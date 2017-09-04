@@ -298,9 +298,9 @@ findZeroCrossing = function(ampl, location) {
 #' Join two waveforms by cross-fading
 #'
 #' \code{crossFade} joins two input vectors (waveforms) by cross-fading. It
-#' truncates both input vectors, so that ampl1 ends with a zero crossing and
-#' ampl2 starts with a zero crossing, both on an upward portion of the
-#' soundwave. Then it cross-fades both vectors linearly with an overlap of
+#' truncates both input vectors, so that \code{ampl1} ends with a zero crossing
+#' and \code{ampl2} starts with a zero crossing, both on an upward portion of
+#' the soundwave. Then it cross-fades both vectors linearly with an overlap of
 #' crossLen or crossLenPoints. If the input vectors are too short for the
 #' specified length of cross-faded region, the two vectors are concatenated at
 #' zero crossings instead of cross-fading. Soundgen uses \code{crossFade} for
@@ -600,7 +600,7 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'   should be vectors of length 2: the first element specifies the boundary for
 #'   \code{df$time} and the second for \code{df$value}. Ex.: low = c(0,1) - low
 #'   bound on "time"=0, low bound on "value"=1
-#' @param wiggleAllRows should the firts and last time anchors be wiggled? (TRUE
+#' @param wiggleAllRows should the first and last time anchors be wiggled? (TRUE
 #'   for breathing, FALSE for other anchors)
 #' @return Modified original dataframe.
 #' @keywords internal

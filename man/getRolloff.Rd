@@ -52,7 +52,7 @@ for plotting purposes)}
 }
 \value{
 Returns a matrix of amplitude multiplication factors for adjusting
-  the amplitude of harmonics relative fo f0. Each row of output contains one
+  the amplitude of harmonics relative to f0. Each row of output contains one
   harmonic, and each column contains one glottal cycle.
 }
 \description{

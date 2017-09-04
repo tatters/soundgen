@@ -15,7 +15,7 @@
 #' @param interpolWin when interpolating pitch candidates, the median is
 #'   calculated over \code{± interpolWin}
 #' @param interpolTol when interpolating pitch candidates, the criterion
-#'   for needing to interpolate is the absense of pitch candidates with values
+#'   for needing to interpolate is the absence of pitch candidates with values
 #'   within \code{1 ± interpolTol} of the median of pitch center of
 #'   gravity over the interpolation window. For ex., if \code{interpolTol}
 #'   is .05, we look for values from 0.95 to 1.05 time the median value over

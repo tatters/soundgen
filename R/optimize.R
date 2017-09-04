@@ -2,7 +2,7 @@
 
 #' Optimize parameters for acoustic analysis
 #'
-#' This customized wrapper for \code{\link[stats]{optim}} attemps to optimize the
+#' This customized wrapper for \code{\link[stats]{optim}} attempts to optimize the
 #' parameters of \code{\link{segmentFolder}} or \code{\link{analyzeFolder}} by
 #' comparing the results with a manually annotated "key". This optimization
 #' function uses a single measurement per audio file (e.g., median pitch or the

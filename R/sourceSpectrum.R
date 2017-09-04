@@ -26,7 +26,7 @@
 #'   for plotting purposes)
 #' @param plot if TRUE, produces a plot
 #' @return Returns a matrix of amplitude multiplication factors for adjusting
-#'   the amplitude of harmonics relative fo f0. Each row of output contains one
+#'   the amplitude of harmonics relative to f0. Each row of output contains one
 #'   harmonic, and each column contains one glottal cycle.
 #' @export
 #' @examples
@@ -200,7 +200,11 @@ getRolloff = function(pitch_per_gc = c(440),
 #'   windowLength_points is the size of window for Fourier transform
 #' @param nc the number of time steps for Fourier transform
 #' @inheritParams soundgen
-#' @param formants either a character string like "aaui" referring to default presets for speaker "M1" or a list of formant times, frequencies, amplitudes, and bandwidths. \code{formants = NA} defaults to schwa. Time stamps for formants and mouthOpening can be specified in ms or an any other arbitarary scale.
+#' @param formants either a character string like "aaui" referring to default
+#'   presets for speaker "M1" or a list of formant times, frequencies,
+#'   amplitudes, and bandwidths. \code{formants = NA} defaults to schwa. Time
+#'   stamps for formants and mouthOpening can be specified in ms or an any other
+#'   arbitrary scale.
 #' @param formDrift scale factor regulating the effect of temperature on the
 #'   depth of random drift of all formants (user-defined and stochastic): the
 #'   higher, the more formants drift at a given temperature

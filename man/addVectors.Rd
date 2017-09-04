@@ -10,12 +10,12 @@ addVectors(v1, v2, insertionPoint)
 \item{v1, v2}{numeric vectors}
 
 \item{insertionPoint}{the index of element in vector 1 at which vector 2 will
-be insterted (any integer, can also be negative)}
+be inserted (any integer, can also be negative)}
 }
 \description{
 Adds two partly overlapping vectors, such as two waveforms, to produce a
 longer vector. The location at which vector 2 is pasted is defined by
-insertionPoint. Algorithm: both vectors are padded with zeroes to match in
+insertionPoint. Algorithm: both vectors are padded with zeros to match in
 length and then added. All NA's are converted to 0.
 }
 \examples{

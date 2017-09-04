@@ -1,6 +1,6 @@
 ## UTILITIES FOR FINDING SYLLABLES AND VOCAL BURSTS ##
 
-#' Find fyllables
+#' Find syllables
 #'
 #' Internal soundgen function.
 #'

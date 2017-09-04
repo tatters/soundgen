@@ -22,7 +22,7 @@ should be vectors of length 2: the first element specifies the boundary for
 \code{df$time} and the second for \code{df$value}. Ex.: low = c(0,1) - low
 bound on "time"=0, low bound on "value"=1}
 
-\item{wiggleAllRows}{should the firts and last time anchors be wiggled? (TRUE
+\item{wiggleAllRows}{should the first and last time anchors be wiggled? (TRUE
 for breathing, FALSE for other anchors)}
 }
 \value{

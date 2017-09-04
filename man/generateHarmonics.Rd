@@ -90,7 +90,7 @@ the frequency of random drift of f0 (like jitter, but slower): the higher,
 the faster f0 "wiggles" at a given temperature}
 
 \item{randomWalk_trendStrength}{try 0 to 1 - the higher, the more likely rw
-is to get high in the middle and low at the beginning and end (ie max
+is to get high in the middle and low at the beginning and end (i.e. max
 effect amplitude in the middle of a sound)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging

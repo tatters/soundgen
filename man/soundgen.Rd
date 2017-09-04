@@ -121,7 +121,7 @@ open)}
 presets for speaker "M1" or a list of formant times, frequencies,
 amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
 to schwa. Time stamps for formants and mouthOpening can be specified in ms
-or an any other arbitarary scale. See \code{\link{getSpectralEnvelope}} for more details}
+or an any other arbitrary scale. See \code{\link{getSpectralEnvelope}} for more details}
 
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}

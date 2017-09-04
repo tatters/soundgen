@@ -3,7 +3,7 @@
 #' Segment a sound
 #'
 #' Finds syllables and bursts. Syllables are defined as continuous segments with
-#' ampiltude above threshold. Bursts are defined as local maxima in amplitude
+#' amplitude above threshold. Bursts are defined as local maxima in amplitude
 #' envelope that are high enough both in absolute terms (relative to the global
 #' maximum) and with respect to the surrounding region (relative to local
 #' mimima). See the vignette on acoustic analysis for details.

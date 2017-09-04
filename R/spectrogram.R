@@ -32,7 +32,7 @@
 #'   \code{percentNoise}
 #' @param contrast spectrum is exponentiated by contrast (-inf to +inf,
 #'   recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
-#'   harpness
+#'   sharpness
 #' @param brightness how much to "lighten" the image (>0 = lighter, <0 = darker)
 #' @param method plot spectrum ('spectrum') or the first time derivative of the
 #'   spectrum ('spectralDerivative')

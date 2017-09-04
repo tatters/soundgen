@@ -157,7 +157,7 @@ generateNoise = function(len,
 #'   the frequency of random drift of f0 (like jitter, but slower): the higher,
 #'   the faster f0 "wiggles" at a given temperature
 #' @param randomWalk_trendStrength try 0 to 1 - the higher, the more likely rw
-#'   is to get high in the middle and low at the beginning and end (ie max
+#'   is to get high in the middle and low at the beginning and end (i.e. max
 #'   effect amplitude in the middle of a sound)
 #' @param rolloff_perAmpl as amplitude goes down from max to
 #'   \code{throwaway}, \code{rolloff} increases by \code{rolloff_perAmpl}
@@ -254,7 +254,7 @@ generateHarmonics = function(pitch,
     rw = rw - mean(rw) + 1 # change mean(rw) to 1
     vocalFry_on = (rw_bin > 0) # when is vocal fry on? For ex., rw_bin==1
     #   sets vocal fry on only in regime 1, while rw_bin>0 sets vocal fry on
-    #   in regimes 1 and 2 (ie together with jitter)
+    #   in regimes 1 and 2 (i.e. together with jitter)
     jitter_on = shimmer_on = (rw_bin == 2)
   } else {
     rw = rep(1, nGC)

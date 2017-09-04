@@ -50,7 +50,7 @@ spectrum of frames with entropy exceeding the quantile set by
 
 \item{contrast}{spectrum is exponentiated by contrast (-inf to +inf,
 recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
-harpness}
+sharpness}
 
 \item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
 

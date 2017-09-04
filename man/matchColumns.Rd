@@ -17,7 +17,7 @@ matchColumns(matrix_short, nCol, padWith = 0)
 Internal soundgen function
 }
 \details{
-Adds columns of zeroes or NA to a matrix (attaching them both left and
+Adds columns of zeros or NA to a matrix (attaching them both left and
 right), so that the new number of columns = \code{len}
 }
 \examples{

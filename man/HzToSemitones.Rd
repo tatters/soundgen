@@ -12,7 +12,7 @@ HzToSemitones(h)
 \description{
 Converts from Hz to semitones above C0 (~16.4 Hz). This may not seem very
 useful, but note that (1) this gives you a nice logarithmic scale for
-generating natual pitch transitions, (2) with the added benefit of getting
+generating natural pitch transitions, (2) with the added benefit of getting
 musical notation for free from \code{notesDict} (see examples).
 }
 \examples{

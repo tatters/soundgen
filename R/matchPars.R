@@ -40,7 +40,7 @@
 #'   and reports the outcome
 #' @param padWith compared spectra are padded with either silence (\code{padWith
 #'   = 0}) or with NA's (\code{padWith = NA}) to have the same number of
-#'   columns. When the sounds are of different duration, padding with zeroes
+#'   columns. When the sounds are of different duration, padding with zeros
 #'   rather than NA's improves the fit to target measured by \code{method =
 #'   'pixel'} and \code{'dtw'}, but it has no effect on \code{'cor'} and
 #'   \code{'cosine'}.
@@ -342,7 +342,7 @@ compareSounds = function(target,
                         maxFreq = maxFreq)
 
   # make sure the number of columns (frames) is equal for comparing the two
-  # spectrograms by padding with zeroes (silence)
+  # spectrograms by padding with zeros (silence)
   if (ncol(targetSpec) < ncol(candSpec)) {
     targetSpec = matchColumns(matrix_short = targetSpec,
                               nCol = ncol(candSpec),

@@ -36,7 +36,7 @@ each point in the two spectra; "dtw" = discrete time warp with
 
 \item{padWith}{compared spectra are padded with either silence (\code{padWith
 = 0}) or with NA's (\code{padWith = NA}) to have the same number of
-columns. When the sounds are of different duration, padding with zeroes
+columns. When the sounds are of different duration, padding with zeros
 rather than NA's improves the fit to target measured by \code{method =
 'pixel'} and \code{'dtw'}, but it has no effect on \code{'cor'} and
 \code{'cosine'}.}

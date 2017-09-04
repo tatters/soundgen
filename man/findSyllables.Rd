@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities_segment.R
 \name{findSyllables}
 \alias{findSyllables}
-\title{Find fyllables}
+\title{Find syllables}
 \usage{
 findSyllables(envelope, timestep, threshold, shortestSyl, shortestPause,
   mergeSyl)

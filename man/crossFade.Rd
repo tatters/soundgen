@@ -22,9 +22,9 @@ Returns a numeric vector.
 }
 \description{
 \code{crossFade} joins two input vectors (waveforms) by cross-fading. It
-truncates both input vectors, so that ampl1 ends with a zero crossing and
-ampl2 starts with a zero crossing, both on an upward portion of the
-soundwave. Then it cross-fades both vectors linearly with an overlap of
+truncates both input vectors, so that \code{ampl1} ends with a zero crossing
+and \code{ampl2} starts with a zero crossing, both on an upward portion of
+the soundwave. Then it cross-fades both vectors linearly with an overlap of
 crossLen or crossLenPoints. If the input vectors are too short for the
 specified length of cross-faded region, the two vectors are concatenated at
 zero crossings instead of cross-fading. Soundgen uses \code{crossFade} for
