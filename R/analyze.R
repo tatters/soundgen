@@ -112,10 +112,10 @@
 #'   measures.
 #' @export
 #' @examples
-#' sound1 = soundgen(sylLen = 900, pitchAnchors = list(
+#' sound1 = soundgen(sylLen = 600, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-#'   noiseAnchors = list(time = c(0, 900), value = c(-40, 00)),
-#'   temperature = 0)
+#'   noiseAnchors = list(time = c(0, 600), value = c(-40, 00)),
+#'   temperature = 0, addSilence = 0)
 #' # playme(sound1, 16000)
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
 #'

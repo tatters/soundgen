@@ -80,10 +80,12 @@ sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
 m1 = ssm(sound, samplingRate = 16000,
          input = 'audiogram', simil = 'cor', norm = FALSE,
          ssmWin = 10, kernelLen = 150)  # detailed, local features
+\dontrun{
 m2 = ssm(sound, samplingRate = 16000,
          input = 'mfcc', simil = 'cosine', norm = TRUE,
          ssmWin = 50, kernelLen = 600)  # more global
 # plot(m2$novelty, type='b')  # use for peak detection, etc
+}
 }
 \references{
 \itemize{
