@@ -58,6 +58,7 @@ Computes similarity between two sounds based on correlating mel-transformed
 spectra (auditory spectra). Called by \code{\link{matchPars}}.
 }
 \examples{
+\dontrun{
 target = soundgen(sylLen = 500, formants = 'a',
                   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
                                             value = c(100, 150, 135, 100)),
@@ -102,4 +103,5 @@ for (i in 1:nrow(df)) {
 }
 df$av = rowMeans(df, na.rm = TRUE)
 df  # row 1 = wrong pitch & formants, ..., row 4 = right pitch & formants
+}
 }

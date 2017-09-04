@@ -52,6 +52,7 @@
 #' @param maxFreq parts of the spectra above \code{maxFreq} Hz are not compared
 #' @export
 #' @examples
+#' \dontrun{
 #' playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
 #'
 #' target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
@@ -68,7 +69,6 @@
 #'
 #' # Try to improve the match by optimizing rolloff
 #' # (this may take a few minutes to run, and the results may vary)
-#' \dontrun{
 #' m2 = matchPars(target = target,
 #'                samplingRate = 16000,
 #'                pars = 'rolloff',
@@ -265,6 +265,7 @@ matchPars = function(target,
 #'   all methods in \code{method}
 #' @export
 #' @examples
+#' \dontrun{
 #' target = soundgen(sylLen = 500, formants = 'a',
 #'                   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
 #'                                             value = c(100, 150, 135, 100)),
@@ -310,6 +311,7 @@ matchPars = function(target,
 #' }
 #' df$av = rowMeans(df, na.rm = TRUE)
 #' df  # row 1 = wrong pitch & formants, ..., row 4 = right pitch & formants
+#' }
 compareSounds = function(target,
                          targetSpec = NULL,
                          cand,
