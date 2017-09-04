@@ -328,7 +328,7 @@ getRandomWalk = function(len,
 
 #' Discrete random walk
 #'
-#' Internal soudgen function.
+#' Internal soundgen function.
 #'
 #' Takes a continuous random walk and converts it to continuous epochs of
 #' repeated values 0/1/2, each at least minLength points long. 0/1/2 correspond

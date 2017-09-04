@@ -19,7 +19,7 @@ whether the jobs ahead will take more or less time than the jobs already
 completed}
 }
 \description{
-Internal soudgen function.
+Internal soundgen function.
 }
 \details{
 Based on the current iteration, total number of iterations, and time when the

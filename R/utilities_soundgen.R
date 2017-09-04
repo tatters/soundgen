@@ -2,7 +2,7 @@
 
 #' Report time
 #'
-#' Internal soudgen function.
+#' Internal soundgen function.
 #'
 #' Based on the current iteration, total number of iterations, and time when the
 #' loop started running, prints estimated time left or a summary upon

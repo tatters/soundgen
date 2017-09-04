@@ -21,7 +21,7 @@ range 0 to 100)}
 Returns a vector of integers (0/1/2) of the same length as rw.
 }
 \description{
-Internal soudgen function.
+Internal soundgen function.
 }
 \details{
 Takes a continuous random walk and converts it to continuous epochs of
