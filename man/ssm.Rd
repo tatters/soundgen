@@ -73,7 +73,6 @@ If \code{returnSSM} is TRUE, returns a list of two components: $ssm
 Calculates the self-similarity matrix and novelty vector of a sound.
 }
 \examples{
-\dontrun{
 sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
           formants = NA, pitchAnchors = list(time = c(0, 1),
           value = c(500, 330))))
@@ -85,7 +84,6 @@ m2 = ssm(sound, samplingRate = 16000,
          input = 'mfcc', simil = 'cosine', norm = TRUE,
          ssmWin = 50, kernelLen = 600)  # more global
 # plot(m2$novelty, type='b')  # use for peak detection, etc
-}
 }
 \references{
 \itemize{

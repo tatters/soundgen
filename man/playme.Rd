@@ -16,7 +16,7 @@ Plays an audio file or a numeric vector. This is a simple wrapper for the
 functionality provided by \code{\link[tuneR]{play}}
 }
 \examples{
-\dontrun{playme('~/myfile.wav')}
+# playme('~/myfile.wav')
 f0_Hz = 440
 sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
 # playme(sound, 16000)

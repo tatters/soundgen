@@ -16,12 +16,10 @@
 #'   completed
 #' @keywords internal
 #' @examples
-#' \dontrun{
 #' time_start = proc.time()
 #' for (i in 1:5) {
-#'   Sys.sleep(i ^ 2 / 10)
-#'   reportTime(i = i, nIter = 5, time_start = time_start, jobs = (1:5) ^ 2 / 10)
-#' }
+#'   Sys.sleep(i ^ 2 / 100)
+#'   soundgen:::reportTime(i = i, nIter = 5, time_start = time_start, jobs = (1:5) ^ 2 / 10)
 #' }
 reportTime = function(i, nIter, time_start, jobs = NULL) {
   time_diff = as.numeric((proc.time() - time_start)[3])
@@ -82,7 +80,7 @@ convert_sec_to_hms = function(time_s) {
 #' @param samplingRate sampling rate (only needed if sound is a vector)
 #' @export
 #' @examples
-#' \dontrun{playme('~/myfile.wav')}
+#' # playme('~/myfile.wav')
 #' f0_Hz = 440
 #' sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
 #' # playme(sound, 16000)

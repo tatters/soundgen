@@ -92,7 +92,6 @@ options, but with added routines for noise reduction, smoothing in time and
 frequency domains, and controlling contrast and brightness.
 }
 \examples{
-\dontrun{
 # synthesize a sound 1 s long, with gradually increasing hissing noise
 sound = soundgen(sylLen = 1000, temperature = 0, noiseAnchors = list(
   time = c(0, 1300), value = c(-120, 0)), formantsNoise = list(
@@ -101,6 +100,8 @@ sound = soundgen(sylLen = 1000, temperature = 0, noiseAnchors = list(
 
 # basic spectrogram
 spectrogram(sound, samplingRate = 16000)
+
+\dontrun{
 # add an oscillogram
 spectrogram(sound, samplingRate = 16000, osc = TRUE)
 # broad-band instead of narrow-band

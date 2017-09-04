@@ -27,12 +27,10 @@ loop started running, prints estimated time left or a summary upon
 completion.
 }
 \examples{
-\dontrun{
 time_start = proc.time()
 for (i in 1:5) {
-  Sys.sleep(i ^ 2 / 10)
-  reportTime(i = i, nIter = 5, time_start = time_start, jobs = (1:5) ^ 2 / 10)
-}
+  Sys.sleep(i ^ 2 / 100)
+  soundgen:::reportTime(i = i, nIter = 5, time_start = time_start, jobs = (1:5) ^ 2 / 10)
 }
 }
 \keyword{internal}

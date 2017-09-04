@@ -5,11 +5,11 @@ Version: 1.0.0
 Authors@R: person("Andrey", "Anikin", email = "rty.anik@rambler.ru", role = c("aut", "cre"))
 Maintainer: Andrey Anikin <rty.anik@rambler.ru>
 URL: http://cogsci.se/soundgen.html
-Description: Tools for sound synthesis and acoustic analysis. 
-Description: Tools for sound synthesis and acoustic analysis. 
-  Performs parametric synthesis of sounds with harmonic and noise components 
-  such as animal vocalizations or human voice. Also includes tools for spectral analysis, 
-  pitch tracking, audio segmentation, self-similarity matrices, and morphing.
+Description: Tools for sound synthesis and acoustic analysis.
+    Performs parametric synthesis of sounds with harmonic and noise components
+    such as animal vocalizations or human voice. Also includes tools for
+    spectral analysis, pitch tracking, audio segmentation, self-similarity
+    matrices, and morphing.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true

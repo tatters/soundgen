@@ -52,7 +52,6 @@
 #' @param maxFreq parts of the spectra above \code{maxFreq} Hz are not compared
 #' @export
 #' @examples
-#' \dontrun{
 #' playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
 #'
 #' target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
@@ -67,6 +66,7 @@
 #'                verbose = playback)
 #' cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
 #'
+#' \dontrun{
 #' # Try to improve the match by optimizing rolloff
 #' # (this may take a few minutes to run, and the results may vary)
 #' m2 = matchPars(target = target,

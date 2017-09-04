@@ -143,7 +143,6 @@ NULL
 #' @export
 #' @return Returns the synthesized waveform as a numeric vector.
 #' @examples
-#' \dontrun{
 #' # NB: GUI for soundgen is available as a Shiny app.
 #' # Type "soundgen_app()" to start it
 #'
@@ -160,7 +159,7 @@ NULL
 #' # playme(s1)
 #' s2 = eval(parse(text = presets$F1$Scream_conflict))
 #' # playme(s2)
-
+#' \dontrun{
 #' # unless temperature is 0, the sound is different every time
 #' for (i in 1:3) sound = soundgen(play = playback, temperature = .2)
 #'

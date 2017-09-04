@@ -187,13 +187,14 @@ non-linguistic vocalizations. See the vignette on acoustic analysis for
 details.
 }
 \examples{
-\dontrun{
 sound1 = soundgen(sylLen = 900, pitchAnchors = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
   noiseAnchors = list(time = c(0, 900), value = c(-40, 00)),
   temperature = 0)
 # playme(sound1, 16000)
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
+
+\dontrun{
 # or, to improve the quality of postprocessing:
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 median(a1$pitch, na.rm = TRUE)  # 614 Hz
