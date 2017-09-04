@@ -1,22 +1,3 @@
-# build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
-
-# build vignettes: devtools::build_vignettes()
-
-# devtools::build_win()  # to check on windows
-
-# To install from github (in RStudio):
-# install.packages("devtools", "tuneR", "seewave", "phonTools", "zoo", "shiny", "shinyBS", "reshape2", "mvtnorm", "plyr", "dtw", "grid")
-# library(devtools)
-# install_github("tatters/soundgen")
-
-# view vignettes:
-# vignette(package = 'soundgen')
-# vignette('sound_generation', package = 'soundgen')
-# vignette('acoustic_analysis', package = 'soundgen')
-# or, to open in a browser
-# RShowDoc('sound_generation', package = 'soundgen')
-# RShowDoc('acoustic_analysis', package = 'soundgen')
-
 #' @import stats graphics utils grDevices
 NULL
 
