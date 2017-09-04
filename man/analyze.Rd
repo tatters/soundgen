@@ -187,21 +187,25 @@ non-linguistic vocalizations. See the vignette on acoustic analysis for
 details.
 }
 \examples{
-sound1 = soundgen(sylLen = 600, pitchAnchors = list(
-  time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-  noiseAnchors = list(time = c(0, 600), value = c(-40, 00)),
-  temperature = 0, addSilence = 0)
-# playme(sound1, 16000)
-a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
+sound = soundgen(sylLen = 300, pitchAnchors = list(
+  time = c(0, .5, 1), value = c(900, 400, 2300)),
+  noiseAnchors = list(time = c(0, 300), value = c(-40, 00)),
+  temperature = 0, addSilence = 0, overlap = 0)
+# playme(sound, 16000)
+a = analyze(sound, samplingRate = 16000, plot = TRUE)
 
 \dontrun{
-# or, to improve the quality of postprocessing:
+sound1 = soundgen(sylLen = 900, pitchAnchors = list(
+  time = c(0, .3, .9, 1), value = c(300, 900, 400, 2300)),
+  noiseAnchors = list(time = c(0, 300), value = c(-40, 00)),
+  temperature = 0, addSilence = 0)
+# improve the quality of postprocessing:
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
-median(a1$pitch, na.rm = TRUE)  # 614 Hz
+median(a1$pitch, na.rm = TRUE)  # 583 Hz
 # (can vary, since postprocessing is stochastic)
 # compare to the true value:
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
-  value = c(300, 900, 400, 2300)), len = 1000))
+  value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
 
 # the same pitch contour, but harder b/c of subharmonics and jitter
 sound2 = soundgen(sylLen = 900, temperature = 0,
