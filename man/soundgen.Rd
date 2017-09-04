@@ -221,6 +221,7 @@ animal or human non-linguistic vocalizations. For more information, see
 \url{http://cogsci.se/soundgen.html} and the vignette on sound generation.
 }
 \examples{
+\dontrun{
 # NB: GUI for soundgen is available as a Shiny app.
 # Type "soundgen_app()" to start it
 
@@ -263,4 +264,5 @@ sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
   vocalTract = 5, play = playback)
+}
 }

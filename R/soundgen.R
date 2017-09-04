@@ -162,6 +162,7 @@ NULL
 #' @export
 #' @return Returns the synthesized waveform as a numeric vector.
 #' @examples
+#' \dontrun{
 #' # NB: GUI for soundgen is available as a Shiny app.
 #' # Type "soundgen_app()" to start it
 #'
@@ -205,6 +206,7 @@ NULL
 #'   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
 #'   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
 #'   vocalTract = 5, play = playback)
+#' }
 soundgen = function(repeatBout = 1,
                     nSyl = 1,
                     sylLen = 300,
