@@ -227,11 +227,11 @@ generateHarmonics = function(pitch,
       valueCeiling = -throwaway,
       samplingRate = samplingRate
     )
-    # plot (amplContour, type='l')
+    # plot(amplContour, type='l')
     amplContour = amplContour / abs(throwaway) - 1
     rolloffAmpl = amplContour * rolloff_perAmpl
   } else {
-    rolloffAmpl = 0
+    rolloffAmpl = rep(0, nGC)
   }
 
   # get a random walk for intra-syllable variation
@@ -241,7 +241,7 @@ generateHarmonics = function(pitch,
       rw_range = temperature,
       trend = c(randomWalk_trendStrength, -randomWalk_trendStrength),
       rw_smoothing = .3
-    ) # plot (rw, type = 'l')
+    ) # plot(rw, type = 'l')
     rw_0_100 = zeroOne(rw) * 100
     # plot (rw_0_100, type = 'l')
     rw_bin = getIntegerRandomWalk(
@@ -328,6 +328,9 @@ generateHarmonics = function(pitch,
   # calculate the number of harmonics to generate (from lowest pitch to nyquist)
   nHarmonics = ceiling((samplingRate / 2 - min(pitch_per_gc)) / min(pitch_per_gc))
   # get rolloff
+  if (length(rolloff) < nGC) {
+    rolloff = spline(rolloff, n = nGC)$y
+  }
   rolloff_source = getRolloff(
     pitch_per_gc = pitch_per_gc,
     nHarmonics = nHarmonics,

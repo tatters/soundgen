@@ -531,9 +531,10 @@ soundgen = function(repeatBout = 1,
         for (p in 1:length(pars_to_vary)) {
           l = permittedValues[pars_to_vary[p], 'low']
           h = permittedValues[pars_to_vary[p], 'high']
-          pars_syllable[pars_to_vary[p]] = rnorm_bounded(
-            n = 1,
-            mean = as.numeric(pars_list[pars_to_vary[p]]),
+          par_value = as.numeric(unlist(pars_list[pars_to_vary[p]]))
+          pars_syllable[[pars_to_vary[p]]] = rnorm_bounded(
+            n = length(par_value),
+            mean = par_value,
             low = l,
             high = h,
             sd = (h - l) * temperature / 10,
@@ -595,7 +596,7 @@ soundgen = function(repeatBout = 1,
         syllable = rep(0, round(dur_syl * samplingRate / 1000))
       } else {
         # the actual synthesis is here
-        syllable = try(do.call(generateHarmonics,  c(
+        syllable = try(do.call(generateHarmonics, c(
           pars_syllable,
           list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl)
         ))

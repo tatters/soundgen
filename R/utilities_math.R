@@ -182,7 +182,7 @@ getEntropy = function(x, type = c('weiner', 'shannon')[1], normalize = FALSE) {
 #' @examples
 #' soundgen:::rnorm_bounded(n = 3, mean = 10, sd = 5, low = 7, high = NULL,
 #'   roundToInteger = c(TRUE, FALSE, FALSE))
-#' soundgen:::rnorm_bounded(n = 3, mean = c(10, 50, 100), sd = c(5, 0, 20),
+#' soundgen:::rnorm_bounded(n = 9, mean = c(10, 50, 100), sd = c(5, 0, 20),
 #'   roundToInteger = TRUE) # vectorized
 rnorm_bounded = function(n = 1,
                          mean = 0,
@@ -190,6 +190,10 @@ rnorm_bounded = function(n = 1,
                          low = NULL,
                          high = NULL,
                          roundToInteger = FALSE) {
+  if (length(mean) < n) mean = spline(mean, n = n)$y
+  if (length(sd) < n) sd = spline(sd, n = n)$y
+  sd[sd < 0] = 0
+
   if (any(mean > high | mean < low)) {
     warning(paste('Some of the specified means are outside the low/high bounds!',
             'Mean =', paste(mean, collapse = ', '),
@@ -198,9 +202,6 @@ rnorm_bounded = function(n = 1,
     mean[mean < low] = low
     mean[mean > high] = high
   }
-
-  if (length(mean) < n) mean = rep(mean[1], n)
-  if (length(sd) < n) sd = rep(sd[1], n)
 
   if (sum(sd != 0) == 0) {
     out = mean

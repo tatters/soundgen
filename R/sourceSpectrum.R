@@ -68,6 +68,19 @@
 #' rolloff = getRolloff(pitch_per_gc = c(150, 600),
 #'   rolloffParab = -20, rolloffParabCeiling = 2000,
 #'   plot = TRUE)
+#'
+#' # dynamic rolloff (varies over time)
+#' rolloff = getRolloff(pitch_per_gc = 150,
+#'                      rolloff = c(-12, -18, -24), plot = TRUE)
+#' rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = 40,
+#'                     rolloffParabHarm = 1:15, plot = TRUE)
+#' # only rolloff for the first glottal cycle is plotted, but the sound varies:
+#' s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
+#'               rolloff = c(-12, -24, -2),
+#'               play = TRUE, plot = TRUE)
+#' s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
+#'              rolloffParab = 40, rolloffParabHarm = 1:15,
+#'              play = TRUE, plot = TRUE)
 getRolloff = function(pitch_per_gc = c(440),
                       nHarmonics = 100,
                       rolloff = -12,
@@ -80,8 +93,25 @@ getRolloff = function(pitch_per_gc = c(440),
                       throwaway = -120,
                       samplingRate = 16000,
                       plot = FALSE) {
+  ## In case rolloff pars are dynamic, make them the same length as pitch_per-gc
+  nGC = length(pitch_per_gc)
+  update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
+                  'rolloffParabHarm', 'rolloffParabCeiling', 'rolloffKHz')
+  max_length = max(sapply(update_pars, function(x)length(get(x))))
+  if (max_length > nGC) {
+    pitch_per_gc = spline(pitch_per_gc, n = max_length)$y
+    nGC = length(pitch_per_gc)
+  }
+  for (p in update_pars) {
+    old = get(p)
+    if (length(old) > 1 && length(old) != nGC) {
+      new = spline(old, n = nGC)$y
+      assign(p, new)
+    }
+  }
+
   ## Exponential decay
-  deltas = matrix(0, nrow = nHarmonics, ncol = length(pitch_per_gc))
+  deltas = matrix(0, nrow = nHarmonics, ncol = nGC)
   if (sum(rolloffOct != 0) > 0) {
     for (h in 2:nHarmonics) {
       deltas[h, ] = rolloffOct * (pitch_per_gc * h - baseline) / 1000
@@ -90,7 +120,7 @@ getRolloff = function(pitch_per_gc = c(440),
   }
   # plot(deltas[, 1])
 
-  r = matrix(0, nrow = nHarmonics, ncol = length(pitch_per_gc))
+  r = matrix(0, nrow = nHarmonics, ncol = nGC)
   for (h in 1:nHarmonics) {
     r[h,] = ((rolloff + rolloffKHz *
                 (pitch_per_gc - baseline) / 1000) * log2(h)) + deltas[h,]
@@ -101,13 +131,11 @@ getRolloff = function(pitch_per_gc = c(440),
   }
 
   ## QUADRATIC term affecting the first rolloffParabHarm harmonics only
-  if (rolloffParab != 0) {
+  if (any(rolloffParab != 0)) {
     if (!is.null(rolloffParabCeiling)) {
       rolloffParabHarm = round(rolloffParabCeiling / pitch_per_gc)  # vector of
       # length pitch_per_gc specifying the number of harmonics whose amplitude
       # is to be adjusted
-    } else {
-      rolloffParabHarm = rep(round(rolloffParabHarm), length(pitch_per_gc))
     }
     rolloffParabHarm[rolloffParabHarm == 2] = 3 # will have the effect of boosting
     # H1 (2 * F0)
@@ -127,7 +155,7 @@ getRolloff = function(pitch_per_gc = c(440),
 
     # for a single affected harmonic, just change the amplitude of F0
     r[1, which(rolloffParabHarm < 3)] =
-      r[1, which(rolloffParabHarm < 2)] + rolloffParab
+      r[1, which(rolloffParabHarm < 3)] + rolloffParab
     # if at least 2 harmonics are to be adjusted, calculate a parabola
     for (i in which(rolloffParabHarm >= 3)) {
       rowIdx = 1:rolloffParabHarm[i]
@@ -148,7 +176,7 @@ getRolloff = function(pitch_per_gc = c(440),
   # plotting
   if (plot) {
     x_max = samplingRate / 2 / 1000
-    if (length(pitch_per_gc) == 1 | var(pitch_per_gc) == 0) {
+    if (nGC == 1 | var(pitch_per_gc) == 0) {
       idx = which(r[, 1] > -Inf)
       plot ( idx * pitch_per_gc[1] / 1000, r[idx, 1],
              type = 'b', xlim = c(0, x_max), xlab = 'Frequency, Hz',
