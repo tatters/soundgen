@@ -732,18 +732,75 @@ wiggleAnchors = function(df,
   return(df)
 }
 
+
+#' Get amplitude envelope
+#'
+#' Internal soundgen function
+#'
+#' Returns the smoothed amplitude envelope of a waveform on the original scale.
+#' @inheritParams flatEnv
+#' @param method 'peak' for peak amplitude per window, 'rms' for root mean
+#'   square amplitude, 'mean' for mean (for DC offset removal)
+#' @examples
+#' a = rnorm(500) * seq(1, 0, length.out = 500)
+#' plot(soundgen:::getEnv(a, 20))
+getEnv = function(sound,
+                  windowLength_points,
+                  method = c('rms', 'peak', 'mean')[1]) {
+  len = length(sound)
+  if (method == 'peak') sound_abs = abs(sound)  # avoid repeated calculations
+
+  if (windowLength_points >= len / 2) {
+    # short sound relative to window - just take beginning and end (2 points)
+    s = c(1, len)
+  } else {
+    s = c(1,
+          seq(from = floor(windowLength_points / 2),
+              to = length(sound) - floor(windowLength_points / 2),
+              by = windowLength_points),
+          length(sound))
+  }
+  # s is a sequence of starting indices for windows over which we average
+  envShort = rep(NA, length(s) - 1)
+  for (i in 1:(length(s) - 1)) {
+    seg = s[i] : s[i+1]
+    if (method == 'peak') {
+      # get moving peak amplitude
+      envShort[i] = max(sound_abs[seg])
+    } else if (method == 'rms') {
+      # get moving RMS amplitude
+      envShort[i] = sqrt(mean(sound[seg] ^ 2))
+    } else if (method == 'mean') {
+      envShort[i] = mean(sound[seg])
+    }
+  }
+
+  # upsample and smooth
+  env = getSmoothContour(
+    anchors = data.frame(time = seq(0, 1, length.out = length(envShort)),
+                         value = envShort),
+    len = length(sound)
+  )
+  return(env)
+}
+
+
+
+
 #' Flat envelope
 #'
-#' Flattens the amplitude envelope of a waveform, so that the absolute amplitude
-#' of oscillations is maximum at all time points. This is achieved by dividing
-#' the waveform by its smoothed rolling maximum.
+#' Flattens the amplitude envelope of a waveform. This is achieved by dividing
+#' the waveform by some function of its smoothed rolling amplitude (peak or root
+#' mean square).
 #' @param sound input vector oscillating about zero
 #' @param windowLength the length of smoothing window, ms
-#' @param windowLength_points the length of smoothing window, points. If
-#'   specified, overrides both \code{windowLength} and \code{samplingRate}
 #' @param samplingRate the sampling rate, Hz. Only needed if the length of
 #'   smoothing window is specified in ms rather than points
-#' @param killDC if TRUE, dynamically removes DC offset or similar deviations of
+#' @param method 'peak' for peak amplitude per window, 'rms' for root mean
+#'   square amplitude
+#' @param windowLength_points the length of smoothing window, points. If
+#'   specified, overrides both \code{windowLength} and \code{samplingRate}
+#' @param killEnv if TRUE, dynamically removes DC offset or similar deviations of
 #'   average waveform from zero
 #' @param throwaway parts of sound quieter than \code{throwaway} dB will not be
 #'   amplified
@@ -752,19 +809,19 @@ wiggleAnchors = function(df,
 #' @export
 #' @examples
 #' a = rnorm(500) * seq(1, 0, length.out = 500)
-#' a = a / max(abs(a))
-#' b = flatEnv(a, plot = TRUE, killDC = TRUE,
+#' b = flatEnv(a, plot = TRUE, killEnv = TRUE, method = 'peak',
 #'             windowLength_points = 5)         # too short
-#' c = flatEnv(a, plot = TRUE, killDC = TRUE,
+#' c = flatEnv(a, plot = TRUE, killEnv = TRUE,
 #'             windowLength_points = 250)       # too long
-#' d = flatEnv(a, plot = TRUE, killDC = TRUE,
+#' d = flatEnv(a, plot = TRUE, killEnv = TRUE,
 #'             windowLength_points = 50)        # about right
 flatEnv = function(sound,
                    windowLength = 200,
                    samplingRate = 16000,
+                   method = c('rms', 'peak')[1],
                    windowLength_points = NULL,
-                   killDC = FALSE,
-                   throwaway = -120,
+                   killEnv = FALSE,
+                   throwaway = -80,
                    plot = FALSE) {
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
@@ -777,69 +834,63 @@ flatEnv = function(sound,
     }
   }
 
-  sound_abs = abs(sound)                # avoid repeated calculations to save time
-  m = max(sound_abs)                    # original scale (eg -1 to +1 gives m = 1)
+  m = max(abs(sound))       # original scale (eg -1 to +1 gives m = 1)
+  soundNorm = sound / m    # normalize
   throwaway_lin = 2 ^ (throwaway / 10)  # from dB to linear
-
-  env = zoo::rollmax(sound, k = windowLength_points)       # get moving max
-  anchors = seq(1, length(env), by = windowLength_points)  # downsample
-  env_rightLen = getSmoothContour(                         # smooth
-    anchors = data.frame(time = seq(0, 1, length.out = length(anchors)),
-                         value = env[anchors]),
-    len = length(sound)
-  )
-  env_rightLen[env_rightLen == 0] = 1      # avoid division by 0
-  env_rightLen[sound_abs < throwaway] = 1  # don't amplify very quiet sections
-  sound_norm = sound / env_rightLen        # flattening of amplitude envelope
-  sound_norm = sound_norm / max(abs(sound_norm)) * m  # normalize to original scale
-
+  # get smoothed amplitude envelope
+  env = getEnv(sound = soundNorm,
+               windowLength_points = windowLength_points,
+               method = method)
+  # don't amplify very quiet sections
+  env[env < throwaway_lin] = 1
+  # flatten amplitude envelope
+  soundFlat = soundNorm / env
+  # re-normalize to original scale
+  soundFlat = soundFlat / max(abs(soundFlat)) * m
   # remove DC offset
-  sound_norm = killDC(sound = sound_norm,
-                      windowLength_points = windowLength_points,
-                      plot = FALSE)
+  if (killEnv) {
+    sound_norm = killEnv(sound = soundFlat,
+                         windowLength_points = windowLength_points,
+                         plot = FALSE)
+  }
 
   if (plot) {
     op = par('mfrow')
     par(mfrow = c(1, 2))
     plot(sound, type = 'l', main = 'Original')
-    points(env_rightLen, type = 'l', lty = 1, col = 'blue')
-    plot(sound_norm, type = 'l', main = 'Flattened')
+    points(env * m, type = 'l', lty = 1, col = 'blue')
+    plot(soundFlat, type = 'l', main = 'Flattened')
     par(mfrow = op)
   }
-  return(sound_norm)
+  return(soundFlat)
 }
 
 
-#' Kill DC offset
+#' Kill envelope
 #'
 #' Removes DC offset or similar disbalance in a waveform dynamically, by
-#' subtracting a smoothed moving average.
-#' @param sound input vector oscillating about zero
-#' @param windowLength the length of smoothing window, ms
-#' @param windowLength_points the length of smoothing window, points. If
-#'   specified, overrides both \code{windowLength} and \code{samplingRate}
-#' @param samplingRate the sampling rate, Hz. Only needed if the length of
-#'   smoothing window is specified in ms rather than points
+#' subtracting a smoothed ~moving average. Simplified compared to a true moving
+#' average, but very fast (a few ms per second of 44100 audio).
+#' @inheritParams flatEnv
 #' @param plot if TRUE, plots the original sound, smoothed moving average, and
 #'   modified sound
-#' @export
 #' @examples
-#' # remove statis DC offset
+#' # remove static DC offset
 #' a = rnorm(500) + .3
-#' b = killDC(a, windowLength_points = 500, plot = TRUE)
+#' b = soundgen:::killEnv(a, windowLength_points = 500, plot = TRUE)
 #'
-#' # remove dynamic DC offset (trend)
+#' # remove trend
 #' a = rnorm(500) + seq(0, 1, length.out = 500)
-#' b = killDC(a, windowLength_points = 100, plot = TRUE)
+#' b = soundgen:::killEnv(a, windowLength_points = 100, plot = TRUE)
 #'
 #' # can also be used as a high-pass filter
 #' a = rnorm(500) + sin(1:500 / 50)
-#' b = killDC(a, windowLength_points = 25, plot = TRUE)
-killDC = function(sound,
-                  windowLength = 200,
-                  samplingRate = 16000,
-                  windowLength_points = NULL,
-                  plot = FALSE) {
+#' b = soundgen:::killEnv(a, windowLength_points = 25, plot = TRUE)
+killEnv = function(sound,
+                   windowLength = 200,
+                   samplingRate = 16000,
+                   windowLength_points = NULL,
+                   plot = FALSE) {
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
       if (is.numeric(samplingRate)) {
@@ -851,24 +902,20 @@ killDC = function(sound,
     }
   }
 
-  ma = zoo::rollmean(sound, k = windowLength_points)      # get moving mean
-  anchors = seq(1, length(ma), by = windowLength_points)  # downsample
-  ma_rightLen = getSmoothContour(                         # smooth
-    anchors = data.frame(time = seq(0, 1, length.out = length(anchors)),
-                         value = ma[anchors]),
-    len = length(sound)
-  )
-  sound_norm = sound - ma_rightLen
+  env = getEnv(sound = sound,
+               windowLength_points = windowLength_points,
+               method = 'mean')
+  soundNorm = sound - env
 
   if (plot) {
     op = par('mfrow')
     par(mfrow = c(1, 2))
     plot(sound, type = 'l', main = 'Original')
-    points(ma_rightLen, type = 'l', lty = 1, col = 'blue')
+    points(env, type = 'l', lty = 1, col = 'blue')
     points(rep(0, length(sound)), type = 'l', lty = 2)
-    plot(sound_norm, type = 'l', main = 'DC removed')
+    plot(soundNorm, type = 'l', main = 'Env removed')
     points(rep(0, length(sound)), type = 'l', col = 'blue')
     par(mfrow = op)
   }
-  return(sound_norm)
+  return(soundNorm)
 }

@@ -4,9 +4,9 @@
 \alias{flatEnv}
 \title{Flat envelope}
 \usage{
-flatEnv(sound, windowLength = 200, samplingRate = 16000,
-  windowLength_points = NULL, killDC = FALSE, throwaway = -120,
-  plot = FALSE)
+flatEnv(sound, windowLength = 200, samplingRate = 16000, method = c("rms",
+  "peak")[1], windowLength_points = NULL, killEnv = FALSE,
+  throwaway = -80, plot = FALSE)
 }
 \arguments{
 \item{sound}{input vector oscillating about zero}
@@ -16,10 +16,13 @@ flatEnv(sound, windowLength = 200, samplingRate = 16000,
 \item{samplingRate}{the sampling rate, Hz. Only needed if the length of
 smoothing window is specified in ms rather than points}
 
+\item{method}{'peak' for peak amplitude per window, 'rms' for root mean
+square amplitude}
+
 \item{windowLength_points}{the length of smoothing window, points. If
 specified, overrides both \code{windowLength} and \code{samplingRate}}
 
-\item{killDC}{if TRUE, dynamically removes DC offset or similar deviations of
+\item{killEnv}{if TRUE, dynamically removes DC offset or similar deviations of
 average waveform from zero}
 
 \item{throwaway}{parts of sound quieter than \code{throwaway} dB will not be
@@ -29,17 +32,16 @@ amplified}
 flattened sound}
 }
 \description{
-Flattens the amplitude envelope of a waveform, so that the absolute amplitude
-of oscillations is maximum at all time points. This is achieved by dividing
-the waveform by its smoothed rolling maximum.
+Flattens the amplitude envelope of a waveform. This is achieved by dividing
+the waveform by some function of its smoothed rolling amplitude (peak or root
+mean square).
 }
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
-a = a / max(abs(a))
-b = flatEnv(a, plot = TRUE, killDC = TRUE,
+b = flatEnv(a, plot = TRUE, killEnv = TRUE, method = 'peak',
             windowLength_points = 5)         # too short
-c = flatEnv(a, plot = TRUE, killDC = TRUE,
+c = flatEnv(a, plot = TRUE, killEnv = TRUE,
             windowLength_points = 250)       # too long
-d = flatEnv(a, plot = TRUE, killDC = TRUE,
+d = flatEnv(a, plot = TRUE, killEnv = TRUE,
             windowLength_points = 50)        # about right
 }
