@@ -42,9 +42,9 @@
 #'   nr = windowLength_points / 2, nc = 1, samplingRate = samplingRate,
 #'  formants = list('f1' = data.frame(time = 0, freq = 7000,
 #'                                    amp = 50, width = 2000)))
-#' noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
+#' noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -4,
 #'   samplingRate = samplingRate, filterNoise = filterNoise)
-#' # plot (filterNoise, type = 'l')
+#' # plot(filterNoise, type = 'l')
 #' # playme(noise, samplingRate = samplingRate)
 #'
 #' # low-frequency, wind-like noise
@@ -59,8 +59,9 @@ generateNoise = function(len,
                            'time' = c(0, 300),
                            'value' = c(-120, -120)
                          ),
-                         rolloffNoise = -6,
+                         rolloffNoise = -4,
                          attackLen = 10,
+                         flatSpectrum = 1200,
                          windowLength_points = 1024,
                          samplingRate = 16000,
                          overlap = 75,
@@ -91,19 +92,31 @@ generateNoise = function(len,
   # len + windowLength_points gives us two extra windows, since otherwise
   #   the sequence is a bit shorter than needed after i-fft
   nr = windowLength_points / 2
+  bin = samplingRate / 2 / nr
+  binsPerKHz = round(1000 / bin)
+  flatBins = round(flatSpectrum / bin)
   nc = length(step)
   if (is.na(filterNoise[1])) {
-    filterNoise = matrix(rep (1, nr), nrow = 1)
+    filterNoise = matrix(rep(1, nr), ncol = 1)
     filterRowIdx = rep(1, nc)
   } else {
     filterRowIdx = round(seq(1, ncol(filterNoise), length.out = nc))
   }
   # modify the exact filter (if provided) by adding the specified
-  #   basic exponential rolloff
-  filterNoise = apply(filterNoise, 2, function(x) {
-    x * 2 ^ (rolloffNoise / 10 * log2(1:nr))
-  })
-  # plot(filterNoise[,1], type = 'l')
+  #   basic linear rolloff
+  # filterNoise = apply(filterNoise, 2, function(x) {
+  #   # x * 2 ^ (rolloffNoise / 10 * log2(1:nr))  # exponential rolloff
+  # })
+  idx = (flatBins + 1):nr  # modified bins
+  mult = 2 ^ (rolloffNoise / 10 * (idx - flatBins) / binsPerKHz)  # plot(mult)
+  # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 71: spectrum of turbulent noise
+  filterNoise[(flatBins + 1):nr, ] = apply(
+    filterNoise[(flatBins + 1):nr, , drop = FALSE],
+    2,
+    function(x) x * mult
+  )
+  # plot(filterNoise[, 1], type = 'l')
+  # plot(log2(filterNoise[, 1]) * 10, type = 'l')
 
   # instead of synthesizing the time series and then doing fft-ifft,
   #   we can simply synthesize spectral noise, convert to complex
@@ -134,7 +147,7 @@ generateNoise = function(len,
   # spectrogram(breathing, samplingRate = samplingRate)
   # seewave::meanspectrogram(breathing, f = samplingRate, wl = windowLength_points,
   #   dB = 'max0')
-  return (breathing)
+  return(breathing)
 }
 
 

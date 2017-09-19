@@ -287,7 +287,7 @@ getRolloff = function(pitch_per_gc = c(440),
 #' # manual specification of formants
 #' image(t(getSpectralEnvelope(nr = 512, nc = 50,
 #' samplingRate = 16000, formants = list(
-#'   'f1' = data.frame('time' = 0, 'freq' = 900, 'amp' = 30, 'width' = 120),
+#'   'f1' = data.frame('time' = c(0,1), 'freq' = c(900, 500), 'amp' = 30, 'width' = c(20,160)),
 #'   'f2' = data.frame('time' = 0, 'freq' = 1300, 'amp' = 30, 'width' = 120),
 #'   'f3' = data.frame('time' = 0, 'freq' = 3200, 'amp' = 20, 'width' = 200)))))
 getSpectralEnvelope = function(nr,
@@ -302,7 +302,7 @@ getSpectralEnvelope = function(nr,
                                temperature = 0,
                                formDrift = .3,
                                formDisp = .2,
-                               formantDepStoch = 30,
+                               formantDepStoch = 20,
                                smoothLinearFactor = 1,
                                samplingRate = 16000,
                                speedSound = 35400,
@@ -326,7 +326,10 @@ getSpectralEnvelope = function(nr,
   if (!is.numeric(vocalTract) & length(formants[[1]]) > 2) {
     # if we don't know vocalTract, but at least one formant is defined,
     # we guess the length of vocal tract
-    formantDispersion = mean(diff(unlist(lapply(formants, function(f) f$freq))))
+    formant_freqs = unlist(lapply(formants, function(f) f$freq))
+    formantDispersion = getFormantDispersion(formant_freqs,
+                                             speedSound = speedSound,
+                                             method = 'accurate')
     vocalTract = ifelse(
       is.numeric(formantDispersion),
       speedSound / 2 / formantDispersion,
@@ -340,14 +343,25 @@ getSpectralEnvelope = function(nr,
     formants = list('f1' = data.frame(
       'time' = 0,
       'freq' = freq,
-      'amp' = 30,
-      'width' = 50 * (1 + freq^2 / 6 / 10^6)  # Tappert, Martony, and Fant (TMF)-1963
+      'amp' = 20,
+      'width' = 50 * (1 + freq ^ 2 / 6 / 10 ^ 6)  # Tappert, Martony, and Fant (TMF)-1963
     ))
     # freq = 50:5000; a = 50 * (1 + freq^2 / 6 / 10^6); plot(freq, a)
   }
-
-  # create a "spectrogram"-shaped filter matrix
-  spectralEnvelope = matrix(0, nrow = nr, ncol = nc)
+  # default amplitudes and bandwidths
+  for (f in 1:length(formants)) {
+    formant = formants[[f]]
+    if (is.null(formant$time)) {
+      if (nrow(formant) > 1) {
+        formant$time = seq(0, 1, length.out = nrow(formant))
+      } else {
+        formant$time = 0
+      }
+    }
+    if (is.null(formant$amp)) formant$amp = 20
+    if (is.null(formant$width)) formant$width = 50 * (1 + formant$freq ^ 2 / 6 / 10 ^ 6)
+    formants[[f]] = formant
+  }
 
   # START OF FORMANTS
   if (is.list(formants)) {
@@ -379,11 +393,13 @@ getSpectralEnvelope = function(nr,
     if (temperature > 0) {
       # create a few new, relatively high-frequency "pseudo-formants" moving
       # together with the real formants
-      if (is.null(vocalTract) && length(formants) > 1) {
+      if (!is.numeric(vocalTract) && length(formants) > 1) {
         ff = unlist(lapply(formants, function(x) x$freq[1]))
-        formantDispersion = mean(c(ff[1], diff(ff)))
-      } else if (!is.null(vocalTract)) {
-        formantDispersion = 2 * speedSound / (4 * vocalTract)
+        formantDispersion = getFormantDispersion(ff,
+                                                 speedSound = speedSound,
+                                                 method = 'accurate')
+      } else if (is.numeric(vocalTract)) {
+        formantDispersion = speedSound / (2 * vocalTract)
       } else {
         formantDispersion = NA # making sdG also NA, ie extra formants not added
       }
@@ -392,41 +408,36 @@ getSpectralEnvelope = function(nr,
       freq_max = max(formants_upsampled[[nFormants]][, 'freq'])
 
       if (!is.na(sdG) && formantDepStoch > 0) {
-        while (freq_max < (samplingRate / 2 - 1000)) {
-          # don't add extra formants close to Nyquist to avoid artifacts
-          rw = getRandomWalk(
-            len = nc,
-            rw_range = temperature * formDrift,
-            rw_smoothing = 0,
-            trend = 0
-          )
-          # for nPoints == 1, returns one number close to 1
-          if (length(rw) > 1) {
-            rw = rw - mean(rw) + 1
-          } # for actual random walks, make sure mean is 1
-          temp = data.frame (
-            'time' = formants_upsampled[[1]][, 'time'],
-            'freq' = formants_upsampled[[nFormants]][, 'freq'] +
-              round(rgamma(1,
-                           formantDispersion ^ 2 / sdG ^ 2,
-                           formantDispersion / sdG ^ 2
-              ) * rw
-              ))
-          # rgamma: mean = formantDepStoch, sd = formantDepStoch*temperature
-          temp$amp = round(rgamma(
-            1,
+        # formant_f = (2 * f - 1) / 2 * formantDispersion, therefore
+        # nyquist = (2 * nExtraFormants - 1) / 2 * formantDispersion
+        # Solving for nExtraFormants gives (nyquist * 2 / formantDispersion + 1) / 2:
+        nExtraFormants = round((samplingRate * 2 / formantDispersion + 1) / 2) - nFormants
+        # (we don't want a formant close to Nyquist to avoid artifacts, hence the last -1)
+        if (is.numeric(nExtraFormants) && nExtraFormants > 0) {
+          extraFreqs_regular = (2 * ((nFormants+1):(nFormants + nExtraFormants)) - 1) /
+            2 * formantDispersion
+          extraFreqs = rgamma(nExtraFormants,
+                              extraFreqs_regular ^ 2 / sdG ^ 2,
+                              extraFreqs_regular / sdG ^ 2)
+          extraAmps = rgamma(
+            nExtraFormants,
             (formantDep / temperature) ^ 2,
-            formantDepStoch * formantDep /
-              (formantDepStoch * temperature) ^ 2 ) * rw)
-          temp$width = 50 + (log2(temp$freq) - 5) * 20
-          # visualize: freq=50:8000; plot(freq, 50+(log2(freq)-5)*20)
-          formants_upsampled[[nFormants + 1]] = temp
-          nFormants = nFormants + 1
-          freq_max = max(formants_upsampled[[nFormants]]$freq)
+            formantDepStoch * formantDep / (formantDepStoch * temperature) ^ 2
+          )
+          extraWidths = 50 * (1 + extraFreqs ^ 2 / 6 / 10 ^ 6)  # Tappert, Martony, and Fant (TMF)-1963
+          for (f in 1:nExtraFormants) {
+            formants_upsampled[[nFormants + 1]] = data.frame (
+              'time' = formants_upsampled[[1]][, 'time'],
+              'freq' = extraFreqs[f],
+              'amp' = extraAmps[f],
+              'width' = extraWidths[f]
+            )
+            nFormants = length(formants_upsampled)
+          }
         }
       }
 
-      # wiggle both user-specified and stochastically added formants
+      # wiggle both user-specified and stochastic formants
       for (f in 1:nFormants) {
         for (c in 2:4) {
           # wiggle freq, ampl and bandwidth independently
@@ -443,7 +454,7 @@ getSpectralEnvelope = function(nr,
           }
           formants_upsampled[[f]][, c] = formants_upsampled[[f]][, c] * rw
         }
-      } # end of wiggling existing formants
+      } # end of wiggling formants
     } # end of if temperature > 0
 
     ## Deterministic part
@@ -496,6 +507,7 @@ getSpectralEnvelope = function(nr,
       formants_upsampled[[f]][, 'freq'] [formants_upsampled[[f]][, 'freq'] < 1] = 1
     }
 
+    # TODO: move this part to work on formants instead of formants_upsampled!!!
     # nasalize the parts with closed mouth: see Hawkins & Stevens (1985);
     # http://www.cslu.ogi.edu/tutordemos/SpectrogramReading/cse551html/cse551/node35.html
     nasalizedIdx = which(mouthOpen_binary == 0) # or specify a separate
@@ -533,24 +545,92 @@ getSpectralEnvelope = function(nr,
         formants_upsampled$f1[nasalizedIdx, 'amp'] * 4 / 5
       formants_upsampled$f1[nasalizedIdx, 'width'] =
         formants_upsampled$f1[nasalizedIdx, 'width'] * 5 / 4
+
+      zeros = c(zeros, which(names(formants_upsampled) == 'fnz'))
+      poles = c(poles, which(names(formants_upsampled) == 'fnp'))
     }
 
-    # add formants to spectrogram
-    for (f in 1:length(formants_upsampled)) {
-      mg = formants_upsampled[[f]][, 'freq']  # mean of gamma distribution
-      # (vector of length nc)
-      sdg = formants_upsampled[[f]][, 'width']  # sd of gamma distribution
-      # (vector of length nc)
-      sdg[sdg == 0] = 1  # otherwise division by 0
-      shape = mg ^ 2 / sdg ^ 2
-      rate = mg / sdg ^ 2
-      formant = matrix(0, nrow = nr, ncol = nc)
-      for (c in 1:nc) {
-        formant[, c] = dgamma (1:nr, shape[c], rate[c])
-        formant[, c] = formant[, c] / max(formant[, c]) *
-          formants_upsampled[[f]][c, 'amp']
+    # Add formants to spectrogram
+    # create a "spectrogram"-shaped filter matrix
+    spectralEnvelope = matrix(0, nrow = nr, ncol = nc)
+    # for (f in 1:length(formants_upsampled)) {
+    #   mg = formants_upsampled[[f]][, 'freq']  # mean of gamma distribution
+    #   # (vector of length nc)
+    #   sdg = formants_upsampled[[f]][, 'width']  # sd of gamma distribution
+    #   # (vector of length nc)
+    #   sdg[sdg == 0] = 1  # otherwise division by 0
+    #   shape = mg ^ 2 / sdg ^ 2
+    #   rate = mg / sdg ^ 2
+    #   formant = matrix(0, nrow = nr, ncol = nc)
+    #   for (c in 1:nc) {
+    #     formant[, c] = dgamma(1:nr, shape[c], rate[c])
+    #     formant[, c] = formant[, c] / max(formant[, c]) *
+    #       formants_upsampled[[f]][c, 'amp']
+    #   }
+    #   spectralEnvelope = spectralEnvelope + formant
+    # }
+    freqs_bins = 1:nr
+    poles = as.numeric(which(sapply(formants, function(x) x[, 'amp'][1] > 0)))
+    zeros = as.numeric(which(sapply(formants, function(x) x[, 'amp'][1] < 0)))
+    s = complex(real = 0, imaginary = 2 * pi * freqs_bins)
+    if (length(zeros) == 0) {  # all-pole
+      # Stevens 2000 p. 131
+      for (f in 1:length(formants_upsampled)) {
+        pf = 2 * pi * formants_upsampled[[f]][, 'freq']
+        bp = -formants_upsampled[[f]][, 'width'] * pi
+        s1 = complex(real = bp, imaginary = pf)
+        s1c = complex(real = bp, imaginary = -pf)
+        formant = matrix(0, nrow = nr, ncol = nc)
+        for (c in 1:nc) {
+          tns = s1[c] * s1c[c] / (s - s1[c]) / (s - s1c[c])
+          formant[, c] = log10(abs(tns)) * formants_upsampled[[f]][c, 'amp']
+          # plot(bin_freqs, formant[, c], type = 'l')
+        }
+        spectralEnvelope = spectralEnvelope + formant
       }
-      spectralEnvelope = spectralEnvelope + formant
+    } else {  # both zeros and poles
+      # Stevens 2000 p. 137
+      # first generate zero-pole pairs based on user-specified formants
+      n = length(formants)
+      freqs = sapply(formants_upsampled[1:n], function(x) x[, 'freq'])
+      widths = sapply(formants_upsampled[1:n], function(x) x[, 'width'])
+      for (c in 1:nc) {
+        pf = 2 * pi * freqs[c, ]
+        bp = -widths[c, ] * pi
+        s1 = complex(real = bp[poles], imaginary = pf[poles])
+        s1c = complex(real = bp[poles], imaginary = -pf[poles])
+        s0 = complex(real = bp[zeros], imaginary = pf[zeros])
+        s0c = complex(real = bp[zeros], imaginary = -pf[zeros])
+        numerator = prod(s1) * prod(s1c)
+        for (z in 1:length(zeros)) {
+          numerator = numerator * (s - s0[z]) * (s - s0c[z])
+        }
+        denominator = prod(s0) * prod(s0c)
+        for (p in 1:length(poles)) {
+          denominator = denominator * (s - s1[p]) * (s - s1c[p])
+        }
+        tns = numerator / denominator
+        formant = log10(abs(tns)) * formants_upsampled[[f]][c, 'amp']
+        # plot(bin_freqs, formant, type = 'l')
+        spectralEnvelope[, c] = spectralEnvelope[, c] + formant
+      }
+      # then add extra formants, if any, using all-pole model
+      if (n + 1 < length(formants_upsampled)) {
+        for (f in (n + 1):length(formants_upsampled)) {
+          pf = 2 * pi * formants_upsampled[[f]][, 'freq']
+          bp = -formants_upsampled[[f]][, 'width'] * pi
+          s1 = complex(real = bp, imaginary = pf)
+          s1c = complex(real = bp, imaginary = -pf)
+          formant = matrix(0, nrow = nr, ncol = nc)
+          for (c in 1:nc) {
+            tns = s1[c] * s1c[c] / (s - s1[c]) / (s - s1c[c])
+            formant[, c] = log10(abs(tns)) * formants_upsampled[[f]][c, 'amp']
+            # plot(bin_freqs, formant[, c], type = 'l')
+          }
+          spectralEnvelope = spectralEnvelope + formant
+        }
+      }
+
     }
     spectralEnvelope = spectralEnvelope * formantDep
     # plot(spectralEnvelope[, 1], type = 'l')
@@ -558,6 +638,13 @@ getSpectralEnvelope = function(nr,
     mouthOpen_binary = rep(1, nc)
     mouthOpening_upsampled = rep(0.5, nc)
   }
+
+  # add correction for not adding higher formants
+  # rolloffAdjust = 0 - 12 * log2(((nr*1):1)) [1:nr]
+  # rolloffAdjust = rolloffAdjust - min(rolloffAdjust)
+  # spectralEnvelope = apply(spectralEnvelope,
+  #                          2,
+  #                          function(x) x + rolloffAdjust)
   # END OF FORMANTS
 
   # add lip radiation when the mouth is open
@@ -568,8 +655,8 @@ getSpectralEnvelope = function(nr,
       2 ^ (mouthOpening_upsampled[c] * openMouthBoost / 10)
   }
 
-  # convert from dB to linear multiplier
-  spectralEnvelope = 2 ^ (spectralEnvelope / 10)
+  # convert from dB to linear multiplier of power spectrum
+  spectralEnvelope = 10 ^ (spectralEnvelope / 10)
 
   if (plot) {
     if (is.numeric(duration)) {
@@ -586,7 +673,7 @@ getSpectralEnvelope = function(nr,
       col = rev(colFun(nCols))
     }
     image(x = x,
-          y = seq(0, samplingRate /2, length.out = nr)/ 1000,
+          y = seq(0, samplingRate /2, length.out = nr) / 1000,
           z = t(spectralEnvelope),
           xlab = xlab,
           ylab = ylab,
@@ -594,5 +681,5 @@ getSpectralEnvelope = function(nr,
           ...)
   }
 
-  return (spectralEnvelope)
+  return(spectralEnvelope)
 }

@@ -652,3 +652,61 @@ getSigmoid = function(len,
   out = rep(c(b, rev(b)), length.out = len)
   return(out)
 }
+
+#' Get formant dispersion
+#'
+#' Internal soundgen function.
+#'
+#' Estimates formant dispersion based on one or more formant frequencies.
+#' @param formants a vector of formant frequencies, Hz
+#' @inheritParams getSpectralEnvelope
+#' @param method method of calculating formant dispersion: \code{fast} for
+#'   simple averaging of inter-formant difference, \code{accurate} for fitting a
+#'   linear regression to formant frequencies
+#' @examples
+#' nIter = 100  # nIter = 10000 for better results
+#' out = data.frame(vtl = runif(nIter, 5, 70),
+#'                  nFormants = round(runif(nIter, 1, 10)),
+#'                  noise = runif(nIter, 0, .2),
+#'                  vtl_est = rep(NA, nIter),
+#'                  error = rep(NA, nIter))
+#' for (i in 1:nIter) {
+#'   a = 1:out$nFormants[i]
+#'   formants = sort(speedSound * (2 * a - 1) / (4 * out$vtl[i]) * rnorm(n = length(a),
+#'                                                                  mean = 1,
+#'                                                                  sd = out$noise[i]))
+#'   disp = soundgen:::getFormantDispersion(formants, method = 'fast')
+#'   out$vtl_est[i] = speedSound / 2 / disp
+#'   out$error[i] = (out$vtl[i] -  out$vtl_est[i]) / out$vtl[i]
+#' }
+#' \dontrun{
+#' library(ggplot2)
+#' ggplot(out, aes(x = nFormants, y = error)) +
+#'   geom_point(alpha = .1) +
+#'   geom_smooth() +
+#'   theme_bw()
+#' ggplot(out, aes(x = noise, y = error)) +
+#'   geom_point(alpha = .1) +
+#'   geom_smooth() +
+#'   theme_bw()
+#' }
+getFormantDispersion = function(formants,
+                                speedSound = 35400,
+                                method = c('fast', 'accurate')[2]) {
+  if (!is.numeric(formants) | length(formants) < 1) return(NA)
+  if (method == 'fast') {
+    l = length(formants)
+    if (l > 1) {
+      formantDispersion = mean(diff(formants))
+    } else {
+      formantDispersion = 2 * formants
+    }
+  } else if (method == 'accurate') {
+    # Reby et al. (2005) "Red deer stags use formants..."
+    deltaF = (2 * (1:length(formants)) - 1) / 2
+    # plot(deltaF, formants)
+    mod = lm(formants ~ deltaF - 1)  # NB: no intercept, i.e. forced to pass through 0
+    formantDispersion = summary(mod)$coef[1]
+  }
+  return(formantDispersion)
+}
