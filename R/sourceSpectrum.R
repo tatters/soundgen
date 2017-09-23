@@ -70,10 +70,10 @@
 #'   plot = TRUE)
 #'
 #' # dynamic rolloff (varies over time)
-#' rolloff = getRolloff(pitch_per_gc = 150,
+#' rolloff = getRolloff(pitch_per_gc = c(150, 250),
 #'                      rolloff = c(-12, -18, -24), plot = TRUE)
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = 40,
-#'                     rolloffParabHarm = 1:15, plot = TRUE)
+#' rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
+#'                     rolloffParabHarm = 1:5, plot = TRUE)
 #' # only rolloff for the first glottal cycle is plotted, but the sound varies:
 #' s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
 #'               rolloff = c(-12, -24, -2),
@@ -97,7 +97,7 @@ getRolloff = function(pitch_per_gc = c(440),
   nGC = length(pitch_per_gc)
   update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
                   'rolloffParabHarm', 'rolloffParabCeiling', 'rolloffKHz')
-  max_length = max(sapply(update_pars, function(x)length(get(x))))
+  max_length = max(sapply(update_pars, function(x) length(get(x))))
   if (max_length > nGC) {
     pitch_per_gc = spline(pitch_per_gc, n = max_length)$y
     nGC = length(pitch_per_gc)
@@ -136,6 +136,9 @@ getRolloff = function(pitch_per_gc = c(440),
       rolloffParabHarm = round(rolloffParabCeiling / pitch_per_gc)  # vector of
       # length pitch_per_gc specifying the number of harmonics whose amplitude
       # is to be adjusted
+    } else if (length(rolloffParabHarm) < ncol(r)) {
+        rolloffParabHarm = rep(rolloffParabHarm, ncol(r))
+        # if the original length was >1, it was upsampled at the beginning of fun
     }
     rolloffParabHarm[rolloffParabHarm == 2] = 3 # will have the effect of boosting
     # H1 (2 * F0)
@@ -192,14 +195,14 @@ getRolloff = function(pitch_per_gc = c(440),
       freqs_max = rows_max * pitch_max / 1000
       rolloff_min = r[rows_min, idx_min]
       rolloff_max = r[rows_max, idx_max]
-      plot (freqs_min, rolloff_min, type = 'b', col = 'blue',
-            xlim = c(0, x_max), xlab = 'Frequency, Hz',
-            ylab = 'Amplitude, dB', main = 'Glottal source rolloff')
-      text (x = x_max, y = -10, labels = 'Lowest pitch',
-            col = 'blue', pos = 2)
-      points (freqs_max, rolloff_max, type = 'b', col = 'red')
-      text (x = x_max, y = 0, labels = 'Highest pitch',
-            col = 'red', pos = 2)
+      plot(freqs_min, rolloff_min, type = 'b', col = 'blue',
+           xlim = c(0, x_max), xlab = 'Frequency, Hz',
+           ylab = 'Amplitude, dB', main = 'Glottal source rolloff')
+      text(x = x_max, y = -10, labels = 'Lowest pitch',
+           col = 'blue', pos = 2)
+      points(freqs_max, rolloff_max, type = 'b', col = 'red')
+      text(x = x_max, y = 0, labels = 'Highest pitch',
+           col = 'red', pos = 2)
     }
   }
 
@@ -316,8 +319,15 @@ getSpectralEnvelope = function(nr,
   if (class(formants) == 'character') {
     formants = convertStringToFormants(formants)
   } else if (is.list(formants)) {
-    if (is.list(formants[[1]])) {
+    if (class(formants[[1]]) == 'list') {
       formants = lapply(formants, as.data.frame)
+    } else if (is.numeric(formants[[1]])) {
+      formants = lapply(formants, function(x) {
+        data.frame(time = seq(0, 1, length.out = length(x)),
+                   freq = x,
+                   amp = rep(20, length(x)),
+                   width = 50 * (1 + x ^ 2 / 6 / 10 ^ 6))
+      })
     }
   } else if (!is.null(formants) && !is.na(formants)) {
     stop('If defined, formants must be a list or a string of characters
@@ -495,7 +505,13 @@ getSpectralEnvelope = function(nr,
         (4 * vocalTract) # speedSound = 35400 cm/s, speed of sound in warm
       # air. The formula for mouth opening is adapted from Moore (2016)
       # "A Real-Time Parametric General-Purpose Mammalian Vocal Synthesiser".
-      # mouthOpening = .5 gives no modification (neutral, "default" position)
+      # mouthOpening = .5 gives no modification (neutral, "default" position).
+      # Basically we assume a closed-closed tube for closed mouth and a
+      # closed-open tube for open mouth, but since formants can be specified
+      # rather than calculated based on vocalTract, we just subtract half the
+      # total difference between open and closed tubes in Hz from each formant
+      # value as the mouth goes from half-open (neutral) to fully closed, or we
+      # add half that value as the mouth goes from neutral to max open
       adjustment_bins = (adjustment_hz - bin_width / 2) / bin_width + 1
     } else {
       adjustment_bins = 0
@@ -553,22 +569,6 @@ getSpectralEnvelope = function(nr,
     # Add formants to spectrogram
     # create a "spectrogram"-shaped filter matrix
     spectralEnvelope = matrix(0, nrow = nr, ncol = nc)
-    # for (f in 1:length(formants_upsampled)) {
-    #   mg = formants_upsampled[[f]][, 'freq']  # mean of gamma distribution
-    #   # (vector of length nc)
-    #   sdg = formants_upsampled[[f]][, 'width']  # sd of gamma distribution
-    #   # (vector of length nc)
-    #   sdg[sdg == 0] = 1  # otherwise division by 0
-    #   shape = mg ^ 2 / sdg ^ 2
-    #   rate = mg / sdg ^ 2
-    #   formant = matrix(0, nrow = nr, ncol = nc)
-    #   for (c in 1:nc) {
-    #     formant[, c] = dgamma(1:nr, shape[c], rate[c])
-    #     formant[, c] = formant[, c] / max(formant[, c]) *
-    #       formants_upsampled[[f]][c, 'amp']
-    #   }
-    #   spectralEnvelope = spectralEnvelope + formant
-    # }
     freqs_bins = 1:nr
     poles = as.numeric(which(sapply(formants, function(x) x[, 'amp'][1] > 0)))
     zeros = as.numeric(which(sapply(formants, function(x) x[, 'amp'][1] < 0)))
@@ -577,7 +577,7 @@ getSpectralEnvelope = function(nr,
       # Stevens 2000 p. 131
       for (f in 1:length(formants_upsampled)) {
         pf = 2 * pi * formants_upsampled[[f]][, 'freq']
-        bp = -formants_upsampled[[f]][, 'width'] * pi
+        bp = formants_upsampled[[f]][, 'width'] * pi
         s1 = complex(real = bp, imaginary = pf)
         s1c = complex(real = bp, imaginary = -pf)
         formant = matrix(0, nrow = nr, ncol = nc)
@@ -592,11 +592,11 @@ getSpectralEnvelope = function(nr,
       # Stevens 2000 p. 137
       # first generate zero-pole pairs based on user-specified formants
       n = length(formants)
-      freqs = sapply(formants_upsampled[1:n], function(x) x[, 'freq'])
-      widths = sapply(formants_upsampled[1:n], function(x) x[, 'width'])
+      freqs = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'freq']), ncol = n)
+      widths = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'width']), ncol = n)
       for (c in 1:nc) {
         pf = 2 * pi * freqs[c, ]
-        bp = -widths[c, ] * pi
+        bp = widths[c, ] * pi
         s1 = complex(real = bp[poles], imaginary = pf[poles])
         s1c = complex(real = bp[poles], imaginary = -pf[poles])
         s0 = complex(real = bp[zeros], imaginary = pf[zeros])
@@ -618,7 +618,7 @@ getSpectralEnvelope = function(nr,
       if (n + 1 < length(formants_upsampled)) {
         for (f in (n + 1):length(formants_upsampled)) {
           pf = 2 * pi * formants_upsampled[[f]][, 'freq']
-          bp = -formants_upsampled[[f]][, 'width'] * pi
+          bp = formants_upsampled[[f]][, 'width'] * pi
           s1 = complex(real = bp, imaginary = pf)
           s1c = complex(real = bp, imaginary = -pf)
           formant = matrix(0, nrow = nr, ncol = nc)
@@ -633,11 +633,12 @@ getSpectralEnvelope = function(nr,
 
     }
     spectralEnvelope = spectralEnvelope * formantDep
-    # plot(spectralEnvelope[, 1], type = 'l')
   } else {
     mouthOpen_binary = rep(1, nc)
     mouthOpening_upsampled = rep(0.5, nc)
   }
+  # plot(spectralEnvelope[, 1], type = 'l')
+  # image(t(spectralEnvelope))
 
   # add correction for not adding higher formants
   # rolloffAdjust = 0 - 12 * log2(((nr*1):1)) [1:nr]

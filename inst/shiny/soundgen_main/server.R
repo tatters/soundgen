@@ -822,8 +822,7 @@ server = function(input, output, session) {
     # seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
     #   wl = floor(input$specWindowLength*input$samplingRate/1000/2)*2,
     #   flim = c(0,10), main = 'Spectrum')
-    getRolloff(pitch_per_gc = getSmoothContour(
-      myPars$pitchAnchors),
+    getRolloff(pitch_per_gc = range(myPars$pitchAnchors$value),
       rolloff = input$rolloff,
       rolloffOct = input$rolloffOct,
       rolloffParab = input$rolloffParab,

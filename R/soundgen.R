@@ -1,3 +1,5 @@
+# TODO: spectrum plot - adjust frequency range as with spectrogram;
+
 #' @import stats graphics utils grDevices
 NULL
 
@@ -221,14 +223,9 @@ soundgen = function(repeatBout = 1,
                     rolloffParab = 0,
                     rolloffParabHarm = 3,
                     rolloffLip = 6,
-                    formants = list(f1 = list(time = 0, freq = 860,
-                                              amp = 30, width = 120),
-                                    f2 = list(time = 0, freq = 1280,
-                                              amp = 40, width = 120),
-                                    f3 = list(time = 0, freq = 2900,
-                                              amp = 25, width = 200)),
+                    formants = list(f1 = 860, f2 = 1280, f3 = 2900),
                     formantDep = 1,
-                    formantDepStoch = 30,
+                    formantDepStoch = 20,
                     vocalTract = 15.5,
                     subFreq = 100,
                     subDep = 100,
@@ -343,6 +340,28 @@ soundgen = function(repeatBout = 1,
   # Illustration: jitterDep = 1.5; nonlinDep = 0:100;
   # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))),
   #   type = 'l')
+
+  # soundgen() normally expects a list of formant values,
+  # but a string is also ok for demonstration purposes
+  # (dictionary for caller 1 is used to interpret)
+  if (class(formants) == 'character') {
+    formants = convertStringToFormants(formants)
+  } else if (is.list(formants)) {
+    if (class(formants[[1]]) == 'list') {
+      formants = lapply(formants, as.data.frame)
+    } else if (is.numeric(formants[[1]])) {
+      formants = lapply(formants, function(x) {
+        data.frame(time = seq(0, 1, length.out = length(x)),
+                   freq = x,
+                   amp = rep(20, length(x)),
+                   width = 50 * (1 + x ^ 2 / 6 / 10 ^ 6))
+      })
+    }
+  } else if (!is.null(formants) && !is.na(formants)) {
+    stop('If defined, formants must be a list or a string of characters
+          from dictionary presets: a, o, i, e, u, 0 (schwa)')
+  }
+
   if (maleFemale != 0) {
     # adjust pitch and formants along the male-female dimension
     # pitch varies by 1 octave up or down
@@ -353,21 +372,13 @@ soundgen = function(repeatBout = 1,
       for (f in 1:length(formants)) {
         # formants vary by 25% up or down:
         #   see http://www.santiagobarreda.com/vignettes/v1/v1.html)
-        formants[[f]]$freq = formants[[f]]$freq * 1.25 ^ maleFemale
+        if (!is.null(formants[[f]]$freq)) {
+          formants[[f]]$freq = formants[[f]]$freq * 1.25 ^ maleFemale
+        }
       }
     }
     # vocalTract varies by ±25% from the average
     vocalTract = vocalTract * (1 - .25 * maleFemale)
-  }
-
-  # soundgen() normally expects a list of formant values,
-  # but a string is also ok for demonstration purposes
-  # (dictionary for caller 1 is used to interpret)
-  if (class(formants) == 'character') {
-    formants = convertStringToFormants(formants)
-  }
-  if (class(formants[[1]]) == 'list') {
-    formants = lapply(formants, as.data.frame)
   }
 
   # stochastic rounding of the number of syllables and repeatBouts
