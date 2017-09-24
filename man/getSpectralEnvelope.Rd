@@ -6,11 +6,11 @@
 \usage{
 getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1, rolloffLip = 6,
   mouthAnchors = NA, mouthOpenThres = 0, openMouthBoost = 0,
-  vocalTract = NULL, temperature = 0, formDrift = 0.3, formDisp = 0.2,
-  formantDepStoch = 30, smoothLinearFactor = 1, samplingRate = 16000,
-  speedSound = 35400, plot = FALSE, duration = NULL,
-  colorTheme = c("bw", "seewave", "...")[1], nCols = 100, xlab = "Time",
-  ylab = "Frequency, kHz", ...)
+  vocalTract = NULL, temperature = 0.05, formDrift = 0.3,
+  formDisp = 0.2, formantDepStoch = 20, smoothLinearFactor = 1,
+  samplingRate = 16000, speedSound = 35400, plot = FALSE,
+  duration = NULL, colorTheme = c("bw", "seewave", "...")[1], nCols = 100,
+  xlab = "Time", ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where
@@ -100,29 +100,33 @@ FFT.
 }
 \examples{
 # [a] with F1-F3 visible
-image(t(getSpectralEnvelope(nr = 512, nc = 50,
+e = getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
-  temperature = 0)))
-# some "wiggling" of specified formants plus extra formants on top
-image(t(getSpectralEnvelope(nr = 512, nc = 50,
-  formants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, formantDepStoch = 10)))
-# stronger extra formants
-image(t(getSpectralEnvelope(nr = 512, nc = 50,
-  formants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, formantDepStoch = 30)))
-# a schwa based on the length of vocal tract = 15.5 cm
-image(t(getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
-  temperature = .1, vocalTract = 15.5)))
+  temperature = 0, plot = TRUE)
+# image(t(e))  # to plot the output on a linear scale instead of dB
 
-# no formants at all
-image(t(getSpectralEnvelope(nr = 512, nc = 50,
-  formants = NA, temperature = 0)))
+# some "wiggling" of specified formants plus extra formants on top
+e = getSpectralEnvelope(nr = 512, nc = 50,
+  formants = soundgen:::convertStringToFormants('a'),
+  temperature = 0.1, formantDepStoch = 20, plot = TRUE)
+# stronger extra formants
+e = getSpectralEnvelope(nr = 512, nc = 50,
+  formants = soundgen:::convertStringToFormants('a'),
+  temperature = 0.1, formantDepStoch = 30, plot = TRUE)
+# a schwa based on the length of vocal tract = 15.5 cm
+e = getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
+  temperature = .1, vocalTract = 15.5, plot = TRUE)
+
+# no formants at all, only lip radiation
+e = getSpectralEnvelope(nr = 512, nc = 50,
+  formants = NA, temperature = 0, plot = TRUE)
 
 # manual specification of formants
-image(t(getSpectralEnvelope(nr = 512, nc = 50,
-samplingRate = 16000, formants = list(
-  'f1' = data.frame('time' = 0, 'freq' = 900, 'amp' = 30, 'width' = 120),
-  'f2' = data.frame('time' = 0, 'freq' = 1300, 'amp' = 30, 'width' = 120),
-  'f3' = data.frame('time' = 0, 'freq' = 3200, 'amp' = 20, 'width' = 200)))))
+e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,
+  formants = list(f1 = data.frame(time = c(0, 1), freq = c(900, 500),
+                                  amp = 20, width = c(80, 50)),
+                  f2 = data.frame(time = c(0, 1), freq = c(1200, 2500),
+                                  amp = 20, width = 100),
+                  f3 = data.frame(time = 0, freq = 2900,
+                                  amp = 20, width = 120)))
 }

@@ -5,9 +5,9 @@
 \title{Generate noise}
 \usage{
 generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value = c(-120,
-  -120)), rolloffNoise = -6, attackLen = 10, windowLength_points = 1024,
-  samplingRate = 16000, overlap = 75, throwaway = -120,
-  filterNoise = NA)
+  -120)), rolloffNoise = -4, attackLen = 10, flatSpectrum = 1200,
+  windowLength_points = 1024, samplingRate = 16000, overlap = 75,
+  throwaway = -120, filterNoise = NA)
 }
 \arguments{
 \item{len}{length of output}
@@ -69,9 +69,9 @@ filterNoise = soundgen:::getSpectralEnvelope(
   nr = windowLength_points / 2, nc = 1, samplingRate = samplingRate,
  formants = list('f1' = data.frame(time = 0, freq = 7000,
                                    amp = 50, width = 2000)))
-noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
+noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -4,
   samplingRate = samplingRate, filterNoise = filterNoise)
-# plot (filterNoise, type = 'l')
+# plot(filterNoise, type = 'l')
 # playme(noise, samplingRate = samplingRate)
 
 # low-frequency, wind-like noise

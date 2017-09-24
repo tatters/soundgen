@@ -109,10 +109,10 @@ rolloff = getRolloff(pitch_per_gc = c(150, 600),
   plot = TRUE)
 
 # dynamic rolloff (varies over time)
-rolloff = getRolloff(pitch_per_gc = 150,
+rolloff = getRolloff(pitch_per_gc = c(150, 250),
                      rolloff = c(-12, -18, -24), plot = TRUE)
-rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = 40,
-                    rolloffParabHarm = 1:15, plot = TRUE)
+rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
+                    rolloffParabHarm = 1:5, plot = TRUE)
 # only rolloff for the first glottal cycle is plotted, but the sound varies:
 s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
               rolloff = c(-12, -24, -2),

@@ -710,3 +710,24 @@ getFormantDispersion = function(formants,
   }
   return(formantDispersion)
 }
+
+
+#' Get bandwidth
+#'
+#' Internal soundgen function.
+#'
+#' Calculates formant bandwidth as a function of formant frequencies using a modified version of TMF-63 formula. Namely, above 500 Hz it follows the original formula Tappert, Martony, and Fant (TMF)-1963, and below 500 Hz it applies a correction to allow for energy losses at low frequencies. See Khodai & Joopari (2002), "Comparison of formulae for estimating formant bandwidth".
+#' @param f a vector of formant frequencies, Hz
+#' @examples
+#' f = 1:5000
+#' plot(f, getBandwidth(f), type = 'l',
+#'   xlab = 'Formant frequency, Hz', ylab = 'Estimated bandwidth, Hz')
+getBandwidth = function(f) {
+  b = rep(NA, length(f))
+  f1 = which(f < 500)
+  f2 = which(f >= 500)
+  b[f1] =  52.08333 * (1 + (f[f1]-500) ^ 2/ 10 ^ 5)
+  b[f2] = 50 * (1 + f[f2] ^ 2 / 6 / 10 ^ 6)
+  # plot(f, b, type = 'l')
+  return(b)
+}

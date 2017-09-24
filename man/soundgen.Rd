@@ -14,16 +14,15 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   jitterDep = 3, vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0,
   attackLen = 50, rolloff = -12, rolloffOct = -12, rolloffKHz = -6,
   rolloffParab = 0, rolloffParabHarm = 3, rolloffLip = 6,
-  formants = list(f1 = list(time = 0, freq = 860, amp = 30, width = 120), f2 =
-  list(time = 0, freq = 1280, amp = 40, width = 120), f3 = list(time = 0, freq =
-  2900, amp = 25, width = 200)), formantDep = 1, formantDepStoch = 30,
-  vocalTract = 15.5, subFreq = 100, subDep = 100, shortestEpoch = 300,
-  amDep = 0, amFreq = 30, amShape = 0, noiseAnchors = data.frame(time =
-  c(0, 300), value = c(-120, -120)), formantsNoise = NA, rolloffNoise = -14,
-  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  amplAnchors = NA, amplAnchorsGlobal = NA, samplingRate = 16000,
-  windowLength = 50, overlap = 75, addSilence = 100, pitchFloor = 50,
-  pitchCeiling = 3500, pitchSamplingRate = 3500, throwaway = -120,
+  formants = list(f1 = 860, f2 = 1280, f3 = 2900), formantDep = 1,
+  formantDepStoch = 20, vocalTract = 15.5, subFreq = 100, subDep = 100,
+  shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
+  noiseAnchors = data.frame(time = c(0, 300), value = c(-120, -120)),
+  formantsNoise = NA, rolloffNoise = -14, mouthAnchors = data.frame(time =
+  c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
+  samplingRate = 16000, windowLength = 50, overlap = 75,
+  addSilence = 100, pitchFloor = 50, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, throwaway = -120,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
 }
