@@ -608,20 +608,27 @@ getSpectralEnvelope = function(nr,
       s1c = Conj(s1)
       s0 = complex(real = bp[zeros], imaginary = pf[zeros])
       s0c = Conj(s0)
-      numerator = prod(s1 ^ amps_norm[c, poles]) * prod(s1c ^ amps_norm[c, poles])
+      # numerator = prod(s1 ^ amps_norm[c, poles]) * prod(s1c ^ amps_norm[c, poles])  # can exceed 10^150
+      log_numerator = sum(amps_norm[c, poles] * log10(s1)) + sum(amps_norm[c, poles] * log10(s1c))
       if (length(zeros) > 0) {
         for (z in 1:length(zeros)) {
-          numerator = numerator * ((s - s0[z]) * (s - s0c[z])) ^ amps_norm[c, zeros[z]]
+          # numerator = numerator * ((s - s0[z]) * (s - s0c[z])) ^ amps_norm[c, zeros[z]]
+          log_numerator = log_numerator + amps_norm[c, zeros[z]] * log10((s - s0[z]) * (s - s0c[z]))
         }
-        denominator = prod(s0 ^ amps_norm[c, zeros]) * prod(s0c ^ amps_norm[c, zeros])
+        # denominator = prod(s0 ^ amps_norm[c, zeros]) * prod(s0c ^ amps_norm[c, zeros])
+        log_denominator = sum(amps_norm[c, zeros] * log10(s0)) + sum(amps_norm[c, zeros] * log10(s0c))
       } else {
-        denominator = 1
+        # denominator = 1
+        log_denominator = 0
       }
       for (p in 1:length(poles)) {
-        denominator = denominator * ((s - s1[p]) * (s - s1c[p])) ^ amps_norm[c, poles[p]]
+        # denominator = denominator * ((s - s1[p]) * (s - s1c[p])) ^ amps_norm[c, poles[p]]
+        log_denominator = log_denominator + amps_norm[c, poles[p]] * log10((s - s1[p]) * (s - s1c[p]))
       }
-      tns = numerator / denominator
-      formants_per_bin = 10 * log10(abs(tns))
+      # tns = numerator / denominator
+      log_tns = log_numerator - log_denominator
+      # formants_per_bin = 10 * log10(abs(tns))
+      formants_per_bin = 10 * Re(log_tns)
       # plot(bin_freqs, formants_per_bin, type = 'l')
       spectralEnvelope[, c] = spectralEnvelope[, c] + formants_per_bin
     }
