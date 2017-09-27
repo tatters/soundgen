@@ -36,7 +36,7 @@ permittedValues = matrix(c(
   'vibratoDep', 0, 0, 3, 0.125,
   'shimmerDep', 0, 0, 100, 1,
   'attackLen', 50, 0, 200, 10,
-  'rolloff', -6, -60, 0, 1,
+  'rolloff', -12, -60, 0, 1,
   'rolloffOct', -6, -30, 10, 1,
   'rolloffParab', 0, -50, 50, 5,
   'rolloffParabHarm', 3, 1, 20, 1,
@@ -97,7 +97,7 @@ defaults = list(
   vibratoDep = 0,
   shimmerDep = 0,
   attackLen = 50,
-  rolloff = -6,
+  rolloff = -12,
   rolloffOct = -6,
   rolloffParab = 0,
   rolloffParabHarm = 3,
@@ -131,9 +131,9 @@ defaults = list(
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   amplAnchors = list(time = c(0, 1), value = c(120, 120)),
   amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 120)),
-  formants = list(f1 = data.frame(time = 0, freq = 860, amp = 20, width = 56),
-                  f2 = data.frame(time = 0, freq = 1430, amp = 20, width = 64),
-                  f3 = data.frame(time = 0, freq = 2900, amp = 20, width = 120)),
+  formants = list(f1 = data.frame(time = 0, freq = 860, amp = 25, width = 56),
+                  f2 = data.frame(time = 0, freq = 1430, amp = 25, width = 64),
+                  f3 = data.frame(time = 0, freq = 2900, amp = 25, width = 120)),
   formantsNoise = NA,
   vowelString = NA,
   samplingRate = 16000,
@@ -164,7 +164,7 @@ presets = list(
 
     Laugh = 'soundgen(nSyl = 4, sylLen = 120, pauseLen = 120, pitchAnchors = list(time = c(0, 1), value = c(180, 166)), pitchAnchorsGlobal = list(time = c(0, 0.3, 1), value = c(1, 2, 0)), temperature = 0.1, nonlinBalance = 50, jitterDep = 0.8, attackLen = 10, formants = list(f1 = list(time = c(0, 0.5, 1), freq = c(860, 530, 530), amp = c(30, 30, 30), width = c(120, 50, 50)), f1.4 = list(time = c(0, 0.5, 1), freq = c(1100, 1100, 1100), amp = c(0, -20, -20), width = c(100, 100, 100)), f1.6 = list(time = c(0, 0.5, 1), freq = c(1400, 1400, 1400), amp = c(0, 20, 20), width = c(100, 100, 100)), f2 = list(time = c(0, 0.5, 1), freq = c(1280, 2400, 2400), amp = c(40, 40, 40), width = c(120, 300, 300)), f3 = list(time = c(0, 0.5, 1), freq = c(2900, 4000, 4000), amp = c(25, 30, 30), width = c(200, 300, 300))), subDep = 0, shortestEpoch = 50, noiseAnchors = list(time = c(39, 56, 167), value = c(-120, -44, -120)), formantsNoise = list(f1 = list(time = c(0, 1), freq = c(860, 530), amp = c(30, 30), width = c(120, 50)), f1.4 = list(time = c(0, 1), freq = c(1100, 1100), amp = c(0, -20), width = c(100, 100)), f1.6 = list(time = c(0, 1), freq = c(1400, 1400), amp = c(0, 20), width = c(100, 100)), f2 = list(time = c(0, 1), freq = c(1280, 2400), amp = c(40, 40), width = c(120, 300)), f3 = list(time = c(0, 1), freq = c(2900, 4000), amp = c(25, 30), width = c(200, 300)), f4 = list(time = c(0, 1), freq = c(3800, 3800), amp = c(20, 0), width = c(100, 100))), rolloffNoise = -5, amplAnchors = list(time = c(0, 0.32, 1), value = c(120, 67, 120)), amplAnchorsGlobal = list(time = c(0, 0.55, 1), value = c(120, 110, 56)))',
 
-    Snore = 'soundgen(sylLen = 960, pitchAnchors = list(time = c(0, 0.15, 0.87, 1), value = c(175, 199, 188, 140)), temperature = 0.05, nonlinBalance = 67, jitterDep = 0.75, formants = list(f1 = list(time = 0, freq = 560, amp = 30, width = 120), f2 = list(time = 0, freq = 1000, amp = 40, width = 120), f3 = list(time = 0, freq = 1450, amp = 25, width = 200), f4 = list(time = 0, freq = 3800, amp = 20, width = 100)), subDep = 80, shortestEpoch = 200, noiseAnchors = list(time = c(0, 960), value = c(-40, -40)), formantsNoise = list(f1 = list(time = 0, freq = 560, amp = 30, width = 120), f2 = list(time = 0, freq = 1000, amp = 40, width = 120), f3 = list(time = 0, freq = 1450, amp = 25, width = 200), f4 = list(time = 0, freq = 3800, amp = 20, width = 100)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 43)))',
+    Snore = 'soundgen(sylLen = 960, pitchAnchors = list(time = c(0, 0.15, 0.87, 1), value = c(175, 199, 188, 140)), temperature = 0.05, nonlinBalance = 67, jitterDep = 0.75, formants = list(f1 = list(time = 0, freq = 560, amp = 30, width = 120), f2 = list(time = 0, freq = 1000, amp = 40, width = 120), f3 = list(time = 0, freq = 1450, amp = 25, width = 200), f4 = list(time = 0, freq = 3800, amp = 25, width = 100)), subDep = 80, shortestEpoch = 200, noiseAnchors = list(time = c(0, 960), value = c(-40, -40)), formantsNoise = list(f1 = list(time = 0, freq = 560, amp = 30, width = 120), f2 = list(time = 0, freq = 1000, amp = 40, width = 120), f3 = list(time = 0, freq = 1450, amp = 25, width = 200), f4 = list(time = 0, freq = 3800, amp = 25, width = 100)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 43)))',
 
     # 'Formants' is a reserved name. The list of presets for every caller should end with
     # a list of 'Formants' presets for each vowel and consonant, otherwise you won't be
@@ -172,47 +172,46 @@ presets = list(
     Formants = list(
       vowels = list(
         'a' = list(
-          f1=list(time=0, freq=860, amp=20, width=120), # amplitude in dB, freq and width in Hz
-          f2=list(time=0, freq=1430, amp=20, width=120),
-          f3=list(time=0, freq=2900, amp=20, width=200) # any number of formants may be specified
+          f1=list(time=0, freq=860, amp=25, width=56), # amplitude in dB, freq and width in Hz
+          f2=list(time=0, freq=1430, amp=25, width=67),
+          f3=list(time=0, freq=2900, amp=25, width=120) # any number of formants may be specified
         ),
         'o' = list(
-          f1=list(time=0, freq=630, amp=20, width=100),
-          f2=list(time=0, freq=900, amp=20, width=100),
-          f3=list(time=0, freq=3000, amp=20, width=200),
-          f4=list(time=0, freq=3960, amp=20, width=200)
+          f1=list(time=0, freq=630, amp=25, width=53),
+          f2=list(time=0, freq=900, amp=25, width=57),
+          f3=list(time=0, freq=3000, amp=25, width=125),
+          f4=list(time=0, freq=3960, amp=25, width=180)
         ),
         'i' = list(
-          f1=list(time=0, freq=300, amp=20, width=80),
-          f2=list(time=0, freq=2700, amp=20, width=100),
-          f3=list(time=0, freq=3400, amp=20, width=350),
-          f4=list(time=0, freq=4200, amp=20, width=350)
+          f1=list(time=0, freq=300, amp=25, width=73),
+          f2=list(time=0, freq=2700, amp=25, width=110),
+          f3=list(time=0, freq=3400, amp=25, width=150)
         ),
         'e' = list(
-          f1=list(time=0, freq=530, amp=20, width=50),
-          'f1.4'=list(time=0, freq=1100, amp=-20, width=100), # insert a zero-pole pair between F1 and F2
-          'f1.6'=list(time=0, freq=1400, amp=20, width=100),  # insert a zero-pole pair between F1 and F2
-          f2=list(time=0, freq=2400, amp=20, width=300),
-          f3=list(time=0, freq=4000, amp=20, width=300)
+          f1=list(time=0, freq=530, amp=25, width=150),
+          'f1.4'=list(time=0, freq=1100, amp=-20, width=200), # insert a zero-pole pair between F1 and F2
+          'f1.6'=list(time=0, freq=1400, amp=25, width=200),  # insert a zero-pole pair between F1 and F2
+          f2=list(time=0, freq=2400, amp=25, width=100),
+          f3=list(time=0, freq=4000, amp=25, width=180)
         ),
         'u' = list(
-          f1=list(time=0, freq=375, amp=20, width=80),
-          f2=list(time=0, freq=550, amp=20, width=120),
-          f3=list(time=0, freq=2100, amp=20, width=300),
-          f4=list(time=0, freq=4200, amp=20, width=250)
+          f1=list(time=0, freq=300, amp=25, width=60),
+          f2=list(time=0, freq=610, amp=25, width=50),
+          f3=list(time=0, freq=2100, amp=25, width=90),
+          f4=list(time=0, freq=4200, amp=25, width=200)
         ),
         '0' = list(  # schwa
-          f1=list(time=0, freq=640, amp=20, width=100),
-          f2=list(time=0, freq=1670, amp=20, width=100),
-          f3=list(time=0, freq=2700, amp=20, width=100),
-          f4=list(time=0, freq=3880, amp=20, width=100)
+          f1=list(time=0, freq=640, amp=25, width=53),
+          f2=list(time=0, freq=1670, amp=25, width=73),
+          f3=list(time=0, freq=2700, amp=25, width=110),
+          f4=list(time=0, freq=3880, amp=25, width=175)
         )
       ),
       consonants = list(
         'h' = list(
           label = 'h',
           rolloffNoise = -13,
-          f1=list(time=0, freq=420, amp=20, width=150),
+          f1=list(time=0, freq=420, amp=25, width=150),
           f2=list(time=0, freq=1200, amp=50, width=250),
           f3=list(time=0, freq=5000, amp=10, width=200),
           f4=list(time=0, freq=8500, amp=10, width=300)
@@ -220,7 +219,7 @@ presets = list(
         's' = list(
           label = 's',
           rolloffNoise = 0,
-          f1=list(time=0, freq=5500, amp=20, width=200),
+          f1=list(time=0, freq=5500, amp=25, width=200),
           f2=list(time=0, freq=7000, amp=30, width=1000),
           f3=list(time=0, freq=9000, amp=30, width=1000)
         ),
@@ -237,7 +236,7 @@ presets = list(
           rolloffNoise = -10,
           f1=list(time=0, freq=1400, amp=30, width=200),
           f2=list(time=0, freq=2000, amp=10, width=80),
-          f3=list(time=0, freq=2900, amp=20, width=1000)
+          f3=list(time=0, freq=2900, amp=25, width=1000)
         ),
         'n' = list(
           label = 'snuffle',  # sNuffle (breathing through the nose)
@@ -249,11 +248,11 @@ presets = list(
   ),
 
   F1 = list(
-    Vowel2 = 'soundgen(sylLen = 500, pitchAnchors = list(time = c(0, 0.6, 1), value = c(340, 370, 340)), formants = list(f1 = list(time = 0, freq = 900, amp = 30, width = 80), f2 = list(time = 0, freq = 1300, amp = 30, width = 160), f3 = list(time = 0, freq = 3300, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 20, width = 370)))',
+    Vowel2 = 'soundgen(sylLen = 500, pitchAnchors = list(time = c(0, 0.6, 1), value = c(340, 370, 340)), formants = list(f1 = list(time = 0, freq = 900, amp = 30, width = 80), f2 = list(time = 0, freq = 1300, amp = 30, width = 160), f3 = list(time = 0, freq = 3300, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 25, width = 370)))',
 
-    Scream = 'soundgen(sylLen = 1110, pitchAnchors = list(time = c(0, 0.1, 0.85, 1), value = c(900, 1832, 1618, 1200)), temperature = 0.1, nonlinBalance = 70, jitterDep = 1, shimmerDep = 10, formants = list(f1 = list(time = 0, freq = 900, amp = 30, width = 80), f2 = list(time = 0, freq = 1300, amp = 30, width = 160), f3 = list(time = 0, freq = 3300, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 20, width = 370)), subFreq = 400, noiseAnchors = list(time = c(0, 1110), value = c(-120, -120)))',
+    Scream = 'soundgen(sylLen = 1110, pitchAnchors = list(time = c(0, 0.1, 0.85, 1), value = c(900, 1832, 1618, 1200)), temperature = 0.1, nonlinBalance = 70, jitterDep = 1, shimmerDep = 10, formants = list(f1 = list(time = 0, freq = 900, amp = 30, width = 80), f2 = list(time = 0, freq = 1300, amp = 30, width = 160), f3 = list(time = 0, freq = 3300, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 25, width = 370)), subFreq = 400, noiseAnchors = list(time = c(0, 1110), value = c(-120, -120)))',
 
-    Growl = 'soundgen(sylLen = 1100, pitchAnchors = list(time = c(0, 0.1, 0.3, 1), value = c(238, 251, 449, 205)), temperature = 0.1, rolloff = -15, rolloffOct = -6, rolloffParab = -20, rolloffParabHarm = 20, formants = list(f1 = list(time = 0, freq = 800, amp = 20, width = 120), f2 = list(time = 0, freq = 2150, amp = 30, width = 300), f3 = list(time = 0, freq = 4250, amp = 30, width = 300), f4 = list(time = 0, freq = 6600, amp = 30, width = 300)), amDep = 40, amFreq = 35, amShape = -0.4, noiseAnchors = list(time = c(0, 1100), value = c(-120, -120)), formantsNoise = list(f1 = list(time = 0, freq = 800, amp = 20, width = 120), f2 = list(time = 0, freq = 2150, amp = 30, width = 300), f3 = list(time = 0, freq = 4250, amp = 30, width = 300), f4 = list(time = 0, freq = 6600, amp = 30, width = 300)), mouthAnchors = list(time = c(0, 0.13, 0.76, 1), value = c(0.4, 0.59, 0.61, 0.45)), amplAnchorsGlobal = list(time = c(0, 0.13, 1), value = c(101, 120, 26)))',
+    Growl = 'soundgen(sylLen = 1100, pitchAnchors = list(time = c(0, 0.1, 0.3, 1), value = c(238, 251, 449, 205)), temperature = 0.1, rolloff = -15, rolloffOct = -6, rolloffParab = -20, rolloffParabHarm = 20, formants = list(f1 = list(time = 0, freq = 800, amp = 25, width = 120), f2 = list(time = 0, freq = 2150, amp = 30, width = 300), f3 = list(time = 0, freq = 4250, amp = 30, width = 300), f4 = list(time = 0, freq = 6600, amp = 30, width = 300)), amDep = 40, amFreq = 35, amShape = -0.4, noiseAnchors = list(time = c(0, 1100), value = c(-120, -120)), formantsNoise = list(f1 = list(time = 0, freq = 800, amp = 25, width = 120), f2 = list(time = 0, freq = 2150, amp = 30, width = 300), f3 = list(time = 0, freq = 4250, amp = 30, width = 300), f4 = list(time = 0, freq = 6600, amp = 30, width = 300)), mouthAnchors = list(time = c(0, 0.13, 0.76, 1), value = c(0.4, 0.59, 0.61, 0.45)), amplAnchorsGlobal = list(time = c(0, 0.13, 1), value = c(101, 120, 26)))',
 
     Moan = 'soundgen(sylLen = 360, pitchAnchors = list(time = c(0, 1), value = c(380, 260)), attackLen = 100, rolloff = -20, rolloffOct = -6, formants = list(f1 = list(time = c(0, 0.5, 1), freq = c(900, 900, 790), amp = c(30, 30, 30), width = c(80, 80, 100)), f2 = list(time = c(0, 0.5, 1), freq = c(1300, 1300, 1600), amp = c(30, 30, 30), width = c(160, 160, 100)), f3 = list(time = c(0, 0.5, 1), freq = c(3300, 3300, 3100), amp = c(25, 25, 30), width = c(130, 130, 100)), f4 = list(time = c(0, 0.5, 1), freq = c(4340, 4340, 3900), amp = c(20, 20, 30), width = c(370, 370, 100))), noiseAnchors = list(time = c(0, 417, 508), value = c(-63, -29, -120)), formantsNoise = list(f1 = list(time = c(0, 0.5, 1), freq = c(900, 900, 790), amp = c(30, 30, 30), width = c(80, 80, 100)), f2 = list(time = c(0, 0.5, 1), freq = c(1300, 1300, 1600), amp = c(30, 30, 30), width = c(160, 160, 100)), f3 = list(time = c(0, 0.5, 1), freq = c(3300, 3300, 3100), amp = c(25, 25, 30), width = c(130, 4340, 3900), amp = c(20, 20, 30), width = c(370, 370, 100))), mouthAnchors = list(time = c(0, 0.14, 1), value = c(0.24, 0.41, 0.19)), amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 18)))',
 
@@ -264,48 +263,48 @@ presets = list(
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       vowels = list(
         'a' = list(
-          f1=list(time=0, freq=900, amp=30, width=80), # amplitude in dB, freq and width in Hz
-          f2=list(time=0, freq=1300, amp=30, width=160),
-          f3=list(time=0, freq=3300, amp=25, width=130),
-          f4=list(time=0, freq=4340, amp=20, width=370) # any number of formants may be specified
+          f1=list(time=0, freq=900, amp=25, width=56), # amplitude in dB, freq and width in Hz
+          f2=list(time=0, freq=1300, amp=25, width=64),
+          f3=list(time=0, freq=3300, amp=25, width=140),
+          f4=list(time=0, freq=4340, amp=25, width=210)
         ),
         'o' = list(
-          f1=list(time=0, freq=800, amp=30, width=80),
-          f2=list(time=0, freq=1100, amp=30, width=80),
-          f3=list(time=0, freq=3560, amp=40, width=200),
-          f4=list(time=0, freq=5830, amp=50, width=200)
+          f1=list(time=0, freq=800, amp=25, width=55),
+          f2=list(time=0, freq=1100, amp=25, width=60),
+          f3=list(time=0, freq=3560, amp=25, width=155),
+          f4=list(time=0, freq=5830, amp=25, width=330)
         ),
         'i' = list(
-          f1=list(time=0, freq=330, amp=30, width=120),
-          f2=list(time=0, freq=2700, amp=40, width=120),
-          f3=list(time=0, freq=3580, amp=30, width=200),
-          f4=list(time=0, freq=4710, amp=30, width=200),
-          'f5'=list(time=0, freq=5800, amp=30, width=200)
+          f1=list(time=0, freq=330, amp=25, width=67),
+          f2=list(time=0, freq=2700, amp=25, width=110),
+          f3=list(time=0, freq=3580, amp=25, width=160),
+          f4=list(time=0, freq=4710, amp=25, width=230),
+          f5=list(time=0, freq=5800, amp=25, width=330)
         ),
         'e' = list(
-          f1=list(time=0, freq=930, amp=30, width=100),
-          f2=list(time=0, freq=2470, amp=30, width=100),
-          f3=list(time=0, freq=3300, amp=25, width=120),
-          f4=list(time=0, freq=4200, amp=30, width=200)
+          f1=list(time=0, freq=930, amp=25, width=57),
+          f2=list(time=0, freq=2470, amp=25, width=100),
+          f3=list(time=0, freq=3300, amp=25, width=140),
+          f4=list(time=0, freq=4200, amp=25, width=200)
         ),
         'u' = list(
-          f1=list(time=0, freq=450, amp=30, width=80),
-          f2=list(time=0, freq=850, amp=40, width=120),
-          f3=list(time=0, freq=2900, amp=30, width=200),
-          f4=list(time=0, freq=4100, amp=30, width=275)
+          f1=list(time=0, freq=450, amp=25, width=53),
+          f2=list(time=0, freq=850, amp=25, width=56),
+          f3=list(time=0, freq=2900, amp=25, width=120),
+          f4=list(time=0, freq=4100, amp=25, width=190)
         ),
         '0' = list(  # schwa
-          f1=list(time=0, freq=790, amp=30, width=100),
-          f2=list(time=0, freq=1600, amp=30, width=100),
-          f3=list(time=0, freq=3100, amp=30, width=100),
-          f4=list(time=0, freq=3900, amp=30, width=100)
+          f1=list(time=0, freq=790, amp=25, width=55),
+          f2=list(time=0, freq=1600, amp=25, width=70),
+          f3=list(time=0, freq=3100, amp=25, width=130),
+          f4=list(time=0, freq=3900, amp=25, width=180)
         )
       ),
       consonants = list(
         'h' = list(
           label = 'h',
           rolloffNoise = -13,
-          f1=list(time=0, freq=420, amp=20, width=150),
+          f1=list(time=0, freq=420, amp=25, width=150),
           f2=list(time=0, freq=1200, amp=50, width=250),
           f3=list(time=0, freq=5000, amp=10, width=200),
           f4=list(time=0, freq=8500, amp=10, width=300)
@@ -313,7 +312,7 @@ presets = list(
         's' = list(
           label = 's',
           rolloffNoise = 0,
-          f1=list(time=0, freq=5500, amp=20, width=200), # NB: amplitude in dB for consonants
+          f1=list(time=0, freq=5500, amp=25, width=200), # NB: amplitude in dB for consonants
           f2=list(time=0, freq=7000, amp=30, width=1000),
           f3=list(time=0, freq=9000, amp=30, width=1000)
         ),
@@ -330,7 +329,7 @@ presets = list(
           rolloffNoise = -10,
           f1=list(time=0, freq=1400, amp=30, width=200),
           f2=list(time=0, freq=2000, amp=10, width=80),
-          f3=list(time=0, freq=2900, amp=20, width=1000)
+          f3=list(time=0, freq=2900, amp=25, width=1000)
         ),
         'n' = list(
           label = 'snuffle',  # sNuffle (breathing through the nose)
@@ -342,15 +341,15 @@ presets = list(
   ),
 
   Chimpanzee = list(
-    Bark_alarm = 'soundgen(sylLen = 160, pitchAnchors = list(time = c(0, 1), value = c(232, 185)), nonlinBalance = 100, jitterDep = 4.9, attackLen = 61, rolloff = -30, rolloffOct = 0, formants = list(f1 = list(time = 0, freq = 415, amp = 60, width = 120), f2 = list(time = 0, freq = 1000, amp = 60, width = 120), f3 = list(time = 0, freq = 3000, amp = 20, width = 200), f4 = list(time = 0, freq = 5000, amp = 20, width = 1000)), subFreq = 125, subDep = 90, noiseAnchors = list(time = c(0, 76, 158, 344), value = c(-120, 16, -21, -120)), formantsNoise = list(f1 = list(time = 0, freq = 415, amp = 60, width = 120), f2 = list(time = 0, freq = 1000, amp = 60, width = 120), f3 = list(time = 0, freq = 3000, amp = 20, width = 200), f4 = list(time = 0, freq = 5000, amp = 20, width = 1000)), rolloffNoise = -14)',
+    Bark_alarm = 'soundgen(sylLen = 160, pitchAnchors = list(time = c(0, 1), value = c(232, 185)), nonlinBalance = 100, jitterDep = 4.9, attackLen = 61, rolloff = -30, rolloffOct = 0, formants = list(f1 = list(time = 0, freq = 415, amp = 60, width = 120), f2 = list(time = 0, freq = 1000, amp = 60, width = 120), f3 = list(time = 0, freq = 3000, amp = 25, width = 200), f4 = list(time = 0, freq = 5000, amp = 25, width = 1000)), subFreq = 125, subDep = 90, noiseAnchors = list(time = c(0, 76, 158, 344), value = c(-120, 16, -21, -120)), formantsNoise = list(f1 = list(time = 0, freq = 415, amp = 60, width = 120), f2 = list(time = 0, freq = 1000, amp = 60, width = 120), f3 = list(time = 0, freq = 3000, amp = 25, width = 200), f4 = list(time = 0, freq = 5000, amp = 25, width = 1000)), rolloffNoise = -14)',
 
-    Scream_conflict = 'soundgen(sylLen = 740, pitchAnchors = list(time = c(0, 0.3, 0.9, 1), value = c(1200, 1547, 1487, 1154)), temperature = 0.05, nonlinBalance = 100, jitterDep = 0.3, rolloff = -6, rolloffOct = 0, formants = list(f1 = list(time = 0, freq = 800, amp = 30, width = 80), f2 = list(time = 0, freq = 1600, amp = 30, width = 160), f3 = list(time = 0, freq = 3000, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 20, width = 370)), subFreq = 75, subDep = 130, noiseAnchors = list(time = c(0, 740), value = c(-120, -120)), formantsNoise = list(f1 = list(time = 0, freq = 800, amp = 30, width = 80), f2 = list(time = 0, freq = 1600, amp = 30, width = 160), f3 = list(time = 0, freq = 3000, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 20, width = 370)), rolloffNoise = -12)',
+    Scream_conflict = 'soundgen(sylLen = 740, pitchAnchors = list(time = c(0, 0.3, 0.9, 1), value = c(1200, 1547, 1487, 1154)), temperature = 0.05, nonlinBalance = 100, jitterDep = 0.3, rolloff = -6, rolloffOct = 0, formants = list(f1 = list(time = 0, freq = 800, amp = 30, width = 80), f2 = list(time = 0, freq = 1600, amp = 30, width = 160), f3 = list(time = 0, freq = 3000, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 25, width = 370)), subFreq = 75, subDep = 130, noiseAnchors = list(time = c(0, 740), value = c(-120, -120)), formantsNoise = list(f1 = list(time = 0, freq = 800, amp = 30, width = 80), f2 = list(time = 0, freq = 1600, amp = 30, width = 160), f3 = list(time = 0, freq = 3000, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 25, width = 370)), rolloffNoise = -12)',
 
-    Grunt_excited = 'soundgen(nSyl = 6, sylLen = 100, pauseLen = 220, pitchAnchors = list(time = c(0, 1), value = c(127, 102)), temperature = 0.05, rolloffOct = -6, formants = list(f1 = list(time = c(0, 1), freq = c(415, 300), amp = c(60, 60), width = c(120, 120)), f2 = list(time = c(0, 1), freq = c(1000, 500), amp = c(60, 60), width = c(120, 120)), f3 = list(time = c(0, 1), freq = c(2200, 2500), amp = c(20, 20), width = c(200, 200)), f4 = list(time = 0, freq = 3600, amp = 20, width = 200), f5 = list(time = c(0, 1), freq = c(4600, 4200), amp = c(20, 20), width = c(200, 200))), noiseAnchors = list(time = c(0, 83, 205), value = c(-120, -6, -120)), rolloffNoise = -12, amplAnchorsGlobal = list(time = c(0, 0.35, 1), value = c(89, 120, 31)))',  # TODO: CHECK BREATHING!!!
+    Grunt_excited = 'soundgen(nSyl = 6, sylLen = 100, pauseLen = 220, pitchAnchors = list(time = c(0, 1), value = c(127, 102)), temperature = 0.05, rolloffOct = -6, formants = list(f1 = list(time = c(0, 1), freq = c(415, 300), amp = c(60, 60), width = c(120, 120)), f2 = list(time = c(0, 1), freq = c(1000, 500), amp = c(60, 60), width = c(120, 120)), f3 = list(time = c(0, 1), freq = c(2200, 2500), amp = c(20, 20), width = c(200, 200)), f4 = list(time = 0, freq = 3600, amp = 25, width = 200), f5 = list(time = c(0, 1), freq = c(4600, 4200), amp = c(20, 20), width = c(200, 200))), noiseAnchors = list(time = c(0, 83, 205), value = c(-120, -6, -120)), rolloffNoise = -12, amplAnchorsGlobal = list(time = c(0, 0.35, 1), value = c(89, 120, 31)))',  # TODO: CHECK BREATHING!!!
 
     Hoot_excited = 'soundgen(sylLen = 730, pitchAnchors = list(time = c(0, 0.52, 1), value = c(440, 405, 440)), rolloff = -20, rolloffOct = 0, formants = list(f1 = list(time = c(0, 0.4, 1), freq = c(300, 500, 400), amp = c(30, 30, 30), width = c(80, 80, 80)), f2 = list(time = c(0, 0.2, 1), freq = c(500, 1000, 700), amp = c(30, 30, 30), width = c(120, 120, 120)), f3 = list(time = 0, freq = 2500, amp = 30, width = 120), f4 = list(time = 0, freq = 4000, amp = 30, width = 200), f5 = list(time = 0, freq = 5580, amp = 30, width = 200)), noiseAnchors = list(time = c(0, 730), value = c(-8, -8)), rolloffNoise = -13)',
 
-    Laugh_playing = 'soundgen(nSyl = 5, sylLen = 100, pauseLen = 150, pitchAnchors = list(time = c(0, 0.5, 1), value = c(134, 144, 117)), rolloff = -22, rolloffOct = 0, rolloffParab = -20, rolloffParabHarm = 8, formants = list(f1 = list(time = 0, freq = 300, amp = 30, width = 80), f2 = list(time = 0, freq = 950, amp = 30, width = 120), f3 = list(time = 0, freq = 1600, amp = 40, width = 120), f4 = list(time = 0, freq = 2240, amp = 25, width = 200), f5 = list(time = 0, freq = 2900, amp = 20, width = 100)), noiseAnchors = list(time = c(20, 60, 100), value = c(-120, -19, -120)), formantsNoise = list(f1 = list(time = 0, freq = 300, amp = 30, width = 80), f2 = list(time = 0, freq = 950, amp = 30, width = 120), f3 = list(time = 0, freq = 1600, amp = 40, width = 120), f4 = list(time = 0, freq = 2240, amp = 25, width = 200), f5 = list(time = 0, freq = 2900, amp = 20, width = 100)), rolloffNoise = -16)',
+    Laugh_playing = 'soundgen(nSyl = 5, sylLen = 100, pauseLen = 150, pitchAnchors = list(time = c(0, 0.5, 1), value = c(134, 144, 117)), rolloff = -22, rolloffOct = 0, rolloffParab = -20, rolloffParabHarm = 8, formants = list(f1 = list(time = 0, freq = 300, amp = 30, width = 80), f2 = list(time = 0, freq = 950, amp = 30, width = 120), f3 = list(time = 0, freq = 1600, amp = 40, width = 120), f4 = list(time = 0, freq = 2240, amp = 25, width = 200), f5 = list(time = 0, freq = 2900, amp = 25, width = 100)), noiseAnchors = list(time = c(20, 60, 100), value = c(-120, -19, -120)), formantsNoise = list(f1 = list(time = 0, freq = 300, amp = 30, width = 80), f2 = list(time = 0, freq = 950, amp = 30, width = 120), f3 = list(time = 0, freq = 1600, amp = 40, width = 120), f4 = list(time = 0, freq = 2240, amp = 25, width = 200), f5 = list(time = 0, freq = 2900, amp = 25, width = 100)), rolloffNoise = -16)',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...
@@ -393,7 +392,7 @@ presets = list(
 
     Elephant = 'soundgen(sylLen = 510, pitchAnchors = list(time = c(0, 0.37, 1), value = c(436, 452, 328)), nonlinBalance = 50, jitterDep = 0.3, rolloffOct = -2, formants = NA, vocalTract = 100, subFreq = 75, subDep = 40, shortestEpoch = 50, noiseAnchors = list(time = c(0, 510), value = c(-120, -120)), amplAnchors = list(time = c(0, 0.53, 1), value = c(120, 120, 61)))',
 
-    Seagull = 'soundgen(nSyl = 8, sylLen = 200, pauseLen = 140, pitchAnchors = list(time = c(0, 0.65, 1), value = c(977, 1540, 826)), temperature = 0.05, nonlinBalance = 100, jitterDep = 0, rolloff = 0, rolloffOct = -4, rolloffParab = 25, rolloffParabHarm = 6, formants = list(f1 = list(time = 0, freq = 1000, amp = 20, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), vocalTract = 15, subFreq = 525, subDep = 220, noiseAnchors = list(time = c(-3, 41, 166, 201), value = c(-37, -120, -120, -45)), formantsNoise = list(f1 = list(time = 0, freq = 1000, amp = 20, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), rolloffNoise = -16, samplingRate = 24000)',
+    Seagull = 'soundgen(nSyl = 8, sylLen = 200, pauseLen = 140, pitchAnchors = list(time = c(0, 0.65, 1), value = c(977, 1540, 826)), temperature = 0.05, nonlinBalance = 100, jitterDep = 0, rolloff = 0, rolloffOct = -4, rolloffParab = 25, rolloffParabHarm = 6, formants = list(f1 = list(time = 0, freq = 1000, amp = 25, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), vocalTract = 15, subFreq = 525, subDep = 220, noiseAnchors = list(time = c(-3, 41, 166, 201), value = c(-37, -120, -120, -45)), formantsNoise = list(f1 = list(time = 0, freq = 1000, amp = 25, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), rolloffNoise = -16, samplingRate = 24000)',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...

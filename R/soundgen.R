@@ -223,7 +223,7 @@ soundgen = function(repeatBout = 1,
                     rolloffParab = 0,
                     rolloffParabHarm = 3,
                     rolloffLip = 6,
-                    formants = list(f1 = 860, f2 = 1280, f3 = 2900),
+                    formants = list(f1 = 860, f2 = 1430, f3 = 2900),
                     formantDep = 1,
                     formantDepStoch = 20,
                     vocalTract = 15.5,
@@ -312,7 +312,28 @@ soundgen = function(repeatBout = 1,
   if (class(mouthAnchors) == 'list') mouthAnchors = as.data.frame(mouthAnchors)
   if (class(noiseAnchors) == 'list') noiseAnchors = as.data.frame(noiseAnchors)
 
-  # adjust parameters according to the specified hyperparameters
+  # soundgen() normally expects a list of formant values,
+  # but a string is also ok for demonstration purposes
+  # (dictionary for caller 1 is used to interpret)
+  if (class(formants) == 'character') {
+    formants = convertStringToFormants(formants)
+  } else if (is.list(formants)) {
+    if (class(formants[[1]]) == 'list') {
+      formants = lapply(formants, as.data.frame)
+    } else if (is.numeric(formants[[1]])) {
+      formants = lapply(formants, function(x) {
+        data.frame(time = seq(0, 1, length.out = length(x)),
+                   freq = x,
+                   amp = rep(20, length(x)),
+                   width = getBandwidth(x))
+      })
+    }
+  } else if (!is.null(formants) && !is.na(formants)) {
+    stop('If defined, formants must be a list or a string of characters
+          from dictionary presets: a, o, i, e, u, 0 (schwa)')
+  }
+
+  ## adjust parameters according to the specified hyperparameters
   if (creakyBreathy < 0) {
     # for creaky voice
     nonlinBalance = min(100, nonlinBalance - creakyBreathy * 50)
@@ -327,6 +348,12 @@ soundgen = function(repeatBout = 1,
     noiseAnchors$value[noiseAnchors$value >
                          permittedValues['noiseAmpl', 'high']] =
       permittedValues['noiseAmpl', 'high']
+    # increase formant bandwidths by up to 100%
+    if (is.list(formants)) {
+      for (f in 1:length(formants)) {
+        formants[[f]]$width = formants[[f]]$width * (creakyBreathy + 1)
+      }
+    }
   }
   # adjust rolloff for both creaky and breathy voices
   rolloff = rolloff - creakyBreathy * 10
@@ -340,27 +367,6 @@ soundgen = function(repeatBout = 1,
   # Illustration: jitterDep = 1.5; nonlinDep = 0:100;
   # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))),
   #   type = 'l')
-
-  # soundgen() normally expects a list of formant values,
-  # but a string is also ok for demonstration purposes
-  # (dictionary for caller 1 is used to interpret)
-  if (class(formants) == 'character') {
-    formants = convertStringToFormants(formants)
-  } else if (is.list(formants)) {
-    if (class(formants[[1]]) == 'list') {
-      formants = lapply(formants, as.data.frame)
-    } else if (is.numeric(formants[[1]])) {
-      formants = lapply(formants, function(x) {
-        data.frame(time = seq(0, 1, length.out = length(x)),
-                   freq = x,
-                   amp = rep(20, length(x)),
-                   width = 50 * (1 + x ^ 2 / 6 / 10 ^ 6))
-      })
-    }
-  } else if (!is.null(formants) && !is.na(formants)) {
-    stop('If defined, formants must be a list or a string of characters
-          from dictionary presets: a, o, i, e, u, 0 (schwa)')
-  }
 
   if (maleFemale != 0) {
     # adjust pitch and formants along the male-female dimension
