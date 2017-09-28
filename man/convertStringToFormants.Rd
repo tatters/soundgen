@@ -26,7 +26,9 @@ consonants "s" "x" "j".
 }
 \examples{
 formants = soundgen:::convertStringToFormants(
-  phonemeString = 'aaeuiiiii', speaker = 'M1')
+  phonemeString = 'au', speaker = 'M1')
+formants = soundgen:::convertStringToFormants(
+  phonemeString = 'aeui', speaker = 'F1')
 formants = soundgen:::convertStringToFormants(
   phonemeString = 'aaeuiiiii', speaker = 'Chimpanzee')
 }

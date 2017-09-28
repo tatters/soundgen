@@ -241,7 +241,10 @@ ui = fluidPage(
                                                ), width=6
                                              ),
                                              mainPanel(
-                                               plotOutput('plotFormants'), width=6
+                                               plotOutput('plotFormants'),
+                                               fluidRow(
+                                                 radioButtons(inputId='formants_spectrogram_or_spectrum', label="Filter preview (voiced)", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrum', inline=TRUE, width=NULL)
+                                               ), width=6
                                              )
                                            )
                                   ),
@@ -272,7 +275,10 @@ ui = fluidPage(
                                                ), width=6
                                              ),
                                              mainPanel(
-                                               plotOutput('plotConsonant'), width=6
+                                               plotOutput('plotConsonant'),
+                                               fluidRow(
+                                                 radioButtons(inputId='formantsNoise_spectrogram_or_spectrum', label="Filter preview (unvoiced)", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrum', inline=TRUE, width=NULL)
+                                               ), width=6
                                              )
                                            )
                                   )
@@ -293,7 +299,7 @@ ui = fluidPage(
              plotOutput('spectrogram')
            ),
            fluidRow(
-             radioButtons(inputId='spectrogram_or_spectrum', label="Show", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrogram', inline=TRUE, width=NULL)
+             radioButtons(inputId='spectrogram_or_spectrum', label="Generated sound", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrogram', inline=TRUE, width=NULL)
            ),
            fluidRow(
              sliderInput('specWindowLength', 'Window length, ms', value=permittedValues['specWindowLength','default'], min=permittedValues['specWindowLength', 'low'], max=permittedValues['specWindowLength', 'high'], step=permittedValues['specWindowLength','step'])
@@ -332,13 +338,8 @@ ui = fluidPage(
            shinyBS::bsCollapsePanel("Export R code",
                                     tags$style(type="text/css", "textarea {width:100%; font-size:50%}"), # NB: this little hack ties the width of the following textarea to the width of the panel in which it is embedded; see http://stackoverflow.com/questions/32640875/r-shiny-tie-textarea-width-to-wellpanel-width
                                     tags$textarea(id="mycall", label='Copy-paste function call', rows=10, cols=20, value="", placeholder ="soundgen()")
-           )
-    )
-  ),
-
-  fluidRow(
-    column(12,
-           HTML('SoundGen 1.0.0 beta, August 2017. Load/detach library(shinyBS) to show/hide tips. Project web page <a href="http://cogsci.se/soundgen.html">http://cogsci.se/soundgen.html</a>. Contact me at andrey.anikin / at / lucs.lu.se. Thank you!')
+           ),
+           actionButton("about", "About")
     )
   )
 )

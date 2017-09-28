@@ -549,7 +549,8 @@ server = function(input, output, session) {
       ylim = c(permittedValues['mouthOpening', 'low'], permittedValues['mouthOpening', 'high']),
       valueFloor = permittedValues['mouthOpening', 'low'],
       valueCeiling = permittedValues['mouthOpening', 'high'],
-      plot = TRUE)
+      plot = TRUE,
+      ylab = 'Mouth opening (0.5 = neutral)')
     # xaxs = "i" to enforce exact axis limits, otherwise we exceed the range.
     # OR: xlim = range(myPars$noiseAnchors$time)
   })
@@ -837,7 +838,7 @@ server = function(input, output, session) {
 
   output$plotFormants = renderPlot({
     nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2)
-    if (TRUE) {
+    if (input$formants_spectrogram_or_spectrum == 'spectrum') {
       s = getSpectralEnvelope(nr = nr,
                               nc = 100,
                               formants = myPars$formants,
@@ -922,40 +923,44 @@ server = function(input, output, session) {
 
   output$plotConsonant = renderPlot({
     if (is.null(myPars$formantsNoise) || is.na(myPars$formantsNoise)) {
-      # same as plotFormants
-      getSpectralEnvelope(
-        nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2),
-        nc = 100,
-        formants = myPars$formants,
-        formantDep = input$formantDep,
-        rolloffLip = input$rolloffLip,
-        mouthAnchors = myPars$mouthAnchors,
-        vocalTract = input$vocalTract,
-        temperature = input$temperature,
-        formantDepStoch = input$formantDepStoch,
-        samplingRate = input$samplingRate,
-        plot = TRUE,
-        duration = durSyl_withNoise(),
-        xlab = 'Time, ms',
-        ylab = 'Frequency, kHz',
-        colorTheme = input$spec_colorTheme
-      )
+      plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
+      text(x = 5, y = 5, labels = 'Same filter as for voiced', adj = .5, col = 'blue', cex = 1)
     } else {
-      plot(1:100)
-      getSpectralEnvelope(
-        nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2),
-        nc = 100,
-        formants = myPars$formantsNoise,
-        formantDep = input$formantDep,
-        rolloffLip = input$rolloffLip + input$rolloffNoise,
-        temperature = 0,
-        samplingRate = input$samplingRate,
-        plot = TRUE,
-        duration = durSyl_withNoise(),
-        xlab = 'Time, ms',
-        ylab = 'Frequency, kHz',
-        colorTheme = input$spec_colorTheme
-      )
+      nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2)
+      if (input$formantsNoise_spectrogram_or_spectrum == 'spectrum') {
+        s = getSpectralEnvelope(nr = nr,
+                                nc = 100,
+                                formants = myPars$formantsNoise,
+                                formantDep = input$formantDep,
+                                rolloffLip = input$rolloffLip,
+                                mouthAnchors = myPars$mouthAnchors,
+                                vocalTract = input$vocalTract,
+                                temperature = input$temperature,
+                                formantDepStoch = input$formantDepStoch,
+                                samplingRate = input$samplingRate,
+                                plot = FALSE
+        )
+        lta = apply(s, 1, mean)
+        freqs = seq(1, round(samplingRate / 2), length.out = nr)
+        plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz', ylab = 'Power, dB')
+      } else {
+        getSpectralEnvelope(nr = nr,
+                            nc = 100,
+                            formants = myPars$formantsNoise,
+                            formantDep = input$formantDep,
+                            rolloffLip = input$rolloffLip,
+                            mouthAnchors = myPars$mouthAnchors,
+                            vocalTract = input$vocalTract,
+                            temperature = input$temperature,
+                            formantDepStoch = input$formantDepStoch,
+                            samplingRate = input$samplingRate,
+                            plot = TRUE,
+                            duration = durSyl_withNoise(),
+                            xlab = 'Time, ms',
+                            ylab = 'Frequency, kHz',
+                            colorTheme = input$spec_colorTheme
+        )
+      }
     }
   })
 
@@ -1091,5 +1096,14 @@ server = function(input, output, session) {
     # update sliders
     reset_all()
     mycall()
+  })
+
+  observeEvent(input$about, {
+    id <<- showNotification(
+      ui = 'SoundGen 1.1.0 beta, 2017. Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!',
+      duration = 10,
+      closeButton = TRUE,
+      type = 'default'
+    )
   })
 }

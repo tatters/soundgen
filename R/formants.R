@@ -1,222 +1,3 @@
-# Functions for controlling the spectrum of generated sounds (rolloff and formants).
-
-#' Control rolloff of harmonics
-#'
-#' Harmonics are generated as separate sine waves. But we don't want each
-#' harmonic to be equally strong, so we normally specify some rolloff function
-#' that describes the loss of energy in upper harmonics relative to the
-#' fundamental frequency (f0). \code{\link{getRolloff}} provides flexible
-#' control over this rolloff function, going beyond simple exponential decay
-#' (\code{rolloff}). Use quadratic terms to modify the behavior of a few lower
-#' harmonics, \code{rolloffOct} to adjust the rate of decay per
-#' octave, and \code{rolloffKHz} for rolloff correction depending on
-#' f0. Plot the output with different parameter values and see examples below
-#' and the vignette to get a feel for how to use \code{\link{getRolloff}}
-#' effectively.
-#' @param pitch_per_gc a vector of f0 per glottal cycle, Hz
-#' @param nHarmonics maximum number of harmonics to generate (very weak
-#'   harmonics with amplitude < \code{throwaway} will be discarded)
-#' @inheritParams soundgen
-#' @param rolloffParabCeiling quadratic adjustment is applied only up to
-#'   \code{rolloffParabCeiling}, Hz. If not NULL, it overrides
-#'   \code{rolloffParabHarm}
-#' @param baseline The "neutral" frequency, at which no adjustment of rolloff
-#'   takes place regardless of \code{rolloffKHz}
-#' @param samplingRate sampling rate (needed to stop at Nyquist frequency and
-#'   for plotting purposes)
-#' @param plot if TRUE, produces a plot
-#' @return Returns a matrix of amplitude multiplication factors for adjusting
-#'   the amplitude of harmonics relative to f0. Each row of output contains one
-#'   harmonic, and each column contains one glottal cycle.
-#' @export
-#' @examples
-#' # steady exponential rolloff of -12 dB per octave
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-#'   rolloffOct = 0, plot = TRUE)
-#' # the rate of rolloff slows down with each octave
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-#'   rolloffOct = 2, plot = TRUE)
-#' # the rate of rolloff increases with each octave
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-#'   rolloffOct = -2, plot = TRUE)
-#'
-#' # variable f0: the lower f0, the more harmonics are non-zero
-#' rolloff = getRolloff(pitch_per_gc = c(150, 800, 3000),
-#'   rolloffOct = 0, plot = TRUE)
-#' # without the correction for f0 (rolloffKHz),
-#'   # high-pitched sounds have the same rolloff as low-pitched sounds,
-#'   # producing unnaturally strong high-frequency harmonics
-#' rolloff = getRolloff(pitch_per_gc = c(150, 800, 3000),
-#'   rolloffOct = 0, rolloffKHz = 0, plot = TRUE)
-#'
-#' # parabolic adjustment of lower harmonics
-#' rolloff = getRolloff(pitch_per_gc = 350, rolloffParab = 0,
-#'   rolloffParabHarm = 2, plot = TRUE)
-#' # rolloffParabHarm = 1 affects only f0
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = 30,
-#'   rolloffParabHarm = 1, plot = TRUE)
-#' # rolloffParabHarm=2 or 3 affects only h1
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = 30,
-#'   rolloffParabHarm = 2, plot = TRUE)
-#' # rolloffParabHarm = 4 affects h1 and h2, etc
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = 30,
-#'   rolloffParabHarm = 4, plot = TRUE)
-#' # negative rolloffParab weakens lower harmonics
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = -20,
-#'   rolloffParabHarm = 7, plot = TRUE)
-#' # only harmonics below 2000 Hz are affected
-#' rolloff = getRolloff(pitch_per_gc = c(150, 600),
-#'   rolloffParab = -20, rolloffParabCeiling = 2000,
-#'   plot = TRUE)
-#'
-#' # dynamic rolloff (varies over time)
-#' rolloff = getRolloff(pitch_per_gc = c(150, 250),
-#'                      rolloff = c(-12, -18, -24), plot = TRUE)
-#' rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
-#'                     rolloffParabHarm = 1:5, plot = TRUE)
-#' # only rolloff for the first glottal cycle is plotted, but the sound varies:
-#' s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
-#'               rolloff = c(-12, -24, -2),
-#'               play = TRUE, plot = TRUE)
-#' s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
-#'              rolloffParab = 40, rolloffParabHarm = 1:15,
-#'              play = TRUE, plot = TRUE)
-getRolloff = function(pitch_per_gc = c(440),
-                      nHarmonics = 100,
-                      rolloff = -12,
-                      rolloffOct = -2,
-                      rolloffParab = 0,
-                      rolloffParabHarm = 2,
-                      rolloffParabCeiling = NULL,
-                      rolloffKHz = -6,
-                      baseline = 200,
-                      throwaway = -120,
-                      samplingRate = 16000,
-                      plot = FALSE) {
-  ## In case rolloff pars are dynamic, make them the same length as pitch_per-gc
-  nGC = length(pitch_per_gc)
-  update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
-                  'rolloffParabHarm', 'rolloffParabCeiling', 'rolloffKHz')
-  max_length = max(sapply(update_pars, function(x) length(get(x))))
-  if (max_length > nGC) {
-    pitch_per_gc = spline(pitch_per_gc, n = max_length)$y
-    nGC = length(pitch_per_gc)
-  }
-  for (p in update_pars) {
-    old = get(p)
-    if (length(old) > 1 && length(old) != nGC) {
-      new = spline(old, n = nGC)$y
-      assign(p, new)
-    }
-  }
-
-  ## Exponential decay
-  deltas = matrix(0, nrow = nHarmonics, ncol = nGC)
-  if (sum(rolloffOct != 0) > 0) {
-    for (h in 2:nHarmonics) {
-      deltas[h, ] = rolloffOct * (pitch_per_gc * h - baseline) / 1000
-      # rolloff changes by rolloffOct per octave for each octave above H2
-    }
-  }
-  # plot(deltas[, 1])
-
-  r = matrix(0, nrow = nHarmonics, ncol = nGC)
-  for (h in 1:nHarmonics) {
-    r[h,] = ((rolloff + rolloffKHz *
-                (pitch_per_gc - baseline) / 1000) * log2(h)) + deltas[h,]
-    # note that rolloff is here adjusted as a linear function of
-    #   the difference between current f0 and baseline
-    r[h, which(h * pitch_per_gc >= samplingRate / 2)] = -Inf # to avoid
-    # aliasing, we discard all harmonics above Nyquist frequency
-  }
-
-  ## QUADRATIC term affecting the first rolloffParabHarm harmonics only
-  if (any(rolloffParab != 0)) {
-    if (!is.null(rolloffParabCeiling)) {
-      rolloffParabHarm = round(rolloffParabCeiling / pitch_per_gc)  # vector of
-      # length pitch_per_gc specifying the number of harmonics whose amplitude
-      # is to be adjusted
-    } else if (length(rolloffParabHarm) < ncol(r)) {
-      rolloffParabHarm = rep(rolloffParabHarm, ncol(r))
-      # if the original length was >1, it was upsampled at the beginning of fun
-    }
-    rolloffParabHarm[rolloffParabHarm == 2] = 3 # will have the effect of boosting
-    # H1 (2 * F0)
-    # parabola ax^2+bx+c
-    # 0 at h=1 and at h=rolloffParabHarm; a parabola up/down in between. We have the following constraints on the parabola: f(1)=0; f(rolloffParabHarm)=0; f'((1+rolloffParabHarm)/2)=0; and f((1+rolloffParabHarm)/2)=rolloffParab.
-    ## Solving for a,b,c
-    # f'(middle) = 2a*(1+rolloffParabHarm)/2+b = a*(1+rolloffParabHarm)+b = 0, so b = -a*(1+rolloffParabHarm).
-    # f(1) = a+b+c = 0, so c = -a+a*(1+rolloffParabHarm) = a*rolloffParabHarm.
-    # f(middle)=rolloffParab. middle is (1+rolloffParabHarm)/2, and f( (1+rolloffParabHarm)/2 ) = a*(1+rolloffParabHarm)^2/4 + b*(1+rolloffParabHarm)/2 + c = (substituting above expressions for b and c) = a*(1+rolloffParabHarm)^2/4 - a*(1+rolloffParabHarm)*(1+rolloffParabHarm)/2 + a*rolloffParabHarm = -a*(1+rolloffParabHarm)^2/4 + a*rolloffParabHarm = -a/4*(1 + rolloffParabHarm^2 + 2*rolloffParabHarm - 4*rolloffParabHarm) = -a/4*(1-rolloffParabHarm)^2. And we want this to equal rolloffParab. Solving for a, we have a = -4*rolloffParab/(rolloffParabHarm-1)^2
-    a = -4 * rolloffParab / (rolloffParabHarm - 1) ^ 2
-    b = -a * (1 + rolloffParabHarm)
-    c = a * rolloffParabHarm
-    # # verify:
-    # myf = function(s, a, b, c) {return(a * s^2 + b * s + c)}
-    # s = seq(1, rolloffParabHarm[1], by = .5)
-    # plot (s, myf(s, a, b, c))
-
-    # for a single affected harmonic, just change the amplitude of F0
-    r[1, which(rolloffParabHarm < 3)] =
-      r[1, which(rolloffParabHarm < 3)] + rolloffParab
-    # if at least 2 harmonics are to be adjusted, calculate a parabola
-    for (i in which(rolloffParabHarm >= 3)) {
-      rowIdx = 1:rolloffParabHarm[i]
-      r[rowIdx, i] = r[rowIdx, i] + a[i] * rowIdx ^ 2 +
-        b[i] * rowIdx + c[i]   # plot (r[, 1])
-    }
-  }
-
-  # set values under throwaway to zero
-  if (is.numeric(throwaway)) {
-    # if not null and not NA
-    r[r < throwaway] = -Inf
-  }
-
-  # normalize so the amplitude of F0 is always 0
-  r = apply (r, 2, function(x) x - max(x))
-
-  # plotting
-  if (plot) {
-    x_max = samplingRate / 2 / 1000
-    if (nGC == 1 | var(pitch_per_gc) == 0) {
-      idx = which(r[, 1] > -Inf)
-      plot ( idx * pitch_per_gc[1] / 1000, r[idx, 1],
-             type = 'b', xlim = c(0, x_max), xlab = 'Frequency, Hz',
-             ylab = 'Amplitude, dB', main = 'Glottal source rolloff')
-    } else {
-      pitch_min = min(pitch_per_gc)
-      pitch_max = max(pitch_per_gc)
-      idx_min = which.min(pitch_per_gc)
-      idx_max = which.max(pitch_per_gc)
-      rows_min = 1:tail(which(r[, idx_min] > -Inf), 1)
-      rows_max = 1:tail(which(r[, idx_max] > -Inf), 1)
-      freqs_min = rows_min * pitch_min / 1000
-      freqs_max = rows_max * pitch_max / 1000
-      rolloff_min = r[rows_min, idx_min]
-      rolloff_max = r[rows_max, idx_max]
-      plot(freqs_min, rolloff_min, type = 'b', col = 'blue',
-           xlim = c(0, x_max), xlab = 'Frequency, Hz',
-           ylab = 'Amplitude, dB', main = 'Glottal source rolloff')
-      text(x = x_max, y = -10, labels = 'Lowest pitch',
-           col = 'blue', pos = 2)
-      points(freqs_max, rolloff_max, type = 'b', col = 'red')
-      text(x = x_max, y = 0, labels = 'Highest pitch',
-           col = 'red', pos = 2)
-    }
-  }
-
-  # convert from dB to linear amplitude multipliers
-  r = 2 ^ (r / 10)
-
-  # shorten by discarding harmonics that are 0 throughout the sound
-  r = r[which(apply(r, 1, sum) > 0), , drop = FALSE]
-  rownames(r) = 1:nrow(r) # helpful for adding vocal fry
-
-  return (r)
-}
-
-
 #' Spectral envelope
 #'
 #' Prepares a spectral envelope for filtering a sound to add formants, lip
@@ -320,29 +101,8 @@ getSpectralEnvelope = function(nr,
                                xlab = 'Time',
                                ylab = 'Frequency, kHz',
                                ...) {
-  ## reformat formants
-  if (class(formants) == 'character') {
-    formants = convertStringToFormants(formants)
-  } else if (is.list(formants)) {
-    for (f in 1:length(formants)) {
-      formant = formants[[f]]
-      if (is.list(formant) && 'freq' %in% names(formant)) {
-        formant = as.data.frame(formant)
-        if (is.null(formant$time)) formant$time = seq(0, 1, length.out = nrow(formant))
-        if (is.null(formant$amp)) formant$amp = NA
-        if (is.null(formant$width)) formant$width = getBandwidth(formant$freq)
-      } else if (is.numeric(formant)) {  # numbers assumed to represent frequency
-        formant = data.frame(time = seq(0, 1, length.out = length(formant)),
-                             freq = formant,
-                             amp = rep(NA, length(formant)),
-                             width = getBandwidth(formant))
-      }
-      formants[[f]] = formant[, c('time', 'freq', 'amp', 'width')]
-    }
-  } else if (!is.null(formants) && !is.na(formants)) {
-    stop('If defined, formants must be either a list or a string of characters
-          from dictionary presets: a, o, i, e, u, 0 (schwa)')
-  }
+  # standard formatting
+  formants = reformatFormants(formants)
 
   ## estimate vocal tract length
   if (!is.numeric(vocalTract) & is.numeric(formants[[1]]$freq)) {
@@ -380,12 +140,15 @@ getSpectralEnvelope = function(nr,
   # if there are zeros, set all NA amps to formantDepStoch
   if (is.list(formants)) {
     any_zeros = any(sapply(formants, function(f) {
+      # check if there are any negative amp values, excluding NA's
       a = f$amp
-      any(is.numeric(a)) && any(a < 0, na.omit = TRUE)
+      any(is.numeric(a)) && any(a < 0, na.rm = TRUE)
     }))
     if (any_zeros) {
       for (f in 1:length(formants)) {
-        if (!is.numeric(formants[[f]]$amp)) formants[[f]]$amp = formantDepStoch
+        if (!is.numeric(formants[[f]]$amp)) {
+          formants[[f]]$amp = formantDepStoch
+        }
       }
     }
   }
@@ -412,8 +175,7 @@ getSpectralEnvelope = function(nr,
         out
       })
       if (!is.matrix(temp)) {
-        # if nc==1, we get numeric instead of
-        # matrix and need to convert
+        # if nc==1, we get numeric instead of matrix and need to convert
         temp = t(as.matrix(temp))
       }
       temp
@@ -687,7 +449,7 @@ getSpectralEnvelope = function(nr,
   lip_dB = rolloffLip * log2(1:nr) # vector of length nr
   for (c in 1:nc) {
     spectralEnvelope[, c] = spectralEnvelope[, c] +
-                               (lip_dB * mouthOpen_binary[c]) *
+      (lip_dB * mouthOpen_binary[c]) *
       10 ^ (mouthOpening_upsampled[c] * openMouthBoost / 20)
   }
 
@@ -719,3 +481,138 @@ getSpectralEnvelope = function(nr,
 
   return(spectralEnvelope_lin)
 }
+
+
+#' Reformat formants
+#'
+#' Internal soundgen function.
+#'
+#' Checks that the formants are formatted in a valid way and expands them to a
+#' standard list of dataframes with time, frequency, amplitude, and bandwidth of
+#' each formant specified explicitly.
+#' @param formants either a character string like "aoiu" or a list with an entry
+#'   for each formant
+#' @examples
+#' formants = soundgen:::reformatFormants('aau')
+#' formants = soundgen:::reformatFormants(list(f1 = 500, f2 = c(1500, 1700)))
+#' formants = soundgen:::reformatFormants(list(
+#'      f1 = list(freq = 800, amp = 30),
+#'      f2 = list(freq = c(1500, 1700, 2200), width = c(100, 150, 175))
+#' ))
+reformatFormants = function(formants) {
+  if (class(formants) == 'character') {
+    # "aui" etc - read off values from presets$M1
+    formants = convertStringToFormants(formants)
+  }
+  if (is.list(formants)) {
+    for (f in 1:length(formants)) {
+      formant = formants[[f]]
+      if (is.list(formant) && 'freq' %in% names(formant)) {
+        # expand to full format from e.g. f1 = list(freq = 550, amp = 30)
+        formant = as.data.frame(formant)
+        if (is.null(formant$time)) {
+          formant$time = seq(0, 1, length.out = nrow(formant))
+        }
+        if (is.null(formant$amp)) {
+          formant$amp = NA
+        }
+        if (is.null(formant$width)) {
+          formant$width = getBandwidth(formant$freq)
+        }
+      } else if (is.numeric(formant)) {
+        # expand to full format from e.g. f1 = 550
+        # (numbers are assumed to represent frequency)
+        formant = data.frame(time = seq(0, 1, length.out = length(formant)),
+                             freq = formant,
+                             amp = rep(NA, length(formant)),
+                             width = getBandwidth(formant))
+      }
+      # make sure columns are in the right order (for esthetics & debugging)
+      formants[[f]] = formant[, c('time', 'freq', 'amp', 'width')]
+    }
+  } else if (!is.null(formants) && !is.na(formants)) {
+    stop('If defined, formants must be either a list or a string of characters
+         from dictionary presets: a, o, i, e, u, 0 (schwa)')
+  }
+  return(formants)
+}
+
+
+#' Get bandwidth
+#'
+#' Internal soundgen function.
+#'
+#' Calculates formant bandwidth as a function of formant frequencies using a modified version of TMF-63 formula. Namely, above 500 Hz it follows the original formula Tappert, Martony, and Fant (TMF)-1963, and below 500 Hz it applies a correction to allow for energy losses at low frequencies. See Khodai & Joopari (2002), "Comparison of formulae for estimating formant bandwidth".
+#' @param f a vector of formant frequencies, Hz
+#' @examples
+#' f = 1:5000
+#' plot(f, getBandwidth(f), type = 'l',
+#'   xlab = 'Formant frequency, Hz', ylab = 'Estimated bandwidth, Hz')
+getBandwidth = function(f) {
+  b = rep(NA, length(f))
+  f1 = which(f < 500)
+  f2 = which(f >= 500)
+  b[f1] =  52.08333 * (1 + (f[f1]-500) ^ 2/ 10 ^ 5)
+  b[f2] = 50 * (1 + f[f2] ^ 2 / 6 / 10 ^ 6)
+  # plot(f, b, type = 'l')
+  return(b)
+}
+
+#' Get formant dispersion
+#'
+#' Internal soundgen function.
+#'
+#' Estimates formant dispersion based on one or more formant frequencies.
+#' @param formants a vector of formant frequencies, Hz
+#' @inheritParams getSpectralEnvelope
+#' @param method method of calculating formant dispersion: \code{fast} for
+#'   simple averaging of inter-formant difference, \code{accurate} for fitting a
+#'   linear regression to formant frequencies
+#' @examples
+#' nIter = 100  # nIter = 10000 for better results
+#' out = data.frame(vtl = runif(nIter, 5, 70),
+#'                  nFormants = round(runif(nIter, 1, 10)),
+#'                  noise = runif(nIter, 0, .2),
+#'                  vtl_est = rep(NA, nIter),
+#'                  error = rep(NA, nIter))
+#' for (i in 1:nIter) {
+#'   a = 1:out$nFormants[i]
+#'   formants = sort(speedSound * (2 * a - 1) / (4 * out$vtl[i]) * rnorm(n = length(a),
+#'                                                                  mean = 1,
+#'                                                                  sd = out$noise[i]))
+#'   disp = soundgen:::getFormantDispersion(formants, method = 'fast')
+#'   out$vtl_est[i] = speedSound / 2 / disp
+#'   out$error[i] = (out$vtl[i] -  out$vtl_est[i]) / out$vtl[i]
+#' }
+#' \dontrun{
+#' library(ggplot2)
+#' ggplot(out, aes(x = nFormants, y = error)) +
+#'   geom_point(alpha = .1) +
+#'   geom_smooth() +
+#'   theme_bw()
+#' ggplot(out, aes(x = noise, y = error)) +
+#'   geom_point(alpha = .1) +
+#'   geom_smooth() +
+#'   theme_bw()
+#' }
+getFormantDispersion = function(formants,
+                                speedSound = 35400,
+                                method = c('fast', 'accurate')[2]) {
+  if (!is.numeric(formants) | length(formants) < 1) return(NA)
+  if (method == 'fast') {
+    l = length(formants)
+    if (l > 1) {
+      formantDispersion = mean(diff(formants))
+    } else {
+      formantDispersion = 2 * formants
+    }
+  } else if (method == 'accurate') {
+    # Reby et al. (2005) "Red deer stags use formants..."
+    deltaF = (2 * (1:length(formants)) - 1) / 2
+    # plot(deltaF, formants)
+    mod = lm(formants ~ deltaF - 1)  # NB: no intercept, i.e. forced to pass through 0
+    formantDispersion = summary(mod)$coef[1]
+  }
+  return(formantDispersion)
+}
+

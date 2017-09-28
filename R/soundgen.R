@@ -1,4 +1,4 @@
-# TODO: spectrum plot - adjust frequency range as with spectrogram;
+# TODO: spectrum plot - adjust frequency range as with spectrogram; add switch between spectrum/spectrogram for formants preview; change /e/ for M1; check all presets
 
 #' @import stats graphics utils grDevices
 NULL
@@ -312,31 +312,8 @@ soundgen = function(repeatBout = 1,
   if (class(mouthAnchors) == 'list') mouthAnchors = as.data.frame(mouthAnchors)
   if (class(noiseAnchors) == 'list') noiseAnchors = as.data.frame(noiseAnchors)
 
-  # soundgen() normally expects a list of formant values,
-  # but a string is also ok for demonstration purposes
-  # (dictionary for caller 1 is used to interpret)
-  if (class(formants) == 'character') {
-    formants = convertStringToFormants(formants)
-  } else if (is.list(formants)) {
-    for (f in 1:length(formants)) {
-      formant = formants[[f]]
-      if (is.list(formant) && 'freq' %in% names(formant)) {
-        formant = as.data.frame(formant)
-        if (is.null(formant$time)) formant$time = seq(0, 1, length.out = nrow(formant))
-        if (is.null(formant$amp)) formant$amp = NA
-        if (is.null(formant$width)) formant$width = getBandwidth(formant$freq)
-      } else if (is.numeric(formant)) {  # numbers assumed to represent frequency
-        formant = data.frame(time = seq(0, 1, length.out = length(formant)),
-                             freq = formant,
-                             amp = rep(NA, length(formant)),
-                             width = getBandwidth(formant))
-      }
-      formants[[f]] = formant[, c('time', 'freq', 'amp', 'width')]
-    }
-  } else if (!is.null(formants) && !is.na(formants)) {
-    stop('If defined, formants must be either a list or a string of characters
-          from dictionary presets: a, o, i, e, u, 0 (schwa)')
-  }
+  # expand formants to full format for adjusting bandwidth if creakyBreathy > 0
+  formants = reformatFormants(formants)
 
   ## adjust parameters according to the specified hyperparameters
   if (creakyBreathy < 0) {
