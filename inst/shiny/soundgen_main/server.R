@@ -836,22 +836,41 @@ server = function(input, output, session) {
   })
 
   output$plotFormants = renderPlot({
-    getSpectralEnvelope(nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2),
-                        nc = 100,
-                        formants = myPars$formants,
-                        formantDep = input$formantDep,
-                        rolloffLip = input$rolloffLip,
-                        mouthAnchors = myPars$mouthAnchors,
-                        vocalTract = input$vocalTract,
-                        temperature = input$temperature,
-                        formantDepStoch = input$formantDepStoch,
-                        samplingRate = input$samplingRate,
-                        plot = TRUE,
-                        duration = durSyl_withNoise(),
-                        xlab = 'Time, ms',
-                        ylab = 'Frequency, kHz',
-                        colorTheme = input$spec_colorTheme
-    )
+    nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2)
+    if (TRUE) {
+      s = getSpectralEnvelope(nr = nr,
+                              nc = 100,
+                              formants = myPars$formants,
+                              formantDep = input$formantDep,
+                              rolloffLip = input$rolloffLip,
+                              mouthAnchors = myPars$mouthAnchors,
+                              vocalTract = input$vocalTract,
+                              temperature = input$temperature,
+                              formantDepStoch = input$formantDepStoch,
+                              samplingRate = input$samplingRate,
+                              plot = FALSE
+      )
+      lta = apply(s, 1, mean)
+      freqs = seq(1, round(samplingRate / 2), length.out = nr)
+      plot(freqs, 10 * log10(lta), type = 'l', xlab = 'Frequency, Hz', ylab = 'Power, dB')
+    } else {
+      getSpectralEnvelope(nr = nr,
+                          nc = 100,
+                          formants = myPars$formants,
+                          formantDep = input$formantDep,
+                          rolloffLip = input$rolloffLip,
+                          mouthAnchors = myPars$mouthAnchors,
+                          vocalTract = input$vocalTract,
+                          temperature = input$temperature,
+                          formantDepStoch = input$formantDepStoch,
+                          samplingRate = input$samplingRate,
+                          plot = TRUE,
+                          duration = durSyl_withNoise(),
+                          xlab = 'Time, ms',
+                          ylab = 'Frequency, kHz',
+                          colorTheme = input$spec_colorTheme
+      )
+    }
   })
 
   output$plotAM = renderPlot({

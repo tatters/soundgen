@@ -137,8 +137,8 @@ getRolloff = function(pitch_per_gc = c(440),
       # length pitch_per_gc specifying the number of harmonics whose amplitude
       # is to be adjusted
     } else if (length(rolloffParabHarm) < ncol(r)) {
-        rolloffParabHarm = rep(rolloffParabHarm, ncol(r))
-        # if the original length was >1, it was upsampled at the beginning of fun
+      rolloffParabHarm = rep(rolloffParabHarm, ncol(r))
+      # if the original length was >1, it was upsampled at the beginning of fun
     }
     rolloffParabHarm[rolloffParabHarm == 2] = 3 # will have the effect of boosting
     # H1 (2 * F0)
@@ -337,7 +337,7 @@ getSpectralEnvelope = function(nr,
     stop('If defined, formants must be a list or a string of characters
           from dictionary presets: a, o, i, e, u, 0 (schwa)')
   }
-  if (!is.numeric(vocalTract) & length(formants[[1]]) > 2) {
+  if (!is.numeric(vocalTract) & is.numeric(formants[[1]]$freq)) {
     # if we don't know vocalTract, but at least one formant is defined,
     # we guess the length of vocal tract
     formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
@@ -595,42 +595,66 @@ getSpectralEnvelope = function(nr,
     poles = as.numeric(which(sapply(formants_upsampled, function(x) x[, 'amp'][1] > 0)))
     zeros = as.numeric(which(sapply(formants, function(x) x[, 'amp'][1] < 0)))
     s = complex(real = 0, imaginary = 2 * pi * freqs_bins)
-    # Stevens 2000 p. 137
-    n = length(formants_upsampled)
-    freqs = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'freq']), ncol = n)
-    widths = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'width']), ncol = n)
-    amps = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'amp']), ncol = n)
-    amps_norm = abs(amps / 10)  # zeros are indexed, we know them - but their amplitudes should be positive
-    for (c in 1:nc) {
-      pf = 2 * pi * freqs[c, ]
-      bp = widths[c, ] * pi
-      s1 = complex(real = bp[poles], imaginary = pf[poles])
-      s1c = Conj(s1)
-      s0 = complex(real = bp[zeros], imaginary = pf[zeros])
-      s0c = Conj(s0)
-      # numerator = prod(s1 ^ amps_norm[c, poles]) * prod(s1c ^ amps_norm[c, poles])  # can exceed 10^150
-      log_numerator = sum(amps_norm[c, poles] * log10(s1)) + sum(amps_norm[c, poles] * log10(s1c))
-      if (length(zeros) > 0) {
-        for (z in 1:length(zeros)) {
-          # numerator = numerator * ((s - s0[z]) * (s - s0c[z])) ^ amps_norm[c, zeros[z]]
-          log_numerator = log_numerator + amps_norm[c, zeros[z]] * log10((s - s0[z]) * (s - s0c[z]))
+
+    if (length(zeros) == 0) {  # all-pole
+      # special case for faster computing (saves ~10 to 30 ms). Stevens 2000 p. 131
+      for (f in 1:length(formants_upsampled)) {
+        pf = 2 * pi * formants_upsampled[[f]][, 'freq']
+        bp = -formants_upsampled[[f]][, 'width'] * pi
+        s1 = complex(real = bp, imaginary = pf)
+        s1c = Conj(s1)
+        formant = matrix(0, nrow = nr, ncol = nc)
+        for (c in 1:nc) {
+          # actually much faster w/o log-transform, and numbers don't get very large anyhow
+          tns = s1[c] * s1c[c] / (s - s1[c]) / (s - s1c[c])
+          formant[, c] = log10(abs(tns)) * formants_upsampled[[f]][c, 'amp']
+          # plot(bin_freqs, formant[, c], type = 'l')
         }
-        # denominator = prod(s0 ^ amps_norm[c, zeros]) * prod(s0c ^ amps_norm[c, zeros])
-        log_denominator = sum(amps_norm[c, zeros] * log10(s0)) + sum(amps_norm[c, zeros] * log10(s0c))
-      } else {
-        # denominator = 1
-        log_denominator = 0
+        spectralEnvelope = spectralEnvelope + formant
       }
-      for (p in 1:length(poles)) {
-        # denominator = denominator * ((s - s1[p]) * (s - s1c[p])) ^ amps_norm[c, poles[p]]
-        log_denominator = log_denominator + amps_norm[c, poles[p]] * log10((s - s1[p]) * (s - s1c[p]))
+    } else {  # both zeros and poles
+      # General case. Stevens 2000 p. 137
+      n = length(formants_upsampled)
+      freqs = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'freq']), ncol = n)
+      widths = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'width']), ncol = n)
+      amps = matrix(sapply(formants_upsampled[1:n], function(x) x[, 'amp']), ncol = n)
+      amps_norm = abs(amps / 10)  # we know which ones are zeros, but their ampls must be positive
+
+      for (c in 1:nc) {
+        pf = 2 * pi * freqs[c, ]
+        bp = widths[c, ] * pi
+        s1 = complex(real = bp[poles], imaginary = pf[poles])
+        s1c = Conj(s1)
+        s0 = complex(real = bp[zeros], imaginary = pf[zeros])
+        s0c = Conj(s0)
+        # numerator = prod(s1 ^ amps_norm[c, poles]) * prod(s1c ^ amps_norm[c, poles])  # can exceed 10^150
+        log_numerator = sum(amps_norm[c, poles] * log10(s1)) +
+          sum(amps_norm[c, poles] * log10(s1c))
+        if (length(zeros) > 0) {
+          for (z in 1:length(zeros)) {
+            # numerator = numerator * ((s - s0[z]) * (s - s0c[z])) ^ amps_norm[c, zeros[z]]
+            log_numerator = log_numerator + amps_norm[c, zeros[z]] *
+              log10((s - s0[z]) * (s - s0c[z]))
+          }
+          # denominator = prod(s0 ^ amps_norm[c, zeros]) * prod(s0c ^ amps_norm[c, zeros])
+          log_denominator = sum(amps_norm[c, zeros] * log10(s0)) +
+            sum(amps_norm[c, zeros] * log10(s0c))
+        } else {
+          # denominator = 1
+          log_denominator = 0
+        }
+        for (p in 1:length(poles)) {
+          # denominator = denominator * ((s - s1[p]) * (s - s1c[p])) ^ amps_norm[c, poles[p]]
+          log_denominator = log_denominator + amps_norm[c, poles[p]] *
+            log10((s - s1[p]) * (s - s1c[p]))
+        }
+        # tns = numerator / denominator
+        log_tns = log_numerator - log_denominator
+        # formants_per_bin = 10 * log10(abs(tns))
+        formants_per_bin = 10 * Re(log_tns)
+        # plot(bin_freqs, formants_per_bin, type = 'l')
+        spectralEnvelope[, c] = spectralEnvelope[, c] + formants_per_bin
       }
-      # tns = numerator / denominator
-      log_tns = log_numerator - log_denominator
-      # formants_per_bin = 10 * log10(abs(tns))
-      formants_per_bin = 10 * Re(log_tns)
-      # plot(bin_freqs, formants_per_bin, type = 'l')
-      spectralEnvelope[, c] = spectralEnvelope[, c] + formants_per_bin
     }
     spectralEnvelope = spectralEnvelope * formantDep
   } else {
