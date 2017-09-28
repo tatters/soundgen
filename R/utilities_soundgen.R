@@ -127,7 +127,9 @@ playme = function(sound, samplingRate = 16000) {
 #' @keywords internal
 #' @examples
 #' formants = soundgen:::convertStringToFormants(
-#'   phonemeString = 'aaeuiiiii', speaker = 'M1')
+#'   phonemeString = 'au', speaker = 'M1')
+#' formants = soundgen:::convertStringToFormants(
+#'   phonemeString = 'aeui', speaker = 'F1')
 #' formants = soundgen:::convertStringToFormants(
 #'   phonemeString = 'aaeuiiiii', speaker = 'Chimpanzee')
 convertStringToFormants = function(phonemeString, speaker = 'M1') {
@@ -149,7 +151,14 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
   vowels = list()
   formantNames = character()
   for (v in 1:length(unique_phonemes)) {
-    vowels[[v]] = presets[[speaker]]$Formants$vowels[unique_phonemes[v]][[1]]
+    p = presets[[speaker]]$Formants$vowels[unique_phonemes[v]][[1]]
+    for (f in 1:length(p)) {
+      if (is.numeric(p[[f]])) {
+        p[[f]] = data.frame(time = 0,
+                            freq = p[[f]])
+      }
+    }
+    vowels[[v]] = p
     formantNames = c(formantNames, names(vowels[[v]]))
   }
   formantNames = sort(unique(formantNames))
@@ -170,14 +179,8 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
       # way to pick up the closest vowel with this missing formant, not just the
       # first one, but that's only a problem in long sequences of vowels with
       # really different numbers of formants (nasalization)
-      vowels[[v]] [[f]] = data.frame(
-        'time' = 0,
-        'freq' = closestFreq,
-        'amp' = 0,
-        'width' = 100
-      )
-      # NB: width must be positive, otherwise dgamma crashes in
-      # getSpectralEnvelope()
+      vowels[[v]] [[f]] = data.frame(time = 0,
+                                     freq = closestFreq)
     }
   }
 
@@ -186,9 +189,7 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
   for (f in 1:length(formantNames)) {
     formants[[f]] = data.frame(
       'time' = vector(),
-      'freq' = vector(),
-      'amp' = vector(),
-      'width' = vector()
+      'freq' = vector()
     )
   }
   names(formants) = formantNames
@@ -198,8 +199,10 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
     vowel = vowels[[valid_phonemes[v]]]
     for (f in 1:length(vowel)) {
       formantName = names(vowel)[f]
-      formants[[formantName]] = rbind(formants[[formantName]],
-                                      vowel[[f]])
+      if (is.numeric(vowel[[f]])) vowel[[f]] = data.frame(time = 0,
+                                                          freq = vowel[[f]])
+      # formants[[formantName]] = rbind(formants[[formantName]],  vowel[[f]])
+      formants[[formantName]] = rbind(formants[[formantName]], vowel[[f]])
     }
   }
 
@@ -211,11 +214,6 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
     }
   }
 
-  # remove formants with amplitude 0 at all time points
-  all_zeroes = sapply(formants, function(f) {
-    sum(f$amp == 0) == length(f) # all values are 0
-  })
-  formants = formants [which(!all_zeroes), drop = FALSE]
   return (formants)
 }
 

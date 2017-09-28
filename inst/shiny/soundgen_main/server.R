@@ -852,7 +852,7 @@ server = function(input, output, session) {
       )
       lta = apply(s, 1, mean)
       freqs = seq(1, round(samplingRate / 2), length.out = nr)
-      plot(freqs, 10 * log10(lta), type = 'l', xlab = 'Frequency, Hz', ylab = 'Power, dB')
+      plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz', ylab = 'Power, dB')
     } else {
       getSpectralEnvelope(nr = nr,
                           nc = 100,

@@ -131,9 +131,7 @@ defaults = list(
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   amplAnchors = list(time = c(0, 1), value = c(120, 120)),
   amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 120)),
-  formants = list(f1 = data.frame(time = 0, freq = 860, amp = 25, width = 56),
-                  f2 = data.frame(time = 0, freq = 1430, amp = 25, width = 64),
-                  f3 = data.frame(time = 0, freq = 2900, amp = 25, width = 120)),
+  formants = list(f1 = 860, f2 = 1430, f3 = 2900),
   formantsNoise = NA,
   vowelString = NA,
   samplingRate = 16000,
@@ -171,41 +169,12 @@ presets = list(
     # able to specify formants in a string like 'aui' for this speaker
     Formants = list(
       vowels = list(
-        'a' = list(
-          f1=list(time=0, freq=860, amp=25, width=56), # amplitude in dB, freq and width in Hz
-          f2=list(time=0, freq=1430, amp=25, width=67),
-          f3=list(time=0, freq=2900, amp=25, width=120) # any number of formants may be specified
-        ),
-        'o' = list(
-          f1=list(time=0, freq=630, amp=25, width=53),
-          f2=list(time=0, freq=900, amp=25, width=57),
-          f3=list(time=0, freq=3000, amp=25, width=125),
-          f4=list(time=0, freq=3960, amp=25, width=180)
-        ),
-        'i' = list(
-          f1=list(time=0, freq=300, amp=25, width=73),
-          f2=list(time=0, freq=2700, amp=25, width=110),
-          f3=list(time=0, freq=3400, amp=25, width=150)
-        ),
-        'e' = list(
-          f1=list(time=0, freq=530, amp=25, width=150),
-          'f1.4'=list(time=0, freq=1100, amp=-20, width=200), # insert a zero-pole pair between F1 and F2
-          'f1.6'=list(time=0, freq=1400, amp=25, width=200),  # insert a zero-pole pair between F1 and F2
-          f2=list(time=0, freq=2400, amp=25, width=100),
-          f3=list(time=0, freq=4000, amp=25, width=180)
-        ),
-        'u' = list(
-          f1=list(time=0, freq=300, amp=25, width=60),
-          f2=list(time=0, freq=610, amp=25, width=50),
-          f3=list(time=0, freq=2100, amp=25, width=90),
-          f4=list(time=0, freq=4200, amp=25, width=200)
-        ),
-        '0' = list(  # schwa
-          f1=list(time=0, freq=640, amp=25, width=53),
-          f2=list(time=0, freq=1670, amp=25, width=73),
-          f3=list(time=0, freq=2700, amp=25, width=110),
-          f4=list(time=0, freq=3880, amp=25, width=175)
-        )
+        'a' = list(f1 = 860, f2 = 1430, f3 = 2900),
+        'o' = list(f1 = 630, f2 = 900, f3 = 3000, f4 = 3960),
+        'i' = list(f1 = 300, f2 = 2700, f3 = 3400),
+        'e' = list(f1 = 530, f2 = 2400, f3 = 4000),
+        'u' = list(f1 = 300, f2 = 610, f3 = 2100, f4 = 4200),
+        '0' = list(f1 = 640, f2 = 1670, f3 = 2700, f4 = 3880)  # schwa
       ),
       consonants = list(
         'h' = list(
@@ -262,43 +231,12 @@ presets = list(
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       vowels = list(
-        'a' = list(
-          f1=list(time=0, freq=900, amp=25, width=56), # amplitude in dB, freq and width in Hz
-          f2=list(time=0, freq=1300, amp=25, width=64),
-          f3=list(time=0, freq=3300, amp=25, width=140),
-          f4=list(time=0, freq=4340, amp=25, width=210)
-        ),
-        'o' = list(
-          f1=list(time=0, freq=800, amp=25, width=55),
-          f2=list(time=0, freq=1100, amp=25, width=60),
-          f3=list(time=0, freq=3560, amp=25, width=155),
-          f4=list(time=0, freq=5830, amp=25, width=330)
-        ),
-        'i' = list(
-          f1=list(time=0, freq=330, amp=25, width=67),
-          f2=list(time=0, freq=2700, amp=25, width=110),
-          f3=list(time=0, freq=3580, amp=25, width=160),
-          f4=list(time=0, freq=4710, amp=25, width=230),
-          f5=list(time=0, freq=5800, amp=25, width=330)
-        ),
-        'e' = list(
-          f1=list(time=0, freq=930, amp=25, width=57),
-          f2=list(time=0, freq=2470, amp=25, width=100),
-          f3=list(time=0, freq=3300, amp=25, width=140),
-          f4=list(time=0, freq=4200, amp=25, width=200)
-        ),
-        'u' = list(
-          f1=list(time=0, freq=450, amp=25, width=53),
-          f2=list(time=0, freq=850, amp=25, width=56),
-          f3=list(time=0, freq=2900, amp=25, width=120),
-          f4=list(time=0, freq=4100, amp=25, width=190)
-        ),
-        '0' = list(  # schwa
-          f1=list(time=0, freq=790, amp=25, width=55),
-          f2=list(time=0, freq=1600, amp=25, width=70),
-          f3=list(time=0, freq=3100, amp=25, width=130),
-          f4=list(time=0, freq=3900, amp=25, width=180)
-        )
+        'a' = list(f1 = 900, f2 = 1300, f3 = 3300, f4 = 4340),
+        'o' = list(f1 = 800, f2 = 1100, f3 = 3560, f4 = 5830),
+        'i' = list(f1 = 330, f2 = 2700, f3 = 3580, f4 = 4710, f5 = 5800),
+        'e' = list(f1 = 930, f2 = 2470, f3 = 3300, f4 = 4200),
+        'u' = list(f1 = 450, f2 = 850, f3 = 2900, f4 = 4100),
+        '0' = list(f1 = 790, f2 = 1600, f3 = 3100, f4 = 3900)  # schwa
       ),
       consonants = list(
         'h' = list(
