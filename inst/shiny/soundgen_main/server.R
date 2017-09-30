@@ -96,9 +96,14 @@ server = function(input, output, session) {
 
       # special cases
       if (!is.null(preset$pitchAnchors)) {
-        updateSliderInput(session, 'pitchRange',
-                          value = c(round(min(preset$pitchAnchors$value) / 2 ^ (1 / 12), 0),
-                                    round(max(preset$pitchAnchors$value) * 2 ^ (1 / 12), 0)))
+        if (is.na(preset$pitchAnchors)) {
+          updateCheckboxInput(session, 'generateVoiced', value = FALSE)
+        } else {
+          updateCheckboxInput(session, 'generateVoiced', value = TRUE)
+          updateSliderInput(session, 'pitchRange',
+                            value = c(round(min(preset$pitchAnchors$value) / 2 ^ (1 / 12), 0),
+                                      round(max(preset$pitchAnchors$value) * 2 ^ (1 / 12), 0)))
+        }
       }
 
       if(!is.null(preset$vowelString)) {
@@ -441,7 +446,7 @@ server = function(input, output, session) {
   output$pitch_anchorsGlobal = renderTable(expr = {
     if (is.list(myPars$pitchAnchorsGlobal)) {
       data.frame(
-        'Time 0 to 1' = myPars$pitchAnchorsGlobal$time,
+        'Time 0 to 1' = round(myPars$pitchAnchorsGlobal$time, 2),
         'Pitch delta, semitones' = round(myPars$pitchAnchorsGlobal$value, 0))
     } else {
       'None'
@@ -527,8 +532,8 @@ server = function(input, output, session) {
     )})
 
   output$noise_anchors = renderTable(expr = data.frame(
-    'Time, ms' = round(myPars$noiseAnchors$time,0),
-    'Amplitude, dB' = round(myPars$noiseAnchors$value,0),
+    'Time, ms' = round(myPars$noiseAnchors$time, 0),
+    'Amplitude, dB' = round(myPars$noiseAnchors$value, 0),
     row.names = 1:length(myPars$noiseAnchors$time)),
     digits = 0, align = 'c', rownames = FALSE)
 
@@ -549,8 +554,8 @@ server = function(input, output, session) {
       ylim = c(permittedValues['mouthOpening', 'low'], permittedValues['mouthOpening', 'high']),
       valueFloor = permittedValues['mouthOpening', 'low'],
       valueCeiling = permittedValues['mouthOpening', 'high'],
-      plot = TRUE,
-      ylab = 'Mouth opening (0.5 = neutral)')
+      plot = TRUE)
+    # ylab = 'Mouth opening (0.5 = neutral)')
     # xaxs = "i" to enforce exact axis limits, otherwise we exceed the range.
     # OR: xlim = range(myPars$noiseAnchors$time)
   })
@@ -622,7 +627,7 @@ server = function(input, output, session) {
     amplEnvelope_syl()
   })
 
-  amplEnvelope_syl <- reactive({
+  amplEnvelope_syl = reactive({
     getSmoothContour(anchors = myPars$amplAnchors,
                      xaxs = "i",
                      xlim = c(0, input$sylLen),
@@ -699,21 +704,21 @@ server = function(input, output, session) {
 
   amplEnvelopeGlobal = reactive({
     if (input$nSyl > 1) {
-      getSmoothContour (anchors = myPars$amplAnchorsGlobal,
-                        xaxs = "i", xlim = c(0, durTotal()),
-                        ylim = c(0, -input$throwaway),
-                        valueFloor = 0,
-                        valueCeiling = -input$throwaway,
-                        len = durTotal() / 1000 * 100,
-                        samplingRate = 100, plot = TRUE)
+      getSmoothContour(anchors = myPars$amplAnchorsGlobal,
+                       xaxs = "i", xlim = c(0, durTotal()),
+                       ylim = c(0, -input$throwaway),
+                       valueFloor = 0,
+                       valueCeiling = -input$throwaway,
+                       len = durTotal() / 1000 * 100,
+                       samplingRate = 100, plot = TRUE)
     } else {
-      plot (1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
-      text (x = 5, y = 5, labels = 'Need >1 syllable!', adj = .5, col = 'blue', cex = 1)
+      plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
+      text(x = 5, y = 5, labels = 'Need >1 syllable!', adj = .5, col = 'blue', cex = 1)
     }
   })
 
   observeEvent(input$plotAmplGlobal_click, {
-    click_x = round(round(input$plotAmplGlobal_click$x) / durTotal(), 2)
+    click_x = round(input$plotAmplGlobal_click$x / durTotal(), 2)
     click_y = round(input$plotAmplGlobal_click$y)
     # if the click is outside the allowed range of y, re-interpret the click as within the range
     if (click_y < 0) click_y = 0
@@ -730,8 +735,8 @@ server = function(input, output, session) {
         myPars$amplAnchorsGlobal$time[closest_point_in_time] =
           input$plotAmplGlobal_click$x
       }
-    } else { # otherwise, we simply add the new point as another anchor
-      myPars[['amplAnchorsGlobal']] = data.frame (
+    } else {  # otherwise, we simply add the new point as another anchor
+      myPars[['amplAnchorsGlobal']] = data.frame(
         'time' = c(myPars$amplAnchorsGlobal$time, click_x),
         'value' = c(myPars$amplAnchorsGlobal$value, click_y)
       ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc
@@ -979,7 +984,8 @@ server = function(input, output, session) {
     } else {
       seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
                         wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
-                        flim = c(0, 10), main = 'Spectrum')
+                        flim = c(input$spec_ylim[1], input$spec_ylim[2]),
+                        main = 'Spectrum')
     }
   })
 
@@ -1060,6 +1066,10 @@ server = function(input, output, session) {
   )
 
   observeEvent(input$generateAudio, {
+    generate()
+  })
+
+  generate = reactive({
     # first remove the previous sound file to avoid cluttering up the www/ folder
     if (!is.null(myPars$myfile)){
       file.remove(paste0('www/', myPars$myfile))

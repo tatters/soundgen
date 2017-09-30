@@ -1,4 +1,4 @@
-# TODO: spectrum plot - adjust frequency range as with spectrogram; add switch between spectrum/spectrogram for formants preview; change /e/ for M1; check all presets
+# TODO: update "generate voiced components" when switching to a new preset; check all presets
 
 #' @import stats graphics utils grDevices
 NULL
@@ -652,7 +652,7 @@ soundgen = function(repeatBout = 1,
             nc = nInt,
             formants = formantsNoise,
             formantDep = formantDep,
-            formantDepStoch = formantDepStoch,
+            formantDepStoch = 0,  # formantDepStoch,
             rolloffLip = rolloffLip,
             mouthAnchors = mouthAnchors,
             temperature = temperature,
