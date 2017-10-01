@@ -125,7 +125,7 @@ getSpectralEnvelope = function(nr,
     )
   }
   if (length(formants[[1]]) < 2 & is.numeric(vocalTract) &
-      temperature > 0 & formantDep > 0) {
+      temperature > 0 & formantDep > 0 & formantDepStoch > 0) {
     # ie if is.na(formants) or if there's something wrong with it,
     # we fall back on vocalTract to make a schwa
     freq = speedSound / 4 / vocalTract
@@ -373,7 +373,7 @@ getSpectralEnvelope = function(nr,
           tns = s1[c] * s1c[c] / (s - s1[c]) / (s - s1c[c])
           formant[, c] = log10(abs(tns))
           if (na_amp[f]) {
-            formant[, c] = formant[, c] * formantDepStoch
+            formant[, c] = formant[, c] * 20  # formantDepStoch can be 0
           } else {
             formant[, c] = formant[, c] / max(formant[, c]) * formants_upsampled[[f]][c, 'amp']
           }
@@ -616,3 +616,83 @@ getFormantDispersion = function(formants,
   return(formantDispersion)
 }
 
+
+#' Prepare a list of formants
+#'
+#' Internal soundgen function.
+#'
+#' Takes a string of phonemes entered WITHOUT ANY BREAKS. Recognized phonemes in
+#' the human preset dictionary: vowels "a" "o" "i" "e" "u" "0" (schwa);
+#' consonants "s" "x" "j".
+#' @param phonemeString a string of characters from the dictionary of phoneme
+#'   presets, e.g., uaaaaii (short u - longer a - medium-long i)
+#' @param speaker name of the preset dictionary to use
+#' @return Returns a list of formant values, which can be fed directly into
+#'   \code{\link{getSpectralEnvelope}}
+#' @keywords internal
+#' @examples
+#' formants = soundgen:::convertStringToFormants(phonemeString = 'a')
+#' formants = soundgen:::convertStringToFormants(
+#'   phonemeString = 'au', speaker = 'M1')
+#' formants = soundgen:::convertStringToFormants(
+#'   phonemeString = 'aeui', speaker = 'F1')
+#' formants = soundgen:::convertStringToFormants(
+#'   phonemeString = 'aaeuiiiii', speaker = 'Chimpanzee')
+convertStringToFormants = function(phonemeString, speaker = 'M1') {
+  availablePresets = names(presets[[speaker]]$Formants$vowels)
+  if (length(availablePresets) < 1) {
+    warning(paste0('No phoneme presets found for speaker ', speaker,
+                   '. Defaulting to M1'))
+    speaker = 'M1'
+    availablePresets = names(presets[[speaker]]$Formants$vowels)
+  }
+  input_phonemes = strsplit(phonemeString, "")[[1]]
+  valid_phonemes = input_phonemes[input_phonemes %in% availablePresets]
+  unique_phonemes = unique(valid_phonemes)
+  if (length(valid_phonemes) < 1)
+    return(NA)
+
+  # for each input vowel, look up the corresponding formant values
+  # in the presets dictionary and append to formants
+  vowels = list()
+  formantNames = character()
+  for (v in 1:length(unique_phonemes)) {
+    vowels[[v]] = presets[[speaker]]$Formants$vowels[unique_phonemes[v]][[1]]
+    formantNames = c(formantNames, names(vowels[[v]]))
+  }
+  formantNames = sort(unique(formantNames))
+  names(vowels) = unique_phonemes
+
+  # make sure we have filled in info on all formants from the entire
+  # sequence of vowels for each individual vowel
+  for (v in 1:length(vowels)) {
+    absentFormants = formantNames[!formantNames %in% names(vowels[[v]])]
+    for (f in absentFormants) {
+      closestFreq = unlist(sapply(vowels, function(x) x[f]))
+      # names_stripped = substr(names(closestFreq),
+      #                         nchar(names(closestFreq)) - 3,
+      #                         nchar(names(closestFreq)))
+      # closestFreq = closestFreq[which(names_stripped == 'freq')]
+      vowels[[v]] [[f]] = as.numeric(na.omit(closestFreq))[1]
+      # NB: instead of the last [1], ideally we should specify some intelligent
+      # way to pick up the closest vowel with this missing formant, not just the
+      # first one, but that's only a problem in long sequences of vowels with
+      # really different numbers of formants (nasalization)
+    }
+  }
+
+  # initialize a common list of exact formants
+  formants = vector("list", length(formantNames))
+  names(formants) = formantNames
+
+  # for each vowel, append its formants to the common list
+  for (v in 1:length(valid_phonemes)) {
+    vowel = vowels[[valid_phonemes[v]]]
+    for (f in 1:length(vowel)) {
+      formantName = names(vowel)[f]
+      formants[[formantName]] = c(formants[[formantName]], vowel[[f]])
+    }
+  }
+
+  return (formants)
+}

@@ -27,6 +27,9 @@ no breathing, 0 = as strong as the voiced (harmonic) part}
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms)}
 
+\item{flatSpectrum}{keep spectrum flat up to ... Hz (ie rolloffNoise applies
+only above this frequency)}
+
 \item{windowLength_points}{the length of fft window, points}
 
 \item{samplingRate}{sampling frequency, Hz}
@@ -46,8 +49,8 @@ Internal soundgen function.
 }
 \details{
 Generates white noise of length \code{len} and with spectrum defined by
-exponential decay \code{rolloffNoise} and/or a specified filter
-\code{filterNoise}. Algorithm: paints a spectrum with desired
+linear decay \code{rolloffNoise} above \code{flatSpectrum} and/or a specified
+filter \code{filterNoise}. Algorithm: paints a spectrum with desired
 characteristics, sets phase to zero, and generates a time sequence via
 inverse FFT. Noise can then be used as an additional source to be added to
 the glottal source AFTER the glottal source has been formant-filtered, or
@@ -81,5 +84,6 @@ filterNoise = soundgen:::getSpectralEnvelope(
     time = 0, freq = 150, amp = 30, width = 90)))
 noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
   samplingRate = samplingRate, filterNoise = filterNoise)
+# playme(noise, samplingRate = samplingRate)
 }
 \keyword{internal}

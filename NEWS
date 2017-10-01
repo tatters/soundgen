@@ -1,1 +1,17 @@
-RELEASE OF SOUNDGEN VERSION 1.0.0 [04-September-2017]
+          CHANGES IN SOUNDGEN VERSION 1.1.0 [...Sys.Date()...]
+
+MAJOR
+  * Formants are generated using either all-pole or zero-pole models (instead of densities of gamma distribution), and bandwidth are now compatible with standard phonetic measurements.
+  * Unvoiced component is generated with a flat spectrum up to a certain threshold, followed by linear rolloff.
+  * Back-compatibility in program syntax is preserved. However, because of these changes in the generation algorithm, the presets from version 1.0.0 will no longer generate the same sounds as before. The vignette on sound generation is updated to explain these changes in detail, and the preset library is updated accordingly.
+
+MINOR
+  * Support is added for shorthand specification of formants, e.g. formants = list(f1 = 800, f2 = c(1500, 2200)). Full format of 1.0.0 is also supported.
+  * Rolloff parameters are vectorized, allowing rolloff to change dynamically within a vocalization (command-line only; not available from the app).
+  * Numerous small bugs fixed, notably dB conversion, ...
+
+NEW FUNCTIONS:
+  * flatEnv(): normalizing the amplitude dynamically, i.e., keeping loudness constant throughout a sound file
+
+
+          RELEASE OF SOUNDGEN VERSION 1.0.0 [04-September-2017]

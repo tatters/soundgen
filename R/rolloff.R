@@ -83,12 +83,12 @@
 #'              play = TRUE, plot = TRUE)
 getRolloff = function(pitch_per_gc = c(440),
                       nHarmonics = 100,
-                      rolloff = -12,
-                      rolloffOct = -2,
+                      rolloff = -6,
+                      rolloffOct = -3,
                       rolloffParab = 0,
-                      rolloffParabHarm = 2,
+                      rolloffParabHarm = 3,
                       rolloffParabCeiling = NULL,
-                      rolloffKHz = -6,
+                      rolloffKHz = -3,
                       baseline = 200,
                       throwaway = -120,
                       samplingRate = 16000,
@@ -109,6 +109,7 @@ getRolloff = function(pitch_per_gc = c(440),
       assign(p, new)
     }
   }
+  rolloffParabHarm = round(rolloffParabHarm)
 
   ## Exponential decay
   deltas = matrix(0, nrow = nHarmonics, ncol = nGC)
@@ -122,8 +123,8 @@ getRolloff = function(pitch_per_gc = c(440),
 
   r = matrix(0, nrow = nHarmonics, ncol = nGC)
   for (h in 1:nHarmonics) {
-    r[h,] = ((rolloff + rolloffKHz *
-                (pitch_per_gc - baseline) / 1000) * log2(h)) + deltas[h,]
+    r[h, ] = ((rolloff + rolloffKHz *
+               (pitch_per_gc - baseline) / 1000) * log2(h)) + deltas[h,]
     # note that rolloff is here adjusted as a linear function of
     #   the difference between current f0 and baseline
     r[h, which(h * pitch_per_gc >= samplingRate / 2)] = -Inf # to avoid
@@ -174,7 +175,7 @@ getRolloff = function(pitch_per_gc = c(440),
   }
 
   # normalize so the amplitude of F0 is always 0
-  r = apply (r, 2, function(x) x - max(x))
+  r = apply(r, 2, function(x) x - max(x))
 
   # plotting
   if (plot) {
@@ -207,7 +208,7 @@ getRolloff = function(pitch_per_gc = c(440),
   }
 
   # convert from dB to linear amplitude multipliers
-  r = 2 ^ (r / 10)
+  r = 10 ^ (r / 20)
 
   # shorten by discarding harmonics that are 0 throughout the sound
   r = r[which(apply(r, 1, sum) > 0), , drop = FALSE]

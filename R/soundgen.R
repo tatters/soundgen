@@ -1,4 +1,4 @@
-# TODO: update "generate voiced components" when switching to a new preset; check all presets
+# TODO: reformatFormants: export simplified list without time if there is only one value per formant; check all presets
 
 #' @import stats graphics utils grDevices
 NULL
@@ -217,9 +217,9 @@ soundgen = function(repeatBout = 1,
                     vibratoDep = 0,
                     shimmerDep = 0,
                     attackLen = 50,
-                    rolloff = -12,
-                    rolloffOct = -12,
-                    rolloffKHz = -6,
+                    rolloff = -6,
+                    rolloffOct = -3,
+                    rolloffKHz = -3,
                     rolloffParab = 0,
                     rolloffParabHarm = 3,
                     rolloffLip = 6,
@@ -703,7 +703,7 @@ soundgen = function(repeatBout = 1,
     if (!is.na(amplAnchorsGlobal) &&
         length(which(amplAnchorsGlobal$value < -throwaway)) > 0) {
       # convert from dB to linear multiplier
-      amplAnchorsGlobal$value = 2 ^ (amplAnchorsGlobal$value / 10)
+      amplAnchorsGlobal$value = 10 ^ (amplAnchorsGlobal$value / 20)
       amplEnvelope = getSmoothContour(
         anchors = amplAnchorsGlobal,
         len = length(sound),

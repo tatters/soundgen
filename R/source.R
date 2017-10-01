@@ -5,8 +5,8 @@
 #' Internal soundgen function.
 #'
 #' Generates white noise of length \code{len} and with spectrum defined by
-#' exponential decay \code{rolloffNoise} and/or a specified filter
-#' \code{filterNoise}. Algorithm: paints a spectrum with desired
+#' linear decay \code{rolloffNoise} above \code{flatSpectrum} and/or a specified
+#' filter \code{filterNoise}. Algorithm: paints a spectrum with desired
 #' characteristics, sets phase to zero, and generates a time sequence via
 #' inverse FFT. Noise can then be used as an additional source to be added to
 #' the glottal source AFTER the glottal source has been formant-filtered, or
@@ -19,6 +19,8 @@
 #'   breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
 #'   aspiration noise at the given time anchors (to be smoothed). throwaway =
 #'   no breathing, 0 = as strong as the voiced (harmonic) part
+#' @param flatSpectrum keep spectrum flat up to ... Hz (ie rolloffNoise applies
+#'   only above this frequency)
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points
 #' @param filterNoise (optional): in addition to using rolloffNoise,
@@ -54,10 +56,11 @@
 #'     time = 0, freq = 150, amp = 30, width = 90)))
 #' noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
 #'   samplingRate = samplingRate, filterNoise = filterNoise)
+#' # playme(noise, samplingRate = samplingRate)
 generateNoise = function(len,
                          noiseAnchors = data.frame(
-                           'time' = c(0, 300),
-                           'value' = c(-120, -120)
+                           time = c(0, 300),
+                           value = c(-120, -120)
                          ),
                          rolloffNoise = -4,
                          attackLen = 10,
@@ -79,7 +82,7 @@ generateNoise = function(len,
   # plot(breathingStrength)
 
   # convert anchor amplitudes from dB to linear multipliers
-  breathingStrength = 2 ^ (breathingStrength / 10)
+  breathingStrength = 10 ^ (breathingStrength / 20)
 
   if (sum(is.na(breathingStrength)) > 0) {
     return(rep(0, len))
@@ -104,19 +107,16 @@ generateNoise = function(len,
   }
   # modify the exact filter (if provided) by adding the specified
   #   basic linear rolloff
-  # filterNoise = apply(filterNoise, 2, function(x) {
-  #   # x * 2 ^ (rolloffNoise / 10 * log2(1:nr))  # exponential rolloff
-  # })
-  idx = (flatBins + 1):nr  # modified bins
-  mult = 2 ^ (rolloffNoise / 10 * (idx - flatBins) / binsPerKHz)  # plot(mult)
-  # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 71: spectrum of turbulent noise
+  idx = (flatBins + 1):nr  # the bins that will be modified
+  mult = 10 ^ (rolloffNoise / 20 * (idx - flatBins) / binsPerKHz)  # plot(mult)
+  # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 7.1: spectrum of turbulent noise
   filterNoise[(flatBins + 1):nr, ] = apply(
     filterNoise[(flatBins + 1):nr, , drop = FALSE],
     2,
     function(x) x * mult
   )
   # plot(filterNoise[, 1], type = 'l')
-  # plot(log2(filterNoise[, 1]) * 10, type = 'l')
+  # plot(log10(filterNoise[, 1]) * 20, type = 'l')
 
   # instead of synthesizing the time series and then doing fft-ifft,
   #   we can simply synthesize spectral noise, convert to complex
@@ -145,8 +145,7 @@ generateNoise = function(len,
   # plot(breathing, type = 'l')
   # playme(breathing, samplingRate = samplingRate)
   # spectrogram(breathing, samplingRate = samplingRate)
-  # seewave::meanspectrogram(breathing, f = samplingRate, wl = windowLength_points,
-  #   dB = 'max0')
+  # seewave::meanspec(breathing, f = samplingRate, wl = windowLength_points, dB = 'max0')
   return(breathing)
 }
 
@@ -459,7 +458,7 @@ generateHarmonics = function(pitch,
     )
     # plot (amplEnvelope, type = 'l')
     # convert from dB to linear multiplier
-    amplEnvelope = 2 ^ (amplEnvelope / 10)
+    amplEnvelope = 10 ^ (amplEnvelope / 20)
     waveform = waveform * amplEnvelope
   }
   waveform = waveform / max(waveform)
