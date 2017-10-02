@@ -8,12 +8,12 @@ generateHarmonics(pitch, attackLen = 50, nonlinBalance = 0, nonlinDep = 0,
   jitterDep = 0, jitterLen = 1, vibratoFreq = 100, vibratoDep = 0,
   shimmerDep = 0, creakyBreathy = 0, rolloff = -18, rolloffOct = -2,
   rolloffKHz = -6, rolloffParab = 0, rolloffParabHarm = 3,
-  rolloffLip = 6, rolloff_perAmpl = 12, temperature = 0,
-  pitchDriftDep = 0.5, pitchDriftFreq = 0.125,
-  randomWalk_trendStrength = 0.5, shortestEpoch = 300, subFreq = 100,
-  subDep = 0, amDep = 0, amFreq = 30, amplAnchors = NA, overlap = 75,
-  samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, throwaway = -120)
+  rolloff_perAmpl = 12, temperature = 0, pitchDriftDep = 0.5,
+  pitchDriftFreq = 0.125, randomWalk_trendStrength = 0.5,
+  shortestEpoch = 300, subFreq = 100, subDep = 0, amDep = 0,
+  amFreq = 30, amplAnchors = NA, overlap = 75, samplingRate = 16000,
+  pitchFloor = 75, pitchCeiling = 3500, pitchSamplingRate = 3500,
+  throwaway = -120)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
@@ -68,10 +68,6 @@ exponential decay.}
 
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
-
-\item{rolloffLip}{the effect of lip radiation on source spectrum, dB/oct
-(the default of +6 dB/oct produces a high-frequency boost when the mouth is
-open)}
 
 \item{rolloff_perAmpl}{as amplitude goes down from max to
 \code{throwaway}, \code{rolloff} increases by \code{rolloff_perAmpl}

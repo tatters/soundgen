@@ -5,12 +5,12 @@
 \title{Spectral envelope}
 \usage{
 getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1, rolloffLip = 6,
-  mouthAnchors = NA, mouthOpenThres = 0, openMouthBoost = 0,
-  vocalTract = NULL, temperature = 0.05, formDrift = 0.3,
-  formDisp = 0.2, formantDepStoch = 20, smoothLinearFactor = 1,
-  samplingRate = 16000, speedSound = 35400, plot = FALSE,
-  duration = NULL, colorTheme = c("bw", "seewave", "...")[1], nCols = 100,
-  xlab = "Time", ylab = "Frequency, kHz", ...)
+  rolloffNose = 4, mouthAnchors = NA, mouthOpenThres = 0.2,
+  openMouthBoost = 0, vocalTract = NULL, temperature = 0.05,
+  formDrift = 0.3, formDisp = 0.2, formantDepStoch = 20,
+  smoothLinearFactor = 1, samplingRate = 16000, speedSound = 35400,
+  plot = FALSE, duration = NULL, colorTheme = c("bw", "seewave",
+  "...")[1], nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where
@@ -31,19 +31,24 @@ to amplitudes in \code{formants})}
 (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
+\item{rolloffNose}{the effect of radiation through the nose on source
+spectrum, dB/oct (the alternative to \code{rolloffLip} when the mouth is
+closed)}
+
 \item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 i.e. no modification) or a dataframe specifying the time (ms) and value of
 mouth opening}
 
-\item{mouthOpenThres}{the mouth is considered to be open when its
-opening is greater than \code{mouthOpenThres}. Defaults to 0}
+\item{mouthOpenThres}{open the lips (switch from nose radiation to lip
+radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1}
 
 \item{openMouthBoost}{amplify the voice when the mouth is open by
 \code{openMouthBoost} dB}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
-opens and closes}
+opens and closes. If \code{NULL} or \code{NA}, the length is estimated
+based on specified formant frequencies (if any)}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
@@ -109,10 +114,6 @@ e = getSpectralEnvelope(nr = 512, nc = 50,
 e = getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
   temperature = 0.1, formantDepStoch = 20, plot = TRUE)
-# stronger extra formants
-e = getSpectralEnvelope(nr = 512, nc = 50,
-  formants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, formantDepStoch = 30, plot = TRUE)
 # a schwa based on the length of vocal tract = 15.5 cm
 e = getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
   temperature = .1, vocalTract = 15.5, plot = TRUE)
@@ -120,6 +121,11 @@ e = getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
 # no formants at all, only lip radiation
 e = getSpectralEnvelope(nr = 512, nc = 50,
   formants = NA, temperature = 0, plot = TRUE)
+
+# mouth opening
+e = getSpectralEnvelope(nr = 512, nc = 50,
+  vocalTract = 16, plot = TRUE, rolloffLip = 6, rolloffNose = 4,
+  mouthAnchors = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 
 # manual specification of formants
 e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,

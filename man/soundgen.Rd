@@ -12,17 +12,17 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   noiseAnchorsDep = 0.1, amplAnchorsDep = 0.1), maleFemale = 0,
   creakyBreathy = 0, nonlinBalance = 0, nonlinDep = 50, jitterLen = 1,
   jitterDep = 3, vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0,
-  attackLen = 50, rolloff = -12, rolloffOct = -12, rolloffKHz = -6,
+  attackLen = 50, rolloff = -9, rolloffOct = -3, rolloffKHz = -3,
   rolloffParab = 0, rolloffParabHarm = 3, rolloffLip = 6,
-  formants = list(f1 = 860, f2 = 1430, f3 = 2900), formantDep = 1,
-  formantDepStoch = 20, vocalTract = 15.5, subFreq = 100, subDep = 100,
-  shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
-  noiseAnchors = data.frame(time = c(0, 300), value = c(-120, -120)),
-  formantsNoise = NA, rolloffNoise = -14, mouthAnchors = data.frame(time =
-  c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
-  samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitchFloor = 50, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, throwaway = -120,
+  rolloffNose = 4, mouthOpenThres = 0, formants = list(f1 = 860, f2 =
+  1430, f3 = 2900), formantDep = 1, formantDepStoch = 20, vocalTract = NA,
+  subFreq = 100, subDep = 100, shortestEpoch = 300, amDep = 0,
+  amFreq = 30, amShape = 0, noiseAnchors = data.frame(time = c(0, 300),
+  value = c(-80, -80)), formantsNoise = NA, rolloffNoise = -4,
+  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
+  amplAnchors = NA, amplAnchorsGlobal = NA, samplingRate = 16000,
+  windowLength = 50, overlap = 75, addSilence = 100, pitchFloor = 50,
+  pitchCeiling = 3500, pitchSamplingRate = 3500, throwaway = -80,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
 }
@@ -116,6 +116,13 @@ exponential decay.}
 (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
+\item{rolloffNose}{the effect of radiation through the nose on source
+spectrum, dB/oct (the alternative to \code{rolloffLip} when the mouth is
+closed)}
+
+\item{mouthOpenThres}{open the lips (switch from nose radiation to lip
+radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1}
+
 \item{formants}{either a character string like "aaui" referring to default
 presets for speaker "M1" or a list of formant times, frequencies,
 amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
@@ -130,7 +137,8 @@ the highest specified formant, dB (only if temperature > 0)}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
-opens and closes}
+opens and closes. If \code{NULL} or \code{NA}, the length is estimated
+based on specified formant frequencies (if any)}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
 dynamically so f0 is always a multiple of subFreq)}

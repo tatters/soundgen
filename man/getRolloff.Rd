@@ -4,9 +4,9 @@
 \alias{getRolloff}
 \title{Control rolloff of harmonics}
 \usage{
-getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -12,
-  rolloffOct = -2, rolloffParab = 0, rolloffParabHarm = 2,
-  rolloffParabCeiling = NULL, rolloffKHz = -6, baseline = 200,
+getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -6,
+  rolloffOct = -3, rolloffParab = 0, rolloffParabHarm = 3,
+  rolloffParabCeiling = NULL, rolloffKHz = -3, baseline = 200,
   throwaway = -120, samplingRate = 16000, plot = FALSE)
 }
 \arguments{

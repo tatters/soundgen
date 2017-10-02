@@ -1,4 +1,4 @@
-# TODO: reformatFormants: export simplified list without time if there is only one value per formant; check all presets
+# TODO: check rolloff per kHz; check all presets
 
 #' @import stats graphics utils grDevices
 NULL
@@ -80,6 +80,11 @@ NULL
 #' @param rolloffLip the effect of lip radiation on source spectrum, dB/oct
 #'   (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 #'   open)
+#' @param rolloffNose the effect of radiation through the nose on source
+#'   spectrum, dB/oct (the alternative to \code{rolloffLip} when the mouth is
+#'   closed)
+#' @param mouthOpenThres open the lips (switch from nose radiation to lip
+#'   radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1
 #' @param formants either a character string like "aaui" referring to default
 #'   presets for speaker "M1" or a list of formant times, frequencies,
 #'   amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
@@ -91,7 +96,8 @@ NULL
 #'   the highest specified formant, dB (only if temperature > 0)
 #' @param vocalTract the length of vocal tract, cm. Used for calculating formant
 #'   dispersion (for adding extra formants) and formant transitions as the mouth
-#'   opens and closes
+#'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated
+#'   based on specified formant frequencies (if any)
 #' @param subFreq target frequency of subharmonics, Hz (lower than f0, adjusted
 #'   dynamically so f0 is always a multiple of subFreq)
 #' @param subDep the width of subharmonic band, Hz. Regulates how quickly the
@@ -217,16 +223,18 @@ soundgen = function(repeatBout = 1,
                     vibratoDep = 0,
                     shimmerDep = 0,
                     attackLen = 50,
-                    rolloff = -6,
+                    rolloff = -9,
                     rolloffOct = -3,
                     rolloffKHz = -3,
                     rolloffParab = 0,
                     rolloffParabHarm = 3,
                     rolloffLip = 6,
+                    rolloffNose = 4,
+                    mouthOpenThres = 0,
                     formants = list(f1 = 860, f2 = 1430, f3 = 2900),
                     formantDep = 1,
                     formantDepStoch = 20,
-                    vocalTract = 15.5,
+                    vocalTract = NA,
                     subFreq = 100,
                     subDep = 100,
                     shortestEpoch = 300,
@@ -234,9 +242,9 @@ soundgen = function(repeatBout = 1,
                     amFreq = 30,
                     amShape = 0,
                     noiseAnchors = data.frame(time = c(0, 300),
-                                              value = c(-120, -120)),
+                                              value = c(-80, -80)),
                     formantsNoise = NA,
-                    rolloffNoise = -14,
+                    rolloffNoise = -4,
                     mouthAnchors = data.frame(time = c(0, 1),
                                               value = c(.5, .5)),
                     amplAnchors = NA,
@@ -248,7 +256,7 @@ soundgen = function(repeatBout = 1,
                     pitchFloor = 50,
                     pitchCeiling = 3500,
                     pitchSamplingRate = 3500,
-                    throwaway = -120,
+                    throwaway = -80,
                     invalidArgAction = c('adjust', 'abort', 'ignore')[1],
                     plot = FALSE,
                     play = FALSE,
@@ -325,7 +333,7 @@ soundgen = function(repeatBout = 1,
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
     noiseAnchors = data.frame(time = c(0, sylLen + 100),
-                              value = c(-120, -120))
+                              value = c(-throwaway, -throwaway))
     noiseAnchors$value = noiseAnchors$value + creakyBreathy * 160
     noiseAnchors$value[noiseAnchors$value >
                          permittedValues['noiseAmpl', 'high']] =
@@ -413,7 +421,6 @@ soundgen = function(repeatBout = 1,
     'shortestEpoch' = shortestEpoch,
     'subFreq' = subFreq,
     'subDep' = subDep,
-    'rolloffLip' = rolloffLip,
     'amDep' = amDep,
     'amFreq' = amFreq,
     'nonlinBalance' = nonlinBalance,
@@ -654,6 +661,8 @@ soundgen = function(repeatBout = 1,
             formantDep = formantDep,
             formantDepStoch = 0,  # formantDepStoch,
             rolloffLip = rolloffLip,
+            rolloffNose = rolloffNose,
+            mouthOpenThres = mouthOpenThres,
             mouthAnchors = mouthAnchors,
             temperature = temperature,
             formDrift = tempEffects$formDrift,
@@ -748,6 +757,8 @@ soundgen = function(repeatBout = 1,
         formantDep = formantDep,
         formantDepStoch = formantDepStoch,
         rolloffLip = rolloffLip,
+        rolloffNose = rolloffNose,
+        mouthOpenThres = mouthOpenThres,
         mouthAnchors = mouthAnchors,
         temperature = temperature,
         formDrift = tempEffects$formDrift,

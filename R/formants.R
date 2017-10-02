@@ -27,8 +27,6 @@
 #'   phonetics", p. 138
 #' @param openMouthBoost amplify the voice when the mouth is open by
 #'   \code{openMouthBoost} dB
-#' @param mouthOpenThres the mouth is considered to be open when its
-#'   opening is greater than \code{mouthOpenThres}. Defaults to 0
 #' @param formantDepStoch the amplitude of additional formants added above
 #'   the highest specified formant (only if temperature > 0)
 #' @param smoothLinearFactor regulates smoothing of formant anchors (0 to +Inf)
@@ -58,10 +56,6 @@
 #' e = getSpectralEnvelope(nr = 512, nc = 50,
 #'   formants = soundgen:::convertStringToFormants('a'),
 #'   temperature = 0.1, formantDepStoch = 20, plot = TRUE)
-#' # stronger extra formants
-#' e = getSpectralEnvelope(nr = 512, nc = 50,
-#'   formants = soundgen:::convertStringToFormants('a'),
-#'   temperature = 0.1, formantDepStoch = 30, plot = TRUE)
 #' # a schwa based on the length of vocal tract = 15.5 cm
 #' e = getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
 #'   temperature = .1, vocalTract = 15.5, plot = TRUE)
@@ -69,6 +63,11 @@
 #' # no formants at all, only lip radiation
 #' e = getSpectralEnvelope(nr = 512, nc = 50,
 #'   formants = NA, temperature = 0, plot = TRUE)
+#'
+#' # mouth opening
+#' e = getSpectralEnvelope(nr = 512, nc = 50,
+#'   vocalTract = 16, plot = TRUE, rolloffLip = 6, rolloffNose = 4,
+#'   mouthAnchors = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 #'
 #' # manual specification of formants
 #' e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,
@@ -83,8 +82,9 @@ getSpectralEnvelope = function(nr,
                                formants = NA,
                                formantDep = 1,
                                rolloffLip = 6,
+                               rolloffNose = 4,
                                mouthAnchors = NA,
-                               mouthOpenThres = 0,
+                               mouthOpenThres = 0.2,
                                openMouthBoost = 0,
                                vocalTract = NULL,
                                temperature = 0.05,
@@ -105,7 +105,7 @@ getSpectralEnvelope = function(nr,
   formants = reformatFormants(formants)
 
   ## estimate vocal tract length
-  if (!is.numeric(vocalTract) & is.numeric(formants[[1]]$freq)) {
+  if (!is.numeric(vocalTract) && is.list(formants) && is.numeric(formants[[1]]$freq)) {
     # if we don't know vocalTract, but at least one formant is defined,
     # we guess the length of vocal tract
     formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
@@ -283,8 +283,8 @@ getSpectralEnvelope = function(nr,
         valueCeiling = permittedValues['mouthOpening', 'high'],
         plot = FALSE
       )
-      mouthOpening_upsampled[mouthOpening_upsampled < mouthOpenThres] = 0
-      mouthOpen_binary = ifelse(mouthOpening_upsampled > 0, 1, 0)
+      # mouthOpening_upsampled[mouthOpening_upsampled < mouthOpenThres] = 0
+      mouthOpen_binary = ifelse(mouthOpening_upsampled > mouthOpenThres, 1, 0)
     }
     # plot(mouthOpening_upsampled, type = 'l')
 
@@ -445,12 +445,15 @@ getSpectralEnvelope = function(nr,
   #                          function(x) x + rolloffAdjust)
   # END OF FORMANTS
 
-  # add lip radiation when the mouth is open
+  # add lip radiation when the mouth is open and nose radiation when the mouth is closed
   lip_dB = rolloffLip * log2(1:nr) # vector of length nr
+  nose_dB = rolloffNose * log2(1:nr)
+  # plot(lip_dB, type = 'l'); plot(nose_dB, type = 'l')
   for (c in 1:nc) {
     spectralEnvelope[, c] = spectralEnvelope[, c] +
-      (lip_dB * mouthOpen_binary[c]) *
-      10 ^ (mouthOpening_upsampled[c] * openMouthBoost / 20)
+      lip_dB * mouthOpen_binary[c] +
+      nose_dB * (1 - mouthOpen_binary[c]) +
+      mouthOpen_binary[c] * openMouthBoost
   }
 
   # convert from dB to linear multiplier of power spectrum

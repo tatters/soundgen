@@ -138,9 +138,16 @@ server = function(input, output, session) {
       if (!is.list(preset$noiseAnchors) & is.numeric(preset$sylLen)) {
         myPars$noiseAnchors = data.frame(
           time = c(0, preset$sylLen),
-          value = c(-120, -120)
+          value = c(input$throwaway, input$throwaway)
         )
         myPars$sylDur_previous = input$sylLen
+      }
+
+      if (is.numeric(preset$vocalTract)) {
+        updateSliderInput(session, inputId = 'vocalTract', value = preset$vocalTract)
+        updateCheckboxInput(session, inputId = 'estimateVTL', value = FALSE)
+      } else {
+        updateCheckboxInput(session, inputId = 'estimateVTL', value = TRUE)
       }
     }
   })
@@ -244,6 +251,9 @@ server = function(input, output, session) {
     myPars$updateDur = TRUE  # execute after the first change (resetting)
   })
 
+  vocalTract = reactive({
+    ifelse(input$estimateVTL, NA, input$vocalTract)
+  })
 
   ## P I T C H
   observeEvent(input$generateVoiced, {
@@ -850,14 +860,14 @@ server = function(input, output, session) {
                               formantDep = input$formantDep,
                               rolloffLip = input$rolloffLip,
                               mouthAnchors = myPars$mouthAnchors,
-                              vocalTract = input$vocalTract,
+                              vocalTract = vocalTract(),
                               temperature = input$temperature,
                               formantDepStoch = input$formantDepStoch,
                               samplingRate = input$samplingRate,
                               plot = FALSE
       )
       lta = apply(s, 1, mean)
-      freqs = seq(1, round(samplingRate / 2), length.out = nr)
+      freqs = seq(1, round(input$samplingRate / 2), length.out = nr)
       plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz', ylab = 'Power, dB')
     } else {
       getSpectralEnvelope(nr = nr,
@@ -866,7 +876,7 @@ server = function(input, output, session) {
                           formantDep = input$formantDep,
                           rolloffLip = input$rolloffLip,
                           mouthAnchors = myPars$mouthAnchors,
-                          vocalTract = input$vocalTract,
+                          vocalTract = vocalTract(),
                           temperature = input$temperature,
                           formantDepStoch = input$formantDepStoch,
                           samplingRate = input$samplingRate,
@@ -1016,10 +1026,12 @@ server = function(input, output, session) {
       rolloffParabHarm = input$rolloffParabHarm,
       rolloffKHz = input$rolloffKHz,
       rolloffLip = input$rolloffLip,
+      rolloffNose = input$rolloffNose,
+      mouthOpenThres = input$mouthOpenThres,
       formants = myPars$formants,
       formantDep = input$formantDep,
       formantDepStoch = input$formantDepStoch,
-      vocalTract = input$vocalTract,
+      vocalTract = vocalTract(),
       subFreq = input$subFreq,
       subDep = input$subDep,
       shortestEpoch = input$shortestEpoch,

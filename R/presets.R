@@ -36,15 +36,16 @@ permittedValues = matrix(c(
   'vibratoDep', 0, 0, 3, 0.125,
   'shimmerDep', 0, 0, 100, 1,
   'attackLen', 50, 0, 200, 10,
-  'rolloff', -6, -30, 0, 1,
+  'rolloff', -9, -30, 0, 1,
   'rolloffOct', -3, -30, 10, 1,
   'rolloffParab', 0, -30, 30, 1,
   'rolloffParabHarm', 3, 1, 20, 1,
   'rolloffKHz', -3, -20, 0, 1,
   'rolloffLip', 6, 0, 20, 1,
+  'rolloffNose', 4, 0, 20, 1,
+  'mouthOpenThres', 0, 0, 1, .05,
   'formantDep', 1, 0, 2, .1,
   'formantDepStoch', 20, 0, 40, 5,
-  'vocalTract', 15.5, 2, 100, .5,
   'subFreq', 100, 10, 1000, 10,
   'subDep', 100, 0, 500, 10,
   'shortestEpoch', 300, 50, 500, 25,
@@ -56,12 +57,13 @@ permittedValues = matrix(c(
   'rolloffNoise', -4, -20, 20, 1,
 
   # other soundgen settings, which are NOT updateable sliders in soundgen_app()
+  'vocalTract', 15.5, 2, 100, .5,
   'overlap', 50, 0, 99, 1,
   'addSilence', 100, 0, 1000, 50,
   'pitchFloor', 50, 1, 1000, 1,
   'pitchCeiling', 3500, 10, 100000, 10,
   'pitchSamplingRate', 3500, 10, 100000, 10,
-  'throwaway', -120, -200, -10, 10,
+  'throwaway', -80, -200, -10, 10,
 
   # soundgen_app() settings, which are not needed for soundgen()
   'specWindowLength', 40, 5, 100, 2.5,
@@ -71,7 +73,7 @@ permittedValues = matrix(c(
   'pitch', 100, 25, 3500, 1,  # set pitch range per species
   'pitchDeltas', 0, -24, 24, 1,  # amplPitchGlobal range
   'time', 0, 0, 5000, 1,
-  'noiseAmpl', 0, -120, 40, 1  # for plotting - noise ylim
+  'noiseAmpl', 0, -80, 40, 1  # for plotting - noise ylim
 ), ncol=5, byrow=TRUE)
 temp = permittedValues[,1]
 permittedValues = apply (permittedValues[,2:5], 2, as.numeric)
@@ -97,45 +99,45 @@ defaults = list(
   vibratoDep = 0,
   shimmerDep = 0,
   attackLen = 50,
-  rolloff = -6,
+  rolloff = -9,
   rolloffOct = -3,
   rolloffParab = 0,
   rolloffParabHarm = 3,
   rolloffKHz = -3,
   rolloffLip = 6,
+  rolloffNose = 4,
+  mouthOpenThres = 0,
   formantDep = 1,
   formantDepStoch = 20,
-  vocalTract = 15.5,
   subFreq = 100,
   subDep = 100,
   shortestEpoch = 300,
   amDep = 0,
   amFreq = 30,
   amShape = 0,
-  rolloffNoise = -4,
   samplingRate = 16000,
   windowLength = 40,
+  rolloffNoise = -4,
   windowLength_points = 512,
   overlap = 75,
   addSilence = 100,
   pitchFloor = 25,
   pitchCeiling = 3500,
   pitchSamplingRate = 3500,
-  throwaway = -120,
+  throwaway = -80,
   pitchAnchors = list(
     time = c(0, .1, .9, 1),
     value = c(100, 150, 135, 100)
   ),
   pitchAnchorsGlobal = list(time = c(0, 1), value = c(0, 0)),
-  noiseAnchors = list(time = c(0, 300), value = c(-120, -120)),
+  noiseAnchors = list(time = c(0, 300), value = c(-80, -80)),
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
-  amplAnchors = list(time = c(0, 1), value = c(120, 120)),
-  amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 120)),
+  amplAnchors = list(time = c(0, 1), value = c(80, 80)),
+  amplAnchorsGlobal = list(time = c(0, 1), value = c(80, 80)),
   formants = list(f1 = 860, f2 = 1430, f3 = 2900),
   formantsNoise = NA,
   vowelString = NA,
-  samplingRate = 16000,
-  windowLength = 50
+  vocalTract = NA
 )
 # devtools::use_data(defaults, overwrite = TRUE)
 
@@ -152,17 +154,17 @@ presets = list(
   M1 = list(
     Vowel1 = 'soundgen()', # these are just the global defaults
 
-    Gasp = 'soundgen(sylLen = 250, pitchAnchors = list(time = c(0, 0.38, 1), value = c(147, 163, 150)), temperature = 0.05, nonlinBalance = 45, jitterDep = 1, shimmerDep = 15, rolloff = -26, rolloffOct = -9, rolloffParab = 40, rolloffParabHarm = 5, rolloffKHz = -15, rolloffLip = 0, formants = list(f1 = 900, f2 = 1400, f3 = 2200), formantDep = 1, vocalTract = 18, subFreq = 80, subDep = 35, shortestEpoch = 50, amDep = 20, amFreq = 10, noiseAnchors = list(time = c(-36, 9, 238, 333), value = c(-86, -44, -72, -118)), rolloffNoise = -12, amplAnchors = list(time = c(0, 1), value = c(120, 72)))',
+    Gasp = 'soundgen(sylLen = 250, pitchAnchors = list(time = c(0, 0.38, 1), value = c(147, 163, 150)), temperature = 0.05, nonlinBalance = 45, jitterDep = 1, shimmerDep = 15, attackLen = 10, rolloff = -3, rolloffOct = 0, rolloffLip = 0, formants = NULL, vocalTract = 17, subFreq = 80, subDep = 35, shortestEpoch = 50, noiseAnchors = list(time = c(-45, 5, 258, 482), value = c(-80, -5, -9, -60)), rolloffNoise = 0, mouthAnchors = list(time = c(0, 0.05, 1), value = c(0, 0.46, 0.15)), amplAnchors = list(time = c(0, 1), value = c(79, 68)), throwaway = -80)',
 
-    Roar = 'soundgen(sylLen = 960, pitchAnchors = list(time = c(0, 0.13, 0.9, 1), value = c(151, 187, 139, 120)), temperature = 0.1, nonlinBalance = 60, jitterDep = 0.7, rolloff = -18, rolloffOct = 0, formants = list(f1 = 500, f2 = 1000, f3 = 1500), vocalTract = 19, subFreq = 90, subDep = 60, shortestEpoch = 150, noiseAnchors = list(time = c(0, 960), value = c(-120, -120)), mouthAnchors = list(time = c(0, 0.1, 1), value = c(0.38, 0.71, 0.42)))',
+    Roar = 'soundgen(sylLen = 960, pitchAnchors = list(time = c(0, 0.13, 0.9, 1), value = c(151, 187, 139, 120)), temperature = 0.1, nonlinBalance = 60, jitterDep = 0.7, rolloff = -12, rolloffOct = 3, formants = list(f1 = 500, f2 = 1000, f3 = 1500), vocalTract = 19, subFreq = 90, subDep = 60, shortestEpoch = 150, noiseAnchors = list(time = c(0, 960), value = c(-80, -80)), mouthAnchors = list(time = c(0, 0.1, 1), value = c(0.38, 0.71, 0.42)))',
 
-    Moan = 'soundgen(sylLen = 800, pitchAnchors = list(time = c(0, 1), value = c(203, 143)), nonlinBalance = 100, jitterDep = 1.3, jitterLen = 59, attackLen = 100, rolloff = -30, rolloffOct = 0, formants = list(f1 = c(630, 860), f2 = c(900, 1430), f3 = c(3000, 2900), f4 = c(3960, 3960)), subDep = 0, noiseAnchors = list(time = c(-15, 743, 890), value = c(-63, -48, -120)), rolloffNoise = -15, mouthAnchors = list(time = c(0, 0.05, 1), value = c(0.32, 0.54, 0.3)), amplAnchors = list(time = c(0, 1), value = c(120, 104)))',
+    Moan = 'soundgen(sylLen = 800, pitchAnchors = list(time = c(0, 0.21, 1), value = c(230, 181, 143)), nonlinBalance = 100, jitterDep = 1, jitterLen = 60, attackLen = 100, rolloff = -12, rolloffOct = 0, formants = list(f1 = c(630, 860), f2 = c(900, 1430), f3 = c(3000, 2900), f4 = c(3960, 3960)), subDep = 0, noiseAnchors = list(time = c(-20, 801, 911), value = c(-39, -27, -80)), rolloffNoise = -8, mouthAnchors = list(time = c(0, 1), value = c(0.54, 0.3)), amplAnchors = list(time = c(0, 1), value = c(80, 71)))',
 
     Sigh = 'soundgen(sylLen = 50, pitchAnchors = NA, pitchAnchorsGlobal = NULL, temperature = 0.1, formants = list(f1 = 860, f2 = 1430, f3 = 2900), vocalTract = 17, noiseAnchors = list(time = c(-20, 104, 756, 1252), value = c(26, 40, 23, -22)))',
 
-    Laugh = 'soundgen(nSyl = 5, sylLen = 120, pauseLen = 120, pitchAnchors = list(time = c(0, 1), value = c(180, 166)), pitchAnchorsGlobal = list(time = c(0, 0.3, 1), value = c(1, 2, 0)), temperature = 0.1, nonlinBalance = 50, jitterDep = 0.8, attackLen = 10, formants = list(f1 = list(time = c(0, 0.5, 1), freq = c(860, 550, 550)), f2 = list(time = c(0, 0.5, 1), freq = c(1430, 2300, 2300)), f3 = list(time = c(0, 0.5, 1), freq = c(2900, 2800, 2800)), f4 = list(time = c(0, 0.5, 1), freq = c(4000, 4000, 4000))), subDep = 0, shortestEpoch = 50, noiseAnchors = list(time = c(-10, 57, 237), value = c(-120, -40, -120)), rolloffNoise = -12, amplAnchors = list(time = c(0, 0.32, 1), value = c(120, 60, 120)), amplAnchorsGlobal = list(time = c(0, 0.77, 1), value = c(120, 69, 0)))',
+    Laugh = 'soundgen(nSyl = 5, sylLen = 120, pauseLen = 120, pitchAnchors = list(time = c(0, 1), value = c(180, 166)), pitchAnchorsGlobal = list(time = c(0, 0.3, 1), value = c(1, 2, 0)), temperature = 0.1, nonlinBalance = 50, jitterDep = 0.8, attackLen = 10, formants = list(f1 = list(time = c(0, 0.5, 1), freq = c(860, 550, 550)), f2 = list(time = c(0, 0.5, 1), freq = c(1430, 2300, 2300)), f3 = list(time = c(0, 0.5, 1), freq = c(2900, 2800, 2800)), f4 = list(time = c(0, 0.5, 1), freq = c(4000, 4000, 4000))), subDep = 0, shortestEpoch = 50, noiseAnchors = list(time = c(-10, 57, 237), value = c(-80, -40, -80)), rolloffNoise = -6, amplAnchors = list(time = c(0, 0.32, 1), value = c(80, 60, 80)), amplAnchorsGlobal = list(time = c(0, 0.77, 1), value = c(80, 69, 0)))',
 
-    Snore = 'soundgen(sylLen = 960, pitchAnchors = list(time = c(0, 0.15, 0.87, 1), value = c(175, 199, 188, 140)), temperature = 0.05, nonlinBalance = 67, jitterDep = 0.75, formants = list(f1 = 560, f2 = 1000, f3 = 1450, f4 = 3800), subDep = 80, shortestEpoch = 200, noiseAnchors = list(time = c(-9, 991), value = c(-21, -21)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 43)))',
+    Snore = 'soundgen(sylLen = 960, pitchAnchors = list(time = c(0, 0.15, 0.87, 1), value = c(175, 199, 188, 140)), temperature = 0.05, nonlinBalance = 67, jitterDep = 0.75, formants = list(f1 = 560, f2 = 1000, f3 = 1450, f4 = 3800), subDep = 80, shortestEpoch = 200, noiseAnchors = list(time = c(-9, 991), value = c(-21, -21)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 1), value = c(80, 43)))',
 
     # 'Formants' is a reserved name. The list of presets for every caller should end with
     # a list of 'Formants' presets for each vowel and consonant, otherwise you won't be
@@ -216,15 +218,15 @@ presets = list(
   F1 = list(
     Vowel2 = 'soundgen(sylLen = 500, pitchAnchors = list(time = c(0, 0.6, 1), value = c(340, 370, 340)), formants = list(f1 = 900, f2 = 1300, f3 = 3300, f4 = 4340))',
 
-    Scream = 'soundgen(sylLen = 1110, pitchAnchors = list(time = c(0, 0.1, 0.85, 1), value = c(900, 1832, 1618, 1200)), temperature = 0.1, nonlinBalance = 70, jitterDep = 1, shimmerDep = 10, rolloff = -6, formants = NULL, vocalTract = 13.5, subFreq = 400, noiseAnchors = list(time = c(0, 1110), value = c(-120, -120)), rolloffNoise = 0)',
+    Scream = 'soundgen(sylLen = 1110, pitchAnchors = list(time = c(0, 0.1, 0.85, 1), value = c(900, 1832, 1618, 1200)), temperature = 0.1, nonlinBalance = 70, jitterDep = 1, shimmerDep = 10, rolloff = -6, formants = NULL, vocalTract = 13.5, subFreq = 400, noiseAnchors = list(time = c(0, 1110), value = c(-80, -80)), rolloffNoise = 0)',
 
-    Growl = 'soundgen(sylLen = 1100, pitchAnchors = list(time = c(0, 0.12, 0.34, 1), value = c(238, 254, 448, 203)), temperature = 0.1, nonlinBalance = 71, jitterDep = 1.8, rolloff = -6, rolloffParab = -20, rolloffParabHarm = 20, formants = NULL, vocalTract = 13.5, subDep = 0, shortestEpoch = 150, amDep = 40, amFreq = 35, amShape = -0.4, noiseAnchors = list(time = c(-6, 542, 1122), value = c(-24, -1, -26)), mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 0.13, 1), value = c(101, 120, 26)))',
+    Growl = 'soundgen(sylLen = 1100, pitchAnchors = list(time = c(0, 0.12, 0.34, 1), value = c(238, 254, 448, 203)), temperature = 0.1, nonlinBalance = 71, jitterDep = 1.8, rolloff = -3, rolloffParab = -20, rolloffParabHarm = 20, formants = NULL, vocalTract = 13.5, subDep = 0, shortestEpoch = 150, amDep = 40, amFreq = 35, amShape = -0.4, noiseAnchors = list(time = c(-6, 550, 1122), value = c(-24, -13, -26)), rolloffNoise = 0, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0,  0.13, 1), value = c(71, 80, 26)))',
 
-    Moan = 'soundgen(sylLen = 360, pitchAnchors = list(time = c(0, 1), value = c(380, 260)), attackLen = 100, rolloff = -24, formants = list(f1 = 900, f2 = 1300, f3 = 3300, f4 = 4340), vocalTract = 13.5, noiseAnchors = list(time = c(0, 417, 508), value = c(-63, -29, -120)), mouthAnchors = list(time = c(0, 0.09, 1), value = c(0.12, 0.37, 0.5)), amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 18)))',
+    Moan = 'soundgen(sylLen = 360, pitchAnchors = list(time = c(0, 1), value = c(380, 260)), attackLen = 100, rolloff = -24, formants = list(f1 = 900, f2 = 1300, f3 = 3300, f4 = 4340), vocalTract = 13.5, noiseAnchors = list(time = c(0, 417, 508), value = c(-63, -29, -80)), mouthAnchors = list(time = c(0, 0.09, 1), value = c(0.12, 0.37, 0.5)), amplAnchorsGlobal = list(time = c(0, 1), value = c(80, 18)))',
 
-    Laugh = 'soundgen(nSyl = 3, sylLen = 60, pauseLen = 90, pitchAnchors = list(time = c(0, 1), value = c(368, 284)), temperature = 0.075, attackLen = 10, formants = list(f1 = 900, f2 = 1300, f3 = 3300, f4 = 4340), noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)), rolloffNoise = -8, amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 20)))',
+    Laugh = 'soundgen(nSyl = 3, sylLen = 60, pauseLen = 90, pitchAnchors = list(time = c(0, 1), value = c(368, 284)), temperature = 0.075, attackLen = 10, formants = list(f1 = 900, f2 = 1300, f3 = 3300, f4 = 4340), noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -80)), rolloffNoise = -8, amplAnchorsGlobal = list(time = c(0, 1), value = c(80, 20)))',
 
-    Cry = 'soundgen(sylLen = 1600, pitchAnchors = list(time = c(0, 1), value = c(610, 511)), temperature = 0.2, nonlinBalance = 15, formants = NULL, vocalTract = 13.5, subFreq = 125, subDep = 70, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 60)))',
+    Cry = 'soundgen(sylLen = 1600, pitchAnchors = list(time = c(0, 1), value = c(610, 511)), temperature = 0.2, nonlinBalance = 15, formants = NULL, vocalTract = 13.5, subFreq = 125, subDep = 70, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 1), value = c(80, 60)))',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       vowels = list(
@@ -276,15 +278,15 @@ presets = list(
   ),
 
   Chimpanzee = list(
-    Bark_alarm = 'soundgen(sylLen = 160, pitchAnchors = list(time = c(0, 1), value = c(232, 185)), nonlinBalance = 100, jitterDep = 2.8, attackLen = 61, rolloff = -19, formants = list(f1 = 400, f2 = 1000), vocalTract = 23, subFreq = 125, subDep = 60, noiseAnchors = list(time = c(0, 63, 344), value = c(-120, -10, -120)), rolloffNoise = -14)',
+    Bark_alarm = 'soundgen(sylLen = 160, pitchAnchors = list(time = c(0, 1), value = c(232, 185)), nonlinBalance = 100, jitterDep = 2.8, attackLen = 61, rolloff = -19, formants = list(f1 = 400, f2 = 1000), vocalTract = 23, subFreq = 125, subDep = 60, noiseAnchors = list(time = c(0, 63, 344), value = c(-80, -10, -80)), rolloffNoise = -14)',
 
     Scream_conflict = 'soundgen(sylLen = 740, pitchAnchors = list(time = c(0, 0.3, 0.9, 1), value = c(1200, 1547, 1487, 1154)), temperature = 0.05, nonlinBalance = 100, jitterDep = 0.3, rolloff = -6, rolloffOct = 0, formants = NULL, subFreq = 75, subDep = 130)',
 
-    Grunt_excited = 'soundgen(nSyl = 6, sylLen = 100, pauseLen = 220, pitchAnchors = list(time = c(0, 1), value = c(216, 164)), pitchAnchorsGlobal = list(time = c(0, 0.4, 1), value = c(0, 1, -8.4)), temperature = 0.15, nonlinBalance = 100, jitterDep = 3.1, attackLen = 10, formants = list(f1 = c(410, 250), f2 = c(990, 650)), vocalTract = 20.5, subDep = 0, noiseAnchors = list(time = c(-8, 22, 298), value = c(-120, -41, -120)), rolloffNoise = -7, amplAnchors = list(time = c(0, 1), value = c(119, 89)), amplAnchorsGlobal = list(time = c(0, 0.35, 1), value = c(89, 120, 31)))',
+    Grunt_excited = 'soundgen(nSyl = 6, sylLen = 100, pauseLen = 220, pitchAnchors = list(time = c(0, 1), value = c(216, 164)), pitchAnchorsGlobal = list(time = c(0, 0.4, 1), value = c(0, 1, -8.4)), temperature = 0.15, nonlinBalance = 100, jitterDep = 3.1, attackLen = 10, formants = list(f1 = c(410, 250), f2 = c(990, 650)), vocalTract = 20.5, subDep = 0, noiseAnchors = list(time = c(-8, 22, 298), value = c(-80, -41, -80)), rolloffNoise = -7, amplAnchors = list(time = c(0, 1), value = c(119, 89)), amplAnchorsGlobal = list(time = c(0, 0.35, 1), value = c(60, 80, 31)))',
 
     Hoot_excited = 'soundgen(sylLen = 730, pitchAnchors = list(time = c(0, 0.52, 1), value = c(440, 405, 440)), nonlinBalance = 100, jitterDep = 0.4,  attackLen = 0, rolloff = -9, rolloffOct = -3, rolloffParabHarm = 1, formants = list(f1 = c(250, 450), f2 = 800, f3 = 1600), vocalTract = 25.5, subFreq = 190, subDep = 0, noiseAnchors = list(time = c(-19, 26, 173, 738), value = c(-44, -4, -37, -39)))',
 
-    Laugh_playing = 'soundgen(nSyl = 6, sylLen = 120, pauseLen = 120, pitchAnchors = list(time = c(0, 1), value = c(127, 102)), temperature = 0.05, rolloff = -24, rolloffParab = 15, rolloffParabHarm = 1, formants = list(f1 = 400, f2 = 900, f3 = 1500), vocalTract = 23, noiseAnchors = list(time = c(-6, 30, 110, 168, 219), value = c(-42, -83, -82, -61, -120)), rolloffNoise = -20, amplAnchorsGlobal = list(time = c(0, 0.35, 1), value = c(89, 120, 31)))',
+    Laugh_playing = 'soundgen(nSyl = 6, sylLen = 120, pauseLen = 120, pitchAnchors = list(time = c(0, 1), value = c(127, 102)), temperature = 0.05, rolloff = -12, rolloffParab = 15, rolloffParabHarm = 1, formants = list(f1 = 400, f2 = 900, f3 = 1500), vocalTract = 23, noiseAnchors = list(time = c(-6, 30, 110, 168, 219), value = c(-42, -63, -62, -61, -80)), rolloffNoise = -20, amplAnchorsGlobal = list(time = c(0, 0.35, 1), value = c(59, 80, 31)))',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...
@@ -292,24 +294,24 @@ presets = list(
   ),
 
   Cat = list(
-    Chirp = 'soundgen(sylLen = 120, pitchAnchors = list(time = c(0, 0.5, 1), value = c(828, 768, 423)), nonlinBalance = 100, jitterDep = 0.3, shimmerDep = 11, attackLen = 1, rolloff = -3, rolloffOct = -4, formants = list(f1 = list(time = 0, freq = 875, amp = 30, width = 282), f2 = list(time = 0, freq = 1944, amp = 30, width = 372), f3 = list(time = 0, freq = 2409, amp = 30, width = 448)), vocalTract = 10, subDep = 0, noiseAnchors = list(time = c(-1, 120, 161), value = c(-60, 14, -47)), amplAnchors = list(time = c(0, 0.33, 1), value = c(120, 120, 87)), windowLength = 10)',
+    Chirp = 'soundgen(sylLen = 120, pitchAnchors = list(time = c(0, 0.5, 1), value = c(828, 768, 423)), nonlinBalance = 100, jitterDep = 0.3, shimmerDep = 11, attackLen = 1, rolloff = -3, rolloffOct = -4, formants = list(f1 = list(time = 0, freq = 875, amp = 30, width = 282), f2 = list(time = 0, freq = 1944, amp = 30, width = 372), f3 = list(time = 0, freq = 2409, amp = 30, width = 448)), vocalTract = 10, subDep = 0, noiseAnchors = list(time = c(-1, 80, 161), value = c(-60, 14, -47)), amplAnchors = list(time = c(0, 0.33, 1), value = c(80, 80, 57)), windowLength = 10)',
 
-    Growl = 'soundgen(sylLen = 2700, pitchAnchors = list(time = c(0, 0.8, 1), value = c(65, 65, 48)), temperature = 0.05, nonlinBalance = 100, jitterDep = 1.7, jitterLen = 17, shimmerDep = 14, rolloff = -21, rolloffOct = 0, rolloffParab = 20, rolloffParabHarm = 20, formants = list(f1 = list(time = 0, freq = 400, amp = 40, width = 200), f2 = list(time = 0, freq = 3000, amp = 10, width = 200)), vocalTract = 10, subDep = 0, noiseAnchors = list(time = c(8, 2676), value = c(-120, -120)))',
+    Growl = 'soundgen(sylLen = 2700, pitchAnchors = list(time = c(0, 0.8, 1), value = c(65, 65, 48)), temperature = 0.05, nonlinBalance = 100, jitterDep = 1.7, jitterLen = 17, shimmerDep = 14, rolloff = -21, rolloffOct = 0, rolloffParab = 20, rolloffParabHarm = 20, formants = list(f1 = list(time = 0, freq = 400, amp = 40, width = 200), f2 = list(time = 0, freq = 3000, amp = 10, width = 200)), vocalTract = 10, subDep = 0, noiseAnchors = list(time = c(8, 2676), value = c(-80, -80)))',
 
     Hiss = 'soundgen(pitchAnchors = NULL, formants = list(f1 = list(time = 0, freq = 1112, amp = 30, width = 277), f2 = list(time = 0, freq = 2610, amp = 30, width = 310), f3 = list(time = 0, freq = 4587, amp = 30, width = 529)), formantDepStoch = 20, vocalTract = 10, noiseAnchors = list(time = c(-185, 74, 503), value = c(-5, 40, -24)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 0.13, 1), value = c(0, 0.5, 0.5)))',
 
     Howl = 'soundgen(sylLen = 3150, pitchAnchors = list(time = c(0, 0.05, 0.18, 0.45, 0.91, 1), value = c(221, 322, 346, 304, 273, 253)), temperature = 0.075, rolloffOct = -13, formants = list(f1 = list(time = 0, freq = 895, amp = 30, width = 150), f2 = list(time = c(0, 1), freq = c(1500, 2000), amp = 40, width = 150), f3 = list(time = 0, freq = 3287, amp = 30, width = 165)), vocalTract = 10, mouthAnchors = list(time = c(0, 0.1, 0.19, 0.25, 0.41, 0.91,  1), value = c(0, 0.37, 0.29, 0.66, 0.37, 0.34, 0.27)))',
 
-    Heat = 'soundgen(sylLen = 800, pitchAnchors = list(time = c(0, 0.5, 0.93, 1), value = c(480, 552, 549, 517)), temperature = 0.1, rolloffOct = -10, rolloffParab = -20, rolloffParabHarm = 1, formants = list(f1 = list(time = c(0, 1), freq = c(1500, 500), amp = 30, width = 150), f2 = list(time = 0, freq = 2100, amp = 30, width = 150), f3 = list(time = c(0, 1), freq = 5500, amp = c(10, 30), width = 200)), vocalTract = 10, amDep = 20, amFreq = 40, noiseAnchors = list(time = c(0, 800), value = c(-120, -120)), mouthAnchors = list(
+    Heat = 'soundgen(sylLen = 800, pitchAnchors = list(time = c(0, 0.5, 0.93, 1), value = c(480, 552, 549, 517)), temperature = 0.1, rolloffOct = -10, rolloffParab = -20, rolloffParabHarm = 1, formants = list(f1 = list(time = c(0, 1), freq = c(1500, 500), amp = 30, width = 150), f2 = list(time = 0, freq = 2100, amp = 30, width = 150), f3 = list(time = c(0, 1), freq = 5500, amp = c(10, 30), width = 200)), vocalTract = 10, amDep = 20, amFreq = 40, noiseAnchors = list(time = c(0, 800), value = c(-80, -80)), mouthAnchors = list(
   time = c(0, 0.12, 0.86, 1), value = c(0, 0.52, 0.57, 0)))',
 
-    Meow = 'soundgen(sylLen = 920, pitchAnchors = list(time = c(0, 0.2, 1), value = c(480, 550, 515)), attackLen = 150, rolloff = -6, formants = list(f1 = list(time = 0, freq = 1594, amp = 30, width = 200), f3 = list(time = 0, freq = 3600, amp = 30, width = 200)), vocalTract = 10, noiseAnchors = list(time = c(0, 920), value = c(-120, -120)), mouthAnchors = list(time = c(0, 0.16, 0.91, 1), value = c(0, 1, 0.31, 0.06)))',
+    Meow = 'soundgen(sylLen = 920, pitchAnchors = list(time = c(0, 0.2, 1), value = c(480, 550, 515)), attackLen = 150, rolloff = -6, formants = list(f1 = list(time = 0, freq = 1594, amp = 30, width = 200), f3 = list(time = 0, freq = 3600, amp = 30, width = 200)), vocalTract = 10, noiseAnchors = list(time = c(0, 920), value = c(-80, -80)), mouthAnchors = list(time = c(0, 0.16, 0.91, 1), value = c(0, 1, 0.31, 0.06)))',
 
     Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 50, pitchAnchors = list(time = c(0, 1), value = c(25, 25)), temperature = 0.1, nonlinBalance = 100, jitterDep = 1.2, jitterLen = 34, rolloff = -18, rolloffOct = -30, rolloffParab = 25, rolloffParabHarm = 9, rolloffLip = 0, formants = list(f1 = list(time = 0, freq = 1200, amp = 30, width = 150)), vocalTract = 10, subDep = 0, amDep = 70, amFreq = 25, noiseAnchors = list(time = c(-191, -115, 839), value = c(-92, -26, -58)), rolloffNoise = -13)',
 
-    Scream = 'soundgen(repeatBout = 2, sylLen = 1610, pauseLen = 500, pitchAnchors = list(time = c(0, 0.28, 0.53, 0.88, 1), value = c(388, 385, 669, 663, 392)), temperature = 0.05, nonlinBalance = 35, jitterDep = 1.9, rolloff = -8, formants = list(f1 = list(time = c(0, 1), freq = c(1800, 1000), amp = 40, width = 150), f2 = list(time = 0, freq = 2400, amp = 40, width = 150)), vocalTract = 10, subFreq = 150, subDep = 80, noiseAnchors = list(time = c(0, 603), value = c(-120, -120)))',
+    Scream = 'soundgen(repeatBout = 2, sylLen = 1610, pauseLen = 500, pitchAnchors = list(time = c(0, 0.28, 0.53, 0.88, 1), value = c(388, 385, 669, 663, 392)), temperature = 0.05, nonlinBalance = 35, jitterDep = 1.9, rolloff = -8, formants = list(f1 = list(time = c(0, 1), freq = c(1800, 1000), amp = 40, width = 150), f2 = list(time = 0, freq = 2400, amp = 40, width = 150)), vocalTract = 10, subFreq = 150, subDep = 80, noiseAnchors = list(time = c(0, 603), value = c(-80, -80)))',
 
-    Snarl = 'soundgen(sylLen = 450, pitchAnchors = list(time = c(0, 0.08, 1), value = c(193, 454, 434)), nonlinBalance = 72, jitterDep = 2.9, attackLen = 0, rolloff = 0, formants = list(f1 = list(time = 0, freq = 1500, amp = 40, width = 250), f2 = list(time = 0, freq = 2500, amp = 40, width = 300)), vocalTract = 10, subFreq = 150, subDep = 110, shortestEpoch = 75, noiseAnchors = list(time = c(0, 83), value = c(-120, -120)), mouthAnchors = list(time = c(0, 0.3, 0.63, 1), value = c(0, 1, 1, 0.5)), windowLength = 10)',
+    Snarl = 'soundgen(sylLen = 450, pitchAnchors = list(time = c(0, 0.08, 1), value = c(193, 454, 434)), nonlinBalance = 72, jitterDep = 2.9, attackLen = 0, rolloff = 0, formants = list(f1 = list(time = 0, freq = 1500, amp = 40, width = 250), f2 = list(time = 0, freq = 2500, amp = 40, width = 300)), vocalTract = 10, subFreq = 150, subDep = 110, shortestEpoch = 75, noiseAnchors = list(time = c(0, 83), value = c(-80, -80)), mouthAnchors = list(time = c(0, 0.3, 0.63, 1), value = c(0, 1, 1, 0.5)), windowLength = 10)',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...
@@ -317,17 +319,17 @@ presets = list(
   ),
 
   Misc = list(
-    Cat_miaw = 'soundgen(sylLen = 1300, pitchAnchors = list(time = c(0, 0.25, 1), value = c(264, 315, 274)), temperature = 0.05, rolloff = -6, rolloffOct = -6, rolloffParab = 20, rolloffParabHarm = 20, formants = list(f1 = list(time = c(0, 0.15, 1), freq = c(1540, 1900, 1020), amp = c(20, 20, 20), width = c(200, 200, 200)), f2 = list(time = c(0, 0.15, 1), freq = c(1800, 2900, 2800), amp = c(20, 20, 20), width = c(200, 200, 200)), f2.5 = list(time = c(0, 0.15, 1), freq = c(2500, 3700, 3400), amp = c(-20, -20, -20), width = c(400, 400, 400)), f3 = list(time = c(0, 0.15, 1), freq = c(3200, 5300, 5200), amp = c(20, 20, 20), width = c(400, 400, 400)), f4 = list(time = c(0, 0.15, 1), freq = c(6000, 6200, 6000), amp = c(20, 20, 20), width = c(400, 400, 400))), vocalTract = 8, noiseAnchors = list(time = c(-44, 1108, 1338), value = c(-55, -44, -76)), formantsNoise = list(f1 = list(time = c(0, 0.15, 1), freq = c(1540, 1900, 1020), amp = c(20, 20, 20), width = c(200, 200, 200)), f2 = list(time = c(0, 0.15, 1), freq = c(1800, 2900, 2800), amp = c(20, 20, 20), width = c(200, 200, 200)), f2.5 = list(time = c(0, 0.15, 1), freq = c(2500, 3700, 3400), amp = c(-20, -20, -20), width = c(400, 400, 400)), f3 = list(time = c(0, 0.15, 1), freq = c(3200, 5300, 5200), amp = c(20, 20, 20), width = c(400, 400, 400)), f4 = list(time = c(0, 0.15, 1), freq = c(6000, 6200, 6000), amp = c(20, 20, 20), width = c(400, 400, 400))), rolloffNoise = -17, mouthAnchors = list(time = c(0, 0.14, 0.84, 1), value = c(0, 0.51, 0.38, 0)), amplAnchors = list(time = c(0, 0.3, 1), value = c(35, 120, 36)))',
+    Cat_miaw = 'soundgen(sylLen = 1300, pitchAnchors = list(time = c(0, 0.25, 1), value = c(264, 315, 274)), temperature = 0.05, rolloff = -6, rolloffOct = -6, rolloffParab = 20, rolloffParabHarm = 20, formants = list(f1 = list(time = c(0, 0.15, 1), freq = c(1540, 1900, 1020), amp = c(20, 20, 20), width = c(200, 200, 200)), f2 = list(time = c(0, 0.15, 1), freq = c(1800, 2900, 2800), amp = c(20, 20, 20), width = c(200, 200, 200)), f2.5 = list(time = c(0, 0.15, 1), freq = c(2500, 3700, 3400), amp = c(-20, -20, -20), width = c(400, 400, 400)), f3 = list(time = c(0, 0.15, 1), freq = c(3200, 5300, 5200), amp = c(20, 20, 20), width = c(400, 400, 400)), f4 = list(time = c(0, 0.15, 1), freq = c(6000, 6200, 6000), amp = c(20, 20, 20), width = c(400, 400, 400))), vocalTract = 8, noiseAnchors = list(time = c(-44, 1108, 1338), value = c(-55, -44, -76)), formantsNoise = list(f1 = list(time = c(0, 0.15, 1), freq = c(1540, 1900, 1020), amp = c(20, 20, 20), width = c(200, 200, 200)), f2 = list(time = c(0, 0.15, 1), freq = c(1800, 2900, 2800), amp = c(20, 20, 20), width = c(200, 200, 200)), f2.5 = list(time = c(0, 0.15, 1), freq = c(2500, 3700, 3400), amp = c(-20, -20, -20), width = c(400, 400, 400)), f3 = list(time = c(0, 0.15, 1), freq = c(3200, 5300, 5200), amp = c(20, 20, 20), width = c(400, 400, 400)), f4 = list(time = c(0, 0.15, 1), freq = c(6000, 6200, 6000), amp = c(20, 20, 20), width = c(400, 400, 400))), rolloffNoise = -17, mouthAnchors = list(time = c(0, 0.14, 0.84, 1), value = c(0, 0.51, 0.38, 0)), amplAnchors = list(time = c(0, 0.3, 1), value = c(35, 80, 36)))',
 
     Cow = 'soundgen(sylLen = 1610, pitchAnchors = list(time = c(0, 0.61, 0.85, 1), value = c(71, 104, 200, 197)), temperature = 0.05, nonlinBalance = 66, jitterDep = 2, rolloff = -24, rolloffOct = 0, rolloffKHz = -10, formants = list(f1 = list(time = c(0, 1), freq = c(300, 300), amp = c(30, 30), width = c(120, 120)), f2 = list(time = 0, freq = 800, amp = 40, width = 120), f3 = list(time = 0, freq = 1100, amp = 40, width = 150)), formantDep = 1.6, vocalTract = 34, subDep = 50, shortestEpoch = 125, noiseAnchors = list(time = c(-55, 1404, 1608, 1846), value = c(-120, -120, 3, -120)), formantsNoise = list(f1 = list(time = c(0, 1), freq = c(300, 300), amp = c(30, 30), width = c(120, 120)), f2 = list(time = 0, freq = 800, amp = 40, width = 120), f3 = list(time = 0, freq = 1100, amp = 40, width = 150)), rolloffNoise = -17, mouthAnchors = list(time = c(0, 0.6, 0.83, 1), value = c(0, 0, 0.89, 0.81)))',
 
-    Dog_bark = 'soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, pitchAnchors = list(time = c(0, 0.29, 1), value = c(559, 716, 647)), temperature = 0.05, nonlinBalance = 100, jitterDep = 2.1, formants = list(f1 = 1500, f2 = 3300, f3 = 6000), formantDep = 1, vocalTract = 8.5, subDep = 0, noiseAnchors = list(time = c(0, 78, 160), value = c(-120, 12, -120)), rolloffNoise = -9, mouthAnchors = list(time = c(0, 0.5, 1), value = c(0, 0.5, 0)))',
+    Dog_bark = 'soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, pitchAnchors = list(time = c(0, 0.29, 1), value = c(559, 716, 647)), temperature = 0.05, nonlinBalance = 100, jitterDep = 2.1, formants = list(f1 = 1500, f2 = 3300, f3 = 6000), formantDep = 1, vocalTract = 8.5, subDep = 0, noiseAnchors = list(time = c(0, 78, 160), value = c(-80, 12, -80)), rolloffNoise = -9, mouthAnchors = list(time = c(0, 0.5, 1), value = c(0, 0.5, 0)))',
 
     Duck = 'soundgen(repeatBout = 5, sylLen = 110, pauseLen = 170, pitchAnchors = list(time = c(0, 1), value = c(119, 110)), temperature = 0.1, rolloffOct = 0, formants = list(f1 = list(time = 0, freq = 1600, amp = 40, width = 250), f2 = list(time = 0, freq = 2100, amp = 40, width = 250), f3 = list(time = 0, freq = 2870, amp = 40, width = 300), f4 = list(time = 0, freq = 5600, amp = 40, width = 300), f5 = list(time = 0, freq = 6400, amp = 40, width = 300), f6 = list(time = 0, freq = 7200, amp = 40, width = 300)), noiseAnchors = list(time = c(0, 110), value = c(0, 0)), formantsNoise = list(f1 = list(time = 0, freq = 1600, amp = 40, width = 250), f2 = list(time = 0, freq = 2100, amp = 40, width = 250), f3 = list(time = 0, freq = 2870, amp = 40, width = 300), f4 = list(time = 0, freq = 5600, amp = 40, width = 300), f5 = list(time = 0, freq = 6400, amp = 40, width = 300), f6 = list(time = 0, freq = 7200, amp = 40, width = 300)), mouthAnchors = list(time = c(0, 0.5, 1), value = c(0.3, 0.5, 0.3)))',
 
-    Elephant = 'soundgen(sylLen = 510, pitchAnchors = list(time = c(0, 0.37, 1), value = c(436, 452, 328)), nonlinBalance = 50, jitterDep = 0.3, rolloffOct = -2, formants = NA, vocalTract = 100, subFreq = 75, subDep = 40, shortestEpoch = 50, noiseAnchors = list(time = c(0, 510), value = c(-120, -120)), amplAnchors = list(time = c(0, 0.53, 1), value = c(120, 120, 61)))',
+    Elephant = 'soundgen(sylLen = 510, pitchAnchors = list(time = c(0, 0.37, 1), value = c(436, 452, 328)), nonlinBalance = 50, jitterDep = 0.3, rolloffOct = -2, formants = NA, vocalTract = 100, subFreq = 75, subDep = 40, shortestEpoch = 50, noiseAnchors = list(time = c(0, 510), value = c(-80, -80)), amplAnchors = list(time = c(0, 0.53, 1), value = c(80, 80, 61)))',
 
-    Seagull = 'soundgen(nSyl = 8, sylLen = 200, pauseLen = 140, pitchAnchors = list(time = c(0, 0.65, 1), value = c(977, 1540, 826)), temperature = 0.05, nonlinBalance = 100, jitterDep = 0, rolloff = 0, rolloffOct = -4, rolloffParab = 25, rolloffParabHarm = 6, formants = list(f1 = list(time = 0, freq = 1000, amp = 25, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), vocalTract = 15, subFreq = 525, subDep = 220, noiseAnchors = list(time = c(-3, 41, 166, 201), value = c(-37, -120, -120, -45)), formantsNoise = list(f1 = list(time = 0, freq = 1000, amp = 25, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), rolloffNoise = -16, samplingRate = 24000)',
+    Seagull = 'soundgen(nSyl = 8, sylLen = 200, pauseLen = 140, pitchAnchors = list(time = c(0, 0.65, 1), value = c(977, 1540, 826)), temperature = 0.05, nonlinBalance = 100, jitterDep = 0, rolloff = 0, rolloffOct = -4, rolloffParab = 25, rolloffParabHarm = 6, formants = list(f1 = list(time = 0, freq = 1000, amp = 25, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), vocalTract = 15, subFreq = 525, subDep = 220, noiseAnchors = list(time = c(-3, 41, 166, 201), value = c(-37, -80, -80, -45)), formantsNoise = list(f1 = list(time = 0, freq = 1000, amp = 25, width = 250), f2 = list(time = 0, freq = 2200, amp = 30, width = 400), f3 = list(time = 0, freq = 4400, amp = 10, width = 200), f4 = list(time = 0, freq = 5900, amp = 10, width = 300), f5 = list(time = 0, freq = 7200, amp = 10, width = 300)), rolloffNoise = -16, samplingRate = 24000)',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...
@@ -341,3 +343,12 @@ presets = list(
 ) # END of presets / dictionaries
 
 # devtools::use_data(presets, overwrite = TRUE)
+
+
+## extras
+# cow1 = soundgen(sylLen = 1400, pitchAnchors = list(time = c(0, 11/14, 1), value = c(75, 130, 200)), temperature = 0.1, rolloff = -6, rolloffOct = -3, rolloffParab = 12, mouthOpenThres = 0.6, formants = NULL, vocalTract = 36.5, mouthAnchors = list(time = c(0, 0.82, 1), value = c(0.6, 0, 1)), noiseAnchors = list(time = c(0, 1400), value = c(-25, -25)), rolloffNoise = -4, addSilence = 0)
+# cow2 = soundgen(sylLen = 310, pitchAnchors = list(time = c(0, 1), value = c(359, 359)), temperature = 0.05, nonlinBalance = 100, jitterDep = 1.3, attackLen = 0, rolloff = -6, rolloffOct = -3, rolloffKHz = -0, formants = NULL, vocalTract = 36.5, subFreq = 150, subDep = 70, noiseAnchors = list(time = c(0, 26, 317, 562), value = c(-80, -23, -22, -80)), rolloffNoise = -6, addSilence = 0)
+# s = crossFade(cow1, cow2, samplingRate = 16000, crossLen = 150)
+# # playme(s, 16000)
+# # spectrogram(s, 16000, osc=T)
+# # seewave::savewav(s, f = 16000, '~/Downloads/cow_soundgen.wav')
