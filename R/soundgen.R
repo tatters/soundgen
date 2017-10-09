@@ -1,4 +1,4 @@
-# TODO: check rolloff per kHz; check all presets
+# TODO: spectrum plot to throwaway_dB only; default noise anchors -80; pitchAnchors etc should accept short format (w/o time stamps); analyzeFolder should return df not list; check all presets
 
 #' @import stats graphics utils grDevices
 NULL
@@ -602,6 +602,7 @@ soundgen = function(repeatBout = 1,
         syllable = rep(0, round(dur_syl * samplingRate / 1000))
       } else {
         # the actual synthesis is here
+        # print(pars_syllable)
         syllable = try(do.call(generateHarmonics, c(
           pars_syllable,
           list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl)

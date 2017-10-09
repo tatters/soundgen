@@ -35,7 +35,7 @@ semitonesToHz = function(s) {
 #' @examples
 #' soundgen:::to_dB(c(.1, .5, .75, .9, .95, .99, .999, .9999))
 to_dB = function(x) {
-  return(20 * log10(x / (1 - x)))
+  return(10 * log10(x / (1 - x)))
 }
 
 #' List depth

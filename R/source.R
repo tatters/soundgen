@@ -185,20 +185,20 @@ generateNoise = function(len,
 generateHarmonics = function(pitch,
                              attackLen = 50,
                              nonlinBalance = 0,
-                             nonlinDep = 0,
+                             nonlinDep = 50,
                              jitterDep = 0,
                              jitterLen = 1,
-                             vibratoFreq = 100,
+                             vibratoFreq = 5,
                              vibratoDep = 0,
                              shimmerDep = 0,
                              creakyBreathy = 0,
-                             rolloff = -18,
-                             rolloffOct = -2,
-                             rolloffKHz = -6,
+                             rolloff = -9,
+                             rolloffOct = -3,
+                             rolloffKHz = -3,
                              rolloffParab = 0,
                              rolloffParabHarm = 3,
-                             rolloff_perAmpl = 12,
-                             temperature = 0,
+                             rolloff_perAmpl = 3,
+                             temperature = .025,
                              pitchDriftDep = .5,
                              pitchDriftFreq = .125,
                              randomWalk_trendStrength = .5,
@@ -213,7 +213,7 @@ generateHarmonics = function(pitch,
                              pitchFloor = 75,
                              pitchCeiling = 3500,
                              pitchSamplingRate = 3500,
-                             throwaway = -120) {
+                             throwaway = -80) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
   if (vibratoDep > 0) {
@@ -246,7 +246,7 @@ generateHarmonics = function(pitch,
   }
 
   # get a random walk for intra-syllable variation
-  if (temperature > 0) {
+  if (temperature > 0 && nonlinBalance < 100) {
     rw = getRandomWalk(
       len = nGC,
       rw_range = temperature,

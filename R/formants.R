@@ -355,7 +355,7 @@ getSpectralEnvelope = function(nr,
     # Add formants to spectrogram
     freqs_bins = 1:nr
     poles = 1:length(formants_upsampled)
-    zeros = as.numeric(which(sapply(formants_upsampled, function(x) x[, 'amp'][1] < 0)))
+    zeros = as.numeric(which(sapply(formants_upsampled, function(x) any(x[, 'amp'] < 0))))
     if (length(zeros) > 0) poles = poles[-zeros]
     s = complex(real = 0, imaginary = 2 * pi * freqs_bins)
     na_amp = sapply(formants_upsampled, function(x) is.na(x[1, 'amp']))  # check only the first frame
