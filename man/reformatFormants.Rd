@@ -20,6 +20,7 @@ each formant specified explicitly.
 }
 \examples{
 formants = soundgen:::reformatFormants('aau')
+formants = soundgen:::reformatFormants(c(500, 1500, 2500))
 formants = soundgen:::reformatFormants(list(f1 = 500, f2 = c(1500, 1700)))
 formants = soundgen:::reformatFormants(list(
      f1 = list(freq = 800, amp = 30),

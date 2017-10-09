@@ -105,29 +105,18 @@ getSpectralEnvelope = function(nr,
   formants = reformatFormants(formants)
 
   ## estimate vocal tract length
-  if (!is.numeric(vocalTract) && is.list(formants) && is.numeric(formants[[1]]$freq)) {
+  if (!is.numeric(vocalTract) && is.list(formants)) {
     # if we don't know vocalTract, but at least one formant is defined,
     # we guess the length of vocal tract
-    formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
-    non_integer_formants = apply(as.matrix(names(formant_freqs)),
-                                 1,
-                                 function(x) {
-                                   grepl('.', x, fixed = TRUE)
-                                 })
-    formant_freqs = formant_freqs[!non_integer_formants]
-    formantDispersion = getFormantDispersion(formant_freqs,
-                                             speedSound = speedSound,
-                                             method = 'accurate')
-    vocalTract = ifelse(
-      is.numeric(formantDispersion),
-      speedSound / 2 / formantDispersion,
-      speedSound / 4 / formants$f1$freq
-    )
+    vocalTract = estimateVTL(formants = formants,
+                             speedSound = speedSound,
+                             checkFormat = FALSE)  # already checked
   }
+
+  # if is.na(formants) or if there's something wrong with it,
+  # we fall back on vocalTract to make a schwa
   if (length(formants[[1]]) < 2 & is.numeric(vocalTract) &
       temperature > 0 & formantDep > 0 & formantDepStoch > 0) {
-    # ie if is.na(formants) or if there's something wrong with it,
-    # we fall back on vocalTract to make a schwa
     freq = speedSound / 4 / vocalTract
     formants = list('f1' = data.frame(
       'time' = 0,
@@ -497,6 +486,7 @@ getSpectralEnvelope = function(nr,
 #'   for each formant
 #' @examples
 #' formants = soundgen:::reformatFormants('aau')
+#' formants = soundgen:::reformatFormants(c(500, 1500, 2500))
 #' formants = soundgen:::reformatFormants(list(f1 = 500, f2 = c(1500, 1700)))
 #' formants = soundgen:::reformatFormants(list(
 #'      f1 = list(freq = 800, amp = 30),
@@ -506,6 +496,17 @@ reformatFormants = function(formants) {
   if (class(formants) == 'character') {
     # "aui" etc - read off values from presets$M1
     formants = convertStringToFormants(formants)
+  } else if (is.numeric(formants)) {
+    # expand to full format from e.g. "formants = c(500, 1500, 2500)"
+    freqs = formants
+    formants = vector('list', length(freqs))
+    names(formants) = paste0('f', 1:length(freqs))
+    for (f in 1:length(freqs)) {
+      formants[[f]] = data.frame(time = 0,
+                                 freq = freqs[f],
+                                 amp = NA,
+                                 width = getBandwidth(freqs[f]))
+    }
   }
   if (is.list(formants)) {
     for (f in 1:length(formants)) {
@@ -698,4 +699,52 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
   }
 
   return (formants)
+}
+
+#' Estimate vocal tract length
+#'
+#' Estimates the length of vocal tract based on formant frequencies, assuming
+#' that the vocal tract can be modeled as a tube open as both ends.
+#' @inheritParams getSpectralEnvelope
+#' @param checkFormat if TRUE, expands shorthand format specifications into the
+#'   canonical form of a list with four components: time, frequency, amplitude
+#'   and bandwidth for each format (as returned by the internal function
+#'   \code{reformatFormants})
+#' @return Returns the estimated vocal tract length in cm.
+#' @export
+#' @examples
+#' estimateVTL(NA)
+#' estimateVTL(500)
+#' estimateVTL(c(600, 1850, 3100))
+#' estimateVTL(formants = list(f1 = 600, f2 = 1650, f3 = 2400))
+#'
+#' # for moving formants, frequencies are averaged over time,
+#' # i.e. this is identical to the previous example
+#' estimateVTL(formants = list(f1 = c(500, 700), f2 = 1650, f3 = c(2200, 2600)))
+estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
+  if (checkFormat) {
+    formants = reformatFormants(formants)
+  }
+  if (is.list(formants) && is.numeric(formants[[1]]$freq)) {
+    # if we don't know vocalTract, but at least one formant is defined,
+    # we guess the length of vocal tract
+    formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
+    non_integer_formants = apply(as.matrix(names(formant_freqs)),
+                                 1,
+                                 function(x) {
+                                   grepl('.', x, fixed = TRUE)
+                                 })
+    formant_freqs = formant_freqs[!non_integer_formants]
+    formantDispersion = getFormantDispersion(formant_freqs,
+                                             speedSound = speedSound,
+                                             method = 'accurate')
+    vocalTract = ifelse(
+      is.numeric(formantDispersion),
+      speedSound / 2 / formantDispersion,
+      speedSound / 4 / formants$f1$freq
+    )
+  } else {
+    vocalTract = NA
+  }
+  return(vocalTract)
 }

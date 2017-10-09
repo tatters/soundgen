@@ -1,4 +1,4 @@
-# TODO: update morphing routine for new formant of formants; default noise anchors -80; pitchAnchors etc should accept short format (w/o time stamps); analyzeFolder should return df not list; check all presets
+# TODO: update morphing routine for new formant of formants; default noise anchors -80; analyzeFolder should return df not list; check all presets
 
 #' @import stats graphics utils grDevices
 NULL
@@ -309,14 +309,6 @@ soundgen = function(repeatBout = 1,
   if (!is.numeric(tempEffects$noiseAnchorsDep)) tempEffects$noiseAnchorsDep = .1
   if (!is.numeric(tempEffects$amplAnchorsDep)) tempEffects$amplAnchorsDep = .1
 
-  # force anchor lists to dataframe
-  if (class(pitchAnchors) == 'list') pitchAnchors = as.data.frame(pitchAnchors)
-  if (class(pitchAnchorsGlobal) == 'list') pitchAnchorsGlobal = as.data.frame(pitchAnchorsGlobal)
-  if (class(amplAnchors) == 'list') amplAnchors = as.data.frame(amplAnchors)
-  if (class(amplAnchorsGlobal) == 'list') amplAnchorsGlobal = as.data.frame(amplAnchorsGlobal)
-  if (class(mouthAnchors) == 'list') mouthAnchors = as.data.frame(mouthAnchors)
-  if (class(noiseAnchors) == 'list') noiseAnchors = as.data.frame(noiseAnchors)
-
   # expand formants to full format for adjusting bandwidth if creakyBreathy > 0
   formants = reformatFormants(formants)
 
@@ -499,22 +491,6 @@ soundgen = function(repeatBout = 1,
       pauseDur_max = permittedValues['pauseLen', 'high'],
       temperature = temperature * tempEffects$sylLenDep
     )
-    syllableStartIdx = round(syllables[, 'start'] * samplingRate / 1000)
-    syllableStartIdx[1] = 1
-    # if noise is added before the voiced part of each syllable
-    #   (negative time anchors) or starts later than the voiced part,
-    #   we need to shift noise insertion points
-    if (!is.na(noiseAnchors) && noiseAnchors$time[1] != 0) {
-      shift = -round(noiseAnchors$time[1] * samplingRate / 1000)
-      if (noiseAnchors$time[1] < 0) {
-        # only the first syllableStartIdx is shifted, because that changes
-        # the sound length and the remaining syllableStartIdx, if any,
-        # are already shifted appropriately
-        syllableStartIdx[1] = syllableStartIdx[1] - shift
-      } else {
-        syllableStartIdx = syllableStartIdx - shift # shift for each syllable
-      }
-    }
     # end of syllable segmentation
 
     # START OF SYLLABLE GENERATION
@@ -611,7 +587,7 @@ soundgen = function(repeatBout = 1,
       if (class(syllable) == 'try-error') {
         stop('Failed to generate the new syllable!')
       }
-      if (sum(is.na(syllable)) > 0) {
+      if (any(is.na(syllable))) {
         stop('The new syllable contains NA values!')
       }
 
@@ -625,6 +601,13 @@ soundgen = function(repeatBout = 1,
 
       # add syllable and pause to the growing sound
       voiced = c(voiced, syllable, pause)
+
+      # update syllable timing info, b/c with temperature > 0 there will be deviations
+
+      if (s < nrow(syllables)) {
+        correction = length(voiced) / samplingRate * 1000 - syllables[s + 1, 'start']
+        syllables[s + 1, ] = syllables[s + 1, ] + correction
+      }
 
       # generate the unvoiced part, but don't add it to the sound just yet
       if (!is.na(noiseAnchors) &&
@@ -690,6 +673,24 @@ soundgen = function(repeatBout = 1,
     # spectrogram(voiced, samplingRate = samplingRate, osc = TRUE)
     # playme(voiced, samplingRate = samplingRate)
     # END OF SYLLABLE GENERATION
+
+    ## calculate updated syllable timing for inserting unvoiced segments
+    syllableStartIdx = round(syllables[, 'start'] * samplingRate / 1000)
+    syllableStartIdx[1] = 1
+    # if noise is added before the voiced part of each syllable
+    #   (negative time anchors) or starts later than the voiced part,
+    #   we need to shift noise insertion points
+    if (!is.na(noiseAnchors) && noiseAnchors$time[1] != 0) {
+      shift = -round(noiseAnchors$time[1] * samplingRate / 1000)
+      if (noiseAnchors$time[1] < 0) {
+        # only the first syllableStartIdx is shifted, because that changes
+        # the sound length and the remaining syllableStartIdx, if any,
+        # are already shifted appropriately
+        syllableStartIdx[1] = syllableStartIdx[1] - shift
+      } else {
+        syllableStartIdx = syllableStartIdx - shift # shift for each syllable
+      }
+    }
 
     # if the unvoiced noise is of type "breathing" (the same formants as in
     #   the voiced part), we mix voiced+unvoiced BEFORE filtering the sound,
