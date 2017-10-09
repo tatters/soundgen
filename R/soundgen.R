@@ -1,4 +1,4 @@
-# TODO: spectrum plot to throwaway_dB only; default noise anchors -80; pitchAnchors etc should accept short format (w/o time stamps); analyzeFolder should return df not list; check all presets
+# TODO: update morphing routine for new formant of formants; default noise anchors -80; pitchAnchors etc should accept short format (w/o time stamps); analyzeFolder should return df not list; check all presets
 
 #' @import stats graphics utils grDevices
 NULL
@@ -288,13 +288,10 @@ soundgen = function(repeatBout = 1,
     }
   }
 
-  # convert numeric anchors to dataframes
+  # check and, if necessary, reformat anchors to dataframes
   for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal',
                    'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
-    if (is.numeric(get(anchor)) && length(get(anchor)) > 0) {
-      assign(anchor, data.frame(time = seq(0, 1, length.out = length(get(anchor))),
-                                value = get(anchor)))
-    }
+    assign(anchor, reformatAnchors(get(anchor)))
   }
   if (is.numeric(noiseAnchors) && length(noiseAnchors) > 0) {
     noiseAnchors = data.frame(time = seq(0, sylLen, length.out = length(noiseAnchors)),
@@ -513,7 +510,7 @@ soundgen = function(repeatBout = 1,
         # only the first syllableStartIdx is shifted, because that changes
         # the sound length and the remaining syllableStartIdx, if any,
         # are already shifted appropriately
-        syllableStartIdx[1] = syllableStartIdx - shift
+        syllableStartIdx[1] = syllableStartIdx[1] - shift
       } else {
         syllableStartIdx = syllableStartIdx - shift # shift for each syllable
       }

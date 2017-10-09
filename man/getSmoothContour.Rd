@@ -54,22 +54,22 @@ than frequencies in Hz). Pitch plots have two Y axes: one showing Hz and the
 other showing musical notation.
 }
 \examples{
+# long format: anchors are a dataframe
 a = getSmoothContour(anchors = data.frame(
   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
   voiced = 200, valueFloor = 0, plot = TRUE, main = '',
   samplingRate = 16000) # breathing
 
-a = getSmoothContour(anchors = data.frame(
-  time = c(0, .1), value = c(350, 800)),
+# short format: anchors are a vector (equal time steps assumed)
+a = getSmoothContour(anchors = c(350, 800, 600),
   len = 5500, thisIsPitch = TRUE, plot = TRUE,
   samplingRate = 3500) # pitch
 
-# a single anchor gives constant pitch
-a = getSmoothContour(anchors = data.frame(time = 0, value = 800),
+# a single anchor gives constant value
+a = getSmoothContour(anchors = 800,
   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 
-# two anchors give loglinear pitch change
-a = getSmoothContour(anchors = data.frame(
-  time = c(0, 1), value = c(220, 440)),
+# two pitch anchors give loglinear F0 change
+a = getSmoothContour(anchors = c(220, 440),
   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 }

@@ -32,23 +32,23 @@
 #' @export
 #' @return Returns a numeric vector.
 #' @examples
+#' # long format: anchors are a dataframe
 #' a = getSmoothContour(anchors = data.frame(
 #'   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
 #'   voiced = 200, valueFloor = 0, plot = TRUE, main = '',
 #'   samplingRate = 16000) # breathing
 #'
-#' a = getSmoothContour(anchors = data.frame(
-#'   time = c(0, .1), value = c(350, 800)),
+#' # short format: anchors are a vector (equal time steps assumed)
+#' a = getSmoothContour(anchors = c(350, 800, 600),
 #'   len = 5500, thisIsPitch = TRUE, plot = TRUE,
 #'   samplingRate = 3500) # pitch
 #'
-#' # a single anchor gives constant pitch
-#' a = getSmoothContour(anchors = data.frame(time = 0, value = 800),
+#' # a single anchor gives constant value
+#' a = getSmoothContour(anchors = 800,
 #'   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 #'
-#' # two anchors give loglinear pitch change
-#' a = getSmoothContour(anchors = data.frame(
-#'   time = c(0, 1), value = c(220, 440)),
+#' # two pitch anchors give loglinear F0 change
+#' a = getSmoothContour(anchors = c(220, 440),
 #'   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
                             len = NULL,
@@ -64,12 +64,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             voiced = NULL,
                             contourLabel = NULL,
                             ...) {
-  if (class(anchors) == 'list') {
-    anchors = as.data.frame(anchors)
-  }
-  if (!is.list(anchors)) {  # no anchors specified
-    return(NA)
-  }
+  anchors = reformatAnchors(anchors)
   if (nrow(anchors) > 10 && method == 'loess') {
     method = 'spline'
     # warning('More than 10 anchors; changing interpolation method from loess to spline')
@@ -270,4 +265,55 @@ getDiscreteContour = function(len,
             cex = 3)
   }
   return(contour)
+}
+
+#' Reformat anchors
+#'
+#' Internal soundgen function.
+#'
+#' Checks that the anchors are formatted in a valid way and expands them to a
+#' standard dataframe with two columns: time and value. NB: works for all
+#' anchors except noiseAnchors, which have to be scaled by sylLen and are
+#' therefore processed directly in soundgen()
+#' @param anchors a numeric vector of values or a list/dataframe with one column
+#'   (value) or two columns (time and value)
+#' @examples
+#' soundgen:::reformatAnchors(150)
+#' soundgen:::reformatAnchors(c(150, 200, 220))
+#' soundgen:::reformatAnchors(anchors = list(value=c(150, 200, 220)))
+#' soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
+#'                                           value = c(150, 200, 220)))
+
+#' # returns NA
+#' soundgen:::reformatAnchors('aha')
+#' # returns NA with a warning
+#' soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
+#'                                           freq = c(150, 200, 220)))
+reformatAnchors = function(anchors) {
+  if (is.numeric(anchors)) {
+    # for numeric vectors, assume these are equally spaced anchor values
+    anchors_df = data.frame(
+      time = seq(0, 1, length.out = max(2, length(anchors))),
+      value = anchors
+    )
+  } else if (is.list(anchors)) {
+    # for dataframes or lists, reformat if necessary
+    if (class(anchors) != 'dataframe') {
+      anchors_df = as.data.frame(anchors)
+    }
+    if (ncol(anchors_df) == 1) {
+      # if there is only one vector, again assume these are values
+      anchors_df = data.frame(
+        time = seq(0, 1, length.out = max(2, nrow(anchors_df))),
+        value = anchors_df[, 1]
+      )
+    } else if (!identical(colnames(anchors_df), c('time', 'value'))) {
+      warning(paste('Anchors should be either numeric or a dataframe',
+                    'with two columns: time and value.'))
+      return(NA)
+    }
+  } else {
+    return(NA)
+  }
+  return(anchors_df)
 }

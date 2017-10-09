@@ -85,6 +85,24 @@ server = function(input, output, session) {
         try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
       }
 
+      # reformat anchors from the preset
+      for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal',
+                       'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
+        if (!is.null(preset[[anchor]]) && !is.na(preset[[anchor]])) {
+          preset[[anchor]] = reformatAnchors(preset[[anchor]])
+        }
+      }
+      if (is.numeric(preset$noiseAnchors) && length(preset$noiseAnchors) > 0) {
+        preset$noiseAnchors = data.frame(
+          time = seq(0,
+                     ifelse(is.numeric(preset$sylLen),
+                            preset$sylLen,
+                            permittedValues['sylLen', 'default']),
+                     length.out = max(2, length(preset$noiseAnchors))),
+          value = preset$noiseAnchors
+        )
+      }
+
       myPars_to_reset = names(myPars)[which(names(myPars) %in% names(preset))]
       for (v in myPars_to_reset) {
         myPars[[v]] = preset[[v]]
@@ -96,7 +114,7 @@ server = function(input, output, session) {
 
       # special cases
       if (!is.null(preset$pitchAnchors)) {
-        if (is.na(preset$pitchAnchors)) {
+        if (any(is.na(preset$pitchAnchors))) {
           updateCheckboxInput(session, 'generateVoiced', value = FALSE)
         } else {
           updateCheckboxInput(session, 'generateVoiced', value = TRUE)
@@ -995,6 +1013,7 @@ server = function(input, output, session) {
       seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
                         wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
                         flim = c(input$spec_ylim[1], input$spec_ylim[2]),
+                        alim = c(input$throwaway, 0),
                         main = 'Spectrum')
     }
   })

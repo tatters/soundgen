@@ -4,16 +4,16 @@
 \alias{generateHarmonics}
 \title{Generate harmonics}
 \usage{
-generateHarmonics(pitch, attackLen = 50, nonlinBalance = 0, nonlinDep = 0,
-  jitterDep = 0, jitterLen = 1, vibratoFreq = 100, vibratoDep = 0,
-  shimmerDep = 0, creakyBreathy = 0, rolloff = -18, rolloffOct = -2,
-  rolloffKHz = -6, rolloffParab = 0, rolloffParabHarm = 3,
-  rolloff_perAmpl = 12, temperature = 0, pitchDriftDep = 0.5,
-  pitchDriftFreq = 0.125, randomWalk_trendStrength = 0.5,
-  shortestEpoch = 300, subFreq = 100, subDep = 0, amDep = 0,
-  amFreq = 30, amplAnchors = NA, overlap = 75, samplingRate = 16000,
-  pitchFloor = 75, pitchCeiling = 3500, pitchSamplingRate = 3500,
-  throwaway = -120)
+generateHarmonics(pitch, attackLen = 50, nonlinBalance = 0,
+  nonlinDep = 50, jitterDep = 0, jitterLen = 1, vibratoFreq = 5,
+  vibratoDep = 0, shimmerDep = 0, creakyBreathy = 0, rolloff = -9,
+  rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
+  rolloffParabHarm = 3, rolloff_perAmpl = 3, temperature = 0.025,
+  pitchDriftDep = 0.5, pitchDriftFreq = 0.125,
+  randomWalk_trendStrength = 0.5, shortestEpoch = 300, subFreq = 100,
+  subDep = 0, amDep = 0, amFreq = 30, amplAnchors = NA, overlap = 75,
+  samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, throwaway = -80)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
