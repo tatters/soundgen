@@ -648,7 +648,7 @@ getSigmoid = function(len,
 
   a = seq(from = from, to = to, length.out = samplingRate / freq / 2)
   b = 1 / (1 + exp(-a * slope))
-  b = zeroOne(b)
+  b = zeroOne(b)  # plot(b, type = 'l')
   out = rep(c(b, rev(b)), length.out = len)
   return(out)
 }

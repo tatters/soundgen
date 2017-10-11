@@ -8,7 +8,7 @@ MAJOR
 MINOR
   * Support is added for shorthand specification of all anchors, e.g. "pitchAnchors = c(150, 180, 140)", and of formants, e.g. "formants = list(f1 = 800, f2 = c(1500, 2200))". The expanded format from soundgen 1.0.0 is also supported.
   * Rolloff parameters are vectorized, allowing rolloff to change dynamically within a vocalization (command-line only; not available from the app).
-  * Numerous small bugs fixed, notably dB conversion, ...
+  * Numerous small bugs fixed, notably dB conversion, timing of unvoiced segments in polysyllabic vocalizations, ...
 
 NEW FUNCTIONS:
   * flatEnv(): normalizes amplitude envelope dynamically, i.e., keeping loudness constant throughout the sound

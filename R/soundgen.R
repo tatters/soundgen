@@ -1,4 +1,4 @@
-# TODO: update morphing routine for new formant of formants; default noise anchors -80; analyzeFolder should return df not list; check all presets
+# TODO: closed phase as % of glottal cycle; vectorized AM (non-constant, command line only); update morphing routine for new format of formants; default noise anchors -80; analyzeFolder should return df not list; check all presets; try beat generation for drums or single glottal pulses a la croc
 
 #' @import stats graphics utils grDevices
 NULL
