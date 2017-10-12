@@ -1,4 +1,4 @@
-# TODO: closed phase as % of glottal cycle; vectorized AM (non-constant, command line only); update morphing routine for new format of formants; analyzeFolder should return df not list; check all presets; try beat generation for drums or single glottal pulses a la croc
+# TODO: vectorized AM (non-constant, command line only); update morphing routine for new format of formants; analyzeFolder should return df not list; check all presets; try beat generation for drums or single glottal pulses a la croc
 
 #' @import stats graphics utils grDevices
 NULL
@@ -22,24 +22,27 @@ NULL
 #' @param sylLen average duration of each syllable, ms
 #' @param pauseLen average duration of pauses between syllables, ms
 #' @param pitchAnchors a numeric vector of f0 values in Hz (assuming equal time
-#'   steps) or a dataframe specifying the time (ms) and value (Hz) of each
-#'   anchor. These anchors are used to create a smooth contour of fundamental
-#'   frequency f0 (pitch) within one syllable (see Examples)
+#'   steps) or a dataframe specifying the time (ms or 0 to 1) and value (Hz) of
+#'   each anchor. These anchors are used to create a smooth contour of
+#'   fundamental frequency f0 (pitch) within one syllable (see Examples)
 #' @param pitchAnchorsGlobal unlike \code{pitchAnchors}, these anchors are used
 #'   to create a smooth contour of average f0 across multiple syllables. The
 #'   values are in semitones relative to the existing pitch, i.e. 0 = no change
+#' @param glottisAnchors anchors for specifying the proportion of a glottal
+#'   cycle with closed glottis, % (0 = no modification, 100 = closed phase as
+#'   long as open phase); numeric vector or dataframe specifying time and value
 #' @param temperature hyperparameter for regulating the amount of stochasticity
 #'   in sound generation
 #' @param tempEffects a list of scale factors regulating the effect of
 #'   temperature on particular parameters. To change, specify just those pars
 #'   that you want to modify, don't rewrite the whole list (defaults are
-#'   hard-coded). \code{sylLenDep}: random variation of the duration of
-#'   syllables and pauses; \code{formDrift}: the amount of random drift of
-#'   formants; \code{formDisp}: irregularity of the dispersion of stochastic
-#'   formants; \code{pitchDriftDep}: amount of slow random drift of f0;
-#'   \code{pitchDriftFreq}: frequency of slow random drift of f0;
+#'   hard-coded). \code{sylLenDep}: duration of syllables and pauses;
+#'   \code{formDrift}: formant frequencies; \code{formDisp}: dispersion of
+#'   stochastic formants; \code{pitchDriftDep}: amount of slow random drift of
+#'   f0; \code{pitchDriftFreq}: frequency of slow random drift of f0;
 #'   \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
-#'   fluctuations of user-specified pitch / noise / amplitude anchors
+#'   fluctuations of user-specified pitch / noise / amplitude anchors;
+#'   \code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
 #'   vocalTract to make the speaker appear more male (-1...0) or more female
 #'   (0...+1)

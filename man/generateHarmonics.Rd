@@ -21,6 +21,10 @@ computational efficiency, provide the pitch contour at a reduced sampling
 rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be
 upsampled before synthesis.}
 
+\item{glottisAnchors}{anchors for specifying the proportion of a glottal
+cycle with closed glottis, % (0 = no modification, 100 = closed phase as
+long as open phase); numeric vector or dataframe specifying time and value}
+
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms)}
 

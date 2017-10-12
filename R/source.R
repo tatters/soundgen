@@ -592,3 +592,106 @@ generateEpoch = function(pitch_per_gc,
   # playme(waveform, samplingRate)
   return(waveform)
 }
+
+#' Fart
+#'
+#' While the same sounds can be created with soundgen(), this dedicated
+#' facetious function produces the same effect more efficiently and with very
+#' few control parameters. With default paramesettings, execution time is ~ 10
+#' ms per second of audio sampled at 16000 Hz. Principle: creates separate
+#' glottal cycles with harmonics, but no formants. See \code{\link{soundgen}}
+#' for more details.
+#' @inheritParams soundgen
+#' @plot if TRUE, plots the waveform
+#' @return Returns a normalized waveform.
+#' @export
+#' @examples
+#' f = fart(play = T)
+#' # playme(f)
+fart = function(glottisAnchors = c(350, 700),
+                pitchAnchors = 75,
+                temperature = 0.25,
+                sylLen = 600,
+                rolloff = -20,
+                samplingRate = 16000,
+                play = TRUE,
+                plot = FALSE) {
+  glottisAnchors = reformatAnchors(glottisAnchors)
+  pitchAnchors = reformatAnchors(pitchAnchors)
+
+  # wiggle pars
+  if (temperature > 0) {
+    rolloff = rnorm_bounded(n = 1,
+                            mean = rolloff,
+                            sd = rolloff * temperature * .5,
+                            low = -50, high = 10)
+    sylLen = rnorm_bounded(n = 1,
+                           mean = sylLen,
+                           sd = sylLen * temperature * .5,
+                           low = 0, high = 10000)
+
+    glottisAnchors = wiggleAnchors(glottisAnchors, temperature, temp_coef = .5, low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE)
+    pitchAnchors = wiggleAnchors(pitchAnchors, temperature, temp_coef = 1, low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE)
+  }
+
+  # preliminary glottis contour
+  glottisClosed = getSmoothContour(anchors = glottisAnchors, len = 100)
+
+  # adjust length based on proportion of closed glottis (pauses added)
+  mean_closed = mean(glottisClosed) / 100
+  sylLen = sylLen / (mean_closed + 1)
+  pitchAnchors = pitchAnchors * (mean_closed + 1)
+
+  # prepare pitch contour
+  pitch = getSmoothContour(anchors = pitchAnchors, len = sylLen * samplingRate / 1000)
+
+  # get pitch per glottal cycle
+  gc = getGlottalCycles(pitch, samplingRate = samplingRate)
+  pitch_per_gc = pitch[gc]
+  gc_len = round(samplingRate / pitch_per_gc)
+
+  # final glottis contour
+  glottisClosed = getSmoothContour(anchors = glottisAnchors, len = length(gc))
+
+  # prepare rolloff
+  nHarmonics = ceiling((samplingRate / 2 - min(pitch)) / min(pitch))
+  roll_dB = log2(1:nHarmonics) * rolloff
+  roll_dB = roll_dB[roll_dB > -80]
+  roll = 10 ^ (roll_dB / 20)
+
+  # synthesize the sound
+  pause_len = round(gc_len * glottisClosed / 100)
+  s = vector()
+  for (i in 1:length(gc)) {
+    cycle = 0
+    for (h in 1:length(roll)) {
+      cycle = cycle +
+        sin(2 * pi * pitch_per_gc[i] * (0:(gc_len[i] - 1)) *
+              h / samplingRate) * roll[h]
+    }  # plot(cycle, type = 'l')
+    s = c(s, cycle, rep(0, pause_len[i]))
+  }
+
+  # amplitude drift
+  if (temperature > 0) {
+    drift = getRandomWalk(
+      len = 100,
+      rw_range = temperature * 10,
+      rw_smoothing = .2,
+      method = 'spline'
+    ) + 1
+    # plot(drift, type = 'l')
+    drift_upsampled = approx(drift,
+                             n = length(s))$y
+    s = s * drift_upsampled
+  }
+
+  s = s / max(abs(s))
+
+  if (play) playme(s, samplingRate)
+  if (plot) {
+    time = (1:length(s)) / samplingRate * 1000
+    plot(time, s, type = 'l', xlab = 'Time, ms')
+  }
+  return(s)
+}

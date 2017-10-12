@@ -38,13 +38,17 @@ Details)}
 \item{pauseLen}{average duration of pauses between syllables, ms}
 
 \item{pitchAnchors}{a numeric vector of f0 values in Hz (assuming equal time
-steps) or a dataframe specifying the time (ms) and value (Hz) of each
-anchor. These anchors are used to create a smooth contour of fundamental
-frequency f0 (pitch) within one syllable (see Examples)}
+steps) or a dataframe specifying the time (ms or 0 to 1) and value (Hz) of
+each anchor. These anchors are used to create a smooth contour of
+fundamental frequency f0 (pitch) within one syllable (see Examples)}
 
 \item{pitchAnchorsGlobal}{unlike \code{pitchAnchors}, these anchors are used
 to create a smooth contour of average f0 across multiple syllables. The
 values are in semitones relative to the existing pitch, i.e. 0 = no change}
+
+\item{glottisAnchors}{anchors for specifying the proportion of a glottal
+cycle with closed glottis, % (0 = no modification, 100 = closed phase as
+long as open phase); numeric vector or dataframe specifying time and value}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
@@ -52,13 +56,13 @@ in sound generation}
 \item{tempEffects}{a list of scale factors regulating the effect of
 temperature on particular parameters. To change, specify just those pars
 that you want to modify, don't rewrite the whole list (defaults are
-hard-coded). \code{sylLenDep}: random variation of the duration of
-syllables and pauses; \code{formDrift}: the amount of random drift of
-formants; \code{formDisp}: irregularity of the dispersion of stochastic
-formants; \code{pitchDriftDep}: amount of slow random drift of f0;
-\code{pitchDriftFreq}: frequency of slow random drift of f0;
+hard-coded). \code{sylLenDep}: duration of syllables and pauses;
+\code{formDrift}: formant frequencies; \code{formDisp}: dispersion of
+stochastic formants; \code{pitchDriftDep}: amount of slow random drift of
+f0; \code{pitchDriftFreq}: frequency of slow random drift of f0;
 \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
-fluctuations of user-specified pitch / noise / amplitude anchors}
+fluctuations of user-specified pitch / noise / amplitude anchors;
+\code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis}
 
 \item{maleFemale}{hyperparameter for shifting f0 contour, formants, and
 vocalTract to make the speaker appear more male (-1...0) or more female

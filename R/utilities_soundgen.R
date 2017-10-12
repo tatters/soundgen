@@ -364,6 +364,7 @@ fadeInOut = function(ampl,
 #' soundgen:::getGlottalCycles(seq(150, 200, length.out = 350),
 #'   samplingRate = 3500)
 getGlottalCycles = function (pitch, samplingRate) {
+  if (length(pitch) < 2) return(1)
   glottalCycles = numeric()
   i = 1 # the first border is the first time point
   while (i < length(pitch)) {
