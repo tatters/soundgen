@@ -331,6 +331,7 @@ fadeInOut = function(ampl,
                      do_fadeOut = TRUE,
                      length_fade = 1000) {
   if ((!do_fadeIn & !do_fadeOut) | length_fade < 2) return(ampl)
+  length_fade = round(length_fade)  # just in case of non-integers
 
   length_fade = min(length_fade, length(ampl))
   fadeIn = seq(0, 1, length.out = length_fade)
@@ -354,16 +355,15 @@ fadeInOut = function(ampl,
 #'
 #' Returns a vector of indices giving the borders between "glottal cycles",
 #' assuming that we know the true f0 at each time point (as we do in synthesized
-#' sounds) and that maximum amplitude gives us the center of a glottal cycle.
-#' The first index is always 1.
+#' sounds). The first index is always 1.
 #' @param pitch a vector of fundamental frequency values
 #' @param samplingRate sampling rate at which f0 values are provided
 #' @keywords internal
 #' @examples
 #' # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
-#' soundgen:::getGlottalCycles (seq(150, 200, length.out = 350),
+#' soundgen:::getGlottalCycles(seq(150, 200, length.out = 350),
 #'   samplingRate = 3500)
-getGlottalCycles = function (pitch, samplingRate = 44100) {
+getGlottalCycles = function (pitch, samplingRate) {
   glottalCycles = numeric()
   i = 1 # the first border is the first time point
   while (i < length(pitch)) {
@@ -371,7 +371,7 @@ getGlottalCycles = function (pitch, samplingRate = 44100) {
     # take steps proportionate to the current F0
     i = i + max(2, floor(samplingRate / pitch[i]))
   }
-  return (glottalCycles)
+  return(glottalCycles)
 }
 
 

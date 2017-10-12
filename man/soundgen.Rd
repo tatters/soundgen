@@ -6,7 +6,7 @@
 \usage{
 soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
-  100)), pitchAnchorsGlobal = NA, temperature = 0.025,
+  100)), pitchAnchorsGlobal = NA, glottisAnchors = 0, temperature = 0.025,
   tempEffects = list(sylLenDep = 0.02, formDrift = 0.3, formDisp = 0.2,
   pitchDriftDep = 0.5, pitchDriftFreq = 0.125, pitchAnchorsDep = 0.05,
   noiseAnchorsDep = 0.1, amplAnchorsDep = 0.1), maleFemale = 0,

@@ -4,16 +4,16 @@
 \alias{generateHarmonics}
 \title{Generate harmonics}
 \usage{
-generateHarmonics(pitch, attackLen = 50, nonlinBalance = 0,
-  nonlinDep = 50, jitterDep = 0, jitterLen = 1, vibratoFreq = 5,
-  vibratoDep = 0, shimmerDep = 0, creakyBreathy = 0, rolloff = -9,
-  rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
+generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
+  nonlinBalance = 0, nonlinDep = 50, jitterDep = 0, jitterLen = 1,
+  vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0, creakyBreathy = 0,
+  rolloff = -9, rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
   rolloffParabHarm = 3, rolloff_perAmpl = 3, temperature = 0.025,
   pitchDriftDep = 0.5, pitchDriftFreq = 0.125,
   randomWalk_trendStrength = 0.5, shortestEpoch = 300, subFreq = 100,
-  subDep = 0, amDep = 0, amFreq = 30, amplAnchors = NA, overlap = 75,
-  samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, throwaway = -80)
+  subDep = 0, amplAnchors = NA, overlap = 75, samplingRate = 16000,
+  pitchFloor = 75, pitchCeiling = 3500, pitchSamplingRate = 3500,
+  throwaway = -80)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
@@ -100,11 +100,6 @@ strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
 strong subharmonics}
 
-\item{amDep}{amplitude modulation depth, %. 0: no change; 100: amplitude
-modulation with amplitude range equal to the dynamic range of the sound}
-
-\item{amFreq}{amplitude modulation frequency, Hz}
-
 \item{amplAnchors}{a numeric vector of amplitude envelope (0 to 1) or a
 dataframe specifying the time (ms) and value of amplitude anchors}
 
@@ -131,10 +126,12 @@ Returns one continuous, unfiltered, voiced syllable consisting of several
 sine waves.
 }
 \examples{
-pitch=soundgen:::getSmoothContour(len = 3500,
+pitch = soundgen:::getSmoothContour(len = 3500,
   anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
 plot(pitch)
-sound = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
-# playme(sound, samplingRate = 16000) # no formants yet
+sound1 = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
+#' # playme(sound1, samplingRate = 16000) # no formants yet
+sound2 = soundgen:::generateHarmonics(pitch, samplingRate = 16000, glottisAnchors = c(0, 300))
+#' # playme(sound2, samplingRate = 16000) # pauses between glottal cycles
 }
 \keyword{internal}

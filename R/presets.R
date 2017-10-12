@@ -37,6 +37,7 @@ permittedValues = matrix(c(
   'shimmerDep', 0, 0, 100, 1,
   'attackLen', 50, 0, 200, 10,
   'rolloff', -9, -30, 0, 1,
+  'glottisAnchors', 0, 0, 1000, 5,
   'rolloffOct', -3, -30, 10, 1,
   'rolloffParab', 0, -30, 30, 1,
   'rolloffParabHarm', 3, 1, 20, 1,
@@ -130,6 +131,7 @@ defaults = list(
     value = c(100, 150, 135, 100)
   ),
   pitchAnchorsGlobal = list(time = c(0, 1), value = c(0, 0)),
+  glottisAnchors = 0,
   noiseAnchors = list(time = c(0, 1), value = c(-80, -80)),
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   amplAnchors = list(time = c(0, 1), value = c(80, 80)),
@@ -306,7 +308,7 @@ presets = list(
 
     Meow = 'soundgen(sylLen = 920, pitchAnchors = list(time = c(0, 0.2, 1), value = c(480, 550, 515)), attackLen = 150, rolloff = -2, rolloffOct = -4, formants = c(1594, 3600), mouthAnchors = list(time = c(0, 0.16, 0.91, 1), value = c(0, 1, 0.31, 0.06)))',
 
-    Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 50, pitchAnchors = 25, temperature = 0.1, jitterDep = 0, jitterLen = 34, rolloff = -12, rolloffLip = 0, formants = c(1200, 2600, 5200, 7000), subDep = 0, amDep = 70, amFreq = 25, noiseAnchors = list(time = c(-113, 96, 839), value = c(-80, -39, -58)))',
+    Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 50, pitchAnchors = 25, glottisAnchors = 170, temperature = 0.1, jitterDep = 0, jitterLen = 34, rolloff = -30, rolloffLip = 0, formants = c(1200, 2600, 5200, 7000), subDep = 0, noiseAnchors = list(time = c(-113, 96, 839), value = c(-80, -39, -58)))',
 
     Scream = 'soundgen(repeatBout = 2, sylLen = 1610, pauseLen = 500, pitchAnchors = list(time = c(0, 0.28, 0.53, 0.88, 1), value = c(388, 385, 669, 663, 392)), temperature = 0.05, nonlinBalance = 35, jitterDep = 1.9, rolloff = -6, formants = list(f1 = c(1800, 1000), f2 = 2400), subFreq = 150, subDep = 80)',
 
@@ -318,6 +320,8 @@ presets = list(
   ),
 
   Misc = list(
+    Crocodile = 'soundgen(sylLen = 2570, pitchAnchors = list(time = c(0, 0.36, 1), value = c(25, 42, 25)), glottisAnchors = c(150, 200), rolloff = -21, formants = c(200, 500, 1200, 1800), temperature = .25, invalidArgAction = "ignore")',
+
     Dog_bark = 'soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, pitchAnchors = list(time = c(0, 0.29, 1), value = c(559, 716, 647)), temperature = 0.05, nonlinBalance = 100, jitterDep = 2.1, formants = c(1500, 3300, 6000), formantDep = 1, vocalTract = 8.5, subDep = 0, noiseAnchors = list(time = c(0, 78, 160), value = c(-80, 12, -80)), rolloffNoise = -9, mouthAnchors = c(0, 0.5, 0))',
 
     Duck = 'soundgen(repeatBout = 5, sylLen = 110, pauseLen = 170, pitchAnchors = c(119, 110), temperature = 0.1, rolloff = -3, rolloffOct = -2, formants = c(1600, 2700, 5600, 6400), noiseAnchors = -13, mouthAnchors = c(0.34, 0.57, 0.35))',

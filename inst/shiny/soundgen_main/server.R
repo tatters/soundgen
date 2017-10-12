@@ -86,7 +86,7 @@ server = function(input, output, session) {
       }
 
       # reformat anchors from the preset
-      for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal',
+      for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
                        'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
         if (!is.null(preset[[anchor]]) && !is.na(preset[[anchor]])) {
           preset[[anchor]] = reformatAnchors(preset[[anchor]])
@@ -166,6 +166,10 @@ server = function(input, output, session) {
         updateCheckboxInput(session, inputId = 'estimateVTL', value = FALSE)
       } else {
         updateCheckboxInput(session, inputId = 'estimateVTL', value = TRUE)
+      }
+
+      if (is.list(preset$glottisAnchors)) {
+        updateSliderInput(session, inputId = 'glottisAnchors', value = mean(preset$glottisAnchors$value))
       }
     }
   })
@@ -1028,6 +1032,7 @@ server = function(input, output, session) {
       pauseLen = input$pauseLen,
       pitchAnchors = myPars$pitchAnchors,
       pitchAnchorsGlobal = myPars$pitchAnchorsGlobal,
+      glottisAnchors = input$glottisAnchors,
       temperature = input$temperature,
       maleFemale = input$maleFemale,
       creakyBreathy = input$creakyBreathy,

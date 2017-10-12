@@ -177,12 +177,15 @@ generateNoise = function(len,
 #'   in higher frequencies
 #' @keywords internal
 #' @examples
-#' pitch=soundgen:::getSmoothContour(len = 3500,
+#' pitch = soundgen:::getSmoothContour(len = 3500,
 #'   anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
 #' plot(pitch)
-#' sound = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
-#' # playme(sound, samplingRate = 16000) # no formants yet
+#' sound1 = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
+#' #' # playme(sound1, samplingRate = 16000) # no formants yet
+#' sound2 = soundgen:::generateHarmonics(pitch, samplingRate = 16000, glottisAnchors = c(0, 300))
+#' #' # playme(sound2, samplingRate = 16000) # pauses between glottal cycles
 generateHarmonics = function(pitch,
+                             glottisAnchors = 0,
                              attackLen = 50,
                              nonlinBalance = 0,
                              nonlinDep = 50,
@@ -205,8 +208,6 @@ generateHarmonics = function(pitch,
                              shortestEpoch = 300,
                              subFreq = 100,
                              subDep = 0,
-                             amDep = 0,
-                             amFreq = 30,
                              amplAnchors = NA,
                              overlap = 75,
                              samplingRate = 16000,
@@ -356,7 +357,7 @@ generateHarmonics = function(pitch,
   # NB: this whole pitch_per_gc trick is purely for computational efficiency.
   #   The entire pitch contour can be fed in, but then it takes up to 1 s
   #   per s of audio
-  # image(t(rolloff_source))
+  # image(t(log(rolloff_source)))
 
   # add shimmer (random variation in amplitude)
   if (shimmerDep > 0 & nonlinBalance > 0) {
@@ -370,8 +371,12 @@ generateHarmonics = function(pitch,
     # column of rolloff_source by shimmer[1], the second column by shimmer[2], etc
   }
 
+  # synthesize one glottal cycle at a time or a whole epoch at once?
+  synthesize_per_gc = is.list(glottisAnchors) && any(glottisAnchors$value > 0)
+
   # add vocal fry (subharmonics)
-  if (subDep > 0 & nonlinBalance > 0) {
+  if (!synthesize_per_gc &&  # can't add subharmonics if doing one gc at a time (one f0 period)
+      subDep > 0 & nonlinBalance > 0) {
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,
@@ -389,55 +394,28 @@ generateHarmonics = function(pitch,
   }
 
   ## WAVEFORM GENERATION
-  # Upsample pitch contour to full resolution (samplingRate).
-  #   Uses a more sophisticated but still very fast version of linear
-  #   interpolation, which takes into account the variable length
-  #   of glottal cycles
-  up = upsample(pitch_per_gc, samplingRate = samplingRate)
-  pitch_upsampled = up$pitch
-  gc_upsampled = up$gc
-  integr = cumsum(pitch_upsampled) / samplingRate
-  waveform = 0
-
-  # synthesize one epoch at a time and join by cross-fading
-  for (e in 1:nrow(epochs)) {
-    idx_gc_up = gc_upsampled[epochs$start[e]:(epochs$end[e] + 1)]
-    idx_up = min(idx_gc_up):max(idx_gc_up)
-    waveform_epoch = rep(0, length(idx_up))
-    integr_epoch = integr[idx_up]
-    rolloff_epoch = rolloff_source[[e]]  # rolloff_source MUST be a list!
-
-    for (h in 1:nrow(rolloff_epoch)) {
-      # NB: rolloff_source can have fewer
-      # harmonics that nHarmonics, since weak harmonics are discarded for
-      # computational efficiency. Or it can have a lot more than nHarmonics,
-      # if we add vocal fry
-      times_f0 = as.numeric(rownames(rolloff_epoch)[h]) # freq of harmonic h
-      # as a multiple of f0
-      am_upsampled = approx(rolloff_epoch[h, ],
-                            n = length(idx_up),
-                            x = idx_gc_up[-length(idx_gc_up)])$y
-      # plot(am_upsampled, type = 'l')
-      # the actual waveform synthesis happens HERE:
-      waveform_epoch = waveform_epoch +
-        sin(2 * pi * integr_epoch * times_f0) * am_upsampled
-      # # normalize amplitude to avoid abrupt amplitude jumps as subharmonics regime changes
-      # if (e > 1) {
-      #   max_prev = max(tail(ampl, samplingRate * .1)) # over the last ... ms of the previous epoch
-      #   max_new = max(head(ampl_epoch, samplingRate * .1)) # over the first ... ms of the new epoch
-      #   ampl_epoch = ampl_epoch * max_prev / max_new
-      #   RMS_prev = sqrt(mean(tail(ampl, samplingRate * .1)^2)) # over the last ... ms of the previous epoch
-      #   RMS_new = sqrt(mean(head(ampl_epoch, samplingRate * .1)^2)) # over the first ... ms of the new epoch
-      #   ampl_epoch = ampl_epoch * RMS_prev / RMS_new
-      # }
+  if (synthesize_per_gc) {
+    # synthesize one glottal cycle at a time
+    r = rolloff_source
+    for (e in 1:length(rolloff_source)) {
+      r[[e]] = rolloff_source[[e]]
+      r[[e]] = as.list(as.data.frame(r[[e]]))
+      for (i in 1:length(r[[e]])) {
+        r[[e]][[i]] = matrix(r[[e]][[i]], ncol = 1, dimnames = list(rownames(rolloff_source[[e]])))
+      }
     }
-    waveform = crossFade(waveform,
-                         waveform_epoch,
-                         samplingRate = samplingRate,
-                         crossLen = 15) # longer crossLen
-    # provides for smoother transitions, but it shortens the resulting sound.
-    # Short transitions preserve sound duration but may create a click
-    # where two epochs are joined
+    r = unlist(r, recursive = FALSE)  # get rid of epochs
+    glottisClosed_per_gc = getSmoothContour(anchors = glottisAnchors, len = nGC, valueFloor = 0)
+    waveform = generateGC(pitch_per_gc = pitch_per_gc,
+                          glottisClosed_per_gc = glottisClosed_per_gc,
+                          rolloff_per_gc = r,
+                          samplingRate = samplingRate)
+  } else {
+    # synthesize continuously
+    waveform = generateEpoch(pitch_per_gc = pitch_per_gc,
+                             epochs = epochs,
+                             rolloff_per_epoch = rolloff_source,
+                             samplingRate = samplingRate)
   }
   # sum(is.na(waveform))
   # plot(waveform[], type = 'l')
@@ -471,15 +449,146 @@ generateHarmonics = function(pitch,
 
   # pitch drift is accompanied by amplitude drift
   if (temperature > 0) {
+    gc_upsampled = upsample(pitch_per_gc, samplingRate = samplingRate)$gc
     drift_upsampled = approx(drift,
                              n = length(waveform),
                              x = gc_upsampled[-length(gc_upsampled)])$y
+    waveform = waveform * drift_upsampled
     # plot(drift_upsampled, type = 'l')
-  } else {
-    drift_upsampled = 1
   }
-  waveform = waveform * drift_upsampled
   # playme(waveform, samplingRate = samplingRate)
   # spectrogram(waveform, samplingRate = samplingRate)
+  return(waveform)
+}
+
+
+
+#' Generate glottal cycles
+#'
+#' Internal soundgen function.
+#' Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff)
+#' and creates a waveform consisting of a string of these glottal cycles
+#' separated by pauses (if there is a closed phase). The principle is to work
+#' with one glottal cycle at a time and create a sine wave for each harmonic,
+#' with amplitudes adjusted by rolloff.
+#' @param pitch_per_gc pitch per glottal cycle, Hz
+#' @param glottisClosed_per_gc proportion of closed phase per glottal cycle, %
+#' @param rolloff_source a list of one-column matrices, one for each glottal
+#'   cycle, specifying rolloff per harmonic (linear multiplier, ie NOT in dB)
+#'   Each matrix has as many rows as there are harmonics, and rownames specify
+#'   the ratio to F0 (eg 1.5 means it's a subharmonic added between f0 and its
+#'   first harmonic)
+#' @param samplingRate the sampling rate of generated sound, Hz
+#' @return Returns a waveform as a non-normalized numeric vector centered at zero.
+#' @examples
+#' pitch_per_gc = seq(100, 150, length.out = 25)
+#' glottisClosed_per_gc = seq(0, 300, length.out = 25)
+#' m = matrix(10 ^ (-6 * log2(1:200) / 20))
+#' rownames(m) = 1:nrow(m)
+#' rolloff_source = rep(list(m), 25)
+#' s = generateGC(pitch_per_gc,  glottisClosed_per_gc,  rolloff_source,  samplingRate = 16000)
+#' # plot(s, type = 'l')
+#' # playme(s)
+generateGC = function(pitch_per_gc,
+                      glottisClosed_per_gc,
+                      rolloff_per_gc,
+                      samplingRate) {
+  gc_len = round(samplingRate / pitch_per_gc)  # length of each gc, points
+  pause_len = round(gc_len * glottisClosed_per_gc / 100)  # length of each pause, points
+
+  # synthesize one glottal cycle at a time
+  waveform = 0
+  for (i in 1:length(gc_len)) {
+    cycle = 0
+    for (h in 1:nrow(rolloff_per_gc[[i]])) {
+      times_f0 = as.numeric(rownames(rolloff_per_gc[[i]])[h]) # freq of harmonic h
+      idx = 0:(gc_len[i] - 1)  # count from zero, ensuring the gc starts at sin(0) = 0
+      cycle = cycle +
+        sin(2 * pi * pitch_per_gc[i] * times_f0 * idx / samplingRate) *
+        rolloff_per_gc[[i]][h]
+    }
+    # plot(cycle, type = 'l')
+    waveform = c(waveform, cycle, rep(0, pause_len[i]))
+  }
+  # plot(waveform, type = 'l')
+  # playme(waveform, samplingRate)
+  return(waveform)
+}
+
+
+#' Generate an epoch
+#'
+#' Internal soundgen function.
+#' Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff)
+#' and creates a continuous waveform. The principle is to work with one epoch
+#' with stable regime of subharmonics at a time and create a sine wave for each
+#' harmonic, with amplitudes adjusted by rolloff.
+#' @param pitch_per_gc pitch per glottal cycle, Hz
+#' @param rolloff_source a list of matrices with one matrix for each epoch; each
+#'   matrix should contain one column for each glottal cycle and one row for
+#'   each harmonic (linear multiplier, ie NOT in dB). Rownames specify the ratio
+#'   to F0 (eg 1.5 means it's a subharmonic added between f0 and its first
+#'   harmonic)
+#' @param samplingRate the sampling rate of generated sound, Hz
+#' @return Returns a waveform as a non-normalized numeric vector centered at zero.
+#' @examples
+#' pitch_per_gc = seq(100, 150, length.out = 90)
+#' epochs = data.frame (start = c(1, 51),
+#'                      end = c(50, 90))
+#' m1 = matrix(rep(10 ^ (-6 * log2(1:200) / 20), 50), ncol = 50, byrow = FALSE)
+#' m2 = matrix(rep(10 ^ (-12 * log2(1:200) / 20), 40), ncol = 40, byrow = FALSE)
+#' rownames(m1) = 1:nrow(m1)
+#' rownames(m2) = 1:nrow(m2)
+#' rolloff_source = list(m1, m2)
+#' s = generateEpoch(pitch_per_gc, epochs, rolloff_source,  samplingRate = 16000)
+#' # plot(s, type = 'l')
+#' # playme(s)
+generateEpoch = function(pitch_per_gc,
+                         epochs,
+                         rolloff_per_epoch,
+                         samplingRate) {
+  # Upsample pitch contour to full resolution (samplingRate).
+  #   Uses a more sophisticated but still very fast version of linear
+  #   interpolation, which takes into account the variable length
+  #   of glottal cycles
+  up = upsample(pitch_per_gc, samplingRate = samplingRate)
+  pitch_upsampled = up$pitch
+  gc_upsampled = up$gc
+  integr = cumsum(pitch_upsampled) / samplingRate
+  waveform = 0
+
+  # synthesize one epoch at a time and join by cross-fading
+  for (e in 1:nrow(epochs)) {
+    idx_gc_up = gc_upsampled[epochs$start[e]:(epochs$end[e] + 1)]
+    idx_up = min(idx_gc_up):max(idx_gc_up)
+    waveform_epoch = 0
+    integr_epoch = integr[idx_up]
+    rolloff_epoch = rolloff_per_epoch[[e]]  # rolloff_source MUST be a list!
+
+    for (h in 1:nrow(rolloff_epoch)) {
+      # NB: rolloff_source can have fewer
+      # harmonics that nHarmonics, since weak harmonics are discarded for
+      # computational efficiency. Or it can have a lot more than nHarmonics,
+      # if we add vocal fry
+      times_f0 = as.numeric(rownames(rolloff_epoch)[h]) # freq of harmonic h
+      # as a multiple of f0
+      am_upsampled = approx(rolloff_epoch[h, ],
+                            n = length(idx_up),
+                            x = idx_gc_up[-length(idx_gc_up)])$y
+      # plot(am_upsampled, type = 'l')
+      # the actual waveform synthesis happens HERE:
+      waveform_epoch = waveform_epoch +
+        sin(2 * pi * integr_epoch * times_f0) * am_upsampled
+    }
+    waveform = crossFade(waveform,
+                         waveform_epoch,
+                         samplingRate = samplingRate,
+                         crossLen = 15) # longer crossLen
+    # provides for smoother transitions, but it shortens the resulting sound.
+    # Short transitions preserve sound duration but may create a click
+    # where two epochs are joined
+  }
+  # plot(waveform, type = 'l')
+  # playme(waveform, samplingRate)
   return(waveform)
 }

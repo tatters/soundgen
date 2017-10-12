@@ -4,7 +4,7 @@
 \alias{getGlottalCycles}
 \title{Divide f0 contour into glottal cycles}
 \usage{
-getGlottalCycles(pitch, samplingRate = 44100)
+getGlottalCycles(pitch, samplingRate)
 }
 \arguments{
 \item{pitch}{a vector of fundamental frequency values}
@@ -17,12 +17,11 @@ Internal soundgen function.
 \details{
 Returns a vector of indices giving the borders between "glottal cycles",
 assuming that we know the true f0 at each time point (as we do in synthesized
-sounds) and that maximum amplitude gives us the center of a glottal cycle.
-The first index is always 1.
+sounds). The first index is always 1.
 }
 \examples{
 # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
-soundgen:::getGlottalCycles (seq(150, 200, length.out = 350),
+soundgen:::getGlottalCycles(seq(150, 200, length.out = 350),
   samplingRate = 3500)
 }
 \keyword{internal}

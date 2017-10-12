@@ -1,4 +1,4 @@
-# TODO: closed phase as % of glottal cycle; vectorized AM (non-constant, command line only); update morphing routine for new format of formants; default noise anchors -80; analyzeFolder should return df not list; check all presets; try beat generation for drums or single glottal pulses a la croc
+# TODO: closed phase as % of glottal cycle; vectorized AM (non-constant, command line only); update morphing routine for new format of formants; analyzeFolder should return df not list; check all presets; try beat generation for drums or single glottal pulses a la croc
 
 #' @import stats graphics utils grDevices
 NULL
@@ -202,6 +202,7 @@ soundgen = function(repeatBout = 1,
                     pitchAnchors = data.frame(time = c(0, .1, .9, 1),
                                               value = c(100, 150, 135, 100)),
                     pitchAnchorsGlobal = NA,
+                    glottisAnchors = 0,
                     temperature = 0.025,
                     tempEffects = list(
                       sylLenDep = .02,
@@ -289,16 +290,23 @@ soundgen = function(repeatBout = 1,
   }
 
   # check and, if necessary, reformat anchors to dataframes
-  for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal',
+  for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
                    'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
     assign(anchor, reformatAnchors(get(anchor)))
   }
   if (is.numeric(noiseAnchors) && length(noiseAnchors) > 0) {
-    noiseAnchors = data.frame(time = seq(0, sylLen, length.out = length(noiseAnchors)),
+    noiseAnchors = data.frame(time = seq(0, sylLen, length.out = max(2, length(noiseAnchors))),
                               value = noiseAnchors)
   }
 
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+
+  # preliminary glottis contour
+  glottisClosed = getSmoothContour(anchors = glottisAnchors, len = 100)
+  # adjust length based on proportion of closed glottis (pauses added)
+  mean_closed = mean(glottisClosed) / 100
+  sylLen = sylLen / (mean_closed + 1)
+  pitchAnchors$value = pitchAnchors$value * (mean_closed + 1)
 
   # defaults of tempEffects
   if (!is.numeric(tempEffects$formDrift)) tempEffects$formDrift = .3
@@ -308,6 +316,7 @@ soundgen = function(repeatBout = 1,
   if (!is.numeric(tempEffects$pitchAnchorsDep)) tempEffects$pitchAnchorsDep = .05
   if (!is.numeric(tempEffects$noiseAnchorsDep)) tempEffects$noiseAnchorsDep = .1
   if (!is.numeric(tempEffects$amplAnchorsDep)) tempEffects$amplAnchorsDep = .1
+  if (!is.numeric(tempEffects$glottisAnchorsDep)) tempEffects$glottisAnchorsDep = .1
 
   # expand formants to full format for adjusting bandwidth if creakyBreathy > 0
   formants = reformatFormants(formants)
@@ -410,8 +419,6 @@ soundgen = function(repeatBout = 1,
     'shortestEpoch' = shortestEpoch,
     'subFreq' = subFreq,
     'subDep' = subDep,
-    'amDep' = amDep,
-    'amFreq' = amFreq,
     'nonlinBalance' = nonlinBalance,
     'nonlinDep' = nonlinDep,
     'pitchFloor' = pitchFloor,
@@ -450,10 +457,13 @@ soundgen = function(repeatBout = 1,
 
   wiggleNoise = temperature > 0 &&
     class(noiseAnchors) == 'data.frame' &&
-    sum(noiseAnchors$value > throwaway) > 0
+    any(noiseAnchors$value > throwaway)
   wiggleAmpl_per_syl = temperature > 0 &&
     !is.na(amplAnchors) &&
-    sum(amplAnchors$value < -throwaway) > 0
+    any(amplAnchors$value < -throwaway)
+  wiggleGlottis = temperature > 0 &&
+    class(glottisAnchors) == 'data.frame' &&
+    any(glottisAnchors$value > 0)
 
   # START OF BOUT GENERATION
   for (b in 1:repeatBout) {
@@ -503,6 +513,7 @@ soundgen = function(repeatBout = 1,
       #   they are within the permitted range for each variable
       pitchAnchors_per_syl = pitchAnchors
       amplAnchors_per_syl = amplAnchors
+      glottisAnchors_per_syl = glottisAnchors
 
       if (temperature > 0) {
         # OR if (temperature>0 & nrow(syllables)>1)
@@ -550,6 +561,15 @@ soundgen = function(repeatBout = 1,
             temp_coef = tempEffects$amplAnchorsDep
           )
         }
+        if (wiggleGlottis) {
+          glottisAnchors_per_syl = wiggleAnchors(
+            df = glottisAnchors_per_syl,
+            temperature = temperature,
+            low = c(0, 0),
+            high = c(1, Inf),
+            temp_coef = tempEffects$glottisAnchorsDep
+          )
+        }
       }
 
       # generate smooth pitch contour for this particular syllable
@@ -578,7 +598,9 @@ soundgen = function(repeatBout = 1,
         # print(pars_syllable)
         syllable = try(do.call(generateHarmonics, c(
           pars_syllable,
-          list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl)
+          list(pitch = pitchContour_syl,
+               amplAnchors = amplAnchors_per_syl,
+               glottisAnchors = glottisAnchors_per_syl)
         ))
         )
       }
