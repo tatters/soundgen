@@ -1,4 +1,4 @@
-# TODO: vectorized AM (non-constant, command line only); update morphing routine for new format of formants; analyzeFolder should return df not list; check all presets; try beat generation for drums or single glottal pulses a la croc
+# TODO: vectorized AM (non-constant, command line only); update morphing routine for new format of formants; analyzeFolder should return df not list; check all presets; fun for beat generation
 
 #' @import stats graphics utils grDevices
 NULL
@@ -309,7 +309,9 @@ soundgen = function(repeatBout = 1,
   # adjust length based on proportion of closed glottis (pauses added)
   mean_closed = mean(glottisClosed) / 100
   sylLen = sylLen / (mean_closed + 1)
-  pitchAnchors$value = pitchAnchors$value * (mean_closed + 1)
+  if (is.list(pitchAnchors)) {
+    pitchAnchors$value = pitchAnchors$value * (mean_closed + 1)
+  }
 
   # defaults of tempEffects
   if (!is.numeric(tempEffects$formDrift)) tempEffects$formDrift = .3

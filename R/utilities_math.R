@@ -628,9 +628,11 @@ isCentral.localMax = function(x, threshold) {
 #' @return Returns a vector of length \code{len} and range from 0 to 1
 #' @param len the length of output vector
 #' @param samplingRate the sampling rate of the output vector, Hz
-#' @param freq the frequency of amplitude modulation, Hz
-#' @param shape 0 = ~sine, -1 = clicks, +1 = notches (NB: vice versa in soundgen!)
-#' @param spikiness the larger, the more quickly the shape of filter leaves
+#' @param freq the frequency of amplitude modulation, Hz (numeric vector)
+#' @param shape 0 = ~sine, -1 = clicks, +1 = notches (NB: vice versa in
+#'   soundgen!); numeric vector of length 1 or the same length as \code{freq}
+#' @param spikiness the larger, the more quickly the shape of filter leaves;
+#'   numeric vector of length 1 or the same length as \code{freq}
 #'   sine-like approximation as shape deviates from 0
 #' @examples
 #' for (shape in c(0, -.1, .1, -1, 1)) {
@@ -642,14 +644,44 @@ getSigmoid = function(len,
                       freq = 5,
                       shape = 0,
                       spikiness = 1) {
-  from = -exp(-shape * spikiness)
-  to = exp(shape * spikiness)
-  slope = exp(abs(shape)) * 5  # close to sine
+  if (length(freq) > 1 | length(shape) > 1 | length(spikiness) > 1) {
+    # get preliminary frequency contour to estimate how many cycles are needed
+    freqContour_prelim = getSmoothContour(anchors = freq, len = 100, valueFloor = 0.001, method = 'spline')
+    # plot(freqContour_prelim, type = 'l')
+    n = ceiling(len / samplingRate / mean(1 / freqContour_prelim))
 
-  a = seq(from = from, to = to, length.out = samplingRate / freq / 2)
-  b = 1 / (1 + exp(-a * slope))
-  b = zeroOne(b)  # plot(b, type = 'l')
-  out = rep(c(b, rev(b)), length.out = len)
+    # get actual contours
+    freqContour = getSmoothContour(anchors = freq, len = n, valueFloor = 0.001, method = 'spline')
+    shapeContour = getSmoothContour(anchors = shape, len = n, method = 'spline')
+    spikinessContour = getSmoothContour(anchors = spikiness, len = n, method = 'spline')
+
+    # set up par vectors
+    from = -exp(-shapeContour * spikinessContour)
+    to = exp(shapeContour * spikinessContour)
+    slope = exp(abs(shapeContour)) * 5  # close to sine
+
+    # create one cycle at a time
+    out = vector()
+    i = 1
+    while (length(out) < len) {
+      a = seq(from = from[i], to = to[i], length.out = samplingRate / freqContour[i] / 2)
+      b = 1 / (1 + exp(-a * slope[i]))
+      b = zeroOne(b)  # plot(b, type = 'l')
+      out = c(out, b, rev(b))
+      i = ifelse(i + 1 > n, n, i + 1)  # repeat the last value if we run out of cycles
+    }
+    out = out[1:len]
+  } else {
+    # if pars are static, we can take a shortcut (~50 times faster)
+    from = -exp(-shape * spikiness)
+    to = exp(shape * spikiness)
+    slope = exp(abs(shape)) * 5  # close to sine
+    a = seq(from = from, to = to, length.out = samplingRate / freq / 2)
+    b = 1 / (1 + exp(-a * slope))
+    b = zeroOne(b)  # plot(b, type = 'l')
+    out = rep(c(b, rev(b)), length.out = len)
+  }
+  # plot(out, type = 'l')
   return(out)
 }
 

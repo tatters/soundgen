@@ -12,11 +12,13 @@ getSigmoid(len, samplingRate = 16000, freq = 5, shape = 0,
 
 \item{samplingRate}{the sampling rate of the output vector, Hz}
 
-\item{freq}{the frequency of amplitude modulation, Hz}
+\item{freq}{the frequency of amplitude modulation, Hz (numeric vector)}
 
-\item{shape}{0 = ~sine, -1 = clicks, +1 = notches (NB: vice versa in soundgen!)}
+\item{shape}{0 = ~sine, -1 = clicks, +1 = notches (NB: vice versa in
+soundgen!); numeric vector of length 1 or the same length as \code{freq}}
 
-\item{spikiness}{the larger, the more quickly the shape of filter leaves
+\item{spikiness}{the larger, the more quickly the shape of filter leaves;
+numeric vector of length 1 or the same length as \code{freq}
 sine-like approximation as shape deviates from 0}
 }
 \value{

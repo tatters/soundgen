@@ -51,7 +51,7 @@ permittedValues = matrix(c(
   'subDep', 100, 0, 500, 10,
   'shortestEpoch', 300, 50, 500, 25,
   'amDep', 0, 0, 100, 5,
-  'amFreq', 30, 10, 100, 5,
+  'amFreq', 30, 1, 100, 1,
   'amShape', 0, -1, 1, .025,
   'samplingRate', 16000, 8000, 44100, 100,
   'windowLength', 40, 5, 100, 2.5, # default, low, high, step
@@ -132,7 +132,7 @@ defaults = list(
   ),
   pitchAnchorsGlobal = list(time = c(0, 1), value = c(0, 0)),
   glottisAnchors = 0,
-  noiseAnchors = list(time = c(0, 1), value = c(-80, -80)),
+  noiseAnchors = list(time = c(0, 300), value = c(-80, -80)),
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   amplAnchors = list(time = c(0, 1), value = c(80, 80)),
   amplAnchorsGlobal = list(time = c(0, 1), value = c(80, 80)),

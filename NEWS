@@ -1,15 +1,16 @@
           CHANGES IN SOUNDGEN VERSION 1.1.0 [...Sys.Date()...]
 
 MAJOR
-  * Formants are generated using either all-pole or zero-pole models (instead of densities of gamma distribution), and formant bandwidth is now compatible with standard phonetic models.
-  * An alternative method of synthesizing the voiced component has been added. If there is a closed phase of the glottal cycle (a new argument to soundgen() - "glottisAnchors"), glottal cycles are synthesized one by one, with pauses added in between. Good for synthesizing vocal fry and for integrating alternative models of glottal excitation (future work).
+  * Formants are generated using all-pole or zero-pole models (instead of densities of gamma distribution), and formant bandwidth is now compatible with standard phonetic models.
+  * An alternative method of synthesizing the voiced component has been added. If there is a non-zero closed phase of the glottal cycle (a new argument to soundgen() - "glottisAnchors"), glottal cycles are synthesized one by one, with pauses added in between. Good for creating vocal fry and, potentially, for integrating alternative models of glottal excitation (future work).
   * Unvoiced component is generated with a flat spectrum up to a certain threshold, followed by linear rolloff.
   * Back-compatibility in program syntax is preserved. However, because of major changes in the core generation algorithm, the presets from version 1.0.0 will no longer generate the same sounds as before. The vignette on sound generation is updated to explain these changes in detail, and the preset library is updated accordingly.
 
 MINOR
-  * Support has been added for shorthand specification of all anchors with values only (assuming equal time steps), e.g. "pitchAnchors = c(150, 180, 140)", and of formants with default amplitudes and bandwidths, e.g. "formants = list(f1 = 800, f2 = c(1500, 2200))". The expanded format from soundgen 1.0.0 is also supported.
-  * Rolloff parameters are vectorized, allowing rolloff to change dynamically within a vocalization (command-line only; currently not implemented in the Shiny app).
-  * Numerous small bugs have been fixed, notably dB conversion, timing of unvoiced segments in polysyllabic vocalizations, ...
+  * Support for shorthand specification of all anchors with values only (assuming equal time steps), e.g. "pitchAnchors = c(150, 180, 140)", and of formants with default amplitudes and bandwidths, e.g. "formants = list(f1 = 800, f2 = c(1500, 2200))". The expanded format from soundgen 1.0.0 is also supported.
+  * Vectorized rolloff parameters, allowing rolloff to change dynamically within a vocalization (command-line only; currently not implemented in the Shiny app).
+  * Minor debugging and extended plotting capabilities in soundgen_app(), e.g. preview of formant filter, better intergration of spectrogram and spectrum output plots, etc.
+  * Numerous small bugs elsewhere, notably dB conversion, timing of unvoiced segments in polysyllabic vocalizations, ...
 
 NEW FUNCTIONS:
   * flatEnv(): normalizes amplitude envelope dynamically, i.e., keeping loudness constant throughout the sound

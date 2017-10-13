@@ -602,7 +602,7 @@ generateEpoch = function(pitch_per_gc,
 #' glottal cycles with harmonics, but no formants. See \code{\link{soundgen}}
 #' for more details.
 #' @inheritParams soundgen
-#' @plot if TRUE, plots the waveform
+#' @param plot if TRUE, plots the waveform
 #' @return Returns a normalized waveform.
 #' @export
 #' @examples

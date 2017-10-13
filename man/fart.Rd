@@ -31,7 +31,7 @@ in sound generation}
 \item{play}{if TRUE, plays the synthesized sound. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
 
-\item{plot}{if TRUE, plots a spectrogram}
+\item{plot}{if TRUE, plots the waveform}
 }
 \value{
 Returns a normalized waveform.
