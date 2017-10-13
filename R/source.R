@@ -472,7 +472,7 @@ generateHarmonics = function(pitch,
 #' with one glottal cycle at a time and create a sine wave for each harmonic,
 #' with amplitudes adjusted by rolloff.
 #' @param pitch_per_gc pitch per glottal cycle, Hz
-#' @param glottisClosed_per_gc proportion of closed phase per glottal cycle, %
+#' @param glottisClosed_per_gc proportion of closed phase per glottal cycle, \%
 #' @param rolloff_source a list of one-column matrices, one for each glottal
 #'   cycle, specifying rolloff per harmonic (linear multiplier, ie NOT in dB)
 #'   Each matrix has as many rows as there are harmonics, and rownames specify
@@ -694,4 +694,54 @@ fart = function(glottisAnchors = c(350, 700),
     plot(time, s, type = 'l', xlab = 'Time, ms')
   }
   return(s)
+}
+
+
+#' Generate beat
+#'
+#' Generates percussive sounds from clicks through drum-like beats to sliding tones. The principle is to create a sine wave with rapid frequency modulation and to add a fade-out. No extra harmonics or formants are added. For this specific purpose, this is vastly faster and easier than to tinker with \code{\link{soundgen}} settings, especially since percussive syllables tend to be very short.
+#' @inheritParams soundgen
+#' @param nSyl the number of syllables to generate
+#' @param fadeOut if TRUE, a linear fade-out is applied to the entire syllable
+#' @return Returns a non-normalized waveform centered at zero.
+#' @examples
+#' play = c(TRUE, FALSE)[2]
+#' # a drum-like sound
+#' s = generateBeat(nSyl = 1, sylLen = 200,
+#'                  pitchAnchors = c(200, 100), play = play)
+#' plot(s, type = 'l')
+#'
+#' # a dry, muted drum
+#' s = generateBeat(nSyl = 1, sylLen = 200,
+#'                  pitchAnchors = c(200, 10), play = play)
+#'
+#' # sci-fi laser guns
+#' s = generateBeat(nSyl = 3, sylLen = 300,
+#'                  pitchAnchors = c(1000, 50), play = play)
+#'
+#' # machine guns
+#' s = generateBeat(nSyl = 10, sylLen = 10, pauseLen = 50,
+#'                  pitchAnchors = c(2300, 300), play = play)
+beat = function(nSyl = 10,
+                sylLen = 200,
+                pauseLen = 50,
+                pitchAnchors = c(200, 10),
+                samplingRate = 16000,
+                fadeOut = TRUE,
+                play = TRUE) {
+  len = sylLen * samplingRate / 1000
+  pitchContour = getSmoothContour(anchors = pitchAnchors, len = len, valueFloor = 0, thisIsPitch = TRUE)
+  int = cumsum(pitchContour)
+  beat = sin(2 * pi * int / samplingRate)
+  if (fadeOut) {
+    beat = fadeInOut(beat, length_fade = length(beat), do_fadeIn = FALSE)
+  }
+  # plot(beat, type = 'l')
+  # spectrogram(beat, samplingRate, ylim = c(0, 1))
+  if (nSyl > 1) {
+    pause = rep(0, round(pauseLen / 1000 * samplingRate))
+    beat = rep(c(beat, pause), nSyl)
+  }
+  if (play) playme(beat, samplingRate)
+  return(beat)
 }

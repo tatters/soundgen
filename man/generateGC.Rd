@@ -9,7 +9,7 @@ generateGC(pitch_per_gc, glottisClosed_per_gc, rolloff_per_gc, samplingRate)
 \arguments{
 \item{pitch_per_gc}{pitch per glottal cycle, Hz}
 
-\item{glottisClosed_per_gc}{proportion of closed phase per glottal cycle, %}
+\item{glottisClosed_per_gc}{proportion of closed phase per glottal cycle, \%}
 
 \item{samplingRate}{the sampling rate of generated sound, Hz}
 

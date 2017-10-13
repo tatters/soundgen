@@ -15,7 +15,7 @@ MINOR
 NEW FUNCTIONS:
   * flatEnv(): normalizes amplitude envelope dynamically, i.e., keeping loudness constant throughout the sound
   * estimateVTL(): estimates the length of vocal tract based on formant frequencies
-  * fart(): a simplified version of soundgen() for rapid generation of a particular type of sounds
+  * fart(), beat(): simplified versions of soundgen() for rapid generation of particular types of sounds
 
 
           RELEASE OF SOUNDGEN VERSION 1.0.0 [04-September-2017]
