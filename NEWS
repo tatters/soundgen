@@ -1,21 +1,25 @@
           CHANGES IN SOUNDGEN VERSION 1.1.0 [...Sys.Date()...]
 
+This release concerns only tools for sound generation, the most crucial change being a more realistic model of formant generation.
+
 MAJOR
   * Formants are generated using all-pole or zero-pole models (instead of densities of gamma distribution), and formant bandwidth is now compatible with standard phonetic models.
-  * An alternative method of synthesizing the voiced component has been added. If there is a non-zero closed phase of the glottal cycle (a new argument to soundgen() - "glottisAnchors"), glottal cycles are synthesized one by one, with pauses added in between. Good for creating vocal fry and, potentially, for integrating alternative models of glottal excitation (future work).
+  * An alternative method of synthesizing the voiced component has been added. If there is a non-zero closed phase of the glottal cycle (a new argument to soundgen() - "glottisAnchors"), glottal pulses are synthesized one by one, with pauses added in between. Good for creating vocal fry and, potentially, for integrating alternative models of glottal excitation (future work).
   * Unvoiced component is generated with a flat spectrum up to a certain threshold, followed by linear rolloff.
   * Back-compatibility in program syntax is preserved. However, because of major changes in the core generation algorithm, the presets from version 1.0.0 will no longer generate the same sounds as before. The vignette on sound generation is updated to explain these changes in detail, and the preset library is updated accordingly.
 
 MINOR
-  * Support for shorthand specification of all anchors with values only (assuming equal time steps), e.g. "pitchAnchors = c(150, 180, 140)", and of formants with default amplitudes and bandwidths, e.g. "formants = list(f1 = 800, f2 = c(1500, 2200))". The expanded format from soundgen 1.0.0 is also supported.
-  * Vectorized rolloff parameters, allowing rolloff to change dynamically within a vocalization (command-line only; currently not implemented in the Shiny app).
+  * Support for shorthand specification of formants with default amplitudes and bandwidths, e.g. "formants = list(f1 = 800, f2 = c(1500, 2200))", and support for shorthand specification of all anchors with values only in presets and other input to soundgen_app. The expanded format from soundgen 1.0.0 is also supported.
+  * Vectorized rolloff and amplitude modulation parameters, allowing them to change dynamically within a vocalization (command-line only; currently not implemented in the Shiny app).
+  * Additional components in tempEffects offering more control over stochastic behavior of soundgen() (command-line only).
   * Minor debugging and extended plotting capabilities in soundgen_app(), e.g. preview of formant filter, better intergration of spectrogram and spectrum output plots, etc.
-  * Numerous small bugs elsewhere, notably dB conversion, timing of unvoiced segments in polysyllabic vocalizations, ...
+  * Debugging elsewhere, notably dB conversion, timing of unvoiced segments in polysyllabic vocalizations in soundgen(), ...
 
 NEW FUNCTIONS:
   * flatEnv(): normalizes amplitude envelope dynamically, i.e., keeping loudness constant throughout the sound
   * estimateVTL(): estimates the length of vocal tract based on formant frequencies
-  * fart(), beat(): simplified versions of soundgen() for rapid generation of particular types of sounds
+  * fart(): a simplified version of soundgen() for simple and rapid generation of a particular type of sounds, like raspberries, ripping noises, etc
+  * beat(): generation of percussive noises like drum-like beats, clicks, etc
 
 
           RELEASE OF SOUNDGEN VERSION 1.0.0 [04-September-2017]

@@ -1,4 +1,4 @@
-# TODO: update morphing routine for new format of formants; analyzeFolder should return df not list; check all presets; fun for beat generation
+# TODO: update morphing routine for new format of formants; analyzeFolder should return df not list; extend tempEffects to include amplitude drift
 
 #' @import stats graphics utils grDevices
 NULL
@@ -40,7 +40,10 @@ NULL
 #'   \code{formDrift}: formant frequencies; \code{formDisp}: dispersion of
 #'   stochastic formants; \code{pitchDriftDep}: amount of slow random drift of
 #'   f0; \code{pitchDriftFreq}: frequency of slow random drift of f0;
-#'   \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
+#'   \code{amplDriftDep}: drift of amplitude mirroring pitch drift;
+#'   \code{subDriftDep}: drift of subharmonic frequency and bandwidth mirroring
+#'   pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring pitch
+#'   drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
 #'   fluctuations of user-specified pitch / noise / amplitude anchors;
 #'   \code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
@@ -213,6 +216,9 @@ soundgen = function(repeatBout = 1,
                       formDisp = .2,
                       pitchDriftDep = .5,
                       pitchDriftFreq = .125,
+                      amplDriftDep = 20,
+                      subDriftDep = 4,
+                      rolloffDriftDep = 3,
                       pitchAnchorsDep = .05,
                       noiseAnchorsDep = .1,
                       amplAnchorsDep = .1
@@ -314,10 +320,14 @@ soundgen = function(repeatBout = 1,
   }
 
   # defaults of tempEffects
+  if (!is.numeric(tempEffects$sylLenDep)) tempEffects$sylLenDep = .3
   if (!is.numeric(tempEffects$formDrift)) tempEffects$formDrift = .3
   if (!is.numeric(tempEffects$formDisp)) tempEffects$formDisp = .2
   if (!is.numeric(tempEffects$pitchDriftDep)) tempEffects$pitchDriftDep = .5
   if (!is.numeric(tempEffects$pitchDriftFreq)) tempEffects$pitchDriftFreq = .125
+  if (!is.numeric(tempEffects$amplDriftDep)) tempEffects$amplDriftDep = 20
+  if (!is.numeric(tempEffects$subDriftDep)) tempEffects$subDriftDep = 4
+  if (!is.numeric(tempEffects$rolloffDriftDep)) tempEffects$rolloffDriftDep = 3
   if (!is.numeric(tempEffects$pitchAnchorsDep)) tempEffects$pitchAnchorsDep = .05
   if (!is.numeric(tempEffects$noiseAnchorsDep)) tempEffects$noiseAnchorsDep = .1
   if (!is.numeric(tempEffects$amplAnchorsDep)) tempEffects$amplAnchorsDep = .1
@@ -421,6 +431,9 @@ soundgen = function(repeatBout = 1,
     'temperature' = temperature,
     'pitchDriftDep' = tempEffects$pitchDriftDep,
     'pitchDriftFreq' = tempEffects$pitchDriftFreq,
+    'amplDriftDep' = tempEffects$amplDriftDep,
+    'subDriftDep' = tempEffects$subDriftDep,
+    'rolloffDriftDep' = tempEffects$rolloffDriftDep,
     'shortestEpoch' = shortestEpoch,
     'subFreq' = subFreq,
     'subDep' = subDep,
@@ -614,9 +627,9 @@ soundgen = function(repeatBout = 1,
       if (class(syllable) == 'try-error') {
         stop('Failed to generate the new syllable!')
       }
-      if (any(is.na(syllable))) {
-        stop('The new syllable contains NA values!')
-      }
+      # if (any(is.na(syllable))) {
+      #   stop('The new syllable contains NA values!')
+      # }
 
       # generate pause for all but the last syllable
       if (s < nrow(syllables)) {
@@ -828,7 +841,8 @@ soundgen = function(repeatBout = 1,
     # spectrogram(soundFiltered, samplingRate = samplingRate)
     # playme(soundFiltered, samplingRate = samplingRate)
 
-    # add the separately filtered noise back into the sound at the appropriate time points AFTER filtering the sound
+    # add the separately filtered noise back into the sound
+    # at the appropriate time points AFTER filtering the sound
     if (length(unvoiced) > 0 && is.list(formantsNoise)) {
       for (s in 1:length(unvoiced)) {
         soundFiltered = addVectors(soundFiltered, unvoiced[[s]],
@@ -846,10 +860,8 @@ soundgen = function(repeatBout = 1,
                        shape = amShape)
       trill = 1 - sig * amDep / 100
       # plot(trill, type='l')
-    } else {
-      trill = 1
+      soundFiltered = soundFiltered * trill
     }
-    soundFiltered = soundFiltered * trill
 
     # grow bout
     if (b == 1) {
@@ -862,7 +874,7 @@ soundgen = function(repeatBout = 1,
   }
 
   # add some silence before and after the entire bout
-  if (!is.na(addSilence)) {
+  if (is.numeric(addSilence)) {
     n = round(samplingRate / 1000 * addSilence)
     bout = c(rep(0, n), bout, rep(0, n))
   }

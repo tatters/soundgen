@@ -204,6 +204,9 @@ generateHarmonics = function(pitch,
                              temperature = .025,
                              pitchDriftDep = .5,
                              pitchDriftFreq = .125,
+                             amplDriftDep = 20,
+                             subDriftDep = 4,
+                             rolloffDriftDep = 3,
                              randomWalk_trendStrength = .5,
                              shortestEpoch = 300,
                              subFreq = 100,
@@ -346,8 +349,8 @@ generateHarmonics = function(pitch,
   rolloff_source = getRolloff(
     pitch_per_gc = pitch_per_gc,
     nHarmonics = nHarmonics,
-    rolloff = (rolloff + rolloffAmpl) * rw ^ 3,
-    rolloffOct = rolloffOct * rw ^ 3,
+    rolloff = (rolloff + rolloffAmpl) * rw ^ rolloffDriftDep,
+    rolloffOct = rolloffOct * rw ^ rolloffDriftDep,
     rolloffKHz = rolloffKHz * rw,
     rolloffParab = rolloffParab,
     rolloffParabHarm = rolloffParabHarm,
@@ -380,8 +383,8 @@ generateHarmonics = function(pitch,
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,
-      subFreq = subFreq * rw ^ 4,
-      subDep = subDep * rw ^ 4 * vocalFry_on,
+      subFreq = subFreq * rw ^ subDriftDep,
+      subDep = subDep * rw ^ subDriftDep * vocalFry_on,
       shortestEpoch = shortestEpoch,
       throwaway = throwaway
     )
@@ -438,7 +441,6 @@ generateHarmonics = function(pitch,
     amplEnvelope = 10 ^ (amplEnvelope / 20)
     waveform = waveform * amplEnvelope
   }
-  waveform = waveform / max(waveform)
 
   # add attack
   if (attackLen > 0) {
@@ -448,14 +450,15 @@ generateHarmonics = function(pitch,
   }
 
   # pitch drift is accompanied by amplitude drift
-  if (temperature > 0) {
+  if (temperature > 0 && amplDriftDep > 0) {
     gc_upsampled = upsample(pitch_per_gc, samplingRate = samplingRate)$gc
     drift_upsampled = approx(drift,
                              n = length(waveform),
                              x = gc_upsampled[-length(gc_upsampled)])$y
-    waveform = waveform * drift_upsampled
+    waveform = waveform * drift_upsampled ^ amplDriftDep
     # plot(drift_upsampled, type = 'l')
   }
+  waveform = waveform / max(waveform)
   # playme(waveform, samplingRate = samplingRate)
   # spectrogram(waveform, samplingRate = samplingRate)
   return(waveform)
