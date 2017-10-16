@@ -345,9 +345,11 @@ soundgen = function(repeatBout = 1,
     subDep = subDep * 2 ^ (-creakyBreathy)
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
-    noiseAnchors = data.frame(time = c(0, sylLen + 100),
-                              value = c(-throwaway, -throwaway))
-    noiseAnchors$value = noiseAnchors$value + creakyBreathy * 160
+    if (!is.list(noiseAnchors)) {
+      noiseAnchors = data.frame(time = c(0, sylLen + 100),
+                                value = c(-throwaway, -throwaway))
+    }
+    noiseAnchors$value = noiseAnchors$value + creakyBreathy * 120
     noiseAnchors$value[noiseAnchors$value >
                          permittedValues['noiseAmpl', 'high']] =
       permittedValues['noiseAmpl', 'high']
@@ -851,9 +853,15 @@ soundgen = function(repeatBout = 1,
     } # plot(soundFiltered, type = 'l')
 
     # trill - rapid regular amplitude modulation
-    if (amDep > 0) {
+    if (any(amDep > 0)) {
       # trill = 1 - sin(2 * pi * (1:length(soundFiltered)) /
       #                  samplingRate * amFreq) * amDep / 100
+      if (length(amDep) > 1) {
+        amDep = getSmoothContour(anchors = amDep,
+                                 len = length(soundFiltered),
+                                 method = 'spline',
+                                 valueFloor = 0)
+      }
       sig = getSigmoid(len = length(soundFiltered),
                        samplingRate = samplingRate,
                        freq = amFreq,

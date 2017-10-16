@@ -176,9 +176,14 @@ If you don't want stochastic behavior, set temperature to zero. But note that so
 * formDisp = .2: irregularity of the dispersion of stochastic formants that are added above user-specified formants (if any) at distances consistent with the specified length of the vocal tract `vocalTract`
 * pitchDriftDep = .5: amount of slow random drift of f0 (the higher, the more f0 changes)
 * pitchDriftFreq = .125: frequency of slow random drift of f0 (the higher, the faster f0 changes)
+* amplDriftDep = 20: drift of amplitude mirroring pitch drift
+* subDriftDep = 4: drift of subharmonic frequency and bandwidth mirroring pitch drift
+* rolloffDriftDep =3: drift of rolloff mirroring pitch drift
 * pitchAnchorsDep = .05: random fluctuations of user-specified pitch anchors across syllables (if nSyl > 1)
 * noiseAnchorsDep = .1: random fluctuations of user-specified noise anchors across syllables (if nSyl > 1)
 * amplAnchorsDep = .1: random fluctuations of user-specified amplitude anchors across syllables (if nSyl > 1)
+
+The units in which these coefficients are expressed are not on the same scale. To enhance a particular component of stochastic behavior, set the corresponding coefficient to a value higher than the default; to remove it completely, set its scaling coefficient to zero. 
 
 ```{r}
 # despite the high temperature, temporal structure does not vary at all, 
@@ -192,13 +197,13 @@ To simplify usage, there are a few other hyper-parameters. They are redundant in
 
 For example, to imitate the effect of varying body size, you can use `maleFemale`:
 ```{r}
-mf = c(-1,  # male: 100% lower F0, 25% lower formants, 25% longer vocal tract
+mf = c(-1,  # male: 100% lower f0, 25% lower formants, 25% longer vocal tract
        0,   # neutral (default)
-       1)   # female: 100% higher F0, 25% higher formants, 25% shorter vocal tract
+       1)   # female: 100% higher f0, 25% higher formants, 25% shorter vocal tract
 # See e.g. http://www.santiagobarreda.com/vignettes/v1/v1.html
 
 for (i in mf) {
-  s = soundgen(maleFemale = i, formants = NA, vocalTract = 25, play = playback)
+  s = soundgen(maleFemale = i, formants = NA, vocalTract = 17, play = playback)
   # Since `formants` are not specified, but temperature is above zero, a 
   # schwa-like sound with approximately equidistant formants is generated using
   # `vocalTract` (cm) to calculate the expected formant dispersion.
@@ -224,17 +229,16 @@ Use `amplAnchors` and `amplAnchorsGlobal` to modulate the amplitude (loudness) o
 # in the oscillogram under the spectrogram), and there is an overall fade-out
 # over the entire bout
 s = soundgen(nSyl = 4, plot = TRUE, osc = TRUE, play = playback,
-             amplAnchors = data.frame(time = c(0, .5, 1), 
+             amplAnchors = data.frame(time = c(0, .3, 1),  # unequal time steps
                                       value = c(120, 100, 120)),
-             amplAnchorsGlobal = data.frame(time = c(0, 1), 
-                                            value = c(120, 0)))
+             amplAnchorsGlobal = c(120, 0))  # equal time steps, so shorthand is ok
 ```
 
 Rapid amplitude modulation imitating a trill is implemented by multiplying the synthesized waveform by a wave with adjustable shape `amShape` (defaults to ~sine), frequency `amFreq`, and amplitude `amDep`:
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 1000, formants = NA,
-             amDep = 50,   # halves the amplitude at troughs (0% = none, 100% = max)
-             amFreq = 35,  # amplitude modulation with frequency 35 Hz
+             amDep = c(0, 100),   # halves the amplitude at troughs (0% = none, 100% = max)
+             amFreq = c(50, 25),  # amplitude modulation with frequency 35 Hz
              amShape = 0,  # 0 = close to sine, -1 = notches, +1 = clicks
              plot = TRUE, osc = TRUE, play = playback)
 ```

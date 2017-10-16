@@ -71,7 +71,13 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
   }
 
   if (is.list(anchors) && is.numeric(len) && nrow(anchors) > len) {
-    return(anchors$value[1])
+    # if there are more anchors than len, pick just some anchors at random
+    anchors = as.data.frame(anchors)
+    idx = sample(1:nrow(anchors), size = len, replace = FALSE)
+    idx = sort(idx)
+    idx[1] = 1
+    idx[len] = nrow(anchors)  # make sure the first and last anchors are preserved
+    anchors = anchors[idx, ]
   }
 
   if (!is.null(valueFloor)) {
