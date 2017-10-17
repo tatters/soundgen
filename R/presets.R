@@ -136,7 +136,7 @@ defaults = list(
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   amplAnchors = list(time = c(0, 1), value = c(80, 80)),
   amplAnchorsGlobal = list(time = c(0, 1), value = c(80, 80)),
-  formants = list(f1 = 860, f2 = 1430, f3 = 2900),
+  formants = c(860, 1430, 2900),
   formantsNoise = NA,
   vowelString = NA,
   vocalTract = NA
@@ -322,7 +322,7 @@ presets = list(
   Misc = list(
     Crocodile = 'soundgen(sylLen = 2570, pitchAnchors = list(time = c(0, 0.36, 1), value = c(25, 42, 25)), glottisAnchors = c(150, 200), rolloff = -25, formants = c(200, 500, 1200, 1800), temperature = .25, invalidArgAction = "ignore")',
 
-    Dog_bark = 'soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, pitchAnchors = list(time = c(0, 0.29, 1), value = c(559, 716, 647)), temperature = 0.05, nonlinBalance = 100, jitterDep = 2.1, formants = c(1500, 3300, 6000), formantDep = 1, vocalTract = 8.5, subDep = 0, noiseAnchors = list(time = c(0, 78, 160), value = c(-80, 12, -80)), rolloffNoise = -9, mouthAnchors = c(0, 0.5, 0))',
+    Dog_bark = 'soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, pitchAnchors = list(time = c(0, 0.29, 1), value = c(559, 716, 647)), temperature = 0.05, nonlinBalance = 100, jitterDep = 2.1, formants = c(1500, 3300, 6000), vocalTract = 8.5, subDep = 0, noiseAnchors = list(time = c(0, 78, 160), value = c(-80, 12, -80)), rolloffNoise = -9, mouthAnchors = c(0, 0.5, 0))',
 
     Duck = 'soundgen(repeatBout = 5, sylLen = 110, pauseLen = 170, pitchAnchors = c(119, 110), temperature = 0.1, rolloff = -3, rolloffOct = -2, formants = c(1600, 2700, 5600, 6400), noiseAnchors = -13, mouthAnchors = c(0.34, 0.57, 0.35))',
 

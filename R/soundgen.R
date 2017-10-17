@@ -1,4 +1,4 @@
-# TODO: update morphing routine for new format of formants; analyzeFolder should return df not list; extend tempEffects to include amplitude drift
+# TODO: update morphing routine for new format of formants; analyzeFolder should return df not list; rename rolloffLip and rolloffNose to lipRadiation and noseRadiation
 
 #' @import stats graphics utils grDevices
 NULL
@@ -241,7 +241,7 @@ soundgen = function(repeatBout = 1,
                     rolloffLip = 6,
                     rolloffNose = 4,
                     mouthOpenThres = 0,
-                    formants = list(f1 = 860, f2 = 1430, f3 = 2900),
+                    formants = c(860, 1430, 2900),
                     formantDep = 1,
                     formantDepStoch = 20,
                     vocalTract = NA,
@@ -335,6 +335,7 @@ soundgen = function(repeatBout = 1,
 
   # expand formants to full format for adjusting bandwidth if creakyBreathy > 0
   formants = reformatFormants(formants)
+  formantsNoise = reformatFormants(formantsNoise)
 
   ## adjust parameters according to the specified hyperparameters
   if (creakyBreathy < 0) {

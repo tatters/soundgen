@@ -52,6 +52,49 @@ morph = function(formula1,
          or a character string like "soundgen(sylLen = 500"')
   }
 
+  # expand all abbreviations to full format
+  if (!is.null(formula1$formants)) {  # otherwise drops NULL completely
+    formula1$formants = reformatFormants(formula1$formants)
+  }
+  if (!is.null(formula2$formants)) {
+    formula2$formants = reformatFormants(formula2$formants)
+  }
+
+  if (!is.null(formula1$formantsNoise)) {
+    formula1$formantsNoise = reformatFormants(formula1$formantsNoise)
+  }
+  if (!is.null(formula2$formantsNoise)) {
+    formula2$formantsNoise = reformatFormants(formula2$formantsNoise)
+  }
+
+  for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
+                   'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
+    if(!is.null(formula1[[anchor]])) {
+      formula1[[anchor]] = reformatAnchors(formula1[[anchor]])
+    }
+    if(!is.null(formula2[[anchor]])) {
+      formula2[[anchor]] = reformatAnchors(formula2[[anchor]])
+    }
+  }
+  if (is.numeric(formula1$noiseAnchors) && length(formula1$noiseAnchors) > 0) {
+    formula1$noiseAnchors = data.frame(
+      time = seq(0,
+                 ifelse(is.numeric(formula1$sylLen),
+                        formula1$sylLen,
+                        defaults$sylLen),
+                 length.out = max(2, length(formula1$noiseAnchors))),
+      value = formula1$noiseAnchors)
+  }
+  if (is.numeric(formula2$noiseAnchors) && length(formula2$noiseAnchors) > 0) {
+    formula2$noiseAnchors = data.frame(
+      time = seq(0,
+                 ifelse(is.numeric(formula2$sylLen),
+                        formula2$sylLen,
+                        defaults$sylLen),
+                 length.out = max(2, length(formula2$noiseAnchors))),
+      value = formula2$noiseAnchors)
+  }
+
   # which pars are different from the defaults of soundgen()?
   defaults = as.character(call('print', args(soundgen)))[2]
   defaults = substr(defaults, 11, (nchar(defaults) - 12))
@@ -87,26 +130,34 @@ morph = function(formula1,
   f2 = f2[match(names(f1), names(f2))]
 
   # fill in formant stuff if it is missing for one sound but defined for the other
-  if (!is.list(f1$formants) & is.list(f2$formants)) {
-    # class list means it's not NA or NULL
-    f1$formants = f2$formants
-    for (f in 1:length(f1$formants))
-      f1$formants[[f]]$amp = 0
+  # b/c defaults contain formants in c() form, repeat:
+  if (!is.null(f1$formants)) {  # otherwise drops NULL completely
+    f1$formants = reformatFormants(f1$formants)
   }
-  if (!is.list(f1$formantsNoise) & is.list(f2$formantsNoise)) {
-    f1$formantsNoise = f2$formantsNoise
-    for (f in 1:length(f1$formantsNoise))
-      f1$formantsNoise[[f]]$amp = 0
+  if (!is.null(f2$formants)) {
+    f2$formants = reformatFormants(f2$formants)
   }
-  if (!is.list(f2$formants) & is.list(f1$formants)) {
-    f2$formants = f1$formants
-    for (f in 1:length(f2$formants))
-      f2$formants[[f]]$amp = 0
+
+  if ((!is.list(f1$formants) & is.list(f2$formants)) |
+      (is.list(f1$formants) & !is.list(f2$formants))) {
+    stop(paste('Specify formants either for both formulas or for neither'))
   }
-  if (!is.list(f2$formantsNoise) & is.list(f1$formantsNoise)) {
-    f2$formantsNoise = f1$formantsNoise
-    for (f in 1:length(f2$formantsNoise))
-      f2$formantsNoise[[f]]$amp = 0
+
+  if ((!is.list(f1$formantsNoise) & is.list(f2$formantsNoise)) |
+      (is.list(f1$formantsNoise) & !is.list(f2$formantsNoise))) {
+    stop(paste('Specify formantsNoise either for both formulas or for neither'))
+  }
+
+  if ((any(is.na(unlist(f1$formants))) & !any(is.na(unlist(f2$formants)))) |
+      (!any(is.na(unlist(f1$formants))) & any(is.na(unlist(f2$formants))))) {
+    stop(paste('All formant amplitudes and bandwidths should be either left default',
+               'or fully specified in both formulas, not a mix'))
+  }
+
+  if ((any(is.na(unlist(f1$formantsNoise))) & !any(is.na(unlist(f2$formantsNoise)))) |
+      (!any(is.na(unlist(f1$formantsNoise))) & any(is.na(unlist(f2$formantsNoise))))) {
+    stop(paste('All formantsNoise amplitudes and bandwidths should be either left default',
+               'or fully specified in both formulas, not a mix'))
   }
 
   # log-transform pitch and formant frequencies before morphing
@@ -120,22 +171,19 @@ morph = function(formula1,
         f1$formants[[l]]$freq = log(f1$formants[[l]]$freq)
       }
     }
-  }
-  if ('formants' %in% names(f2)) {
     for (l in 1:length(f2$formants)) {
       if (is.numeric(f2$formants[[l]]$freq)) {
         f2$formants[[l]]$freq = log(f2$formants[[l]]$freq)
       }
     }
   }
+
   if ('formantsNoise' %in% names(f1)) {
     for (l in 1:length(f1$formantsNoise)) {
       if (is.numeric(f1$formantsNoise[[l]]$freq)) {
         f1$formantsNoise[[l]]$freq = log(f1$formantsNoise[[l]]$freq)
       }
     }
-  }
-  if ('formantsNoise' %in% names(f2)) {
     for (l in 1:length(f2$formantsNoise)) {
       if (is.numeric(f2$formantsNoise[[l]]$freq)) {
         f2$formantsNoise[[l]]$freq = log(f2$formantsNoise[[l]]$freq)
@@ -205,5 +253,5 @@ morph = function(formula1,
       seewave::savewav(sounds[[h]], f = samplingRate, filename = filename)
     }
   }
-  return (list(formulas = formulas, sounds = sounds))
+  return(list(formulas = formulas, sounds = sounds))
 }
