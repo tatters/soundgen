@@ -45,6 +45,6 @@ glottal cycles with harmonics, but no formants. See \code{\link{soundgen}}
 for more details.
 }
 \examples{
-f = fart(play = T)
+f = fart(play = FALSE)
 # playme(f)
 }

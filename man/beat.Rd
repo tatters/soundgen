@@ -30,24 +30,29 @@ setting another default player for \code{\link[tuneR]{play}}}
 Returns a non-normalized waveform centered at zero.
 }
 \description{
-Generates percussive sounds from clicks through drum-like beats to sliding tones. The principle is to create a sine wave with rapid frequency modulation and to add a fade-out. No extra harmonics or formants are added. For this specific purpose, this is vastly faster and easier than to tinker with \code{\link{soundgen}} settings, especially since percussive syllables tend to be very short.
+Generates percussive sounds from clicks through drum-like beats to sliding
+tones. The principle is to create a sine wave with rapid frequency modulation
+and to add a fade-out. No extra harmonics or formants are added. For this
+specific purpose, this is vastly faster and easier than to tinker with
+\code{\link{soundgen}} settings, especially since percussive syllables tend
+to be very short.
 }
 \examples{
 play = c(TRUE, FALSE)[2]
 # a drum-like sound
-s = generateBeat(nSyl = 1, sylLen = 200,
+s = beat(nSyl = 1, sylLen = 200,
                  pitchAnchors = c(200, 100), play = play)
 plot(s, type = 'l')
 
 # a dry, muted drum
-s = generateBeat(nSyl = 1, sylLen = 200,
+s = beat(nSyl = 1, sylLen = 200,
                  pitchAnchors = c(200, 10), play = play)
 
 # sci-fi laser guns
-s = generateBeat(nSyl = 3, sylLen = 300,
+s = beat(nSyl = 3, sylLen = 300,
                  pitchAnchors = c(1000, 50), play = play)
 
 # machine guns
-s = generateBeat(nSyl = 10, sylLen = 10, pauseLen = 50,
+s = beat(nSyl = 10, sylLen = 10, pauseLen = 50,
                  pitchAnchors = c(2300, 300), play = play)
 }

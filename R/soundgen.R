@@ -1,4 +1,4 @@
-# TODO: analyzeFolder should return df not list; rename lipRad and noseRad to lipRad and noseRadiation
+# TODO: analyzeFolder should return df not list; subharmonics for separate glottal cycles (?)
 
 #' @import stats graphics utils grDevices
 NULL

@@ -146,8 +146,8 @@ matchPars = function(target,
   if (is.list(af) && nrow(af) > 0) {
     for (f in 1:min(3, nrow(af))) {  # add max 3 formants
       parDefault$formants[[paste0('f', f)]] = list(
-        time = 0, freq = round(af$formant[f]),
-        amp = 30, width = round(af$bandwidth[f])
+        freq = round(af$formant[f]),
+        width = round(af$bandwidth[f])
       )
     }
   }

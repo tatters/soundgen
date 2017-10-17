@@ -579,6 +579,7 @@ getBandwidth = function(f) {
 #'   linear regression to formant frequencies
 #' @examples
 #' nIter = 100  # nIter = 10000 for better results
+#' speedSound = 35400
 #' out = data.frame(vtl = runif(nIter, 5, 70),
 #'                  nFormants = round(runif(nIter, 1, 10)),
 #'                  noise = runif(nIter, 0, .2),

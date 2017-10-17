@@ -9,13 +9,15 @@ generateEpoch(pitch_per_gc, epochs, rolloff_per_epoch, samplingRate)
 \arguments{
 \item{pitch_per_gc}{pitch per glottal cycle, Hz}
 
-\item{samplingRate}{the sampling rate of generated sound, Hz}
+\item{epochs}{a dataframe specifying the beginning and end of each epoch}
 
-\item{rolloff_source}{a list of matrices with one matrix for each epoch; each
+\item{rolloff_per_epoch}{a list of matrices with one matrix for each epoch; each
 matrix should contain one column for each glottal cycle and one row for
 each harmonic (linear multiplier, ie NOT in dB). Rownames specify the ratio
 to F0 (eg 1.5 means it's a subharmonic added between f0 and its first
 harmonic)}
+
+\item{samplingRate}{the sampling rate of generated sound, Hz}
 }
 \value{
 Returns a waveform as a non-normalized numeric vector centered at zero.
@@ -36,7 +38,8 @@ m2 = matrix(rep(10 ^ (-12 * log2(1:200) / 20), 40), ncol = 40, byrow = FALSE)
 rownames(m1) = 1:nrow(m1)
 rownames(m2) = 1:nrow(m2)
 rolloff_source = list(m1, m2)
-s = generateEpoch(pitch_per_gc, epochs, rolloff_source,  samplingRate = 16000)
+s = soundgen:::generateEpoch(pitch_per_gc, epochs,
+                             rolloff_source,  samplingRate = 16000)
 # plot(s, type = 'l')
 # playme(s)
 }

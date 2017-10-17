@@ -476,7 +476,7 @@ generateHarmonics = function(pitch,
 #' with amplitudes adjusted by rolloff.
 #' @param pitch_per_gc pitch per glottal cycle, Hz
 #' @param glottisClosed_per_gc proportion of closed phase per glottal cycle, \%
-#' @param rolloff_source a list of one-column matrices, one for each glottal
+#' @param rolloff_per_gc a list of one-column matrices, one for each glottal
 #'   cycle, specifying rolloff per harmonic (linear multiplier, ie NOT in dB)
 #'   Each matrix has as many rows as there are harmonics, and rownames specify
 #'   the ratio to F0 (eg 1.5 means it's a subharmonic added between f0 and its
@@ -489,7 +489,8 @@ generateHarmonics = function(pitch,
 #' m = matrix(10 ^ (-6 * log2(1:200) / 20))
 #' rownames(m) = 1:nrow(m)
 #' rolloff_source = rep(list(m), 25)
-#' s = generateGC(pitch_per_gc,  glottisClosed_per_gc,  rolloff_source,  samplingRate = 16000)
+#' s = soundgen:::generateGC(pitch_per_gc,  glottisClosed_per_gc,
+#'                           rolloff_source,  samplingRate = 16000)
 #' # plot(s, type = 'l')
 #' # playme(s)
 generateGC = function(pitch_per_gc,
@@ -527,11 +528,12 @@ generateGC = function(pitch_per_gc,
 #' with stable regime of subharmonics at a time and create a sine wave for each
 #' harmonic, with amplitudes adjusted by rolloff.
 #' @param pitch_per_gc pitch per glottal cycle, Hz
-#' @param rolloff_source a list of matrices with one matrix for each epoch; each
+#' @param rolloff_per_epoch a list of matrices with one matrix for each epoch; each
 #'   matrix should contain one column for each glottal cycle and one row for
 #'   each harmonic (linear multiplier, ie NOT in dB). Rownames specify the ratio
 #'   to F0 (eg 1.5 means it's a subharmonic added between f0 and its first
 #'   harmonic)
+#' @param epochs a dataframe specifying the beginning and end of each epoch
 #' @param samplingRate the sampling rate of generated sound, Hz
 #' @return Returns a waveform as a non-normalized numeric vector centered at zero.
 #' @examples
@@ -543,7 +545,8 @@ generateGC = function(pitch_per_gc,
 #' rownames(m1) = 1:nrow(m1)
 #' rownames(m2) = 1:nrow(m2)
 #' rolloff_source = list(m1, m2)
-#' s = generateEpoch(pitch_per_gc, epochs, rolloff_source,  samplingRate = 16000)
+#' s = soundgen:::generateEpoch(pitch_per_gc, epochs,
+#'                              rolloff_source,  samplingRate = 16000)
 #' # plot(s, type = 'l')
 #' # playme(s)
 generateEpoch = function(pitch_per_gc,
@@ -609,7 +612,7 @@ generateEpoch = function(pitch_per_gc,
 #' @return Returns a normalized waveform.
 #' @export
 #' @examples
-#' f = fart(play = T)
+#' f = fart(play = FALSE)
 #' # playme(f)
 fart = function(glottisAnchors = c(350, 700),
                 pitchAnchors = 75,
@@ -702,28 +705,34 @@ fart = function(glottisAnchors = c(350, 700),
 
 #' Generate beat
 #'
-#' Generates percussive sounds from clicks through drum-like beats to sliding tones. The principle is to create a sine wave with rapid frequency modulation and to add a fade-out. No extra harmonics or formants are added. For this specific purpose, this is vastly faster and easier than to tinker with \code{\link{soundgen}} settings, especially since percussive syllables tend to be very short.
+#' Generates percussive sounds from clicks through drum-like beats to sliding
+#' tones. The principle is to create a sine wave with rapid frequency modulation
+#' and to add a fade-out. No extra harmonics or formants are added. For this
+#' specific purpose, this is vastly faster and easier than to tinker with
+#' \code{\link{soundgen}} settings, especially since percussive syllables tend
+#' to be very short.
 #' @inheritParams soundgen
 #' @param nSyl the number of syllables to generate
 #' @param fadeOut if TRUE, a linear fade-out is applied to the entire syllable
 #' @return Returns a non-normalized waveform centered at zero.
+#' @export
 #' @examples
 #' play = c(TRUE, FALSE)[2]
 #' # a drum-like sound
-#' s = generateBeat(nSyl = 1, sylLen = 200,
+#' s = beat(nSyl = 1, sylLen = 200,
 #'                  pitchAnchors = c(200, 100), play = play)
 #' plot(s, type = 'l')
 #'
 #' # a dry, muted drum
-#' s = generateBeat(nSyl = 1, sylLen = 200,
+#' s = beat(nSyl = 1, sylLen = 200,
 #'                  pitchAnchors = c(200, 10), play = play)
 #'
 #' # sci-fi laser guns
-#' s = generateBeat(nSyl = 3, sylLen = 300,
+#' s = beat(nSyl = 3, sylLen = 300,
 #'                  pitchAnchors = c(1000, 50), play = play)
 #'
 #' # machine guns
-#' s = generateBeat(nSyl = 10, sylLen = 10, pauseLen = 50,
+#' s = beat(nSyl = 10, sylLen = 10, pauseLen = 50,
 #'                  pitchAnchors = c(2300, 300), play = play)
 beat = function(nSyl = 10,
                 sylLen = 200,

@@ -11,13 +11,13 @@ generateGC(pitch_per_gc, glottisClosed_per_gc, rolloff_per_gc, samplingRate)
 
 \item{glottisClosed_per_gc}{proportion of closed phase per glottal cycle, \%}
 
-\item{samplingRate}{the sampling rate of generated sound, Hz}
-
-\item{rolloff_source}{a list of one-column matrices, one for each glottal
+\item{rolloff_per_gc}{a list of one-column matrices, one for each glottal
 cycle, specifying rolloff per harmonic (linear multiplier, ie NOT in dB)
 Each matrix has as many rows as there are harmonics, and rownames specify
 the ratio to F0 (eg 1.5 means it's a subharmonic added between f0 and its
 first harmonic)}
+
+\item{samplingRate}{the sampling rate of generated sound, Hz}
 }
 \value{
 Returns a waveform as a non-normalized numeric vector centered at zero.
@@ -36,7 +36,8 @@ glottisClosed_per_gc = seq(0, 300, length.out = 25)
 m = matrix(10 ^ (-6 * log2(1:200) / 20))
 rownames(m) = 1:nrow(m)
 rolloff_source = rep(list(m), 25)
-s = generateGC(pitch_per_gc,  glottisClosed_per_gc,  rolloff_source,  samplingRate = 16000)
+s = soundgen:::generateGC(pitch_per_gc,  glottisClosed_per_gc,
+                          rolloff_source,  samplingRate = 16000)
 # plot(s, type = 'l')
 # playme(s)
 }

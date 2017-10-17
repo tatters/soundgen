@@ -650,8 +650,9 @@ The first thing you might want to do with your target audio recording is to anal
 
 ```{r}
 target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-                  pitchAnchors = data.frame(time = c(0, 1), value = c(300, 200)),
+                  pitchAnchors =c(300, 200),
                   rolloff = -5, play = playback)  # we hope to reproduce this sound
+# playme(target)
 
 m1 = matchPars(target = target,
                samplingRate = 16000,
@@ -667,12 +668,12 @@ At this point I would really recommend copy-pasting your call to `soundgen` into
 
 ```{r, eval = FALSE}
 call('soundgen', m1$pars)
-# remove "list(...)" to get your call to soundgen():
-soundgen(samplingRate = 16000, nSyl = 3, sylLen = 79, pauseLen = 114,
-    pitchAnchors = list(time = c(0, 0.5, 1), value = c(274, 253, 216)),
-    formants = list(f1 = list(time = 0, freq = 821, amp = 30,  width = 122),
-                    f2 = list(time = 0, freq = 1266, amp = 30, width = 36),
-                    f3 = list(time = 0, freq = 2888, amp = 30, width = 117)))
+# copy-paste from the console and remove "list(...)" to get your call to soundgen():
+# soundgen(samplingRate = 16000, nSyl = 3, sylLen = 79, pauseLen = 114,
+#     pitchAnchors = list(time = c(0, 0.5, 1), value = c(274, 253, 216)),
+#     formants = list(f1 = list(freq = 821, width = 122),
+#                     f2 = list(freq = 1266, width = 36),
+#                     f3 = list(freq = 2888, width = 117)))
 ```
 
 Load this formula into the Shiny app. To do so, run `soundgen_app()`, click "Load new preset" on the right-hand side of the screen, copy-paste the formula above (no quotes), and click "Update sliders". If all goes well, all the settings should be updated, so that clicking "Generate" should produce the same sound as `cand1` above. Now you can tinker with the settings in the app, improving them further.
