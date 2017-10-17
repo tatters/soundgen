@@ -79,7 +79,7 @@ noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -4,
 
 # low-frequency, wind-like noise
 filterNoise = soundgen:::getSpectralEnvelope(
-  nr = windowLength_points / 2, nc = 1, rolloffLip = 0,
+  nr = windowLength_points / 2, nc = 1, lipRad = 0,
   samplingRate = samplingRate, formants = list('f1' = data.frame(
     time = 0, freq = 150, amp = 30, width = 90)))
 noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,

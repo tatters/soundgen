@@ -1,4 +1,4 @@
-# TODO: update morphing routine for new format of formants; analyzeFolder should return df not list; rename rolloffLip and rolloffNose to lipRadiation and noseRadiation
+# TODO: analyzeFolder should return df not list; rename lipRad and noseRad to lipRad and noseRadiation
 
 #' @import stats graphics utils grDevices
 NULL
@@ -83,11 +83,12 @@ NULL
 #' @param rolloffKHz rolloff changes linearly with f0 by
 #'   \code{rolloffKHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
 #'   steeper basic rolloff as f0 goes up by 1000 Hz
-#' @param rolloffLip the effect of lip radiation on source spectrum, dB/oct
+#' @param lipRad the effect of lip radiation on source spectrum, dB/oct
 #'   (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 #'   open)
-#' @param rolloffNose the effect of radiation through the nose on source
-#'   spectrum, dB/oct (the alternative to \code{rolloffLip} when the mouth is
+#' @param rolloffLip same as lipRad (deprecated since soundgen 1.1.0)
+#' @param noseRad the effect of radiation through the nose on source
+#'   spectrum, dB/oct (the alternative to \code{lipRad} when the mouth is
 #'   closed)
 #' @param mouthOpenThres open the lips (switch from nose radiation to lip
 #'   radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1
@@ -238,8 +239,9 @@ soundgen = function(repeatBout = 1,
                     rolloffKHz = -3,
                     rolloffParab = 0,
                     rolloffParabHarm = 3,
-                    rolloffLip = 6,
-                    rolloffNose = 4,
+                    lipRad = 6,
+                    rolloffLip = NULL,
+                    noseRad = 4,
                     mouthOpenThres = 0,
                     formants = c(860, 1430, 2900),
                     formantDep = 1,
@@ -272,6 +274,12 @@ soundgen = function(repeatBout = 1,
                     play = FALSE,
                     savePath = NA,
                     ...) {
+  # deprecated pars
+  if (!missing(rolloffLip)) {
+    lipRad = rolloffLip
+    message('rolloffLip is deprecated; use lipRad instead')
+  }
+
   # check that values of numeric arguments are valid and within range
   for (p in rownames(permittedValues)[1:which(
     rownames(permittedValues) == 'rolloffNoise'
@@ -684,8 +692,8 @@ soundgen = function(repeatBout = 1,
             formants = formantsNoise,
             formantDep = formantDep,
             formantDepStoch = 0,  # formantDepStoch,
-            rolloffLip = rolloffLip,
-            rolloffNose = rolloffNose,
+            lipRad = lipRad,
+            noseRad = noseRad,
             mouthOpenThres = mouthOpenThres,
             mouthAnchors = mouthAnchors,
             temperature = temperature,
@@ -798,8 +806,8 @@ soundgen = function(repeatBout = 1,
         formants = formants,
         formantDep = formantDep,
         formantDepStoch = formantDepStoch,
-        rolloffLip = rolloffLip,
-        rolloffNose = rolloffNose,
+        lipRad = lipRad,
+        noseRad = noseRad,
         mouthOpenThres = mouthOpenThres,
         mouthAnchors = mouthAnchors,
         temperature = temperature,

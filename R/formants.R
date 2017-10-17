@@ -66,7 +66,7 @@
 #'
 #' # mouth opening
 #' e = getSpectralEnvelope(nr = 512, nc = 50,
-#'   vocalTract = 16, plot = TRUE, rolloffLip = 6, rolloffNose = 4,
+#'   vocalTract = 16, plot = TRUE, lipRad = 6, noseRad = 4,
 #'   mouthAnchors = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 #'
 #' # manual specification of formants
@@ -81,8 +81,8 @@ getSpectralEnvelope = function(nr,
                                nc,
                                formants = NA,
                                formantDep = 1,
-                               rolloffLip = 6,
-                               rolloffNose = 4,
+                               lipRad = 6,
+                               noseRad = 4,
                                mouthAnchors = NA,
                                mouthOpenThres = 0.2,
                                openMouthBoost = 0,
@@ -435,8 +435,8 @@ getSpectralEnvelope = function(nr,
   # END OF FORMANTS
 
   # add lip radiation when the mouth is open and nose radiation when the mouth is closed
-  lip_dB = rolloffLip * log2(1:nr) # vector of length nr
-  nose_dB = rolloffNose * log2(1:nr)
+  lip_dB = lipRad * log2(1:nr) # vector of length nr
+  nose_dB = noseRad * log2(1:nr)
   # plot(lip_dB, type = 'l'); plot(nose_dB, type = 'l')
   for (c in 1:nc) {
     spectralEnvelope[, c] = spectralEnvelope[, c] +

@@ -661,7 +661,7 @@ m1 = matchPars(target = target,
 # m1$pars contains a list of soundgen settings
 cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
 ```
-Without optimization, we simply match soundgen parameters based on acoustic analysis. In particular, `matchPars()` calls `segment()` and `analyze()` to get some basic descriptives of the target sound and to choose the appropriate settings for `soundgen` based on these measurements. If you are very lucky, this *might* in fact accurately match the temporal structure, pitch, and (stationary) formants of your target.
+Without optimization, we simply match soundgen parameters based on acoustic analysis. In particular, `matchPars()` calls `segment()` and `analyze()` to get some basic descriptives of the target sound and to choose the appropriate settings for `soundgen` based on these measurements. If you are very lucky, this *might* in fact accurately match the temporal structure, pitch, and (stationary) formants of your target. Most likely, it won't. In particular, for animal vocalizations a better option is often to estimate the vocal tract length from the dispersion of a few consecutive formants you can identify on the spectrogram (use `estimateVTL()`) and set `vocalTract = your_estimate, formants = NULL`. 
 
 At this point I would really recommend copy-pasting your call to `soundgen` into the Shiny app and adjusting these settings in an interactive environment, rather than from the console. For example, to use the parameters in `m1$pars`, type `call('soundgen', m1$pars)`, remove the "list()" part from the output, and you have your formula:
 

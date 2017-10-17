@@ -14,16 +14,16 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   nonlinBalance = 0, nonlinDep = 50, jitterLen = 1, jitterDep = 3,
   vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0, attackLen = 50,
   rolloff = -9, rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
-  rolloffParabHarm = 3, rolloffLip = 6, rolloffNose = 4,
-  mouthOpenThres = 0, formants = list(f1 = 860, f2 = 1430, f3 = 2900),
-  formantDep = 1, formantDepStoch = 20, vocalTract = NA, subFreq = 100,
-  subDep = 100, shortestEpoch = 300, amDep = 0, amFreq = 30,
-  amShape = 0, noiseAnchors = data.frame(time = c(0, 300), value = c(-80,
-  -80)), formantsNoise = NA, rolloffNoise = -4,
-  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  amplAnchors = NA, amplAnchorsGlobal = NA, samplingRate = 16000,
-  windowLength = 50, overlap = 75, addSilence = 100, pitchFloor = 50,
-  pitchCeiling = 3500, pitchSamplingRate = 3500, throwaway = -80,
+  rolloffParabHarm = 3, lipRad = 6, rolloffLip = NULL, noseRad = 4,
+  mouthOpenThres = 0, formants = c(860, 1430, 2900), formantDep = 1,
+  formantDepStoch = 20, vocalTract = NA, subFreq = 100, subDep = 100,
+  shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
+  noiseAnchors = data.frame(time = c(0, 300), value = c(-80, -80)),
+  formantsNoise = NA, rolloffNoise = -4, mouthAnchors = data.frame(time =
+  c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
+  samplingRate = 16000, windowLength = 50, overlap = 75,
+  addSilence = 100, pitchFloor = 50, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, throwaway = -80,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
 }
@@ -120,12 +120,14 @@ exponential decay.}
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
 
-\item{rolloffLip}{the effect of lip radiation on source spectrum, dB/oct
+\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct
 (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
-\item{rolloffNose}{the effect of radiation through the nose on source
-spectrum, dB/oct (the alternative to \code{rolloffLip} when the mouth is
+\item{rolloffLip}{same as lipRad (deprecated since soundgen 1.1.0)}
+
+\item{noseRad}{the effect of radiation through the nose on source
+spectrum, dB/oct (the alternative to \code{lipRad} when the mouth is
 closed)}
 
 \item{mouthOpenThres}{open the lips (switch from nose radiation to lip

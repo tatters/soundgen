@@ -4,8 +4,8 @@
 \alias{getSpectralEnvelope}
 \title{Spectral envelope}
 \usage{
-getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1, rolloffLip = 6,
-  rolloffNose = 4, mouthAnchors = NA, mouthOpenThres = 0.2,
+getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1, lipRad = 6,
+  noseRad = 4, mouthAnchors = NA, mouthOpenThres = 0.2,
   openMouthBoost = 0, vocalTract = NULL, temperature = 0.05,
   formDrift = 0.3, formDisp = 0.2, formantDepStoch = 20,
   smoothLinearFactor = 1, samplingRate = 16000, speedSound = 35400,
@@ -27,12 +27,12 @@ arbitrary scale.}
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}
 
-\item{rolloffLip}{the effect of lip radiation on source spectrum, dB/oct
+\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct
 (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
-\item{rolloffNose}{the effect of radiation through the nose on source
-spectrum, dB/oct (the alternative to \code{rolloffLip} when the mouth is
+\item{noseRad}{the effect of radiation through the nose on source
+spectrum, dB/oct (the alternative to \code{lipRad} when the mouth is
 closed)}
 
 \item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
@@ -124,7 +124,7 @@ e = getSpectralEnvelope(nr = 512, nc = 50,
 
 # mouth opening
 e = getSpectralEnvelope(nr = 512, nc = 50,
-  vocalTract = 16, plot = TRUE, rolloffLip = 6, rolloffNose = 4,
+  vocalTract = 16, plot = TRUE, lipRad = 6, noseRad = 4,
   mouthAnchors = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 
 # manual specification of formants

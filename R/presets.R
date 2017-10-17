@@ -42,8 +42,8 @@ permittedValues = matrix(c(
   'rolloffParab', 0, -30, 30, 1,
   'rolloffParabHarm', 3, 1, 20, 1,
   'rolloffKHz', -3, -20, 0, 1,
-  'rolloffLip', 6, 0, 20, 1,
-  'rolloffNose', 4, 0, 20, 1,
+  'lipRad', 6, 0, 20, 1,
+  'noseRad', 4, 0, 20, 1,
   'mouthOpenThres', 0, 0, 1, .05,
   'formantDep', 1, 0, 2, .1,
   'formantDepStoch', 20, 0, 40, 5,
@@ -105,8 +105,8 @@ defaults = list(
   rolloffParab = 0,
   rolloffParabHarm = 3,
   rolloffKHz = -3,
-  rolloffLip = 6,
-  rolloffNose = 4,
+  lipRad = 6,
+  noseRad = 4,
   mouthOpenThres = 0,
   formantDep = 1,
   formantDepStoch = 20,
@@ -308,7 +308,7 @@ presets = list(
 
     Meow = 'soundgen(sylLen = 920, pitchAnchors = list(time = c(0, 0.2, 1), value = c(480, 550, 515)), attackLen = 150, rolloff = -2, rolloffOct = -4, formants = c(1594, 3600), mouthAnchors = list(time = c(0, 0.16, 0.91, 1), value = c(0, 1, 0.31, 0.06)))',
 
-    Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 50, pitchAnchors = 25, glottisAnchors = 170, temperature = 0.1, jitterDep = 0, jitterLen = 34, rolloff = -30, rolloffLip = 0, formants = c(1200, 2600, 5200, 7000), subDep = 0, noiseAnchors = list(time = c(-113, 96, 839), value = c(-80, -39, -58)))',
+    Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 50, pitchAnchors = 25, glottisAnchors = 170, temperature = 0.1, jitterDep = 0, jitterLen = 34, rolloff = -30, lipRad = 0, formants = c(1200, 2600, 5200, 7000), subDep = 0, noiseAnchors = list(time = c(-113, 96, 839), value = c(-80, -39, -58)))',
 
     Scream = 'soundgen(repeatBout = 2, sylLen = 1610, pauseLen = 500, pitchAnchors = list(time = c(0, 0.28, 0.53, 0.88, 1), value = c(388, 385, 669, 663, 392)), temperature = 0.05, nonlinBalance = 35, jitterDep = 1.9, rolloff = -6, formants = list(f1 = c(1800, 1000), f2 = 2400), subFreq = 150, subDep = 80)',
 
