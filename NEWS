@@ -11,9 +11,9 @@ MINOR
   * Support for shorthand specification of all anchors in presets and other input to soundgen_app, e.g. "mouthAnchors = c(0, 0, .3, .5)". The expanded format from soundgen 1.0.0 is also supported.
   * Vectorized rolloff and amplitude modulation parameters, allowing them to change dynamically within a vocalization (command-line only; currently not implemented in the Shiny app).
   * Additional components in tempEffects offering more control over stochastic behavior of soundgen() (command-line only).
-  * Separate radiation functions for the lips and the nose (when the mouth is closed). The corresponding soundeng() arguments are "lipRad" (replacing "rolloffLip") and "noseRad".
+  * Separate radiation functions for the lips and the nose (when the mouth is closed). The corresponding soundgen() arguments are "lipRad" (replacing "rolloffLip") and "noseRad".
   * Minor debugging and extended capabilities in soundgen_app(), e.g. preview of formant filter, better intergration of spectrogram and spectrum output plots, a simple way to remove the voiced component, etc.
-  * Minor debugging elsewhere, notably dB conversion and timing of unvoiced segments in polysyllabic vocalizations in soundgen().
+  * Minor debugging elsewhere, notably dB conversion, timing of unvoiced segments in polysyllabic vocalizations in soundgen(), format of the output in analyzeFolder() and segmentFolder(), etc.
 
 NEW FUNCTIONS:
   * flatEnv(): normalizes amplitude envelope dynamically, i.e., keeping loudness constant throughout the sound

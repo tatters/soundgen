@@ -295,6 +295,7 @@ segmentFolder = function (myfolder,
       tail(unlist(strsplit(filenames[x], '/')), 1)
     })
     output = output[, c('sound', colnames(output)[1:(ncol(output) - 1)])]
+    output = as.data.frame(apply(output, 2, unlist))
   } else {
     output = result
     names(output) = filenames

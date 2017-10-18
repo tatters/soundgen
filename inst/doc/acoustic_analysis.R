@@ -3,15 +3,15 @@ library(soundgen)
 s1 = soundgen(sylLen = 900, temperature = 0,
               pitchAnchors = list(time = c(0, .3, .8, 1), 
                                   value = c(300, 900, 400, 2300)),
-              noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
-              subDep = 100, jitterDep = 0.5, nonlinBalance = 100)
+              noiseAnchors = c(-40, 0), subDep = 100, 
+              jitterDep = 0.5, nonlinBalance = 100)
 # playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
 
 ## ------------------------------------------------------------------------
 true_pitch = getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
                                              value = c(300, 900, 400, 2300)),
                               len = 1000)  # any length will do
-# median(true_pitch)  # 611 Hz
+median(true_pitch)  # 611 Hz
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
 a1 = analyze(s1, samplingRate = 16000, plot = TRUE)
@@ -38,27 +38,27 @@ par(mfrow = c(1, 1))
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
             pitchMethods = 'autocor',
-            autocorThres = .3,
-            nCands = 2)
+            autocorThres = .45,
+            nCands = 3)
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
             pitchMethods = 'dom',
-            domThres = .3,
+            domThres = .1,
             domSmooth = 500)
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
             pitchMethods = 'cep',
-            cepThres = .2,
+            cepThres = .3,
             cepSmooth = 3,
             nCands = 2)
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
             pitchMethods = 'spec',
-            specPeak = .6,
-            nCands = 3)
+            specPeak = .4,
+            nCands = 2)
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
@@ -72,10 +72,10 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
 ## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
 par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .35, step = 50,
+             pitchMethods = 'cep', cepThres = .3, step = 25,
              snakeStep = NULL, smooth = 0)  
 a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .35, step = 50,
+             pitchMethods = 'cep', cepThres = .3, step = 25,
              snakeStep = NULL, smooth = 0,
              interpolWin = NULL, pathfinding = 'none')  # disable interpolation
 par(mfrow = c(1, 1))
@@ -83,25 +83,13 @@ par(mfrow = c(1, 1))
 ## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
 par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .2, nCands = 2,
+             pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 0)  # minimize pitch jumps
 a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .2, nCands = 2,
+             pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 1)  # minimize deviation from candidates
-par(mfrow = c(1, 1))
-
-## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
-par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .2, nCands = 2,
-             snakeStep = NULL, smooth = 0, interpolTol = Inf,
-             pathfinding = 'slow', certWeight = .25)
-a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .2, nCands = 2,
-             snakeStep = NULL, smooth = 0, interpolTol = Inf,
-             pathfinding = 'fast')
 par(mfrow = c(1, 1))
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
@@ -159,7 +147,7 @@ s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
               pitchAnchors = list(time = c(0, 1), value = c(368, 284)),
               noiseAnchors = list(time = c(0, 67, 86, 186), 
                                   value = c(-45, -47, -89, -120)),
-              rolloff_noise = -8, amplAnchorsGlobal = list(time = c(0, 1), 
+              rolloffNoise = -8, amplAnchorsGlobal = list(time = c(0, 1), 
                                                            value = c(120, 20)))
 # spectrogram(s2, samplingRate = 16000, osc = TRUE)
 # playme(s2, samplingRate = 16000)

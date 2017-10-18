@@ -1,5 +1,3 @@
-# TODO: analyzeFolder should return df not list
-
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
 NULL

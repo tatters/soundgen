@@ -323,7 +323,7 @@ s = getSpectralEnvelope(nr = 1024,  # freq bins in FFT frame (window_length / 2)
                         plot = TRUE, 
                         dur = 1500,   # just an example
                         colorTheme = 'seewave',
-                        rolloffLip = 6) 
+                        lipRad = 6) 
 # Note that lip radiation is also specified here (dB). 
 # This has the effect of amplifying higher frequencies to mimic lip radiation. 
 ```
@@ -399,16 +399,16 @@ s1 = soundgen(pitchAnchors = c(1500, 800), glottisAnchors = 75,
               samplingRate = 16000, play = playback)
 
 # This sounds better but takes a long time to synthesize:
-s2 = soundgen(pitchAnchors = c(1500, 800), glottisAnchors = 75, 
+s2 = suppressWarnings(soundgen(pitchAnchors = c(1500, 800), glottisAnchors = 75, 
               samplingRate = 80000, play = playback, 
-              invalidArgAction = 'ignore')
+              invalidArgAction = 'ignore'))
 # NB: invalidArgAction = 'ignore' forces a "weird" samplingRate value
 # to be accepted without question
 
 # Now this is what this feature is for: vocal fry
 s3 = soundgen(sylLen = 1500, pitchAnchors = c(75, 40), 
               glottisAnchors = c(0, 700), 
-              samplingRate = 80000, play = playback)
+              samplingRate = 16000, play = playback)
 plot(s3, type = 'l')
 ```
 
@@ -438,20 +438,21 @@ Moving on to advanced pitch effects settings, `subFreq` ("Subharmonic frequency,
 s1 = soundgen(subFreq = 400, subDep = 150, nonlinBalance = 100,
               jitterDep = 0, shimmerDep = 0, temperature = 0, 
               sylLen = 500, pitchAnchors = c(800, 900),
-              play = playback, plot = TRUE)
+              play = playback, plot = TRUE, ylim = c(0, 3))
 s2 = soundgen(subFreq = 400, subDep = 400, nonlinBalance = 100,
               jitterDep = 0, shimmerDep = 0, temperature = 0, 
               sylLen = 500, pitchAnchors = c(800, 900),
-              play = playback, plot = TRUE)
+              play = playback, plot = TRUE, ylim = c(0, 3))
 ```
 
 Sidebands may be easier to understand for high-pitched sounds with low subharmonic frequencies. For example, chimpanzees emit piercing screams with narrow subharmonic bands. If we set `subFreq` to 75 Hz and `subDep` to 130 Hz, subharmonics literally form a band around each harmonic of the main stack, creating a very distinct, immediately recognizable sound quality:
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(subFreq = 75, subDep = 130, nonlinBalance = 100,
              jitterDep = 0, shimmerDep = 0, temperature = 0, 
-             sylLen = 800, plot = TRUE, play = playback,
+             sylLen = 800, formants = NULL, play = playback,
              pitchAnchors = data.frame(time=c(0, .3, .9, 1), 
                                        value = c(1200, 1547, 1487, 1154)))
+spectrogram(s, 16000, windowLength = 50, ylim = c(0, 5), contrast = .7)
 ```
 
 As for jitter in pitch regime 3, it wiggles both f0 and g0 harmonic stacks, blurring the spectrum. Parameter `jitterDep` ("Jitter depth, semitones" in the app) defines how much the pitch fluctuates, while `jitterLen` ("Jitter period, ms") defines how rapid these fluctuations are. Slow jitter with a period of ~50 ms produces the effect of a shaky, unsteady voice. It may sound similar to a vibrato, but jitter is irregular. Rapid jitter with a period of ~1 ms, especially in combination with subharmonics, may be used to imitate deterministic chaos, which is found in voiced but highly irregular animal sounds such as barks, roars, noisy screams, etc. This works best for high-pitched sounds like screams.
