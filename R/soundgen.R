@@ -1,6 +1,7 @@
-# TODO: analyzeFolder should return df not list; subharmonics for separate glottal cycles (?)
+# TODO: analyzeFolder should return df not list
 
 #' @import stats graphics utils grDevices
+#' @encoding UTF-8
 NULL
 
 
@@ -217,7 +218,7 @@ soundgen = function(repeatBout = 1,
                       formDisp = .2,
                       pitchDriftDep = .5,
                       pitchDriftFreq = .125,
-                      amplDriftDep = 20,
+                      amplDriftDep = 5,
                       subDriftDep = 4,
                       rolloffDriftDep = 3,
                       pitchAnchorsDep = .05,
@@ -333,7 +334,7 @@ soundgen = function(repeatBout = 1,
   if (!is.numeric(tempEffects$formDisp)) tempEffects$formDisp = .2
   if (!is.numeric(tempEffects$pitchDriftDep)) tempEffects$pitchDriftDep = .5
   if (!is.numeric(tempEffects$pitchDriftFreq)) tempEffects$pitchDriftFreq = .125
-  if (!is.numeric(tempEffects$amplDriftDep)) tempEffects$amplDriftDep = 20
+  if (!is.numeric(tempEffects$amplDriftDep)) tempEffects$amplDriftDep = 5
   if (!is.numeric(tempEffects$subDriftDep)) tempEffects$subDriftDep = 4
   if (!is.numeric(tempEffects$rolloffDriftDep)) tempEffects$rolloffDriftDep = 3
   if (!is.numeric(tempEffects$pitchAnchorsDep)) tempEffects$pitchAnchorsDep = .05

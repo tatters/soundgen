@@ -21,15 +21,14 @@ Imports: stats,
     seewave,
     zoo,
     shiny,
-    shinyBS,
     reshape2,
     mvtnorm,
     plyr,
     dtw,
-    grid,
     phonTools
 Depends: R (>= 3.4)
 RoxygenNote: 6.0.1
 Suggests: knitr,
-    rmarkdown
+    rmarkdown,
+    shinyBS
 VignetteBuilder: knitr

@@ -157,8 +157,6 @@ ui = fluidPage(
                                              sidebarPanel(
                                                sliderInput('rolloff', 'Source rolloff, dB/octave', value=permittedValues['rolloff','default'], min=permittedValues['rolloff', 'low'], max=permittedValues['rolloff', 'high'], step=permittedValues['rolloff','step']),
                                                shinyBS:::bsPopover(id='rolloff', title=NULL, content='Loss of energy in harmonics relative to fundamental frequency (F0); low values emphasize F0', placement="right", trigger="hover"),
-                                               sliderInput('glottisAnchors', 'Closed glottis, %', value=permittedValues['glottisAnchors', 'default'], min=permittedValues['glottisAnchors', 'low'], max=permittedValues['glottisAnchors', 'high'], step=permittedValues['glottisAnchors','step']),
-                                               shinyBS:::bsPopover(id='glottisAnchors', title=NULL, content='Proportion of time glottis is closed relative to F0 period; adds silences between glottal cycles', placement="right", trigger="hover"),
                                                shinyBS::bsCollapsePanel("Advanced",
                                                                         sliderInput('rolloffOct', 'Change of rolloff with frequency, dB/octave', value=permittedValues['rolloffOct','default'], min=permittedValues['rolloffOct', 'low'], max=permittedValues['rolloffOct', 'high'], step=permittedValues['rolloffOct','step']),
                                                                         shinyBS:::bsPopover(id='rolloffOct', title=NULL, content='Negative: rolloff is progressively steeper for higher frequencies', placement="right", trigger="hover"),
@@ -167,7 +165,9 @@ ui = fluidPage(
                                                                         sliderInput('rolloffParab', 'Parabolic rolloff adjustment, dB/octave', value=permittedValues['rolloffParab','default'], min=permittedValues['rolloffParab', 'low'], max=permittedValues['rolloffParab', 'high'], step=permittedValues['rolloffParab','step']),
                                                                         shinyBS:::bsPopover(id='rolloffParab', title=NULL, content='Parabolic boost to the first ... harmonics, dB', placement="right", trigger="hover"),
                                                                         sliderInput('rolloffParabHarm', 'Harmonics boosted', value=permittedValues['rolloffParabHarm','default'], min=permittedValues['rolloffParabHarm', 'low'], max=permittedValues['rolloffParabHarm', 'high'], step=permittedValues['rolloffParabHarm','step']),
-                                                                        shinyBS:::bsPopover(id='rolloffParabHarm', title=NULL, content='Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover")
+                                                                        shinyBS:::bsPopover(id='rolloffParabHarm', title=NULL, content='Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover"),
+                                                                        sliderInput('glottisAnchors', 'Closed glottis, %', value=permittedValues['glottisAnchors', 'default'], min=permittedValues['glottisAnchors', 'low'], max=permittedValues['glottisAnchors', 'high'], step=permittedValues['glottisAnchors','step']),
+                                                                        shinyBS:::bsPopover(id='glottisAnchors', title=NULL, content='Proportion of time glottis is closed relative to F0 period; adds silences between glottal cycles', placement="right", trigger="hover")
                                                ), width=6
                                              ),
                                              mainPanel(

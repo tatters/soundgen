@@ -74,13 +74,13 @@
 #'                      rolloff = c(-12, -18, -24), plot = TRUE)
 #' rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
 #'                     rolloffParabHarm = 1:5, plot = TRUE)
+#' \dontrun{
 #' # only rolloff for the first glottal cycle is plotted, but the sound varies:
 #' s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
-#'               rolloff = c(-12, -24, -2),
-#'               play = TRUE, plot = TRUE)
+#'               rolloff = c(-12, -24, -2), plot = TRUE)
 #' s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
-#'              rolloffParab = 40, rolloffParabHarm = 1:15,
-#'              play = TRUE, plot = TRUE)
+#'              rolloffParab = 40, rolloffParabHarm = 1:15, plot = TRUE)
+#' }
 getRolloff = function(pitch_per_gc = c(440),
                       nHarmonics = 100,
                       rolloff = -6,

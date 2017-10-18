@@ -8,6 +8,8 @@ HzToSemitones(h, ref = 0.5109875)
 }
 \arguments{
 \item{h}{vector or matrix of frequencies (Hz)}
+
+\item{ref}{frequency of the reference value (defaults to C-5, 0.51 Hz)}
 }
 \description{
 Converts from Hz to semitones above C-5 (~0.5109875 Hz). This may not seem very

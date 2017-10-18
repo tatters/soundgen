@@ -692,7 +692,7 @@ getEnv = function(sound,
 #'   square amplitude
 #' @param windowLength_points the length of smoothing window, points. If
 #'   specified, overrides both \code{windowLength} and \code{samplingRate}
-#' @param killEnv if TRUE, dynamically removes DC offset or similar deviations of
+#' @param killDC if TRUE, dynamically removes DC offset or similar deviations of
 #'   average waveform from zero
 #' @param throwaway parts of sound quieter than \code{throwaway} dB will not be
 #'   amplified
@@ -701,18 +701,18 @@ getEnv = function(sound,
 #' @export
 #' @examples
 #' a = rnorm(500) * seq(1, 0, length.out = 500)
-#' b = flatEnv(a, plot = TRUE, killEnv = TRUE, method = 'peak',
+#' b = flatEnv(a, plot = TRUE, killDC = TRUE, method = 'peak',
 #'             windowLength_points = 5)         # too short
-#' c = flatEnv(a, plot = TRUE, killEnv = TRUE,
+#' c = flatEnv(a, plot = TRUE, killDC = TRUE,
 #'             windowLength_points = 250)       # too long
-#' d = flatEnv(a, plot = TRUE, killEnv = TRUE,
+#' d = flatEnv(a, plot = TRUE, killDC = TRUE,
 #'             windowLength_points = 50)        # about right
 flatEnv = function(sound,
                    windowLength = 200,
                    samplingRate = 16000,
                    method = c('rms', 'peak')[1],
                    windowLength_points = NULL,
-                   killEnv = FALSE,
+                   killDC = FALSE,
                    throwaway = -80,
                    plot = FALSE) {
   if (!is.numeric(windowLength_points)) {
@@ -740,10 +740,10 @@ flatEnv = function(sound,
   # re-normalize to original scale
   soundFlat = soundFlat / max(abs(soundFlat)) * m
   # remove DC offset
-  if (killEnv) {
-    sound_norm = killEnv(sound = soundFlat,
-                         windowLength_points = windowLength_points,
-                         plot = FALSE)
+  if (killDC) {
+    sound_norm = killDC(sound = soundFlat,
+                        windowLength_points = windowLength_points,
+                        plot = FALSE)
   }
 
   if (plot) {
@@ -769,16 +769,16 @@ flatEnv = function(sound,
 #' @examples
 #' # remove static DC offset
 #' a = rnorm(500) + .3
-#' b = soundgen:::killEnv(a, windowLength_points = 500, plot = TRUE)
+#' b = soundgen:::killDC(a, windowLength_points = 500, plot = TRUE)
 #'
 #' # remove trend
 #' a = rnorm(500) + seq(0, 1, length.out = 500)
-#' b = soundgen:::killEnv(a, windowLength_points = 100, plot = TRUE)
+#' b = soundgen:::killDC(a, windowLength_points = 100, plot = TRUE)
 #'
 #' # can also be used as a high-pass filter
 #' a = rnorm(500) + sin(1:500 / 50)
-#' b = soundgen:::killEnv(a, windowLength_points = 25, plot = TRUE)
-killEnv = function(sound,
+#' b = soundgen:::killDC(a, windowLength_points = 25, plot = TRUE)
+killDC = function(sound,
                    windowLength = 200,
                    samplingRate = 16000,
                    windowLength_points = NULL,

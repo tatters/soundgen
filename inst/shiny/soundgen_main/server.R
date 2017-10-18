@@ -1154,7 +1154,7 @@ server = function(input, output, session) {
 
   observeEvent(input$about, {
     id <<- showNotification(
-      ui = 'SoundGen 1.1.0 beta, 2017. Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!',
+      ui = 'SoundGen 1.1.0, 2017. Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!',
       duration = 10,
       closeButton = TRUE,
       type = 'default'

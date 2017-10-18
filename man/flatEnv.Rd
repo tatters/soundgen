@@ -5,8 +5,8 @@
 \title{Flat envelope}
 \usage{
 flatEnv(sound, windowLength = 200, samplingRate = 16000, method = c("rms",
-  "peak")[1], windowLength_points = NULL, killEnv = FALSE,
-  throwaway = -80, plot = FALSE)
+  "peak")[1], windowLength_points = NULL, killDC = FALSE, throwaway = -80,
+  plot = FALSE)
 }
 \arguments{
 \item{sound}{input vector oscillating about zero}
@@ -22,7 +22,7 @@ square amplitude}
 \item{windowLength_points}{the length of smoothing window, points. If
 specified, overrides both \code{windowLength} and \code{samplingRate}}
 
-\item{killEnv}{if TRUE, dynamically removes DC offset or similar deviations of
+\item{killDC}{if TRUE, dynamically removes DC offset or similar deviations of
 average waveform from zero}
 
 \item{throwaway}{parts of sound quieter than \code{throwaway} dB will not be
@@ -38,10 +38,10 @@ mean square).
 }
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
-b = flatEnv(a, plot = TRUE, killEnv = TRUE, method = 'peak',
+b = flatEnv(a, plot = TRUE, killDC = TRUE, method = 'peak',
             windowLength_points = 5)         # too short
-c = flatEnv(a, plot = TRUE, killEnv = TRUE,
+c = flatEnv(a, plot = TRUE, killDC = TRUE,
             windowLength_points = 250)       # too long
-d = flatEnv(a, plot = TRUE, killEnv = TRUE,
+d = flatEnv(a, plot = TRUE, killDC = TRUE,
             windowLength_points = 50)        # about right
 }

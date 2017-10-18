@@ -7,6 +7,7 @@
 #' generating natural pitch transitions, (2) with the added benefit of getting
 #' musical notation for free from \code{notesDict} (see examples).
 #' @param h vector or matrix of frequencies (Hz)
+#' @param ref frequency of the reference value (defaults to C-5, 0.51 Hz)
 #' @export
 #' @examples
 #' s = HzToSemitones(c(440, 293, 115))
@@ -21,6 +22,7 @@ HzToSemitones = function(h, ref = 0.5109875) {
 #'
 #' Converts from semitones above C-5 (~0.5109875 Hz) to Hz. See \code{\link{HzToSemitones}}
 #' @param s vector or matrix of frequencies (semitones above C0)
+#' @param ref frequency of the reference value (defaults to C-5, 0.51 Hz)
 #' @export
 semitonesToHz = function(s, ref = 0.5109875) {
   return(ref * 2 ^ (s / 12))

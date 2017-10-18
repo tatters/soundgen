@@ -86,7 +86,7 @@ for more information.
 playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
 
 target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-  pitchAnchors = data.frame(time = c(0, 1), value = c(300, 200)),
+  pitchAnchors = c(300, 200),
   rolloff = -5, play = playback)  # we hope to reproduce this sound
 
 # Match pars based on acoustic analysis alone, without any optimization.

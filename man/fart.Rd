@@ -5,7 +5,7 @@
 \title{Fart}
 \usage{
 fart(glottisAnchors = c(350, 700), pitchAnchors = 75, temperature = 0.25,
-  sylLen = 600, rolloff = -20, samplingRate = 16000, play = TRUE,
+  sylLen = 600, rolloff = -20, samplingRate = 16000, play = FALSE,
   plot = FALSE)
 }
 \arguments{
@@ -45,6 +45,6 @@ glottal cycles with harmonics, but no formants. See \code{\link{soundgen}}
 for more details.
 }
 \examples{
-f = fart(play = FALSE)
+f = fart()
 # playme(f)
 }

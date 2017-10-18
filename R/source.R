@@ -204,7 +204,7 @@ generateHarmonics = function(pitch,
                              temperature = .025,
                              pitchDriftDep = .5,
                              pitchDriftFreq = .125,
-                             amplDriftDep = 20,
+                             amplDriftDep = 5,
                              subDriftDep = 4,
                              rolloffDriftDep = 3,
                              randomWalk_trendStrength = .5,
@@ -612,7 +612,7 @@ generateEpoch = function(pitch_per_gc,
 #' @return Returns a normalized waveform.
 #' @export
 #' @examples
-#' f = fart(play = FALSE)
+#' f = fart()
 #' # playme(f)
 fart = function(glottisAnchors = c(350, 700),
                 pitchAnchors = 75,
@@ -620,7 +620,7 @@ fart = function(glottisAnchors = c(350, 700),
                 sylLen = 600,
                 rolloff = -20,
                 samplingRate = 16000,
-                play = TRUE,
+                play = FALSE,
                 plot = FALSE) {
   glottisAnchors = reformatAnchors(glottisAnchors)
   pitchAnchors = reformatAnchors(pitchAnchors)
@@ -740,7 +740,7 @@ beat = function(nSyl = 10,
                 pitchAnchors = c(200, 10),
                 samplingRate = 16000,
                 fadeOut = TRUE,
-                play = TRUE) {
+                play = FALSE) {
   len = sylLen * samplingRate / 1000
   pitchContour = getSmoothContour(anchors = pitchAnchors, len = len, valueFloor = 0, thisIsPitch = TRUE)
   int = cumsum(pitchContour)
