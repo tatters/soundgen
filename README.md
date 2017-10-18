@@ -18,7 +18,7 @@ For more information, please see the vignettes on sound synthesis and acoustic a
 # Installation
 install.packages("soundgen")
 
-NB: Make sure all dependencies have been installed correctly! 
+NB: Make sure all dependencies have been installed correctly! For problems with seewave, see http://rug.mnhn.fr/seewave/
 On Macs, you may need to do the following:
 * First install brew according to the instructions here: https://brew.sh/
 * Then run the following in a terminal

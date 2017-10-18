@@ -278,6 +278,12 @@ server = function(input, output, session) {
   })
 
   ## P I T C H
+  observeEvent(input$pitchFloorCeiling, {
+    updateSliderInput(session, inputId = 'pitchRange',
+                      min = input$pitchFloorCeiling[1],
+                      max = input$pitchFloorCeiling[2])
+  })
+
   observeEvent(input$generateVoiced, {
     if (input$generateVoiced == FALSE) {
       myPars$pitchAnchors = NULL
@@ -299,6 +305,8 @@ server = function(input, output, session) {
       getSmoothContour(anchors = myPars$pitchAnchors,
                        len = input$sylLen * permittedValues['pitch', 'high'] / 1000,
                        ylim = c(pitch_y_lwr, pitch_y_upr),
+                       valueFloor = input$pitchFloorCeiling[1],
+                       valueCeiling = input$pitchFloorCeiling[2],
                        samplingRate = permittedValues['pitch', 'high'],
                        thisIsPitch = TRUE, plot = TRUE)
     } else {

@@ -61,7 +61,7 @@ permittedValues = matrix(c(
   'vocalTract', 15.5, 2, 100, .5,
   'overlap', 50, 0, 99, 1,
   'addSilence', 100, 0, 1000, 50,
-  'pitchFloor', 50, 1, 1000, 1,
+  'pitchFloor', 1, 1, 1000, 1,
   'pitchCeiling', 3500, 10, 100000, 10,
   'pitchSamplingRate', 3500, 10, 100000, 10,
   'throwaway', -80, -200, -10, 10,
@@ -71,7 +71,7 @@ permittedValues = matrix(c(
   'specContrast', .2, -1, 1, .05,
   'specBrightness', 0, -1, 1, .05,
   'mouthOpening', .5, 0, 1, .05,
-  'pitch', 100, 25, 3500, 1,  # set pitch range per species
+  'pitch', 100, 1, 3500, 1,  # set pitch range per species
   'pitchDeltas', 0, -24, 24, 1,  # amplPitchGlobal range
   'time', 0, 0, 5000, 1,
   'noiseAmpl', 0, -80, 40, 1  # for plotting - noise ylim
@@ -122,7 +122,7 @@ defaults = list(
   windowLength_points = 512,
   overlap = 75,
   addSilence = 100,
-  pitchFloor = 25,
+  pitchFloor = 1,
   pitchCeiling = 3500,
   pitchSamplingRate = 3500,
   throwaway = -80,

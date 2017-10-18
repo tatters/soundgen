@@ -50,7 +50,7 @@ ui = fluidPage(
                                                shinyBS:::bsPopover(id='pitchSamplingRate', title=NULL, content='The number of considered F0 values per second of audio. Should be >= pitchCeiling for best quality', placement="right", trigger="hover"),
                                                numericInput('throwaway', 'Dynamic range, dB', value=permittedValues['throwaway', 'default'], min=permittedValues['throwaway', 'low'], max=permittedValues['throwaway', 'high'], step=permittedValues['throwaway', 'step']),
                                                shinyBS:::bsPopover(id='throwaway', title=NULL, content='Discard everything below this amplitude', placement="right", trigger="hover"),
-                                               sliderInput('pitchFloorCeiling', 'Synthesized pitch range, Hz', value=c(permittedValues['pitch', 'low'],permittedValues['pitch', 'high']), min=25, max=8000, step=25),
+                                               sliderInput('pitchFloorCeiling', 'Synthesized pitch range, Hz', value=c(permittedValues['pitch', 'low'], permittedValues['pitch', 'high']), min=1, max=8000, step=10),
                                                shinyBS:::bsPopover(id='pitchFloorCeiling', title=NULL, content='Sets the bounds of fundamental frequency for synthesis', placement="right", trigger="hover"), width=6
                                              ),
                                              mainPanel(

@@ -160,7 +160,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     smoothContour[smoothContour < valueFloor] = valueFloor
     smoothContour[smoothContour > valueCeiling] = valueCeiling
   }
-  # plot (smoothContour, type='l')
+  # plot(smoothContour, type='l')
 
   if (plot) {
     op = par("mar") # save user's original margin settings

@@ -22,7 +22,7 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   formantsNoise = NA, rolloffNoise = -4, mouthAnchors = data.frame(time =
   c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
   samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitchFloor = 50, pitchCeiling = 3500,
+  addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
   pitchSamplingRate = 3500, throwaway = -80,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
