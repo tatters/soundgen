@@ -79,7 +79,7 @@
 #' s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
 #'               rolloff = c(-12, -24, -2), plot = TRUE)
 #' s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
-#'              rolloffParab = 40, rolloffParabHarm = 1:15, plot = TRUE)
+#'              rolloffParab = 20, rolloffParabHarm = 1:15, plot = TRUE)
 #' }
 getRolloff = function(pitch_per_gc = c(440),
                       nHarmonics = 100,

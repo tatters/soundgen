@@ -208,11 +208,6 @@ median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
   value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
 
 # the same pitch contour, but harder b/c of subharmonics and jitter
-sound2 = soundgen(sylLen = 900, temperature = 0,
-                  pitchAnchors = list(time = c(0, .3, .8, 1),
-                                      value = c(300, 900, 400, 2300)),
-                  noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
-                  subDep = 100, jitterDep = 0.5, pitchEffectsAmount = 100)
 sound2 = soundgen(sylLen = 900, pitchAnchors = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
   noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),

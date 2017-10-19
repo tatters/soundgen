@@ -58,15 +58,15 @@
 #'   pitchAnchors = c(300, 200),
 #'   rolloff = -5, play = playback)  # we hope to reproduce this sound
 #'
+#' \dontrun{
 #' # Match pars based on acoustic analysis alone, without any optimization.
 #' # This *MAY* match temporal structure, pitch, and stationary formants
 #' m1 = matchPars(target = target,
 #'                samplingRate = 16000,
 #'                maxIter = 0,  # no optimization, only acoustic analysis
 #'                verbose = playback)
-#' # cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
+#' cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
 #'
-#' \dontrun{
 #' # Try to improve the match by optimizing rolloff
 #' # (this may take a few minutes to run, and the results may vary)
 #' m2 = matchPars(target = target,

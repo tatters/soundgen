@@ -39,10 +39,10 @@ Returns a normalized waveform.
 \description{
 While the same sounds can be created with soundgen(), this dedicated
 facetious function produces the same effect more efficiently and with very
-few control parameters. With default paramesettings, execution time is ~ 10
-ms per second of audio sampled at 16000 Hz. Principle: creates separate
-glottal cycles with harmonics, but no formants. See \code{\link{soundgen}}
-for more details.
+few control parameters. With default settings, execution time is ~ 10 ms per
+second of audio sampled at 16000 Hz. Principle: creates separate glottal
+cycles with harmonics, but no formants. See \code{\link{soundgen}} for more
+details.
 }
 \examples{
 f = fart()

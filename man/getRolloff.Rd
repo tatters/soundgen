@@ -118,6 +118,6 @@ rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
 s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
               rolloff = c(-12, -24, -2), plot = TRUE)
 s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
-             rolloffParab = 40, rolloffParabHarm = 1:15, plot = TRUE)
+             rolloffParab = 20, rolloffParabHarm = 1:15, plot = TRUE)
 }
 }
