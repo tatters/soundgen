@@ -1,9 +1,9 @@
-          CHANGES IN SOUNDGEN VERSION 1.1.0 [...Sys.Date()...]
+          CHANGES IN SOUNDGEN VERSION 1.1.0 [19-October-2017]
 
 MAJOR
   * Formant generation is now compatible with standard phonetic models (all-pole or zero-pole models instead of densities of gamma distribution).
-  * An alternative method of synthesizing glottal pulses one by one ("soundgen(glottisAnchors = ...)". Good for vocal fry and, potentially, for integrating alternative models of glottal pulses (future work).
   * Unvoiced component is generated with a flat spectrum up to a certain threshold, followed by linear rolloff.
+  * An alternative method of synthesizing glottal pulses one by one ("soundgen(glottisAnchors = ...)". Good for vocal fry and, potentially, for integrating alternative models of glottal pulses (future work).
   * Back-compatibility in program syntax is preserved, but presets from version 1.0.0 will sound different. The vignette on sound generation and the preset library are updated accordingly.
 
 MINOR

@@ -503,7 +503,7 @@ server = function(input, output, session) {
   myUnvoicedContour = reactive({
     br_xlim_low = min(input$noiseTime[1], 0)
     br_xlim_high = max(input$noiseTime[2], input$sylLen)
-    br_ylim_low = permittedValues['noiseAmpl', 'low']
+    br_ylim_low = input$throwaway  # permittedValues['noiseAmpl', 'low']
     br_ylim_high = permittedValues['noiseAmpl', 'high']
     nTicks = length(seq(br_ylim_low, br_ylim_high, by = 20)) - 1
     getSmoothContour(anchors = myPars$noiseAnchors,
@@ -1154,7 +1154,7 @@ server = function(input, output, session) {
 
   observeEvent(input$about, {
     id <<- showNotification(
-      ui = 'SoundGen 1.1.0, 2017. Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!',
+      ui = 'SoundGen 1.1.0. Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!',
       duration = 10,
       closeButton = TRUE,
       type = 'default'

@@ -1,6 +1,6 @@
 # soundgen
-R package for sound synthesis and acoustic analysis, version 1.0.0
-Homepage: http://cogsci.se/soundgen.html
+R package for sound synthesis and acoustic analysis, version 1.1.0
+Homepage with help, demos, etc: http://cogsci.se/soundgen.html
 Source code on github: https://github.com/tatters/soundgen
 
 Performs parametric synthesis of sounds with harmonic and noise components 
@@ -13,7 +13,9 @@ pitch tracking, audio segmentation, self-similarity matrices, morphing, etc.
 * Acoustic analysis of a .wav file: analyze()
 * Measuring syllables, pauses, and bursts in a .wav file: segment()
 
-For more information, please see the vignettes on sound synthesis and acoustic analysis.
+For more information, please see the vignettes on sound synthesis and acoustic analysis:
+vignette("acoustic_analysis", package="soundgen")
+vignette("sound_generation", package="soundgen")
 
 # Installation
 install.packages("soundgen")

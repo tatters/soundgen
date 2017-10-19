@@ -646,7 +646,7 @@ getSigmoid = function(len,
                       freq = 5,
                       shape = 0,
                       spikiness = 1) {
-  print(c(len, freq))
+  # print(c(len, freq))
   if (length(freq) > 1 | length(shape) > 1 | length(spikiness) > 1) {
     # get preliminary frequency contour to estimate how many cycles are needed
     freqContour_prelim = getSmoothContour(anchors = freq, len = 100, valueFloor = 0.001, method = 'spline')

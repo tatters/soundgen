@@ -64,7 +64,7 @@
 #'                samplingRate = 16000,
 #'                maxIter = 0,  # no optimization, only acoustic analysis
 #'                verbose = playback)
-#' cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
+#' # cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
 #'
 #' \dontrun{
 #' # Try to improve the match by optimizing rolloff
