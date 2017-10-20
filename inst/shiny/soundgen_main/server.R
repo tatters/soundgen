@@ -89,7 +89,7 @@ server = function(input, output, session) {
       for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
                        'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
         if (!is.null(preset[[anchor]]) && !is.na(preset[[anchor]])) {
-          preset[[anchor]] = reformatAnchors(preset[[anchor]])
+          preset[[anchor]] = soundgen:::reformatAnchors(preset[[anchor]])
         }
       }
       if (is.numeric(preset$noiseAnchors) && length(preset$noiseAnchors) > 0) {
@@ -898,7 +898,8 @@ server = function(input, output, session) {
       )
       lta = apply(s, 1, mean)
       freqs = seq(1, round(input$samplingRate / 2), length.out = nr)
-      plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz', ylab = 'Power, dB')
+      plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz',
+           ylab = 'Power, dB', xlim = c(input$spec_ylim[1], input$spec_ylim[2]) * 1000)
     } else {
       getSpectralEnvelope(nr = nr,
                           nc = 100,
@@ -914,6 +915,7 @@ server = function(input, output, session) {
                           duration = durSyl_withNoise(),
                           xlab = 'Time, ms',
                           ylab = 'Frequency, kHz',
+                          xlim = c(input$spec_ylim[1], input$spec_ylim[2]) * 1000,
                           colorTheme = input$spec_colorTheme
       )
     }
@@ -981,13 +983,14 @@ server = function(input, output, session) {
                                 mouthAnchors = myPars$mouthAnchors,
                                 vocalTract = input$vocalTract,
                                 temperature = input$temperature,
-                                formantDepStoch = input$formantDepStoch,
+                                formantDepStoch = 0,
                                 samplingRate = input$samplingRate,
                                 plot = FALSE
         )
         lta = apply(s, 1, mean)
-        freqs = seq(1, round(samplingRate / 2), length.out = nr)
-        plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz', ylab = 'Power, dB')
+        freqs = seq(1, round(input$samplingRate / 2), length.out = nr)
+        plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz',
+             ylab = 'Power, dB', xlim = c(input$spec_ylim[1], input$spec_ylim[2]) * 1000)
       } else {
         getSpectralEnvelope(nr = nr,
                             nc = 100,
@@ -997,12 +1000,13 @@ server = function(input, output, session) {
                             mouthAnchors = myPars$mouthAnchors,
                             vocalTract = input$vocalTract,
                             temperature = input$temperature,
-                            formantDepStoch = input$formantDepStoch,
+                            formantDepStoch = 0,
                             samplingRate = input$samplingRate,
                             plot = TRUE,
                             duration = durSyl_withNoise(),
                             xlab = 'Time, ms',
                             ylab = 'Frequency, kHz',
+                            xlim = c(input$spec_ylim[1], input$spec_ylim[2]) * 1000,
                             colorTheme = input$spec_colorTheme
         )
       }
