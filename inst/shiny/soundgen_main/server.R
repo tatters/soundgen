@@ -329,7 +329,7 @@ server = function(input, output, session) {
 
       closest_point_in_time = which.min(abs(myPars$pitchAnchors$time - click_x))
       delta_x = abs(myPars$pitchAnchors$time[closest_point_in_time] - click_x)
-      # if the click is near (within ±5% of the time range) an existing anchor
+      # if the click is near (within 5% of the time range) an existing anchor
       # point, we update the pitch of this anchor according to click location (and
       # the time as well, unless it is the first or the last anchor)
       if (delta_x < 0.05) {
@@ -432,7 +432,7 @@ server = function(input, output, session) {
 
       closest_point_in_time = which.min(abs(myPars$pitchAnchorsGlobal$time - click_x))
       delta_x = abs(myPars$pitchAnchorsGlobal$time[closest_point_in_time] - click_x)
-      # if the click is near (within ±20% of the time range) an existing anchor
+      # if the click is near (within 20% of the time range) an existing anchor
       # point, we update the pitch of this anchor according to click location (and
       # the time as well, unless it is the first or the last anchor)
       if (delta_x < 0.2) {
@@ -530,7 +530,7 @@ server = function(input, output, session) {
 
     closest_point_in_time = which.min(abs(myPars$noiseAnchors$time - click_x))
     delta_x = abs(myPars$noiseAnchors$time[closest_point_in_time] - click_x)
-    # if the click is near (within ±5% of the time range) an existing anchor
+    # if the click is near (within 5% of the time range) an existing anchor
     # point, we update the ampl of this anchor according to click location and time
     if (delta_x < 0.05 * durSyl_withNoise()) {
       myPars$noiseAnchors$value[closest_point_in_time] = click_y
@@ -614,7 +614,7 @@ server = function(input, output, session) {
 
     closest_point_in_time = which.min(abs(myPars$mouthAnchors$time - click_x))
     delta_x = abs(myPars$mouthAnchors$time[closest_point_in_time] - click_x)
-    # if the click is near (within ±5% of the time range) an existing anchor
+    # if the click is near (within 5% of the time range) an existing anchor
     # point, we update the pitch of this anchor according to click location and time
     if (delta_x < 0.05) {
       myPars$mouthAnchors$value[closest_point_in_time] = click_y
@@ -688,7 +688,7 @@ server = function(input, output, session) {
 
     closest_point_in_time = which.min(abs(myPars$amplAnchors$time - click_x))
     delta_x = abs(myPars$amplAnchors$time[closest_point_in_time] - click_x)
-    # if the click is near (within ±5% of the time range) an existing anchor point,
+    # if the click is near (within 5% of the time range) an existing anchor point,
     # we update the anchor according to click location and time
     if (delta_x < 0.05) {
       myPars$amplAnchors$value[closest_point_in_time] = click_y
@@ -766,7 +766,7 @@ server = function(input, output, session) {
 
     closest_point_in_time = which.min(abs(myPars$amplAnchorsGlobal$time - click_x))
     delta_x = abs(myPars$amplAnchorsGlobal$time[closest_point_in_time] - click_x)
-    # if the click is near (within ±5% of the time range) an existing anchor
+    # if the click is near (within 5% of the time range) an existing anchor
     # point, we update the pitch of this anchor according to click location and time
     if (delta_x < 0.05) {
       myPars$amplAnchorsGlobal$value[closest_point_in_time] = click_y

@@ -115,12 +115,13 @@ findBursts = function(envelope,
     stop('interburst is negative')
   }
 
-  # we're basically going to look for local maxima within ± n
+  # we're basically going to look for local maxima within plus-minus n
   n = floor(interburst / timestep)
   bursts = data.frame(time = 0, ampl = 0)
 
   for (i in 1:nrow(envelope)) {
-    # for each datapoint, compare it with the local minima to the left/right over ± interburst_min ms
+    # for each datapoint, compare it with the local minima to the left/right
+    # over plus-minus interburst_min ms
     if (i > n) {
       local_min_left = min(envelope$value[(i - n):i])
     } else {
@@ -135,7 +136,8 @@ findBursts = function(envelope,
       local_min_right = 0
     }
 
-    # define the window for analysis (differs from ± interburst_min because we have to consider the beginning and end of file)
+    # define the window for analysis (differs from plus-minus interburst_min,
+    # because we have to consider the beginning and end of file)
     if (i > n) {
       limit_left = i - n
     } else {
@@ -148,7 +150,7 @@ findBursts = function(envelope,
     }
 
     # DEFINITION OF A BURST FOLLOWS!!!
-    # (1) it is a local maximum over ± interburst_min
+    # (1) it is a local maximum over plus-minus interburst_min
     cond1 = envelope$value[i] == max(envelope$value[limit_left:limit_right])
     # (2) it is above a certain % of the global maximum
     cond2 = envelope$value[i] / max(envelope$value) > burstThres

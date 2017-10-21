@@ -13,10 +13,10 @@
 #'   our certainty in pitch candidates
 #' @inheritParams analyze
 #' @param interpolWin when interpolating pitch candidates, the median is
-#'   calculated over \code{± interpolWin}
+#'   calculated over \code{plus-minus interpolWin}
 #' @param interpolTol when interpolating pitch candidates, the criterion
 #'   for needing to interpolate is the absence of pitch candidates with values
-#'   within \code{1 ± interpolTol} of the median of pitch center of
+#'   within \code{1 plus-minus interpolTol} of the median of pitch center of
 #'   gravity over the interpolation window. For ex., if \code{interpolTol}
 #'   is .05, we look for values from 0.95 to 1.05 time the median value over
 #'   interpolation window.
@@ -155,7 +155,7 @@ interpolate = function(pitchCands,
   for (f in 1:ncol(pitchCands)) {
     left = max(1, f - interpolWin)
     right = min(ncol(pitchCands), f + interpolWin)
-    # median over interpolation window (by default ±2 points)
+    # median over interpolation window (by default plus-minus 2 points)
     med = median(pitchCenterGravity[left:right], na.rm = TRUE)
     sum_pitchCands = sum(
       pitchCands[, f] > (1 - interpolTol) * med &
@@ -583,7 +583,7 @@ findGrad = function(path, interpol = 3) {
 #' lines(df1[, 2], type='b', col='blue', pch=3)
 medianSmoother = function (df, smoothing_ww, smoothingThres) {
   temp = df # to calculate median_over_window for original values
-  hw = floor(smoothing_ww / 2) # smooth over ± half the smoothing_ww
+  hw = floor(smoothing_ww / 2) # smooth over plus-minus half the smoothing_ww
   for (i in 1:nrow(df)) {
     window = c (max(i - hw, 1), min(i + hw, nrow(df))) # smoothing window
     median_over_window = apply(as.matrix(temp[(window[1]:window[2]), ]), 2, function(x) {

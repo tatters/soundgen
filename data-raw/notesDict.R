@@ -1,5 +1,5 @@
 ## conversion from Hz to musical notes (for UI only). See http://www.phy.mtu.edu/~suits/notefreqs.html for reference table. The commented-out section shows how the dictionary was originally compiled
-notes = c('C', 'C\U266F', 'D', 'D\U266F', 'E', 'F', 'F\U266F', 'G', 'G\U266F', 'A', 'B\U266D', 'B')
+notes = c('C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B')
 nOct = 11
 notes_all = paste0(notes, rep(-5:(nOct - 1), each = 12))
 # paste0(notes_all, collapse=', ')

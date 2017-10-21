@@ -29,11 +29,11 @@ pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
 only relevant if \code{pathfinding = 'slow'}}
 
 \item{interpolWin}{when interpolating pitch candidates, the median is
-calculated over \code{± interpolWin}}
+calculated over \code{plus-minus interpolWin}}
 
 \item{interpolTol}{when interpolating pitch candidates, the criterion
 for needing to interpolate is the absence of pitch candidates with values
-within \code{1 ± interpolTol} of the median of pitch center of
+within \code{1 plus-minus interpolTol} of the median of pitch center of
 gravity over the interpolation window. For ex., if \code{interpolTol}
 is .05, we look for values from 0.95 to 1.05 time the median value over
 interpolation window.}

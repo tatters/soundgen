@@ -279,7 +279,7 @@ getSpectralEnvelope = function(nr,
 
     # adjust formants for mouth opening
     if (!is.null(vocalTract) && is.finite(vocalTract)) {
-      # is.finite() returns F for NaN, NA, ±inf, etc
+      # is.finite() returns F for NaN, NA, inf, etc
       adjustment_hz = (mouthOpening_upsampled - 0.5) * speedSound /
         (4 * vocalTract) # speedSound = 35400 cm/s, speed of sound in warm
       # air. The formula for mouth opening is adapted from Moore (2016)

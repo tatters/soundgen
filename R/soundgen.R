@@ -396,7 +396,7 @@ soundgen = function(repeatBout = 1,
         }
       }
     }
-    # vocalTract varies by ±25% from the average
+    # vocalTract varies by 25% from the average
     vocalTract = vocalTract * (1 - .25 * maleFemale)
   }
 
