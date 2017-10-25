@@ -1,3 +1,5 @@
+# TODO: rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R;
+
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
 NULL

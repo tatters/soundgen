@@ -1,3 +1,9 @@
+formantsPerVowel = data.frame(  # Ladefoged 2012 "Vowels & consonants, 3rd ed.", p. 43
+  phoneme = c('bee', 'bid', 'bed', 'bad', 'bod', 'bud', 'bawd', 'hood', 'hoo'),
+  f1 = c(250, 380, 550, 650, 720, 620, 570, 430, 300),
+  f2 = c(2300, 1950, 1800, 1750, 1100, 1200, 850, 1050, 880)
+)
+
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
   files = list.files('www/')
@@ -17,6 +23,7 @@ server = function(input, output, session) {
                           'amplAnchors' = defaults$amplAnchors,
                           'amplAnchorsGlobal' = defaults$amplAnchorsGlobal,
                           'formants' = defaults$formants,
+                          'formantsPicked' = c(NA, NA),
                           'formantsNoise' = NA,
                           'updateDur' = TRUE,
                           'loaded_presets' = list(),
@@ -48,6 +55,7 @@ server = function(input, output, session) {
   # The right order is crucial
   reset_all = reactive({
     # print('running reset_all()')
+    myPars$formantsPicked = c(NA, NA)
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
     # from being updated by event listener observeEvent(input$sylLen)
     # when a new preset is loaded
@@ -900,7 +908,7 @@ server = function(input, output, session) {
       freqs = seq(1, round(input$samplingRate / 2), length.out = nr)
       plot(freqs, 20 * log10(lta), type = 'l', xlab = 'Frequency, Hz',
            ylab = 'Power, dB', xlim = c(input$spec_ylim[1], input$spec_ylim[2]) * 1000)
-    } else {
+    } else if (input$formants_spectrogram_or_spectrum == 'spectrogram') {
       getSpectralEnvelope(nr = nr,
                           nc = 100,
                           formants = myPars$formants,
@@ -915,9 +923,36 @@ server = function(input, output, session) {
                           duration = durSyl_withNoise(),
                           xlab = 'Time, ms',
                           ylab = 'Frequency, kHz',
-                          xlim = c(input$spec_ylim[1], input$spec_ylim[2]) * 1000,
                           colorTheme = input$spec_colorTheme
       )
+    } else if (input$formants_spectrogram_or_spectrum == 'formantPicker') {
+      plot(formantsPerVowel$f1, formantsPerVowel$f2, type = 'n',
+           xlab = 'F1, Hz', ylab = 'F2, Hz',
+           xlim = c(100, 1000), ylim = c(400, 2900))
+      text(formantsPerVowel$f1, formantsPerVowel$f2,
+           labels = formantsPerVowel$phoneme, col = 'blue')
+      mtext(paste('F1 = ', myPars$formantsPicked[1]), side = 3, line = 1)
+      mtext(paste('F2 = ', myPars$formantsPicked[2]), side = 3, line = 0)
+      if(!any(is.na(myPars$formantsPicked))) {
+        points(myPars$formantsPicked[1], myPars$formantsPicked[2],
+               pch = 4, cex = 2, lwd = 5, col = rgb(1, 0, 0, alpha = .5))
+      }
+    }
+  })
+
+  observeEvent(input$plotFormants_click, {
+    if (input$formants_spectrogram_or_spectrum == 'formantPicker') {
+      myPars$formantsPicked = round(c(input$plotFormants_click$x, input$plotFormants_click$y))
+      myPars$formants = myPars$formantsPicked
+      # prevent VTL from being calculated based on these formants, since f1-f2 are not enough
+      updateCheckboxInput(session, inputId = 'estimateVTL', value = FALSE)
+    }
+  })
+
+  observeEvent(input$plotFormants_dblclick, {
+    if (input$formants_spectrogram_or_spectrum == 'formantPicker') {
+      myPars$formantsPicked = c(NA, NA)
+      myPars$formants = NA
     }
   })
 

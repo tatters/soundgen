@@ -234,7 +234,7 @@ ui = fluidPage(
                                                                         tags$textarea(id="formants", label='Exact formants', rows=10, cols=20, value=NA, placeholder ="list()")
                                                ),
                                                shinyBS::bsCollapsePanel("Advanced",
-                                                                        checkboxInput(inputId = 'estimateVTL', label = 'Estimate vocal tract length from formants?', value = TRUE),
+                                                                        checkboxInput(inputId = 'estimateVTL', label = 'Estimate vocal tract length from formants?', value = FALSE),
                                                                         shinyBS:::bsPopover(id='estimateVTL', title=NULL, content='If TRUE, user-specified formants trump user-specified vocal tract length', placement="right", trigger="hover"),
                                                                         sliderInput('vocalTract', 'The length of vocal tract, cm', value=permittedValues['vocalTract', 'default'], min=permittedValues['vocalTract', 'low'], max=permittedValues['vocalTract', 'high'], step=permittedValues['vocalTract', 'step']),
                                                                         shinyBS:::bsPopover(id='vocalTract', title=NULL, content='Affects default formant dispersion at temperature>0', placement="right", trigger="hover"),
@@ -247,9 +247,9 @@ ui = fluidPage(
                                                ), width=6
                                              ),
                                              mainPanel(
-                                               plotOutput('plotFormants'),
+                                               plotOutput('plotFormants', click = "plotFormants_click", dblclick = dblclickOpts(id = "plotFormants_dblclick")),
                                                fluidRow(
-                                                 radioButtons(inputId='formants_spectrogram_or_spectrum', label="Filter preview (voiced)", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrum', inline=TRUE, width=NULL)
+                                                 radioButtons(inputId='formants_spectrogram_or_spectrum', label="Filter preview (voiced)", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum", "Formant picker"="formantPicker"), selected='spectrum', inline=TRUE, width=NULL)
                                                ), width=6
                                              )
                                            )
@@ -311,11 +311,9 @@ ui = fluidPage(
              radioButtons(inputId='spectrogram_or_spectrum', label="Generated sound", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrogram', inline=TRUE, width=NULL)
            ),
            fluidRow(
-             sliderInput('specWindowLength', 'Window length, ms', value=permittedValues['specWindowLength','default'], min=permittedValues['specWindowLength', 'low'], max=permittedValues['specWindowLength', 'high'], step=permittedValues['specWindowLength','step'])
-           ),
-           fluidRow(
              shinyBS::bsCollapse(id="spec_controls",
                                  shinyBS::bsCollapsePanel("Show spectrogram controls",
+                                                          sliderInput('specWindowLength', 'Window length, ms', value=permittedValues['specWindowLength','default'], min=permittedValues['specWindowLength', 'low'], max=permittedValues['specWindowLength', 'high'], step=permittedValues['specWindowLength','step']),
                                                           shinyBS:::bsPopover(id='specWindowLength', title=NULL, content='Window length for FFT transform (Gaussian)', placement="below", trigger="hover"),
                                                           sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0,5), min=0, max=22, step=1),
                                                           radioButtons(inputId='spec_colorTheme', label="Color scheme", choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
