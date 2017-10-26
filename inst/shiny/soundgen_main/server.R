@@ -27,7 +27,8 @@ server = function(input, output, session) {
                           'formantsNoise' = NA,
                           'updateDur' = TRUE,
                           'loaded_presets' = list(),
-                          'sylDur_previous' = defaults$sylLen
+                          'sylDur_previous' = defaults$sylLen,
+                          updateVTL = FALSE
   )
 
   durTotal = reactive({
@@ -59,6 +60,7 @@ server = function(input, output, session) {
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
     # from being updated by event listener observeEvent(input$sylLen)
     # when a new preset is loaded
+    myPars$updateVTL = FALSE
 
     # first reset everything to defaults
     for (v in rownames(permittedValues)[1:which(rownames(permittedValues) == 'rolloffNoise')]) {
@@ -180,6 +182,18 @@ server = function(input, output, session) {
         updateSliderInput(session, inputId = 'glottisAnchors', value = mean(preset$glottisAnchors$value))
       }
     }
+
+    # update VTL if preset contains formants, but does not contain an explicit VTL value
+    if (!is.null(preset$formants) &&
+        any(!is.na(preset$formants)) &&
+        !is.numeric(preset$vocalTract)) {
+      v = estimateVTL(preset$formants)
+      if (is.numeric(v)) {
+        if (v < permittedValues['vocalTract', 'low']) v = permittedValues['vocalTract', 'low']
+        if (v > permittedValues['vocalTract', 'high']) v = permittedValues['vocalTract', 'high']
+        updateSliderInput(session, inputId = 'vocalTract', value = v)
+      }
+    }
   })
 
   observeEvent(input$callType, {
@@ -285,6 +299,25 @@ server = function(input, output, session) {
   vocalTract = reactive({
     ifelse(input$estimateVTL, NA, input$vocalTract)
   })
+
+  observeEvent({
+    input$estimateVTL
+    myPars$formants}, {
+      if (myPars$updateVTL && input$estimateVTL) {
+        v = estimateVTL(myPars$formants)
+        if (is.numeric(v)) {
+          if (v < permittedValues['vocalTract', 'low']) v = permittedValues['vocalTract', 'low']
+          if (v > permittedValues['vocalTract', 'high']) v = permittedValues['vocalTract', 'high']
+          updateSliderInput(session, inputId = 'vocalTract', value = v)
+        }
+      }
+    myPars$updateVTL = TRUE
+  })
+
+  # observeEvent(input$estimateVTL, {
+  #   vocalTract_est()
+  # })
+
 
   ## P I T C H
   observeEvent(input$pitchFloorCeiling, {
@@ -944,6 +977,9 @@ server = function(input, output, session) {
 
   observeEvent(input$plotFormants_click, {
     if (input$formants_spectrogram_or_spectrum == 'formantPicker') {
+      # prevent VTL from being calculated based on these formants, since f1-f2 are not enough
+      updateCheckboxInput(session, inputId = 'estimateVTL', value = FALSE)
+      myPars$updateVTL = FALSE
       myPars$formantsPicked = round(c(input$plotFormants_click$x, input$plotFormants_click$y))
       myPars$formants = myPars$formantsPicked
       updateTextInput(session, inputId = 'formants',
@@ -951,8 +987,7 @@ server = function(input, output, session) {
                                     ', f2 = ', myPars$formantsPicked[2], ')'))
       updateTextInput(session, inputId = 'vowelString',
                       value = '')
-      # prevent VTL from being calculated based on these formants, since f1-f2 are not enough
-      updateCheckboxInput(session, inputId = 'estimateVTL', value = FALSE)
+
     }
   })
 

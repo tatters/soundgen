@@ -7,11 +7,10 @@
 estimateVTL(formants, speedSound = 35400, checkFormat = TRUE)
 }
 \arguments{
-\item{formants}{either a character string like "aaui" referring to default
-presets for speaker "M1" or a list of formant times, frequencies,
-amplitudes, and bandwidths. \code{formants = NA} defaults to schwa. Time
-stamps for formants and mouthOpening can be specified in ms or an any other
-arbitrary scale.}
+\item{formants}{a character string like "aaui" referring to default presets
+for speaker "M1"; a vector of formant frequencies; or a list of formant
+times, frequencies, amplitudes, and bandwidths, with a single value of each
+for static or multiple values of each for moving formants.}
 
 \item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
 phonetics", p. 138}
