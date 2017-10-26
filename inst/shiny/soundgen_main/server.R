@@ -227,7 +227,8 @@ server = function(input, output, session) {
       try({
         converted = soundgen:::convertStringToFormants(input$vowelString,
                                                        speaker = input$speaker)
-        if (sum(unlist(converted)) > 0) { # if the converted formant list is not empty
+        if (!class(converted) == 'logical' &&  # not NA
+            sum(unlist(converted)) > 0) { # if the converted formant list is not empty
           myPars$formants = converted
           # (...otherwise don't change myPars$formants to prevent crashing)
         }
@@ -923,6 +924,7 @@ server = function(input, output, session) {
                           duration = durSyl_withNoise(),
                           xlab = 'Time, ms',
                           ylab = 'Frequency, kHz',
+                          ylim = input$spec_ylim,
                           colorTheme = input$spec_colorTheme
       )
     } else if (input$formants_spectrogram_or_spectrum == 'formantPicker') {
@@ -944,6 +946,11 @@ server = function(input, output, session) {
     if (input$formants_spectrogram_or_spectrum == 'formantPicker') {
       myPars$formantsPicked = round(c(input$plotFormants_click$x, input$plotFormants_click$y))
       myPars$formants = myPars$formantsPicked
+      updateTextInput(session, inputId = 'formants',
+                      value = paste0('list(f1 = ', myPars$formantsPicked[1],
+                                    ', f2 = ', myPars$formantsPicked[2], ')'))
+      updateTextInput(session, inputId = 'vowelString',
+                      value = '')
       # prevent VTL from being calculated based on these formants, since f1-f2 are not enough
       updateCheckboxInput(session, inputId = 'estimateVTL', value = FALSE)
     }
@@ -953,6 +960,10 @@ server = function(input, output, session) {
     if (input$formants_spectrogram_or_spectrum == 'formantPicker') {
       myPars$formantsPicked = c(NA, NA)
       myPars$formants = NA
+      updateTextInput(session, inputId = 'formants',
+                      value = '')
+      updateTextInput(session, inputId = 'vowelString',
+                      value = '')
     }
   })
 
