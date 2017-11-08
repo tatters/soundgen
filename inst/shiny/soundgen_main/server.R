@@ -123,6 +123,13 @@ server = function(input, output, session) {
       }
 
       # special cases
+      if (is.numeric(preset$sylLen)) {
+        # update "previous" sylLen for scaling the syllable
+        myPars$sylDur_previous = preset$sylLen
+      } else {
+        myPars$sylDur_previous = defaults$sylLen
+      }
+
       if (!is.null(preset$pitchAnchors)) {
         if (any(is.na(preset$pitchAnchors))) {
           updateCheckboxInput(session, 'generateVoiced', value = FALSE)
@@ -284,11 +291,14 @@ server = function(input, output, session) {
     if (myPars$updateDur == TRUE) {
       # doesn't run if updateDur == FALSE (set to F in reset_all())
       scale_coef = input$sylLen / myPars$sylDur_previous
-      myPars$noiseAnchors$time[myPars$noiseAnchors$time > 0] =
-        round(myPars$noiseAnchors$time[myPars$noiseAnchors$time > 0] * scale_coef)
-      # rescale positive time anchors, but not negative ones
-      # (ie the length of pre-syllable aspiration does not
-      # vary as the syllable length changes - just doesn't seem to make sense)
+      # rescale positive time anc<hors up to sylLen, but not later, and not negative ones
+      # (ie the length of pre- and post-syllable aspiration does not
+      # vary as the syllable length changes)
+      idx1 = which(myPars$noiseAnchors$time > 0 & myPars$noiseAnchors$time <= myPars$sylDur_previous)
+      myPars$noiseAnchors$time[idx1] = round(myPars$noiseAnchors$time[idx1] * scale_coef)
+      idx2 = which(myPars$noiseAnchors$time > myPars$sylDur_previous)
+      myPars$noiseAnchors$time[idx2] = myPars$noiseAnchors$time[idx2] + input$sylLen - myPars$sylDur_previous
+
       updateSliderInput(session, inputId = 'noiseTime',
                         value = range(myPars$noiseAnchors$time))
       myPars$sylDur_previous = input$sylLen  # track the previous value

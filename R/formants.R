@@ -510,6 +510,9 @@ reformatFormants = function(formants) {
     }
   }
   if (is.list(formants)) {
+    if (is.null(names(formants))) {
+      names(formants) = paste0('f', 1:length(formants))
+    }
     for (f in 1:length(formants)) {
       formant = formants[[f]]
       if (is.list(formant) && 'freq' %in% names(formant)) {
