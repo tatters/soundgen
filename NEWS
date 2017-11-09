@@ -1,7 +1,8 @@
-          CHANGES IN SOUNDGEN VERSION 1.?.? [...Sys.Date()...]
+          CHANGES IN SOUNDGEN VERSION 1.1.1 [...Sys.Date()...]
 
 MINOR
   * Internal seewave function stft() was renamed to stdft() in seewave 2.0.6. To ensure compatibility, soundgen now requires seewave >= 2.0.6
+  * soundgen(): all tempEffects default to 1 and act like scaling factors
   * soundgen_app(): fixed a bug introduced in soundgen 1.1.0, which caused the app to crash with simplified formant specification
   * soundgen_app(): one-click formant picker added to streamline specification of F1 & F2
   * soundgen_app(): more intelligent scaling of noise anchors as sylLen changes

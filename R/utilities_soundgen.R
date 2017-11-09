@@ -527,6 +527,7 @@ wiggleAnchors = function(df,
                          low,
                          high,
                          wiggleAllRows = FALSE) {
+  if (temperature == 0 | temp_coef == 0) return(df)
   if (any(is.na(df))) return(NA)
   if (class(df) != 'data.frame') df = as.data.frame(df)
 
@@ -620,6 +621,9 @@ wiggleAnchors = function(df,
   if (is.numeric(orig)) {
     df[c(1, nrow(df)), 1] = orig
   }
+
+  # make sure the anchors are still in the right time order
+  df = df[order(df$time), ]
 
   return(df)
 }

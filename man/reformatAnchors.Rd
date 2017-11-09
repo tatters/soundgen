@@ -30,4 +30,9 @@ soundgen:::reformatAnchors('aha')
 # returns NA with a warning
 soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
                                           freq = c(150, 200, 220)))
+\dontrun{
+# throws an error
+soundgen:::reformatAnchors(anchors = list(time = c(0, .8, .7, 1),
+                                          value = c(150, 200, 150, 220)))
+}
 }

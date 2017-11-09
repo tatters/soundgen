@@ -5,10 +5,11 @@
 \title{Smooth contour from anchors}
 \usage{
 getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
-  len = NULL, thisIsPitch = FALSE, method = c("spline", "loess")[2],
-  valueFloor = NULL, valueCeiling = NULL, plot = FALSE, main = "",
-  xlim = NULL, ylim = NULL, samplingRate = 16000, voiced = NULL,
-  contourLabel = NULL, ...)
+  len = NULL, thisIsPitch = FALSE, method = c("approx", "spline",
+  "loess")[3], discontThres = 0.05, jumpThres = 0.01, valueFloor = NULL,
+  valueCeiling = NULL, plot = FALSE, main = "", xlim = NULL,
+  ylim = NULL, samplingRate = 16000, voiced = NULL, contourLabel = NULL,
+  ...)
 }
 \arguments{
 \item{anchors}{a dataframe of anchors with specified time and amplitude.
@@ -27,6 +28,12 @@ before smoothing and plots in both Hz and musical notation}
 'spline' if you have a lot of anchors and not much patience, since it is
 much faster than 'loess', but it may produce weird results when there are
 only a few anchors}
+
+\item{discontThres, jumpThres}{if two anchors are closer in time than
+\code{discontThres}, the contour is broken into segments with a linear
+transition between these anchors; if anchors are closer than
+\code{jumpThres}, a new section starts with no transition at all (e.g. for
+adding pitch jumps)}
 
 \item{valueFloor, valueCeiling}{lower/upper bounds for the contour}
 
@@ -72,4 +79,21 @@ a = getSmoothContour(anchors = 800,
 # two pitch anchors give loglinear F0 change
 a = getSmoothContour(anchors = c(220, 440),
   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
+
+## Two closely spaced anchors produce a pitch jump
+# one loess for the entire contour
+a1 = getSmoothContour(anchors = list(time = c(0, .15, .2, .7, 1),
+    value = c(360, 116, 550, 700, 610)), len = 500, thisIsPitch = TRUE,
+    plot = TRUE, samplingRate = 500)
+# two segments with a linear transition
+a2 = getSmoothContour(anchors = list(time = c(0, .15, .17, .7, 1),
+    value = c(360, 116, 550, 700, 610)), len = 500, thisIsPitch = TRUE,
+    plot = TRUE, samplingRate = 500)
+# two segments with an abrupt jump
+a3 = getSmoothContour(anchors = list(time = c(0, .15, .155, .7, 1),
+    value = c(360, 116, 550, 700, 610)), len = 500, thisIsPitch = TRUE,
+    plot = TRUE, samplingRate = 500)
+# compare:
+plot(a2)
+plot(a3)  # NB: the segment before the jump is upsampled to compensate
 }
