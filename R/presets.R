@@ -139,7 +139,19 @@ defaults = list(
   formants = c(860, 1430, 2900),
   formantsNoise = NA,
   vowelString = NA,
-  vocalTract = NA
+  vocalTract = NA,
+  sylLenDep = 1,
+  formDrift = .3,
+  formDisp = .2,
+  pitchDriftDep = .5,
+  pitchDriftFreq = .125,
+  amplDriftDep = 5,
+  subDriftDep = 4,
+  rolloffDriftDep = 3,
+  pitchAnchorsDep = .05,
+  noiseAnchorsDep = .1,
+  amplAnchorsDep = .1,
+  glottisAnchorsDep = .1
 )
 # devtools::use_data(defaults, overwrite = TRUE)
 

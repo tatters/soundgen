@@ -36,16 +36,15 @@ NULL
 #'   in sound generation
 #' @param tempEffects a list of scale factors regulating the effect of
 #'   temperature on particular parameters. To change, specify just those pars
-#'   that you want to modify, don't rewrite the whole list (defaults are
-#'   hard-coded). \code{sylLenDep}: duration of syllables and pauses;
-#'   \code{formDrift}: formant frequencies; \code{formDisp}: dispersion of
-#'   stochastic formants; \code{pitchDriftDep}: amount of slow random drift of
-#'   f0; \code{pitchDriftFreq}: frequency of slow random drift of f0;
-#'   \code{amplDriftDep}: drift of amplitude mirroring pitch drift;
-#'   \code{subDriftDep}: drift of subharmonic frequency and bandwidth mirroring
-#'   pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring pitch
-#'   drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
-#'   fluctuations of user-specified pitch / noise / amplitude anchors;
+#'   that you want to modify (default is 1 for all of them). \code{sylLenDep}:
+#'   duration of syllables and pauses; \code{formDrift}: formant frequencies;
+#'   \code{formDisp}: dispersion of stochastic formants; \code{pitchDriftDep}:
+#'   amount of slow random drift of f0; \code{pitchDriftFreq}: frequency of slow
+#'   random drift of f0; \code{amplDriftDep}: drift of amplitude mirroring pitch
+#'   drift; \code{subDriftDep}: drift of subharmonic frequency and bandwidth
+#'   mirroring pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring
+#'   pitch drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}:
+#'   random fluctuations of user-specified pitch / noise / amplitude anchors;
 #'   \code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
 #'   vocalTract to make the speaker appear more male (-1...0) or more female
@@ -212,19 +211,7 @@ soundgen = function(repeatBout = 1,
                     pitchAnchorsGlobal = NA,
                     glottisAnchors = 0,
                     temperature = 0.025,
-                    tempEffects = list(
-                      sylLenDep = .02,
-                      formDrift = .3,
-                      formDisp = .2,
-                      pitchDriftDep = .5,
-                      pitchDriftFreq = .125,
-                      amplDriftDep = 5,
-                      subDriftDep = 4,
-                      rolloffDriftDep = 3,
-                      pitchAnchorsDep = .05,
-                      noiseAnchorsDep = .1,
-                      amplAnchorsDep = .1
-                    ),
+                    tempEffects = list(),
                     maleFemale = 0,
                     creakyBreathy = 0,
                     nonlinBalance = 0,
@@ -328,19 +315,17 @@ soundgen = function(repeatBout = 1,
     pitchAnchors$value = pitchAnchors$value * (mean_closed + 1)
   }
 
-  # defaults of tempEffects
-  if (!is.numeric(tempEffects$sylLenDep)) tempEffects$sylLenDep = .3
-  if (!is.numeric(tempEffects$formDrift)) tempEffects$formDrift = .3
-  if (!is.numeric(tempEffects$formDisp)) tempEffects$formDisp = .2
-  if (!is.numeric(tempEffects$pitchDriftDep)) tempEffects$pitchDriftDep = .5
-  if (!is.numeric(tempEffects$pitchDriftFreq)) tempEffects$pitchDriftFreq = .125
-  if (!is.numeric(tempEffects$amplDriftDep)) tempEffects$amplDriftDep = 5
-  if (!is.numeric(tempEffects$subDriftDep)) tempEffects$subDriftDep = 4
-  if (!is.numeric(tempEffects$rolloffDriftDep)) tempEffects$rolloffDriftDep = 3
-  if (!is.numeric(tempEffects$pitchAnchorsDep)) tempEffects$pitchAnchorsDep = .05
-  if (!is.numeric(tempEffects$noiseAnchorsDep)) tempEffects$noiseAnchorsDep = .1
-  if (!is.numeric(tempEffects$amplAnchorsDep)) tempEffects$amplAnchorsDep = .1
-  if (!is.numeric(tempEffects$glottisAnchorsDep)) tempEffects$glottisAnchorsDep = .1
+  # tempEffects are either left at default levels or multiplied by user-supplied values
+  es = c('sylLenDep', 'formDrift', 'formDisp', 'pitchDriftDep',
+         'amplDriftDep', 'subDriftDep', 'rolloffDriftDep', 'pitchAnchorsDep',
+         'noiseAnchorsDep', 'amplAnchorsDep', 'glottisAnchorsDep')
+  for (e in es) {
+    if (!is.numeric(tempEffects[[e]])) {
+      tempEffects[[e]] = defaults[[e]]
+    } else {
+      tempEffects[[e]] = defaults[[e]] * tempEffects[[e]]
+    }
+  }
 
   # expand formants to full format for adjusting bandwidth if creakyBreathy > 0
   formants = reformatFormants(formants)
@@ -498,33 +483,10 @@ soundgen = function(repeatBout = 1,
   # START OF BOUT GENERATION
   for (b in 1:repeatBout) {
     # syllable segmentation
-    if (sylLen >= permittedValues['sylLen', 'low'] && sylLen <= permittedValues['sylLen', 'high']) {
-      sylDur_s = rnorm_bounded(
-        n = 1,
-        mean = sylLen,
-        low = permittedValues['sylLen', 'low'],
-        high = permittedValues['sylLen', 'high'],
-        sd = (permittedValues['sylLen', 'high'] -
-                permittedValues['sylLen', 'low']) * temperature * tempEffects$sylLenDep,
-        roundToInteger = FALSE
-      )
-    } else {
-      sylDur_s = sylLen  # don't try to wiggle weird values, esp. 0
-    }
-
-    pauseDur_s = rnorm_bounded(
-      n = 1,
-      mean = pauseLen,
-      low = permittedValues['pauseLen', 'low'],
-      high = permittedValues['pauseLen', 'high'],
-      sd = (permittedValues['pauseLen', 'high'] -
-              permittedValues['pauseLen', 'low']) * temperature * tempEffects$sylLenDep,
-      roundToInteger = FALSE
-    )
     syllables = divideIntoSyllables(
-      sylLen = sylDur_s,
+      sylLen = sylLen,
       nSyl = nSyl,
-      pauseLen = pauseDur_s,
+      pauseLen = pauseLen,
       sylDur_min = permittedValues['sylLen', 'low'],
       sylDur_max = permittedValues['sylLen', 'high'],
       pauseDur_min = permittedValues['pauseLen', 'low'],

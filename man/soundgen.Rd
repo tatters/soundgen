@@ -7,10 +7,7 @@
 soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
   100)), pitchAnchorsGlobal = NA, glottisAnchors = 0, temperature = 0.025,
-  tempEffects = list(sylLenDep = 0.02, formDrift = 0.3, formDisp = 0.2,
-  pitchDriftDep = 0.5, pitchDriftFreq = 0.125, amplDriftDep = 5, subDriftDep =
-  4, rolloffDriftDep = 3, pitchAnchorsDep = 0.05, noiseAnchorsDep = 0.1,
-  amplAnchorsDep = 0.1), maleFemale = 0, creakyBreathy = 0,
+  tempEffects = list(), maleFemale = 0, creakyBreathy = 0,
   nonlinBalance = 0, nonlinDep = 50, jitterLen = 1, jitterDep = 3,
   vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0, attackLen = 50,
   rolloff = -9, rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
@@ -56,16 +53,15 @@ in sound generation}
 
 \item{tempEffects}{a list of scale factors regulating the effect of
 temperature on particular parameters. To change, specify just those pars
-that you want to modify, don't rewrite the whole list (defaults are
-hard-coded). \code{sylLenDep}: duration of syllables and pauses;
-\code{formDrift}: formant frequencies; \code{formDisp}: dispersion of
-stochastic formants; \code{pitchDriftDep}: amount of slow random drift of
-f0; \code{pitchDriftFreq}: frequency of slow random drift of f0;
-\code{amplDriftDep}: drift of amplitude mirroring pitch drift;
-\code{subDriftDep}: drift of subharmonic frequency and bandwidth mirroring
-pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring pitch
-drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
-fluctuations of user-specified pitch / noise / amplitude anchors;
+that you want to modify (default is 1 for all of them). \code{sylLenDep}:
+duration of syllables and pauses; \code{formDrift}: formant frequencies;
+\code{formDisp}: dispersion of stochastic formants; \code{pitchDriftDep}:
+amount of slow random drift of f0; \code{pitchDriftFreq}: frequency of slow
+random drift of f0; \code{amplDriftDep}: drift of amplitude mirroring pitch
+drift; \code{subDriftDep}: drift of subharmonic frequency and bandwidth
+mirroring pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring
+pitch drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}:
+random fluctuations of user-specified pitch / noise / amplitude anchors;
 \code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis}
 
 \item{maleFemale}{hyperparameter for shifting f0 contour, formants, and

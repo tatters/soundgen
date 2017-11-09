@@ -4,7 +4,7 @@
 \name{defaults}
 \alias{defaults}
 \title{Shiny app defaults}
-\format{An object of class \code{list} of length 52.}
+\format{An object of class \code{list} of length 64.}
 \usage{
 defaults
 }
