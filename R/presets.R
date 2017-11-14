@@ -32,7 +32,7 @@ permittedValues = matrix(c(
   'nonlinDep', 50, 0, 100, 1,
   'jitterDep', 3, 0, 24, 0.1,
   'jitterLen', 1, 1, 100, 1,
-  'vibratoFreq', 5, 3, 10, .5,
+  'vibratoFreq', 5, 1, 10, .5,
   'vibratoDep', 0, 0, 3, 0.125,
   'shimmerDep', 0, 0, 100, 1,
   'attackLen', 50, 0, 200, 10,
@@ -151,7 +151,8 @@ defaults = list(
   pitchAnchorsDep = .05,
   noiseAnchorsDep = .1,
   amplAnchorsDep = .1,
-  glottisAnchorsDep = .1
+  glottisAnchorsDep = .1,
+  specDep = .1
 )
 # devtools::use_data(defaults, overwrite = TRUE)
 

@@ -18,15 +18,7 @@
 #'   calculated based on the maximum time value (in ms) and \code{samplingRate}
 #' @param thisIsPitch (boolean) is this a pitch contour? If true, log-transforms
 #'   before smoothing and plots in both Hz and musical notation
-#' @param method smoothing method: 'spline' or 'loess' (default). Consider
-#'   'spline' if you have a lot of anchors and not much patience, since it is
-#'   much faster than 'loess', but it may produce weird results when there are
-#'   only a few anchors
-#' @param discontThres,jumpThres if two anchors are closer in time than
-#'   \code{discontThres}, the contour is broken into segments with a linear
-#'   transition between these anchors; if anchors are closer than
-#'   \code{jumpThres}, a new section starts with no transition at all (e.g. for
-#'   adding pitch jumps)
+#' @inheritParams soundgen
 #' @param valueFloor,valueCeiling lower/upper bounds for the contour
 #' @param plot (boolean) produce a plot?
 #' @param samplingRate sampling rate used to convert time values to points (Hz)
@@ -89,21 +81,11 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             contourLabel = NULL,
                             ...) {
   anchors = reformatAnchors(anchors)
-  if (is.list(anchors) && nrow(anchors) > 10 && method == 'loess') {
+  if (is.list(anchors) && nrow(anchors) > 10 && nrow(anchors) < 50 && method == 'loess') {
     method = 'spline'
     # warning('More than 10 anchors; changing interpolation method from loess to spline')
   } else if (is.list(anchors) && nrow(anchors) > 50) {
     method = 'approx'
-  }
-
-  if (is.list(anchors) && is.numeric(len) && nrow(anchors) > len) {
-    # if there are more anchors than len, pick just some anchors at random
-    anchors = as.data.frame(anchors)
-    idx = sample(1:nrow(anchors), size = len, replace = FALSE)
-    idx = sort(idx)
-    idx[1] = 1
-    idx[len] = nrow(anchors)  # make sure the first and last anchors are preserved
-    anchors = anchors[idx, ]
   }
 
   if (!is.null(valueFloor)) {
@@ -129,6 +111,16 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     anchors$time = anchors$time - min(anchors$time)
     anchors$time = anchors$time / max(anchors$time) # strictly 0 to 1
     duration_ms = len / samplingRate * 1000
+  }
+
+  # if there are more anchors than len, pick just some anchors at random
+  if (nrow(anchors) > len) {
+    anchors = as.data.frame(anchors)
+    idx = sample(1:nrow(anchors), size = len, replace = FALSE)
+    idx = sort(idx)
+    idx[1] = 1
+    idx[len] = nrow(anchors)  # make sure the first and last anchors are preserved
+    anchors = anchors[idx, ]
   }
 
   if (!is.numeric(duration_ms) || duration_ms == 0 || !is.numeric(len) || len == 0) {
@@ -164,7 +156,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
         trans_len = round((anchors$time[sections$start[i + 1]] -
                              anchors$time[sections$end[i]]) /
                             diff(range(anchors$time)) * len)
-        if (sections$jump[i]) {
+        if (sections$jump[i] && length(cont) > 0) {
           # upsample the segment before the jump to make up for skipped transition
           cont = approx(cont, n = length(cont) + trans_len)$y
         } else {

@@ -1,4 +1,4 @@
-# TODO: debug removing anchors in app; rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R;
+# TODO: debug removing anchors in app; pitchDriftFreq should be called period?; rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R;
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -45,7 +45,8 @@ NULL
 #'   mirroring pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring
 #'   pitch drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}:
 #'   random fluctuations of user-specified pitch / noise / amplitude anchors;
-#'   \code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis
+#'   \code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis;
+#'   \code{specDep}: rolloff, nonlinear effects, attack
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
 #'   vocalTract to make the speaker appear more male (-1...0) or more female
 #'   (0...+1)
@@ -136,6 +137,12 @@ NULL
 #' @param amplAnchorsGlobal a numeric vector of global amplitude envelope
 #'   spanning multiple syllables or a dataframe specifying the time (ms) and
 #'   value (0 to 1) of each anchor
+#' @param method = c('approx', 'spline', 'loess')[3],
+#' @param discontThres,jumpThres if two anchors are closer in time than
+#'   \code{discontThres}, the contour is broken into segments with a linear
+#'   transition between these anchors; if anchors are closer than
+#'   \code{jumpThres}, a new section starts with no transition at all (e.g. for
+#'   adding pitch jumps)
 #' @param samplingRate sampling frequency, Hz
 #' @param windowLength length of FFT window, ms
 #' @param overlap FFT window overlap, \%
@@ -249,6 +256,9 @@ soundgen = function(repeatBout = 1,
                                               value = c(.5, .5)),
                     amplAnchors = NA,
                     amplAnchorsGlobal = NA,
+                    method = c('approx', 'spline', 'loess')[3],
+                    discontThres = .05,
+                    jumpThres = .01,
                     samplingRate = 16000,
                     windowLength = 50,
                     overlap = 75,
@@ -318,7 +328,7 @@ soundgen = function(repeatBout = 1,
   # tempEffects are either left at default levels or multiplied by user-supplied values
   es = c('sylLenDep', 'formDrift', 'formDisp', 'pitchDriftDep',
          'amplDriftDep', 'subDriftDep', 'rolloffDriftDep', 'pitchAnchorsDep',
-         'noiseAnchorsDep', 'amplAnchorsDep', 'glottisAnchorsDep')
+         'noiseAnchorsDep', 'amplAnchorsDep', 'glottisAnchorsDep', 'specDep')
   for (e in es) {
     if (!is.numeric(tempEffects[[e]])) {
       tempEffects[[e]] = defaults[[e]]
@@ -511,19 +521,19 @@ soundgen = function(repeatBout = 1,
         # OR if (temperature>0 & nrow(syllables)>1)
         # if you don't want to mess with single-syllable vocalizations
         for (p in 1:length(pars_to_vary)) {
+          par_value = as.numeric(unlist(pars_list[pars_to_vary[p]]))
           l = permittedValues[pars_to_vary[p], 'low']
           h = permittedValues[pars_to_vary[p], 'high']
-          par_value = as.numeric(unlist(pars_list[pars_to_vary[p]]))
+          sd = (h - l) * temperature * tempEffects$specDep
           pars_syllable[[pars_to_vary[p]]] = rnorm_bounded(
             n = length(par_value),
             mean = par_value,
             low = l,
             high = h,
-            sd = (h - l) * temperature / 10,
-            roundToInteger = (pars_to_vary[p] %in% pars_to_round)
+            sd = sd,
+            roundToInteger = (pars_to_vary[p] %in% pars_to_round),
+            invalidArgAction = invalidArgAction
           )
-          # /10 to have less variation in the spectral pars vs.
-          # duration of separate syllables
         }
         if (is.list(pitchAnchors_per_syl)) {
           pitchAnchors_per_syl = wiggleAnchors(
@@ -531,7 +541,8 @@ soundgen = function(repeatBout = 1,
             temperature = temperature,
             low = c(0, permittedValues['pitch', 'low']),
             high = c(1, permittedValues['pitch', 'high']),
-            temp_coef = tempEffects$pitchAnchorsDep
+            temp_coef = tempEffects$pitchAnchorsDep,
+            invalidArgAction = invalidArgAction
           )
         }
         if (wiggleNoise) {
@@ -541,7 +552,8 @@ soundgen = function(repeatBout = 1,
             low = c(-Inf, permittedValues['noiseAmpl', 'low']),
             high = c(+Inf, permittedValues['noiseAmpl', 'high']),
             wiggleAllRows = TRUE,
-            temp_coef = tempEffects$noiseAnchorsDep
+            temp_coef = tempEffects$noiseAnchorsDep,
+            invalidArgAction = invalidArgAction
           )
         }
         if (wiggleAmpl_per_syl) {
@@ -550,7 +562,8 @@ soundgen = function(repeatBout = 1,
             temperature = temperature,
             low = c(0, 0),
             high = c(1,-throwaway),
-            temp_coef = tempEffects$amplAnchorsDep
+            temp_coef = tempEffects$amplAnchorsDep,
+            invalidArgAction = invalidArgAction
           )
         }
         if (wiggleGlottis) {
@@ -559,7 +572,8 @@ soundgen = function(repeatBout = 1,
             temperature = temperature,
             low = c(0, 0),
             high = c(1, Inf),
-            temp_coef = tempEffects$glottisAnchorsDep
+            temp_coef = tempEffects$glottisAnchorsDep,
+            invalidArgAction = invalidArgAction
           )
         }
       }
@@ -570,6 +584,9 @@ soundgen = function(repeatBout = 1,
         pitchContour_syl = getSmoothContour(
           anchors = pitchAnchors_per_syl,
           len = round(dur_syl * pitchSamplingRate / 1000),
+          method = method,
+          discontThres = discontThres,
+          jumpThres = jumpThres,
           samplingRate = pitchSamplingRate,
           valueFloor = pitchFloor,
           valueCeiling = pitchCeiling,
@@ -617,10 +634,9 @@ soundgen = function(repeatBout = 1,
       voiced = c(voiced, syllable, pause)
 
       # update syllable timing info, b/c with temperature > 0 there will be deviations
-
       if (s < nrow(syllables)) {
         correction = length(voiced) / samplingRate * 1000 - syllables[s + 1, 'start']
-        syllables[s + 1, ] = syllables[s + 1, ] + correction
+        syllables[(s + 1):nrow(syllables), ] = syllables[(s + 1):nrow(syllables), ] + correction
       }
 
       # generate the unvoiced part, but don't add it to the sound just yet
@@ -729,6 +745,9 @@ soundgen = function(repeatBout = 1,
       amplEnvelope = getSmoothContour(
         anchors = amplAnchorsGlobal,
         len = length(sound),
+        method = method,
+        discontThres = discontThres,
+        jumpThres = jumpThres,
         valueFloor = 0,
         valueCeiling = -throwaway,
         samplingRate = samplingRate

@@ -401,7 +401,9 @@ getGlottalCycles = function (pitch, samplingRate) {
 #' soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
 #'   pauseLen = 55, temperature = 0.2, plot = TRUE)
 #' soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
-#'   pauseLen = 55, temperature = 0, plot = TRUE)
+#'   pauseLen = 55, temperature = 0)
+#' soundgen:::divideIntoSyllables (nSyl = 3, sylLen = 100,
+#'   pauseLen = 25, temperature = 0.5)
 divideIntoSyllables = function (nSyl,
                                 sylLen,
                                 pauseLen,
@@ -492,6 +494,7 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'   bound on "time"=0, low bound on "value"=1
 #' @param wiggleAllRows should the first and last time anchors be wiggled? (TRUE
 #'   for breathing, FALSE for other anchors)
+#' @inheritParams soundgen
 #' @return Modified original dataframe.
 #' @keywords internal
 #' @examples
@@ -526,7 +529,8 @@ wiggleAnchors = function(df,
                          temp_coef,
                          low,
                          high,
-                         wiggleAllRows = FALSE) {
+                         wiggleAllRows = FALSE,
+                         invalidArgAction = c('adjust', 'abort', 'ignore')[1]) {
   if (temperature == 0 | temp_coef == 0) return(df)
   if (any(is.na(df))) return(NA)
   if (class(df) != 'data.frame') df = as.data.frame(df)
@@ -550,7 +554,8 @@ wiggleAnchors = function(df,
         mean = as.numeric(df[1, idx]),
         sd = as.numeric(df[1, idx] * temperature * temp_coef),
         low = low[idx],
-        high = high[idx]))
+        high = high[idx],
+        invalidArgAction = invalidArgAction))
       if (class(newAnchor) == 'try-error') {
         stop(paste('Failed to add an anchor to df:', paste(df, collapse = ', ')))
       } else {
@@ -609,7 +614,8 @@ wiggleAnchors = function(df,
       sd = as.numeric(ranges[i] * temperature * temp_coef),
       low = low[i],
       high = high[i],
-      roundToInteger = FALSE
+      roundToInteger = FALSE,
+      invalidArgAction = invalidArgAction
     ))
     if (class(w) == 'try-error') {
       warning(paste('Failed to wiggle column', i, 'of df:',
