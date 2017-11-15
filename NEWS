@@ -2,11 +2,13 @@
 
 MINOR
   * Internal seewave function stft() was renamed to stdft() in seewave 2.0.6. To ensure compatibility, soundgen now requires seewave >= 2.0.6
+  * soundgen(): support for discontinuous contours, e.g. pitch jumps
   * soundgen(): all tempEffects default to 1 and act like scaling factors, a new tempEffect ("specDep")
   * soundgen(): invalidArgFunction propagates through temperature effects, ensuring that "weird" parameter values outside the ranges in permittedValues are still processed properly
+  * soundgen(): vectorized rolloffNoise
   * soundgen_app(): fixed a bug introduced in soundgen 1.1.0, which caused the app to crash with simplified formant specification
   * soundgen_app(): one-click formant picker added to streamline specification of F1 & F2
-  * Miscellaneous, small-scale debugging
+  * Miscellaneous small-scale debugging
 
 
           CHANGES IN SOUNDGEN VERSION 1.1.0 [19-October-2017]

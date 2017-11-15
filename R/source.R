@@ -34,9 +34,9 @@
 #' noise = soundgen:::generateNoise(len = samplingRate,
 #'   rolloffNoise = 0, samplingRate = samplingRate)
 #' # playme(noise, samplingRate = samplingRate)
-#' # 1 s of noise with rolloff -6 dB
+#' # 1 s of noise with rolloff changing from 0 to -6 dB
 #' noise = soundgen:::generateNoise(len = samplingRate,
-#'   rolloffNoise = -6, samplingRate = samplingRate)
+#'   rolloffNoise = c(0, -6), samplingRate = samplingRate)
 #'
 #' # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 #' windowLength_points = 1024
@@ -68,7 +68,7 @@ generateNoise = function(len,
                          windowLength_points = 1024,
                          samplingRate = 16000,
                          overlap = 75,
-                         throwaway = -120,
+                         throwaway = -80,
                          filterNoise = NA) {
   # convert anchors to a smooth contour of breathing amplitudes
   breathingStrength = getSmoothContour(
@@ -83,7 +83,6 @@ generateNoise = function(len,
 
   # convert anchor amplitudes from dB to linear multipliers
   breathingStrength = 10 ^ (breathingStrength / 20)
-
   if (sum(is.na(breathingStrength)) > 0) {
     return(rep(0, len))
   }
@@ -100,31 +99,47 @@ generateNoise = function(len,
   flatBins = round(flatSpectrum / bin)
   nc = length(step)
   if (is.na(filterNoise[1])) {
-    filterNoise = matrix(rep(1, nr), ncol = 1)
-    filterRowIdx = rep(1, nc)
+    filterNoise = matrix(1, nrow = nr, ncol = nc)
   } else {
-    filterRowIdx = round(seq(1, ncol(filterNoise), length.out = nc))
+    if (nrow(filterNoise) != nr | ncol(filterNoise) != nc) {
+      # message('Incorrect dimensions of filterNoise. Interpolating...')
+      filterRowIdx = round(seq(1, nrow(filterNoise), length.out = nr))
+      filterColIdx = round(seq(1, ncol(filterNoise), length.out = nc))
+      filterNoise = filterNoise[filterRowIdx, filterColIdx]
+    }
   }
   # modify the exact filter (if provided) by adding the specified
   #   basic linear rolloff
   idx = (flatBins + 1):nr  # the bins that will be modified
-  mult = 10 ^ (rolloffNoise / 20 * (idx - flatBins) / binsPerKHz)  # plot(mult)
-  # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 7.1: spectrum of turbulent noise
-  filterNoise[(flatBins + 1):nr, ] = apply(
-    filterNoise[(flatBins + 1):nr, , drop = FALSE],
-    2,
-    function(x) x * mult
-  )
+  if (length(rolloffNoise) > 1) {
+    rolloffNoise = getSmoothContour(anchors = rolloffNoise,
+                                    len = nc)
+    mult = matrix(apply(
+      matrix(1:nc, ncol = 1),
+      1,
+      function(x) 10 ^ (rolloffNoise[x] / 20 * (idx - flatBins) / binsPerKHz)
+    ), nrow = length(idx), ncol = nc)
+    # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 7.1: spectrum of turbulent noise
+  } else {
+    a = 10 ^ (rolloffNoise / 20 * (idx - flatBins) / binsPerKHz)
+    mult = matrix(rep(a, nc),
+                  ncol = nc)
+  }
+  # image(t(mult))
+
+  filterNoise[idx, ] = filterNoise[idx, ] * mult
+  # image(t(filterNoise))
   # plot(filterNoise[, 1], type = 'l')
   # plot(log10(filterNoise[, 1]) * 20, type = 'l')
 
-  # instead of synthesizing the time series and then doing fft-ifft,
+  ## instead of synthesizing the time series and then doing fft-ifft,
   #   we can simply synthesize spectral noise, convert to complex
   #   (setting imaginary=0), and then do inverse FFT just once
-  z1 = matrix(as.complex(runif(nr * nc)), nrow = nr, ncol = nc)  # set up spectrum
-  z1_filtered = apply(matrix(1:ncol(z1)), 1, function(x) {
-    z1[, x] * filterNoise[, filterRowIdx[x]]
-  })  # multiply by filter
+  # set up spectrum with white noise
+  z1 = matrix(as.complex(runif(nr * nc)), nrow = nr, ncol = nc)
+  # multiply by filter
+  z1_filtered = z1 * filterNoise
+  # do inverse FFT
   breathing = as.numeric (
     seewave::istft(
       z1_filtered,
@@ -133,15 +148,18 @@ generateNoise = function(len,
       wl = windowLength_points,
       output = "matrix"
     )
-  )  # inverse FFT
+  )
   breathing = matchLengths(breathing, len = len)  # pad with 0s or trim
   breathing = breathing / max(breathing) * breathingStrength # normalize
-  breathing = fadeInOut(
-    breathing,
-    do_fadeIn = TRUE,
-    do_fadeOut = TRUE,
-    length_fade = floor(attackLen * samplingRate / 1000)
-  )  # add attack
+  # add attack
+  if (is.numeric(attackLen) && attackLen > 0) {
+    breathing = fadeInOut(
+      breathing,
+      do_fadeIn = TRUE,
+      do_fadeOut = TRUE,
+      length_fade = floor(attackLen * samplingRate / 1000)
+    )
+  }
   # plot(breathing, type = 'l')
   # playme(breathing, samplingRate = samplingRate)
   # spectrogram(breathing, samplingRate = samplingRate)

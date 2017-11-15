@@ -69,8 +69,9 @@ NULL
 #'   cycles (0 to 100\% of original amplitude of each cycle)
 #' @param attackLen duration of fade-in / fade-out at each end of syllables and
 #'   noise (ms)
-#' @param rolloff basic rolloff at a constant rate of \code{rolloff} db/octave
-#'   (exponential decay). See \code{\link{getRolloff}} for more details
+#' @param rolloff basic rolloff from lower to upper harmonics, db/octave
+#'   (exponential decay). All rolloff parameters are vectorized. See
+#'   \code{\link{getRolloff}} for more details
 #' @param rolloffOct basic rolloff changes from lower to upper
 #'   harmonics (regardless of f0) by \code{rolloffOct} dB/oct. For
 #'   example, we can get steeper rolloff in the upper part of the spectrum
@@ -78,7 +79,7 @@ NULL
 #'   first \code{rolloffParabHarm} harmonics. The middle harmonic
 #'   of the first \code{rolloffParabHarm} harmonics is amplified or
 #'   dampened by \code{rolloffParab} dB relative to the basic
-#'   exponential decay.
+#'   exponential decay
 #' @param rolloffParabHarm the number of harmonics affected by
 #'   \code{rolloffParab}
 #' @param rolloffKHz rolloff changes linearly with f0 by
@@ -128,7 +129,7 @@ NULL
 #'   component, approximating aspiration noise [h]
 #' @param rolloffNoise rolloff of noise, dB/octave. It is analogous to
 #'   \code{rolloff}, but while \code{rolloff} applies to the harmonic component,
-#'   \code{rolloffNoise} applies to the noise component
+#'   \code{rolloffNoise} applies to the noise component (vectorized)
 #' @param mouthAnchors a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 #'   i.e. no modification) or a dataframe specifying the time (ms) and value of
 #'   mouth opening
@@ -416,6 +417,7 @@ soundgen = function(repeatBout = 1,
     'shimmerDep',
     'rolloff',
     'rolloffOct',
+    'rolloffNoise',
     'shortestEpoch',
     'subFreq',
     'subDep'
@@ -435,6 +437,7 @@ soundgen = function(repeatBout = 1,
     'rolloffKHz' = rolloffKHz,
     'rolloffParab' = rolloffParab,
     'rolloffParabHarm' = rolloffParabHarm,
+    'rolloffNoise' = rolloffNoise,
     'temperature' = temperature,
     'pitchDriftDep' = tempEffects$pitchDriftDep,
     'pitchDriftFreq' = tempEffects$pitchDriftFreq,
