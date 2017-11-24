@@ -430,13 +430,17 @@ getIntegerRandomWalk = function(rw,
 #' # trimmed on the left
 #' soundgen:::matchLengths(3:7, len = 3, padDir = 'left')
 #' # padded with zeros on the left
-#' soundgen:::matchLengths(3:7, len = 30, padDir = 'left')
+#' soundgen:::matchLengths(3:7, len = 10, padDir = 'left')
+#' #' # trimmed on the right
+#' soundgen:::matchLengths(3:7, len = 3, padDir = 'right')
+#' # padded with zeros on the right
+#' soundgen:::matchLengths(3:7, len = 10, padDir = 'right')
 matchLengths = function(myseq,
                         len,
                         padDir = c('left', 'right', 'central')[3],
                         padWith = 0) {
   #  padDir specifies where to cut/add zeros ('left' / 'right' / 'central')
-  if (length(myseq) == len) return (myseq)
+  if (length(myseq) == len) return(myseq)
 
   if (padDir == 'central') {
     if (length(myseq) < len) {
@@ -456,7 +460,7 @@ matchLengths = function(myseq,
     }
   } else if (padDir == 'right') {
     if (length(myseq) > len) {
-      myseq = myseq [1:(length(myseq) - len)]
+      myseq = myseq [1:len]
     } else {
       myseq = c(myseq, rep(padWith, (len - length(myseq))))
     }
