@@ -762,3 +762,120 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
   }
   return(vocalTract)
 }
+
+
+#' Add formants
+#'
+#' A spectral filter that adds formants to a sound - that is, amplifies certain
+#' frequency bands, as in human vowels. See \code{\link{soundgen}} and
+#' \code{\link{getSpectralEnvelope}} for more information.
+#'
+#' Algorithm: converts input from a time series (time domain) to a spectrogram
+#' (frequency domain) through short-term Fourier transform (STFT), multiples by
+#' the spectral filter containing the specified formants, and transforms back to
+#' a time series via inverse STFT. This is a subroutine in
+#' \code{\link{soundgen}}, but it can also be used on any existing sound.
+#' @param sound numeric vector with \code{samplingRate}
+#' @inheritParams soundgen
+#' @export
+#' @examples
+#' sound = runif(16000)  # white noise
+#' # playme(sound)
+#' # spectrogram(sound, samplingRate = 16000)
+#' sound_filtered = addFormants(sound, formants = c(900, 1300))
+#' # playme(sound_filtered)
+#' # spectrogram(sound_filtered, samplingRate = 16000)
+addFormants = function(sound,
+                       formants,
+                       vocalTract = NA,
+                       formantDep = 1,
+                       formantDepStoch = 20,
+                       lipRad = 6,
+                       noseRad = 4,
+                       mouthOpenThres = 0,
+                       mouthAnchors = NA,
+                       temperature = 0.025,
+                       formDrift = 0.3,
+                       formDisp = 0.2,
+                       samplingRate = 16000,
+                       windowLength_points = 800,
+                       overlap = 75) {
+  # prepare vocal tract filter (formants + some spectral noise + lip radiation)
+  if (sum(sound) == 0) {
+    # otherwise fft glitches
+    soundFiltered = sound
+  } else {
+    # for very short sounds, make sure the analysis window is no more
+    #   than half the sound's length
+    windowLength_points = min(windowLength_points, floor(length(sound) / 2))
+    step = seq(1,
+               max(1, (length(sound) - windowLength_points)),
+               windowLength_points - (overlap * windowLength_points / 100))
+    nc = length(step) # number of windows for fft
+    nr = windowLength_points / 2 # number of frequency bins for fft
+
+    # are formants moving or stationary?
+    if (is.list(formants)) {
+      movingFormants = max(sapply(formants, function(x) sapply(x, length))) > 1
+    } else {
+      movingFormants = FALSE
+    }
+    if (is.list(mouthAnchors) && sum(mouthAnchors$value != .5) > 0) {
+      movingFormants = TRUE
+    }
+    nInt = ifelse(movingFormants, nc, 1)
+
+    # prepare the filter
+    spectralEnvelope = getSpectralEnvelope(
+      nr = nr,
+      nc = nInt,
+      formants = formants,
+      formantDep = formantDep,
+      formantDepStoch = formantDepStoch,
+      lipRad = lipRad,
+      noseRad = noseRad,
+      mouthOpenThres = mouthOpenThres,
+      mouthAnchors = mouthAnchors,
+      temperature = temperature,
+      formDrift = formDrift,
+      formDisp = formDisp,
+      samplingRate = samplingRate,
+      vocalTract = vocalTract
+    )
+    # image(t(spectralEnvelope))
+
+    # fft and filtering
+    z = seewave::stft(
+      wave = as.matrix(sound),
+      f = samplingRate,
+      wl = windowLength_points,
+      zp = 0,
+      step = step,
+      wn = 'hamming',
+      fftw = FALSE,
+      scale = TRUE,
+      complex = TRUE
+    )
+    if (movingFormants) {
+      z = z * spectralEnvelope
+    } else {
+      z = apply (z, 2, function(x)
+        x * spectralEnvelope)
+    }
+
+    # inverse fft
+    soundFiltered = as.numeric(
+      seewave::istft(
+        z,
+        f = samplingRate,
+        ovlp = overlap,
+        wl = windowLength_points,
+        output = "matrix"
+      )
+    )
+    soundFiltered = soundFiltered / max(soundFiltered) # normalize
+  }
+  # spectrogram(soundFiltered, samplingRate = samplingRate)
+  # playme(soundFiltered, samplingRate = samplingRate)
+  return(soundFiltered)
+}

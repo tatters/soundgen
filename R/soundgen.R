@@ -761,82 +761,22 @@ soundgen = function(repeatBout = 1,
       sound = sound * amplEnvelope
     }
 
-    # prepare vocal tract filter (formants + some spectral noise + lip radiation)
-    if (sum(sound) == 0) {
-      # ie if we didn't synthesize a voiced syllable (unvoiced part only) -
-      #   otherwise fft glitches
-      soundFiltered = sound
-    } else {
-      # for very short sounds, make sure the analysis window is no more
-      #   than half the sound's length
-      windowLength_points = min(windowLength_points, floor(length(sound) / 2))
-      step = seq(1,
-                 max(1, (length(sound) - windowLength_points)),
-                 windowLength_points - (overlap * windowLength_points / 100))
-      nc = length(step) # number of windows for fft
-      nr = windowLength_points / 2 # number of frequency bins for fft
-
-      # are formants moving or stationary?
-      if (is.list(formants)) {
-        movingFormants = max(sapply(formants, function(x) sapply(x, length))) > 1
-      } else {
-        movingFormants = FALSE
-      }
-      if (is.list(mouthAnchors) && sum(mouthAnchors$value != .5) > 0) {
-        movingFormants = TRUE
-      }
-      nInt = ifelse(movingFormants, nc, 1)
-
-      # prepare the filter
-      spectralEnvelope = getSpectralEnvelope(
-        nr = nr,
-        nc = nInt,
-        formants = formants,
-        formantDep = formantDep,
-        formantDepStoch = formantDepStoch,
-        lipRad = lipRad,
-        noseRad = noseRad,
-        mouthOpenThres = mouthOpenThres,
-        mouthAnchors = mouthAnchors,
-        temperature = temperature,
-        formDrift = tempEffects$formDrift,
-        formDisp = tempEffects$formDisp,
-        samplingRate = samplingRate,
-        vocalTract = vocalTract
-      )
-      # image(t(spectralEnvelope))
-
-      # fft and filtering
-      z = seewave::stft(
-        wave = as.matrix(sound),
-        f = samplingRate,
-        wl = windowLength_points,
-        zp = 0,
-        step = step,
-        wn = 'hamming',
-        fftw = FALSE,
-        scale = TRUE,
-        complex = TRUE
-      )
-      if (movingFormants) {
-        z = z * spectralEnvelope
-      } else {
-        z = apply (z, 2, function(x)
-          x * spectralEnvelope)
-      }
-
-      # inverse fft
-      soundFiltered = as.numeric(
-        seewave::istft(
-          z,
-          f = samplingRate,
-          ovlp = overlap,
-          wl = windowLength_points,
-          output = "matrix"
-        )
-      )
-      soundFiltered = soundFiltered / max(soundFiltered) # normalize
-    }
+    # add formants
+    soundFiltered = addFormants(sound = sound,
+                           formants = formants,
+                           vocalTract = vocalTract,
+                           formantDep = formantDep,
+                           formantDepStoch = formantDepStoch,
+                           lipRad = lipRad,
+                           noseRad = noseRad,
+                           mouthOpenThres = mouthOpenThres,
+                           mouthAnchors = mouthAnchors,
+                           temperature = temperature,
+                           formDrift = tempEffects$formDrift,
+                           formDisp = tempEffects$formDisp,
+                           samplingRate = samplingRate,
+                           windowLength_points = windowLength_points,
+                           overlap = overlap)
     # spectrogram(soundFiltered, samplingRate = samplingRate)
     # playme(soundFiltered, samplingRate = samplingRate)
 
