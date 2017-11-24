@@ -5,7 +5,8 @@
 \title{Random draw from a truncated normal distribution}
 \usage{
 rnorm_bounded(n = 1, mean = 0, sd = 1, low = NULL, high = NULL,
-  roundToInteger = FALSE)
+  roundToInteger = FALSE, invalidArgAction = c("adjust", "abort",
+  "ignore")[1])
 }
 \arguments{
 \item{n}{the number of values to return}
@@ -20,6 +21,10 @@ are generated (vector of length 1 or n)}
 
 \item{roundToInteger}{boolean vector of length 1 or n. If TRUE, the
 corresponding value is rounded to the nearest integer.}
+
+\item{invalidArgAction}{what to do if an argument is invalid or outside the
+range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
+= stop execution, 'ignore' = throw a warning and continue (may crash)}
 }
 \value{
 A vector of length n.
@@ -36,5 +41,11 @@ soundgen:::rnorm_bounded(n = 3, mean = 10, sd = 5, low = 7, high = NULL,
   roundToInteger = c(TRUE, FALSE, FALSE))
 soundgen:::rnorm_bounded(n = 9, mean = c(10, 50, 100), sd = c(5, 0, 20),
   roundToInteger = TRUE) # vectorized
+# in case of conflicts between mean and bounds, either adjust the mean:
+soundgen:::rnorm_bounded(n = 3, mean = 10, sd = .1,
+  low = c(15, 0, 0), high = c(100, 100, 8), invalidArgAction = 'adjust')
+#... or ignore the boundaries
+soundgen:::rnorm_bounded(n = 3, mean = 10, sd = .1,
+  low = c(15, 0, 0), high = c(100, 100, 8), invalidArgAction = 'ignore')
 }
 \keyword{internal}

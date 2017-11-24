@@ -24,12 +24,17 @@ calculated based on the maximum time value (in ms) and \code{samplingRate}}
 \item{thisIsPitch}{(boolean) is this a pitch contour? If true, log-transforms
 before smoothing and plots in both Hz and musical notation}
 
-\item{method}{smoothing method: 'spline' or 'loess' (default). Consider
-'spline' if you have a lot of anchors and not much patience, since it is
-much faster than 'loess', but it may produce weird results when there are
-only a few anchors}
+\item{method}{the method of smoothing envelopes based on provided anchors:
+'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
+= polynomial local smoothing function}
 
-\item{discontThres, jumpThres}{if two anchors are closer in time than
+\item{discontThres}{if two anchors are closer in time than
+\code{discontThres}, the contour is broken into segments with a linear
+transition between these anchors; if anchors are closer than
+\code{jumpThres}, a new section starts with no transition at all (e.g. for
+adding pitch jumps)}
+
+\item{jumpThres}{if two anchors are closer in time than
 \code{discontThres}, the contour is broken into segments with a linear
 transition between these anchors; if anchors are closer than
 \code{jumpThres}, a new section starts with no transition at all (e.g. for

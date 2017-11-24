@@ -15,8 +15,9 @@ getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -6,
 \item{nHarmonics}{maximum number of harmonics to generate (very weak
 harmonics with amplitude < \code{throwaway} will be discarded)}
 
-\item{rolloff}{basic rolloff at a constant rate of \code{rolloff} db/octave
-(exponential decay). See \code{\link{getRolloff}} for more details}
+\item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
+(exponential decay). All rolloff parameters are vectorized. See
+\code{\link{getRolloff}} for more details}
 
 \item{rolloffOct}{basic rolloff changes from lower to upper
 harmonics (regardless of f0) by \code{rolloffOct} dB/oct. For
@@ -26,7 +27,7 @@ example, we can get steeper rolloff in the upper part of the spectrum}
 first \code{rolloffParabHarm} harmonics. The middle harmonic
 of the first \code{rolloffParabHarm} harmonics is amplified or
 dampened by \code{rolloffParab} dB relative to the basic
-exponential decay.}
+exponential decay}
 
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
@@ -43,7 +44,7 @@ steeper basic rolloff as f0 goes up by 1000 Hz}
 takes place regardless of \code{rolloffKHz}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -120) to save computational resources}
+number (in dB, defaults to -80) to save computational resources}
 
 \item{samplingRate}{sampling rate (needed to stop at Nyquist frequency and
 for plotting purposes)}

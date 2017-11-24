@@ -23,7 +23,7 @@ stack. Low values produce narrow sidebands, high values produce uniformly
 strong subharmonics}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -120) to save computational resources}
+number (in dB, defaults to -80) to save computational resources}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}

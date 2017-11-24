@@ -418,7 +418,7 @@ getDiscreteContour = function(len,
 #' soundgen:::reformatAnchors(150)
 #' soundgen:::reformatAnchors(c(150, 200, 220))
 #' soundgen:::reformatAnchors(anchors = list(value=c(150, 200, 220)))
-#' soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
+#' soundgen:::reformatAnchors(anchors = list(time = c(0, 10, 100),
 #'                                           value = c(150, 200, 220)))
 
 #' # returns NA
@@ -461,5 +461,7 @@ reformatAnchors = function(anchors) {
   if (any(diff(anchors_df$time) < 0)) {
     stop('Time stamps of anchors must increase monotonically')
   }
+  # make sure time ranges from 0 to 1
+  anchors_df$time = zeroOne(anchors_df$time)
   return(anchors_df)
 }

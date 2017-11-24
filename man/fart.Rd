@@ -23,8 +23,9 @@ in sound generation}
 
 \item{sylLen}{average duration of each syllable, ms}
 
-\item{rolloff}{basic rolloff at a constant rate of \code{rolloff} db/octave
-(exponential decay). See \code{\link{getRolloff}} for more details}
+\item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
+(exponential decay). All rolloff parameters are vectorized. See
+\code{\link{getRolloff}} for more details}
 
 \item{samplingRate}{sampling frequency, Hz}
 

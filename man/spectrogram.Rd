@@ -54,8 +54,8 @@ sharpness}
 
 \item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
 
-\item{method}{plot spectrum ('spectrum') or the first time derivative of the
-spectrum ('spectralDerivative')}
+\item{method}{plot spectrum ('spectrum') or spectral derivative
+('spectralDerivative')}
 
 \item{output}{specifies what to return: nothing ('none'), unmodified
 spectrogram ('original'), or denoised and/or smoothed spectrogram

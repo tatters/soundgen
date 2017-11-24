@@ -7,7 +7,7 @@
 generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value = c(-120,
   -120)), rolloffNoise = -4, attackLen = 10, flatSpectrum = 1200,
   windowLength_points = 1024, samplingRate = 16000, overlap = 75,
-  throwaway = -120, filterNoise = NA)
+  throwaway = -80, filterNoise = NA)
 }
 \arguments{
 \item{len}{length of output}
@@ -22,7 +22,7 @@ no breathing, 0 = as strong as the voiced (harmonic) part}
 
 \item{rolloffNoise}{rolloff of noise, dB/octave. It is analogous to
 \code{rolloff}, but while \code{rolloff} applies to the harmonic component,
-\code{rolloffNoise} applies to the noise component}
+\code{rolloffNoise} applies to the noise component (vectorized)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms)}
@@ -37,7 +37,7 @@ only above this frequency)}
 \item{overlap}{FFT window overlap, \%}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -120) to save computational resources}
+number (in dB, defaults to -80) to save computational resources}
 
 \item{filterNoise}{(optional): in addition to using rolloffNoise,
 we can provide the exact filter - a vector of length windowLength_points/2
@@ -62,9 +62,9 @@ samplingRate = 16000
 noise = soundgen:::generateNoise(len = samplingRate,
   rolloffNoise = 0, samplingRate = samplingRate)
 # playme(noise, samplingRate = samplingRate)
-# 1 s of noise with rolloff -6 dB
+# 1 s of noise with rolloff changing from 0 to -6 dB
 noise = soundgen:::generateNoise(len = samplingRate,
-  rolloffNoise = -6, samplingRate = samplingRate)
+  rolloffNoise = c(0, -6), samplingRate = samplingRate)
 
 # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 windowLength_points = 1024

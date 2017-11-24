@@ -23,7 +23,7 @@ therefore processed directly in soundgen()
 soundgen:::reformatAnchors(150)
 soundgen:::reformatAnchors(c(150, 200, 220))
 soundgen:::reformatAnchors(anchors = list(value=c(150, 200, 220)))
-soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
+soundgen:::reformatAnchors(anchors = list(time = c(0, 10, 100),
                                           value = c(150, 200, 220)))
 # returns NA
 soundgen:::reformatAnchors('aha')

@@ -34,8 +34,8 @@
 #'   recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
 #'   sharpness
 #' @param brightness how much to "lighten" the image (>0 = lighter, <0 = darker)
-#' @param method plot spectrum ('spectrum') or the first time derivative of the
-#'   spectrum ('spectralDerivative')
+#' @param method plot spectrum ('spectrum') or spectral derivative
+#'   ('spectralDerivative')
 #' @param output specifies what to return: nothing ('none'), unmodified
 #'   spectrogram ('original'), or denoised and/or smoothed spectrogram
 #'   ('processed')

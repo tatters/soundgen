@@ -53,8 +53,9 @@ cycles (0 to 100\% of original amplitude of each cycle)}
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
 from creaky (-1) to breathy (+1)}
 
-\item{rolloff}{basic rolloff at a constant rate of \code{rolloff} db/octave
-(exponential decay). See \code{\link{getRolloff}} for more details}
+\item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
+(exponential decay). All rolloff parameters are vectorized. See
+\code{\link{getRolloff}} for more details}
 
 \item{rolloffOct}{basic rolloff changes from lower to upper
 harmonics (regardless of f0) by \code{rolloffOct} dB/oct. For
@@ -68,7 +69,7 @@ steeper basic rolloff as f0 goes up by 1000 Hz}
 first \code{rolloffParabHarm} harmonics. The middle harmonic
 of the first \code{rolloffParabHarm} harmonics is amplified or
 dampened by \code{rolloffParab} dB relative to the basic
-exponential decay.}
+exponential decay}
 
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
@@ -120,7 +121,7 @@ values reduce processing time. A rule of thumb is to set this to
 the same value as \code{pitchCeiling}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -120) to save computational resources}
+number (in dB, defaults to -80) to save computational resources}
 }
 \description{
 Internal soundgen function.

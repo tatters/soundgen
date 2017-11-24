@@ -1,4 +1,4 @@
-# TODO: debug removing anchors in app; pitchDriftFreq should be called period?; rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R;
+# TODO: debug removing anchors in app; rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R; check creakyBreathy (breathing not applied to the entire sound)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -119,7 +119,7 @@ NULL
 #'   modulation with amplitude range equal to the dynamic range of the sound
 #' @param amFreq amplitude modulation frequency, Hz
 #' @param amShape amplitude modulation shape (-1 to +1, defaults to 0)
-#' @param noiseAnchors a numeric vector of noise amplitudes (-120 dB = none, 0
+#' @param noiseAnchors a numeric vector of noise amplitudes (throwaway dB = none, 0
 #'   dB = as loud as voiced component) or a dataframe specifying the time (ms)
 #'   and amplitude (dB) of anchors for generating the noise component such as
 #'   aspiration, hissing, etc
@@ -138,7 +138,9 @@ NULL
 #' @param amplAnchorsGlobal a numeric vector of global amplitude envelope
 #'   spanning multiple syllables or a dataframe specifying the time (ms) and
 #'   value (0 to 1) of each anchor
-#' @param method = c('approx', 'spline', 'loess')[3],
+#' @param method the method of smoothing envelopes based on provided anchors:
+#'   'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
+#'   = polynomial local smoothing function
 #' @param discontThres,jumpThres if two anchors are closer in time than
 #'   \code{discontThres}, the contour is broken into segments with a linear
 #'   transition between these anchors; if anchors are closer than
@@ -153,7 +155,7 @@ NULL
 #'   values reduce processing time. A rule of thumb is to set this to
 #'   the same value as \code{pitchCeiling}
 #' @param throwaway discard harmonics and noise that are quieter than this
-#'   number (in dB, defaults to -120) to save computational resources
+#'   number (in dB, defaults to -80) to save computational resources
 #' @param invalidArgAction what to do if an argument is invalid or outside the
 #'   range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 #'   = stop execution, 'ignore' = throw a warning and continue (may crash)
@@ -284,8 +286,8 @@ soundgen = function(repeatBout = 1,
     rownames(permittedValues) == 'rolloffNoise'
   )]) {
     if (!is.numeric(get(p)) ||
-        get(p) < permittedValues[p, 'low'] ||
-        get(p) > permittedValues[p, 'high']) {
+        any(get(p) < permittedValues[p, 'low']) ||
+        any(get(p) > permittedValues[p, 'high'])) {
       if (invalidArgAction == 'abort') {
         # exit with a warning
         stop(paste(p, 'must be between',
@@ -689,7 +691,7 @@ soundgen = function(repeatBout = 1,
         unvoiced[[s]] = generateNoise(
           len = unvoicedDur_syl,
           noiseAnchors = noiseAnchors_syl[[s]],
-          rolloffNoise = rnorm(n = 1,
+          rolloffNoise = rnorm(n = length(rolloffNoise),
                                mean = rolloffNoise,
                                sd = abs(rolloffNoise) * temperature * tempEffects$specDep),
           attackLen = attackLen,
@@ -743,8 +745,6 @@ soundgen = function(repeatBout = 1,
     #   over the entire bout and normalize to -1...+1
     if (!is.na(amplAnchorsGlobal) &&
         length(which(amplAnchorsGlobal$value < -throwaway)) > 0) {
-      # convert from dB to linear multiplier
-      amplAnchorsGlobal$value = 10 ^ (amplAnchorsGlobal$value / 20)
       amplEnvelope = getSmoothContour(
         anchors = amplAnchorsGlobal,
         len = length(sound),
@@ -754,7 +754,10 @@ soundgen = function(repeatBout = 1,
         valueFloor = 0,
         valueCeiling = -throwaway,
         samplingRate = samplingRate
-      )  # plot(amplEnvelope)
+      )
+      # convert from dB to linear multiplier
+      amplEnvelope = 10 ^ (amplEnvelope / 20)
+      # plot(amplEnvelope)
       sound = sound * amplEnvelope
     }
 

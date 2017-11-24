@@ -24,7 +24,7 @@ permittedValues = matrix(c(
   'repeatBout', 1, 1, 20, 1,  # default, low, high, step
   'nSyl', 1, 1, 10, 1,
   'sylLen', 300, 20, 5000, 10,
-  'pauseLen', 200, 20, 1000, 10,
+  'pauseLen', 200, 0, 1000, 10,
   'temperature', .025, 0, 1, .025,
   'maleFemale', 0, -1, 1, 0.1,
   'creakyBreathy', 0, -1, 1, 0.1,

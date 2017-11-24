@@ -120,7 +120,7 @@ plot(anchors, type = 'l', xlab = 'Time (points)', ylab = 'Pitch (Hz)')
 sound = soundgen(pitchAnchors = anchors, sylLen = 1000, play = playback)
 ```
 
-For more flexibility, anchors can also be specified at arbitary times using the "long format" - a dataframe with two columns: `time` (ms) and `value` (in the case of pitch, this is frequency in Hz). This is particularly useful for `noiseAnchors`, since the unvoiced component can be present both before and after the voiced component (see the section on unvoiced component), and for adding anchors interactively in the Shiny app. The function that generates smooth contours of f0 and other parameters is `getSmoothContour()`. You do not have to call it explicitly, but sometimes it can be helpful to do so in order to visualize the curve implied by your anchors. Time can range from 0 to 1, or it can be specified in ms – it makes no difference, since the sound is rescaled to match the duration `sylLen`.
+For more flexibility, anchors can also be specified at arbitary times using the "long format" - a dataframe with two columns: `time` (ms) and `value` (in the case of pitch, this is frequency in Hz). This is particularly useful for `noiseAnchors`, since the unvoiced component can be present both before and after the voiced component (see the section on unvoiced component), and for adding anchors interactively in the Shiny app. The function that generates smooth contours of f0 and other parameters is `getSmoothContour()`, and its interpolation algorithm is controlled by soundgen argument `method`. You do not have to call `getSmoothContour()` explicitly, but sometimes it can be helpful to do so in order to visualize the curve implied by your anchors. Time can range from 0 to 1, or it can be specified in ms – it makes no difference, since the sound is rescaled to match the duration `sylLen`.
 
 For example, say we want f0 to increase sharply from 350 to 700 Hz and then slowly return to baseline. Time anchors can then be specified as `c(0, .1, 1)` (think of it as "start", "10%", and "end" of the sound), and the arguments `len` and `samplingRate` together determine the duration: `len / samplingRate` gives duration in seconds. Values are processed on a logarithmic (musical) scale if `thisIsPitch` is `TRUE`: observe that C4 (note C of octave 4), C5, and C6 are equidistant on the right-hand Y axis. Also note that the resulting curve is smoothed (using loess for up to 10 anchors and cubic spline interpolation for >10 anchors):
 
@@ -136,7 +136,13 @@ sound = soundgen(sylLen = 2000, play = playback,
                                            value = c(350, 700, 350)))
 ```
 
-To get more complex curves, simply add more anchors. 
+To get more complex curves, simply add more anchors. The assumption behind specifying an entire contour with a few discrete anchors is that the contour is smooth and continuous. However, there may be special occasions when you do want a discontinuity such as an instantaneous pitch jump. The default behavior of `getSmoothContour()` is to make a jump if two anchors are closer than one percent of the syllable length (as specified with the default `jumpThres = 0.01`). To make a pitch jump, you thus provide two values of f0 that are very close in time, for example:
+
+```{r fig.width = 5, fig.height = 5}
+s = soundgen(sylLen = 400, plot = TRUE, play = playback,
+             pitchAnchors = data.frame(time = c(0, 0.2, .201, .4, 1), 
+                                       value = c(900, 1200, 1800, 2000, 1500)))
+```
 
 *TIP Given the same anchors, the shape of the resulting curve depends on syllable duration. That's because the amount of smoothing is adjusted automatically as you change syllable duration. Double-check that all your contours still look reasonable if you change the duration!*
 
@@ -579,8 +585,27 @@ par(mfrow = c(1, 1))
 
 Here is a more elaborate example, in which two components of the same syllable are so different that it's easier to synthesize them separately and then cross-fade, rather than to try and find a set of parameters that will generate the entire syllable in one go:
 ```{r fig.width = 5, fig.height = 5}
-cow1 = soundgen(sylLen = 1400, pitchAnchors = list(time = c(0, 11/14, 1), value = c(75, 130, 200)), temperature = 0.1, rolloff = -6, rolloffOct = -3, rolloffParab = 12, mouthOpenThres = 0.6, formants = NULL, vocalTract = 36.5, mouthAnchors = list(time = c(0, 0.82, 1), value = c(0.6, 0, 1)), noiseAnchors = list(time = c(0, 1400), value = c(-25, -25)), rolloffNoise = -4, addSilence = 0)
-cow2 = soundgen(sylLen = 310, pitchAnchors = list(time = c(0, 1), value = c(359, 359)), temperature = 0.05, nonlinBalance = 100, jitterDep = 1.3, attackLen = 0, rolloff = -6, rolloffOct = -3, rolloffKHz = -0, formants = NULL, vocalTract = 36.5, subFreq = 150, subDep = 70, noiseAnchors = list(time = c(0, 26, 317, 562), value = c(-80, -23, -22, -80)), rolloffNoise = -6, addSilence = 0)
+cow1 = soundgen(sylLen = 1400, 
+                pitchAnchors = list(time = c(0, 11/14, 1), 
+                                    value = c(75, 130, 200)), 
+                temperature = 0.1, 
+                rolloff = -6, rolloffOct = -3, rolloffParab = 12,
+                mouthOpenThres = 0.6, 
+                formants = NULL, vocalTract = 36.5, 
+                mouthAnchors = list(time = c(0, 0.82, 1), 
+                                    value = c(0.6, 0, 1)), 
+                noiseAnchors = list(time = c(0, 1400), 
+                                    value = c(-25, -25)), 
+                rolloffNoise = -4, addSilence = 0)
+cow2 = soundgen(sylLen = 310, pitchAnchors = c(359, 359), 
+                temperature = 0.05, nonlinBalance = 100, 
+                subFreq = 150, subDep = 70, jitterDep = 1.3, 
+                rolloff = -6, rolloffOct = -3, rolloffKHz = -0, 
+                formants = NULL, vocalTract = 36.5, 
+                noiseAnchors = list(time = c(0, 26, 317, 562), 
+                                    value = c(-80, -23, -22, -80)), 
+                rolloffNoise = -6, 
+                attackLen = 0, addSilence = 0)
 s = crossFade(cow1, cow2, samplingRate = 16000, crossLen = 150)
 # playme(s, 16000)
 spectrogram(s, 16000, osc=T, ylim = c(0, 4))
@@ -589,10 +614,13 @@ spectrogram(s, 16000, osc=T, ylim = c(0, 4))
 If you want the two sounds to overlap, you can use `addVectors()`. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add chirping of birds in the background:
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
-sound1 = soundgen(sylLen = 700, pitchAnchors = 250:180, formants = 'aaao', 
+sound1 = soundgen(sylLen = 700, pitchAnchors = 250:180, 
+                  formants = 'aaao', 
                   addSilence = 100, play = playback)
-sound2 = soundgen(nSyl = 2, sylLen = 150, pitchAnchors = 4300:2200, attackLen = 10,
-                  formants = NA, temperature = 0, addSilence = 0, play = playback)
+sound2 = soundgen(nSyl = 2, sylLen = 150, 
+                  pitchAnchors = 4300:2200, attackLen = 10,
+                  formants = NA, temperature = 0, 
+                  addSilence = 0, play = playback)
 
 insertionTime = .1 + .15  # silence + 150 ms
 samplingRate = 16000
@@ -600,7 +628,7 @@ insertionPoint = insertionTime * samplingRate
 comb = addVectors(sound1, 
                   sound2 * .05,  # to make sound2 quieter relative to sound1
                   insertionPoint = insertionPoint)
-# NB: soundgen softens attack by default, so no clicks are produced by overlapping
+# soundgen softens attack by default, so no clicks
 # playme(comb)
 spectrogram(comb, 16000, windowLength = 10, ylim = c(0, 5), 
             contrast = .5, colorTheme = 'seewave')
@@ -642,11 +670,27 @@ m = morph(formula1 = list(repeatBout = 2),
 
 
 # Matching an existing sound
-When synthesizing a new sound with the function `soundgen()`, a serious challenge is to find the values of all its many arguments that will together produce the result you want. If the sound you are trying to create exists only in your imagination, there is nothing for it but to tinker with the controls until a satisfactory result is achieved. However, if you have an existing audio recording that you wish to duplicate, there are two ways to simplify the task of finding the optimal values of control parameters: (1) perform acoustic analysis of the target sound to guide the choice of soundgen settings, and (2) automatically optimize some soundgen settings to match the target. Below are some tools and tips for doing this.
+When synthesizing a new sound with the function `soundgen()`, a serious challenge is to find the values of all its many arguments that will together produce the result you want. Below I discuss three methods for adjusting soundgen settings: (1) manual matching by ear, (2) matching by acoustic analysis, and (3) matching by formal optimization.
+
+## Matching by ear
+If the sound you are trying to create exists only in your imagination, there is nothing for it but to tinker with argument values until a satisfactory result is achieved. Even if you have an existing audio recording that you wish to duplicate, the fastest and surest way to find the appropriate soundgen settings - in my experience - is to do it manually, using soundgen_app() and/or typing R scripts with calls to soundgen(). I prefer to work with scripts and suggest that you proceed as follows.
+
+1.  Open the target sound, if you have one, in an interactive audio editor(s) of your choice. I mostly use Audacity, although Praat offers the nice feature of being able to click on the spectrogram and see the exact frequency of a particular spectral element.
+1.  Match the temporal parameters. If there are several stereotypical syllables, set `repeatBout`. If syllables are repetitive but not identical, with an overall drift of f0 and formants, set `nSyl`. Note that `sylLen` and `pauseLen` refer to the duration of voiced segments and pauses between them - unvoiced segments do not count. If the syllables are very different, synthesize them one by one and concatenate as described in section "Combining two sounds". Biphonic sounds with more than one fundamental frequency can be synthesized separately and overlaid.
+1.  Match the fundamental frequency. No existing pitch tracker is reliable enough, so just find f0 manually using your ears and a narrow-band spectrogram (window length of 40-50 ms is usually about right). Use as few pitch anchors as possible: `pitchAnchors = 440` for flat intonation, `pitchAnchors = c(440, 300)` for a linear slide, `pitchAnchors = c(300, 440, 300)` for a rising-falling contour, or `pitchAnchors = data.frame(time = c(0, .1, 1), value = c(300, 440, 300))` for more complex contours with values specified at arbitrary time points. For multiple syllables, describe how f0 changes across syllables using `pitchAnchorsGlobal`. Remember that you don't need to manually code every tiny fluctuation of f0: you can also add (regular) vibrato, (irregular) jitter with large `jitterLen`, or increase the effect of temperature on f0 with `tempEffects = list(pitchDriftDep = ..., pitchDriftFreq = ..., pitchAnchorsDep = ...)`.
+1.  Match the formants. No existing algorithm for finding formants even remotely approaches the sensitivity of human perception, so again, just do it manually. Often it may be tricky to find the formants by eyeballing the spectrogram, especially if the sound is short, tonal, and high-pitched. In the worst case try a schwa with `formants = NULL, vocalTract = my-best-guess-in-cm` (for humans vocal tract length is between 10 and 20 cm). If you can hear or see the first few formants, specify them using as few anchors as possible, always starting at F1. For example, for stationary F1-F3 type `formants = c(600, 1700, 3000)` (f4 and above will be added automatically based on the estimated vocal tract length); for moving F1, type `formants = list(f1 = c(500, 700), f2 = 1700, f3 = 3000`; for more complicated cases, see the section on formants above. Remember that formant transitions apply to the entire bout, i.e. across multiple syllables if `nSyl > 1`. If formant tracks are roughly parallel (e.g. all formants descend together), it's easier to write stationary formants and add something like `mouthAnchors = c(0.6, 0.4)`.
+1.  Match nonlinear effects by adding subharmonics / sidebands, jitter, and shimmer. Don't forget to set `nonlinBalance` to a positive number.
+1.  Match the turbulent noise component by adjusting `noiseAnchors`. Often the formant structure of turbulent noise is similar enough to the voiced component to leave the default `formantsNoise = NULL`; if not, specify `formantsNoise` separately. A bit of breathing provides excellent glue between syllables - set the last value of `noiseAnchors$time` to more than `sylLen` to extend breathing beyond the voiced part.
+1.  Match the spectral envelope by adjusting `rolloff` and `rolloffNoise`. Plot the long-term average spectrum of the target and of the candidate sound using `seewave::meanspec()` and try to match the two spectra. 
+1.  Match the amplitude envelope with `amplAnchors`, attack with `attackLen`, and/or amplitude modulation with `amDep = ..., amFreq = ...`. This is best done once you are happy with other settings, since amplitude envelope is strongly affected by the chosen values of f0, formants, noise, and rolloff. For really sharp attack, reduce `windowLength`.
+1.  Adjust the amount of stochasticity by generating the sound repeatedly and varying `temperature` and `tempEffects = list(...)`. Call `soundgen(...your-pars..., play = TRUE, plot = TRUE)` to get immediate visual and auditory feedback.
+
+
+## Matching by acoustic analysis
+In addition to manual matching, there are two ways to find the optimal values of control parameters semi-audomatically: (1) perform acoustic analysis of the target sound to guide the choice of soundgen settings, and (2) automatically optimize some soundgen settings to match the target. Below are some tools and tips for doing this.
 
 *DISCLAIMER: what follows is work in progress, not guaranteed to produce the desired results. Above all, don't expect a magic bullet that will completely solve the matching problem without any manual intervention*
 
-## Matching by acoustic analysis
 The first thing you might want to do with your target audio recording is to analyze it acoustically and extract precise measurements of syllable number and duration, pitch contour, and formant structure. You can use any tool of your choice to do this, including soundgen's functions `segment` and `analyze`, which are described in the vignette on acoustic analysis. Once you have the measurements, you can convert them into appropriate values of soundgen arguments. An even easier solution is to use the function `matchPars` without optimization (`maxIter = 0`), which will perform a quick acoustic analysis and translate the results into soundgen settings, as follows:
 
 ```{r}
@@ -665,7 +709,7 @@ cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
 ```
 Without optimization, we simply match soundgen parameters based on acoustic analysis. In particular, `matchPars()` calls `segment()` and `analyze()` to get some basic descriptives of the target sound and to choose the appropriate settings for `soundgen` based on these measurements. If you are very lucky, this *might* in fact accurately match the temporal structure, pitch, and (stationary) formants of your target. Most likely, it won't. In particular, for animal vocalizations a better option is often to estimate the vocal tract length from the dispersion of a few consecutive formants you can identify on the spectrogram (use `estimateVTL()`) and set `vocalTract = your_estimate, formants = NULL`. 
 
-At this point I would really recommend copy-pasting your call to `soundgen` into the Shiny app and adjusting these settings in an interactive environment, rather than from the console. For example, to use the parameters in `m1$pars`, type `call('soundgen', m1$pars)`, remove the "list()" part from the output, and you have your formula:
+At this point you can copy-paste your call to `soundgen` into the Shiny app and adjusting these settings in an interactive environment, rather than from the console. For example, to use the parameters in `m1$pars`, type `call('soundgen', m1$pars)`, remove the "list()" part from the output, and you have your formula:
 
 ```{r, eval = FALSE}
 call('soundgen', m1$pars)

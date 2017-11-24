@@ -4,7 +4,7 @@
 \alias{addVectors}
 \title{Add overlapping vectors}
 \usage{
-addVectors(v1, v2, insertionPoint)
+addVectors(v1, v2, insertionPoint = 1)
 }
 \arguments{
 \item{v1, v2}{numeric vectors}

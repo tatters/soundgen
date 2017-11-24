@@ -43,6 +43,8 @@ temperature is zero.
 soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
   pauseLen = 55, temperature = 0.2, plot = TRUE)
 soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
-  pauseLen = 55, temperature = 0, plot = TRUE)
+  pauseLen = 55, temperature = 0)
+soundgen:::divideIntoSyllables (nSyl = 3, sylLen = 100,
+  pauseLen = 25, temperature = 0.5)
 }
 \keyword{internal}

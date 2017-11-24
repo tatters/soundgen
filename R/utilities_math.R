@@ -60,6 +60,7 @@ listDepth = function(x) ifelse(is.list(x), 1L + max(sapply(x, listDepth)), 0L)
 zeroOne = function(x) {
   x = x - min(x)
   x = x / max(x)
+  return(x)
 }
 
 #' log01
@@ -542,7 +543,10 @@ addVectors = function(v1, v2, insertionPoint = 1) {
     v2 = c(v2, rep(0, -len_dif))
   }
 
-  return (v1 + v2)
+  # add and normalize
+  out = v1 + v2
+  out = out / max(abs(out))
+  return (out)
 }
 
 

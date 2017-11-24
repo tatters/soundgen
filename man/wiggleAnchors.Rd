@@ -4,7 +4,8 @@
 \alias{wiggleAnchors}
 \title{Randomly modify anchors}
 \usage{
-wiggleAnchors(df, temperature, temp_coef, low, high, wiggleAllRows = FALSE)
+wiggleAnchors(df, temperature, temp_coef, low, high, wiggleAllRows = FALSE,
+  invalidArgAction = c("adjust", "abort", "ignore")[1])
 }
 \arguments{
 \item{df}{dataframe of anchors, for ex. \code{data.frame(time = c(0, .1, .8,
@@ -24,6 +25,10 @@ bound on "time"=0, low bound on "value"=1}
 
 \item{wiggleAllRows}{should the first and last time anchors be wiggled? (TRUE
 for breathing, FALSE for other anchors)}
+
+\item{invalidArgAction}{what to do if an argument is invalid or outside the
+range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
+= stop execution, 'ignore' = throw a warning and continue (may crash)}
 }
 \value{
 Modified original dataframe.
