@@ -25,3 +25,4 @@ Returns the smoothed amplitude envelope of a waveform on the original scale.
 a = rnorm(500) * seq(1, 0, length.out = 500)
 plot(soundgen:::getEnv(a, 20))
 }
+\keyword{internal}

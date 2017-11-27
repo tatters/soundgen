@@ -38,3 +38,4 @@ for (shape in c(0, -.1, .1, -1, 1)) {
   plot(s, type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
 }
 }
+\keyword{internal}

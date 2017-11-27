@@ -42,7 +42,7 @@ play = c(TRUE, FALSE)[2]
 # a drum-like sound
 s = beat(nSyl = 1, sylLen = 200,
                  pitchAnchors = c(200, 100), play = play)
-plot(s, type = 'l')
+# plot(s, type = 'l')
 
 # a dry, muted drum
 s = beat(nSyl = 1, sylLen = 200,

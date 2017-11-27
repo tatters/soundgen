@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft(). Found only in formants.R, although istft() is also found in source.R
+# TODO: check all presets - could probably be improved; rename seewave function stft() to stdft(). Found only in formants.R, although istft() is also found in source.R
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -227,7 +227,7 @@ soundgen = function(repeatBout = 1,
                     nonlinBalance = 0,
                     nonlinDep = 50,
                     jitterLen = 1,
-                    jitterDep = 3,
+                    jitterDep = 1,
                     vibratoFreq = 5,
                     vibratoDep = 0,
                     shimmerDep = 0,
@@ -378,19 +378,30 @@ soundgen = function(repeatBout = 1,
     }
   }
   # adjust rolloff for both creaky and breathy voices
-  rolloff = min(rolloff - creakyBreathy * 10, permittedValues['rolloff', 'high'])
+  rolloff = rolloff - creakyBreathy * 10
+  rolloff[rolloff < permittedValues['rolloff', 'low']] =
+    permittedValues['rolloff', 'low']
+  rolloff[rolloff > permittedValues['rolloff', 'high']] =
+    permittedValues['rolloff', 'high']
   rolloffOct = rolloffOct - creakyBreathy * 5
+  rolloffOct[rolloffOct < permittedValues['rolloffOct', 'low']] =
+    permittedValues['rolloffOct', 'low']
+  rolloffOct[rolloffOct > permittedValues['rolloffOct', 'high']] =
+    permittedValues['rolloffOct', 'high']
 
   # effects of nonlinDep hyper
   subFreq = 2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50
   # subFreq unchanged for nonlinDep=50%, raised for lower and
   # lowered for higher noise intensities. Max set at 2*subFreq-50, min at 50 Hz.
+  # Jitter and shimmer go to 0 if nonlinDep = 0 and double if nonlinDep = 1
   # Illustration: subFreq=250; nonlinDep=0:100; plot(nonlinDep,
   #   2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50, type = 'l')
   jitterDep = 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep)))
-  # Illustration: jitterDep = 1.5; nonlinDep = 0:100;
+  # Illustration: jitterDep = 1; nonlinDep = 0:100;
   # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))), type = 'l')
-  shimmerDep = 20 * shimmerDep / (1 + exp(.1 * (50 - nonlinDep)))
+  shimmerDep = 2 * shimmerDep / (1 + exp(.1 * (50 - nonlinDep)))
+  # Illustration: shimmerDep = 1.5; nonlinDep = 0:100;
+  # plot(nonlinDep, 2 * shimmerDep / (1 + exp(.1 * (50 - nonlinDep))), type = 'l')
 
   # effects of maleFemale hyper
   if (maleFemale != 0) {

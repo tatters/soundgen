@@ -39,7 +39,7 @@ rownames(m1) = 1:nrow(m1)
 rownames(m2) = 1:nrow(m2)
 rolloff_source = list(m1, m2)
 s = soundgen:::generateEpoch(pitch_per_gc, epochs,
-                             rolloff_source,  samplingRate = 16000)
+                             rolloff_source, samplingRate = 16000)
 # plot(s, type = 'l')
 # playme(s)
 }

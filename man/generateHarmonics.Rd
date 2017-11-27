@@ -130,13 +130,4 @@ Internal soundgen function.
 Returns one continuous, unfiltered, voiced syllable consisting of several
 sine waves.
 }
-\examples{
-pitch = soundgen:::getSmoothContour(len = 3500,
-  anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
-plot(pitch)
-sound1 = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
-#' # playme(sound1, samplingRate = 16000) # no formants yet
-sound2 = soundgen:::generateHarmonics(pitch, samplingRate = 16000, glottisAnchors = c(0, 300))
-#' # playme(sound2, samplingRate = 16000) # pauses between glottal cycles
-}
 \keyword{internal}

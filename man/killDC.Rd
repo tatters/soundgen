@@ -39,3 +39,4 @@ b = soundgen:::killDC(a, windowLength_points = 100, plot = TRUE)
 a = rnorm(500) + sin(1:500 / 50)
 b = soundgen:::killDC(a, windowLength_points = 25, plot = TRUE)
 }
+\keyword{internal}

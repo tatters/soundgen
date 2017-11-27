@@ -154,11 +154,11 @@ generateNoise = function(len,
   breathing = breathing / max(breathing) * breathingStrength # normalize
   # add attack
   if (is.numeric(attackLen) && attackLen > 0) {
-    breathing = fadeInOut(
+    l = floor(attackLen * samplingRate / 1000)
+    breathing = fade(
       breathing,
-      do_fadeIn = TRUE,
-      do_fadeOut = TRUE,
-      length_fade = floor(attackLen * samplingRate / 1000)
+      fadeIn = l,
+      fadeOut = l
     )
   }
   # plot(breathing, type = 'l')
@@ -195,14 +195,6 @@ generateNoise = function(len,
 #'   dB/octave. The effect is to make loud parts brighter by increasing energy
 #'   in higher frequencies
 #' @keywords internal
-#' @examples
-#' pitch = soundgen:::getSmoothContour(len = 3500,
-#'   anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
-#' plot(pitch)
-#' sound1 = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
-#' #' # playme(sound1, samplingRate = 16000) # no formants yet
-#' sound2 = soundgen:::generateHarmonics(pitch, samplingRate = 16000, glottisAnchors = c(0, 300))
-#' #' # playme(sound2, samplingRate = 16000) # pauses between glottal cycles
 generateHarmonics = function(pitch,
                              glottisAnchors = 0,
                              attackLen = 50,
@@ -467,8 +459,10 @@ generateHarmonics = function(pitch,
 
   # add attack
   if (attackLen > 0) {
-    waveform = fadeInOut(waveform,
-                         length_fade = floor(attackLen * samplingRate / 1000))
+    l = floor(attackLen * samplingRate / 1000)
+    waveform = fade(waveform,
+                    fadeIn = l,
+                    fadeOut = l)
     # plot(waveform, type = 'l')
   }
 
@@ -569,7 +563,7 @@ generateGC = function(pitch_per_gc,
 #' rownames(m2) = 1:nrow(m2)
 #' rolloff_source = list(m1, m2)
 #' s = soundgen:::generateEpoch(pitch_per_gc, epochs,
-#'                              rolloff_source,  samplingRate = 16000)
+#'                              rolloff_source, samplingRate = 16000)
 #' # plot(s, type = 'l')
 #' # playme(s)
 generateEpoch = function(pitch_per_gc,
@@ -744,7 +738,7 @@ fart = function(glottisAnchors = c(350, 700),
 #' # a drum-like sound
 #' s = beat(nSyl = 1, sylLen = 200,
 #'                  pitchAnchors = c(200, 100), play = play)
-#' plot(s, type = 'l')
+#' # plot(s, type = 'l')
 #'
 #' # a dry, muted drum
 #' s = beat(nSyl = 1, sylLen = 200,
@@ -765,11 +759,14 @@ beat = function(nSyl = 10,
                 fadeOut = TRUE,
                 play = FALSE) {
   len = sylLen * samplingRate / 1000
-  pitchContour = getSmoothContour(anchors = pitchAnchors, len = len, valueFloor = 0, thisIsPitch = TRUE)
+  pitchContour = getSmoothContour(anchors = pitchAnchors,
+                                  len = len,
+                                  valueFloor = 0,
+                                  thisIsPitch = TRUE)
   int = cumsum(pitchContour)
   beat = sin(2 * pi * int / samplingRate)
   if (fadeOut) {
-    beat = fadeInOut(beat, length_fade = length(beat), do_fadeIn = FALSE)
+    beat = fade(beat, fadeOut = length(beat))
   }
   # plot(beat, type = 'l')
   # spectrogram(beat, samplingRate, ylim = c(0, 1))

@@ -661,6 +661,7 @@ isCentral.localMax = function(x, threshold) {
 #' @param spikiness the larger, the more quickly the shape of filter leaves;
 #'   numeric vector of length 1 or the same length as \code{freq}
 #'   sine-like approximation as shape deviates from 0
+#' @keywords internal
 #' @examples
 #' for (shape in c(0, -.1, .1, -1, 1)) {
 #'   s = soundgen:::getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2)
