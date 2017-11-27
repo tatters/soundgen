@@ -5,7 +5,7 @@
 \title{Discrete smooth contour from anchors}
 \usage{
 getDiscreteContour(len, anchors = data.frame(time = c(0, 1), value = c(1, 1)),
-  method = c("spline", "loess")[2], valueFloor = NULL,
+  interpol = c("spline", "loess")[2], valueFloor = NULL,
   valueCeiling = NULL, ylim = NULL, plot = FALSE, ...)
 }
 \arguments{
@@ -19,7 +19,7 @@ by len, which must then be provided in ms). So anchors$time is assumed to
 be in ms if len=NULL and relative if len is specified. \code{anchors$value}
 can be on any scale.}
 
-\item{method}{the method of smoothing envelopes based on provided anchors:
+\item{interpol}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
 = polynomial local smoothing function}
 
@@ -45,7 +45,7 @@ Intended for plotting variation in parameters across syllables.
 }
 \examples{
 # for a bout consisting of 10 syllables
-soundgen:::getDiscreteContour(len = 10, method = 'spline', plot = TRUE,
+soundgen:::getDiscreteContour(len = 10, interpol = 'spline', plot = TRUE,
   ylab = 'Semitones', anchors = data.frame(time = c(0, .2, .6, 1),
   value = c(0, -3, 1, 0)))
 }

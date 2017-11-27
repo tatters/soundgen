@@ -48,7 +48,12 @@ mouth opening}
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
 
+\item{formDrift, formDisp}{scaling factors for the effect of temperature on
+formant drift and dispersal, respectively}
+
 \item{samplingRate}{sampling frequency, Hz}
+
+\item{windowLength_points}{length of FFT window, points}
 
 \item{overlap}{FFT window overlap, \%}
 }

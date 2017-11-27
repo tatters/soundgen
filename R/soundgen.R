@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R; check creakyBreathy (breathing not applied to the entire sound)
+# TODO: rename seewave function stft() to stdft(). Found only in formants.R, although istft() is also found in source.R
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -138,7 +138,7 @@ NULL
 #' @param amplAnchorsGlobal a numeric vector of global amplitude envelope
 #'   spanning multiple syllables or a dataframe specifying the time (ms) and
 #'   value (0 to 1) of each anchor
-#' @param method the method of smoothing envelopes based on provided anchors:
+#' @param interpol the method of smoothing envelopes based on provided anchors:
 #'   'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
 #'   = polynomial local smoothing function
 #' @param discontThres,jumpThres if two anchors are closer in time than
@@ -258,7 +258,7 @@ soundgen = function(repeatBout = 1,
                                               value = c(.5, .5)),
                     amplAnchors = NA,
                     amplAnchorsGlobal = NA,
-                    method = c('approx', 'spline', 'loess')[3],
+                    interpol = c('approx', 'spline', 'loess')[3],
                     discontThres = .05,
                     jumpThres = .01,
                     samplingRate = 16000,
@@ -477,7 +477,7 @@ soundgen = function(repeatBout = 1,
       getDiscreteContour(
         len = nSyl,
         anchors = pitchAnchorsGlobal,
-        method = 'spline',
+        interpol = 'spline',
         plot = FALSE
       ) / 12
     )
@@ -599,7 +599,7 @@ soundgen = function(repeatBout = 1,
         pitchContour_syl = getSmoothContour(
           anchors = pitchAnchors_per_syl,
           len = round(dur_syl * pitchSamplingRate / 1000),
-          method = method,
+          interpol = interpol,
           discontThres = discontThres,
           jumpThres = jumpThres,
           samplingRate = pitchSamplingRate,
@@ -760,7 +760,7 @@ soundgen = function(repeatBout = 1,
       amplEnvelope = getSmoothContour(
         anchors = amplAnchorsGlobal,
         len = length(sound),
-        method = method,
+        interpol = interpol,
         discontThres = discontThres,
         jumpThres = jumpThres,
         valueFloor = 0,
@@ -808,7 +808,7 @@ soundgen = function(repeatBout = 1,
       if (length(amDep) > 1) {
         amDep = getSmoothContour(anchors = amDep,
                                  len = length(soundFiltered),
-                                 method = 'spline',
+                                 interpol = 'spline',
                                  valueFloor = 0)
       }
       sig = getSigmoid(len = length(soundFiltered),

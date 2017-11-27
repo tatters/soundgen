@@ -6,7 +6,7 @@
 \usage{
 getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
   len = NULL, thisIsPitch = FALSE, normalizeTime = TRUE,
-  method = c("approx", "spline", "loess")[3], discontThres = 0.05,
+  interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
   jumpThres = 0.01, valueFloor = NULL, valueCeiling = NULL,
   plot = FALSE, main = "", xlim = NULL, ylim = NULL,
   samplingRate = 16000, voiced = NULL, contourLabel = NULL, ...)
@@ -27,7 +27,7 @@ before smoothing and plots in both Hz and musical notation}
 
 \item{normalizeTime}{if TRUE, normalizes anchors$time values to range from 0 to 1}
 
-\item{method}{the method of smoothing envelopes based on provided anchors:
+\item{interpol}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
 = polynomial local smoothing function}
 

@@ -71,7 +71,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             len = NULL,
                             thisIsPitch = FALSE,
                             normalizeTime = TRUE,
-                            method = c('approx', 'spline', 'loess')[3],
+                            interpol = c('approx', 'spline', 'loess')[3],
                             discontThres = .05,
                             jumpThres = .01,
                             valueFloor = NULL,
@@ -85,11 +85,11 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             contourLabel = NULL,
                             ...) {
   anchors = reformatAnchors(anchors, normalizeTime = normalizeTime)
-  if (is.list(anchors) && nrow(anchors) > 10 && nrow(anchors) < 50 && method == 'loess') {
-    method = 'spline'
+  if (is.list(anchors) && nrow(anchors) > 10 && nrow(anchors) < 50 && interpol == 'loess') {
+    interpol = 'spline'
     # warning('More than 10 anchors; changing interpolation method from loess to spline')
   } else if (is.list(anchors) && nrow(anchors) > 50) {
-    method = 'approx'
+    interpol = 'approx'
   }
 
   if (!is.null(valueFloor)) {
@@ -127,14 +127,15 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     anchors = anchors[idx, ]
   }
 
-  if (!is.numeric(duration_ms) || duration_ms == 0 || !is.numeric(len) || len == 0) {
+  if (!is.numeric(duration_ms) || duration_ms == 0 ||
+      !is.numeric(len) || len == 0) {
     return(NA)
   }
 
   if (discontThres <= 0 | nrow(anchors) < 3) {
     smoothContour = drawContour(len = len,
                                 anchors = anchors,
-                                method = method,
+                                interpol = interpol,
                                 valueFloor = valueFloor,
                                 valueCeiling = valueCeiling,
                                 duration_ms = duration_ms)
@@ -151,7 +152,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                          diff(range(anchors$time)) * len)
       cont = drawContour(len = segm_len,
                          anchors = anchors[sections$start[i]:sections$end[i], ],
-                         method = method,
+                         interpol = interpol,
                          valueFloor = valueFloor,
                          valueCeiling = valueCeiling,
                          duration_ms = duration_ms)
@@ -256,9 +257,10 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
 #' The core part of getSmoothContour() that actually performs the interpolation
 #' between anchors.
 #' @inheritParams getSmoothContour
+#' @param duration_ms contour duration, ms
 drawContour = function(len,
                        anchors,
-                       method,
+                       interpol,
                        valueFloor,
                        valueCeiling,
                        duration_ms = 500) {
@@ -271,13 +273,13 @@ drawContour = function(len,
     smoothContour = seq(anchors$value[1], anchors$value[2], length.out = len)
   } else {
     # smooth contour
-    if (method == 'approx') {
+    if (interpol == 'approx') {
       smoothContour = approx(anchors$value, n = len, x = anchors$time)$y
       # plot(smoothContour, type='l')
-    } else if (method == 'spline') {
+    } else if (interpol == 'spline') {
       smoothContour = spline(anchors$value, n = len, x = anchors$time)$y
       # plot(smoothContour, type='l')
-    } else if (method == 'loess') {
+    } else if (interpol == 'loess') {
       anchor_time_points = anchors$time - min(anchors$time)
       anchor_time_points = anchor_time_points / max(anchor_time_points) * len
       anchor_time_points[anchor_time_points == 0] = 1
@@ -377,12 +379,12 @@ splitContour = function(anchors,
 #' @keywords internal
 #' @examples
 #' # for a bout consisting of 10 syllables
-#' soundgen:::getDiscreteContour(len = 10, method = 'spline', plot = TRUE,
+#' soundgen:::getDiscreteContour(len = 10, interpol = 'spline', plot = TRUE,
 #'   ylab = 'Semitones', anchors = data.frame(time = c(0, .2, .6, 1),
 #'   value = c(0, -3, 1, 0)))
 getDiscreteContour = function(len,
                               anchors = data.frame(time = c(0, 1), value = c(1, 1)),
-                              method = c('spline', 'loess')[2],
+                              interpol = c('spline', 'loess')[2],
                               valueFloor = NULL,
                               valueCeiling = NULL,
                               ylim = NULL,
@@ -391,7 +393,7 @@ getDiscreteContour = function(len,
   contour = getSmoothContour(
     len = len,
     anchors = anchors,
-    method = method,
+    interpol = interpol,
     valueFloor = valueFloor,
     valueCeiling = valueCeiling
   )

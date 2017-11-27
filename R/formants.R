@@ -776,6 +776,9 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #' a time series via inverse STFT. This is a subroutine in
 #' \code{\link{soundgen}}, but it can also be used on any existing sound.
 #' @param sound numeric vector with \code{samplingRate}
+#' @param formDrift,formDisp scaling factors for the effect of temperature on
+#'   formant drift and dispersal, respectively
+#' @param windowLength_points length of FFT window, points
 #' @inheritParams soundgen
 #' @export
 #' @examples
@@ -845,17 +848,33 @@ addFormants = function(sound,
     # image(t(spectralEnvelope))
 
     # fft and filtering
-    z = seewave::stft(
-      wave = as.matrix(sound),
-      f = samplingRate,
-      wl = windowLength_points,
-      zp = 0,
-      step = step,
-      wn = 'hamming',
-      fftw = FALSE,
-      scale = TRUE,
-      complex = TRUE
-    )
+    if (packageVersion("seewave") < '2.0.6') {
+      # stft is supposed to be renamed to stdft in seewave 2.0.6
+      z = seewave::stft(
+        wave = as.matrix(sound),
+        f = samplingRate,
+        wl = windowLength_points,
+        zp = 0,
+        step = step,
+        wn = 'hamming',
+        fftw = FALSE,
+        scale = TRUE,
+        complex = TRUE
+      )
+    } else {
+      z = seewave::stdft(
+        wave = as.matrix(sound),
+        f = samplingRate,
+        wl = windowLength_points,
+        zp = 0,
+        step = step,
+        wn = 'hamming',
+        fftw = FALSE,
+        scale = TRUE,
+        complex = TRUE
+      )
+    }
+
     if (movingFormants) {
       z = z * spectralEnvelope
     } else {

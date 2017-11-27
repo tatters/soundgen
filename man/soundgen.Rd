@@ -17,8 +17,8 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
   noiseAnchors = NULL, formantsNoise = NA, rolloffNoise = -4,
   mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  amplAnchors = NA, amplAnchorsGlobal = NA, method = c("approx", "spline",
-  "loess")[3], discontThres = 0.05, jumpThres = 0.01,
+  amplAnchors = NA, amplAnchorsGlobal = NA, interpol = c("approx",
+  "spline", "loess")[3], discontThres = 0.05, jumpThres = 0.01,
   samplingRate = 16000, windowLength = 50, overlap = 75,
   addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
   pitchSamplingRate = 3500, throwaway = -80,
@@ -192,7 +192,7 @@ dataframe specifying the time (ms) and value of amplitude anchors}
 spanning multiple syllables or a dataframe specifying the time (ms) and
 value (0 to 1) of each anchor}
 
-\item{method}{the method of smoothing envelopes based on provided anchors:
+\item{interpol}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
 = polynomial local smoothing function}
 
