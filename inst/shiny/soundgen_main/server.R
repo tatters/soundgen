@@ -409,6 +409,7 @@ server = function(input, output, session) {
     if (is.list(myPars$pitchAnchors)) {
       ref = as.data.frame(myPars[['pitchAnchors']])
       ref$time = ref$time * input$sylLen
+      ref$value = semitonesToHz(ref$value)
       closestPoint = nearPoints(ref, input$plotIntonation_dblclick,
                                 xvar = 'time', yvar = 'value',
                                 threshold = 100000, maxpoints = 1)

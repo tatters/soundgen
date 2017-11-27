@@ -368,8 +368,8 @@ generateHarmonics = function(pitch,
     pitch_per_gc = pitch_per_gc,
     nHarmonics = nHarmonics,
     rolloff = (rolloff + rolloffAmpl) * rw ^ rolloffDriftDep,
-    rolloffOct = rolloffOct * rw ^ rolloffDriftDep,
-    rolloffKHz = rolloffKHz * rw,
+    rolloffOct = rolloffOct,
+    rolloffKHz = rolloffKHz,
     rolloffParab = rolloffParab,
     rolloffParabHarm = rolloffParabHarm,
     samplingRate = samplingRate,
@@ -422,11 +422,15 @@ generateHarmonics = function(pitch,
       r[[e]] = rolloff_source[[e]]
       r[[e]] = as.list(as.data.frame(r[[e]]))
       for (i in 1:length(r[[e]])) {
-        r[[e]][[i]] = matrix(r[[e]][[i]], ncol = 1, dimnames = list(rownames(rolloff_source[[e]])))
+        r[[e]][[i]] = matrix(r[[e]][[i]],
+                             ncol = 1,
+                             dimnames = list(rownames(rolloff_source[[e]])))
       }
     }
     r = unlist(r, recursive = FALSE)  # get rid of epochs
-    glottisClosed_per_gc = getSmoothContour(anchors = glottisAnchors, len = nGC, valueFloor = 0)
+    glottisClosed_per_gc = getSmoothContour(anchors = glottisAnchors,
+                                            len = nGC,
+                                            valueFloor = 0)
     waveform = generateGC(pitch_per_gc = pitch_per_gc,
                           glottisClosed_per_gc = glottisClosed_per_gc,
                           rolloff_per_gc = r,
