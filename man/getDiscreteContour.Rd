@@ -12,11 +12,12 @@ getDiscreteContour(len, anchors = data.frame(time = c(0, 1), value = c(1, 1)),
 \item{len}{the number of syllables (equivalently, the length of generated
 contour)}
 
-\item{anchors}{a dataframe of anchors with specified time and amplitude.
-\code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
-to 1 (with duration determined by len, which must then be provided in ms).
-So anchors$time is assumed to be in ms if len=NULL and relative if len is
-specified. \code{anchors$value} can be on any scale.}
+\item{anchors}{a numeric vector of values or a list/dataframe with one column
+(value) or two columns (time and value). \code{achors$time} can be in ms
+(with len=NULL) or in arbitrary units, eg 0 to 1 (with duration determined
+by len, which must then be provided in ms). So anchors$time is assumed to
+be in ms if len=NULL and relative if len is specified. \code{anchors$value}
+can be on any scale.}
 
 \item{method}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)

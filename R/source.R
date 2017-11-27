@@ -60,7 +60,7 @@
 generateNoise = function(len,
                          noiseAnchors = data.frame(
                            time = c(0, 300),
-                           value = c(-120, -120)
+                           value = c(-80, -80)
                          ),
                          rolloffNoise = -4,
                          attackLen = 10,
@@ -74,6 +74,7 @@ generateNoise = function(len,
   breathingStrength = getSmoothContour(
     len = len,
     anchors = noiseAnchors,
+    normalizeTime = FALSE,
     valueFloor = permittedValues['noiseAmpl', 'low'],
     valueCeiling = permittedValues['noiseAmpl', 'high'],
     samplingRate = samplingRate,

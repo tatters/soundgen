@@ -35,6 +35,10 @@ soundgen:::matchLengths(3:7, len = 3)
 # trimmed on the left
 soundgen:::matchLengths(3:7, len = 3, padDir = 'left')
 # padded with zeros on the left
-soundgen:::matchLengths(3:7, len = 30, padDir = 'left')
+soundgen:::matchLengths(3:7, len = 10, padDir = 'left')
+#' # trimmed on the right
+soundgen:::matchLengths(3:7, len = 3, padDir = 'right')
+# padded with zeros on the right
+soundgen:::matchLengths(3:7, len = 10, padDir = 'right')
 }
 \keyword{internal}

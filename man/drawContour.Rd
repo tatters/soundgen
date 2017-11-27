@@ -10,11 +10,12 @@ drawContour(len, anchors, method, valueFloor, valueCeiling, duration_ms = 500)
 \item{len}{the required length of the output contour. If NULL, it will be
 calculated based on the maximum time value (in ms) and \code{samplingRate}}
 
-\item{anchors}{a dataframe of anchors with specified time and amplitude.
-\code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
-to 1 (with duration determined by len, which must then be provided in ms).
-So anchors$time is assumed to be in ms if len=NULL and relative if len is
-specified. \code{anchors$value} can be on any scale.}
+\item{anchors}{a numeric vector of values or a list/dataframe with one column
+(value) or two columns (time and value). \code{achors$time} can be in ms
+(with len=NULL) or in arbitrary units, eg 0 to 1 (with duration determined
+by len, which must then be provided in ms). So anchors$time is assumed to
+be in ms if len=NULL and relative if len is specified. \code{anchors$value}
+can be on any scale.}
 
 \item{method}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)

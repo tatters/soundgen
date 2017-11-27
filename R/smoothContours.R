@@ -9,15 +9,17 @@
 #' transition on a log scale (as if we were operating with musical notes rather
 #' than frequencies in Hz). Pitch plots have two Y axes: one showing Hz and the
 #' other showing musical notation.
-#' @param anchors a dataframe of anchors with specified time and amplitude.
-#'   \code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
-#'   to 1 (with duration determined by len, which must then be provided in ms).
-#'   So anchors$time is assumed to be in ms if len=NULL and relative if len is
-#'   specified. \code{anchors$value} can be on any scale.
+#' @param anchors a numeric vector of values or a list/dataframe with one column
+#'   (value) or two columns (time and value). \code{achors$time} can be in ms
+#'   (with len=NULL) or in arbitrary units, eg 0 to 1 (with duration determined
+#'   by len, which must then be provided in ms). So anchors$time is assumed to
+#'   be in ms if len=NULL and relative if len is specified. \code{anchors$value}
+#'   can be on any scale.
 #' @param len the required length of the output contour. If NULL, it will be
 #'   calculated based on the maximum time value (in ms) and \code{samplingRate}
 #' @param thisIsPitch (boolean) is this a pitch contour? If true, log-transforms
 #'   before smoothing and plots in both Hz and musical notation
+#' @param normalizeTime if TRUE, normalizes anchors$time values to range from 0 to 1
 #' @inheritParams soundgen
 #' @param valueFloor,valueCeiling lower/upper bounds for the contour
 #' @param plot (boolean) produce a plot?
@@ -32,6 +34,7 @@
 #' # long format: anchors are a dataframe
 #' a = getSmoothContour(anchors = data.frame(
 #'   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
+#'   normalizeTime = FALSE,
 #'   voiced = 200, valueFloor = 0, plot = TRUE, main = '',
 #'   samplingRate = 16000) # breathing
 #'
@@ -67,6 +70,7 @@
 getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
                             len = NULL,
                             thisIsPitch = FALSE,
+                            normalizeTime = TRUE,
                             method = c('approx', 'spline', 'loess')[3],
                             discontThres = .05,
                             jumpThres = .01,
@@ -80,7 +84,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             voiced = NULL,
                             contourLabel = NULL,
                             ...) {
-  anchors = reformatAnchors(anchors)
+  anchors = reformatAnchors(anchors, normalizeTime = normalizeTime)
   if (is.list(anchors) && nrow(anchors) > 10 && nrow(anchors) < 50 && method == 'loess') {
     method = 'spline'
     # warning('More than 10 anchors; changing interpolation method from loess to spline')
@@ -414,6 +418,7 @@ getDiscreteContour = function(len,
 #' therefore processed directly in soundgen()
 #' @param anchors a numeric vector of values or a list/dataframe with one column
 #'   (value) or two columns (time and value)
+#' @param normalizeTime if TRUE, normalizes anchors$time values to range from 0 to 1
 #' @examples
 #' soundgen:::reformatAnchors(150)
 #' soundgen:::reformatAnchors(c(150, 200, 220))
@@ -431,7 +436,7 @@ getDiscreteContour = function(len,
 #' soundgen:::reformatAnchors(anchors = list(time = c(0, .8, .7, 1),
 #'                                           value = c(150, 200, 150, 220)))
 #' }
-reformatAnchors = function(anchors) {
+reformatAnchors = function(anchors, normalizeTime = TRUE) {
   if (is.numeric(anchors)) {
     # for numeric vectors, assume these are equally spaced anchor values
     anchors_df = data.frame(
@@ -457,11 +462,14 @@ reformatAnchors = function(anchors) {
   } else {
     return(NA)
   }
+
   # make sure time values are in the right order
   if (any(diff(anchors_df$time) < 0)) {
     stop('Time stamps of anchors must increase monotonically')
   }
+
   # make sure time ranges from 0 to 1
-  anchors_df$time = zeroOne(anchors_df$time)
+  if (normalizeTime) anchors_df$time = zeroOne(anchors_df$time)
+
   return(anchors_df)
 }

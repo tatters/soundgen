@@ -560,6 +560,7 @@ server = function(input, output, session) {
     br_ylim_high = permittedValues['noiseAmpl', 'high']
     nTicks = length(seq(br_ylim_low, br_ylim_high, by = 20)) - 1
     getSmoothContour(anchors = myPars$noiseAnchors,
+                     normalizeTime = FALSE,
                      xlim = c(br_xlim_low, br_xlim_high),
                      ylim = c(br_ylim_low, br_ylim_high),
                      voiced = input$sylLen,
@@ -589,7 +590,7 @@ server = function(input, output, session) {
       myPars$noiseAnchors$value[closest_point_in_time] = click_y
       myPars$noiseAnchors$time[closest_point_in_time] = click_x
     } else { # otherwise, we simply add the new point as another anchor
-      myPars[['noiseAnchors']] = data.frame (
+      myPars[['noiseAnchors']] = data.frame(
         'time' = c(myPars$noiseAnchors$time, click_x),
         'value' = c(myPars$noiseAnchors$value, click_y)
       ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc

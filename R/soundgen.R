@@ -1,4 +1,4 @@
-# TODO: debug removing anchors in app; rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R; check creakyBreathy (breathing not applied to the entire sound)
+# TODO: rename seewave function stft() to stdft(). Found only in soundgen.R, although istft() is also found in source.R; check creakyBreathy (breathing not applied to the entire sound)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -251,8 +251,7 @@ soundgen = function(repeatBout = 1,
                     amDep = 0,
                     amFreq = 30,
                     amShape = 0,
-                    noiseAnchors = data.frame(time = c(0, 300),
-                                              value = c(-80, -80)),
+                    noiseAnchors = NULL, # data.frame(time = c(0, 300), value = c(-80, -80)),
                     formantsNoise = NA,
                     rolloffNoise = -4,
                     mouthAnchors = data.frame(time = c(0, 1),
@@ -313,8 +312,10 @@ soundgen = function(repeatBout = 1,
     assign(anchor, reformatAnchors(get(anchor)))
   }
   if (is.numeric(noiseAnchors) && length(noiseAnchors) > 0) {
-    noiseAnchors = data.frame(time = seq(0, sylLen, length.out = max(2, length(noiseAnchors))),
-                              value = noiseAnchors)
+    noiseAnchors = data.frame(
+      time = seq(0, sylLen, length.out = max(2, length(noiseAnchors))),
+      value = noiseAnchors
+    )
   }
 
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
@@ -345,9 +346,17 @@ soundgen = function(repeatBout = 1,
   formantsNoise = reformatFormants(formantsNoise)
 
   ## adjust parameters according to the specified hyperparameters
+  if (!is.list(noiseAnchors)) {
+    noiseAnchors = data.frame(
+      time = c(0, sylLen),
+      value = c(throwaway, throwaway)
+    )
+  }
+
+  # effects of creakyBreathy hyper
   if (creakyBreathy < 0) {
     # for creaky voice
-    nonlinBalance = min(100, nonlinBalance - creakyBreathy * 50)
+    nonlinBalance = min(100, nonlinBalance - creakyBreathy * 100)
     jitterDep = max(0, jitterDep - creakyBreathy / 2)
     shimmerDep = max(0, shimmerDep - creakyBreathy * 5)
     subDep = subDep * 2 ^ (-creakyBreathy)
@@ -355,9 +364,9 @@ soundgen = function(repeatBout = 1,
     # for breathy voice, add breathing
     if (!is.list(noiseAnchors)) {
       noiseAnchors = data.frame(time = c(0, sylLen + 100),
-                                value = c(-throwaway, -throwaway))
+                                value = c(throwaway, throwaway))
     }
-    noiseAnchors$value = noiseAnchors$value + creakyBreathy * 120
+    noiseAnchors$value = noiseAnchors$value + creakyBreathy * (-throwaway)
     noiseAnchors$value[noiseAnchors$value >
                          permittedValues['noiseAmpl', 'high']] =
       permittedValues['noiseAmpl', 'high']
@@ -369,8 +378,10 @@ soundgen = function(repeatBout = 1,
     }
   }
   # adjust rolloff for both creaky and breathy voices
-  rolloff = rolloff - creakyBreathy * 10
+  rolloff = min(rolloff - creakyBreathy * 10, permittedValues['rolloff', 'high'])
   rolloffOct = rolloffOct - creakyBreathy * 5
+
+  # effects of nonlinDep hyper
   subFreq = 2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50
   # subFreq unchanged for nonlinDep=50%, raised for lower and
   # lowered for higher noise intensities. Max set at 2*subFreq-50, min at 50 Hz.
@@ -378,9 +389,10 @@ soundgen = function(repeatBout = 1,
   #   2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50, type = 'l')
   jitterDep = 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep)))
   # Illustration: jitterDep = 1.5; nonlinDep = 0:100;
-  # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))),
-  #   type = 'l')
+  # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))), type = 'l')
+  shimmerDep = 20 * shimmerDep / (1 + exp(.1 * (50 - nonlinDep)))
 
+  # effects of maleFemale hyper
   if (maleFemale != 0) {
     # adjust pitch and formants along the male-female dimension
     # pitch varies by 1 octave up or down
@@ -400,7 +412,7 @@ soundgen = function(repeatBout = 1,
     vocalTract = vocalTract * (1 - .25 * maleFemale)
   }
 
-  # stochastic rounding of the number of syllables and repeatBouts
+  ## stochastic rounding of the number of syllables and repeatBouts
   #   (eg for nSyl = 2.5, we'll have 2 or 3 syllables with equal probs)
   #   NB: this is very useful for morphing
   if (!is.integer(nSyl)) {

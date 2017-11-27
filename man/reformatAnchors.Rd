@@ -4,11 +4,13 @@
 \alias{reformatAnchors}
 \title{Reformat anchors}
 \usage{
-reformatAnchors(anchors)
+reformatAnchors(anchors, normalizeTime = TRUE)
 }
 \arguments{
 \item{anchors}{a numeric vector of values or a list/dataframe with one column
 (value) or two columns (time and value)}
+
+\item{normalizeTime}{if TRUE, normalizes anchors$time values to range from 0 to 1}
 }
 \description{
 Internal soundgen function.

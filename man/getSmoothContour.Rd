@@ -5,24 +5,27 @@
 \title{Smooth contour from anchors}
 \usage{
 getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
-  len = NULL, thisIsPitch = FALSE, method = c("approx", "spline",
-  "loess")[3], discontThres = 0.05, jumpThres = 0.01, valueFloor = NULL,
-  valueCeiling = NULL, plot = FALSE, main = "", xlim = NULL,
-  ylim = NULL, samplingRate = 16000, voiced = NULL, contourLabel = NULL,
-  ...)
+  len = NULL, thisIsPitch = FALSE, normalizeTime = TRUE,
+  method = c("approx", "spline", "loess")[3], discontThres = 0.05,
+  jumpThres = 0.01, valueFloor = NULL, valueCeiling = NULL,
+  plot = FALSE, main = "", xlim = NULL, ylim = NULL,
+  samplingRate = 16000, voiced = NULL, contourLabel = NULL, ...)
 }
 \arguments{
-\item{anchors}{a dataframe of anchors with specified time and amplitude.
-\code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
-to 1 (with duration determined by len, which must then be provided in ms).
-So anchors$time is assumed to be in ms if len=NULL and relative if len is
-specified. \code{anchors$value} can be on any scale.}
+\item{anchors}{a numeric vector of values or a list/dataframe with one column
+(value) or two columns (time and value). \code{achors$time} can be in ms
+(with len=NULL) or in arbitrary units, eg 0 to 1 (with duration determined
+by len, which must then be provided in ms). So anchors$time is assumed to
+be in ms if len=NULL and relative if len is specified. \code{anchors$value}
+can be on any scale.}
 
 \item{len}{the required length of the output contour. If NULL, it will be
 calculated based on the maximum time value (in ms) and \code{samplingRate}}
 
 \item{thisIsPitch}{(boolean) is this a pitch contour? If true, log-transforms
 before smoothing and plots in both Hz and musical notation}
+
+\item{normalizeTime}{if TRUE, normalizes anchors$time values to range from 0 to 1}
 
 \item{method}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
@@ -69,6 +72,7 @@ other showing musical notation.
 # long format: anchors are a dataframe
 a = getSmoothContour(anchors = data.frame(
   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
+  normalizeTime = FALSE,
   voiced = 200, valueFloor = 0, plot = TRUE, main = '',
   samplingRate = 16000) # breathing
 
