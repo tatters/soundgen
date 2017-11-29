@@ -258,6 +258,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
 #' between anchors.
 #' @inheritParams getSmoothContour
 #' @param duration_ms contour duration, ms
+#' @keywords internal
 drawContour = function(len,
                        anchors,
                        interpol,
@@ -332,6 +333,7 @@ drawContour = function(len,
 #' @return Returns a dataframe containing the index of anchor rows for start and
 #'   end of each segment and whether we want a transition or a jump between
 #'   segments.
+#' @keywords internal
 #' @examples
 #' soundgen:::splitContour(data.frame(time = c(0, 370, 650, 655, 1050, 1400),
 #'   value = c(360, 316, 345, 550, 610, 590)))
@@ -421,6 +423,7 @@ getDiscreteContour = function(len,
 #' @param anchors a numeric vector of values or a list/dataframe with one column
 #'   (value) or two columns (time and value)
 #' @param normalizeTime if TRUE, normalizes anchors$time values to range from 0 to 1
+#' @keywords internal
 #' @examples
 #' soundgen:::reformatAnchors(150)
 #' soundgen:::reformatAnchors(c(150, 200, 220))

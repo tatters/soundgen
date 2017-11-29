@@ -129,36 +129,38 @@ morph = function(formula1,
   f2[notDefaultNames2] = formula2[match(notDefaultNames2, names(formula2))]
   f2 = f2[match(names(f1), names(f2))]
 
-  # fill in formant stuff if it is missing for one sound but defined for the other
-  # b/c defaults contain formants in c() form, repeat:
-  if (!is.null(f1$formants)) {  # otherwise drops NULL completely
-    f1$formants = reformatFormants(f1$formants)
-  }
-  if (!is.null(f2$formants)) {
-    f2$formants = reformatFormants(f2$formants)
-  }
+  suppressWarnings({
+    # fill in formant stuff if it is missing for one sound but defined for the other
+    # b/c defaults contain formants in c() form, repeat:
+    if (!is.null(f1$formants)) {  # otherwise drops NULL completely
+      f1$formants = reformatFormants(f1$formants)
+    }
+    if (!is.null(f2$formants)) {
+      f2$formants = reformatFormants(f2$formants)
+    }
 
-  if ((!is.list(f1$formants) & is.list(f2$formants)) |
-      (is.list(f1$formants) & !is.list(f2$formants))) {
-    stop(paste('Specify formants either for both formulas or for neither'))
-  }
+    if ((!is.list(f1$formants) & is.list(f2$formants)) |
+        (is.list(f1$formants) & !is.list(f2$formants))) {
+      stop(paste('Specify formants either for both formulas or for neither'))
+    }
 
-  if ((!is.list(f1$formantsNoise) & is.list(f2$formantsNoise)) |
-      (is.list(f1$formantsNoise) & !is.list(f2$formantsNoise))) {
-    stop(paste('Specify formantsNoise either for both formulas or for neither'))
-  }
+    if ((!is.list(f1$formantsNoise) & is.list(f2$formantsNoise)) |
+        (is.list(f1$formantsNoise) & !is.list(f2$formantsNoise))) {
+      stop(paste('Specify formantsNoise either for both formulas or for neither'))
+    }
 
-  if ((any(is.na(unlist(f1$formants))) & !any(is.na(unlist(f2$formants)))) |
-      (!any(is.na(unlist(f1$formants))) & any(is.na(unlist(f2$formants))))) {
-    stop(paste('All formant amplitudes and bandwidths should be either left default',
-               'or fully specified in both formulas, not a mix'))
-  }
+    if ((any(is.na(unlist(f1$formants))) & !any(is.na(unlist(f2$formants)))) |
+        (!any(is.na(unlist(f1$formants))) & any(is.na(unlist(f2$formants))))) {
+      stop(paste('All formant amplitudes and bandwidths should be either left default',
+                 'or fully specified in both formulas, not a mix'))
+    }
 
-  if ((any(is.na(unlist(f1$formantsNoise))) & !any(is.na(unlist(f2$formantsNoise)))) |
-      (!any(is.na(unlist(f1$formantsNoise))) & any(is.na(unlist(f2$formantsNoise))))) {
-    stop(paste('All formantsNoise amplitudes and bandwidths should be either left default',
-               'or fully specified in both formulas, not a mix'))
-  }
+    if ((any(is.na(unlist(f1$formantsNoise))) & !any(is.na(unlist(f2$formantsNoise)))) |
+        (!any(is.na(unlist(f1$formantsNoise))) & any(is.na(unlist(f2$formantsNoise))))) {
+      stop(paste('All formantsNoise amplitudes and bandwidths should be either left default',
+                 'or fully specified in both formulas, not a mix'))
+    }
+  })
 
   # log-transform pitch and formant frequencies before morphing
   if ('pitchAnchors' %in% names(f1)) {

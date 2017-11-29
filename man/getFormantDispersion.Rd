@@ -52,3 +52,4 @@ ggplot(out, aes(x = noise, y = error)) +
   theme_bw()
 }
 }
+\keyword{internal}

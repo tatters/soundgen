@@ -38,3 +38,4 @@ soundgen:::reformatAnchors(anchors = list(time = c(0, .8, .7, 1),
                                           value = c(150, 200, 150, 220)))
 }
 }
+\keyword{internal}

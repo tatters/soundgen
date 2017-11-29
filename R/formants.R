@@ -485,6 +485,7 @@ getSpectralEnvelope = function(nr,
 #' each formant specified explicitly.
 #' @param formants either a character string like "aoiu" or a list with an entry
 #'   for each formant
+#' @keywords internal
 #' @examples
 #' formants = soundgen:::reformatFormants('aau')
 #' formants = soundgen:::reformatFormants(c(500, 1500, 2500))
@@ -557,6 +558,7 @@ reformatFormants = function(formants) {
 #' Khodai-Joopari & Clermont (2002), "Comparison of formulae for estimating
 #' formant bandwidths".
 #' @param f a vector of formant frequencies, Hz
+#' @keywords internal
 #' @examples
 #' f = 1:5000
 #' plot(f, soundgen:::getBandwidth(f), type = 'l',
@@ -581,6 +583,7 @@ getBandwidth = function(f) {
 #' @param method method of calculating formant dispersion: \code{fast} for
 #'   simple averaging of inter-formant difference, \code{accurate} for fitting a
 #'   linear regression to formant frequencies
+#' @keywords internal
 #' @examples
 #' nIter = 100  # nIter = 10000 for better results
 #' speedSound = 35400
@@ -766,9 +769,12 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 
 #' Add formants
 #'
-#' A spectral filter that adds formants to a sound - that is, amplifies certain
-#' frequency bands, as in human vowels. See \code{\link{soundgen}} and
-#' \code{\link{getSpectralEnvelope}} for more information.
+#' A spectral filter that either adds or removes formants from a sound - that
+#' is, amplifies or dampens certain frequency bands, as in human vowels. See
+#' \code{\link{soundgen}} and \code{\link{getSpectralEnvelope}} for more
+#' information. With \code{action = 'remove'} this function can perform inverse
+#' filtering to remove formants and obtain raw glottal output, provided that you
+#' can specify the correct formant structure.
 #'
 #' Algorithm: converts input from a time series (time domain) to a spectrogram
 #' (frequency domain) through short-term Fourier transform (STFT), multiples by
@@ -776,6 +782,8 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #' a time series via inverse STFT. This is a subroutine in
 #' \code{\link{soundgen}}, but it can also be used on any existing sound.
 #' @param sound numeric vector with \code{samplingRate}
+#' @param action 'add' = add formants to the sound, 'remove' = remove formants
+#'   (inverse filtering)
 #' @param formDrift,formDisp scaling factors for the effect of temperature on
 #'   formant drift and dispersal, respectively
 #' @param windowLength_points length of FFT window, points
@@ -785,11 +793,21 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #' sound = runif(16000)  # white noise
 #' # playme(sound)
 #' # spectrogram(sound, samplingRate = 16000)
+#'
+#' # add F1 = 900, F2 = 1300 Hz
 #' sound_filtered = addFormants(sound, formants = c(900, 1300))
 #' # playme(sound_filtered)
 #' # spectrogram(sound_filtered, samplingRate = 16000)
+#'
+#' ...and remove them again (assuming we know what the formants are)
+#' sound_inverse_filt = addFormants(sound_filtered,
+#'                                  formants = c(900, 1300),
+#'                                  action = 'remove')
+#' # playme(sound_inverse_filt)
+#' # spectrogram(sound_inverse_filt, samplingRate = 16000)
 addFormants = function(sound,
                        formants,
+                       action = c('add', 'remove')[1],
                        vocalTract = NA,
                        formantDep = 1,
                        formantDepStoch = 20,
@@ -803,6 +821,7 @@ addFormants = function(sound,
                        samplingRate = 16000,
                        windowLength_points = 800,
                        overlap = 75) {
+  formants = reformatFormants(formants)
   # prepare vocal tract filter (formants + some spectral noise + lip radiation)
   if (sum(sound) == 0) {
     # otherwise fft glitches
@@ -875,11 +894,20 @@ addFormants = function(sound,
       )
     }
 
-    if (movingFormants) {
-      z = z * spectralEnvelope
-    } else {
-      z = apply (z, 2, function(x)
-        x * spectralEnvelope)
+    if (action == 'add') {
+      if (movingFormants) {
+        z = z * spectralEnvelope
+      } else {
+        z = apply (z, 2, function(x)
+          x * spectralEnvelope)
+      }
+    } else if (action == 'remove') {
+      if (movingFormants) {
+        z = z / spectralEnvelope
+      } else {
+        z = apply (z, 2, function(x)
+          x / spectralEnvelope)
+      }
     }
 
     # inverse fft

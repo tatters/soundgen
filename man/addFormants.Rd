@@ -4,11 +4,11 @@
 \alias{addFormants}
 \title{Add formants}
 \usage{
-addFormants(sound, formants, vocalTract = NA, formantDep = 1,
-  formantDepStoch = 20, lipRad = 6, noseRad = 4, mouthOpenThres = 0,
-  mouthAnchors = NA, temperature = 0.025, formDrift = 0.3,
-  formDisp = 0.2, samplingRate = 16000, windowLength_points = 800,
-  overlap = 75)
+addFormants(sound, formants, action = c("add", "remove")[1],
+  vocalTract = NA, formantDep = 1, formantDepStoch = 20, lipRad = 6,
+  noseRad = 4, mouthOpenThres = 0, mouthAnchors = NA,
+  temperature = 0.025, formDrift = 0.3, formDisp = 0.2,
+  samplingRate = 16000, windowLength_points = 800, overlap = 75)
 }
 \arguments{
 \item{sound}{numeric vector with \code{samplingRate}}
@@ -18,6 +18,9 @@ presets for speaker "M1" or a list of formant times, frequencies,
 amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
 to schwa. Time stamps for formants and mouthOpening can be specified in ms
 or an any other arbitrary scale. See \code{\link{getSpectralEnvelope}} for more details}
+
+\item{action}{'add' = add formants to the sound, 'remove' = remove formants
+(inverse filtering)}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
@@ -58,9 +61,12 @@ formant drift and dispersal, respectively}
 \item{overlap}{FFT window overlap, \%}
 }
 \description{
-A spectral filter that adds formants to a sound - that is, amplifies certain
-frequency bands, as in human vowels. See \code{\link{soundgen}} and
-\code{\link{getSpectralEnvelope}} for more information.
+A spectral filter that either adds or removes formants from a sound - that
+is, amplifies or dampens certain frequency bands, as in human vowels. See
+\code{\link{soundgen}} and \code{\link{getSpectralEnvelope}} for more
+information. With \code{action = 'remove'} this function can perform inverse
+filtering to remove formants and obtain raw glottal output, provided that you
+can specify the correct formant structure.
 }
 \details{
 Algorithm: converts input from a time series (time domain) to a spectrogram
@@ -73,7 +79,16 @@ a time series via inverse STFT. This is a subroutine in
 sound = runif(16000)  # white noise
 # playme(sound)
 # spectrogram(sound, samplingRate = 16000)
+
+# add F1 = 900, F2 = 1300 Hz
 sound_filtered = addFormants(sound, formants = c(900, 1300))
 # playme(sound_filtered)
 # spectrogram(sound_filtered, samplingRate = 16000)
+
+...and remove them again (assuming we know what the formants are)
+sound_inverse_filt = addFormants(sound_filtered,
+                                 formants = c(900, 1300),
+                                 action = 'remove')
+# playme(sound_inverse_filt)
+# spectrogram(sound_inverse_filt, samplingRate = 16000)
 }

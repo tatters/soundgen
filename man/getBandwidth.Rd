@@ -25,3 +25,4 @@ f = 1:5000
 plot(f, soundgen:::getBandwidth(f), type = 'l',
   xlab = 'Formant frequency, Hz', ylab = 'Estimated bandwidth, Hz')
 }
+\keyword{internal}

@@ -500,6 +500,7 @@ generateHarmonics = function(pitch,
 #'   first harmonic)
 #' @param samplingRate the sampling rate of generated sound, Hz
 #' @return Returns a waveform as a non-normalized numeric vector centered at zero.
+#' @keywords internal
 #' @examples
 #' pitch_per_gc = seq(100, 150, length.out = 25)
 #' glottisClosed_per_gc = seq(0, 300, length.out = 25)
@@ -553,6 +554,7 @@ generateGC = function(pitch_per_gc,
 #' @param epochs a dataframe specifying the beginning and end of each epoch
 #' @param samplingRate the sampling rate of generated sound, Hz
 #' @return Returns a waveform as a non-normalized numeric vector centered at zero.
+#' @keywords internal
 #' @examples
 #' pitch_per_gc = seq(100, 150, length.out = 90)
 #' epochs = data.frame (start = c(1, 51),

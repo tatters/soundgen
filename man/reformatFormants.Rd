@@ -27,3 +27,4 @@ formants = soundgen:::reformatFormants(list(
      f2 = list(freq = c(1500, 1700, 2200), width = c(100, 150, 175))
 ))
 }
+\keyword{internal}

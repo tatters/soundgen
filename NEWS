@@ -1,13 +1,18 @@
           CHANGES IN SOUNDGEN VERSION 1.1.1 [...Sys.Date()...]
+NEW FUNCTIONS:
+  * addFormants() for adding or removing formants from an existing sound
+  * fade() for adding linear/logarithmic/etc fade-in/out
+  * One-click formant picker tool added to soundgen_app()
 
-  * Internal seewave function stft() was renamed to stdft() in seewave 2.0.6. To ensure compatibility, soundgen now requires seewave >= 2.0.6
-  * New function addFormants() for adding formants to an existing sound
-  * soundgen(): support for discontinuous contours such as pitch jumps, new arguments to soundgen for controlling interpolation between anchors ("method", "discontThres", "jumpThres")
+MINOR:
+  * Internal seewave function stft() was renamed to stdft() in seewave 2.0.6. To ensure compatibility, soundgen now checks for seewave version
+  * soundgen(): support for discontinuous contours such as pitch jumps, new arguments to soundgen for controlling interpolation between anchors (new arguments: "interpol", "discontThres", "jumpThres")
   * soundgen(): all tempEffects default to 1 and act like scaling factors, a new tempEffect added ("specDep")
   * soundgen(): invalidArgAction propagates through temperature effects, ensuring that "weird" parameter values outside the ranges in permittedValues are processed properly
   * soundgen(): vectorized rolloffNoise
+  * soundgen(): slightly modified effects of creakyBreathy hyperparameter
   * soundgen_app(): fixed a bug introduced in soundgen 1.1.0, which caused the app to crash with simplified formant specification
-  * soundgen_app(): one-click formant picker added to streamline specification of F1 & F2
+  * Extended and updated vignette on sound generation
   * Miscellaneous small-scale debugging
 
 

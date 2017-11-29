@@ -1,4 +1,4 @@
-# TODO: check all presets - could probably be improved; rename seewave function stft() to stdft(). Found only in formants.R, although istft() is also found in source.R
+# TODO: discuss new functions like addFormants() in the vignette; check all presets - could probably be improved; rename seewave function stft() to stdft(). Found only in formants.R, although istft() is also found in source.R
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

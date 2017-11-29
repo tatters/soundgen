@@ -41,3 +41,4 @@ s = soundgen:::generateGC(pitch_per_gc,  glottisClosed_per_gc,
 # plot(s, type = 'l')
 # playme(s)
 }
+\keyword{internal}

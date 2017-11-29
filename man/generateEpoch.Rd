@@ -43,3 +43,4 @@ s = soundgen:::generateEpoch(pitch_per_gc, epochs,
 # plot(s, type = 'l')
 # playme(s)
 }
+\keyword{internal}

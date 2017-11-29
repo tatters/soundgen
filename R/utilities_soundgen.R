@@ -897,7 +897,7 @@ fade = function(x,
   }
 
   if (plot) {
-    plot(x, type = 'l')
+    plot(x, type = 'l', xlab = '', ylab = '')
     abline(v = fadeIn, col = 'blue')
     abline(v = length(x) - fadeOut, col = 'blue')
   }

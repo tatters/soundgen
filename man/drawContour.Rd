@@ -35,3 +35,4 @@ Internal soundgen function
 The core part of getSmoothContour() that actually performs the interpolation
 between anchors.
 }
+\keyword{internal}

@@ -46,3 +46,4 @@ soundgen:::splitContour(data.frame(time = c(0, .4, .45, .6, .8, 1),
 soundgen:::splitContour(data.frame(time = c(0, 1),
   value = c(360, 590)))
 }
+\keyword{internal}
