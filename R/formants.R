@@ -799,7 +799,7 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #' # playme(sound_filtered)
 #' # spectrogram(sound_filtered, samplingRate = 16000)
 #'
-#' ...and remove them again (assuming we know what the formants are)
+#' # ...and remove them again (assuming we know what the formants are)
 #' sound_inverse_filt = addFormants(sound_filtered,
 #'                                  formants = c(900, 1300),
 #'                                  action = 'remove')
@@ -867,32 +867,18 @@ addFormants = function(sound,
     # image(t(spectralEnvelope))
 
     # fft and filtering
-    if (packageVersion("seewave") < '2.0.6') {
-      # stft is supposed to be renamed to stdft in seewave 2.0.6
-      z = seewave::stft(
-        wave = as.matrix(sound),
-        f = samplingRate,
-        wl = windowLength_points,
-        zp = 0,
-        step = step,
-        wn = 'hamming',
-        fftw = FALSE,
-        scale = TRUE,
-        complex = TRUE
-      )
-    } else {
-      z = seewave::stdft(
-        wave = as.matrix(sound),
-        f = samplingRate,
-        wl = windowLength_points,
-        zp = 0,
-        step = step,
-        wn = 'hamming',
-        fftw = FALSE,
-        scale = TRUE,
-        complex = TRUE
-      )
-    }
+    # NB: stft is supposed to be renamed to stdft in seewave 2.0.6
+    z = seewave::stft(
+      wave = as.matrix(sound),
+      f = samplingRate,
+      wl = windowLength_points,
+      zp = 0,
+      step = step,
+      wn = 'hamming',
+      fftw = FALSE,
+      scale = TRUE,
+      complex = TRUE
+    )
 
     if (action == 'add') {
       if (movingFormants) {

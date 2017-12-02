@@ -85,7 +85,7 @@ sound_filtered = addFormants(sound, formants = c(900, 1300))
 # playme(sound_filtered)
 # spectrogram(sound_filtered, samplingRate = 16000)
 
-...and remove them again (assuming we know what the formants are)
+# ...and remove them again (assuming we know what the formants are)
 sound_inverse_filt = addFormants(sound_filtered,
                                  formants = c(900, 1300),
                                  action = 'remove')
