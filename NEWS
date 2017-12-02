@@ -1,3 +1,6 @@
+          CHANGES IN SOUNDGEN VERSION 1.1.1.9000 [...date...]
+
+
           CHANGES IN SOUNDGEN VERSION 1.1.1 [02-December-2017]
 NEW FUNCTIONS:
   * addFormants() for adding or removing formants from an existing sound
