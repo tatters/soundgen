@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); spectrogram crashes for very short syllables; breathing length should vary together with sylLen when adding nonlinear effect (strong jitter - sylLen varies unpredictably, so breathing may be longer than the voiced part); a top-level scaling factor for broadening formants (formant width); check interpol - doesn't seem to affect mouth contour, which still seems to use loess; check pauseLen_sd in segmentFolder() - always NA?; write and interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back the new version;
+# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); spectrogram crashes for very short syllables; breathing length should vary together with sylLen when adding nonlinear effect (strong jitter - sylLen varies unpredictably, so breathing may be longer than the voiced part); a top-level scaling factor for broadening formants (formant width); check interpol - doesn't seem to affect mouth contour, which still seems to use loess; check pauseLen_sd in segmentFolder() - always NA?; write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version; debug segmentFolder() - doesn't save plots;
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -785,21 +785,23 @@ soundgen = function(repeatBout = 1,
     }
 
     # add formants
-    soundFiltered = addFormants(sound = sound,
-                           formants = formants,
-                           vocalTract = vocalTract,
-                           formantDep = formantDep,
-                           formantDepStoch = formantDepStoch,
-                           lipRad = lipRad,
-                           noseRad = noseRad,
-                           mouthOpenThres = mouthOpenThres,
-                           mouthAnchors = mouthAnchors,
-                           temperature = temperature,
-                           formDrift = tempEffects$formDrift,
-                           formDisp = tempEffects$formDisp,
-                           samplingRate = samplingRate,
-                           windowLength_points = windowLength_points,
-                           overlap = overlap)
+    soundFiltered = addFormants(
+      sound = sound,
+      formants = formants,
+      vocalTract = vocalTract,
+      formantDep = formantDep,
+      formantDepStoch = formantDepStoch,
+      lipRad = lipRad,
+      noseRad = noseRad,
+      mouthOpenThres = mouthOpenThres,
+      mouthAnchors = mouthAnchors,
+      temperature = temperature,
+      formDrift = tempEffects$formDrift,
+      formDisp = tempEffects$formDisp,
+      samplingRate = samplingRate,
+      windowLength_points = windowLength_points,
+      overlap = overlap
+    )
     # spectrogram(soundFiltered, samplingRate = samplingRate)
     # playme(soundFiltered, samplingRate = samplingRate)
 

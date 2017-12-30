@@ -1,4 +1,9 @@
           CHANGES IN SOUNDGEN VERSION 1.1.1.9000 [...date...]
+NEW FUNCTIONS:
+  * formantDev(): estimates the deviation of formant frequencies from schwa
+
+MINOR:
+  * soundgen(): very rapid or instantaneous attack is now achievable without adjusting windowLength
 
 
           CHANGES IN SOUNDGEN VERSION 1.1.1 [02-December-2017]

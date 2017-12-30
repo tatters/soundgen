@@ -805,6 +805,12 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #' estimateVTL(formants_roar[1:4]) # based on F1-F4, VTL is almost 28 cm!
 #' # Since the lowest formants are the most salient,
 #' the apparent size is exaggerated even further
+#'
+#' # If you know VTL, a few lower formants are enough:
+#' # formantDev(formants_roar[1:4],  # only F1-F4
+#'              # VTL estimated based on 10 formants
+#'              vocalTract = estimateVTL(formants_roar))
+#' # ... is identical with formantDev(formants_roar)
 formantDev = function(formants,
                       vocalTract = NULL,
                       speedSound = 35400) {
@@ -881,6 +887,11 @@ addFormants = function(sound,
     # otherwise fft glitches
     soundFiltered = sound
   } else {
+    # pad input with one windowLength_points of 0 to avoid softening the attack
+    sound = c(rep(0, windowLength_points),
+              sound,
+              rep(0, windowLength_points))
+
     # for very short sounds, make sure the analysis window is no more
     #   than half the sound's length
     windowLength_points = min(windowLength_points, floor(length(sound) / 2))
@@ -962,6 +973,14 @@ addFormants = function(sound,
     )
     soundFiltered = soundFiltered / max(soundFiltered) # normalize
   }
+
+  # remove zero padding
+  l = length(soundFiltered)
+  tailIdx = suppressWarnings(max(which(soundFiltered[(l - windowLength_points):l] > .03)))
+  idx = l - windowLength_points + tailIdx - 1
+  if(!is.finite(idx)) idx = l - windowLength_points
+  soundFiltered = soundFiltered[(windowLength_points + 1):idx]
+
   # spectrogram(soundFiltered, samplingRate = samplingRate)
   # playme(soundFiltered, samplingRate = samplingRate)
   return(soundFiltered)
