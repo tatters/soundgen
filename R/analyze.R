@@ -94,13 +94,18 @@
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param savePath if a valid path is specified, a plot is saved in this
 #'   folder (defaults to NA)
-#' @param specPlot a list of graphical parameters passed to
-#'   \code{\link{spectrogram}}. Set to \code{NULL} to suppress plotting just the
+#' @param specPlot deprecated since soundgen 1.1.2. Pass its arguments directly
+#'   to the main function or set \code{plotSpec = FALSE} to remove the
 #'   spectrogram
+#' @param plotSpec if \code{FALSE}, the spectrogram will not be plotted
 #' @param candPlot a list of graphical parameters for displaying
-#'   individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress
-#' @param pitchPlot a list of graphical parameters for displaying the
-#'   final pitch contour. Set to \code{NULL} or \code{NA} to suppress
+#' individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress
+#' @param pitchPlot a list of graphical parameters for displaying the final
+#'   pitch contour. Set to \code{NULL} or \code{NA} to suppress
+#' @param xlab,ylab,main plotting parameters
+#' @param width,height,units parameters passed to \code{\link[grDevices]{jpeg}}
+#'   if the plot is saved
+#' @param ... other graphical parameters passed to \code{\link{spectrogram}}
 #' @return If \code{summary = TRUE}, returns a dataframe with one row and three
 #'   column per acoustic variable (mean / median / SD). If \code{summary =
 #'   FALSE}, returns a dataframe with one row per FFT frame and one column per
@@ -126,7 +131,7 @@
 #'   temperature = 0, addSilence = 0)
 #' # improve the quality of postprocessing:
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
-#' median(a1$pitch, na.rm = TRUE)  # 583 Hz
+#' median(a1$pitch, na.rm = TRUE)  # 586 Hz
 #' # (can vary, since postprocessing is stochastic)
 #' # compare to the true value:
 #' median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
@@ -143,12 +148,13 @@
 #'
 #' # Fancy plotting options:
 #' a = analyze(sound2, samplingRate = 16000, plot = TRUE,
-#'   specPlot = list(xlab = 'Time, ms', colorTheme = 'seewave', contrast = .8),
+#'   xlab = 'Time, ms', colorTheme = 'seewave',
+#'   contrast = .5, ylim = c(0, 4),
 #'   candPlot = list(cex = 3, col = c('gray70', 'yellow', 'purple', 'maroon')),
 #'   pitchPlot = list(col = 'black', lty = 3, lwd = 3))
 #'
 #'# Plot pitch candidates w/o a spectrogram
-#' a = analyze(sound2, samplingRate = 16000, plot = TRUE, specPlot = NA)
+#' a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
 #' }
 analyze = function(x,
                    samplingRate = NULL,
@@ -197,11 +203,8 @@ analyze = function(x,
                    summary = FALSE,
                    plot = TRUE,
                    savePath = NA,
-                   specPlot = list(
-                     contrast = .2,
-                     brightness = 0,
-                     ylim = c(0, 5)
-                   ),
+                   plotSpec = TRUE,
+                   specPlot = NULL,
                    pitchPlot = list(
                      col = rgb(0, 0, 1, .75),
                      lwd = 3
@@ -211,8 +214,26 @@ analyze = function(x,
                      col = c('green', 'red', 'orange', 'violet'),
                      pch = c(16, 2, 3, 7),
                      cex = 2
-                   )) {
+                   ),
+                   ylim = NULL,
+                   xlab = 'Time, ms',
+                   ylab = 'kHz',
+                   main = NULL,
+                   width = 900,
+                   height = 500,
+                   units = 'px',
+                   ...) {
   ## preliminaries
+  # deprecated args
+  if (!missing(specPlot)) {
+    message('specPlot is deprecated; pass its arguments directly to the main function or set plotSpec = FALSE to remove the spectrogram')
+  }
+  if ('osc' %in% names(match.call())) {
+    # we are working with frameBank, not raw waveform
+    osc = FALSE
+    message('Plotting a spectrogram with oscillogram from analyze() is currently not implemented')
+  }
+
   # import a sound
   if (class(x) == 'character') {
     sound = tuneR::readWave(x)
@@ -416,7 +437,8 @@ analyze = function(x,
     f = ifelse(plotname == '',
                'sound',
                plotname)
-    jpeg(filename = paste0(savePath, f, ".jpg"), 1200, 800)
+    jpeg(filename = paste0(savePath, f, ".jpg"),
+         width = width, height = height, units = 'px')
   }
   frameBank = getFrameBank(
     sound = sound,
@@ -428,33 +450,34 @@ analyze = function(x,
     filter = NULL
   )
 
-  if (plot == TRUE && is.list(specPlot)) {
+  if (plot == TRUE && plotSpec) { #
     plot_spec = TRUE
   } else {
     plot_spec = FALSE
-    specPlot = list()  # otherwise can't run do.call('spec') below
   }
 
-  s = do.call('spectrogram', c(
-    list(
-      x = NULL,
-      frameBank = frameBank,
-      duration = duration,
-      samplingRate = samplingRate,
-      windowLength = windowLength,
-      zp = zp,
-      wn = wn,
-      step = step,
-      main = plotname,
-      plot = plot_spec,
-      output = 'original'
-    ),
-    specPlot
-  ))
+  extraSpecPars = list(...)
+  extraSpecPars$osc = NULL
+  s = do.call(spectrogram, c(list(
+    x = NULL,
+    frameBank = frameBank,
+    duration = duration,
+    samplingRate = samplingRate,
+    windowLength = windowLength,
+    zp = zp,
+    wn = wn,
+    step = step,
+    main = plotname,
+    plot = plot_spec,
+    output = 'original',
+    ylim = ylim,
+    xlab = xlab,
+    ylab = ylab
+  ), extraSpecPars))
 
   # calculate amplitude of each frame
   myseq = seq(1, (length(sound) - windowLength_points), length.out = ncol(s))
-  ampl = apply (as.matrix(1:ncol(s)), 1, function(x) {
+  ampl = apply(as.matrix(1:ncol(s)), 1, function(x) {
     # perceived intensity - root mean square of amplitude
     sqrt(mean(sound[myseq[x]:(myseq[x] + windowLength_points)] ^ 2))
   })
@@ -465,12 +488,14 @@ analyze = function(x,
   # vocal range only: 50 to 6000 Hz
   rowLow = which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
   rowHigh = which(as.numeric(rownames(s)) > 6)[1] # 6000 Hz
-  entropy = apply (as.matrix(1:ncol(s)), 1, function(x) {
+  entropy = apply(as.matrix(1:ncol(s)), 1, function(x) {
     getEntropy(s[rowLow:rowHigh, x], type = 'weiner')
   })
   # if the frame is too quiet or too noisy, we will not analyze it
-  cond_silence = ampl > silence
+  cond_silence = ampl > silence &
+    as.logical(apply(s, 2, sum) > 0)  # b/c s frames are not 100% synchronized with ampl frames
   cond_entropy = ampl > silence & entropy < entropyThres
+  cond_entropy[is.na(cond_entropy)] = FALSE
 
   # autocorrelation for each frame
   autocorBank = matrix(NA, nrow = length(autoCorrelation_filter),
@@ -710,12 +735,18 @@ analyze = function(x,
   if (plot) {
     # if plot_spec is FALSE, we first have to set up an empty plot
     if (plot_spec == FALSE) {
-      m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
-      if (is.na(m)) m = samplingRate / 2 / 1000
+      if (is.null(ylim)) {
+        m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
+        if (is.na(m)) m = samplingRate / 2 / 1000
+        ylim = c(0, m)
+      }
       plot(x = result$time,
            y = rep(0, nrow(result)),
            type = 'n',
-           ylim = c(0, m), xlab = 'Time, ms', ylab = 'Pitch, kHz')
+           ylim = ylim,
+           xlab = xlab,
+           ylab = ylab,
+           ...)
     }
     # add pitch candidates to the plot
     if (nrow(pitchCands) > 0) {
@@ -876,11 +907,8 @@ analyzeFolder = function(myfolder,
                          summary = TRUE,
                          plot = FALSE,
                          savePath = NA,
-                         specPlot = list(
-                           contrast = .2,
-                           brightness = 0,
-                           ylim = c(0, 5)
-                         ),
+                         plotSpec = TRUE,
+                         specPlot = NULL,
                          pitchPlot = list(
                            col = rgb(0, 0, 1, .75),
                            lwd = 3
@@ -890,24 +918,43 @@ analyzeFolder = function(myfolder,
                            col = c('green', 'red', 'orange', 'violet'),
                            pch = c(16, 2, 3, 7),
                            cex = 2
-                         )) {
+                         ),
+                         ylim = NULL,
+                         xlab = 'Time, ms',
+                         ylab = 'kHz',
+                         main = NULL,
+                         width = 900,
+                         height = 500,
+                         units = 'px',
+                         ...) {
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
 
+  # deprecated args
+  if (!missing(specPlot)) {
+    message('specPlot is deprecated; pass its arguments directly to the main function or set plotSpec = FALSE to remove the spectrogram')
+  }
+
   # as.list(match.call()) also works, but we want to get default args as well,
   # since plot should default to TRUE for analyze() and FALSE for analyzeFolder(),
   # and summary vice versa.
   # See https://stackoverflow.com/questions/14397364/match-call-with-default-arguments
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
-  myPars = myPars[names(myPars) != 'myfolder' &  # exclude these two args
-                  names(myPars) != 'verbose']
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c('myfolder' , 'verbose', 'specPlot',
+                                        'pitchPlot', 'candPlot')]
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+  # add plot pars correctly, without flattening the lists
+  myPars$pitchPlot = pitchPlot
+  myPars$candPlot = candPlot
 
   result = list()
   for (i in 1:length(filenames)) {
-    result[[i]] = do.call(analyze, c(filenames[i], myPars))
+    result[[i]] = do.call(analyze, c(filenames[i], myPars, ...))
     if (verbose) {
       reportTime(i = i, nIter = length(filenames),
                  time_start = time_start, jobs = filesizes)

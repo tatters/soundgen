@@ -42,12 +42,18 @@ estimateVTL(formants_i)  # 14.5 cm
 formantDev(formants_i)
 # [i]: very low F1, very high F2
 
-formants_roar = c(550, 1000, 1460, 2280, 3350, 4300, 4900, 5800, 6900, 7900)
+formants_roar = c(550, 1000, 1460, 2280, 3350,
+                  4300, 4900, 5800, 6900, 7900)
 estimateVTL(formants_roar)  # 22.5 cm (!)
 # (lowered larynx and rounded lips to exaggerate apparent size)
 formantDev(formants_roar)
 # roar: high F1 and low F2-F4
 estimateVTL(formants_roar[1:4]) # based on F1-F4, VTL is almost 28 cm!
 # Since the lowest formants are the most salient,
-the apparent size is exaggerated even further
+# the apparent size is exaggerated even further
+
+# If you know VTL, a few lower formants are enough:
+vocalTract = estimateVTL(formants_roar)  # VTL estimated based on 10 formants
+formantDev(formants_roar[1:4], vocalTract = vocalTract)
+# ... is identical with formantDev(formants_roar)
 }

@@ -8,7 +8,10 @@ segmentFolder(myfolder, shortestSyl = 40, shortestPause = 40,
   sylThres = 0.9, interburst = NULL, interburstMult = 1,
   burstThres = 0.075, peakToTrough = 3, troughLeft = TRUE,
   troughRight = FALSE, windowLength = 40, overlap = 80, summary = TRUE,
-  plot = FALSE, savePath = NA, verbose = TRUE, reportEvery = 10, ...)
+  plot = FALSE, savePath = NA, verbose = TRUE, reportEvery = 10,
+  col = "green", xlab = "Time, ms", ylab = "Amplitude", main = NULL,
+  width = 900, height = 500, units = "px", sylPlot = list(lty = 1, lwd =
+  2, col = "blue"), burstPlot = list(pch = 8, cex = 3, col = "red"), ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -65,6 +68,27 @@ to NA}
 
 \item{verbose, reportEvery}{if TRUE, reports progress every \code{reportEvery}
 files and estimated time left}
+
+\item{col}{main plotting parameters}
+
+\item{xlab}{main plotting parameters}
+
+\item{ylab}{main plotting parameters}
+
+\item{main}{main plotting parameters}
+
+\item{width}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{height}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{units}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{sylPlot}{a list of graphical parameters for displaying the syllables}
+
+\item{burstPlot}{a list of graphical parameters for displaying the bursts}
 
 \item{...}{other graphical parameters passed to \code{\link[graphics]{plot}}}
 }

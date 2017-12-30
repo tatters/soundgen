@@ -145,7 +145,7 @@ downsample = function(s, srNew = 10, srOld = 120, minLen = 3){
 #'   type = 'shannon', normalize = TRUE), 2))
 getEntropy = function(x, type = c('weiner', 'shannon')[1], normalize = FALSE) {
   if (sum(x) == 0) return (NA)  # empty frames
-  x = ifelse (x <= 0, 1e-10, x)  # otherwise log0 gives NaN
+  x = ifelse(x <= 0, 1e-10, x)  # otherwise log0 gives NaN
   if (type == 'weiner') {
     geom_mean = exp(mean(log(x)))
     ar_mean = mean(x)

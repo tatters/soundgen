@@ -8,7 +8,10 @@ segment(x, samplingRate = NULL, windowLength = 40, overlap = 80,
   shortestSyl = 40, shortestPause = 40, sylThres = 0.9,
   interburst = NULL, interburstMult = 1, burstThres = 0.075,
   peakToTrough = 3, troughLeft = TRUE, troughRight = FALSE,
-  summary = FALSE, plot = FALSE, savePath = NA, ...)
+  summary = FALSE, plot = FALSE, savePath = NA, col = "green",
+  xlab = "Time, ms", ylab = "Amplitude", main = NULL, width = 900,
+  height = 500, units = "px", sylPlot = list(lty = 1, lwd = 2, col =
+  "blue"), burstPlot = list(pch = 8, cex = 3, col = "red"), ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -60,6 +63,15 @@ on each syllable and bursts (location, duration, amplitude, ...)}
 \item{savePath}{full path to the folder in which to save the plots. Defaults
 to NA}
 
+\item{col, xlab, ylab, main}{main plotting parameters}
+
+\item{width, height, units}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{sylPlot}{a list of graphical parameters for displaying the syllables}
+
+\item{burstPlot}{a list of graphical parameters for displaying the bursts}
+
 \item{...}{other graphical parameters passed to \code{\link[graphics]{plot}}}
 }
 \value{
@@ -104,4 +116,18 @@ s = segment(sound, samplingRate = 16000, plot = TRUE,
 
 # just a summary
 segment(sound, samplingRate = 16000, summary = TRUE)
+
+# customizing the plot
+s = segment(sound, samplingRate = 16000, plot = TRUE,
+            shortestSyl = 25, shortestPause = 25, sylThres = .6,
+            col = 'black', lwd = .5,
+            sylPlot = list(lty = 2, col = 'gray20'),
+            burstPlot = list(pch = 16, col = 'gray80'),
+            xlab = 'ms', cex.lab = 1.2, main = 'My awesome plot')
+
+\dontrun{
+# customize the resolution of saved plot
+s = segment(sound, samplingRate = 16000, savePath = '~/Downloads/',
+            width = 1920, height = 1080, units = 'px')
+}
 }

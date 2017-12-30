@@ -19,10 +19,11 @@ analyzeFolder(myfolder, verbose = TRUE, samplingRate = NULL,
   annealPars = list(maxit = 5000, temp = 1000), certWeight = 0.5,
   snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
   smoothVars = c("pitch", "dom"), summary = TRUE, plot = FALSE,
-  savePath = NA, specPlot = list(contrast = 0.2, brightness = 0, ylim = c(0,
-  5)), pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
-  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2))
+  savePath = NA, plotSpec = TRUE, specPlot = NULL, pitchPlot = list(col
+  = rgb(0, 0, 1, 0.75), lwd = 3), candPlot = list(levels = c("autocor",
+  "spec", "dom", "cep"), col = c("green", "red", "orange", "violet"), pch =
+  c(16, 2, 3, 7), cex = 2), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
+  main = NULL, width = 900, height = 500, units = "px", ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -198,15 +199,36 @@ frame-by-frame values}
 \item{savePath}{if a valid path is specified, a plot is saved in this
 folder (defaults to NA)}
 
-\item{specPlot}{a list of graphical parameters passed to
-\code{\link{spectrogram}}. Set to \code{NULL} to suppress plotting just the
+\item{plotSpec}{if \code{FALSE}, the spectrogram will not be plotted}
+
+\item{specPlot}{deprecated since soundgen 1.1.2. Pass its arguments directly
+to the main function or set \code{plotSpec = FALSE} to remove the
 spectrogram}
 
-\item{pitchPlot}{a list of graphical parameters for displaying the
-final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
+\item{pitchPlot}{a list of graphical parameters for displaying the final
+pitch contour. Set to \code{NULL} or \code{NA} to suppress}
 
 \item{candPlot}{a list of graphical parameters for displaying
 individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
+
+\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
+
+\item{xlab}{plotting parameters}
+
+\item{ylab}{plotting parameters}
+
+\item{main}{plotting parameters}
+
+\item{width}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{height}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{units}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{...}{other graphical parameters passed to \code{\link{spectrogram}}}
 }
 \value{
 If \code{summary} is TRUE, returns a dataframe with one row per audio

@@ -763,7 +763,7 @@ The first thing you might want to do with your target audio recording is to anal
 
 ```{r}
 target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-                  pitchAnchors =c(300, 200),
+                  pitchAnchors = c(300, 200),
                   rolloff = -5, play = playback)  # we hope to reproduce this sound
 # playme(target)
 
@@ -774,6 +774,7 @@ m1 = matchPars(target = target,
 
 # m1$pars contains a list of soundgen settings
 cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
+# playme(cand1)
 ```
 Without optimization, we simply match soundgen parameters based on acoustic analysis. In particular, `matchPars()` calls `segment()` and `analyze()` to get some basic descriptives of the target sound and to choose the appropriate settings for `soundgen` based on these measurements. If you are very lucky, this *might* in fact accurately match the temporal structure, pitch, and (stationary) formants of your target. Most likely, it won't. In particular, for animal vocalizations a better option is often to estimate the vocal tract length from the dispersion of a few consecutive formants you can identify on the spectrogram (use `estimateVTL()`) and set `vocalTract = your_estimate, formants = NULL`. 
 

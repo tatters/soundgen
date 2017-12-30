@@ -18,10 +18,11 @@ analyze(x, samplingRate = NULL, silence = 0.04, windowLength = 50,
   "slow")[2], annealPars = list(maxit = 5000, temp = 1000),
   certWeight = 0.5, snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
   smoothVars = c("pitch", "dom"), summary = FALSE, plot = TRUE,
-  savePath = NA, specPlot = list(contrast = 0.2, brightness = 0, ylim = c(0,
-  5)), pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
-  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2))
+  savePath = NA, plotSpec = TRUE, specPlot = NULL, pitchPlot = list(col
+  = rgb(0, 0, 1, 0.75), lwd = 3), candPlot = list(levels = c("autocor",
+  "spec", "dom", "cep"), col = c("green", "red", "orange", "violet"), pch =
+  c(16, 2, 3, 7), cex = 2), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
+  main = NULL, width = 900, height = 500, units = "px", ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -159,15 +160,26 @@ frame-by-frame values}
 \item{savePath}{if a valid path is specified, a plot is saved in this
 folder (defaults to NA)}
 
-\item{specPlot}{a list of graphical parameters passed to
-\code{\link{spectrogram}}. Set to \code{NULL} to suppress plotting just the
+\item{plotSpec}{if \code{FALSE}, the spectrogram will not be plotted}
+
+\item{specPlot}{deprecated since soundgen 1.1.2. Pass its arguments directly
+to the main function or set \code{plotSpec = FALSE} to remove the
 spectrogram}
 
-\item{pitchPlot}{a list of graphical parameters for displaying the
-final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
+\item{pitchPlot}{a list of graphical parameters for displaying the final
+pitch contour. Set to \code{NULL} or \code{NA} to suppress}
 
 \item{candPlot}{a list of graphical parameters for displaying
 individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
+
+\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
+
+\item{xlab, ylab, main}{plotting parameters}
+
+\item{width, height, units}{parameters passed to \code{\link[grDevices]{jpeg}}
+if the plot is saved}
+
+\item{...}{other graphical parameters passed to \code{\link{spectrogram}}}
 }
 \value{
 If \code{summary = TRUE}, returns a dataframe with one row and three
@@ -201,7 +213,7 @@ sound1 = soundgen(sylLen = 900, pitchAnchors = list(
   temperature = 0, addSilence = 0)
 # improve the quality of postprocessing:
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
-median(a1$pitch, na.rm = TRUE)  # 583 Hz
+median(a1$pitch, na.rm = TRUE)  # 586 Hz
 # (can vary, since postprocessing is stochastic)
 # compare to the true value:
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
@@ -218,11 +230,12 @@ a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 
 # Fancy plotting options:
 a = analyze(sound2, samplingRate = 16000, plot = TRUE,
-  specPlot = list(xlab = 'Time, ms', colorTheme = 'seewave', contrast = .8),
+  xlab = 'Time, ms', colorTheme = 'seewave',
+  contrast = .5, ylim = c(0, 4),
   candPlot = list(cex = 3, col = c('gray70', 'yellow', 'purple', 'maroon')),
   pitchPlot = list(col = 'black', lty = 3, lwd = 3))
 
 # Plot pitch candidates w/o a spectrogram
-a = analyze(sound2, samplingRate = 16000, plot = TRUE, specPlot = NA)
+a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
 }
 }

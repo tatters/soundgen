@@ -51,6 +51,11 @@
 #' @param plot if TRUE, produces a segmentation plot
 #' @param savePath full path to the folder in which to save the plots. Defaults
 #'   to NA
+#' @param sylPlot a list of graphical parameters for displaying the syllables
+#' @param burstPlot a list of graphical parameters for displaying the bursts
+#' @param col,xlab,ylab,main main plotting parameters
+#' @param width,height,units parameters passed to \code{\link[grDevices]{jpeg}}
+#'   if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link[graphics]{plot}}
 #' @return If \code{summary = TRUE}, returns only a summary of the number and
 #'   spacing of syllables and vocal bursts. If \code{summary = FALSE}, returns a
@@ -76,6 +81,20 @@
 #'
 #' # just a summary
 #' segment(sound, samplingRate = 16000, summary = TRUE)
+#'
+#' # customizing the plot
+#' s = segment(sound, samplingRate = 16000, plot = TRUE,
+#'             shortestSyl = 25, shortestPause = 25, sylThres = .6,
+#'             col = 'black', lwd = .5,
+#'             sylPlot = list(lty = 2, col = 'gray20'),
+#'             burstPlot = list(pch = 16, col = 'gray80'),
+#'             xlab = 'ms', cex.lab = 1.2, main = 'My awesome plot')
+#'
+#' \dontrun{
+#' # customize the resolution of saved plot
+#' s = segment(sound, samplingRate = 16000, savePath = '~/Downloads/',
+#'             width = 1920, height = 1080, units = 'px')
+#' }
 segment = function(x,
                    samplingRate = NULL,
                    windowLength = 40,
@@ -92,6 +111,23 @@ segment = function(x,
                    summary = FALSE,
                    plot = FALSE,
                    savePath = NA,
+                   col = 'green',
+                   xlab = 'Time, ms',
+                   ylab = 'Amplitude',
+                   main = NULL,
+                   width = 900,
+                   height = 500,
+                   units = 'px',
+                   sylPlot = list(
+                     lty = 1,
+                     lwd = 2,
+                     col = 'blue'
+                   ),
+                   burstPlot = list(
+                     pch = 8,
+                     cex = 3,
+                     col = 'red'
+                   ),
                    ...) {
   mergeSyl = ifelse(is.null(shortestPause) || is.na(shortestPause), F, T)
   if (windowLength < 10) {
@@ -107,12 +143,14 @@ segment = function(x,
     sound = sound@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = substring(plotname, 1, nchar(plotname) - 4)
+    if (is.null(main)) main = plotname
   }  else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
       sound = x
-      plotname = ''
+      plotname = 'newPlot'
+      if (is.null(main)) main = ''
     }
   }
 
@@ -173,18 +211,27 @@ segment = function(x,
   ## plotting (optional)
   if (is.character(savePath)) plot = TRUE
   if (plot) {
+    # defaults
+    if (is.null(sylPlot$lty)) sylPlot$lty = 1
+    if (is.null(sylPlot$lwd)) sylPlot$lwd = 2
+    if (is.null(sylPlot$col)) sylPlot$col = 'blue'
+    if (is.null(burstPlot$pch)) burstPlot$pch = 8
+    if (is.null(burstPlot$cex)) burstPlot$cex = 3
+    if (is.null(burstPlot$col)) burstPlot$col = 'red'
+
     if (is.character(savePath)) {
-      jpeg(filename = paste0 (savePath, plotname, ".jpg"), 900, 500)
+      jpeg(filename = paste0(savePath, plotname, ".jpg"),
+           width = width, height = height, units = units)
     }
-    plot(envelope$time, envelope$value, type = 'l', col = 'green',
-         xlab = 'Time, ms', ylab = 'Amplitude', main = plotname, ...)
-    points (bursts, col = 'red', cex = 3, pch = 8)
+    plot(x = envelope$time, y = envelope$value, type = 'l', col = col,
+         xlab = xlab, ylab = ylab, main = main, ...)
+    points(bursts, col = burstPlot$col, cex = burstPlot$cex, pch = burstPlot$pch)
     for (s in 1:nrow(syllables)) {
-      segments( x0 = syllables$start[s], y0 = threshold,
-                x1 = syllables$end[s], y1 = threshold,
-                lwd = 2, col = 'blue')
+      segments(x0 = syllables$start[s], y0 = threshold,
+               x1 = syllables$end[s], y1 = threshold,
+               lty = sylPlot$lty, lwd = sylPlot$lwd, col = sylPlot$col)
     }
-    if (!is.na(savePath)){
+    if (is.character(savePath)){
       dev.off()
     }
   }
@@ -268,18 +315,41 @@ segmentFolder = function (myfolder,
                           savePath = NA,
                           verbose = TRUE,
                           reportEvery = 10,
+                          col = 'green',
+                          xlab = 'Time, ms',
+                          ylab = 'Amplitude',
+                          main = NULL,
+                          width = 900,
+                          height = 500,
+                          units = 'px',
+                          sylPlot = list(
+                            lty = 1,
+                            lwd = 2,
+                            col = 'blue'
+                          ),
+                          burstPlot = list(
+                            pch = 8,
+                            cex = 3,
+                            col = 'red'
+                          ),
                           ...) {
   time_start = proc.time()  # timing
   # open all .wav files in folder
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
-  myPars = myPars[names(myPars) != 'myfolder' &  # exclude these two args
-                    names(myPars) != 'verbose']
+  # exclude unnecessary args
+  myPars = myPars[!names(myPars) %in% c('myfolder', 'verbose', 'reportEvery',
+                                        'sylPlot', 'burstPlot')]  # otherwise flattens lists
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+  # add back sylPlot and burstPlot
+  myPars$sylPlot = sylPlot
+  myPars$burstPlot = burstPlot
   result = list()
 
   for (i in 1:length(filenames)) {
-    result[[i]] = result[[i]] = do.call(segment, c(filenames[i], myPars))
+    result[[i]] = do.call(segment, c(filenames[i], myPars, ...))
     if (verbose) {
       if (i %% reportEvery == 0) {
         reportTime(i = i, nIter = length(filenames),
