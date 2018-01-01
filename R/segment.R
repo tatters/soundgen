@@ -220,6 +220,9 @@ segment = function(x,
     if (is.null(burstPlot$col)) burstPlot$col = 'red'
 
     if (is.character(savePath)) {
+      # make sure the last character of savePath is "/"
+      last_char = substr(savePath, nchar(savePath), nchar(savePath))
+      if(last_char != '/') savePath = paste0(savePath, '/')
       jpeg(filename = paste0(savePath, plotname, ".jpg"),
            width = width, height = height, units = units)
     }

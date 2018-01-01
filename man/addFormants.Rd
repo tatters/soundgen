@@ -7,8 +7,9 @@
 addFormants(sound, formants, action = c("add", "remove")[1],
   vocalTract = NA, formantDep = 1, formantDepStoch = 20, lipRad = 6,
   noseRad = 4, mouthOpenThres = 0, mouthAnchors = NA,
-  temperature = 0.025, formDrift = 0.3, formDisp = 0.2,
-  samplingRate = 16000, windowLength_points = 800, overlap = 75)
+  interpol = c("approx", "spline", "loess")[3], temperature = 0.025,
+  formDrift = 0.3, formDisp = 0.2, samplingRate = 16000,
+  windowLength_points = 800, overlap = 75)
 }
 \arguments{
 \item{sound}{numeric vector with \code{samplingRate}}
@@ -47,6 +48,11 @@ radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1}
 \item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 i.e. no modification) or a dataframe specifying the time (ms) and value of
 mouth opening}
+
+\item{interpol}{the method of smoothing envelopes based on provided mouth
+anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
+(default) = polynomial local smoothing function. NB: this does NOT affect
+the smoothing of formant anchors}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}

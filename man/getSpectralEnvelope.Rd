@@ -5,12 +5,13 @@
 \title{Spectral envelope}
 \usage{
 getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1, lipRad = 6,
-  noseRad = 4, mouthAnchors = NA, mouthOpenThres = 0.2,
-  openMouthBoost = 0, vocalTract = NULL, temperature = 0.05,
-  formDrift = 0.3, formDisp = 0.2, formantDepStoch = 20,
-  smoothLinearFactor = 1, samplingRate = 16000, speedSound = 35400,
-  plot = FALSE, duration = NULL, colorTheme = c("bw", "seewave",
-  "...")[1], nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
+  noseRad = 4, mouthAnchors = NA, interpol = c("approx", "spline",
+  "loess")[3], mouthOpenThres = 0.2, openMouthBoost = 0,
+  vocalTract = NULL, temperature = 0.05, formDrift = 0.3,
+  formDisp = 0.2, formantDepStoch = 20, smoothLinearFactor = 1,
+  samplingRate = 16000, speedSound = 35400, plot = FALSE,
+  duration = NULL, colorTheme = c("bw", "seewave", "...")[1], nCols = 100,
+  xlab = "Time", ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where
@@ -39,6 +40,11 @@ closed)}
 \item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 i.e. no modification) or a dataframe specifying the time (ms) and value of
 mouth opening}
+
+\item{interpol}{the method of smoothing envelopes based on provided mouth
+anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
+(default) = polynomial local smoothing function. NB: this does NOT affect
+the smoothing of formant anchors}
 
 \item{mouthOpenThres}{open the lips (switch from nose radiation to lip
 radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1}

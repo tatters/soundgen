@@ -18,6 +18,10 @@
 #'   for static or multiple values of each for moving formants. \code{formants =
 #'   NA} defaults to schwa. Time stamps for formants and mouthOpening can be
 #'   specified in ms or an any other arbitrary scale.
+#' @param interpol the method of smoothing envelopes based on provided mouth
+#'   anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
+#'   (default) = polynomial local smoothing function. NB: this does NOT affect
+#'   the smoothing of formant anchors
 #' @param formDrift scale factor regulating the effect of temperature on the
 #'   depth of random drift of all formants (user-defined and stochastic): the
 #'   higher, the more formants drift at a given temperature
@@ -85,6 +89,7 @@ getSpectralEnvelope = function(nr,
                                lipRad = 6,
                                noseRad = 4,
                                mouthAnchors = NA,
+                               interpol = c('approx', 'spline', 'loess')[3],
                                mouthOpenThres = 0.2,
                                openMouthBoost = 0,
                                vocalTract = NULL,
@@ -269,6 +274,7 @@ getSpectralEnvelope = function(nr,
       mouthOpening_upsampled = getSmoothContour(
         len = nc,
         anchors = mouthAnchors,
+        interpol = interpol,
         valueFloor = permittedValues['mouthOpening', 'low'],
         valueCeiling = permittedValues['mouthOpening', 'high'],
         plot = FALSE
@@ -847,6 +853,10 @@ formantDev = function(formants,
 #' @param formDrift,formDisp scaling factors for the effect of temperature on
 #'   formant drift and dispersal, respectively
 #' @param windowLength_points length of FFT window, points
+#' @param interpol the method of smoothing envelopes based on provided mouth
+#'   anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
+#'   (default) = polynomial local smoothing function. NB: this does NOT affect
+#'   the smoothing of formant anchors
 #' @inheritParams soundgen
 #' @export
 #' @examples
@@ -875,6 +885,7 @@ addFormants = function(sound,
                        noseRad = 4,
                        mouthOpenThres = 0,
                        mouthAnchors = NA,
+                       interpol = c('approx', 'spline', 'loess')[3],
                        temperature = 0.025,
                        formDrift = 0.3,
                        formDisp = 0.2,
@@ -923,6 +934,7 @@ addFormants = function(sound,
       noseRad = noseRad,
       mouthOpenThres = mouthOpenThres,
       mouthAnchors = mouthAnchors,
+      interpol = interpol,
       temperature = temperature,
       formDrift = formDrift,
       formDisp = formDisp,

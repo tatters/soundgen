@@ -4,7 +4,9 @@ NEW FUNCTIONS:
 
 MINOR:
   * soundgen(): very rapid or instantaneous attack is now achievable without adjusting windowLength
-  * analyze(), segment(): streamlined plotting options, minor debugging
+  * soundgen(): interpol also affects the smoothing of mouth anchors
+  * analyze(), segment(): streamlined and extended plotting options (new feature), plots saved properly (bug removed)
+  * segment(): pauseLen_sd no longer always returns NA (bug removed)
 
           CHANGES IN SOUNDGEN VERSION 1.1.1 [02-December-2017]
 NEW FUNCTIONS:

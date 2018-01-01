@@ -27,9 +27,11 @@ before smoothing and plots in both Hz and musical notation}
 
 \item{normalizeTime}{if TRUE, normalizes anchors$time values to range from 0 to 1}
 
-\item{interpol}{the method of smoothing envelopes based on provided anchors:
-'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-= polynomial local smoothing function}
+\item{interpol}{the method of smoothing envelopes based on provided pitch,
+amplitude, and mouth anchors: 'approx' = linear interpolation, 'spline' =
+cubic spline, 'loess' (default) = polynomial local smoothing function. NB:
+this does not affect noiseAnchors, glottalAnchors, and the smoothing of
+formants}
 
 \item{discontThres}{if two anchors are closer in time than
 \code{discontThres}, the contour is broken into segments with a linear

@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version; spectrogram crashes for very short syllables; breathing length should vary together with sylLen when adding nonlinear effect (strong jitter - sylLen varies unpredictably, so breathing may be longer than the voiced part); a top-level scaling factor for broadening formants (formant width); check interpol - doesn't seem to affect mouth contour, which still seems to use loess;
+# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version; spectrogram crashes for very short syllables; breathing length should vary together with sylLen when adding nonlinear effect (strong jitter - sylLen varies unpredictably, so breathing may be longer than the voiced part); a top-level scaling factor for broadening formants (formant width);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -138,9 +138,11 @@ NULL
 #' @param amplAnchorsGlobal a numeric vector of global amplitude envelope
 #'   spanning multiple syllables or a dataframe specifying the time (ms) and
 #'   value (0 to 1) of each anchor
-#' @param interpol the method of smoothing envelopes based on provided anchors:
-#'   'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-#'   = polynomial local smoothing function
+#' @param interpol the method of smoothing envelopes based on provided pitch,
+#'   amplitude, and mouth anchors: 'approx' = linear interpolation, 'spline' =
+#'   cubic spline, 'loess' (default) = polynomial local smoothing function. NB:
+#'   this does not affect noiseAnchors, glottalAnchors, and the smoothing of
+#'   formants
 #' @param discontThres,jumpThres if two anchors are closer in time than
 #'   \code{discontThres}, the contour is broken into segments with a linear
 #'   transition between these anchors; if anchors are closer than
@@ -251,7 +253,7 @@ soundgen = function(repeatBout = 1,
                     amDep = 0,
                     amFreq = 30,
                     amShape = 0,
-                    noiseAnchors = NULL, # data.frame(time = c(0, 300), value = c(-80, -80)),
+                    noiseAnchors = NULL,
                     formantsNoise = NA,
                     rolloffNoise = -4,
                     mouthAnchors = data.frame(time = c(0, 1),
@@ -701,6 +703,7 @@ soundgen = function(repeatBout = 1,
             noseRad = noseRad,
             mouthOpenThres = mouthOpenThres,
             mouthAnchors = mouthAnchors,
+            interpol = interpol,
             temperature = temperature,
             formDrift = tempEffects$formDrift,
             formDisp = tempEffects$formDisp,
@@ -795,6 +798,7 @@ soundgen = function(repeatBout = 1,
       noseRad = noseRad,
       mouthOpenThres = mouthOpenThres,
       mouthAnchors = mouthAnchors,
+      interpol = interpol,
       temperature = temperature,
       formDrift = tempEffects$formDrift,
       formDisp = tempEffects$formDisp,
