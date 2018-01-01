@@ -249,7 +249,7 @@ segment = function(x,
       pauseLen_median = ifelse(nrow(syllables) > 1,
                                median(syllables$pauseLen, na.rm = TRUE),
                                NA),  # otherwise returns NULL
-      pauseLen_sd = sd(syllables$pauseLen),
+      pauseLen_sd = sd(syllables$pauseLen, na.rm = TRUE),
       nBursts = nrow(bursts),
       interburst_mean = suppressWarnings(mean(bursts$interburstInt, na.rm = TRUE)),
       interburst_median = ifelse(nrow(bursts) > 0,

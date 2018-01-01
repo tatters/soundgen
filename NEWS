@@ -4,7 +4,7 @@ NEW FUNCTIONS:
 
 MINOR:
   * soundgen(): very rapid or instantaneous attack is now achievable without adjusting windowLength
-
+  * analyze(), segment(): streamlined plotting options, minor debugging
 
           CHANGES IN SOUNDGEN VERSION 1.1.1 [02-December-2017]
 NEW FUNCTIONS:
