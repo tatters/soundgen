@@ -43,8 +43,9 @@
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
 #' @param osc should an oscillogram be shown under the spectrogram? TRUE / FALSE
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
-#'   or another color theme (e.g. 'heat.colors')
-#' @param xlab label for x-axis
+#'   or any palette from \code{\link[grDevices]{Palettes}} such as
+#'   'heat.colors', 'cm.colors', etc
+#' @param xlab,ylab,main graphical parameters
 #' @param ... other graphical parameters passed to
 #'   \code{seewave:::filled.contour.modif2}
 #' @param frameBank ignore (only needed for pitch tracking)
@@ -69,8 +70,6 @@
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #' # broad-band instead of narrow-band
 #' spectrogram(sound, samplingRate = 16000, windowLength = 5)
-#' # spectral derivatives
-#' spectrogram(sound, samplingRate = 16000, method = 'spectralDerivative')
 #'
 #' # focus only on values in the upper 5% for each frequency bin
 #' spectrogram(sound, samplingRate = 16000, qTime = 0.95)
@@ -89,8 +88,8 @@
 #'
 #' # add bells and whistles
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
-#'   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
-#'   ylab = 'Frequency, kHz', ylim = c(0,5))
+#'   brightness = -1, colorTheme = 'heat.colors',
+#'   ylim = c(0,5), cex.lab = .75, main = 'My spectrogram')
 #' }
 spectrogram = function(x,
                        samplingRate = NULL,
@@ -112,10 +111,16 @@ spectrogram = function(x,
                        plot = TRUE,
                        osc = FALSE,
                        colorTheme = c('bw', 'seewave', '...')[1],
-                       xlab = '',
+                       xlab = 'Time, ms',
+                       ylab = 'Frequency, KHz',
+                       main = '',
                        frameBank = NULL,
                        duration = NULL,
                        ...) {
+  if (overlap < 0 | overlap > 100) {
+    warning('overlap must be >0 and <= 100%; resetting to 70')
+    overlap = 70
+  }
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
   # import audio
   if (class(x) == 'character') {
@@ -123,8 +128,15 @@ spectrogram = function(x,
     samplingRate = sound_wav@samp.rate
     windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
     sound = sound_wav@left
+    if (windowLength_points > (length(sound) / 2)) {
+      windowLength_points = floor(length(sound) / 4) * 2
+      step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
+    }
+    if (windowLength_points == 0) {
+      stop('The sound and/or the windowLength is too short for plotting a spectrogram')
+    }
     duration = length(sound) / samplingRate
-    frameBank = getFrameBank (
+    frameBank = getFrameBank(
       sound = sound,
       samplingRate = samplingRate,
       windowLength_points = windowLength_points,
@@ -140,7 +152,14 @@ spectrogram = function(x,
       sound = x
       duration = length(sound) / samplingRate
       windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-      frameBank = getFrameBank (
+      if (windowLength_points > (length(sound) / 2)) {
+        windowLength_points = floor(length(sound) / 4) * 2
+        step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
+      }
+      if (windowLength_points == 0) {
+        stop('The sound and/or the windowLength is too short for plotting a spectrogram')
+      }
+      frameBank = getFrameBank(
         sound = x,
         samplingRate = samplingRate,
         windowLength_points = windowLength_points,
@@ -168,12 +187,27 @@ spectrogram = function(x,
 
   # FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  if (windowLength_points > (length(sound) / 2)) {
+    windowLength_points = floor(length(sound) / 4) * 2
+    step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
+  }
+  if (windowLength_points == 0) {
+    stop('The sound and/or the windowLength is too short for plotting a spectrogram')
+  }
+
   # fft of each frame
   z = apply(frameBank, 2, function(x) stats::fft(x)[1:(floor(nrow(frameBank) / 2))])
+  if (!is.matrix(z)) z = matrix(z, ncol = 1)
   X = seq(0, duration * 1000, length.out = ncol(z))  # time stamp
+  if (length(X) < 2) {
+    stop('The sound is too short for plotting a spectrogram')
+  }
   Y = seq(0,
           (samplingRate / 2) - (samplingRate / windowLength_points),
           length.out = nrow(z)) / 1000  # frequency stamp
+  if (length(Y) < 2) {
+    stop('The sound and/or the windowLength is too short for plotting a spectrogram')
+  }
   rownames(z) = Y
   colnames(z) = X
   Z = t(abs(z))
@@ -210,7 +244,9 @@ spectrogram = function(x,
   positives = which(Z1 > 0)
   nonpositives = which(Z1 <= 0)
   Z1[positives] = log(Z1[positives])
-  Z1[nonpositives] = min(Z1[positives])
+  if (length(positives) > 0 & length(nonpositives) > 0) {
+    Z1[nonpositives] = min(Z1[positives])
+  }
   Z1 = Z1 - min(Z1)
 
   if (noiseReduction > 0) {
@@ -233,7 +269,7 @@ spectrogram = function(x,
     Z1 = Z1 ^ contrast_exp
   }
 
-  Z1 = Z1 / max(Z1)
+  if (any(Z1 != 0)) Z1 = Z1 / max(Z1)
   if (brightness_exp != 1) {
     Z1 = Z1 / brightness_exp
   }
@@ -256,15 +292,25 @@ spectrogram = function(x,
     if (osc) {
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(3, 1))
       par(mar = c(5.1, 4.1, 0, 2.1), xaxt = 's', yaxt = 'n')
-      plot(seq(1, duration * 1000, length.out = length(sound)), sound,
-           type = "l", xaxs = "i", yaxs = "i", xlab = xlab, ylab = '')
+      plot(
+        seq(1, duration * 1000, length.out = length(sound)),
+        sound,
+        type = "l", xaxs = "i", yaxs = "i",
+        xlab = xlab, ylab = '', main = '', ...)
       axis(side = 1, labels = TRUE)
       abline(h = 0, lty = 2)
       par(mar = c(0, 4.1, 2.1, 2.1), xaxt = 'n', yaxt = 's')
       xlab = ''
     }
-    seewave::filled.contour.modif2(x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
-                                   color.palette = color.palette, ylim = ylim, xlab = xlab, ...)
+
+    seewave::filled.contour.modif2(
+      x = X, y = Y, z = Z1,
+      levels = seq(0, 1, length = 30),
+      color.palette = color.palette,
+      ylim = ylim, main = main,
+      xlab = xlab, ylab = ylab,
+      ...
+    )
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
   }
@@ -343,10 +389,10 @@ getFrameBank = function(sound,
                         zp,
                         filter = NULL) {
   # # normalize to range from no less than -1 to no more than +1
-  if (min(sound) > 0) {
-    sound = scale(sound)
+  if (any(sound != 0)) {
+    sound = sound - mean(sound)
+    sound = sound / max(abs(max(sound)), abs(min(sound)))
   }
-  sound = sound / max(abs(max(sound)), abs(min(sound)))
   duration = length(sound) / samplingRate
   myseq = seq(1, max(1, (length(sound) - windowLength_points)),
               step / 1000 * samplingRate)

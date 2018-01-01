@@ -788,24 +788,28 @@ soundgen = function(repeatBout = 1,
     }
 
     # add formants
-    soundFiltered = addFormants(
-      sound = sound,
-      formants = formants,
-      vocalTract = vocalTract,
-      formantDep = formantDep,
-      formantDepStoch = formantDepStoch,
-      lipRad = lipRad,
-      noseRad = noseRad,
-      mouthOpenThres = mouthOpenThres,
-      mouthAnchors = mouthAnchors,
-      interpol = interpol,
-      temperature = temperature,
-      formDrift = tempEffects$formDrift,
-      formDisp = tempEffects$formDisp,
-      samplingRate = samplingRate,
-      windowLength_points = windowLength_points,
-      overlap = overlap
-    )
+    if (length(sound) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
+      soundFiltered = addFormants(
+        sound = sound,
+        formants = formants,
+        vocalTract = vocalTract,
+        formantDep = formantDep,
+        formantDepStoch = formantDepStoch,
+        lipRad = lipRad,
+        noseRad = noseRad,
+        mouthOpenThres = mouthOpenThres,
+        mouthAnchors = mouthAnchors,
+        interpol = interpol,
+        temperature = temperature,
+        formDrift = tempEffects$formDrift,
+        formDisp = tempEffects$formDisp,
+        samplingRate = samplingRate,
+        windowLength_points = windowLength_points,
+        overlap = overlap
+      )
+    } else {
+      soundFiltered = sound
+    }
     # spectrogram(soundFiltered, samplingRate = samplingRate)
     # playme(soundFiltered, samplingRate = samplingRate)
 

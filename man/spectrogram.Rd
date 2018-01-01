@@ -10,7 +10,8 @@ spectrogram(x, samplingRate = NULL, windowLength = 50, step = NULL,
   contrast = 0.2, brightness = 0, method = c("spectrum",
   "spectralDerivative")[1], output = c("none", "original", "processed")[1],
   ylim = NULL, plot = TRUE, osc = FALSE, colorTheme = c("bw", "seewave",
-  "...")[1], xlab = "", frameBank = NULL, duration = NULL, ...)
+  "...")[1], xlab = "Time, ms", ylab = "Frequency, KHz", main = "",
+  frameBank = NULL, duration = NULL, ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -68,9 +69,10 @@ spectrogram ('original'), or denoised and/or smoothed spectrogram
 \item{osc}{should an oscillogram be shown under the spectrogram? TRUE / FALSE}
 
 \item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
-or another color theme (e.g. 'heat.colors')}
+or any palette from \code{\link[grDevices]{Palettes}} such as
+'heat.colors', 'cm.colors', etc}
 
-\item{xlab}{label for x-axis}
+\item{xlab, ylab, main}{graphical parameters}
 
 \item{frameBank}{ignore (only needed for pitch tracking)}
 
@@ -106,8 +108,6 @@ spectrogram(sound, samplingRate = 16000)
 spectrogram(sound, samplingRate = 16000, osc = TRUE)
 # broad-band instead of narrow-band
 spectrogram(sound, samplingRate = 16000, windowLength = 5)
-# spectral derivatives
-spectrogram(sound, samplingRate = 16000, method = 'spectralDerivative')
 
 # focus only on values in the upper 5\% for each frequency bin
 spectrogram(sound, samplingRate = 16000, qTime = 0.95)
@@ -126,7 +126,7 @@ spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 
 # add bells and whistles
 spectrogram(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
-  brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
-  ylab = 'Frequency, kHz', ylim = c(0,5))
+  brightness = -1, colorTheme = 'heat.colors',
+  ylim = c(0,5), cex.lab = .75, main = 'My spectrogram')
 }
 }
