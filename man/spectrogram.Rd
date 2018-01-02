@@ -69,7 +69,7 @@ spectrogram ('original'), or denoised and/or smoothed spectrogram
 \item{osc}{should an oscillogram be shown under the spectrogram? TRUE / FALSE}
 
 \item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
-or any palette from \code{\link[grDevices]{Palettes}} such as
+or any palette from \code{\link[grDevices]{palette}} such as
 'heat.colors', 'cm.colors', etc}
 
 \item{xlab, ylab, main}{graphical parameters}

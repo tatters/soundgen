@@ -269,7 +269,7 @@ s = soundgen(sylLen = 1000, formants = NA,
              plot = TRUE, osc = TRUE, play = playback)
 ```
 
-*TIP Attack length cannot be reduced to values much smaller than the length of FFT window used for filtering during sound generation. If you need a really sharp sound onset, reduce `windowLength` or trim off the beginning of the sound in post-production*
+*TIP The parameter `attackLen` affects both the beginning and the end of a syllable. For asymmetrical attack, keep `attackLen` low and apply `fade(fadeIn = ..., fadeOut = ...)` to the synthesized sound in post-production. Avoid `attackLen = 0`, since that can cause clicks*
 
 A common special case of modifying the amplitude envelope of a synthesized or recorded sound is to flatten it, making sure the amplitude remains relatively stable throughout the duration of the signal. There is a separate function for achieving this, namely flatEnv():
 ```{r fig.width = 7, fig.height = 3}

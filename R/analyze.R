@@ -242,13 +242,15 @@ analyze = function(x,
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = substring (plotname, first = 1,
                           last = (nchar(plotname) - 4))
-  }  else if (class(x) == 'numeric' & length(x) > 1) {
+  } else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop('Please specify "samplingRate", eg 44100')
     } else {
       sound = x
       plotname = ''
     }
+  } else {
+    stop('Input not recognized')
   }
 
   # normalize to range from no less than -1 to no more than +1
@@ -269,9 +271,9 @@ analyze = function(x,
   duration = length(sound) / samplingRate
   if (!is.numeric(windowLength) || windowLength <= 0 ||
       windowLength > (duration * 1000)) {
-    windowLength = 50
-    warning('"windowLength" must be between 0 and sound_duration ms;
-            defaulting to 50 ms')
+    windowLength = min(50, duration / 2 * 1000)
+    warning(paste0('"windowLength" must be between 0 and sound_duration ms;
+            defaulting to ', windowLength, ' ms'))
   }
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:

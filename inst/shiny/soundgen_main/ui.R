@@ -226,7 +226,8 @@ ui = fluidPage(
                                              sidebarPanel(
                                                sliderInput('formantDep', 'Formant prominence *hyper*', value=permittedValues['formantDep','default'], min=permittedValues['formantDep', 'low'], max=permittedValues['formantDep', 'high'], step=permittedValues['formantDep','step']),
                                                shinyBS:::bsPopover(id='formantDep', title=NULL, content='Multiply formant amplitudes by ... (>1 = emphasize vowel quality)', placement="right", trigger="hover"),
-
+                                               sliderInput('formantWidth', 'Formant width *hyper*', value=permittedValues['formantWidth','default'], min=permittedValues['formantWidth', 'low'], max=permittedValues['formantWidth', 'high'], step=permittedValues['formantWidth','step']),
+                                               shinyBS:::bsPopover(id='formantWidth', title=NULL, content='Multiply formant bandwidths by ... (>1 = nasalized or muffled)', placement="right", trigger="hover"),
                                                textInput('vowelString', label='String of vowel presets *hyper*', value = "a", width = NULL, placeholder ='uaaao'),
                                                shinyBS:::bsPopover(id='vowelString', title=NULL, content="Implemented presets: a, o, i, e, u, 0 (schwa)", placement="right", trigger="hover"),
                                                shinyBS::bsCollapsePanel("Show & modify formants manually",

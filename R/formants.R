@@ -74,6 +74,12 @@
 #'   vocalTract = 16, plot = TRUE, lipRad = 6, noseRad = 4,
 #'   mouthAnchors = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 #'
+#' # scale formant amplitude and/or bandwidth
+#' e = getSpectralEnvelope(nr = 512, nc = 50,
+#'   formants = soundgen:::convertStringToFormants('a'),
+#'   formantWidth = 2, formantDep = .5,
+#'   temperature = 0, plot = TRUE)
+#'
 #' # manual specification of formants
 #' e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,
 #'   formants = list(f1 = data.frame(time = c(0, 1), freq = c(900, 500),
@@ -86,6 +92,7 @@ getSpectralEnvelope = function(nr,
                                nc,
                                formants = NA,
                                formantDep = 1,
+                               formantWidth = 1,
                                lipRad = 6,
                                noseRad = 4,
                                mouthAnchors = NA,
@@ -209,15 +216,18 @@ getSpectralEnvelope = function(nr,
         # Solving for nExtraFormants gives (nyquist * 4 / formantDispersion + 1) / 2:
         nExtraFormants = round((samplingRate * 2 / formantDispersion + 1) / 2) - nFormants
         if (is.numeric(nExtraFormants) && nExtraFormants > 0) {
-          extraFreqs_regular = (2 * ((nFormants_integer + 1):(nFormants_integer + nExtraFormants)) - 1) /
+          extraFreqs_regular = (2 * ((nFormants_integer + 1):
+                                       (nFormants_integer + nExtraFormants)) - 1) /
             2 * formantDispersion
           extraFreqs = rgamma(nExtraFormants,
+                              # mean = extraFreqs_regular, sd = sdG
                               extraFreqs_regular ^ 2 / sdG ^ 2,
                               extraFreqs_regular / sdG ^ 2)
           extraAmps = rgamma(
             nExtraFormants,
-            (formantDep / temperature) ^ 2,
-            formantDepStoch * formantDep / (formantDepStoch * temperature) ^ 2
+            # mean = formantDepStoch, sd = formantDepStoch * temperature
+            1 / temperature ^ 2,
+            1 / (formantDepStoch * temperature ^ 2)
           )
           extraWidths = getBandwidth(extraFreqs)
           for (f in 1:nExtraFormants) {
@@ -262,7 +272,7 @@ getSpectralEnvelope = function(nr,
       # frequencies expressed in bin indices (how many bin widths above the
       # central frequency of the first bin)
       formants_upsampled[[f]][, 'width'] =
-        formants_upsampled[[f]][, 'width'] / bin_width
+        formants_upsampled[[f]][, 'width'] / bin_width * formantWidth
     }
 
     # mouth opening
@@ -881,6 +891,7 @@ addFormants = function(sound,
                        vocalTract = NA,
                        formantDep = 1,
                        formantDepStoch = 20,
+                       formantWidth = 1,
                        lipRad = 6,
                        noseRad = 4,
                        mouthOpenThres = 0,
@@ -930,6 +941,7 @@ addFormants = function(sound,
       formants = formants,
       formantDep = formantDep,
       formantDepStoch = formantDepStoch,
+      formantWidth = formantWidth,
       lipRad = lipRad,
       noseRad = noseRad,
       mouthOpenThres = mouthOpenThres,

@@ -43,7 +43,7 @@
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
 #' @param osc should an oscillogram be shown under the spectrogram? TRUE / FALSE
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
-#'   or any palette from \code{\link[grDevices]{Palettes}} such as
+#'   or any palette from \code{\link[grDevices]{palette}} such as
 #'   'heat.colors', 'cm.colors', etc
 #' @param xlab,ylab,main graphical parameters
 #' @param ... other graphical parameters passed to
@@ -187,7 +187,7 @@ spectrogram = function(x,
 
   # FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-  if (windowLength_points > (length(sound) / 2)) {
+  if (exists('sound') && windowLength_points > (length(sound) / 2)) {
     windowLength_points = floor(length(sound) / 4) * 2
     step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
   }

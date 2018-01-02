@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version; breathing length should vary together with sylLen when adding nonlinear effect (strong jitter - sylLen varies unpredictably, so breathing may be longer than the voiced part); a top-level scaling factor for broadening formants (formant width);
+# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version;
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -103,6 +103,7 @@ NULL
 #'   to amplitudes in \code{formants})
 #' @param formantDepStoch the amplitude of additional stochastic formants added above
 #'   the highest specified formant, dB (only if temperature > 0)
+#' @param formantWidth = scale factor of formant bandwidth (1 = no change)
 #' @param vocalTract the length of vocal tract, cm. Used for calculating formant
 #'   dispersion (for adding extra formants) and formant transitions as the mouth
 #'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated
@@ -246,6 +247,7 @@ soundgen = function(repeatBout = 1,
                     formants = c(860, 1430, 2900),
                     formantDep = 1,
                     formantDepStoch = 20,
+                    formantWidth = 1,
                     vocalTract = NA,
                     subFreq = 100,
                     subDep = 100,
@@ -705,6 +707,7 @@ soundgen = function(repeatBout = 1,
             nc = nInt,
             formants = formantsNoise,
             formantDep = formantDep,
+            formantWidth = formantWidth,
             formantDepStoch = 0,  # formantDepStoch,
             lipRad = lipRad,
             noseRad = noseRad,
@@ -801,6 +804,7 @@ soundgen = function(repeatBout = 1,
         formants = formants,
         vocalTract = vocalTract,
         formantDep = formantDep,
+        formantWidth = formantWidth,
         formantDepStoch = formantDepStoch,
         lipRad = lipRad,
         noseRad = noseRad,

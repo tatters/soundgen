@@ -13,14 +13,14 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   rolloff = -9, rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
   rolloffParabHarm = 3, lipRad = 6, rolloffLip = NULL, noseRad = 4,
   mouthOpenThres = 0, formants = c(860, 1430, 2900), formantDep = 1,
-  formantDepStoch = 20, vocalTract = NA, subFreq = 100, subDep = 100,
-  shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
-  noiseAnchors = NULL, formantsNoise = NA, rolloffNoise = -4,
-  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  amplAnchors = NA, amplAnchorsGlobal = NA, interpol = c("approx",
-  "spline", "loess")[3], discontThres = 0.05, jumpThres = 0.01,
-  samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
+  formantDepStoch = 20, formantWidth = 1, vocalTract = NA,
+  subFreq = 100, subDep = 100, shortestEpoch = 300, amDep = 0,
+  amFreq = 30, amShape = 0, noiseAnchors = NULL, formantsNoise = NA,
+  rolloffNoise = -4, mouthAnchors = data.frame(time = c(0, 1), value =
+  c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
+  interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
+  jumpThres = 0.01, samplingRate = 16000, windowLength = 50,
+  overlap = 75, addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
   pitchSamplingRate = 3500, throwaway = -80,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
@@ -143,6 +143,8 @@ to amplitudes in \code{formants})}
 
 \item{formantDepStoch}{the amplitude of additional stochastic formants added above
 the highest specified formant, dB (only if temperature > 0)}
+
+\item{formantWidth}{= scale factor of formant bandwidth (1 = no change)}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
