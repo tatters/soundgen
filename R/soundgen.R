@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version; spectrogram crashes for very short syllables; breathing length should vary together with sylLen when adding nonlinear effect (strong jitter - sylLen varies unpredictably, so breathing may be longer than the voiced part); a top-level scaling factor for broadening formants (formant width);
+# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version; breathing length should vary together with sylLen when adding nonlinear effect (strong jitter - sylLen varies unpredictably, so breathing may be longer than the voiced part); a top-level scaling factor for broadening formants (formant width);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -640,6 +640,8 @@ soundgen = function(repeatBout = 1,
                glottisAnchors = glottisAnchors_per_syl)
         ))
         )
+        # update the actual syllable duration (varies if there is strong jitter etc)
+        dur_syl = length(syllable) / samplingRate * 1000
       }
       # spectrogram(syllable, samplingRate = samplingRate)
       # playme(syllable, samplingRate = samplingRate)
@@ -672,14 +674,19 @@ soundgen = function(repeatBout = 1,
           sum(noiseAnchors$value > throwaway) > 0) {
         # adjust noiseAnchors$time to match the actual syllable duration
         noiseAnchors_syl[[s]] = noiseAnchors
-        noiseAnchors_syl[[s]]$time[noiseAnchors_syl[[s]]$time > 0] =
-          noiseAnchors_syl[[s]]$time[noiseAnchors_syl[[s]]$time > 0] *
-          dur_syl / sylLen
+        idx_mid = which(noiseAnchors_syl[[s]]$time > 0 &  # not before syl
+                          noiseAnchors_syl[[s]]$time < sylLen)  # not after syl
+        idx_after = which(noiseAnchors_syl[[s]]$time >= sylLen)  # after syl
+        noiseAnchors_syl[[s]]$time[idx_mid] =
+          noiseAnchors_syl[[s]]$time[idx_mid] * dur_syl / sylLen
+        noiseAnchors_syl[[s]]$time[idx_after] =
+          noiseAnchors_syl[[s]]$time[idx_after] - sylLen + dur_syl
         # negative time anchors are not changed: the pre-aspiration length
         # is constant, regardless of the actual syllable duration.
-        # However, positive time anchors are proportional to the actual
+        # Time anchors from 0 to sylLen are proportional to the actual
         # syllable duration re the average expected duration (which the user
         # sees in the UI when choosing time anchors)
+        # Time anchors beyond sylLen are scaled to preserve post-aspiration len
         unvoicedDur_syl = round(diff(range(noiseAnchors_syl[[s]]$time)) *
                                   samplingRate / 1000)
 

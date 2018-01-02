@@ -294,10 +294,12 @@ server = function(input, output, session) {
       # rescale positive time anc<hors up to sylLen, but not later, and not negative ones
       # (ie the length of pre- and post-syllable aspiration does not
       # vary as the syllable length changes)
-      idx1 = which(myPars$noiseAnchors$time > 0 & myPars$noiseAnchors$time <= myPars$sylDur_previous)
+      idx1 = which(myPars$noiseAnchors$time > 0 &
+                     myPars$noiseAnchors$time < myPars$sylDur_previous)
+      idx2 = which(myPars$noiseAnchors$time >= myPars$sylDur_previous)
       myPars$noiseAnchors$time[idx1] = round(myPars$noiseAnchors$time[idx1] * scale_coef)
-      idx2 = which(myPars$noiseAnchors$time > myPars$sylDur_previous)
-      myPars$noiseAnchors$time[idx2] = myPars$noiseAnchors$time[idx2] + input$sylLen - myPars$sylDur_previous
+      myPars$noiseAnchors$time[idx2] = myPars$noiseAnchors$time[idx2] +
+        input$sylLen - myPars$sylDur_previous
 
       updateSliderInput(session, inputId = 'noiseTime',
                         value = range(myPars$noiseAnchors$time))

@@ -4,9 +4,11 @@ NEW FUNCTIONS:
 
 MINOR:
   * soundgen(): very rapid or instantaneous attack is now achievable without adjusting windowLength
-  * soundgen(): interpol also affects the smoothing of mouth anchors
-  * analyze(), segment(): streamlined and extended plotting options (new feature), plots saved properly (bug removed)
-  * segment(): pauseLen_sd no longer always returns NA (bug removed)
+  * soundgen() and soundgen_app(): noiseAnchors are scaled appropriately as syllable length varies due to jitter, while post-syllabic noiseAnchors are not scaled with syllable duration (i.e. the length of post-syllabic aspiration is held constant as syllable length varies)
+  * soundgen(): interpol affects the smoothing of mouth anchors
+  * analyze(), segment(): streamlined and extended plotting options, plots saved properly (bug)
+  * segment(): pauseLen_sd no longer always returns NA (bug)
+  * spectrogram(): proper handling of silent or very short input
 
           CHANGES IN SOUNDGEN VERSION 1.1.1 [02-December-2017]
 NEW FUNCTIONS:
