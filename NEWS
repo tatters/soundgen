@@ -1,6 +1,6 @@
           CHANGES IN SOUNDGEN VERSION 1.1.1.9000 [...date...]
 NEW FUNCTIONS:
-  * formantDev(): estimates the deviation of formant frequencies from schwa
+  * schwa(): estimates expected formant frequencies based on vocal tract length, deviation of measured formants from the schwa, or formant frequencies of desired relative value relative to the schwa
 
 MINOR:
   * soundgen(): very rapid or instantaneous attack is now achievable without adjusting windowLength
