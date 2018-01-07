@@ -141,7 +141,7 @@ generateNoise = function(len,
   # multiply by filter
   z1_filtered = z1 * filterNoise
   # do inverse FFT
-  breathing = as.numeric (
+  breathing = as.numeric(
     seewave::istft(
       z1_filtered,
       f = samplingRate,

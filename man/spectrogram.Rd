@@ -115,7 +115,7 @@ spectrogram(sound, samplingRate = 16000, qTime = 0.95)
 # detect 10\% of the noisiest frames based on entropy and remove the pattern
 # found in those frames (in this cases, breathing)
 spectrogram(sound, samplingRate = 16000,  noiseReduction = 1.1,
-  brightness = -2)  # white noise almost gone
+  brightness = -2)  # white noise gone
 
 # apply median smoothing in both time and frequency domains
 spectrogram(sound, samplingRate = 16000, smoothFreq = 5,
