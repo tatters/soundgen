@@ -779,6 +779,12 @@ analyze = function(x,
       }
       # add the final pitch contour to the plot
       if (is.list(pitchPlot)) {
+        if (is.null(pitchPlot$col)) {
+          pitchPlot$col = rgb(0, 0, 1, .75)
+        }
+        if (is.null(pitchPlot$lwd)) {
+          pitchPlot$lwd = 3
+        }
         do.call('lines', c(list(
           x = result$time,
           y = result$pitch / 1000

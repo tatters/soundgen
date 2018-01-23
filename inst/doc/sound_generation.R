@@ -122,7 +122,7 @@ s1 = flatEnv(s, plot = TRUE, killDC = TRUE, windowLength_points = 50)
 ## ----fig.show = "hold", fig.width = 7, fig.height = 3--------------------
 # Here is a sound with sharp attack
 s = soundgen(sylLen = 1000, addSilence = 0, 
-             attackLen = 0, windowLength = 10)  
+             attackLen = 10)  
 # playme(s)
 s1 = fade(s, fadeIn = 200, fadeOut = 300, samplingRate = 16000,
           shape = 'cos', plot = TRUE)
@@ -440,7 +440,7 @@ m = morph(formula1 = list(repeatBout = 2),
 
 ## ------------------------------------------------------------------------
 target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-                  pitchAnchors =c(300, 200),
+                  pitchAnchors = c(300, 200),
                   rolloff = -5, play = playback)  # we hope to reproduce this sound
 # playme(target)
 
@@ -451,6 +451,7 @@ m1 = matchPars(target = target,
 
 # m1$pars contains a list of soundgen settings
 cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
+# playme(cand1)
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  call('soundgen', m1$pars)

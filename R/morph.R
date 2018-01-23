@@ -162,6 +162,16 @@ morph = function(formula1,
     }
   })
 
+  # NULL noiseAnchors means they should be set to the default throwaway
+  if ('noiseAnchors' %in% notDefaultNames) {
+    if (is.null(f1$noiseAnchors) || is.na(f1$noiseAnchors)) {
+      f1$noiseAnchors = reformatAnchors(defaults$throwaway)
+    }
+    if (is.null(f2$noiseAnchors) || is.na(f2$noiseAnchors)) {
+      f2$noiseAnchors = reformatAnchors(defaults$throwaway)
+    }
+  }
+
   # log-transform pitch and formant frequencies before morphing
   if ('pitchAnchors' %in% names(f1)) {
     if (is.numeric(f1$pitchAnchors$value)) f1$pitchAnchors$value = log(f1$pitchAnchors$value)

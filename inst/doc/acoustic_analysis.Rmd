@@ -39,7 +39,7 @@ The most relevant functions are:
 * `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
 * `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
   
-*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might actually want to use an interactive program like PRAAT and check everything manually. A good approach may be to start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages, software, or manual measurements. You can also customize `soundgen::analyze` to extract additional predictors.*
+*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use an interactive program like PRAAT and check everything manually. A good approach may be to start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages, software, or manual measurements. You can also customize `soundgen::analyze` to extract additional predictors.*
   
 This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics.
   
@@ -242,10 +242,10 @@ To make sure we have at least one pitch candidate for every frame in the suppose
 As an illustration, compare the output of the following two commands:
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
 par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .3, step = 25,
              snakeStep = NULL, smooth = 0)  
-a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .3, step = 25,
              snakeStep = NULL, smooth = 0,
              interpolWin = NULL, pathfinding = 'none')  # disable interpolation
@@ -259,11 +259,11 @@ The next step after interpolation is pathfinding proper - searching for the opti
 
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
 par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 0)  # minimize pitch jumps
-a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 1)  # minimize deviation from candidates
@@ -295,11 +295,11 @@ This smoothing can be applied to any measured value, not only the final pitch co
 
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
 par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
              smooth = 0)
-a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
              smooth = 1)
@@ -313,20 +313,23 @@ When analyzing a sound, and even when batch-processing an entire folder, it is o
 
 ```{r fig.height = 5, fig.width = 7}
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
-            specPlot = list(        # spectrogram: see ?spec
-              contrast = .75,
-              brightness = -0.5,
-              colorTheme = 'seewave',
-              ylim = c(0, 4)
-              # + other pars passed to seewave::filled.contour.modif2
-            ),
-            pitchPlot = list(       # final pitch contour (line)
-              col = rgb(0, .4, .9, .25),
+            # options for spectrogram(): see ?spectrogram
+            contrast = .75,
+            brightness = -0.5,
+            colorTheme = 'seewave',
+            ylim = c(0, 4),
+            # + other pars passed to seewave::filled.contour.modif2()
+            
+            # options for plotting the final pitch contour (line)
+            pitchPlot = list(       
+              col = 'black',
               lwd = 5,
               lty = 3
-              # + other pars passed to base::lines
+              # + other pars passed to base::lines()
             ),
-            candPlot = list(  # pitch candidates (points)
+            
+            # options for plotting pitch candidates (points)
+            candPlot = list(  
               levels = c('autocor', 'cep', 'spec', 'dom'),
               col = c('green', 'violet', 'red', 'orange'),
               pch = c(16, 7, 2, 3),
@@ -334,21 +337,15 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
             ))
 ```
 
-You can also suppress plotting any of these three components: the spectrogram, the final pitch contour, or individual pitch candidates. To do so, set the corresponding list of plotting parameters to NULL or NA. In the examples above `specPlot = NULL` plotted pitch candidates and contour over a blank plot rather than spectrogram. Likewise, we can plot a spectrogram with the final contour only, without individual candidates by setting `plot_pitchCands_par = NULL`.
+You can also suppress plotting any of these three components: the spectrogram, the final pitch contour, or individual pitch candidates. To suppress plotting the spectrogram, set `plotSpec = FALSE`. To suppress plotting the pitch contour, set `pitchPlot = NULL`. To suppress plotting pitch candidates, set `candPlot = NULL`.
 
 To save the plot, specify a valid path, for example:
 ```{r eval = FALSE}
-a = analyze(s1, samplingRate = 16000, plot = TRUE, savePath = '~/Downloads')
+a = analyze(s1, samplingRate = 16000, plot = TRUE, savePath = '~/Downloads',
+            width = 900, height = 500, units = 'px')
 ```
 
-This creates a file called 'sound.jpg' 1200 x 800 pixels in size in the indicated folder. For customization, just wrap the call to `analyze` in something like:
-```{r eval = FALSE}
-jpeg(my.custom.settings.go.here)  # or png(...), or whatever
-a = analyze(s1, samplingRate = 16000, plot = TRUE)
-dev.off()
-```
-
-This is simply more efficient than squeezing all these graphical parameters into `analyze`. In practice, the only time you might want to save the output from within `analyze` is when you do batch processing of multiple files with `analyzeFolder` (see below).
+This creates a file called 'sound.jpg' 900 x 500 pixels in size in the indicated folder. This is mostly useful when you do batch processing of multiple files with `analyzeFolder` and want to save the plots for manual checking of extracted plot contours (see below).
 
 ## Batch processing with `analyzeFolder`
 You may not feel too excited to learn that soundgen contains a wrapper around `analyze` that is meant for analyzing all .wav files in a folder. Indeed, calling `analyze` in a loop will achieve the same result. However, `analyzedFolder` can save you a bit of manual coding. If you want to preserve frame-by-frame information for each file in a folder, you can either loop through the files manually or call `analyzeFolder(myfolder, summary = FALSE)`, which returns a list of dataframes. In contrast, `analyzeFolder(myfolder, summary = TRUE)` returns a single dataframe, in which each acoustic predictor is summarized as the mean, median, and SD of frame-by-frame measurements. Since this is the kind of data you would normally use as input for things like classification of sounds or cluster analysis, this is a convenient shortcut for generating an acoustic dataset for further statistical modeling. In addition, `analyzeFolder` allows you to simultaneously save the plots and prints out estimated time to completion. 
@@ -370,11 +367,10 @@ Soundgen package contains a function called `segment`, which uses both these app
 ```{r fig.height = 3, fig.width = 7}
 # for info on using soundgen() function, see the vignette on sound synthesis 
 s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
-              pitchAnchors = list(time = c(0, 1), value = c(368, 284)),
+              pitchAnchors = c(368, 284),
               noiseAnchors = list(time = c(0, 67, 86, 186), 
                                   value = c(-45, -47, -89, -120)),
-              rolloffNoise = -8, amplAnchorsGlobal = list(time = c(0, 1), 
-                                                           value = c(120, 20)))
+              rolloffNoise = -8, amplAnchorsGlobal = c(80, 50))
 # spectrogram(s2, samplingRate = 16000, osc = TRUE)
 # playme(s2, samplingRate = 16000)
 a = segment(s2, samplingRate = 16000, plot = TRUE)
@@ -423,7 +419,7 @@ par(mfrow = c(1, 1))
 ```
 
 ### Batch processing: `segmentFolder`
-Just as `analyzeFolder` is a wrapper around `analyze` that simplifies looping through a whole folder of .wav files, `segmentFolder` provides a convenient wrapper around `segment`. It accepts the same arguments as `segment`, can optionally save segmentation plots in the designated folder (e.g., `savePath = ~/Downloads/`) as 900 x 500 .jpg files, and reports estimated time left (`verbose = TRUE`). You can save either detailed stats on individual syllables and bursts (`summary = FALSE`) or produce a summary table with means, medians, and SDs (`summary = TRUE`).
+Just as `analyzeFolder` is a wrapper around `analyze` that simplifies looping through a whole folder of .wav files, `segmentFolder` provides a convenient wrapper around `segment`. It accepts the same arguments as `segment` and can optionally save segmentation plots in the designated folder (e.g., `savePath = ~/Downloads/`). It also reports estimated time left (`verbose = TRUE`). You can save either detailed stats on individual syllables and bursts (`summary = FALSE`) or produce a summary table with means, medians, and SDs (`summary = TRUE`).
 
 *TIP If you are analyzing a single sound and are willing to adjust the settings manually, you can measure both syllables and bursts accurately. For batch processing without manual adjustments, bursts are more robust*
 
@@ -433,8 +429,7 @@ The basic idea behind self-similarity matrices (SSMs) is to compare different pa
 
 ```{r fig.show = "hold", fig.height = 6, fig.width = 7}
 s3 = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70, 
-       formants = NA, pitchAnchors = list(time = c(0, 1), 
-                                          value = c(500, 330))))
+       formants = NA, pitchAnchors = c(500, 330)))
 # playme(s3, 16000)
 m = ssm(s3, samplingRate = 16000)
 ```
@@ -477,7 +472,7 @@ The easiest, "out-of-the-box" solution is to use the soundgen function `optimize
 
 *TIP The parameters of `segment` can be optimized within an hour or two with 260 sounds (total audio duration ~9 min), but pitch tracking is really too slow to be optimized head-on. Try a few parameters at a time and use grid optimization instead of `optim` whenever possible. Even so, this might take a few nights* 
 
-If you prefer to optimize manually, without calling `opitmizePars` here are a couple of examples. 
+If you prefer to optimize manually, without calling `opitmizePars`, here are a couple of examples. 
 
 ```{r eval = FALSE}
 # checking combinations of pitch tracking methods

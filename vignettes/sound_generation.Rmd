@@ -281,7 +281,7 @@ Another common modification is to fade the sound in and/or out. One way to do th
 ```{r fig.show = "hold", fig.width = 7, fig.height = 3}
 # Here is a sound with sharp attack
 s = soundgen(sylLen = 1000, addSilence = 0, 
-             attackLen = 0, windowLength = 10)  
+             attackLen = 10)  
 # playme(s)
 s1 = fade(s, fadeIn = 200, fadeOut = 300, samplingRate = 16000,
           shape = 'cos', plot = TRUE)
@@ -322,7 +322,7 @@ formants = list(
                   width = c(0, 240)))
 ```
 
-Feed these list into soundgen() to hear what they sound like.
+Feed these lists into soundgen() to hear what they sound like.
 
 ### Vocal tract length
 In addition to user-specified formants, higher formants are added automatically based on the length of vocal tract length estimated from the user-specified formant frequency values. The function that estimates vocal tract length is imaginatively called estimateVTL:
@@ -331,7 +331,9 @@ estimateVTL(formants = c(500, 1500, 2550))  # 17.5 cm
 estimateVTL(formants = c(300, 1100, 2000))  # 22.8 cm
 ```
 
-This is useful, since upper formants are typically less perceptually salient and we don't want to spend too much time specifying them manually, but still we don't want them to be completely absent, either. An approximation based on standard open-ended tube models is often good enough. You can remove them by setting `temperature = 0` or `formantDepStoch = 0`, but note that without higher formants the entire spectrum loses energy at higher frequencies:
+*TIP A more general function called `schwa()` both estimates VTL and allows you to compare measured formant frequencies with those expected for a neutral schwa sound and perform more sophisticated operations with formants. See `?schwa` for more details if you are working with vowels*
+
+It is often useful to allow soundgen to create upper formants automatically based on the estimated VTL, since upper formants are typically less perceptually salient. As a result, we don't want to spend too much time specifying them manually, but still we don't want them to be completely absent, either. An approximation based on standard open-ended tube models is often good enough. You can remove them by setting `temperature = 0` or `formantDepStoch = 0`, but note that without higher formants the entire spectrum loses energy at higher frequencies:
 
 ```{r fig.show = "hold", fig.width = 7, fig.height = 4}
 s1 = soundgen(formants = c(800, 1200), play = playback, plot = TRUE)
@@ -543,7 +545,7 @@ s = soundgen(sylLen = 800,
              play = playback)
 ```
 
-## Unvoiced component (noise)
+## Unvoiced component (turbulent noise)
 In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces broad-spectrum turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. This can be done in two ways (in the app, go to "Tract / Unvoiced type"):
 
 1.  Breathing. This noise type is generated as white noise with spectral rolloff given by `rolloffNoise` ("Noise rolloff, dB/octave" in the app) above a certain cutoff value (`flatSpectrum`, the default is currently 1200 Hz). It is added to the voiced component *before* formant filtering. As a result, it follows exactly the same formant structure as the voiced component, and you cannot modify its spectrum beyond the basic rolloff setting. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noiseAnchors`, but leave `formantsNoise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
@@ -554,7 +556,7 @@ s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
          sylLen = 500, play = playback)
 ```
 
-1.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component manually in exactly the same format (`formantsNoise`) as for the voiced component (`formants`). 
+2.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component manually in exactly the same format (`formantsNoise`) as for the voiced component (`formants`). 
 
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
@@ -732,7 +734,7 @@ m = morph(formula1 = list(repeatBout = 2),
 # playme(m$sounds[[3]])
 ```
 
-*TIP Morphing a completely unvoiced sound with a voiced sound is currently not implemented. Add a very quiet voiced component to avoid glitches. Also try to make formants and formantsNoise compatible in both formulas: either leave both NULL or specify both in the same way (e.g. with or without explicitly defined amplitudes and bandwidths)*
+*TIP Morphing a completely unvoiced to a voiced sound is currently not implemented. Add a very quiet voiced component to avoid glitches. Also try to make formants and formantsNoise compatible in both formulas: either leave both NULL or specify both in the same way (e.g. with or without explicitly defined amplitudes and bandwidths)*
 
 
 # Matching an existing sound

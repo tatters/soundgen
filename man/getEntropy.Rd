@@ -4,28 +4,25 @@
 \alias{getEntropy}
 \title{Entropy}
 \usage{
-getEntropy(x, type = c("weiner", "shannon")[1], normalize = FALSE)
+getEntropy(x, type = c("weiner", "shannon")[1], normalize = FALSE,
+  convertNonPositive = 1e-10)
 }
 \arguments{
-\item{x}{vector of non-negative floats, e.g. a power spectrum. NB: all
-non-negative values are recoded as 1e-10!}
+\item{x}{vector of positive floats, such as a power spectrum}
 
 \item{type}{'shannon' for Shannon (information) entropy, 'weiner' for Weiner
 entropy}
 
 \item{normalize}{if TRUE, Shannon entropy is normalized by the length of
-input vector to range from 0 to 1. It has no affect on Weiner entropy.}
-}
-\value{
-Float between 0 and 1 or NA
+input vector to range from 0 to 1. It has no affect on Weiner entropy}
+
+\item{convertNonPositive}{all non-positive values are converted to
+\code{convertNonPositive}}
 }
 \description{
-Internal soundgen function.
-}
-\details{
-Returns Weiner or Shannon entropy of an input vector such as a power
-spectrum. Non-negative input values are recoded as as a small positive number
-(1e-10). If all elements are zero, returns NA.
+Returns Weiner or Shannon entropy of an input vector such as the power
+spectrum of a sound. Non-positive input values are converted a small positive
+number (convertNonPositive). If all elements are zero, returns NA.
 }
 \examples{
 # Here are four simplified power spectra, each with 9 frequency bins:
@@ -37,14 +34,13 @@ s = list(
 )
 
 # Weiner entropy is ~0 for periodic, NA for silent, 1 for white noise
-sapply(s, function(x) round(soundgen:::getEntropy(x), 2))
+sapply(s, function(x) round(getEntropy(x), 2))
 
 # Shannon entropy is ~0 for periodic with a single harmonic, moderate for
 # periodic with multiple harmonics, NA for silent, highest for white noise
-sapply(s, function(x) round(soundgen:::getEntropy(x, type = 'shannon'), 2))
+sapply(s, function(x) round(getEntropy(x, type = 'shannon'), 2))
 
 # Normalized Shannon entropy - same but forced to be 0 to 1
-sapply(s, function(x) round(soundgen:::getEntropy(x,
+sapply(s, function(x) round(getEntropy(x,
   type = 'shannon', normalize = TRUE), 2))
 }
-\keyword{internal}

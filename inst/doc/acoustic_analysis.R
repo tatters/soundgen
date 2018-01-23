@@ -71,10 +71,10 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
 
 ## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
 par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .3, step = 25,
              snakeStep = NULL, smooth = 0)  
-a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .3, step = 25,
              snakeStep = NULL, smooth = 0,
              interpolWin = NULL, pathfinding = 'none')  # disable interpolation
@@ -82,11 +82,11 @@ par(mfrow = c(1, 1))
 
 ## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
 par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 0)  # minimize pitch jumps
-a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 1)  # minimize deviation from candidates
@@ -101,11 +101,11 @@ a1 = analyze(s1, samplingRate = 16000, plot = FALSE, priorMean = NA,
 
 ## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
 par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
              smooth = 0)
-a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
+a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
              smooth = 1)
@@ -113,20 +113,23 @@ par(mfrow = c(1, 1))
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
-            specPlot = list(        # spectrogram: see ?spec
-              contrast = .75,
-              brightness = -0.5,
-              colorTheme = 'seewave',
-              ylim = c(0, 4)
-              # + other pars passed to seewave::filled.contour.modif2
-            ),
-            pitchPlot = list(       # final pitch contour (line)
-              col = rgb(0, .4, .9, .25),
+            # options for spectrogram(): see ?spectrogram
+            contrast = .75,
+            brightness = -0.5,
+            colorTheme = 'seewave',
+            ylim = c(0, 4),
+            # + other pars passed to seewave::filled.contour.modif2()
+            
+            # options for plotting the final pitch contour (line)
+            pitchPlot = list(       
+              col = 'black',
               lwd = 5,
               lty = 3
-              # + other pars passed to base::lines
+              # + other pars passed to base::lines()
             ),
-            candPlot = list(  # pitch candidates (points)
+            
+            # options for plotting pitch candidates (points)
+            candPlot = list(  
               levels = c('autocor', 'cep', 'spec', 'dom'),
               col = c('green', 'violet', 'red', 'orange'),
               pch = c(16, 7, 2, 3),
@@ -134,21 +137,16 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
             ))
 
 ## ----eval = FALSE--------------------------------------------------------
-#  a = analyze(s1, samplingRate = 16000, plot = TRUE, savePath = '~/Downloads')
-
-## ----eval = FALSE--------------------------------------------------------
-#  jpeg(my.custom.settings.go.here)  # or png(...), or whatever
-#  a = analyze(s1, samplingRate = 16000, plot = TRUE)
-#  dev.off()
+#  a = analyze(s1, samplingRate = 16000, plot = TRUE, savePath = '~/Downloads',
+#              width = 900, height = 500, units = 'px')
 
 ## ----fig.height = 3, fig.width = 7---------------------------------------
 # for info on using soundgen() function, see the vignette on sound synthesis 
 s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
-              pitchAnchors = list(time = c(0, 1), value = c(368, 284)),
+              pitchAnchors = c(368, 284),
               noiseAnchors = list(time = c(0, 67, 86, 186), 
                                   value = c(-45, -47, -89, -120)),
-              rolloffNoise = -8, amplAnchorsGlobal = list(time = c(0, 1), 
-                                                           value = c(120, 20)))
+              rolloffNoise = -8, amplAnchorsGlobal = c(80, 50))
 # spectrogram(s2, samplingRate = 16000, osc = TRUE)
 # playme(s2, samplingRate = 16000)
 a = segment(s2, samplingRate = 16000, plot = TRUE)
@@ -184,8 +182,7 @@ par(mfrow = c(1, 1))
 
 ## ----fig.show = "hold", fig.height = 6, fig.width = 7--------------------
 s3 = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70, 
-       formants = NA, pitchAnchors = list(time = c(0, 1), 
-                                          value = c(500, 330))))
+       formants = NA, pitchAnchors = c(500, 330)))
 # playme(s3, 16000)
 m = ssm(s3, samplingRate = 16000)
 

@@ -1,6 +1,7 @@
-          CHANGES IN SOUNDGEN VERSION 1.1.1.9000 [...date...]
+          CHANGES IN SOUNDGEN VERSION 1.1.2 [23-January-2018]
 NEW FUNCTIONS:
   * schwa(): estimates expected formant frequencies for a given vocal tract length, deviation of measured formants from the schwa, or formant frequencies in Hz corresponding to given deviations from the schwa
+  * getEntropy(): calculates Shannon or Weiner entropy of a vector such as power spectrum
 
 MINOR:
   * soundgen(): very rapid or instantaneous attack is now achievable without adjusting windowLength
@@ -11,7 +12,7 @@ MINOR:
   * segment(): fixed a bug that caused pauseLen_sd to always return NA
   * spectrogram(): proper handling of silent or very short input
   * spectrogram(): fixed a bug in denoising routines
-  * morph(): fixed a bug caused by changes in duplicated() introduced in the last version of r-devel
+  * morph(): fixed a bug with noiseAnchors that are NULL in one sound and another bug caused by changes in duplicated() that were introduced in the new version of r-devel. Thanks to Kurt Hornik for pointing this out
 
 
           CHANGES IN SOUNDGEN VERSION 1.1.1 [02-December-2017]
