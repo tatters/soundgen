@@ -33,7 +33,7 @@ soundgen:::reformatAnchors('aha')
 soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
                                           freq = c(150, 200, 220)))
 \dontrun{
-# throws an error
+# throws a warning and rearranges in order of time stamps
 soundgen:::reformatAnchors(anchors = list(time = c(0, .8, .7, 1),
                                           value = c(150, 200, 150, 220)))
 }

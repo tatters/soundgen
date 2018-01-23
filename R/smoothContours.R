@@ -437,7 +437,7 @@ getDiscreteContour = function(len,
 #' soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
 #'                                           freq = c(150, 200, 220)))
 #' \dontrun{
-#' # throws an error
+#' # throws a warning and rearranges in order of time stamps
 #' soundgen:::reformatAnchors(anchors = list(time = c(0, .8, .7, 1),
 #'                                           value = c(150, 200, 150, 220)))
 #' }
@@ -470,7 +470,8 @@ reformatAnchors = function(anchors, normalizeTime = TRUE) {
 
   # make sure time values are in the right order
   if (any(diff(anchors_df$time) < 0)) {
-    stop('Time stamps of anchors must increase monotonically')
+    anchors_df = anchors_df[order(anchors_df$time), ]
+    warning('Time stamps of anchors should increase monotonically; re-ordering...')
   }
 
   # make sure time ranges from 0 to 1
