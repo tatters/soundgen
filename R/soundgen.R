@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R); write an interactive spectro_app() that loads a .wav, modifies it by denoising etc, and plays back/saves the new version;
+# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

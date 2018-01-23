@@ -173,7 +173,8 @@ morphDF = function(a,
         hybrid[i, 2] = hybrid[i, 2] +
                        idx[d] * (b[hybrid$match[i], 2] - hybrid[i, 2])
       }
-      hybrid = hybrid[!duplicated(hybrid[, 1:2]), ] # remove duplicate rows
+      # remove duplicate rows
+      hybrid = unique(hybrid[, 1:2]) # hybrid[!duplicated(hybrid[, 1:2]), ]
       if (swap) {
         out[[nMorphs - d + 1]] = hybrid[, 1:2]
       } else {
