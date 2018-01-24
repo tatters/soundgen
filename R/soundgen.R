@@ -383,15 +383,17 @@ soundgen = function(repeatBout = 1,
   }
   # adjust rolloff for both creaky and breathy voices
   rolloff = rolloff - creakyBreathy * 10
-  rolloff[rolloff < permittedValues['rolloff', 'low']] =
-    permittedValues['rolloff', 'low']
-  rolloff[rolloff > permittedValues['rolloff', 'high']] =
-    permittedValues['rolloff', 'high']
-  rolloffOct = rolloffOct - creakyBreathy * 5
-  rolloffOct[rolloffOct < permittedValues['rolloffOct', 'low']] =
-    permittedValues['rolloffOct', 'low']
-  rolloffOct[rolloffOct > permittedValues['rolloffOct', 'high']] =
-    permittedValues['rolloffOct', 'high']
+  if (invalidArgAction != 'ignore') {
+    rolloff[rolloff < permittedValues['rolloff', 'low']] =
+      permittedValues['rolloff', 'low']
+    rolloff[rolloff > permittedValues['rolloff', 'high']] =
+      permittedValues['rolloff', 'high']
+    rolloffOct = rolloffOct - creakyBreathy * 5
+    rolloffOct[rolloffOct < permittedValues['rolloffOct', 'low']] =
+      permittedValues['rolloffOct', 'low']
+    rolloffOct[rolloffOct > permittedValues['rolloffOct', 'high']] =
+      permittedValues['rolloffOct', 'high']
+  }
 
   # effects of nonlinDep hyper
   subFreq = 2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50
