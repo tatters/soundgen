@@ -325,10 +325,18 @@ spectrogram = function(x,
 
 #' Save spectrograms per folder
 #'
-#' Creates spectrograms of all .wav files in a folder and save them as .jpeg files.
+#' Creates spectrograms of all .wav files in a folder and save them as .jpeg
+#' files. This is a lot faster than to run \code{\link{analyzeFolder}} if you
+#' don't need pitch tracking. By default it also creates an html file with a
+#' list of audio files and their spectrograms in the same folder. If you open it
+#' in a browser that supports playing .wav files (e.g. Firefox or Chrome), you
+#' can view the spetrograms and click on them to play each sound. Unlike
+#' \code{\link{analyzeFolder}}, spectrogramFolder supports plotting both a
+#' spectrogram and an oscillogram if \code{osc = TRUE}.
 #' @inheritParams spectrogram
 #' @inheritParams analyzeFolder
 #' @param myfolder full path to the folder containing .wav files
+#' @param htmlPlots if TRUE, saves an html file with clickable plots
 #' @param res nominal resolution passed to \code{\link[grDevices]{jpeg}}
 #' @param ... other parameters passed to \code{\link{spectrogram}}
 #' @export
@@ -338,8 +346,10 @@ spectrogram = function(x,
 #'                   windowLength = 40, overlap = 75,  # spectrogram pars
 #'                   width = 1500, height = 900        # passed to jpeg()
 #'                   )
+#' # note that the folder now also contains an html file with clickable plots
 #' }
 spectrogramFolder = function(myfolder,
+                             htmlPlots = TRUE,
                              verbose = TRUE,
                              windowLength = 50,
                              step = NULL,
@@ -386,6 +396,9 @@ spectrogramFolder = function(myfolder,
       reportTime(i = i, nIter = length(filenames),
                  time_start = time_start, jobs = filesizes)
     }
+  }
+  if (htmlPlots) {
+    htmlPlots(myfolder, myfiles = filenames)
   }
 }
 

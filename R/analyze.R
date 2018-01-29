@@ -841,7 +841,7 @@ analyze = function(x,
 }
 
 
-#' Analyze sound
+#' Analyze folder
 #'
 #' Acoustic analysis of all .wav files in a folder.
 #' @param myfolder full path to target folder

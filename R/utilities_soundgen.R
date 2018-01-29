@@ -112,6 +112,86 @@ playme = function(sound, samplingRate = 16000) {
 }
 
 
+
+#' HTML for clickable plots
+#'
+#' Internal soundgen function
+#'
+#' Writes an html file for displaying clickable plots in a browser.
+#' @param myfolder full path to target folder, without a '/' at the end
+#' @param myfiles a list of full names of files (with paths and extensions)
+#' @keywords internal
+#' @examples
+#' \dontrun{
+#' htmlPlots(myfolder = '~/Downloads/temp',
+#'           myfiles = c('~/Downloads/temp/myfile1.wav',
+#'                       '~/Downloads/temp/myfile2.wav'))
+#' }
+htmlPlots = function(myfolder, myfiles) {
+  # a list of basenames without extension
+  basenames = basename(myfiles)
+  basenames_stripped = as.character(sapply(
+    basenames,
+    function(x) substr(x, 1, nchar(x) - 4)
+  )
+  )
+  n = paste0(basenames_stripped, collapse = "', '")
+  n = paste0("var mylist = ['", n, "'];")
+
+  # create an html file to display nice, clickable spectrograms
+  out_html = file(paste0(myfolder,'/00_clickable_plots.html'))
+  writeLines(
+    c("<!DOCTYPE html>",
+      "<html>",
+      "<head>",
+      "<title>Labels</title>",
+      "<meta charset='UTF-8'>",
+      "<style>",
+      "table { width:100%; float:center; }",
+      "table, th, td { border: 1px solid black; border-collapse: collapse; }",
+      "th, td { padding: 5px; text-align: center; }",
+      "table#t01 tr:nth-child(even) { background-color: #eee; }",
+      "table#t01 tr:nth-child(odd) { background-color:#fff; }",
+      "table#t01 th	{ background-color: black; color: white; }",
+      "</style>",
+      "<script>",
+      n,
+      "</script>",
+      "</head>",
+      "<body>",
+      "<div id='instruction' style='font-size:200%; padding:5px; text-align:center'>Pitch contours of all files in a folder</div>",
+      "<div id='container'> </div>",
+      "<script>",
+      "var sound = [];",
+      "var image = [];",
+      "var table = document.createElement('table'), tr, td, row, cell;",
+      "for (row = 0; row < mylist.length; row++) {",
+      "  sound[row] = mylist[row] + '.wav';",
+      "  image[row] = mylist[row] + '.jpg';",
+      "  tr = document.createElement('tr');",
+      "  td = document.createElement('td');",
+      "  tr.appendChild(td);",
+      "  td.innerHTML = '<img src=\"' + image[row] + '\">';",
+      "  var mysound = sound[row];",
+      "  td.onclick = (function(mysound) {",
+      "    return function() {",
+      "      var audioElement = document.createElement('audio');",
+      "      audioElement.setAttribute('src', mysound);",
+      "      audioElement.play();",
+      "    };",
+      "  })(sound[row]);",
+      "  table.appendChild(tr);",
+      "}",
+      "document.getElementById('container').appendChild(table);",
+      "</script>",
+      "</body>",
+      "</html>",
+      "),"),
+    out_html)
+  close(out_html)
+}
+
+
 #' Find zero crossing
 #'
 #' Internal soundgen function.

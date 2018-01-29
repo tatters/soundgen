@@ -4,13 +4,16 @@
 \alias{spectrogramFolder}
 \title{Save spectrograms per folder}
 \usage{
-spectrogramFolder(myfolder, verbose = TRUE, windowLength = 50,
-  step = NULL, overlap = 50, wn = "gaussian", zp = 0, savePath = NULL,
-  ylim = NULL, osc = TRUE, xlab = "Time, ms", ylab = "kHz",
-  width = 900, height = 500, units = "px", res = NA, ...)
+spectrogramFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
+  windowLength = 50, step = NULL, overlap = 50, wn = "gaussian",
+  zp = 0, savePath = NULL, ylim = NULL, osc = TRUE, xlab = "Time, ms",
+  ylab = "kHz", width = 900, height = 500, units = "px", res = NA,
+  ...)
 }
 \arguments{
 \item{myfolder}{full path to the folder containing .wav files}
+
+\item{htmlPlots}{if TRUE, saves an html file with clickable plots}
 
 \item{verbose}{if TRUE, reports progress and estimated time left}
 
@@ -50,7 +53,14 @@ if the plot is saved}
 \item{...}{other parameters passed to \code{\link{spectrogram}}}
 }
 \description{
-Creates spectrograms of all .wav files in a folder and save them as .jpeg files.
+Creates spectrograms of all .wav files in a folder and save them as .jpeg
+files. This is a lot faster than to run \code{\link{analyzeFolder}} if you
+don't need pitch tracking. By default it also creates an html file with a
+list of audio files and their spectrograms in the same folder. If you open it
+in a browser that supports playing .wav files (e.g. Firefox or Chrome), you
+can view the spetrograms and click on them to play each sound. Unlike
+\code{\link{analyzeFolder}}, spectrogramFolder supports plotting both a
+spectrogram and an oscillogram if \code{osc = TRUE}.
 }
 \examples{
 \dontrun{
@@ -58,5 +68,6 @@ spectrogramFolder('~/Downloads/temp',
                   windowLength = 40, overlap = 75,  # spectrogram pars
                   width = 1500, height = 900        # passed to jpeg()
                   )
+# note that the folder now also contains an html file called
 }
 }
