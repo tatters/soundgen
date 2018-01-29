@@ -323,6 +323,73 @@ spectrogram = function(x,
 }
 
 
+#' Save spectrograms per folder
+#'
+#' Creates spectrograms of all .wav files in a folder and save them as .jpeg files.
+#' @inheritParams spectrogram
+#' @inheritParams analyzeFolder
+#' @param myfolder full path to the folder containing .wav files
+#' @param res nominal resolution passed to \code{\link[grDevices]{jpeg}}
+#' @param ... other parameters passed to \code{\link{spectrogram}}
+#' @export
+#' @examples
+#' \dontrun{
+#' spectrogramFolder('~/Downloads/temp',
+#'                   windowLength = 40, overlap = 75,  # spectrogram pars
+#'                   width = 1500, height = 900        # passed to jpeg()
+#'                   )
+#' }
+spectrogramFolder = function(myfolder,
+                             verbose = TRUE,
+                             windowLength = 50,
+                             step = NULL,
+                             overlap = 50,
+                             wn = 'gaussian',
+                             zp = 0,
+                             savePath = NULL,
+                             ylim = NULL,
+                             osc = TRUE,
+                             xlab = 'Time, ms',
+                             ylab = 'kHz',
+                             width = 900,
+                             height = 500,
+                             units = 'px',
+                             res = NA,
+                             ...) {
+  time_start = proc.time()  # timing
+  filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
+  # in order to provide more accurate estimates of time to completion,
+  # check the size of all files in the target folder
+  filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
+
+  for (i in 1:length(filenames)) {
+    # strip .wav extension
+    f = substr(as.character(filenames[i]), 1, nchar(as.character(filenames[i])) - 4)
+    jpeg(filename = paste0(f, ".jpg"),
+         width = width, height = height,
+         units = units, res = res)
+    do.call(spectrogram, list(
+      x = filenames[i],
+      windowLength = windowLength,
+      step = step,
+      overlap = overlap,
+      wn = wn,
+      zp = zp,
+      ylim = ylim,
+      osc = osc,
+      xlab = xlab,
+      ylab = ylab,
+      main = basename(f),
+      ...))
+    dev.off()
+    if (verbose) {
+      reportTime(i = i, nIter = length(filenames),
+                 time_start = time_start, jobs = filesizes)
+    }
+  }
+}
+
+
 #' Fourier transform windows (seewave)
 #'
 #' Internal soundgen function
