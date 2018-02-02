@@ -297,7 +297,7 @@ spectrogram = function(x,
         sound,
         type = "l", xaxs = "i", yaxs = "i",
         xlab = xlab, ylab = '', main = '', ...)
-      axis(side = 1, labels = TRUE)
+      axis(side = 1, labels = TRUE, ...)
       abline(h = 0, lty = 2)
       par(mar = c(0, 4.1, 2.1, 2.1), xaxt = 'n', yaxt = 's')
       xlab = ''
