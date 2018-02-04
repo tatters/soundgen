@@ -120,10 +120,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
   # if there are more anchors than len, pick just some anchors at random
   if (nrow(anchors) > len) {
     anchors = as.data.frame(anchors)
-    idx = sample(1:nrow(anchors), size = len, replace = FALSE)
-    idx = sort(idx)
-    idx[1] = 1
-    idx[len] = nrow(anchors)  # make sure the first and last anchors are preserved
+    idx = seq(1, nrow(anchors), length.out = len)
     anchors = anchors[idx, ]
   }
 
@@ -180,12 +177,27 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
   # plot(smoothContour, type='p')
 
   if (plot) {
-    time = 1:len
-    op = par("mar") # save user's original margin settings
     idx = seq(1, len, length.out = min(len, 100))
-    # for plotting, shorten smoothContour to max 100 points
-    # to reduce processing load
-    smoothContour_downsampled = smoothContour[idx]
+    op = par("mar") # save user's original margin settings
+    if (len > 100) {
+      # for plotting, shorten smoothContour to max 100 points
+      # to reduce processing load
+      smoothContour_downsampled = smoothContour[idx]
+    } else {
+      smoothContour_downsampled = smoothContour
+    }
+    # plot(smoothContour_downsampled)
+
+    # presuming that len was specified and anchors$time are on a
+    # relative scale, we transform to ms for plotting
+    if (!max(anchors$time) > 1) {
+      anchors$time = anchors$time * duration_ms
+      time = seq(0, len, length.out = len)
+      x = time[idx] / samplingRate * 1000
+    } else {  # time is already in ms
+      time = seq(anchors$time[1], anchors$time[nrow(anchors)], length.out = len)
+      x = time[idx]
+    }
 
     if (thisIsPitch) {
       # pitch - log-transformed
@@ -194,7 +206,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
         max(smoothContour_downsampled) > HzToSemitones(ylim[2])
       )) {
         ylim = round(c(
-          min(smoothContour_downsampled) / 1.1,
+          min(smoothContour_downsampled) / 1.1,  # can't be negative
           max(smoothContour_downsampled) * 1.1
         ))
       } else {
@@ -206,29 +218,34 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
       lbls_Hz = round(semitonesToHz(lbls_semitones))
 
       par(mar = c(5, 4, 4, 3)) # c(bottom, left, top, right)
-      plot(time[idx] / samplingRate * 1000, smoothContour_downsampled,
+      plot(x, smoothContour_downsampled,
            type = 'l', yaxt = "n", ylab = 'Frequency, Hz', xlab = 'Time, ms',
            main = 'Pitch contour', ylim = ylim, ...)
       axis(2, at = lbls_semitones, labels = lbls_Hz, las = 1)
       axis(4, at = lbls_semitones, labels = lbls_notes, las = 1)
-      points(anchors$time * duration_ms, anchors$value, col = 'blue', cex = 3)
+      points(anchors$time, anchors$value, col = 'blue', cex = 3)
     } else {
       # not pitch - not log-transformed
-      if (!max(anchors$time) > 1) {
-        anchors$time = anchors$time * duration_ms
-      } # presuming that len was specified and anchors$time are on a
-      # relative scale, we transform to ms for plotting
+      # if (!max(anchors$time) > 1) {
+      #   anchors$time = anchors$time * duration_ms
+      # } # presuming that len was specified and anchors$time are on a
+      # # relative scale, we transform to ms for plotting
       par(mar = c(5, 4, 4, 3)) # c(bottom, left, top, right)
       if (is.null(xlim)) {
         xlim = c(min(0, anchors$time[1]), anchors$time[length(anchors$time)])
       }
       if (is.null(ylim)) {
-        ylim = c(min(0, min(anchors$value[1])), max(0, max(anchors$value)))
+        m1 = min(c(smoothContour, anchors$value))
+        m1 = ifelse(m1 > 0, m1 / 1.1, m1 * 1.1)
+        m2 = max(c(smoothContour, anchors$value))
+        m2 = ifelse(m2 > 0, m2 * 1.1, m1 / 1.1)
+        ylim = c(m1, m2)
+        # ylim = c(min(0, min(anchors$value)), max(0, max(anchors$value)))
       }
-      x = seq(anchors$time[1],
-              anchors$time[length(anchors$time)],
-              length.out = length(smoothContour_downsampled))
-      plot(x = x, y = smoothContour_downsampled, type = 'l', ylab = 'Amplitude',
+      # x = seq(anchors$time[1],
+      #         anchors$time[length(anchors$time)],
+      #         length.out = length(smoothContour_downsampled))
+      plot(x, y = smoothContour_downsampled, type = 'l', ylab = 'Amplitude',
            xlab = 'Time, ms', xlim = xlim, ylim = ylim, ...)
       points(anchors$time, anchors$value, col = 'blue', cex = 3)
       if (is.numeric(voiced)) {
@@ -275,7 +292,11 @@ drawContour = function(len,
   } else {
     # smooth contour
     if (interpol == 'approx') {
-      smoothContour = approx(anchors$value, n = len, x = anchors$time)$y
+      if (len > nrow(anchors)) {
+        smoothContour = approx(anchors$value, n = len, x = anchors$time)$y
+      } else {
+        smoothContour = anchors$value
+      }
       # plot(smoothContour, type='l')
     } else if (interpol == 'spline') {
       smoothContour = spline(anchors$value, n = len, x = anchors$time)$y
