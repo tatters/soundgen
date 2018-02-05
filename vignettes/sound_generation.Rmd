@@ -545,6 +545,36 @@ s = soundgen(sylLen = 800,
              play = playback)
 ```
 
+### Specifying the timing of each nonlinear regime
+Sometimes it may be necessary to control precisely the timing of each nonlinear regime. For example, in an experiment a sound containing nonlinear effects may need to be synthesized repeatedly, varying one parameter and preserving everything else, including nonlinear regimes. Normally soundgen divides a sound into different nonlinear regimes by generating a random walk, which also controls the drift of some other control parameters. Setting temperature at nearly zero (say, at 0.001) removes random variation in most control parameters, but the random walk for nonlinear effects still remains random. To standardize that random walk as well, use `nonlinRandomWalk`. 
+
+`nonlinRandomWalk` should be a vector containing 0, 1, and 2, where 0 = no nonlinearities, 1 = subharmonics, and 2 = subharmonics + jitter + shimmer. The number and order of 0/1/2 determines which nonlinear regime is active at which time. For example, this will make a sound with no effect in the first third, subharmonics in the second third, and jitter in the final third of the total duration:
+
+```{r fig.width = 5, fig.height = 5}
+rw_bin = c(rep(0, 100), rep(1, 100), rep(2, 100))
+s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
+             subFreq = 100, subDep = 70, jitterDep = 1,
+             nonlinRandomWalk = rw_bin, plot = TRUE, ylim = c(0, 4))
+```
+
+Make `nonlinRandomWalk` a fairly long vector for greater precision, i.e. not just `c(0, 1)` - because of the way `approx` works, that will NOT split the sound into 50% with no nonlinear effects and 50% with subharmonics. Instead, write `c(rep(0, 50), rep(1, 50))` or some such. 
+
+You can also generate an actual random walk and then use it in several sounds to make sure their nonlinear effects have exactly the same timing. For example, here are two sounds with different pitch levels, but identical otherwise, including identical nonlinear regimes:
+
+```{r fig.show = "hold", fig.width = 5, fig.height = 3}
+# set up a random walk (repeat until satisfied with the contour)
+rw = getRandomWalk(len = 1000, rw_range = 100, 
+                   trend = c(0.5, -0.5), rw_smoothing = .3)
+rw_bin = getIntegerRandomWalk(rw, minLength = 100, plot = TRUE)
+# synthesize two sounds
+s1 = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
+              subFreq = 100, subDep = 70, jitterDep = 1,
+              nonlinRandomWalk = rw_bin, plot = TRUE, ylim = c(0, 4))
+s2 = soundgen(sylLen = 800, pitchAnchors = 500, temperature = 0.001,
+              subFreq = 100, subDep = 70, jitterDep = 1,
+              nonlinRandomWalk = rw_bin, plot = TRUE, ylim = c(0, 4))
+```
+
 ## Unvoiced component (turbulent noise)
 In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces broad-spectrum turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. This can be done in two ways (in the app, go to "Tract / Unvoiced type"):
 

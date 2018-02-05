@@ -33,20 +33,16 @@ produce less and less random behavior}
 Returns a numeric vector of length len and range from 0 to rw_range.
 }
 \description{
-Internal soundgen function.
-}
-\details{
 Generates a random walk with flexible control over its range, trend, and
 smoothness. It works by calling \code{\link[stats]{rnorm}} at each step and
 taking a cumulative sum of the generated values. Smoothness is controlled by
 initially generating a shorter random walk and upsampling.
 }
 \examples{
-plot(soundgen:::getRandomWalk(len = 1000, rw_range = 5,
-  rw_smoothing = .2))
-plot(soundgen:::getRandomWalk(len = 1000, rw_range = 15,
+plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .2))
+plot(getRandomWalk(len = 1000, rw_range = 15,
   rw_smoothing = .2, trend = c(.5, -.5)))
-plot(soundgen:::getRandomWalk(len = 1000, rw_range = 15,
+plot(getRandomWalk(len = 1000, rw_range = 15,
   rw_smoothing = .2, trend = c(15, -1)))
 }
-\keyword{internal}
+\keyword{export}

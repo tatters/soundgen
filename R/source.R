@@ -262,7 +262,8 @@ generateHarmonics = function(pitch,
   }
 
   # get a random walk for intra-syllable variation
-  if (temperature > 0 && nonlinBalance < 100) {
+  if (temperature > 0 &&
+      (nonlinBalance < 100 | !is.null(nonlinRandomWalk))) {
     rw = getRandomWalk(
       len = nGC,
       rw_range = temperature,
@@ -296,7 +297,7 @@ generateHarmonics = function(pitch,
   }
 
   # calculate jitter (random variation of F0)
-  if (jitterDep > 0 & nonlinBalance > 0) {
+  if (jitterDep > 0 & any(jitter_on)) {
     ratio = pitch_per_gc * jitterLen / 1000 # the number of gc that make
     #   up one jitter period (vector of length nGC)
     idx = 1
@@ -382,7 +383,7 @@ generateHarmonics = function(pitch,
   # image(t(log(rolloff_source)))
 
   # add shimmer (random variation in amplitude)
-  if (shimmerDep > 0 & nonlinBalance > 0) {
+  if (shimmerDep > 0 & any(shimmer_on)) {
     shimmer = 2 ^ (rnorm (
       n = ncol(rolloff_source),
       mean = 0,
@@ -398,7 +399,7 @@ generateHarmonics = function(pitch,
 
   # add vocal fry (subharmonics)
   if (!synthesize_per_gc &&  # can't add subharmonics if doing one gc at a time (one f0 period)
-      subDep > 0 & nonlinBalance > 0) {
+      subDep > 0 & any(vocalFry_on)) {
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,
