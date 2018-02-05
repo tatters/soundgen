@@ -59,6 +59,8 @@ NULL
 #' @param nonlinDep hyperparameter for regulating the intensity of
 #'   subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
 #'   specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0
+#' @param nonlinRandomWalk a numeric vector specifying the timing of nonliner
+#'   regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer
 #' @param jitterLen duration of stable periods between pitch jumps, ms. Use a
 #'   low value for harsh noise, a high value for irregular vibrato or shaky
 #'   voice
@@ -214,6 +216,12 @@ NULL
 #'   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
 #'   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
 #'   vocalTract = 5, play = playback)
+#'
+#' # Use nonlinRandomWalk to crease reproducible examples of sounds with nonlinear effects. For ex., to make a sound with no effect in the first third, subharmonics in the second third, and jitter in the final third of the total duration:
+#' a = c(rep(0, 100), rep(1, 100), rep(2, 100))
+#' s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
+#'              subFreq = 100, subDep = 70, jitterDep = 1,
+#'              nonlinRandomWalk = a, plot = T, ylim = c(0, 4))
 #' }
 soundgen = function(repeatBout = 1,
                     nSyl = 1,
@@ -229,6 +237,7 @@ soundgen = function(repeatBout = 1,
                     creakyBreathy = 0,
                     nonlinBalance = 0,
                     nonlinDep = 50,
+                    nonlinRandomWalk = NULL,
                     jitterLen = 1,
                     jitterDep = 1,
                     vibratoFreq = 5,
@@ -478,6 +487,7 @@ soundgen = function(repeatBout = 1,
     'subDep' = subDep,
     'nonlinBalance' = nonlinBalance,
     'nonlinDep' = nonlinDep,
+    'nonlinRandomWalk' = nonlinRandomWalk,
     'pitchFloor' = pitchFloor,
     'pitchCeiling' = pitchCeiling,
     'pitchSamplingRate' = pitchSamplingRate,

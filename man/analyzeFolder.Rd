@@ -2,7 +2,7 @@
 % Please edit documentation in R/analyze.R
 \name{analyzeFolder}
 \alias{analyzeFolder}
-\title{Analyze sound}
+\title{Analyze folder}
 \usage{
 analyzeFolder(myfolder, verbose = TRUE, samplingRate = NULL,
   silence = 0.04, windowLength = 50, step = NULL, overlap = 50,

@@ -200,6 +200,7 @@ generateHarmonics = function(pitch,
                              attackLen = 50,
                              nonlinBalance = 0,
                              nonlinDep = 50,
+                             nonlinRandomWalk = NULL,
                              jitterDep = 0,
                              jitterLen = 1,
                              vibratoFreq = 5,
@@ -268,16 +269,23 @@ generateHarmonics = function(pitch,
       trend = c(randomWalk_trendStrength, -randomWalk_trendStrength),
       rw_smoothing = .3
     ) # plot(rw, type = 'l')
-    rw_0_100 = zeroOne(rw) * 100
-    # plot (rw_0_100, type = 'l')
-    rw_bin = getIntegerRandomWalk(
-      rw_0_100,
-      nonlinBalance = nonlinBalance,
-      minLength = ceiling(shortestEpoch / 1000 * pitch_per_gc)
-    )
-    # minLength is shortestEpoch / period_ms, where
-    #   period_ms = 1000 / pitch_per_gc
     rw = rw - mean(rw) + 1 # change mean(rw) to 1
+    if (is.null(nonlinRandomWalk)) {
+      rw_0_100 = zeroOne(rw) * 100
+      # plot(rw_0_100, type = 'l')
+      rw_bin = getIntegerRandomWalk(
+        rw_0_100,
+        nonlinBalance = nonlinBalance,
+        minLength = ceiling(shortestEpoch / 1000 * pitch_per_gc)
+        # minLength is shortestEpoch / period_ms, where
+        #   period_ms = 1000 / pitch_per_gc
+      )
+    } else {
+      # interpolate or downsample user-provided random walk by simple repetition,
+      # so that its new length = nGC (overrides shortestEpoch)
+      rw_bin = approx(nonlinRandomWalk, n = nGC, method = 'constant')$y
+      # plot(rw_bin)
+    }
     vocalFry_on = (rw_bin > 0) # when is vocal fry on? For ex., rw_bin==1
     #   sets vocal fry on only in regime 1, while rw_bin>0 sets vocal fry on
     #   in regimes 1 and 2 (i.e. together with jitter)

@@ -8,16 +8,16 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
   100)), pitchAnchorsGlobal = NA, glottisAnchors = 0, temperature = 0.025,
   tempEffects = list(), maleFemale = 0, creakyBreathy = 0,
-  nonlinBalance = 0, nonlinDep = 50, jitterLen = 1, jitterDep = 1,
-  vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0, attackLen = 50,
-  rolloff = -9, rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
-  rolloffParabHarm = 3, lipRad = 6, rolloffLip = NULL, noseRad = 4,
-  mouthOpenThres = 0, formants = c(860, 1430, 2900), formantDep = 1,
-  formantDepStoch = 20, formantWidth = 1, vocalTract = NA,
-  subFreq = 100, subDep = 100, shortestEpoch = 300, amDep = 0,
-  amFreq = 30, amShape = 0, noiseAnchors = NULL, formantsNoise = NA,
-  rolloffNoise = -4, mouthAnchors = data.frame(time = c(0, 1), value =
-  c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
+  nonlinBalance = 0, nonlinDep = 50, nonlinRandomWalk = NULL,
+  jitterLen = 1, jitterDep = 1, vibratoFreq = 5, vibratoDep = 0,
+  shimmerDep = 0, attackLen = 50, rolloff = -9, rolloffOct = -3,
+  rolloffKHz = -3, rolloffParab = 0, rolloffParabHarm = 3, lipRad = 6,
+  rolloffLip = NULL, noseRad = 4, mouthOpenThres = 0, formants = c(860,
+  1430, 2900), formantDep = 1, formantDepStoch = 20, formantWidth = 1,
+  vocalTract = NA, subFreq = 100, subDep = 100, shortestEpoch = 300,
+  amDep = 0, amFreq = 30, amShape = 0, noiseAnchors = NULL,
+  formantsNoise = NA, rolloffNoise = -4, mouthAnchors = data.frame(time =
+  c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
   interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
   jumpThres = 0.01, samplingRate = 16000, windowLength = 50,
   overlap = 75, addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
@@ -81,6 +81,9 @@ entire sound has jitter + subharmonics. Ignored if temperature = 0}
 \item{nonlinDep}{hyperparameter for regulating the intensity of
 subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
 specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
+
+\item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
+regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 
 \item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
 low value for harsh noise, a high value for irregular vibrato or shaky
@@ -294,5 +297,11 @@ sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
   vocalTract = 5, play = playback)
+
+# Use nonlinRandomWalk to crease reproducible examples of sounds with nonlinear effects. For ex., to make a sound with no effect in the first third, subharmonics in the second third, and jitter in the final third of the total duration:
+a = c(rep(0, 100), rep(1, 100), rep(2, 100))
+s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
+             subFreq = 100, subDep = 70, jitterDep = 1,
+             nonlinRandomWalk = a, plot = T, ylim = c(0, 4))
 }
 }

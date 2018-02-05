@@ -68,6 +68,6 @@ spectrogramFolder('~/Downloads/temp',
                   windowLength = 40, overlap = 75,  # spectrogram pars
                   width = 1500, height = 900        # passed to jpeg()
                   )
-# note that the folder now also contains an html file called
+# note that the folder now also contains an html file with clickable plots
 }
 }
