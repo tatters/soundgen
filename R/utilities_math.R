@@ -363,6 +363,8 @@ getRandomWalk = function(len,
 #' @param nonlinBalance a number between 0 to 100: 0 = returns all zeros;
 #'   100 = returns all twos
 #' @param minLength the mimimum length of each epoch
+#' @param q1,q2 cutoff points for transitioning from regime 0 to 1 (q1) or from
+#'   regime 1 to 2 (q2)
 #' @param plot if TRUE, plots the random walk underlying nonlinear regimes
 #' @return Returns a vector of integers (0/1/2) of the same length as rw.
 #' @keywords internal
@@ -371,29 +373,40 @@ getRandomWalk = function(len,
 #' r = soundgen:::getIntegerRandomWalk(rw, nonlinBalance = 75,
 #'                                      minLength = 10, plot = TRUE)
 #' r = soundgen:::getIntegerRandomWalk(rw, nonlinBalance = 15,
+#'                                     q1 = 30, q2 = 70,
 #'                                      minLength = 10, plot = TRUE)
 getIntegerRandomWalk = function(rw,
                                 nonlinBalance = 50,
                                 minLength = 50,
+                                q1 = NULL,
+                                q2 = NULL,
                                 plot = FALSE) {
   len = length(rw)
-  if (nonlinBalance == 0) return(rep(0, len))
-  if (nonlinBalance == 100) return(rep(2, len))
 
   # calculate thresholds for different noise regimes
-  q1 = noiseThresholdsDict$q1[nonlinBalance + 1]
-  # +1 b/c the rows indices in noiseThresholdsDict start from 0, not 1
-  q2 = noiseThresholdsDict$q2[nonlinBalance + 1]
+  if (is.null(q1)) {
+    q1 = noiseThresholdsDict$q1[nonlinBalance + 1]
+    # +1 b/c the rows indices in noiseThresholdsDict start from 0, not 1
+  }
+  if (is.null(q2)) {
+    q2 = noiseThresholdsDict$q2[nonlinBalance + 1]
+  }
 
-  # convert continuous rw to discrete epochs based on q1 and q2 thresholds
-  rw_bin = rep(0, len)
-  rw_bin[which(rw > q1)] = 1
-  rw_bin[which(rw > q2)] = 2   # plot (rw_bin, ylim=c(0,2))
+  if (nonlinBalance == 0) {
+    rw_bin = rep(0, len)
+  } else if (nonlinBalance == 100) {
+    rw_bin = rep(2, len)
+  } else {
+    # convert continuous rw to discrete epochs based on q1 and q2 thresholds
+    rw_bin = rep(0, len)
+    rw_bin[which(rw > q1)] = 1
+    rw_bin[which(rw > q2)] = 2   # plot (rw_bin, ylim=c(0,2))
 
-  # make sure each epoch is long enough
-  rw_bin = clumper(rw_bin, minLength = minLength)
+    # make sure each epoch is long enough
+    rw_bin = clumper(rw_bin, minLength = minLength)
+  }
 
-  if (FALSE) {
+  if (plot) {
     rw_bin_100 = rw_bin
     rw_bin_100[rw_bin_100 == 1] = q1
     rw_bin_100[rw_bin_100 == 2] = q2

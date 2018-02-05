@@ -1045,24 +1045,8 @@ server = function(input, output, session) {
       rw,
       nonlinBalance = input$nonlinBalance,
       minLength = ceiling(input$shortestEpoch / 1000 * myPitchContour()),
-      plot = FALSE  # for some reason fails to plot
+      plot = TRUE
     )
-    q1 = soundgen:::noiseThresholdsDict$q1[input$nonlinBalance + 1]
-    q2 = soundgen:::noiseThresholdsDict$q2[input$nonlinBalance + 1]
-    rw_bin_100 = rw_bin
-    rw_bin_100[rw_bin_100 == 1] = q1
-    rw_bin_100[rw_bin_100 == 2] = q2
-
-    timeseq = seq(0, input$sylLen, length.out = length(rw))
-    plot(x = timeseq,
-         y = rw, ylim = c(0, 110), type = 'l', lwd = 1,
-         xlab = 'Time', ylab = 'Latent non-linearity', main = 'Random walk')
-    points(x = timeseq,
-           y = rw_bin_100, type = 'l', lwd = 4, col = 'blue')
-    lines(x = c(0, input$sylLen), y = c(q1, q1), lty = 3, lwd = 2, col = 'red')
-    text(x = 0, y = q1 + 2, labels = 'subh', pos = 4)
-    lines(x = c(0, input$sylLen), y = c(q2, q2), lty = 3, lwd = 2, col = 'red')
-    text(x = 0, y = q2 + 2, labels = 'subh + jitter', pos = 4)
   })
 
   output$plotConsonant = renderPlot({
