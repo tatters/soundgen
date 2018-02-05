@@ -6,6 +6,7 @@ NEW FUNCTIONS:
 MINOR:
   * soundgen(): new argument, "nonlinRandomWalk", for specifying the exact timing of each vocal regime (0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer). This is intended for making reproducible examples of sounds with nonlinear effects. See the vignette on sound generation for examples, section "Specifying the timing of each nonlinear regime"
   * getSmoothContour(): proper handling and plotting of anchors that need downsampling, interpolation exactly through the specified anchors with interpol = 'approx'
+  * segmentFolder(), analyzeFolder(): new argument "htmlPlots" to create an html file with a table of click-to-play plots
 
           CHANGES IN SOUNDGEN VERSION 1.1.2 [23-January-2018]
 NEW FUNCTIONS:

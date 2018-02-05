@@ -103,8 +103,8 @@
 #' @param pitchPlot a list of graphical parameters for displaying the final
 #'   pitch contour. Set to \code{NULL} or \code{NA} to suppress
 #' @param xlab,ylab,main plotting parameters
-#' @param width,height,units parameters passed to \code{\link[grDevices]{jpeg}}
-#'   if the plot is saved
+#' @param width,height,units,res parameters passed to
+#'   \code{\link[grDevices]{jpeg}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link{spectrogram}}
 #' @return If \code{summary = TRUE}, returns a dataframe with one row and three
 #'   column per acoustic variable (mean / median / SD). If \code{summary =
@@ -222,6 +222,7 @@ analyze = function(x,
                    width = 900,
                    height = 500,
                    units = 'px',
+                   res = NA,
                    ...) {
   ## preliminaries
   # deprecated args
@@ -440,7 +441,7 @@ analyze = function(x,
                'sound',
                plotname)
     jpeg(filename = paste0(savePath, f, ".jpg"),
-         width = width, height = height, units = 'px')
+         width = width, height = height, units = units, res = res)
   }
   frameBank = getFrameBank(
     sound = sound,
@@ -868,6 +869,7 @@ analyze = function(x,
 #' abline(a=0, b=1, col='red')
 #' }
 analyzeFolder = function(myfolder,
+                         htmlPlots = TRUE,
                          verbose = TRUE,
                          samplingRate = NULL,
                          silence = 0.04,
@@ -934,6 +936,7 @@ analyzeFolder = function(myfolder,
                          width = 900,
                          height = 500,
                          units = 'px',
+                         res = NA,
                          ...) {
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
@@ -952,8 +955,9 @@ analyzeFolder = function(myfolder,
   # See https://stackoverflow.com/questions/14397364/match-call-with-default-arguments
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude some args
-  myPars = myPars[!names(myPars) %in% c('myfolder' , 'verbose', 'specPlot',
-                                        'pitchPlot', 'candPlot')]
+  myPars = myPars[!names(myPars) %in% c(
+    'myfolder' , 'htmlPlots', 'verbose',
+    'specPlot', 'pitchPlot', 'candPlot')]
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
   # add plot pars correctly, without flattening the lists
@@ -980,6 +984,10 @@ analyzeFolder = function(myfolder,
   } else {
     output = result
     names(output) = filenames
+  }
+
+  if (htmlPlots) {
+    htmlPlots(myfolder, myfiles = filenames)
   }
 
   return (output)

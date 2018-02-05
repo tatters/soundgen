@@ -159,7 +159,7 @@ htmlPlots = function(myfolder, myfiles) {
       "</script>",
       "</head>",
       "<body>",
-      "<div id='instruction' style='font-size:200%; padding:5px; text-align:center'>Pitch contours of all files in a folder</div>",
+      "<div id='instruction' style='font-size:200%; padding:5px; text-align:center'>Plots of all files in a folder</div>",
       "<div id='container'> </div>",
       "<script>",
       "var sound = [];",
