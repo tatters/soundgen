@@ -916,6 +916,7 @@ analyzeFolder = function(myfolder,
                          smoothVars = c('pitch', 'dom'),
                          summary = TRUE,
                          plot = FALSE,
+                         savePlots = FALSE,
                          savePath = NA,
                          plotSpec = TRUE,
                          specPlot = NULL,
@@ -948,6 +949,9 @@ analyzeFolder = function(myfolder,
   if (!missing(specPlot)) {
     message('specPlot is deprecated; pass its arguments directly to the main function or set plotSpec = FALSE to remove the spectrogram')
   }
+  if (!missing(savePath)) {
+    message('savePath is deprecated; use savePlots = TRUE instead')
+  }
 
   # as.list(match.call()) also works, but we want to get default args as well,
   # since plot should default to TRUE for analyze() and FALSE for analyzeFolder(),
@@ -956,13 +960,14 @@ analyzeFolder = function(myfolder,
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
-    'myfolder' , 'htmlPlots', 'verbose',
+    'myfolder' , 'htmlPlots', 'verbose', 'savePlots',
     'specPlot', 'pitchPlot', 'candPlot')]
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
   # add plot pars correctly, without flattening the lists
   myPars$pitchPlot = pitchPlot
   myPars$candPlot = candPlot
+  if (savePlots) myPars$savePath = myfolder
 
   result = list()
   for (i in 1:length(filenames)) {
@@ -986,7 +991,7 @@ analyzeFolder = function(myfolder,
     names(output) = filenames
   }
 
-  if (htmlPlots) {
+  if (htmlPlots & savePlots) {
     htmlPlots(myfolder, myfiles = filenames)
   }
 

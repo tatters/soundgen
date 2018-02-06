@@ -1,12 +1,13 @@
           CHANGES IN SOUNDGEN VERSION 1.1.3 [...date...]
 NEW FUNCTIONS:
   * spectrogramFolder(): extracts and saves spectrograms of all .wav files in a folder, creates an html file with a table of click-to-play spectrograms
-  * getRandomWalk(), getIntegerRandomWalk(): functions for working with random walks that, among other things, divide the sound into segments with different nonlinear regimes; see "nonlinRandomWalk" argument to soundgen()
+  * getRandomWalk(), getIntegerRandomWalk(): functions for customizing the random walks that divide the sound into segments with different nonlinear regimes; see "nonlinRandomWalk" argument to soundgen()
 
 MINOR:
   * soundgen(): new argument, "nonlinRandomWalk", for specifying the exact timing of each vocal regime (0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer). This is intended for making reproducible examples of sounds with nonlinear effects. See the vignette on sound generation for examples, section "Specifying the timing of each nonlinear regime"
   * getSmoothContour(): proper handling and plotting of anchors that need downsampling, interpolation exactly through the specified anchors with interpol = 'approx'
-  * segmentFolder(), analyzeFolder(): new argument "htmlPlots" to create an html file with a table of click-to-play plots
+  * segmentFolder(), analyzeFolder(): new argument "htmlPlots" to create an html file with a table of click-to-play plots; new default strategy for saving plots (see "savePlots" argument)
+  * analyze(), analyzeFolder(), segment(), segmentFolder(): new argument "res" for proper control of the size and resolution of the output plots
 
           CHANGES IN SOUNDGEN VERSION 1.1.2 [23-January-2018]
 NEW FUNCTIONS:

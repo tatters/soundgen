@@ -1,4 +1,4 @@
-# TODO: add "res" to analyze(), segment(), analyzeFolder(), and segmentFolder() for proper handling of non-px units by jpeg() and integrate these functions with htmlPlots(); rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

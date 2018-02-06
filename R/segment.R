@@ -317,6 +317,7 @@ segmentFolder = function (myfolder,
                           overlap = 80,
                           summary = TRUE,
                           plot = FALSE,
+                          savePlots = FALSE,
                           savePath = NA,
                           verbose = TRUE,
                           reportEvery = 10,
@@ -339,6 +340,11 @@ segmentFolder = function (myfolder,
                             col = 'red'
                           ),
                           ...) {
+  # deprecated pars
+  if (!missing(savePath)) {
+    message('savePath is deprecated; use savePlots = TRUE instead')
+  }
+
   time_start = proc.time()  # timing
   # open all .wav files in folder
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
@@ -346,15 +352,16 @@ segmentFolder = function (myfolder,
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
-    'myfolder', 'htmlPlots', 'verbose',
+    'myfolder', 'htmlPlots', 'verbose', 'savePlots',
     'reportEvery', 'sylPlot', 'burstPlot')]  # otherwise flattens lists
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
   # add back sylPlot and burstPlot
   myPars$sylPlot = sylPlot
   myPars$burstPlot = burstPlot
-  result = list()
+  if (savePlots) myPars$savePath = myfolder
 
+  result = list()
   for (i in 1:length(filenames)) {
     result[[i]] = do.call(segment, c(filenames[i], myPars, ...))
     if (verbose) {
@@ -378,7 +385,7 @@ segmentFolder = function (myfolder,
     names(output) = filenames
   }
 
-  if (htmlPlots) {
+  if (htmlPlots & savePlots) {
     htmlPlots(myfolder, myfiles = filenames)
   }
 
