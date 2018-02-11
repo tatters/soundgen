@@ -723,3 +723,38 @@ getSigmoid = function(len,
   return(out)
 }
 
+
+#' Report CI
+#'
+#' Internal soundgen function
+#'
+#' Takes a numeric vector or matrix with three elements / columns: fit, lower
+#' quantile from a CI, and upper quantile from a CI. For each row, it prints the
+#' result as fit and CI in square brackets
+#' @param n numeric vector or matrix
+#' @param digits number of decimal points to preserve
+#' @keywords internal
+#' @examples
+#' n = rnorm(100)
+#' reportCI(quantile(n, probs = c(.5, .025, .975)))
+#'
+#' a = data.frame(fit = c(3, 5, 7),
+#'                lwr = c(1, 4, 6.5),
+#'                upr = c(5, 6, 7.1))
+#' reportCI(a, 1)
+reportCI = function(n, digits = 2) {
+  if (class(n) == 'data.frame') {
+    n = as.matrix(n)
+  }
+  n = round(n, digits)
+  if (class(n) == 'matrix') {
+    out = matrix(NA, nrow = nrow(n))
+    rownames(out) = rownames(n)
+    for (i in 1:nrow(n)) {
+      out[i, ] = reportCI(n[i, ])
+    }
+    return(out)
+  } else {
+    paste0(n[1], ' [', n[2], ', ', n[3], ']')
+  }
+}

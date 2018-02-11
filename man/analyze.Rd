@@ -22,7 +22,7 @@ analyze(x, samplingRate = NULL, silence = 0.04, windowLength = 50,
   = rgb(0, 0, 1, 0.75), lwd = 3), candPlot = list(levels = c("autocor",
   "spec", "dom", "cep"), col = c("green", "red", "orange", "violet"), pch =
   c(16, 2, 3, 7), cex = 2), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
-  main = NULL, width = 900, height = 500, units = "px", ...)
+  main = NULL, width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -176,8 +176,8 @@ individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
 
 \item{xlab, ylab, main}{plotting parameters}
 
-\item{width, height, units}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{width, height, units, res}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
 \item{...}{other graphical parameters passed to \code{\link{spectrogram}}}
 }

@@ -4,26 +4,27 @@
 \alias{analyzeFolder}
 \title{Analyze folder}
 \usage{
-analyzeFolder(myfolder, verbose = TRUE, samplingRate = NULL,
-  silence = 0.04, windowLength = 50, step = NULL, overlap = 50,
-  wn = "gaussian", zp = 0, cutFreq = 6000, nFormants = 3,
-  pitchMethods = c("autocor", "spec", "dom"), entropyThres = 0.6,
-  pitchFloor = 75, pitchCeiling = 3500, priorMean = HzToSemitones(300),
-  priorSD = 6, priorPlot = FALSE, nCands = 1, minVoicedCands = "autom",
-  domThres = 0.1, domSmooth = 220, autocorThres = 0.7,
-  autocorSmooth = NULL, cepThres = 0.3, cepSmooth = NULL, cepZp = 0,
-  specThres = 0.3, specPeak = 0.35, specSinglePeakCert = 0.4,
-  specHNRslope = 0.8, specSmooth = 150, specMerge = 1, shortestSyl = 20,
-  shortestPause = 60, interpolWin = 3, interpolTol = 0.3,
-  interpolCert = 0.3, pathfinding = c("none", "fast", "slow")[2],
-  annealPars = list(maxit = 5000, temp = 1000), certWeight = 0.5,
-  snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
+analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
+  samplingRate = NULL, silence = 0.04, windowLength = 50, step = NULL,
+  overlap = 50, wn = "gaussian", zp = 0, cutFreq = 6000,
+  nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
+  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
+  priorMean = HzToSemitones(300), priorSD = 6, priorPlot = FALSE,
+  nCands = 1, minVoicedCands = "autom", domThres = 0.1, domSmooth = 220,
+  autocorThres = 0.7, autocorSmooth = NULL, cepThres = 0.3,
+  cepSmooth = NULL, cepZp = 0, specThres = 0.3, specPeak = 0.35,
+  specSinglePeakCert = 0.4, specHNRslope = 0.8, specSmooth = 150,
+  specMerge = 1, shortestSyl = 20, shortestPause = 60, interpolWin = 3,
+  interpolTol = 0.3, interpolCert = 0.3, pathfinding = c("none", "fast",
+  "slow")[2], annealPars = list(maxit = 5000, temp = 1000),
+  certWeight = 0.5, snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
   smoothVars = c("pitch", "dom"), summary = TRUE, plot = FALSE,
-  savePath = NA, plotSpec = TRUE, specPlot = NULL, pitchPlot = list(col
-  = rgb(0, 0, 1, 0.75), lwd = 3), candPlot = list(levels = c("autocor",
-  "spec", "dom", "cep"), col = c("green", "red", "orange", "violet"), pch =
-  c(16, 2, 3, 7), cex = 2), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
-  main = NULL, width = 900, height = 500, units = "px", ...)
+  savePlots = FALSE, savePath = NA, plotSpec = TRUE, specPlot = NULL,
+  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
+  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2),
+  ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
+  width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -219,14 +220,17 @@ individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
 
 \item{main}{plotting parameters}
 
-\item{width}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{width}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
-\item{height}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{height}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
-\item{units}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{units}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
+
+\item{res}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
 \item{...}{other graphical parameters passed to \code{\link{spectrogram}}}
 }

@@ -6,9 +6,8 @@
 \usage{
 spectrogramFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   windowLength = 50, step = NULL, overlap = 50, wn = "gaussian",
-  zp = 0, savePath = NULL, ylim = NULL, osc = TRUE, xlab = "Time, ms",
-  ylab = "kHz", width = 900, height = 500, units = "px", res = NA,
-  ...)
+  zp = 0, ylim = NULL, osc = TRUE, xlab = "Time, ms", ylab = "kHz",
+  width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
 \item{myfolder}{full path to the folder containing .wav files}
@@ -28,9 +27,6 @@ blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
-\item{savePath}{if a valid path is specified, a plot is saved in this
-folder (defaults to NA)}
-
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 
 \item{osc}{should an oscillogram be shown under the spectrogram? TRUE / FALSE}
@@ -39,28 +35,30 @@ folder (defaults to NA)}
 
 \item{ylab}{graphical parameters}
 
-\item{width}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{width}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
-\item{height}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{height}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
-\item{units}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{units}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
-\item{res}{nominal resolution passed to \code{\link[grDevices]{jpeg}}}
+\item{res}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
 \item{...}{other parameters passed to \code{\link{spectrogram}}}
 }
 \description{
 Creates spectrograms of all .wav files in a folder and save them as .jpeg
-files. This is a lot faster than to run \code{\link{analyzeFolder}} if you
-don't need pitch tracking. By default it also creates an html file with a
-list of audio files and their spectrograms in the same folder. If you open it
-in a browser that supports playing .wav files (e.g. Firefox or Chrome), you
-can view the spetrograms and click on them to play each sound. Unlike
-\code{\link{analyzeFolder}}, spectrogramFolder supports plotting both a
-spectrogram and an oscillogram if \code{osc = TRUE}.
+files in the same folder. This is a lot faster than running
+\code{\link{analyzeFolder}} if you don't need pitch tracking. By default it
+also creates an html file with a list of audio files and their spectrograms
+in the same folder. If you open it in a browser that supports playing .wav
+files (e.g. Firefox or Chrome), you can view the spetrograms and click on
+them to play each sound. Unlike \code{\link{analyzeFolder}},
+spectrogramFolder supports plotting both a spectrogram and an oscillogram if
+\code{osc = TRUE}.
 }
 \examples{
 \dontrun{
