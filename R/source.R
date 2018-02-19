@@ -293,7 +293,7 @@ generateHarmonics = function(pitch,
     jitter_on = shimmer_on = (rw_bin == 2)
   } else {
     rw = rep(1, nGC)
-    vocalFry_on = jitter_on = shimmer_on = rep(1, nGC)
+    vocalFry_on = jitter_on = shimmer_on = rep(TRUE, nGC)
   }
 
   # calculate jitter (random variation of F0)
