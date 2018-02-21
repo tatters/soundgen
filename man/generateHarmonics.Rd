@@ -47,9 +47,9 @@ regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 low value for harsh noise, a high value for irregular vibrato or shaky
 voice}
 
-\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz}
+\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz (vectorized)}
 
-\item{vibratoDep}{the depth of vibrato, semitones}
+\item{vibratoDep}{the depth of vibrato, semitones (vectorized)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
 cycles (0 to 100\% of original amplitude of each cycle)}

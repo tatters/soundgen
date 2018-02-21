@@ -232,7 +232,15 @@ generateHarmonics = function(pitch,
                              throwaway = -80) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
-  if (vibratoDep > 0) {
+  if (any(vibratoDep > 0)) {
+    if (length(vibratoFreq) > 1) {
+      vibratoFreq = getSmoothContour(anchors = vibratoFreq,
+                                     len = length(pitch))
+    }
+    if (length(vibratoDep) > 1) {
+      vibratoDep = getSmoothContour(anchors = vibratoDep,
+                                     len = length(pitch))
+    }
     vibrato = 2 ^ (sin(2 * pi * (1:length(pitch)) * vibratoFreq /
                          pitchSamplingRate) * vibratoDep / 12)
     # plot(vibrato[], type = 'l')

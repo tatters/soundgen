@@ -1,4 +1,4 @@
-# TODO: allow negative pauseLen; vectorize vibrato; check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: vectorize sylLen, pauseLen, jitterDep and the rest of nonlin pars (?); check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -21,7 +21,9 @@ NULL
 #'   formants contours span multiple syllables, but not multiple bouts (see
 #'   Details)
 #' @param sylLen average duration of each syllable, ms
-#' @param pauseLen average duration of pauses between syllables, ms
+#' @param pauseLen average duration of pauses between syllables, ms (can be
+#'   negative between bouts, but not between syllables, i.e. if repeatBout > 1
+#'   but nSyl = 1)
 #' @param pitchAnchors a numeric vector of f0 values in Hz (assuming equal time
 #'   steps) or a dataframe specifying the time (ms or 0 to 1) and value (Hz) of
 #'   each anchor. These anchors are used to create a smooth contour of
@@ -65,8 +67,8 @@ NULL
 #'   low value for harsh noise, a high value for irregular vibrato or shaky
 #'   voice
 #' @param jitterDep cycle-to-cycle random pitch variation, semitones
-#' @param vibratoFreq the rate of regular pitch modulation, or vibrato, Hz
-#' @param vibratoDep the depth of vibrato, semitones
+#' @param vibratoFreq the rate of regular pitch modulation, or vibrato, Hz (vectorized)
+#' @param vibratoDep the depth of vibrato, semitones (vectorized)
 #' @param shimmerDep random variation in amplitude between individual glottal
 #'   cycles (0 to 100\% of original amplitude of each cycle)
 #' @param attackLen duration of fade-in / fade-out at each end of syllables and
@@ -120,8 +122,9 @@ NULL
 #'   subharmonics regime, in ms
 #' @param amDep amplitude modulation depth, %. 0: no change; 100: amplitude
 #'   modulation with amplitude range equal to the dynamic range of the sound
-#' @param amFreq amplitude modulation frequency, Hz
+#' @param amFreq amplitude modulation frequency, Hz (vectorized)
 #' @param amShape amplitude modulation shape (-1 to +1, defaults to 0)
+#'   (vectorized)
 #' @param noiseAnchors a numeric vector of noise amplitudes (throwaway dB = none, 0
 #'   dB = as loud as voiced component) or a dataframe specifying the time (ms)
 #'   and amplitude (dB) of anchors for generating the noise component such as

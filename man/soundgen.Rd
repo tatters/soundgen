@@ -34,7 +34,9 @@ Details)}
 
 \item{sylLen}{average duration of each syllable, ms}
 
-\item{pauseLen}{average duration of pauses between syllables, ms}
+\item{pauseLen}{average duration of pauses between syllables, ms (can be
+negative between bouts, but not between syllables, i.e. if repeatBout > 1
+but nSyl = 1)}
 
 \item{pitchAnchors}{a numeric vector of f0 values in Hz (assuming equal time
 steps) or a dataframe specifying the time (ms or 0 to 1) and value (Hz) of
@@ -91,9 +93,9 @@ voice}
 
 \item{jitterDep}{cycle-to-cycle random pitch variation, semitones}
 
-\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz}
+\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz (vectorized)}
 
-\item{vibratoDep}{the depth of vibrato, semitones}
+\item{vibratoDep}{the depth of vibrato, semitones (vectorized)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
 cycles (0 to 100\% of original amplitude of each cycle)}
@@ -168,9 +170,10 @@ subharmonics regime, in ms}
 \item{amDep}{amplitude modulation depth, %. 0: no change; 100: amplitude
 modulation with amplitude range equal to the dynamic range of the sound}
 
-\item{amFreq}{amplitude modulation frequency, Hz}
+\item{amFreq}{amplitude modulation frequency, Hz (vectorized)}
 
-\item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0)}
+\item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0)
+(vectorized)}
 
 \item{noiseAnchors}{a numeric vector of noise amplitudes (throwaway dB = none, 0
 dB = as loud as voiced component) or a dataframe specifying the time (ms)
