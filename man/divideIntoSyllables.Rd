@@ -11,9 +11,9 @@ divideIntoSyllables(nSyl, sylLen, pauseLen, sylDur_min = 20,
 \arguments{
 \item{nSyl}{the desired number of syllables}
 
-\item{sylLen}{the desired mean syllable duration, in ms}
+\item{sylLen}{the desired mean syllable duration, in ms (vectorized)}
 
-\item{pauseLen}{the desired mean pause between syllables, in ms}
+\item{pauseLen}{the desired mean pause between syllables, in ms (vectorized)}
 
 \item{sylDur_min, sylDur_max}{the lower and upper bounds on possible syllable
 duration, in ms}
@@ -37,14 +37,20 @@ Internal soundgen function.
 Stochastic generation of syllable structure of a bout. Calls
 \code{\link{rnorm_bounded}} to vary the duration of each new syllable and of
 pauses between syllables. Total bout duration will also vary, unless
-temperature is zero.
+temperature is zero. However, the output will always contain exactly
+\code{nSyl} syllables.
 }
 \examples{
+soundgen:::divideIntoSyllables (nSyl = 1, sylLen = 180)
 soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
   pauseLen = 55, temperature = 0.2, plot = TRUE)
 soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
   pauseLen = 55, temperature = 0)
 soundgen:::divideIntoSyllables (nSyl = 3, sylLen = 100,
   pauseLen = 25, temperature = 0.5)
+
+# sylLen and pauseLen are vectorized:
+soundgen:::divideIntoSyllables (nSyl = 15, sylLen = 100:200,
+  pauseLen = c(80, 25, 80), temperature = 0.05, plot = TRUE)
 }
 \keyword{internal}

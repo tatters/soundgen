@@ -419,10 +419,11 @@ getGlottalCycles = function (pitch, samplingRate) {
 #' Stochastic generation of syllable structure of a bout. Calls
 #' \code{\link{rnorm_bounded}} to vary the duration of each new syllable and of
 #' pauses between syllables. Total bout duration will also vary, unless
-#' temperature is zero.
+#' temperature is zero. However, the output will always contain exactly
+#' \code{nSyl} syllables.
 #' @param nSyl the desired number of syllables
-#' @param sylLen the desired mean syllable duration, in ms
-#' @param pauseLen the desired mean pause between syllables, in ms
+#' @param sylLen the desired mean syllable duration, in ms (vectorized)
+#' @param pauseLen the desired mean pause between syllables, in ms (vectorized)
 #' @param sylDur_min,sylDur_max the lower and upper bounds on possible syllable
 #'   duration, in ms
 #' @param pauseDur_min,pauseDur_max the lower and upper bounds on possible pause
@@ -434,12 +435,17 @@ getGlottalCycles = function (pitch, samplingRate) {
 #' @return Returns a matrix with a list of start-end points for syllables
 #' @keywords internal
 #' @examples
+#' soundgen:::divideIntoSyllables (nSyl = 1, sylLen = 180)
 #' soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
 #'   pauseLen = 55, temperature = 0.2, plot = TRUE)
 #' soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
 #'   pauseLen = 55, temperature = 0)
 #' soundgen:::divideIntoSyllables (nSyl = 3, sylLen = 100,
 #'   pauseLen = 25, temperature = 0.5)
+#'
+#' # sylLen and pauseLen are vectorized:
+#' soundgen:::divideIntoSyllables (nSyl = 15, sylLen = 100:200,
+#'   pauseLen = c(80, 25, 80), temperature = 0.05, plot = TRUE)
 divideIntoSyllables = function (nSyl,
                                 sylLen,
                                 pauseLen,
@@ -449,32 +455,42 @@ divideIntoSyllables = function (nSyl,
                                 pauseDur_max = 1000,
                                 temperature = 0.025,
                                 plot = FALSE) {
-  out = matrix(ncol = 2, nrow = 0)
-  colnames(out) = c('start', 'end')
   if (nSyl == 1) {
-    out = rbind(out, c(0, sylLen))
+    # no variation for a single syllable
+    out = data.frame(start = 0, end = sylLen)
   } else {
-    # generate random lengths while respecting the constraints
-    c = 0
-    while (nrow(out) < nSyl) {
-      duration_ms_loop = rnorm_bounded(
-        n = 1,
-        mean = sylLen,
-        low = sylDur_min,
-        high = sylDur_max,
-        sd = sylLen * temperature
-      )
-      pause_ms_loop = rnorm_bounded(
-        n = 1,
-        mean = pauseLen,
-        low = pauseDur_min,
-        high = pauseDur_max,
-        sd = pauseLen * temperature
-      )
-      start = 1 + c # start time of syllable, in ms
-      end = start + duration_ms_loop # end time of syllable, in ms
-      out = rbind(out, c(start, end))
-      c = end + pause_ms_loop
+    # up- or downsample durations to nSyl
+    if (length(sylLen) > 1) {
+      sylLen = getSmoothContour(anchors = sylLen, len = nSyl)
+    }
+    if (length(pauseLen) > 1) {
+      pauseLen = getSmoothContour(anchors = pauseLen, len = nSyl)
+    }
+
+    # generate random lengths of syllabels and pauses under constraints
+    syls = rnorm_bounded(
+      n = nSyl,
+      mean = sylLen,
+      low = sylDur_min,
+      high = sylDur_max,
+      sd = sylLen * temperature
+    )
+    pauses = rnorm_bounded(
+      n = nSyl,
+      mean = pauseLen,
+      low = pauseDur_min,
+      high = pauseDur_max,
+      sd = pauseLen * temperature
+    )
+
+    out = data.frame(start = rep(0, nSyl), end = rep(0, nSyl))
+    for (i in 1:nSyl) {
+      if (i == 1) {
+        out$start[i] = 0
+      } else {
+        out$start[i] = out$end[i - 1] + pauses[i]  # start time of syllable, in ms
+      }
+      out$end[i] = out$start[i] + syls[i] # end time of syllable, in ms
     }
   }
 

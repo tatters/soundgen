@@ -1,4 +1,4 @@
-# TODO: vectorize sylLen, pauseLen, jitterDep and the rest of nonlin pars (?); check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: vectorize jitterDep and the rest of nonlin pars (?); check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

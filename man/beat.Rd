@@ -12,9 +12,7 @@ beat(nSyl = 10, sylLen = 200, pauseLen = 50, pitchAnchors = c(200, 10),
 
 \item{sylLen}{average duration of each syllable, ms}
 
-\item{pauseLen}{average duration of pauses between syllables, ms (can be
-negative between bouts, but not between syllables, i.e. if repeatBout > 1
-but nSyl = 1)}
+\item{pauseLen}{average duration of pauses between syllables, ms}
 
 \item{pitchAnchors}{a numeric vector of f0 values in Hz (assuming equal time
 steps) or a dataframe specifying the time (ms or 0 to 1) and value (Hz) of

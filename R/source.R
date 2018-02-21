@@ -749,6 +749,7 @@ fart = function(glottisAnchors = c(350, 700),
 #' to be very short.
 #' @inheritParams soundgen
 #' @param nSyl the number of syllables to generate
+#' @param pauseLen average duration of pauses between syllables, ms
 #' @param fadeOut if TRUE, a linear fade-out is applied to the entire syllable
 #' @return Returns a non-normalized waveform centered at zero.
 #' @export
