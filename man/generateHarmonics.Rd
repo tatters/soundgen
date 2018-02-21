@@ -41,18 +41,18 @@ specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 
-\item{jitterDep}{cycle-to-cycle random pitch variation, semitones}
+\item{jitterDep}{cycle-to-cycle random pitch variation, semitones (vectorized)}
 
 \item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
 low value for harsh noise, a high value for irregular vibrato or shaky
-voice}
+voice (vectorized)}
 
 \item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz (vectorized)}
 
 \item{vibratoDep}{the depth of vibrato, semitones (vectorized)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
-cycles (0 to 100\% of original amplitude of each cycle)}
+cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
 
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
 from creaky (-1) to breathy (+1)}

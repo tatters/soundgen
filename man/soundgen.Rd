@@ -89,16 +89,16 @@ regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 
 \item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
 low value for harsh noise, a high value for irregular vibrato or shaky
-voice}
+voice (vectorized)}
 
-\item{jitterDep}{cycle-to-cycle random pitch variation, semitones}
+\item{jitterDep}{cycle-to-cycle random pitch variation, semitones (vectorized)}
 
 \item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz (vectorized)}
 
 \item{vibratoDep}{the depth of vibrato, semitones (vectorized)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
-cycles (0 to 100\% of original amplitude of each cycle)}
+cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms)}

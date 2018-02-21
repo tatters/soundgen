@@ -305,7 +305,9 @@ generateHarmonics = function(pitch,
   }
 
   # calculate jitter (random variation of F0)
-  if (jitterDep > 0 & any(jitter_on)) {
+  if (any(jitterDep > 0) & any(jitter_on)) {
+    if (length(jitterDep) > 1) jitterDep = getSmoothContour(jitterDep, len = nGC)
+    if (length(jitterLen) > 1) jitterLen = getSmoothContour(jitterLen, len = nGC)
     ratio = pitch_per_gc * jitterLen / 1000 # the number of gc that make
     #   up one jitter period (vector of length nGC)
     idx = 1
@@ -391,7 +393,8 @@ generateHarmonics = function(pitch,
   # image(t(log(rolloff_source)))
 
   # add shimmer (random variation in amplitude)
-  if (shimmerDep > 0 & any(shimmer_on)) {
+  if (any(shimmerDep > 0) & any(shimmer_on)) {
+    if (length(shimmerDep) > 1) shimmerDep = getSmoothContour(shimmerDep, len = nGC)
     shimmer = 2 ^ (rnorm (
       n = ncol(rolloff_source),
       mean = 0,
@@ -407,7 +410,9 @@ generateHarmonics = function(pitch,
 
   # add vocal fry (subharmonics)
   if (!synthesize_per_gc &&  # can't add subharmonics if doing one gc at a time (one f0 period)
-      subDep > 0 & any(vocalFry_on)) {
+      any(subDep > 0) & any(vocalFry_on)) {
+    if (length(subFreq) > 1) subFreq = getSmoothContour(subFreq, len = nGC)
+    if (length(subDep) > 1) subDep = getSmoothContour(subDep, len = nGC)
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,

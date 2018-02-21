@@ -5,11 +5,12 @@ NEW FUNCTIONS:
 
 MINOR:
   * soundgen(): new argument, "nonlinRandomWalk", for specifying the exact timing of each vocal regime (0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer). This is intended for making reproducible examples of sounds with nonlinear effects. See the vignette on sound generation for examples, section "Specifying the timing of each nonlinear regime"
+  * soundgen(): vectorized parameters vibratoFreq, vibratoDep, sylLen, pauseLen, jitterDep, jitterLen, and shimmerLen. They can now be specified dynamically within one bout, e.g. "nSyl = 15, sylLen = 300:150" produces 15 progressively shorter syllables from 300 ms to 150 ms in length
   * soundgen(): a negative pause (overlap) is allowed between bouts
-  * soundgen(): vectorized parameters vibratoFreq, vibratoDep, sylLen, pauseLen
   * getSmoothContour(): proper handling and plotting of anchors that need downsampling, interpolation exactly through the specified anchors with interpol = 'approx'
   * segmentFolder(), analyzeFolder(): new argument "htmlPlots" to create an html file with a table of click-to-play plots; new default strategy for saving plots (see "savePlots" argument)
   * analyze(), analyzeFolder(), segment(), segmentFolder(): new argument "res" for proper control of the size and resolution of the output plots
+
 
           CHANGES IN SOUNDGEN VERSION 1.1.2 [23-January-2018]
 NEW FUNCTIONS:

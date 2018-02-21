@@ -1,4 +1,4 @@
-# TODO: vectorize jitterDep and the rest of nonlin pars (?); check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -65,12 +65,12 @@ NULL
 #'   regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer
 #' @param jitterLen duration of stable periods between pitch jumps, ms. Use a
 #'   low value for harsh noise, a high value for irregular vibrato or shaky
-#'   voice
-#' @param jitterDep cycle-to-cycle random pitch variation, semitones
+#'   voice (vectorized)
+#' @param jitterDep cycle-to-cycle random pitch variation, semitones (vectorized)
 #' @param vibratoFreq the rate of regular pitch modulation, or vibrato, Hz (vectorized)
 #' @param vibratoDep the depth of vibrato, semitones (vectorized)
 #' @param shimmerDep random variation in amplitude between individual glottal
-#'   cycles (0 to 100\% of original amplitude of each cycle)
+#'   cycles (0 to 100\% of original amplitude of each cycle) (vectorized)
 #' @param attackLen duration of fade-in / fade-out at each end of syllables and
 #'   noise (ms)
 #' @param rolloff basic rolloff from lower to upper harmonics, db/octave
