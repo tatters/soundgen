@@ -1,4 +1,4 @@
-# TODO: rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: allow negative pauseLen; vectorize vibrato; check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -317,6 +317,12 @@ soundgen = function(repeatBout = 1,
                        "invalidArgAction = 'ignore' to force."))
       }
     }
+  }
+  if (pauseLen < 0 && nSyl > 1) {
+    stop(paste(
+      'Negative pauseLen is allowed between bouts, but not between syllables.',
+      'Use repeatBout instead of nSyl if you need syllables to overlap'
+    ))
   }
 
   # check and, if necessary, reformat anchors to dataframes
@@ -868,9 +874,11 @@ soundgen = function(repeatBout = 1,
     if (b == 1) {
       bout = soundFiltered
     } else {
-      bout = c(bout,
-               rep(0, pauseLen * samplingRate / 1000),
-               soundFiltered)
+      bout = addVectors(
+        bout,
+        soundFiltered,
+        insertionPoint = length(bout) + round(pauseLen * samplingRate / 1000)
+      )
     }
   }
 
