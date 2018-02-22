@@ -1,4 +1,4 @@
-# TODO: check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: subDep 0:100 etc crashes because of division by 0; update vignette on sound generation to showcase newly vectorized pars; check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -72,7 +72,8 @@ NULL
 #' @param shimmerDep random variation in amplitude between individual glottal
 #'   cycles (0 to 100\% of original amplitude of each cycle) (vectorized)
 #' @param attackLen duration of fade-in / fade-out at each end of syllables and
-#'   noise (ms)
+#'   noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
+#'   and fade-out)
 #' @param rolloff basic rolloff from lower to upper harmonics, db/octave
 #'   (exponential decay). All rolloff parameters are vectorized. See
 #'   \code{\link{getRolloff}} for more details

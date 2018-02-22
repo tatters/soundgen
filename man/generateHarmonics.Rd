@@ -27,7 +27,8 @@ cycle with closed glottis, % (0 = no modification, 100 = closed phase as
 long as open phase); numeric vector or dataframe specifying time and value}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
-noise (ms)}
+noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
+and fade-out)}
 
 \item{nonlinBalance}{hyperparameter for regulating the (approximate)
 proportion of sound with different regimes of pitch effects (none /

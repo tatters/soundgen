@@ -25,7 +25,8 @@ no breathing, 0 = as strong as the voiced (harmonic) part}
 \code{rolloffNoise} applies to the noise component (vectorized)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
-noise (ms)}
+noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
+and fade-out)}
 
 \item{flatSpectrum}{keep spectrum flat up to ... Hz (ie rolloffNoise applies
 only above this frequency)}

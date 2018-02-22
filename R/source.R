@@ -152,15 +152,18 @@ generateNoise = function(len,
   )
   breathing = matchLengths(breathing, len = len)  # pad with 0s or trim
   breathing = breathing / max(breathing) * breathingStrength # normalize
+
   # add attack
-  if (is.numeric(attackLen) && attackLen > 0) {
+  if (is.numeric(attackLen) && any(attackLen > 0)) {
     l = floor(attackLen * samplingRate / 1000)
+    if (length(l) == 1) l = c(l, l)
     breathing = fade(
       breathing,
-      fadeIn = l,
-      fadeOut = l
+      fadeIn = l[1],
+      fadeOut = l[2]
     )
   }
+
   # plot(breathing, type = 'l')
   # playme(breathing, samplingRate = samplingRate)
   # spectrogram(breathing, samplingRate = samplingRate)
@@ -480,11 +483,12 @@ generateHarmonics = function(pitch,
   }
 
   # add attack
-  if (attackLen > 0) {
+  if (is.numeric(attackLen) && any(attackLen > 0)) {
     l = floor(attackLen * samplingRate / 1000)
+    if (length(l) == 1) l = c(l, l)
     waveform = fade(waveform,
-                    fadeIn = l,
-                    fadeOut = l)
+                    fadeIn = l[1],
+                    fadeOut = l[2])
     # plot(waveform, type = 'l')
   }
 

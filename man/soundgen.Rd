@@ -101,7 +101,8 @@ voice (vectorized)}
 cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
-noise (ms)}
+noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
+and fade-out)}
 
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
 (exponential decay). All rolloff parameters are vectorized. See
