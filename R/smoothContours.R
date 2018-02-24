@@ -129,7 +129,10 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     return(NA)
   }
 
-  if (discontThres <= 0 | nrow(anchors) < 3) {
+  # get smooth contours
+  if (nrow(anchors) == len) {
+    smoothContour = anchors$value
+  } else if (discontThres <= 0 | nrow(anchors) < 3) {
     smoothContour = drawContour(len = len,
                                 anchors = anchors,
                                 interpol = interpol,

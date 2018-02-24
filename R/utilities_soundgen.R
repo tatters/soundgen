@@ -460,11 +460,11 @@ divideIntoSyllables = function (nSyl,
     out = data.frame(start = 0, end = sylLen)
   } else {
     # up- or downsample durations to nSyl
-    if (length(sylLen) > 1) {
+    if (length(sylLen) > 1 & length(sylLen) != nSyl) {
       sylLen = getSmoothContour(anchors = sylLen, len = nSyl)
     }
-    if (length(pauseLen) > 1) {
-      pauseLen = getSmoothContour(anchors = pauseLen, len = nSyl)
+    if (length(pauseLen) > 1 & length(pauseLen) != (nSyl - 1)) {
+      pauseLen = getSmoothContour(anchors = pauseLen, len = nSyl - 1)
     }
 
     # generate random lengths of syllabels and pauses under constraints
@@ -476,7 +476,7 @@ divideIntoSyllables = function (nSyl,
       sd = sylLen * temperature
     )
     pauses = rnorm_bounded(
-      n = nSyl,
+      n = nSyl - 1,
       mean = pauseLen,
       low = pauseDur_min,
       high = pauseDur_max,
@@ -488,11 +488,12 @@ divideIntoSyllables = function (nSyl,
       if (i == 1) {
         out$start[i] = 0
       } else {
-        out$start[i] = out$end[i - 1] + pauses[i]  # start time of syllable, in ms
+        out$start[i] = out$end[i - 1] + pauses[i - 1]  # start time of syllable, in ms
       }
       out$end[i] = out$start[i] + syls[i] # end time of syllable, in ms
     }
   }
+  out$dur = out$end - out$start
 
   if (plot) {
     # for the UI
@@ -998,4 +999,38 @@ fade = function(x,
     abline(v = length(x) - fadeOut, col = 'blue')
   }
   return(x)
+}
+
+
+#' Scale noise anchors
+#'
+#' Internal soundgen function.
+#'
+#' Scales a dataframe containing noise anchors so as to preserve the timing of
+#' positive anchors relative to the new syllable duration. Negative time anchors
+#' are not changed: the pre-aspiration length is constant, regardless of the
+#' actual syllable duration. Time anchors from 0 to sylLen are proportional to
+#' the actual syllable duration re the average expected duration (which the user
+#' sees in the UI when choosing time anchors). Time anchors beyond sylLen are
+#' scaled to preserve post-aspiration duration.
+#' @param noiseAnchors dataframe of noise anchors
+#' @param sylLen_old syllable length relative to which the timing of noise anchors is
+#' specified
+#' @param sylLen_new the new syllable length
+#' @keywords internal
+#' @examples
+#' noiseAnchors = data.frame(time = c(-20, 50, 120),
+#'                             value = c(-50, -10, -60))
+#' scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 200)
+#' scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 50)
+#' scaleNoiseAnchors(noiseAnchors, sylLen_old = 200, sylLen_new = 300)
+scaleNoiseAnchors = function(noiseAnchors, sylLen_old, sylLen_new) {
+  idx_mid = which(noiseAnchors$time > 0 &             # not before syl
+                    noiseAnchors$time < sylLen_old)   # not after syl
+  idx_after = which(noiseAnchors$time >= sylLen_old)  # after syl
+  noiseAnchors$time[idx_mid] =
+    noiseAnchors$time[idx_mid] * sylLen_new / sylLen_old
+  noiseAnchors$time[idx_after] =
+    noiseAnchors$time[idx_after] - sylLen_old + sylLen_new
+  return(noiseAnchors)
 }
