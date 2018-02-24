@@ -1,4 +1,4 @@
-# TODO: if sylLen is as long as nSyl, just use those exact durations; subDep 0:100 etc crashes because of division by 0; update vignette on sound generation to showcase newly vectorized pars; check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: noiseAnchors with breathy voice hyper; subDep 0:100 etc crashes because of division by 0; update vignette on sound generation to showcase newly vectorized pars; check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -322,7 +322,7 @@ soundgen = function(repeatBout = 1,
       }
     }
   }
-  if (pauseLen < 0 && nSyl > 1) {
+  if (any(pauseLen < 0) && nSyl > 1) {
     stop(paste(
       'Negative pauseLen is allowed between bouts, but not between syllables.',
       'Use repeatBout instead of nSyl if you need syllables to overlap'
@@ -356,7 +356,9 @@ soundgen = function(repeatBout = 1,
 
   # make sure sylLen and pauseLen are vectors of appropriate length
   sylLen = getSmoothContour(anchors = sylLen, len = nSyl)
-  pauseLen = getSmoothContour(anchors = pauseLen, len = nSyl - 1)
+  if (nSyl > 1) {
+    pauseLen = getSmoothContour(anchors = pauseLen, len = nSyl - 1)
+  }
 
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
 
@@ -548,6 +550,26 @@ soundgen = function(repeatBout = 1,
     class(glottisAnchors) == 'data.frame' &&
     any(glottisAnchors$value > 0)
 
+  # For polysyllabic vocalizations, calculate amplitude envelope correction
+  # per voiced syllable
+  if (!is.na(amplAnchorsGlobal) &&
+      length(which(amplAnchorsGlobal$value < -throwaway)) > 0) {
+    amplEnvelope = getSmoothContour(
+      anchors = amplAnchorsGlobal,
+      len = nSyl,
+      interpol = interpol,
+      discontThres = discontThres,
+      jumpThres = jumpThres,
+      valueFloor = 0,
+      valueCeiling = -throwaway,
+      samplingRate = samplingRate
+    )
+    # convert from dB to linear multiplier
+    amplEnvelope = 10 ^ (amplEnvelope / 20)
+  } else {
+    amplEnvelope = rep(1, nSyl)
+  }
+
   # START OF BOUT GENERATION
   for (b in 1:repeatBout) {
     # syllable segmentation
@@ -675,10 +697,8 @@ soundgen = function(repeatBout = 1,
           list(pitch = pitchContour_syl,
                amplAnchors = amplAnchors_per_syl,
                glottisAnchors = glottisAnchors_per_syl)
-        ))
+        )) * amplEnvelope[s]  # correction of amplitude per syllable
         )
-        # update the actual syllable duration (varies if there is strong jitter etc)
-        dur_syl = length(syllable) / samplingRate * 1000
       }
       # spectrogram(syllable, samplingRate = samplingRate)
       # playme(syllable, samplingRate = samplingRate)
@@ -689,18 +709,19 @@ soundgen = function(repeatBout = 1,
       #   stop('The new syllable contains NA values!')
       # }
 
-      # generate pause for all but the last syllable
+      # generate a pause for all but the last syllable
       if (s < nrow(syllables)) {
-        pause = rep(0, floor((syllables[s + 1, 1] - syllables[s, 2]) *
+        pause = rep(0, floor((syllables[s + 1, 'start'] - syllables[s, 'end']) *
                                samplingRate / 1000))
       } else {
         pause = numeric()
       }
 
-      # add syllable and pause to the growing sound
+      # add syllable and pause to the growing bout
       voiced = c(voiced, syllable, pause)
 
-      # update syllable timing info, b/c with temperature > 0 there will be deviations
+      # update syllable timing info, b/c with temperature > 0, jitter etc
+      # there may be deviations from the target duration
       if (s < nrow(syllables)) {
         correction = length(voiced) / samplingRate * 1000 - syllables[s + 1, 'start']
         syllables[(s + 1):nrow(syllables), c('start', 'end')] =
@@ -752,7 +773,8 @@ soundgen = function(repeatBout = 1,
         #   otherwise we filter first and then mix voiced+unvoiced
         sound_unvoiced = addVectors(sound_unvoiced,
                                     unvoiced[[s]],
-                                    insertionPoint = insertionIdx)
+                                    insertionPoint = insertionIdx,
+                                    normalize = FALSE)
 
         # update syllable timing if inserting before the bout
         # (increasing its length)
@@ -787,7 +809,8 @@ soundgen = function(repeatBout = 1,
         sound = addVectors(
           voiced,
           sound_unvoiced,
-          insertionPoint = -syllables$start[1] * samplingRate / 1000
+          insertionPoint = -syllables$start[1] * samplingRate / 1000,
+          normalize = FALSE
         )
 
         if (length(sound) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
@@ -822,12 +845,13 @@ soundgen = function(repeatBout = 1,
         soundFiltered = addVectors(
           voicedFiltered,
           unvoicedFiltered,
-          insertionPoint = -syllables$start[1] * samplingRate / 1000
+          insertionPoint = -syllables$start[1] * samplingRate / 1000,
+          normalize = FALSE
         )
       }
     } else {
       # no unvoiced component - just add formants to voiced
-      if (length(sound) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
+      if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
         soundFiltered = do.call(addFormants, c(
           formantPars,
           list(sound = voiced, formants = formants)
@@ -837,26 +861,6 @@ soundgen = function(repeatBout = 1,
       }
     }
     # plot(soundFiltered, type = 'l')
-
-    # For polysyllabic vocalizations, apply amplitude envelope (if specified)
-    #   to the voiced component over the entire bout and normalize to -1...+1
-    if (!is.na(amplAnchorsGlobal) &&
-        length(which(amplAnchorsGlobal$value < -throwaway)) > 0) {
-      amplEnvelope = getSmoothContour(
-        anchors = amplAnchorsGlobal,
-        len = length(soundFiltered),
-        interpol = interpol,
-        discontThres = discontThres,
-        jumpThres = jumpThres,
-        valueFloor = 0,
-        valueCeiling = -throwaway,
-        samplingRate = samplingRate
-      )
-      # convert from dB to linear multiplier
-      amplEnvelope = 10 ^ (amplEnvelope / 20)
-      # plot(amplEnvelope)
-      soundFiltered = soundFiltered * amplEnvelope
-    }
 
     # trill - rapid regular amplitude modulation
     # (affects both voiced and unvoiced)
@@ -885,7 +889,7 @@ soundgen = function(repeatBout = 1,
       bout = addVectors(
         bout,
         soundFiltered,
-        insertionPoint = length(bout) + round(pauseLen * samplingRate / 1000)
+        insertionPoint = length(bout) + round(pauseLen[1] * samplingRate / 1000)
       )
     }
   }

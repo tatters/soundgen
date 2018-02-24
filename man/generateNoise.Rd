@@ -4,8 +4,8 @@
 \alias{generateNoise}
 \title{Generate noise}
 \usage{
-generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value = c(-80,
-  -80)), rolloffNoise = -4, attackLen = 10, flatSpectrum = 1200,
+generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value = c(0,
+  0)), rolloffNoise = -4, attackLen = 10, flatSpectrum = 1200,
   windowLength_points = 1024, samplingRate = 16000, overlap = 75,
   throwaway = -80, filterNoise = NA)
 }

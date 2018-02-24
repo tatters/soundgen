@@ -60,7 +60,7 @@
 generateNoise = function(len,
                          noiseAnchors = data.frame(
                            time = c(0, 300),
-                           value = c(-80, -80)
+                           value = c(0, 0)
                          ),
                          rolloffNoise = -4,
                          attackLen = 10,
@@ -470,13 +470,14 @@ generateHarmonics = function(pitch,
   # apply amplitude envelope and normalize to be on the same scale as breathing
   if (!is.na(amplAnchors) &&
       length(which(amplAnchors$value < -throwaway)) > 0) {
+    amplAnchors$value = amplAnchors$value + throwaway  # 80 - 80 = 0 dB means no correction
     amplEnvelope = getSmoothContour(
       anchors = amplAnchors,
       len = length(waveform),
-      valueFloor = 0,
+      valueFloor = throwaway,
       samplingRate = samplingRate
     )
-    # plot (amplEnvelope, type = 'l')
+    # plot(amplEnvelope, type = 'l')
     # convert from dB to linear multiplier
     amplEnvelope = 10 ^ (amplEnvelope / 20)
     waveform = waveform * amplEnvelope
@@ -501,7 +502,6 @@ generateHarmonics = function(pitch,
     waveform = waveform * drift_upsampled ^ amplDriftDep
     # plot(drift_upsampled, type = 'l')
   }
-  waveform = waveform / max(waveform)
   # playme(waveform, samplingRate = samplingRate)
   # spectrogram(waveform, samplingRate = samplingRate)
   return(waveform)

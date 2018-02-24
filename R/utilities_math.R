@@ -531,7 +531,7 @@ matchColumns = function (matrix_short, nCol, padWith = 0) {
 #' v3 = rep(100, 15)
 #' addVectors(v1, v3, insertionPoint = -4)
 #' addVectors(v2, v3, insertionPoint = 7)
-addVectors = function(v1, v2, insertionPoint = 1) {
+addVectors = function(v1, v2, insertionPoint = 1, normalize = TRUE) {
   if (!is.numeric(v1)) stop(paste('Non-numeric v1:', head(v1)))
   if (!is.numeric(v2)) stop(paste('Non-numeric v2:', head(v2)))
   v1[is.na(v1)] = 0
@@ -558,7 +558,7 @@ addVectors = function(v1, v2, insertionPoint = 1) {
 
   # add and normalize
   out = v1 + v2
-  out = out / max(abs(out))
+  if (normalize) out = out / max(abs(out))
   return (out)
 }
 

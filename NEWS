@@ -12,6 +12,7 @@ NEW FUNCTIONS:
 MINOR:
   * soundgen(): a negative pause (overlap) is allowed between bouts (but not between syllables)
   * soundgen(): attack can be different at the beginning and end of a syllable, e.g. "attackLen = c(50, 100)"
+  * soundgen(): "amplAnchorsGlobal" adjusts the amplitude from syllable to syllable in discrete steps, instead of applying a smooth amplitude envelope to the entire bout
   * getSmoothContour(): proper handling and plotting of anchors that need downsampling, interpolation forced exactly through the specified anchors with interpol = 'approx'
   * segmentFolder(), analyzeFolder(): new argument "htmlPlots" to create an html file with a table of click-to-play plots; new default strategy for saving plots (see "savePlots" argument)
   * analyze(), analyzeFolder(), segment(), segmentFolder(): new argument "res" for proper control of the size and resolution of the output plots

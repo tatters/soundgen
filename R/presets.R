@@ -241,7 +241,7 @@ presets = list(
 
     Moan = 'soundgen(sylLen = 360, pitchAnchors = c(380, 260), attackLen = 100, rolloff = -24, formants = c(900, 1300, 3300, 4340), vocalTract = 13.5, noiseAnchors = list(time = c(0, 417, 508), value = c(-63, -29, -80)), mouthAnchors = list(time = c(0, 0.09, 1), value = c(0.12, 0.37, 0.5)), amplAnchorsGlobal = c(80, 18))',
 
-    Laugh = 'soundgen(nSyl = 3, sylLen = 60, pauseLen = 90, pitchAnchors = c(368, 284), temperature = 0.075, attackLen = 10, formants = c(900, 1300, 3300, 4340), noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -80)), rolloffNoise = -8, amplAnchorsGlobal = c(80, 20))',
+    Laugh = 'soundgen(nSyl = 3, sylLen = 60, pauseLen = 90, pitchAnchors = c(368, 284), temperature = 0.075, attackLen = 10, formants = c(900, 1300, 3300, 4340), noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -80)), rolloffNoise = -8, amplAnchorsGlobal = c(80, 70))',
 
     Cry = 'soundgen(sylLen = 1600, pitchAnchors = c(610, 511), temperature = 0.2, nonlinBalance = 40, formants = NULL, vocalTract = 13.5, subFreq = 125, subDep = 70, mouthAnchors = 0, amplAnchorsGlobal = c(80, 60))',
 
