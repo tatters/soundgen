@@ -1,4 +1,4 @@
-# TODO: noiseAnchors with breathy voice hyper; subDep 0:100 etc crashes because of division by 0; update vignette on sound generation to showcase newly vectorized pars; check why subh are stronger with low vs high F0; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: update vignette on sound generation to showcase newly vectorized pars; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -388,13 +388,6 @@ soundgen = function(repeatBout = 1,
   formantsNoise = reformatFormants(formantsNoise)
 
   ## adjust parameters according to the specified hyperparameters
-  if (!is.list(noiseAnchors)) {
-    noiseAnchors = data.frame(
-      time = c(0, sylLen[1]),
-      value = c(throwaway, throwaway)
-    )
-  }
-
   # effects of creakyBreathy hyper
   if (creakyBreathy < 0) {
     # for creaky voice
@@ -405,7 +398,7 @@ soundgen = function(repeatBout = 1,
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
     if (!is.list(noiseAnchors)) {
-      noiseAnchors = data.frame(time = c(0, mean(sylLen) + 100),
+      noiseAnchors = data.frame(time = c(0, sylLen[1] + 100),
                                 value = c(throwaway, throwaway))
     }
     noiseAnchors$value = noiseAnchors$value + creakyBreathy * (-throwaway)
@@ -431,6 +424,14 @@ soundgen = function(repeatBout = 1,
       permittedValues['rolloffOct', 'low']
     rolloffOct[rolloffOct > permittedValues['rolloffOct', 'high']] =
       permittedValues['rolloffOct', 'high']
+  }
+
+  # reformat noiseAnchors
+  if (!is.list(noiseAnchors)) {
+    noiseAnchors = data.frame(
+      time = c(0, sylLen[1]),
+      value = c(throwaway, throwaway)
+    )
   }
 
   # effects of nonlinDep hyper

@@ -120,9 +120,6 @@ getVocalFry = function(rolloff,
       'epochs' = data.frame('start' = 1, 'end' = length(pitch_per_gc))
     ))
   }
-  if (length(subDep) < length(pitch_per_gc)) {
-    subDep = rep(subDep[1], length(pitch_per_gc))
-  }
 
   throwaway01 = 2 ^ (throwaway / 10)
   period_ms = 1000 / pitch_per_gc

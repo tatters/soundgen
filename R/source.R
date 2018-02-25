@@ -415,7 +415,7 @@ generateHarmonics = function(pitch,
   if (!synthesize_per_gc &&  # can't add subharmonics if doing one gc at a time (one f0 period)
       any(subDep > 0) & any(vocalFry_on)) {
     if (length(subFreq) > 1) subFreq = getSmoothContour(subFreq, len = nGC)
-    if (length(subDep) > 1) subDep = getSmoothContour(subDep, len = nGC)
+    if (length(subDep) > 1) subDep = getSmoothContour(subDep, len = nGC, valueFloor = .001)
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,

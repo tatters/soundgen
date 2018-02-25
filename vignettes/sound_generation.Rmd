@@ -100,6 +100,50 @@ s = soundgen(formants = 'uai', repeatBout = 3, nSyl = 1, play = playback)
 # playme(s)
 ```
 
+Like most arguments to soundgen, `sylLen` and `pauseLen` can also be vectors. For example, if you want to synthesize 5 syllables of progressively shorter duration and separated by increasingly longer pauses, you can write:
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(nSyl = 5, 
+             sylLen = c(300, 100),   # linearly decreasing from 300 to 100 ms
+             pauseLen = c(50, 150),  # increasing from 50 to 150 ms
+             plot = TRUE, osc = TRUE,
+             play = playback)
+# playme(s)
+```
+
+For more complicated, nonlinear changes in the length of syllables or pauses, you can use the function `getSmoothContour` to upsample your anchors (see "Intonation" for examples) or manually code longer sequences of values. The length of your input vector doesn't matter: it will be up- or downsampled automatically. This also works with all other vectorized arguments to soundgen (rolloff, jitterDep, vibratoFreq, etc).
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(
+  nSyl = 10, 
+  sylLen = c(60, 200, 90, 50, 50),  # quickly up to 200 and down to 50
+  pauseLen = c(50, 60, 80, 150),    # growing ~exponentially
+  plot = TRUE, osc = TRUE,
+  play = playback
+)
+```
+
+In the special case of syllables and pauses, your exact values will be used without interpolation if you provide exactly as many as needed:
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(
+  nSyl = 5, 
+  sylLen = c(300, 100, 400, 50, 100),  # 5 syllables, 5 values
+  pauseLen = c(50, 150, 50, 100),      # 4 pauses, 4 values
+  plot = TRUE, osc = TRUE,
+  play = playback
+)
+```
+
+Finally, you can use both `repeatBout` and `nSyl` simultaneously. The pause between bouts is equal to the length of the first syllable:
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(
+  repeatBout = 2,
+  nSyl = 3, 
+  sylLen = c(300, 100), 
+  pauseLen = c(100, 50),     
+  plot = TRUE, osc = TRUE,
+  play = playback
+)
+```
+
 ## Intonation
 ### One syllable
 When we hear a tonal sound such as someone singing, one of its most salient characteristics is intonation or, more precisely, the contour of the fundamental frequency (f0), or, even more precisely, the contour of the spectral band which is perceived to correspond to the fundamental frequency (pitch). Soundgen literally generates a sine wave corresponding to f0 and several more sine waves corresponding to higher harmonics, so f0 is straightforward to implement. However, how can its contour be specified with as few parameters as possible? The solution adopted in soundgen is to take one or more anchors as input and generate a smooth contour that passes through all anchors. 
@@ -576,7 +620,10 @@ s2 = soundgen(sylLen = 800, pitchAnchors = 500, temperature = 0.001,
 ```
 
 ## Unvoiced component (turbulent noise)
-In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces broad-spectrum turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. This can be done in two ways (in the app, go to "Tract / Unvoiced type"):
+In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. 
+
+### Spectrum
+The perceptual quality of turbulent noise depends on its spectral composition, which is controlleg by two soundgen arguments: `formantsNoise` and `rolloffNoise` (in the app, use "Tract / Unvoiced type"). The timing of the unvoiced component relative to the voiced component is controlled by the argument `noiseAnchors`, which is discussed in the next section. There are two basic types of turbulent noise in soundgen:
 
 1.  Breathing. This noise type is generated as white noise with spectral rolloff given by `rolloffNoise` ("Noise rolloff, dB/octave" in the app) above a certain cutoff value (`flatSpectrum`, the default is currently 1200 Hz). It is added to the voiced component *before* formant filtering. As a result, it follows exactly the same formant structure as the voiced component, and you cannot modify its spectrum beyond the basic rolloff setting. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noiseAnchors`, but leave `formantsNoise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
 
@@ -586,7 +633,7 @@ s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
          sylLen = 500, play = playback)
 ```
 
-2.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component manually in exactly the same format (`formantsNoise`) as for the voiced component (`formants`). 
+2.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component (`formantsNoise`) manually in exactly the same format as for the voiced component (`formants`). 
 
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
@@ -601,26 +648,6 @@ s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
 ```
 
 *TIP: pitchAnchors = NA or NULL removes the voiced component, so that only turbulent noise is synthesized. In the app, untick the box Intonation / Intonation syllable / Generate voiced component?*
-
-In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. It shows the timing of noise relative to the voiced component of a typical syllable. Note that noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
-```{r fig.width = 7, fig.height = 5}
-s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 
-             temperature = 0, rolloffNoise = -5, 
-             noiseAnchors = data.frame(time = c(39, 56, 209), 
-                                       value = c(-80, -10, -50)),
-             formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
-             formantsNoise = c(420, 1200),
-             plot = TRUE, osc = TRUE, play = playback)
-```
-
-Both the timing and the amplitude of noise anchors are defined relative to the voiced component. Because noise can extend beyond voiced fragmets, however, time anchors for noise MUST be specified in ms (unlike all the other contours, which also accept time anchors on any arbitrary scale, say 0 to 1). If the noise starts before the voiced part, the first time anchor will be negative. This is easier to specify in the app, which provides a preview. From R console, you can also preview the noise amplitude contour implied by your anchors by calling `getSmoothContour`, for example:
-```{r fig.width = 5, fig.height = 4}
-a = getSmoothContour(anchors = data.frame(time = c(-50, 200, 300), 
-                                          value = c(-80, 20, -80)),
-                     voiced = 200, plot = TRUE, ylim = c(-80, 40), main = '')
-```
-
-*TIP: if the voiced part is shorter than `permittedValues['sylLen', 'low']`, it is not synthesized at all, so you only get the unvoiced component (if any). The voiced part is also not synthesized if the noise is at its loudest, namely `permittedValues['noiseAmpl', 'high']` (40 dB)*
 
 Unlike the voiced component, breathing noise is NOT enriched with stochastically added formants if `formantsNoise` are specified explicitly (i.e., if this is not aspiration noise). If `formantsNoise = NA` or `NULL` (i.e., if this is aspiration noise), formant structure is calculated based on vocal tract length, as usual. For example, to create simple sighs, you can just specify the length of your creature's vocal tract:
 ```{r}
@@ -637,14 +664,14 @@ s2 = soundgen(vocalTract = 30,    # a large animal
 # Another way to remove the voiced component is to write pitchAnchors = NULL
 ```
 
-To contrast, this will produce only two specified formants, ignoring the specified vocal tract length:
+In contrast, the following will produce only two specified formants, ignoring the specified vocal tract length:
 ```{r fig.width = 4, fig.height = 3}
 s3 = soundgen(vocalTract = 17.5, formantsNoise = c(1000, 2000),  
               noiseAnchors = list(time = c(0, 800), value = 40),
               play = playback, plot = TRUE)
 ```
 
-Finally, the excitation source for the unvoiced component can be synthesized as white noise (if `rolloffNoise = 0`) or as turbulent noise with a spectrum that linearly (not exponentially!) loses power over a certain threshold, which is currently fixed at 1200 Hz. The parameter `rolloffNoise` thus controls the source spectrum of the unvoiced component:
+The excitation source for the unvoiced component can be synthesized as white noise (if `rolloffNoise = 0`) or as turbulent noise with a spectrum that linearly (not exponentially!) loses power over a certain threshold, which is currently fixed at 1200 Hz. The parameter `rolloffNoise` thus controls the source spectrum of the unvoiced component:
 ```{r}
 s1 = soundgen(vocalTract = 17.5, rolloffNoise = 0,
               formants = NULL, attackLen = 200, play = playback,
@@ -655,6 +682,41 @@ s2 = soundgen(vocalTract = 17.5, rolloffNoise = -10,
               noiseAnchors = list(time = c(0, 800), value = c(40, 40)))
 # NB: voiced component not generated, since noiseAnchors$value >= 40 dB
 ```
+
+### Amount and timing
+In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. In soundgen, the relevant argument is `noiseAnchors`. It sets the timing of noise relative to the voiced component of a typical syllable. Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 
+             temperature = 0, rolloffNoise = -5, 
+             noiseAnchors = data.frame(time = c(39, 56, 209), 
+                                       value = c(-80, -10, -50)),
+             formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
+             formantsNoise = c(420, 1200),
+             plot = TRUE, osc = TRUE, ylim = c(0, 4), play = playback)
+```
+
+Note that in the previous example `formantsNoise` defines the change of filter for the unvoiced components over the entire bout, i.e. across multiple syllables. This is similar to the way `formants` define the global change in formants across syllables. In contrast, if you have multiple bouts with one syllable in each, the change of unvoiced filter plays out within each bout, and the pause between is counted from the end of the unvoiced component, without any overlap between bouts. Compare the example above to the following (the only change is to use `repeatBout` instead of `nSyl`). Observe the difference in unvoiced formants and pause duration:
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(repeatBout = 2, sylLen = 120, pauseLen = 120, 
+             temperature = 0, rolloffNoise = -5, 
+             noiseAnchors = data.frame(time = c(39, 56, 209), 
+                                       value = c(-80, -10, -50)),
+             formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
+             formantsNoise = c(420, 1200),
+             plot = TRUE, osc = TRUE, ylim = c(0, 4), play = playback)
+```
+
+Both the timing and the amplitude of noise anchors are defined relative to the voiced component. Because noise can extend beyond voiced fragmets, however, time anchors for noise MUST be specified in ms (unlike all the other contours, which also accept time anchors on any arbitrary scale, say 0 to 1). If the noise starts before the voiced part, the first time anchor will be negative. This is easier to visualize in the app, which provides a preview. From R console, you can also preview the noise amplitude contour implied by your anchors by calling `getSmoothContour`, for example:
+```{r fig.width = 5, fig.height = 4}
+a = getSmoothContour(anchors = data.frame(time = c(-50, 200, 300), 
+                                          value = c(-80, 20, -80)),
+                     voiced = 200, 
+                     normalizeTime = FALSE,  # keep time in ms
+                     plot = TRUE, ylim = c(-80, 40), main = '')
+```
+
+*TIP: if the voiced part is shorter than `permittedValues['sylLen', 'low']`, it is not synthesized at all, so you only get the unvoiced component (if any). The voiced part is also not synthesized if the noise is at its loudest, namely `permittedValues['noiseAmpl', 'high']` (40 dB)*
+
 
 # Combining two sounds
 To achieve a complex vocalization, sometimes it may be necessary - or easier - to synthesize two or more sounds separately and then combine them. If the components are strictly consecutive, you can simply concatenate them with `c()`. If there is no silence in between, it is safer to use `crossFade()`, otherwise there can be transients like clicks between the two sounds:
