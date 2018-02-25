@@ -1,4 +1,4 @@
-# TODO: update vignette on sound generation to showcase newly vectorized pars; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: check vignettes; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -748,7 +748,7 @@ soundgen = function(repeatBout = 1,
           overlap = overlap,
           throwaway = throwaway,
           filterNoise = NA # spectralEnvelopeNoise
-        )
+        ) * amplEnvelope[s]  # correction of amplitude per syllable
         # plot(unvoiced[[s]], type = 'l')
       }
     }
