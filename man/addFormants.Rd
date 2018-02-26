@@ -9,7 +9,8 @@ addFormants(sound, formants, action = c("add", "remove")[1],
   formantWidth = 1, lipRad = 6, noseRad = 4, mouthOpenThres = 0,
   mouthAnchors = NA, interpol = c("approx", "spline", "loess")[3],
   temperature = 0.025, formDrift = 0.3, formDisp = 0.2,
-  samplingRate = 16000, windowLength_points = 800, overlap = 75)
+  samplingRate = 16000, windowLength_points = 800, overlap = 75,
+  normalize = TRUE)
 }
 \arguments{
 \item{sound}{numeric vector with \code{samplingRate}}
@@ -67,6 +68,8 @@ formant drift and dispersal, respectively}
 \item{windowLength_points}{length of FFT window, points}
 
 \item{overlap}{FFT window overlap, \%}
+
+\item{normalize}{if TRUE, normalizes the output to range from -1 to +1}
 }
 \description{
 A spectral filter that either adds or removes formants from a sound - that

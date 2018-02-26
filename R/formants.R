@@ -807,6 +807,7 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #'   anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
 #'   (default) = polynomial local smoothing function. NB: this does NOT affect
 #'   the smoothing of formant anchors
+#' @param normalize if TRUE, normalizes the output to range from -1 to +1
 #' @inheritParams soundgen
 #' @export
 #' @examples
@@ -842,7 +843,8 @@ addFormants = function(sound,
                        formDisp = 0.2,
                        samplingRate = 16000,
                        windowLength_points = 800,
-                       overlap = 75) {
+                       overlap = 75,
+                       normalize = TRUE) {
   formants = reformatFormants(formants)
   # prepare vocal tract filter (formants + some spectral noise + lip radiation)
   if (sum(sound) == 0) {
@@ -935,7 +937,8 @@ addFormants = function(sound,
         output = "matrix"
       )
     )
-    soundFiltered = soundFiltered / max(soundFiltered) # normalize
+    # normalize
+    if (normalize) soundFiltered = soundFiltered / max(soundFiltered)
   }
 
   # remove zero padding

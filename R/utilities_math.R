@@ -519,18 +519,19 @@ matchColumns = function (matrix_short, nCol, padWith = 0) {
 #' @param v1,v2 numeric vectors
 #' @param insertionPoint the index of element in vector 1 at which vector 2 will
 #'   be inserted (any integer, can also be negative)
+#' @param normalize if TRUE, the output is normalized to range from -1 to +1
 #' @export
 #' @examples
 #' v1 = 1:6
 #' v2 = rep(100, 3)
-#' addVectors(v1, v2, insertionPoint = 5)
-#' addVectors(v1, v2, insertionPoint = -4)
+#' addVectors(v1, v2, insertionPoint = 5, normalize = FALSE)
+#' addVectors(v1, v2, insertionPoint = -4, normalize = FALSE)
 #' # note the asymmetry: insertionPoint refers to the first arg
-#' addVectors(v2, v1, insertionPoint = -4)
+#' addVectors(v2, v1, insertionPoint = -4, normalize = FALSE)
 #'
 #' v3 = rep(100, 15)
-#' addVectors(v1, v3, insertionPoint = -4)
-#' addVectors(v2, v3, insertionPoint = 7)
+#' addVectors(v1, v3, insertionPoint = -4, normalize = FALSE)
+#' addVectors(v2, v3, insertionPoint = 7, normalize = FALSE)
 addVectors = function(v1, v2, insertionPoint = 1, normalize = TRUE) {
   if (!is.numeric(v1)) stop(paste('Non-numeric v1:', head(v1)))
   if (!is.numeric(v2)) stop(paste('Non-numeric v2:', head(v2)))
@@ -559,7 +560,7 @@ addVectors = function(v1, v2, insertionPoint = 1, normalize = TRUE) {
   # add and normalize
   out = v1 + v2
   if (normalize) out = out / max(abs(out))
-  return (out)
+  return(out)
 }
 
 

@@ -11,6 +11,8 @@ addVectors(v1, v2, insertionPoint = 1, normalize = TRUE)
 
 \item{insertionPoint}{the index of element in vector 1 at which vector 2 will
 be inserted (any integer, can also be negative)}
+
+\item{normalize}{if TRUE, the output is normalized to range from -1 to +1}
 }
 \description{
 Adds two partly overlapping vectors, such as two waveforms, to produce a
@@ -21,12 +23,12 @@ length and then added. All NA's are converted to 0.
 \examples{
 v1 = 1:6
 v2 = rep(100, 3)
-addVectors(v1, v2, insertionPoint = 5)
-addVectors(v1, v2, insertionPoint = -4)
+addVectors(v1, v2, insertionPoint = 5, normalize = FALSE)
+addVectors(v1, v2, insertionPoint = -4, normalize = FALSE)
 # note the asymmetry: insertionPoint refers to the first arg
-addVectors(v2, v1, insertionPoint = -4)
+addVectors(v2, v1, insertionPoint = -4, normalize = FALSE)
 
 v3 = rep(100, 15)
-addVectors(v1, v3, insertionPoint = -4)
-addVectors(v2, v3, insertionPoint = 7)
+addVectors(v1, v3, insertionPoint = -4, normalize = FALSE)
+addVectors(v2, v3, insertionPoint = 7, normalize = FALSE)
 }

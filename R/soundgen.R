@@ -768,10 +768,6 @@ soundgen = function(repeatBout = 1,
         # calculate where unvoiced is to be inserted
         insertionIdx = syllableStartIdx +
           noiseAnchors_syl[[s]]$time[1] * samplingRate / 1000
-
-        # if the unvoiced noise is of type "breathing" (the same formants as in
-        #   the voiced part), we mix voiced+unvoiced BEFORE filtering the sound,
-        #   otherwise we filter first and then mix voiced+unvoiced
         sound_unvoiced = addVectors(sound_unvoiced,
                                     unvoiced[[s]],
                                     insertionPoint = insertionIdx,
@@ -817,7 +813,9 @@ soundgen = function(repeatBout = 1,
         if (length(sound) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           soundFiltered = do.call(addFormants, c(
             formantPars,
-            list(sound = sound, formants = formants)
+            list(sound = sound,
+                 formants = formants,
+                 normalize = FALSE)
           ))
         } else {
           soundFiltered = sound
@@ -828,7 +826,9 @@ soundgen = function(repeatBout = 1,
         if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           voicedFiltered = do.call(addFormants, c(
             formantPars,
-            list(sound = voiced, formants = formants)
+            list(sound = voiced,
+                 formants = formants,
+                 normalize = FALSE)
           ))
         } else {
           voicedFiltered = voiced
@@ -837,7 +837,9 @@ soundgen = function(repeatBout = 1,
         if (length(sound_unvoiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           unvoicedFiltered = do.call(addFormants, c(
             formantPars,
-            list(sound = sound_unvoiced, formants = formantsNoise)
+            list(sound = sound_unvoiced,
+                 formants = formantsNoise,
+                 normalize = FALSE)
           ))
         } else {
           unvoicedFiltered = sound_unvoiced
@@ -855,7 +857,9 @@ soundgen = function(repeatBout = 1,
       if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
         soundFiltered = do.call(addFormants, c(
           formantPars,
-          list(sound = voiced, formants = formants)
+          list(sound = voiced,
+               formants = formants,
+               normalize = FALSE)
         ))
       } else {
         soundFiltered = voiced
@@ -890,7 +894,8 @@ soundgen = function(repeatBout = 1,
       bout = addVectors(
         bout,
         soundFiltered,
-        insertionPoint = length(bout) + round(pauseLen[1] * samplingRate / 1000)
+        insertionPoint = length(bout) + round(pauseLen[1] * samplingRate / 1000),
+        normalize = FALSE
       )
     }
   }
