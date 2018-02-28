@@ -1,4 +1,4 @@
-# TODO: check vignettes; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: check glottisAnchors - maybe possible not to make it change pitch; check vignettes; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -637,7 +637,7 @@ soundgen = function(repeatBout = 1,
           noiseAnchors_syl[[s]] = wiggleAnchors(
             df = noiseAnchors_syl[[s]],
             temperature = temperature,
-            low = c(-Inf, permittedValues['noiseAmpl', 'low']),
+            low = c(-Inf, throwaway),
             high = c(+Inf, permittedValues['noiseAmpl', 'high']),
             wiggleAllRows = TRUE,
             temp_coef = tempEffects$noiseAnchorsDep,
