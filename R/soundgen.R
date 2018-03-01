@@ -1,4 +1,4 @@
-# TODO: check glottisAnchors - maybe possible not to make it change pitch; check vignettes; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: change amplAnchors to 0 to -80 etc scale and amplAnchorsGlobal to 0 ± smth in the app and update the vignette; check glottisAnchors - maybe possible not to make it change pitch; check vignettes; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -140,11 +140,11 @@ NULL
 #' @param mouthAnchors a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 #'   i.e. no modification) or a dataframe specifying the time (ms) and value of
 #'   mouth opening
-#' @param amplAnchors a numeric vector of amplitude envelope (0 to 1) or a
-#'   dataframe specifying the time (ms) and value of amplitude anchors
+#' @param amplAnchors a numeric vector of amplitude envelope (dB) or a dataframe
+#'   specifying the time (ms) and value of amplitude anchors (0 = max amplitude)
 #' @param amplAnchorsGlobal a numeric vector of global amplitude envelope
 #'   spanning multiple syllables or a dataframe specifying the time (ms) and
-#'   value (0 to 1) of each anchor
+#'   value (dB, 0 = no change) of each anchor
 #' @param interpol the method of smoothing envelopes based on provided pitch,
 #'   amplitude, and mouth anchors: 'approx' = linear interpolation, 'spline' =
 #'   cubic spline, 'loess' (default) = polynomial local smoothing function. NB:
@@ -354,6 +354,18 @@ soundgen = function(repeatBout = 1,
     )
   }
 
+  # check amplitude anchors and make all values negative
+  if (is.list(amplAnchors) && any(amplAnchors$value > 0)) {
+    amplAnchors$value = amplAnchors$value + throwaway
+    message(paste('The recommended range for amplAnchors is (throwaway, 0).',
+                  'If positive, values are transformed by adding throwaway'))
+  }
+
+  # for amplAnchorsGlobal, make the first value 0
+  if (is.list(amplAnchorsGlobal) && any(amplAnchorsGlobal$value != 0)) {
+    amplAnchorsGlobal$value = amplAnchorsGlobal$value - amplAnchorsGlobal$value[1]
+  }
+
   # make sure sylLen and pauseLen are vectors of appropriate length
   sylLen = getSmoothContour(anchors = sylLen, len = nSyl)
   if (nSyl > 1) {
@@ -554,14 +566,14 @@ soundgen = function(repeatBout = 1,
   # For polysyllabic vocalizations, calculate amplitude envelope correction
   # per voiced syllable
   if (!is.na(amplAnchorsGlobal) &&
-      length(which(amplAnchorsGlobal$value < -throwaway)) > 0) {
+      any(amplAnchorsGlobal$value != 0)) {
     amplEnvelope = getSmoothContour(
       anchors = amplAnchorsGlobal,
       len = nSyl,
       interpol = interpol,
       discontThres = discontThres,
       jumpThres = jumpThres,
-      valueFloor = 0,
+      valueFloor = throwaway,
       valueCeiling = -throwaway,
       samplingRate = samplingRate
     )
@@ -648,8 +660,8 @@ soundgen = function(repeatBout = 1,
           amplAnchors_per_syl = wiggleAnchors(
             df = amplAnchors_per_syl,
             temperature = temperature,
-            low = c(0, 0),
-            high = c(1,-throwaway),
+            low = c(0, throwaway),
+            high = c(1, 0),
             temp_coef = tempEffects$amplAnchorsDep,
             invalidArgAction = invalidArgAction
           )

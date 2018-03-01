@@ -12,6 +12,7 @@ NEW FUNCTIONS:
   * getRandomWalk(), getIntegerRandomWalk(): functions for customizing the random walks that divide the sound into segments with different nonlinear regimes; see "nonlinRandomWalk" argument to soundgen()
 
 MINOR:
+  * soundgen(): the expected range of amplAnchors is now (throwaway, 0), e.g. (-80, 0), and for amplAnchorsGlobal 0 means no change. Values on the old scale will still work
   * soundgen(): a negative pause (overlap) is allowed between bouts (but not between syllables)
   * soundgen(): attack can be different at the beginning and end of a syllable, e.g. "attackLen = c(50, 100)"
   * soundgen(): "amplAnchorsGlobal" adjusts the amplitude from syllable to syllable in discrete steps, instead of applying a smooth amplitude envelope to the entire bout

@@ -110,8 +110,8 @@ strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
 strong subharmonics}
 
-\item{amplAnchors}{a numeric vector of amplitude envelope (0 to 1) or a
-dataframe specifying the time (ms) and value of amplitude anchors}
+\item{amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
+specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
 
 \item{overlap}{FFT window overlap, \%}
 

@@ -194,12 +194,12 @@ component, approximating aspiration noise [h]}
 i.e. no modification) or a dataframe specifying the time (ms) and value of
 mouth opening}
 
-\item{amplAnchors}{a numeric vector of amplitude envelope (0 to 1) or a
-dataframe specifying the time (ms) and value of amplitude anchors}
+\item{amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
+specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
 
 \item{amplAnchorsGlobal}{a numeric vector of global amplitude envelope
 spanning multiple syllables or a dataframe specifying the time (ms) and
-value (0 to 1) of each anchor}
+value (dB, 0 = no change) of each anchor}
 
 \item{interpol}{the method of smoothing envelopes based on provided pitch,
 amplitude, and mouth anchors: 'approx' = linear interpolation, 'spline' =

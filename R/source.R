@@ -256,17 +256,16 @@ generateHarmonics = function(pitch,
   nGC = length(pitch_per_gc)
 
   # generate a short amplitude contour to adjust rolloff per glottal cycle
-  if (!is.na(amplAnchors) &&
-      length(which(amplAnchors$value < -throwaway)) > 0) {
+  if (!is.na(amplAnchors) && any(amplAnchors$value != 0)) {
     amplContour = getSmoothContour(
       anchors = amplAnchors,
       len = nGC,
-      valueFloor = 0,
-      valueCeiling = -throwaway,
+      valueFloor = throwaway,
+      valueCeiling = 0,
       samplingRate = samplingRate
     )
     # plot(amplContour, type='l')
-    amplContour = amplContour / abs(throwaway) - 1
+    amplContour = (amplContour + abs(throwaway)) / abs(throwaway) - 1
     rolloffAmpl = amplContour * rolloff_perAmpl
   } else {
     rolloffAmpl = rep(0, nGC)
@@ -468,9 +467,7 @@ generateHarmonics = function(pitch,
 
   ## POST-SYNTHESIS EFFECTS
   # apply amplitude envelope and normalize to be on the same scale as breathing
-  if (!is.na(amplAnchors) &&
-      length(which(amplAnchors$value < -throwaway)) > 0) {
-    amplAnchors$value = amplAnchors$value + throwaway  # 80 - 80 = 0 dB means no correction
+  if (!is.na(amplAnchors) && any(amplAnchors$value != 0)) {
     amplEnvelope = getSmoothContour(
       anchors = amplAnchors,
       len = length(waveform),
