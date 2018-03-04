@@ -727,20 +727,21 @@ server = function(input, output, session) {
     getSmoothContour(anchors = myPars$amplAnchors,
                      xaxs = "i",
                      xlim = c(0, input$sylLen),
-                     ylim = c(0, -input$throwaway),
-                     valueFloor = 0, valueCeiling = -input$throwaway,
+                     ylim = c(input$throwaway, 0),
+                     valueFloor = input$throwaway,
+                     valueCeiling = 0,
                      len = input$sylLen / 1000 * 1000,
                      samplingRate = 1000, plot = TRUE)
     # xaxs = "i" to enforce exact axis limits, otherwise we exceed the range
   })
 
   observeEvent(input$plotAmplSyl_click, {
-    click_x = round (round(input$plotAmplSyl_click$x)/input$sylLen,2)
+    click_x = round(round(input$plotAmplSyl_click$x)/input$sylLen,2)
     click_y = round(input$plotAmplSyl_click$y)
     # if the click is outside the allowed range of y, re-interpret the click
     # as within the range
-    if (click_y < 0) click_y = 0
-    if (click_y > -input$throwaway) click_y = -input$throwaway
+    if (click_y < input$throwaway) click_y = input$throwaway
+    if (click_y > 0) click_y = 0
 
     closest_point_in_time = which.min(abs(myPars$amplAnchors$time - click_x))
     delta_x = abs(myPars$amplAnchors$time[closest_point_in_time] - click_x)
@@ -782,7 +783,7 @@ server = function(input, output, session) {
 
   observeEvent(input$ampl_syl_flatten, {
     # flat ampl equal to the first ampl anchor
-    myPars[['amplAnchors']] = data.frame('time' = c(0,1),
+    myPars[['amplAnchors']] = data.frame('time' = c(0, 1),
                                          'value' = rep(myPars$amplAnchors$value[1], 2))
   })
 
@@ -801,10 +802,11 @@ server = function(input, output, session) {
   amplEnvelopeGlobal = reactive({
     if (input$nSyl > 1) {
       getSmoothContour(anchors = myPars$amplAnchorsGlobal,
-                       xaxs = "i", xlim = c(0, durTotal()),
-                       ylim = c(0, -input$throwaway),
-                       valueFloor = 0,
-                       valueCeiling = -input$throwaway,
+                       xaxs = "i",
+                       xlim = c(0, durTotal()),
+                       ylim = c(input$throwaway / 2, -input$throwaway / 2),
+                       valueFloor = input$throwaway / 2,
+                       valueCeiling = -input$throwaway / 2,
                        len = durTotal() / 1000 * 100,
                        samplingRate = 100, plot = TRUE)
     } else {
@@ -817,8 +819,8 @@ server = function(input, output, session) {
     click_x = round(input$plotAmplGlobal_click$x / durTotal(), 2)
     click_y = round(input$plotAmplGlobal_click$y)
     # if the click is outside the allowed range of y, re-interpret the click as within the range
-    if (click_y < 0) click_y = 0
-    if (click_y > -input$throwaway) click_y = -input$throwaway
+    if (click_y < (input$throwaway / 2)) click_y = input$throwaway / 2
+    if (click_y > (-input$throwaway / 2)) click_y = -input$throwaway / 2
 
     closest_point_in_time = which.min(abs(myPars$amplAnchorsGlobal$time - click_x))
     delta_x = abs(myPars$amplAnchorsGlobal$time[closest_point_in_time] - click_x)
@@ -829,7 +831,7 @@ server = function(input, output, session) {
       if (closest_point_in_time != 1 &
           closest_point_in_time != length(myPars$amplAnchorsGlobal$time)) {
         myPars$amplAnchorsGlobal$time[closest_point_in_time] =
-          input$plotAmplGlobal_click$x
+          click_x
       }
     } else {  # otherwise, we simply add the new point as another anchor
       myPars[['amplAnchorsGlobal']] = data.frame(
@@ -864,8 +866,8 @@ server = function(input, output, session) {
 
   observeEvent(input$amplGlobal_flatten, {
     # flat ampl equal to the first ampl anchor
-    myPars[['amplAnchorsGlobal']] = data.frame('time' = c(0,1),
-                                               'value' = rep(myPars$amplAnchorsGlobal$value[1], 2))
+    myPars[['amplAnchorsGlobal']] = data.frame('time' = c(0, 1),
+                                               'value' = c(0, 0))
   })
 
   output$amplGlobal_anchors = renderTable(expr = data.frame(
