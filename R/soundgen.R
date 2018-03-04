@@ -1,4 +1,4 @@
-# TODO: check glottisAnchors - maybe possible not to make it change pitch
+# TODO: run checks, prepare for CRAN, check all commented-out etc examples
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

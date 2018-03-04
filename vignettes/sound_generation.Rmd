@@ -656,7 +656,7 @@ s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
 
 *TIP: pitchAnchors = NA or NULL removes the voiced component, so that only turbulent noise is synthesized. In the app, untick the box Intonation / Intonation syllable / "Generate voiced component?"*
 
-Unlike the voiced component, breathing noise is NOT enriched with stochastically added formants if `formantsNoise` are specified explicitly (i.e., if this is not aspiration noise). To avoid losing all high-frequency energy in your noise, make sure you add a sufficient number of formants in `formantsNoise`, ideally all the way up to Nyquist frequency (half the sampling rate). If `formantsNoise = NA` or `NULL` (i.e., if this is aspiration noise), formant structure is calculated based on vocal tract length, and then extra stochastic formants are added as usual. For example, to create simple sighs, you can just specify the length of your creature's vocal tract:
+If `formantsNoise = NA` or `NULL` (i.e., if this is aspiration noise), formant structure is calculated based on vocal tract length, and then extra stochastic formants are added as usual. For example, to create simple sighs, you can just specify the length of your creature's vocal tract:
 ```{r}
 s1 = soundgen(vocalTract = 17.5,  # ~human throat (17.5 cm)
               formants = NULL, attackLen = 200, play = playback,
@@ -671,10 +671,15 @@ s2 = soundgen(vocalTract = 30,    # a large animal
 # Another way to remove the voiced component is to write pitchAnchors = NULL
 ```
 
-In contrast, the following will produce only two specified formants, ignoring the specified vocal tract length:
+In contrast, if `formantsNoise` are specified explicitly (i.e., if this is not aspiration noise), breathing noise is by default NOT enriched with stochastically added formants. To avoid losing all high-frequency energy in your noise, make sure you add a sufficient number of formants in `formantsNoise`, ideally all the way up to Nyquist frequency (half the sampling rate). Alternatively, you can explicitly specify `vocalTract`, and then extra formants will be added to the unvoiced component. Compare: 
 ```{r fig.width = 4, fig.height = 3}
-s3 = soundgen(vocalTract = 17.5, formantsNoise = c(1000, 2000),  
-              noiseAnchors = list(time = c(0, 800), value = 40),
+# only two specified formants
+s3 = soundgen(formantsNoise = c(1000, 2000),  
+              noiseAnchors = 40, sylLen = 800,
+              play = playback, plot = TRUE)
+# two specified formants plus extra formants based on vocalTract
+s4 = soundgen(vocalTract = 15.5, formantsNoise = c(1000, 2000),  
+              noiseAnchors = 40, sylLen = 800,
               play = playback, plot = TRUE)
 ```
 
@@ -691,7 +696,7 @@ s2 = soundgen(vocalTract = 17.5, rolloffNoise = -10,
 ```
 
 ### Amount and timing
-In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. In soundgen, the relevant argument is `noiseAnchors`. It sets the timing of noise relative to the voiced component of a typical syllable. Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
+In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. In soundgen, the relevant argument is `noiseAnchors`. It sets the timing and loudness of turbulent noise relative to the voiced component of a typical syllable. Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 
              temperature = 0, rolloffNoise = -5, 
@@ -726,7 +731,7 @@ a = getSmoothContour(anchors = data.frame(time = c(-50, 200, 300),
 
 
 # Combining two sounds
-To achieve a complex vocalization, sometimes it may be necessary - or easier - to synthesize two or more sounds separately and then combine them. If the components are strictly consecutive, you can simply concatenate them with `c()`. If there is no silence in between, it is safer to use `crossFade()`, otherwise there can be transients like clicks between the two sounds:
+To achieve a complex vocalization, sometimes it may be necessary - or easier - to synthesize two or more sounds separately and then combine them. If the components are strictly consecutive, you can simply concatenate them with `c()`. If there is no silence in between, it is safer to use `crossFade()`, otherwise this can introduce transients like clicks between the two sounds:
 
 ```{r fig.show = "hold", fig.width = 7, fig.height = 3}
 par(mfrow = c(1, 2))
@@ -795,7 +800,7 @@ insertionPoint = insertionTime * samplingRate
 comb = addVectors(sound1, 
                   sound2 * .05,  # to make sound2 quieter relative to sound1
                   insertionPoint = insertionPoint)
-# soundgen softens attack by default, so no clicks
+# sound1 and sound2 have attack of 50 and 10 ms, so no clicks
 # playme(comb)
 spectrogram(comb, 16000, windowLength = 10, ylim = c(0, 5), 
             contrast = .5, colorTheme = 'seewave')
@@ -843,16 +848,16 @@ When synthesizing a new sound with the function `soundgen()`, a serious challeng
 If the sound you are trying to create exists only in your imagination, there is nothing for it but to tinker with argument values until a satisfactory result is achieved. Even if you have an existing audio recording that you wish to duplicate, the fastest and surest way to find the appropriate soundgen settings - in my experience - is to do it manually, using soundgen_app() and/or typing and editing R scripts with calls to soundgen(). I prefer to work with scripts and suggest that you proceed as follows.
 
 1.  Open the target sound, if you have one, in an interactive audio editor(s) of your choice. I mostly use Audacity, although Praat offers the nice feature of being able to click on the spectrogram and see the exact frequency of a particular spectral element.
-1.  Match the temporal parameters. If there are several stereotypical syllables, set `repeatBout`. If syllables are repetitive but not identical, with an overall drift of f0 and formants, set `nSyl`. Note that `sylLen` and `pauseLen` refer to the duration of voiced segments and pauses between them - unvoiced segments do not count. If the syllables are very different, synthesize them one by one with separate calls to soundgen() and then concatenate as described in section "Combining two sounds". Biphonic sounds with more than one fundamental frequency can be synthesized separately and overlaid.
+1.  Match the temporal parameters. If there are several stereotypical syllables, set `repeatBout`. If syllables are repetitive but not identical, with an overall drift of f0 and formants, set `nSyl`. Note that `sylLen` and `pauseLen` refer to the duration of voiced segments and pauses between them - unvoiced segments do not count. If the syllables are very different, synthesize them one by one with separate calls to soundgen() and then concatenate as described in section 3 ("Combining two sounds"). Biphonic sounds with more than one fundamental frequency can be synthesized separately and overlaid with `addVectors()`.
 1.  Match the fundamental frequency. No existing pitch tracker is reliable enough, so just find f0 manually using your ears and a narrow-band spectrogram (window length of 40-50 ms is usually about right). Use as few pitch anchors as possible: `pitchAnchors = 440` for flat intonation, `pitchAnchors = c(440, 300)` for a linear slide, `pitchAnchors = c(300, 440, 300)` for a rising-falling contour, or `pitchAnchors = data.frame(time = c(0, .1, 1), value = c(300, 440, 300))` for more complex contours with values specified at arbitrary time points. For multiple syllables, describe how f0 changes across syllables using `pitchAnchorsGlobal`. Remember that you don't need to manually code every tiny fluctuation of f0: you can also add (regular) vibrato, (irregular) jitter with large `jitterLen`, or increase the effect of temperature on f0 with `tempEffects = list(pitchDriftDep = ..., pitchDriftFreq = ..., pitchAnchorsDep = ...)`.
 1.  Match the formants. No existing algorithm for finding formants even remotely approaches the sensitivity of human perception, so again, just do it manually. Often it may be tricky to find the formants by eyeballing the spectrogram, especially if the sound is short, tonal, and high-pitched. In the worst case try a schwa with `formants = NULL, vocalTract = my-best-guess-in-cm` (for humans vocal tract length is between 10 and 20 cm). If you can hear or see the first few formants, specify them using as few anchors as possible, always starting at F1. For example, for stationary F1-F3 type `formants = c(600, 1700, 3000)` (f4 and above will be added automatically based on the estimated vocal tract length); for moving F1, type `formants = list(f1 = c(500, 700), f2 = 1700, f3 = 3000`; for more complicated cases, see the section on formants above. Remember that formant transitions apply to the entire bout, i.e. across multiple syllables if `nSyl > 1`. If formant tracks are roughly parallel (e.g. all formants descend together), it's easier to write stationary formants and add something like `mouthAnchors = c(0.6, 0.4)`.
 1.  Match nonlinear effects by adding subharmonics / sidebands, jitter, and shimmer. Don't forget to set `nonlinBalance` to a positive number.
 1.  Match the turbulent noise component by adjusting `noiseAnchors`. Often the formant structure of turbulent noise is similar enough to the voiced component to leave the default `formantsNoise = NULL`; if not, specify `formantsNoise` separately. A bit of breathing provides excellent glue between syllables - set the last value of `noiseAnchors$time` to more than `sylLen` to extend breathing beyond the voiced part.
 1.  Match the spectral envelope by adjusting `rolloff` and `rolloffNoise`. Plot the long-term average spectrum of the target and of the candidate sound using `seewave::meanspec()` and try to match the two spectra. Don't start with this until you are satisfied that you have got the formants right, because spectral slope depends strongly on formant frequencies.
-1.  Match the amplitude envelope with `amplAnchors`, attack with `attackLen`, and/or amplitude modulation with `amDep = ..., amFreq = ...`. This is best done once you are happy with other settings, since amplitude envelope is affected by the chosen values of f0, formants, noise, and rolloff. For really sharp attack, reduce `windowLength`.
+1.  Match the amplitude envelope with `amplAnchors`, attack with `attackLen`, and/or amplitude modulation with `amDep = ..., amFreq = ...`. This is best done once you are happy with other settings, since amplitude envelope is affected by the chosen values of f0, formants, noise, and rolloff.
 1.  Adjust the amount of stochasticity by generating the sound repeatedly and varying `temperature` and `tempEffects = list(...)`. 
 
-*TIP Every time you change something, call `soundgen(...your-pars..., play = TRUE, plot = TRUE)` to get immediate visual and auditory feedback*
+*TIP Every time you change something, call `soundgen(...your-pars..., play = TRUE, plot = TRUE, osc = TRUE)` to get immediate visual and auditory feedback*
 
 
 ## Matching by acoustic analysis
@@ -874,12 +879,12 @@ m1 = matchPars(target = target,
 # ignore the warning about failing to improve the fit: we don't want to optimize yet
 
 # m1$pars contains a list of soundgen settings
-cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
+cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0.001)))
 # playme(cand1)
 ```
 Without optimization, we simply match soundgen parameters based on acoustic analysis. In particular, `matchPars()` calls `segment()` and `analyze()` to get some basic descriptives of the target sound and to choose the appropriate settings for `soundgen` based on these measurements. If you are very lucky, this *might* in fact accurately match the temporal structure, pitch, and (stationary) formants of your target. Most likely, it won't. In particular, for animal vocalizations a better option is often to estimate the vocal tract length from the dispersion of a few consecutive formants you can identify on the spectrogram (use `estimateVTL()`) and set `vocalTract = your_estimate, formants = NULL`. 
 
-At this point you can copy-paste your call to `soundgen` into the Shiny app and adjusting these settings in an interactive environment, rather than from the console. For example, to use the parameters in `m1$pars`, type `call('soundgen', m1$pars)`, remove the "list()" part from the output, and you have your formula:
+At this point you can copy-paste your call to `soundgen` into the Shiny app and start adjusting these settings in an interactive environment, rather than from the console. For example, to use the parameters in `m1$pars`, type `call('soundgen', m1$pars)`, remove the "list()" part from the output, and you have your formula:
 
 ```{r, eval = FALSE}
 call('soundgen', m1$pars)
@@ -912,7 +917,7 @@ sapply(m2$history, function(x) {
         '; fit to target:', round(x$sim, 2))
 })
 
-cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0)))
+cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
 ```
 
 
