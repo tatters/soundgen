@@ -6,6 +6,7 @@ MAJOR:
   * soundgen(): the argument "formantsNoise" (formants in the unvoiced component) now affects polysyllabic bouts in the same way as "formants" (formants in the voiced component), i.e. moving formants in "noiseFormants" span multiple syllables. See vignette: "Unvoiced component"
   * soundgen(): vectorized parameters sylLen, pauseLen, vibratoFreq, vibratoDep, jitterDep, jitterLen, and shimmerLen. For ex., "nSyl = 15, sylLen = 300:150" produces 15 progressively shorter syllables from 300 ms to 150 ms in length. See vignette: "Syllables"
   * soundgen(): a new argument, "nonlinRandomWalk", for specifying the exact timing of each vocal regime (0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer). This is intended for making reproducible examples of sounds with nonlinear effects. See vignette: "Nonlinear effects / Specifying the timing of each nonlinear regime"
+  * depends on seewave >=2.1.0 because of changes in the seewave package
 
 NEW FUNCTIONS:
   * spectrogramFolder(): extracts and saves spectrograms of all .wav files in a folder, creates an html file with a table of click-to-play spectrograms

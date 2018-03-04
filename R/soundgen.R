@@ -1,4 +1,4 @@
-# TODO: change amplAnchors to 0 to -80 etc scale and amplAnchorsGlobal to 0 ± smth in the app and update the vignette; check glottisAnchors - maybe possible not to make it change pitch; check vignettes; rename seewave function stft() to stdft() when seewave is updated to 2.0.6 (stft is only used in formants.R);
+# TODO: change amplAnchors to 0 to -80 etc scale and amplAnchorsGlobal to 0 ± smth in the app and update the vignette; check glottisAnchors - maybe possible not to make it change pitch
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

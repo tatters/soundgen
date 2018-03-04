@@ -899,7 +899,7 @@ addFormants = function(sound,
 
     # fft and filtering
     # NB: stft is supposed to be renamed to stdft in seewave 2.0.6
-    z = seewave::stft(
+    z = seewave::stdft(
       wave = as.matrix(sound),
       f = samplingRate,
       wl = windowLength_points,
