@@ -3,9 +3,10 @@
 Back-compatibible with soundgen 1.1.x. Old code will mostly produce the same results, except for moving noise formants and amplitude envelopes in polysyllabic sounds.
 
 MAJOR:
-  * soundgen(): the argument "formantsNoise" (formants in the unvoiced component) now affects polysyllabic bouts in the same way as "formants" (formants in the voiced component), i.e. moving formants in "noiseFormants" span multiple syllables. See vignette: "Unvoiced component"
-  * soundgen(): vectorized parameters sylLen, pauseLen, vibratoFreq, vibratoDep, jitterDep, jitterLen, and shimmerLen. For ex., "nSyl = 15, sylLen = 300:150" produces 15 progressively shorter syllables from 300 ms to 150 ms in length. See vignette: "Syllables"
-  * soundgen(): a new argument, "nonlinRandomWalk", for specifying the exact timing of each vocal regime (0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer). This is intended for making reproducible examples of sounds with nonlinear effects. See vignette: "Nonlinear effects / Specifying the timing of each nonlinear regime"
+  * soundgen(): the argument "formantsNoise" (formants in the unvoiced component) now affects polysyllabic bouts in the same way as "formants" (formants in the voiced component), i.e. moving formants in "noiseFormants" span multiple syllables (see vignette 2.12)
+  * soundgen(): vectorized parameters sylLen, pauseLen, vibratoFreq, vibratoDep, jitterDep, jitterLen, and shimmerLen. For ex., "nSyl = 15, sylLen = 300:150" produces 15 progressively shorter syllables from 300 ms to 150 ms in length (see vignette 2.5)
+  * soundgen(): a new argument, "nonlinRandomWalk", for specifying the exact timing of each vocal regime (0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer). This is intended for making reproducible examples of sounds with nonlinear effects (see vignette 2.11.5)
+  * soundgen(): "amplAnchorsGlobal" adjusts the amplitude from syllable to syllable in discrete steps, instead of applying a smooth amplitude envelope to the entire bout, and it also applies to the unvoiced component (turbulent noise)
   * depends on seewave >=2.1.0 because of changes in the seewave package
 
 NEW FUNCTIONS:
@@ -13,10 +14,10 @@ NEW FUNCTIONS:
   * getRandomWalk(), getIntegerRandomWalk(): functions for customizing the random walks that divide the sound into segments with different nonlinear regimes; see "nonlinRandomWalk" argument to soundgen()
 
 MINOR:
-  * soundgen(): the expected range of amplAnchors is now (throwaway, 0), e.g. (-80, 0), and for amplAnchorsGlobal 0 means no change. Values on the old scale will still work
+  * soundgen(): an option to add extra stochastic formants to the unvoiced component, just like for the voiced component. To do so, specify "vocalTract" explicitly (see vignette 2.12.1)
+  * soundgen(): the expected range of amplAnchors is now (throwaway, 0), e.g. (-80, 0), and for amplAnchorsGlobal 0 means no change. Values on the old scale will still work (see vignette 2.8)
   * soundgen(): a negative pause (overlap) is allowed between bouts (but not between syllables)
   * soundgen(): attack can be different at the beginning and end of a syllable, e.g. "attackLen = c(50, 100)"
-  * soundgen(): "amplAnchorsGlobal" adjusts the amplitude from syllable to syllable in discrete steps, instead of applying a smooth amplitude envelope to the entire bout
   * getSmoothContour(): proper handling and plotting of anchors that need downsampling, interpolation forced exactly through the specified anchors with interpol = 'approx'
   * segmentFolder(), analyzeFolder(): new argument "htmlPlots" to create an html file with a table of click-to-play plots; new default strategy for saving plots (see "savePlots" argument)
   * analyze(), analyzeFolder(), segment(), segmentFolder(): new argument "res" for proper control of the size and resolution of the output plots

@@ -299,7 +299,7 @@ Mode = function(x) {
 #'   with an upward and a downward curve. Larger absolute values of trend
 #'   produce less and less random behavior
 #' @return Returns a numeric vector of length len and range from 0 to rw_range.
-#' @keywords export
+#' @export
 #' @examples
 #' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .2))
 #' plot(getRandomWalk(len = 1000, rw_range = 15,
@@ -361,7 +361,7 @@ getRandomWalk = function(len,
 #'   regime 1 to 2 (q2). See noiseThresholdsDict for defaults
 #' @param plot if TRUE, plots the random walk underlying nonlinear regimes
 #' @return Returns a vector of integers (0/1/2) of the same length as rw.
-#' @keywords export
+#' @export
 #' @examples
 #' rw = getRandomWalk(len = 100, rw_range = 100, rw_smoothing = .2)
 #' r = getIntegerRandomWalk(rw, nonlinBalance = 75,

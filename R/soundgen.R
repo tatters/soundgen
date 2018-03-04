@@ -1,4 +1,4 @@
-# TODO: change amplAnchors to 0 to -80 etc scale and amplAnchorsGlobal to 0 ± smth in the app and update the vignette; check glottisAnchors - maybe possible not to make it change pitch
+# TODO: check glottisAnchors - maybe possible not to make it change pitch
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -799,7 +799,6 @@ soundgen = function(repeatBout = 1,
       vocalTract = vocalTract,
       formantDep = formantDep,
       formantWidth = formantWidth,
-      formantDepStoch = formantDepStoch,
       lipRad = lipRad,
       noseRad = noseRad,
       mouthOpenThres = mouthOpenThres,
@@ -827,6 +826,7 @@ soundgen = function(repeatBout = 1,
             formantPars,
             list(sound = sound,
                  formants = formants,
+                 formantDepStoch = formantDepStoch,
                  normalize = FALSE)
           ))
         } else {
@@ -840,6 +840,7 @@ soundgen = function(repeatBout = 1,
             formantPars,
             list(sound = voiced,
                  formants = formants,
+                 formantDepStoch = formantDepStoch,
                  normalize = FALSE)
           ))
         } else {
@@ -847,10 +848,15 @@ soundgen = function(repeatBout = 1,
         }
         # add formants to unvoiced
         if (length(sound_unvoiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
+          # add extra stochastic formants to unvoiced only if vocalTract is user-specified
+          fds = ifelse(
+            is.numeric(vocalTract), formantDepStoch, 0
+          )
           unvoicedFiltered = do.call(addFormants, c(
             formantPars,
             list(sound = sound_unvoiced,
                  formants = formantsNoise,
+                 formantDepStoch = fds,
                  normalize = FALSE)
           ))
         } else {
@@ -871,6 +877,7 @@ soundgen = function(repeatBout = 1,
           formantPars,
           list(sound = voiced,
                formants = formants,
+               formantDepStoch = formantDepStoch,
                normalize = FALSE)
         ))
       } else {

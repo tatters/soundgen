@@ -38,4 +38,3 @@ r = getIntegerRandomWalk(rw, nonlinBalance = 15,
                          q1 = 30, q2 = 70,
                          minLength = 10, plot = TRUE)
 }
-\keyword{export}
