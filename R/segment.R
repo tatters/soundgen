@@ -54,8 +54,8 @@
 #' @param sylPlot a list of graphical parameters for displaying the syllables
 #' @param burstPlot a list of graphical parameters for displaying the bursts
 #' @param col,xlab,ylab,main main plotting parameters
-#' @param width,height,units parameters passed to \code{\link[grDevices]{jpeg}}
-#'   if the plot is saved
+#' @param width,height,units,res parameters passed to
+#'   \code{\link[grDevices]{jpeg}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link[graphics]{plot}}
 #' @return If \code{summary = TRUE}, returns only a summary of the number and
 #'   spacing of syllables and vocal bursts. If \code{summary = FALSE}, returns a
@@ -281,6 +281,8 @@ segment = function(x,
 #'
 #' @param myfolder full path to target folder
 #' @inheritParams segment
+#' @param savePlots if TRUE, saves plots as .jpg files
+#' @param htmlPlots if TRUE, saves an html file with clickable plots
 #' @param verbose,reportEvery if TRUE, reports progress every \code{reportEvery}
 #'   files and estimated time left
 #' @return If \code{summary} is TRUE, returns a dataframe with one row per audio

@@ -848,6 +848,8 @@ analyze = function(x,
 #' @param verbose if TRUE, reports progress and estimated time left
 #' @inheritParams analyze
 #' @inheritParams spectrogram
+#' @param savePlots if TRUE, saves plots as .jpg files
+#' @param htmlPlots if TRUE, saves an html file with clickable plots
 #' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
 #'   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
 #' @export

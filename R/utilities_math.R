@@ -737,12 +737,12 @@ getSigmoid = function(len,
 #' @keywords internal
 #' @examples
 #' n = rnorm(100)
-#' reportCI(quantile(n, probs = c(.5, .025, .975)))
+#' soundgen:::reportCI(quantile(n, probs = c(.5, .025, .975)))
 #'
 #' a = data.frame(fit = c(3, 5, 7),
 #'                lwr = c(1, 4, 6.5),
 #'                upr = c(5, 6, 7.1))
-#' reportCI(a, 1)
+#' soundgen:::reportCI(a, 1)
 reportCI = function(n, digits = 2) {
   if (class(n) == 'data.frame') {
     n = as.matrix(n)

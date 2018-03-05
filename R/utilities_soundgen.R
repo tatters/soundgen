@@ -1021,9 +1021,9 @@ fade = function(x,
 #' @examples
 #' noiseAnchors = data.frame(time = c(-20, 50, 120),
 #'                             value = c(-50, -10, -60))
-#' scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 200)
-#' scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 50)
-#' scaleNoiseAnchors(noiseAnchors, sylLen_old = 200, sylLen_new = 300)
+#' soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 200)
+#' soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 50)
+#' soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 200, sylLen_new = 300)
 scaleNoiseAnchors = function(noiseAnchors, sylLen_old, sylLen_new) {
   idx_mid = which(noiseAnchors$time > 0 &             # not before syl
                     noiseAnchors$time < sylLen_old)   # not after syl

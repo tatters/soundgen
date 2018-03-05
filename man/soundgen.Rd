@@ -297,7 +297,10 @@ sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
   mouthAnchors = c(0, 0.5, 0),
   vocalTract = 5, play = playback)
 
-# Use nonlinRandomWalk to crease reproducible examples of sounds with nonlinear effects. For ex., to make a sound with no effect in the first third, subharmonics in the second third, and jitter in the final third of the total duration:
+# Use nonlinRandomWalk to crease reproducible examples of sounds with
+nonlinear effects. For ex., to make a sound with no effect in the first
+third, subharmonics in the second third, and jitter in the final third of the
+total duration:
 a = c(rep(0, 100), rep(1, 100), rep(2, 100))
 s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
              subFreq = 100, subDep = 70, jitterDep = 1,

@@ -29,6 +29,8 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
 \arguments{
 \item{myfolder}{full path to target folder}
 
+\item{htmlPlots}{if TRUE, saves an html file with clickable plots}
+
 \item{verbose}{if TRUE, reports progress and estimated time left}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
@@ -196,6 +198,8 @@ variables (mean, median and SD). If FALSE, returns a list containing
 frame-by-frame values}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
+
+\item{savePlots}{if TRUE, saves plots as .jpg files}
 
 \item{savePath}{if a valid path is specified, a plot is saved in this
 folder (defaults to NA)}

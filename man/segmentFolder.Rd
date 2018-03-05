@@ -17,6 +17,8 @@ segmentFolder(myfolder, htmlPlots = TRUE, shortestSyl = 40,
 \arguments{
 \item{myfolder}{full path to target folder}
 
+\item{htmlPlots}{if TRUE, saves an html file with clickable plots}
+
 \item{shortestSyl}{minimum acceptable length of syllables, ms}
 
 \item{shortestPause}{minimum acceptable break between syllables, ms.
@@ -64,6 +66,8 @@ on each syllable and bursts (location, duration, amplitude, ...)}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 
+\item{savePlots}{if TRUE, saves plots as .jpg files}
+
 \item{savePath}{full path to the folder in which to save the plots. Defaults
 to NA}
 
@@ -78,14 +82,17 @@ files and estimated time left}
 
 \item{main}{main plotting parameters}
 
-\item{width}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{width}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
-\item{height}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{height}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
-\item{units}{parameters passed to \code{\link[grDevices]{jpeg}}
-if the plot is saved}
+\item{units}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
+
+\item{res}{parameters passed to
+\code{\link[grDevices]{jpeg}} if the plot is saved}
 
 \item{sylPlot}{a list of graphical parameters for displaying the syllables}
 

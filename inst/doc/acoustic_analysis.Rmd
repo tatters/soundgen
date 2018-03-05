@@ -6,6 +6,8 @@ output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
+    number_sections: true
+    css: custom.css
 vignette: >
   %\VignetteIndexEntry{Acoustic analysis with soundgen}
   %\VignetteEngine{knitr::rmarkdown}
