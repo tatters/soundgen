@@ -96,7 +96,7 @@ m1 = matchPars(target = target,
                samplingRate = 16000,
                maxIter = 0,  # no optimization, only acoustic analysis
                verbose = playback)
-cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
+cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0.001)))
 
 # Try to improve the match by optimizing rolloff
 # (this may take a few minutes to run, and the results may vary)
@@ -107,6 +107,6 @@ m2 = matchPars(target = target,
                verbose = playback)
 # rolloff should be moving from default (-12) to target (-5):
 sapply(m2$history, function(x) x$pars$rolloff)
-cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0)))
+cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
 }
 }

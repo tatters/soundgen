@@ -65,7 +65,7 @@
 #'                samplingRate = 16000,
 #'                maxIter = 0,  # no optimization, only acoustic analysis
 #'                verbose = playback)
-#' cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
+#' cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0.001)))
 #'
 #' # Try to improve the match by optimizing rolloff
 #' # (this may take a few minutes to run, and the results may vary)
@@ -76,7 +76,7 @@
 #'                verbose = playback)
 #' # rolloff should be moving from default (-12) to target (-5):
 #' sapply(m2$history, function(x) x$pars$rolloff)
-#' cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0)))
+#' cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
 #' }
 matchPars = function(target,
                      samplingRate = NULL,
@@ -269,7 +269,7 @@ matchPars = function(target,
 #' target = soundgen(sylLen = 500, formants = 'a',
 #'                   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
 #'                                             value = c(100, 150, 135, 100)),
-#'                   temperature = 0)
+#'                   temperature = 0.001)
 #' targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
 
 #' parsToTry = list(
@@ -290,7 +290,7 @@ matchPars = function(target,
 #' sounds = list()
 #' for (s in 1:length(parsToTry)) {
 #'   sounds[[length(sounds) + 1]] =  do.call(soundgen,
-#'     c(parsToTry[[s]], list(temperature = 0, sylLen = 500)))
+#'     c(parsToTry[[s]], list(temperature = 0.001, sylLen = 500)))
 #' }
 #'
 #' method = c('cor', 'cosine', 'pixel', 'dtw')

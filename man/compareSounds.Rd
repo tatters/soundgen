@@ -62,7 +62,7 @@ spectra (auditory spectra). Called by \code{\link{matchPars}}.
 target = soundgen(sylLen = 500, formants = 'a',
                   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
                                             value = c(100, 150, 135, 100)),
-                  temperature = 0)
+                  temperature = 0.001)
 targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
 parsToTry = list(
   list(formants = 'i',                                            # wrong
@@ -82,7 +82,7 @@ parsToTry = list(
 sounds = list()
 for (s in 1:length(parsToTry)) {
   sounds[[length(sounds) + 1]] =  do.call(soundgen,
-    c(parsToTry[[s]], list(temperature = 0, sylLen = 500)))
+    c(parsToTry[[s]], list(temperature = 0.001, sylLen = 500)))
 }
 
 method = c('cor', 'cosine', 'pixel', 'dtw')

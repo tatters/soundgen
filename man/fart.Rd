@@ -13,10 +13,10 @@ fart(glottisAnchors = c(350, 700), pitchAnchors = 75, temperature = 0.25,
 cycle with closed glottis, % (0 = no modification, 100 = closed phase as
 long as open phase); numeric vector or dataframe specifying time and value}
 
-\item{pitchAnchors}{a numeric vector of f0 values in Hz (assuming equal time
-steps) or a dataframe specifying the time (ms or 0 to 1) and value (Hz) of
-each anchor. These anchors are used to create a smooth contour of
-fundamental frequency f0 (pitch) within one syllable (see Examples)}
+\item{pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
+specifying the time (ms or 0 to 1) and value (Hz) of each anchor. These
+anchors are used to create a smooth contour of fundamental frequency f0
+(pitch) within one syllable}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}

@@ -56,7 +56,7 @@ voice (vectorized)}
 cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
 
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
-from creaky (-1) to breathy (+1)}
+from creaky (-1) to breathy (+1); 0 = no change}
 
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
 (exponential decay). All rolloff parameters are vectorized. See
@@ -121,9 +121,10 @@ specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
 
 \item{pitchCeiling}{lower & upper bounds of f0}
 
-\item{pitchSamplingRate}{sampling frequency of the pitch contour only, Hz. Low
-values reduce processing time. A rule of thumb is to set this to
-the same value as \code{pitchCeiling}}
+\item{pitchSamplingRate}{sampling frequency of the pitch contour only, Hz.
+Low values reduce processing time. A rule of thumb is to set this to the
+same value as \code{pitchCeiling} for optimal speed and to
+\code{samplingRate} for optimal quality}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB, defaults to -80) to save computational resources}

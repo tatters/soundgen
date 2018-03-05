@@ -20,9 +20,8 @@ breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
 aspiration noise at the given time anchors (to be smoothed). throwaway =
 no breathing, 0 = as strong as the voiced (harmonic) part}
 
-\item{rolloffNoise}{rolloff of noise, dB/octave. It is analogous to
-\code{rolloff}, but while \code{rolloff} applies to the harmonic component,
-\code{rolloffNoise} applies to the noise component (vectorized)}
+\item{rolloffNoise}{linear rolloff of the excitation source for the unvoiced
+component, dB/kHz (vectorized)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in

@@ -19,11 +19,10 @@ by len, which must then be provided in ms). So anchors$time is assumed to
 be in ms if len=NULL and relative if len is specified. \code{anchors$value}
 can be on any scale.}
 
-\item{interpol}{the method of smoothing envelopes based on provided pitch,
-amplitude, and mouth anchors: 'approx' = linear interpolation, 'spline' =
-cubic spline, 'loess' (default) = polynomial local smoothing function. NB:
-this does not affect noiseAnchors, glottalAnchors, and the smoothing of
-formants}
+\item{interpol}{the method of smoothing envelopes based on provided anchors:
+'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
+= polynomial local smoothing function. NB: this does not affect
+noiseAnchors, glottalAnchors, and the smoothing of formants}
 
 \item{valueFloor}{lower/upper bounds for the contour}
 

@@ -57,7 +57,7 @@
 #'   real numbers.
 #' @examples
 #' # synthesize a sound 1 s long, with gradually increasing hissing noise
-#' sound = soundgen(sylLen = 1000, temperature = 0, noiseAnchors = list(
+#' sound = soundgen(sylLen = 1000, temperature = 0.001, noiseAnchors = list(
 #'   time = c(0, 1300), value = c(-120, 0)), formantsNoise = list(
 #'   f1 = list(freq = 5000, width = 10000)))
 #' # playme(sound, samplingRate = 16000)
