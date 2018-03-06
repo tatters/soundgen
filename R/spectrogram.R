@@ -468,6 +468,12 @@ getFrameBank = function(sound,
                         zp,
                         filter = NULL) {
   # # normalize to range from no less than -1 to no more than +1
+  if (!is.numeric(sound)) {
+    return(NA)
+  }
+  if (any(is.na(sound))) {
+    sound[is.na(sound)] = 0
+  }
   if (any(sound != 0)) {
     sound = sound - mean(sound)
     sound = sound / max(abs(max(sound)), abs(min(sound)))

@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.2.0 [03-March-2018]
+          CHANGES IN SOUNDGEN VERSION 1.2.0 [04-March-2018]
 
 Back-compatibible with soundgen 1.1.x. Old code will mostly produce the same results, except for moving noise formants and amplitude envelopes in polysyllabic sounds.
 

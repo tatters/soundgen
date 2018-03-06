@@ -674,11 +674,14 @@ s2 = soundgen(vocalTract = 30,    # a large animal
 In contrast, if `formantsNoise` are specified explicitly (i.e., if this is not aspiration noise), breathing noise is by default NOT enriched with stochastically added formants. To avoid losing all high-frequency energy in your noise, make sure you add a sufficient number of formants in `formantsNoise`, ideally all the way up to Nyquist frequency (half the sampling rate). Alternatively, you can explicitly specify `vocalTract`, and then extra formants will be added to the unvoiced component. Compare: 
 ```{r fig.width = 4, fig.height = 4}
 # only two specified formants
-s3 = soundgen(formantsNoise = c(1000, 2000),  
+s3 = soundgen(pitchAnchors = NULL, 
+              formantsNoise = c(1000, 2000),  
               noiseAnchors = 40, sylLen = 800,
               play = playback, plot = TRUE)
 # two specified formants plus extra formants based on vocalTract
-s4 = soundgen(vocalTract = 15.5, formantsNoise = c(1000, 2000),  
+s4 = soundgen(vocalTract = 15.5, 
+              pitchAnchors = NULL,
+              formantsNoise = c(1000, 2000),  
               noiseAnchors = 40, sylLen = 800,
               play = playback, plot = TRUE)
 ```

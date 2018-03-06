@@ -2,8 +2,6 @@
 #' @encoding UTF-8
 NULL
 
-
-
 #' Generate a sound
 #'
 #' Generates a bout of one or more syllables with pauses between them. Two basic

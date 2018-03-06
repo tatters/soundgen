@@ -15,8 +15,8 @@ pitch tracking, audio segmentation, self-similarity matrices, morphing, etc.
 
 For more information, please see the vignettes on sound synthesis and acoustic analysis:
 
-`vignette("acoustic_analysis", package="soundgen")`   
 `vignette("sound_generation", package="soundgen")`
+`vignette("acoustic_analysis", package="soundgen")`   
 
 Or, to open the vignettes in a browser:   
 `RShowDoc('sound_generation', package = 'soundgen')`   
