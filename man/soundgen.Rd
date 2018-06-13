@@ -211,7 +211,8 @@ adding pitch jumps)}
 
 \item{windowLength}{length of FFT window, ms}
 
-\item{overlap}{FFT window overlap, \%. For allowed values, see \code{\link[seewave]{istft}}}
+\item{overlap}{FFT window overlap, \%. For allowed values, see
+\code{\link[seewave]{istft}}}
 
 \item{addSilence}{silence before and after the bout, ms}
 

@@ -4,18 +4,27 @@
 \alias{crossFade}
 \title{Join two waveforms by cross-fading}
 \usage{
-crossFade(ampl1, ampl2, samplingRate, crossLen = 15, crossLenPoints = NULL)
+crossFade(ampl1, ampl2, crossLenPoints = 240, crossLen = NULL,
+  samplingRate = NULL, shape = c("lin", "exp", "log", "cos", "logistic")[1],
+  steepness = 1)
 }
 \arguments{
 \item{ampl1, ampl2}{two numeric vectors (waveforms) to be joined}
 
-\item{samplingRate}{the sampling rate of input vectors, Hz}
+\item{crossLenPoints}{(optional) the length of overlap in points}
 
-\item{crossLen}{the length of overlap, in ms (doesn't need to be specified
-if crossLenPoints is not NULL)}
+\item{crossLen}{the length of overlap in ms (overrides crossLenPoints)}
 
-\item{crossLenPoints}{(optional) the length of overlap, in points (defaults to
-NULL)}
+\item{samplingRate}{the sampling rate of input vectors, Hz (needed only if
+crossLen is given in ms rather than points)}
+
+\item{shape}{controls the type of fade function: 'lin' = linear, 'exp' =
+exponential, 'log' = logarithmic, 'cos' = cosine, 'logistic' = logistic
+S-curve}
+
+\item{steepness}{scaling factor regulating the steepness of fading curves if
+the shape is 'exp', 'log', or 'logistic' (0 = linear, >1 = steeper than
+default)}
 }
 \value{
 Returns a numeric vector.
@@ -41,5 +50,26 @@ plot(c(sound1, sound2), type = 'b')
 sound = crossFade(sound1, sound2, crossLenPoints = 5)
 plot(sound, type = 'b') # a nice, smooth transition
 length(sound) # but note that cross-fading costs us ~60 points
-#  because of trimming to zero crossings
+#  because of trimming to zero crossings and then overlapping
+
+\dontrun{
+# Actual sounds, alternative shapes of fade-in/out
+sound3 = soundgen(formants = 'a', pitchAnchors = 200,
+                  addSilence = 0, attackLen = c(50, 0))
+sound4 = soundgen(formants = 'u', pitchAnchors = 200,
+                  addSilence = 0, attackLen = c(0, 50))
+
+# simple concatenation (with a click)
+playme(c(sound3, sound4), 16000)
+
+# concatentation from zc to zc (no click, but a rough transition)
+playme(crossFade(sound3, sound4, crossLen = 0), 16000)
+
+# linear crossFade over 35 ms - brief, but smooth
+playme(crossFade(sound3, sound4, crossLen = 35, samplingRate = 16000), 16000)
+
+# s-shaped cross-fade over 300 ms (shortens the sound by ~300 ms)
+playme(crossFade(sound3, sound4, samplingRate = 16000,
+                 crossLen = 300, shape = 'cos'), 16000)
+}
 }

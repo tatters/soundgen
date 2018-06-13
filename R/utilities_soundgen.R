@@ -277,11 +277,11 @@ findZeroCrossing = function(ampl, location) {
 #' vignette on sound generation), but it can also be useful for joining two
 #' separately generated sounds without audible artifacts.
 #' @param ampl1,ampl2 two numeric vectors (waveforms) to be joined
-#' @param samplingRate the sampling rate of input vectors, Hz
-#' @param crossLen the length of overlap, in ms (doesn't need to be specified
-#'   if crossLenPoints is not NULL)
-#' @param crossLenPoints (optional) the length of overlap, in points (defaults to
-#'   NULL)
+#' @param crossLenPoints (optional) the length of overlap in points
+#' @param crossLen the length of overlap in ms (overrides crossLenPoints)
+#' @param samplingRate the sampling rate of input vectors, Hz (needed only if
+#'   crossLen is given in ms rather than points)
+#' @inheritParams fade
 #' @export
 #' @return Returns a numeric vector.
 #' @examples
@@ -293,12 +293,35 @@ findZeroCrossing = function(ampl, location) {
 #' sound = crossFade(sound1, sound2, crossLenPoints = 5)
 #' plot(sound, type = 'b') # a nice, smooth transition
 #' length(sound) # but note that cross-fading costs us ~60 points
-#' #  because of trimming to zero crossings
-crossFade = function (ampl1,
-                      ampl2,
-                      samplingRate,
-                      crossLen = 15,
-                      crossLenPoints = NULL) {
+#' #  because of trimming to zero crossings and then overlapping
+#'
+#' \dontrun{
+#' # Actual sounds, alternative shapes of fade-in/out
+#' sound3 = soundgen(formants = 'a', pitchAnchors = 200,
+#'                   addSilence = 0, attackLen = c(50, 0))
+#' sound4 = soundgen(formants = 'u', pitchAnchors = 200,
+#'                   addSilence = 0, attackLen = c(0, 50))
+#'
+#' # simple concatenation (with a click)
+#' playme(c(sound3, sound4), 16000)
+#'
+#' # concatentation from zc to zc (no click, but a rough transition)
+#' playme(crossFade(sound3, sound4, crossLen = 0), 16000)
+#'
+#' # linear crossFade over 35 ms - brief, but smooth
+#' playme(crossFade(sound3, sound4, crossLen = 35, samplingRate = 16000), 16000)
+#'
+#' # s-shaped cross-fade over 300 ms (shortens the sound by ~300 ms)
+#' playme(crossFade(sound3, sound4, samplingRate = 16000,
+#'                  crossLen = 300, shape = 'cos'), 16000)
+#' }
+crossFade = function(ampl1,
+                     ampl2,
+                     crossLenPoints = 240,
+                     crossLen = NULL,
+                     samplingRate = NULL,
+                     shape = c('lin', 'exp', 'log', 'cos', 'logistic')[1],
+                     steepness = 1) {
   # cut to the nearest zero crossings
   zc1 = findZeroCrossing(ampl1, location = length(ampl1))
   if (!is.na(zc1)) {
@@ -317,13 +340,11 @@ crossFade = function (ampl1,
   # check whether there is enough data to cross-fade. Note that ampl1 or ampl2
   # may even become shorter than crossLenPoints after we shortened them to the
   # nearest zero crossing
-  if (is.null(crossLenPoints)) {
-    crossLenPoints = min(floor(crossLen * samplingRate / 1000),
-                        length(ampl1) - 1,
-                        length(ampl2) - 1)
-  } else {
-    crossLenPoints = min(crossLenPoints, length(ampl1) - 1, length(ampl2) - 1)
+  if (is.null(crossLenPoints) |
+      (!is.null(crossLen) & !is.null(samplingRate))) {
+    crossLenPoints = floor(crossLen * samplingRate / 1000)
   }
+  crossLenPoints = min(crossLenPoints, length(ampl1) - 1, length(ampl2) - 1)
 
   # concatenate or cross-fade
   if (crossLenPoints < 2) {
@@ -332,7 +353,12 @@ crossFade = function (ampl1,
     ampl = c(ampl1, ampl2)
   } else {
     # for segments that are long enough, cross-fade properly
-    multipl = seq(0, 1, length.out = crossLenPoints)
+    # multipl = seq(0, 1, length.out = crossLenPoints)
+    multipl = fade(rep(1, crossLenPoints),
+                   fadeIn = crossLenPoints,
+                   fadeOut = 0,
+                   shape = shape,
+                   steepness = steepness)
     idx1 = length(ampl1) - crossLenPoints
     cross = rev(multipl) * ampl1[(idx1 + 1):length(ampl1)] +
       multipl * ampl2[1:crossLenPoints]
@@ -672,7 +698,7 @@ wiggleAnchors = function(df,
     ))
     if (class(w) == 'try-error') {
       warning(paste('Failed to wiggle column', i, 'of df:',
-                 paste(df, collapse = ', ')))
+                    paste(df, collapse = ', ')))
     } else {
       df[, i] = w
     }
@@ -842,10 +868,10 @@ flatEnv = function(sound,
 #' a = rnorm(500) + sin(1:500 / 50)
 #' b = soundgen:::killDC(a, windowLength_points = 25, plot = TRUE)
 killDC = function(sound,
-                   windowLength = 200,
-                   samplingRate = 16000,
-                   windowLength_points = NULL,
-                   plot = FALSE) {
+                  windowLength = 200,
+                  samplingRate = 16000,
+                  windowLength_points = NULL,
+                  plot = FALSE) {
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
       if (is.numeric(samplingRate)) {
