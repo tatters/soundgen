@@ -34,7 +34,7 @@ only above this frequency)}
 
 \item{samplingRate}{sampling frequency, Hz}
 
-\item{overlap}{FFT window overlap, \%}
+\item{overlap}{FFT window overlap, \%. For allowed values, see \code{\link[seewave]{istft}}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB, defaults to -80) to save computational resources}

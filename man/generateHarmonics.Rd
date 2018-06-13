@@ -113,7 +113,7 @@ strong subharmonics}
 \item{amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
 specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
 
-\item{overlap}{FFT window overlap, \%}
+\item{overlap}{FFT window overlap, \%. For allowed values, see \code{\link[seewave]{istft}}}
 
 \item{samplingRate}{sampling frequency, Hz}
 

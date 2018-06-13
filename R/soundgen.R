@@ -1,3 +1,5 @@
+# TODO: crossFade - add type of fade in/out; use Hilbert-transformed amplitude envelopes in segment(); use spec() instead of meanspec() in analyze(); check spectral centroid calculation, dB vs raw power scale in spectrograms; add shimmerLen (for unstead, trembling voice); maybe check if shimmer can be generated differently. Currently linear interpolation, so the ampl contour might be a bit weird; analyze() should export the spectrum of each frame (a long list) instead of only summaries - then the user can extract whatever measures of spectral shape they like; reportTime() - add par to report every N iterations
+
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
 NULL
@@ -148,7 +150,8 @@ NULL
 #'   adding pitch jumps)
 #' @param samplingRate sampling frequency, Hz
 #' @param windowLength length of FFT window, ms
-#' @param overlap FFT window overlap, \%
+#' @param overlap FFT window overlap, \%. For allowed values, see
+#'   \code{\link[seewave]{istft}}
 #' @param addSilence silence before and after the bout, ms
 #' @param pitchFloor,pitchCeiling lower & upper bounds of f0
 #' @param pitchSamplingRate sampling frequency of the pitch contour only, Hz.
@@ -323,6 +326,16 @@ soundgen = function(repeatBout = 1,
     stop(paste(
       'Negative pauseLen is allowed between bouts, but not between syllables.',
       'Use repeatBout instead of nSyl if you need syllables to overlap'
+    ))
+  }
+
+  # check that the overlap setting is valid
+  o = 25 / (100 - overlap)
+  if (round(o) != o) {
+    overlap = 75
+    warning(paste(
+      'overlap must satisfy 100 * (1 - 1 / (4 * positive_integer)).',
+      'Resetting to 75%. OK values: 75, 87.5, 93.75, 95. See ?seewave::istft'
     ))
   }
 

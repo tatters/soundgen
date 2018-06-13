@@ -67,7 +67,7 @@ formant drift and dispersal, respectively}
 
 \item{windowLength_points}{length of FFT window, points}
 
-\item{overlap}{FFT window overlap, \%}
+\item{overlap}{FFT window overlap, \%. For allowed values, see \code{\link[seewave]{istft}}}
 
 \item{normalize}{if TRUE, normalizes the output to range from -1 to +1}
 }
