@@ -536,7 +536,7 @@ abline(a=0, b=1, col='red')
 ```
 
 # References
-Anikin, A. & Persson, T. (2017). Non-linguistic vocalizations from online amateur videos for emotion research: a validated corpus. Behavior Research Methods, 49(2): 758-771. Text and sounds available <a href="http://cogsci.se/personal/results.html">here</a>
+Anikin, A. & Persson, T. (2017). Non-linguistic vocalizations from online amateur videos for emotion research: a validated corpus. Behavior Research Methods, 49(2): 758-771. Text and sounds available <a href="http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/anikin-persson_2017_nonlinguistic-vocs.html">here</a>
 
 Ba, H., Yang, N., Demirkol, I., & Heinzelman, W. (2012, August). BaNa: A hybrid approach for noise resilient pitch detection. In Statistical Signal Processing Workshop (SSP), 2012 IEEE (pp. 369-372). 
 

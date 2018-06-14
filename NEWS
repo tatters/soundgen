@@ -1,5 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.2.1 [...date...]
 
+MINOR:
+  * crossFade(): accepts different shapes of fade-in/out
 
           CHANGES IN SOUNDGEN VERSION 1.2.0 [04-March-2018]
 
