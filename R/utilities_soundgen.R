@@ -14,29 +14,33 @@
 #'   of each iteration. If not NULL, estimated time left takes into account
 #'   whether the jobs ahead will take more or less time than the jobs already
 #'   completed
+#' @param reportEvery report progress every n iterations
 #' @keywords internal
 #' @examples
 #' time_start = proc.time()
-#' for (i in 1:5) {
-#'   Sys.sleep(i ^ 2 / 100)
-#'   soundgen:::reportTime(i = i, nIter = 5, time_start = time_start, jobs = (1:5) ^ 2 / 10)
+#' for (i in 1:20) {
+#'   Sys.sleep(i ^ 2 / 10000)
+#'   soundgen:::reportTime(i = i, nIter = 20, time_start = time_start,
+#'   jobs = (1:20) ^ 2, reportEvery = 5)
 #' }
-reportTime = function(i, nIter, time_start, jobs = NULL) {
+reportTime = function(i, nIter, time_start, jobs = NULL, reportEvery = 1) {
   time_diff = as.numeric((proc.time() - time_start)[3])
   if (i == nIter) {
     time_total = convert_sec_to_hms(time_diff)
     print(paste0('Completed ', i, ' iterations in ', time_total, '.'))
   } else {
-    if (is.null(jobs)) {
-      # simply count iterations
-      time_left = time_diff / i * (nIter - i)
-    } else {
-      # take into account the expected time for each iteration
-      speed = time_diff / sum(jobs[1:i])
-      time_left = speed * sum(jobs[min((i + 1), nIter):nIter])
+    if (i %% reportEvery == 0) {
+      if (is.null(jobs)) {
+        # simply count iterations
+        time_left = time_diff / i * (nIter - i)
+      } else {
+        # take into account the expected time for each iteration
+        speed = time_diff / sum(jobs[1:i])
+        time_left = speed * sum(jobs[min((i + 1), nIter):nIter])
+      }
+      time_left_hms = convert_sec_to_hms(time_left)
+      print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', time_left_hms))
     }
-    time_left_hms = convert_sec_to_hms(time_left)
-    print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', time_left_hms))
   }
 }
 

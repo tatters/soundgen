@@ -4,7 +4,7 @@
 \alias{reportTime}
 \title{Report time}
 \usage{
-reportTime(i, nIter, time_start, jobs = NULL)
+reportTime(i, nIter, time_start, jobs = NULL, reportEvery = 1)
 }
 \arguments{
 \item{i}{current iteration}
@@ -17,6 +17,8 @@ reportTime(i, nIter, time_start, jobs = NULL)
 of each iteration. If not NULL, estimated time left takes into account
 whether the jobs ahead will take more or less time than the jobs already
 completed}
+
+\item{reportEvery}{report progress every n iterations}
 }
 \description{
 Internal soundgen function.
@@ -28,9 +30,10 @@ completion.
 }
 \examples{
 time_start = proc.time()
-for (i in 1:5) {
-  Sys.sleep(i ^ 2 / 100)
-  soundgen:::reportTime(i = i, nIter = 5, time_start = time_start, jobs = (1:5) ^ 2 / 10)
+for (i in 1:20) {
+  Sys.sleep(i ^ 2 / 10000)
+  soundgen:::reportTime(i = i, nIter = 20, time_start = time_start,
+  jobs = (1:20) ^ 2, reportEvery = 5)
 }
 }
 \keyword{internal}

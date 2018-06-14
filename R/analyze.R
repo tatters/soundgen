@@ -240,8 +240,8 @@ analyze = function(x,
     samplingRate = sound@samp.rate
     sound = sound@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
-    plotname = substring (plotname, first = 1,
-                          last = (nchar(plotname) - 4))
+    plotname = substring(plotname, first = 1,
+                         last = (nchar(plotname) - 4))
   } else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop('Please specify "samplingRate", eg 44100')

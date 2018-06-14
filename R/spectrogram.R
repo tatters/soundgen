@@ -316,9 +316,9 @@ spectrogram = function(x,
   }
 
   if (output == 'original') {
-    return (t(Z))  # before denoising
+    return(t(Z))  # before denoising
   } else if (output == 'processed') {
-    return (t(Z1))  # denoised spectrum / spectralDerivative
+    return(t(Z1))  # denoised spectrum / spectralDerivative
   }
 }
 
