@@ -8,8 +8,8 @@
 #' \code{\link{soundgen}}, but it may be more convenient to call it directly
 #' when synthesizing non-biological noises defined by specific spectral and
 #' amplitude envelopes rather than formants: the wind, whistles, impact noises,
-#' etc. See \code{\link{fart}} for a similarly simplified function for simple,
-#' non-biological voiced sounds.
+#' etc. See \code{\link{fart}} and \code{\link{beat}} for similarly simplified
+#' functions for voiced non-biological sounds.
 #'
 #' Algorithm: paints a spectrum with desired characteristics, sets phase to
 #' zero, and generates a time sequence via inverse FFT. Noise can then be used
@@ -17,22 +17,17 @@
 #' source has been formant-filtered, or BEFORE formant-filtering for glottal
 #' breathing noise.
 #' @param len length of output
-#' @param noiseAnchors a dataframe specifying the amplitude envelope of
-#'   output. $time: timing of aspiration noise, ms c(start,finish) relative to
-#'   voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
-#'   part and lasts until 500 ms into the voiced part (eg total duration of
-#'   breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
-#'   aspiration noise at the given time anchors (to be smoothed). throwaway =
-#'   no breathing, 0 = as strong as the voiced (harmonic) part
-#' @param noiseFlatSpec keep spectrum flat up to ... Hz (ie rolloffNoise applies
-#'   only above this frequency)
+#' @param filterNoise (optional): as an alternative to using rolloffNoise, we
+#'   can provide the exact filter - a vector specifying the power in each
+#'   frequency bin on a linear scale (interpolated to length equal to
+#'   windowLength_points/2). A matrix specifying the filter for each STFT step
+#'   is also accepted. The easiest way to create this matrix is to call
+#'   soundgen:::getSpectralEnvelope, but then you might as well just use
+#'   soundgen() or, if we want moving formants, a matrix with
+#'   windowLength_points/2 rows and an arbitrary number of columns
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points
-#' @param filterNoise (optional): in addition to using rolloffNoise,
-#'   we can provide the exact filter - a vector of length windowLength_points/2
-#'   or, if we want moving formants, a matrix with windowLength_points/2 rows
-#'   and an arbitrary number of columns
-#' @keywords export
+#' @export
 #' @examples
 #' # .5 s of white noise
 #' samplingRate = 16000
@@ -62,7 +57,7 @@
 #'  formants = list('f1' = data.frame(time = 0, freq = 7000,
 #'                                    amp = 50, width = 2000)))
 #' noise = generateNoise(len = samplingRate,
-#'   samplingRate = samplingRate, filterNoise = filterNoise)
+#'   samplingRate = samplingRate, filterNoise = as.numeric(filterNoise))
 #' # plot(filterNoise, type = 'l')
 #' # playme(noise, samplingRate = samplingRate)
 #'
@@ -72,27 +67,27 @@
 #'   samplingRate = samplingRate, formants = list('f1' = data.frame(
 #'     time = 0, freq = 150, amp = 30, width = 90)))
 #' noise = generateNoise(len = samplingRate,
-#'   samplingRate = samplingRate, filterNoise = filterNoise)
+#'   samplingRate = samplingRate, filterNoise = as.numeric(filterNoise))
 #' # playme(noise, samplingRate = samplingRate)
 #'
 #' # Manual filter, e.g. for a kettle-like whistle (narrow-band noise)
 #' filterNoise = c(rep(0, 100), 120, rep(0, 100))  # any length is fine
-#' # plot(filterNoise, type = 'b')  # notch filter at Nyquist / 2, here 8 kHz
+#' # plot(filterNoise, type = 'b')  # notch filter at Nyquist / 2, here 4 kHz
 #' noise = generateNoise(len = samplingRate,
 #'   samplingRate = samplingRate, filterNoise = filterNoise)
 #' # playme(noise, samplingRate = samplingRate)
 #' # spectrogram(noise, samplingRate)
 #' }
 generateNoise = function(len,
-                         noiseAnchors = NULL,
                          rolloffNoise = 0,
-                         attackLen = 10,
                          noiseFlatSpec = 1200,
+                         filterNoise = NULL,
+                         noiseAnchors = NULL,
+                         attackLen = 10,
                          windowLength_points = 1024,
                          samplingRate = 16000,
                          overlap = 75,
-                         throwaway = -80,
-                         filterNoise = NULL) {
+                         throwaway = -80) {
   # convert anchors to a smooth contour of breathing amplitudes
   if (!is.null(noiseAnchors)) {
     breathingStrength = getSmoothContour(
@@ -144,19 +139,23 @@ generateNoise = function(len,
   } else {
     # user-specified exact spectral envelope
     if (is.vector(filterNoise)) {
-      filterNoise = na.omit(filterNoise)
+      filterNoise = filterNoise[!is.na(filterNoise)]
       if (length(filterNoise) != nr) {
         # interpolate to correct freq resolution
         filterNoise = getSmoothContour(filterNoise, len = nr)
         # filterNoise = approx(filterNoise, n = nr, method = 'linear')$y
       }
       filterNoise = matrix(rep(filterNoise, nc), ncol = nc)
+    } else {
+      filterNoise = na.omit(filterNoise)
+      if (ncol(filterNoise) != nc | nrow(filterNoise) != nr) {
+        message('Incorrect dimensions of filterNoise matrix.')
+        filterRowIdx = round(seq(1, nrow(filterNoise), length.out = nr))
+        filterColIdx = round(seq(1, ncol(filterNoise), length.out = nc))
+        filterNoise = filterNoise[filterRowIdx, filterColIdx]
+      }
     }
-    if (ncol(filterNoise) != nc) {
-      # message('Incorrect dimensions of filterNoise. Interpolating...')
-      filterColIdx = round(seq(1, ncol(filterNoise), length.out = nc))
-      filterNoise = filterNoise[, filterColIdx]
-    }
+
   }
   # image(t(filterNoise))
   # plot(filterNoise[, 1], type = 'l')

@@ -4,30 +4,36 @@
 \alias{generateNoise}
 \title{Generate noise}
 \usage{
-generateNoise(len, noiseAnchors = NULL, rolloffNoise = 0, attackLen = 10,
-  noiseFlatSpec = 1200, windowLength_points = 1024, samplingRate = 16000,
-  overlap = 75, throwaway = -80, filterNoise = NULL)
+generateNoise(len, rolloffNoise = 0, noiseFlatSpec = 1200,
+  filterNoise = NULL, noiseAnchors = NULL, attackLen = 10,
+  windowLength_points = 1024, samplingRate = 16000, overlap = 75,
+  throwaway = -80)
 }
 \arguments{
 \item{len}{length of output}
 
-\item{noiseAnchors}{a dataframe specifying the amplitude envelope of
-output. $time: timing of aspiration noise, ms c(start,finish) relative to
-voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
-part and lasts until 500 ms into the voiced part (eg total duration of
-breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
-aspiration noise at the given time anchors (to be smoothed). throwaway =
-no breathing, 0 = as strong as the voiced (harmonic) part}
-
 \item{rolloffNoise}{linear rolloff of the excitation source for the unvoiced
 component, dB/kHz (vectorized)}
+
+\item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
+
+\item{filterNoise}{(optional): as an alternative to using rolloffNoise, we
+can provide the exact filter - a vector specifying the power in each
+frequency bin on a linear scale (interpolated to length equal to
+windowLength_points/2). A matrix specifying the filter for each STFT step
+is also accepted. The easiest way to create this matrix is to call
+soundgen:::getSpectralEnvelope, but then you might as well just use
+soundgen() or, if we want moving formants, a matrix with
+windowLength_points/2 rows and an arbitrary number of columns}
+
+\item{noiseAnchors}{a numeric vector of noise amplitudes (throwaway dB = none, 0
+dB = as loud as voiced component) or a dataframe specifying the time (ms)
+and amplitude (dB) of anchors for generating the noise component such as
+aspiration, hissing, etc}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
 and fade-out)}
-
-\item{noiseFlatSpec}{keep spectrum flat up to ... Hz (ie rolloffNoise applies
-only above this frequency)}
 
 \item{windowLength_points}{the length of fft window, points}
 
@@ -38,11 +44,6 @@ only above this frequency)}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB, defaults to -80) to save computational resources}
-
-\item{filterNoise}{(optional): in addition to using rolloffNoise,
-we can provide the exact filter - a vector of length windowLength_points/2
-or, if we want moving formants, a matrix with windowLength_points/2 rows
-and an arbitrary number of columns}
 }
 \description{
 Generates noise of length \code{len} and with spectrum defined by linear
@@ -51,8 +52,8 @@ specified filter \code{filterNoise}. This function is called internally by
 \code{\link{soundgen}}, but it may be more convenient to call it directly
 when synthesizing non-biological noises defined by specific spectral and
 amplitude envelopes rather than formants: the wind, whistles, impact noises,
-etc. See \code{\link{fart}} for a similarly simplified function for simple,
-non-biological voiced sounds.
+etc. See \code{\link{fart}} and \code{\link{beat}} for similarly simplified
+functions for voiced non-biological sounds.
 }
 \details{
 Algorithm: paints a spectrum with desired characteristics, sets phase to
@@ -90,7 +91,7 @@ filterNoise = soundgen:::getSpectralEnvelope(
  formants = list('f1' = data.frame(time = 0, freq = 7000,
                                    amp = 50, width = 2000)))
 noise = generateNoise(len = samplingRate,
-  samplingRate = samplingRate, filterNoise = filterNoise)
+  samplingRate = samplingRate, filterNoise = as.numeric(filterNoise))
 # plot(filterNoise, type = 'l')
 # playme(noise, samplingRate = samplingRate)
 
@@ -100,16 +101,15 @@ filterNoise = soundgen:::getSpectralEnvelope(
   samplingRate = samplingRate, formants = list('f1' = data.frame(
     time = 0, freq = 150, amp = 30, width = 90)))
 noise = generateNoise(len = samplingRate,
-  samplingRate = samplingRate, filterNoise = filterNoise)
+  samplingRate = samplingRate, filterNoise = as.numeric(filterNoise))
 # playme(noise, samplingRate = samplingRate)
 
 # Manual filter, e.g. for a kettle-like whistle (narrow-band noise)
 filterNoise = c(rep(0, 100), 120, rep(0, 100))  # any length is fine
-# plot(filterNoise, type = 'b')  # notch filter at Nyquist / 2, here 8 kHz
+# plot(filterNoise, type = 'b')  # notch filter at Nyquist / 2, here 4 kHz
 noise = generateNoise(len = samplingRate,
   samplingRate = samplingRate, filterNoise = filterNoise)
 # playme(noise, samplingRate = samplingRate)
 # spectrogram(noise, samplingRate)
 }
 }
-\keyword{export}
