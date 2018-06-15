@@ -1,7 +1,15 @@
           CHANGES IN SOUNDGEN VERSION 1.2.1 [...date...]
 
+MAJOR:
+  *
+
+NEW FUNCTIONS:
+  * generateNoise(): a simplified version of soundgen() for producing purely voiced vocalizations. Unlike soundgen(), it also accepts a manually specified spectral filter for flexible generation of non-biological sounds
+
 MINOR:
+  * soundgen(): a new argument noiseFlatSpec for more advanced control of the spectrum of the unvoiced component
   * crossFade(): accepts different shapes of fade-in/out
+  * Updated url's in documentation
 
           CHANGES IN SOUNDGEN VERSION 1.2.0 [04-March-2018]
 

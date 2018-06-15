@@ -66,6 +66,7 @@ permittedValues = matrix(c(
   'pitchCeiling', 3500, 10, 100000, 10,
   'pitchSamplingRate', 3500, 10, 100000, 10,
   'throwaway', -80, -200, -10, 10,
+  'noiseFlatSpec', 1200, 0, 4000, 100,
 
   # soundgen_app() settings, which are not needed for soundgen()
   'specWindowLength', 40, 5, 100, 2.5,

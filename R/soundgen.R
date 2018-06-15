@@ -1,4 +1,4 @@
-# TODO: use Hilbert-transformed amplitude envelopes in segment(); check spectral centroid calculation, dB vs raw power scale in spectrograms; add shimmerLen (for unstead, trembling voice); maybe check if shimmer can be generated differently. Currently linear interpolation, so the ampl contour might be a bit weird; analyze() should export the spectrum of each frame (a long list) instead of only summaries - then the user can extract whatever measures of spectral shape they like; reportTime() - add par to report every N iterations
+# TODO: use Hilbert-transformed amplitude envelopes in segment(); check spectral centroid calculation, dB vs raw power scale in spectrograms; add shimmerLen (for unstead, trembling voice); maybe check if shimmer can be generated differently. Currently linear interpolation, so the ampl contour might be a bit weird; analyze() should export the spectrum of each frame (a long list) instead of only summaries - then the user can extract whatever measures of spectral shape they like
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -131,6 +131,7 @@ NULL
 #'   component, approximating aspiration noise [h]
 #' @param rolloffNoise linear rolloff of the excitation source for the unvoiced
 #'   component, dB/kHz (vectorized)
+#' @param noiseFlatSpec keeps noise spectrum flat to this frequency, Hz
 #' @param mouthAnchors a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 #'   i.e. no modification) or a dataframe specifying the time (ms) and value of
 #'   mouth opening
@@ -271,6 +272,7 @@ soundgen = function(repeatBout = 1,
                     noiseAnchors = NULL,
                     formantsNoise = NA,
                     rolloffNoise = -4,
+                    noiseFlatSpec = 1200,
                     mouthAnchors = data.frame(time = c(0, 1),
                                               value = c(.5, .5)),
                     amplAnchors = NA,
@@ -764,12 +766,13 @@ soundgen = function(repeatBout = 1,
           len = round(diff(range(noiseAnchors_syl[[s]]$time)) * samplingRate / 1000),
           noiseAnchors = noiseAnchors_syl[[s]],
           rolloffNoise = rolloffNoise_syl,
+          noiseFlatSpec = noiseFlatSpec,
           attackLen = attackLen,
           samplingRate = samplingRate,
           windowLength_points = windowLength_points,
           overlap = overlap,
           throwaway = throwaway,
-          filterNoise = NA # spectralEnvelopeNoise
+          filterNoise = NULL # spectralEnvelopeNoise
         ) * amplEnvelope[s]  # correction of amplitude per syllable
         # plot(unvoiced[[s]], type = 'l')
       }
