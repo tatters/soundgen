@@ -113,7 +113,7 @@ getRolloff = function(pitch_per_gc = c(440),
 
   ## Exponential decay
   deltas = matrix(0, nrow = nHarmonics, ncol = nGC)
-  if (sum(rolloffOct != 0) > 0) {
+  if (sum(rolloffOct != 0) > 0 & nHarmonics > 1) {
     for (h in 2:nHarmonics) {
       deltas[h, ] = rolloffOct * (pitch_per_gc * h - baseline) / 1000
       # rolloff changes by rolloffOct per octave for each octave above H2
@@ -175,7 +175,9 @@ getRolloff = function(pitch_per_gc = c(440),
   }
 
   # normalize so the amplitude of F0 is always 0
-  r = apply(r, 2, function(x) x - max(x))
+  for (i in 1:ncol(r)) {  # apply drops dimensions if nHarm == 1, so using a for loop
+    r[, i] = r[, i] - max(r[, i])
+  }
 
   # plotting
   if (plot) {

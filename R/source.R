@@ -23,8 +23,7 @@
 #'   windowLength_points/2). A matrix specifying the filter for each STFT step
 #'   is also accepted. The easiest way to create this matrix is to call
 #'   soundgen:::getSpectralEnvelope, but then you might as well just use
-#'   soundgen() or, if we want moving formants, a matrix with
-#'   windowLength_points/2 rows and an arbitrary number of columns
+#'   soundgen()
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points
 #' @export
