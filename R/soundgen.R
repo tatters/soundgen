@@ -365,22 +365,24 @@ soundgen = function(repeatBout = 1,
       value = noiseAnchors
     )
   }
-  try(if (any(pitchAnchors$value < pitchFloor)) {
-    pitchFloor = 0.1
-    message('Some pitch values are lower than pitchFloor; lowering to 0.1 Hz')
-  })
-  try(if (any(pitchAnchors$value > samplingRate / 2)) {
-    samplingRate = max(pitchAnchors$value * 4)
-    message(paste('Some pitch values exceed Nyquist frequency;',
-                  'raising samplingRate to', samplingRate, 'Hz'))
-  })
-  try(if (any(pitchAnchors$value > pitchSamplingRate) |
-          any(pitchAnchors$value > pitchCeiling)) {
-    pitchSamplingRate = samplingRate
-    pitchCeiling = samplingRate
-    message(paste('Some pitch values exceed pitchSamplingRate or pitchCeiling.',
-                  'Resetting both to the value of samplingRate.'))
-  }, silent = TRUE)
+  if (is.list(pitchAnchors)) {
+    if (any(pitchAnchors$value < pitchFloor)) {
+      pitchFloor = 0.1
+      message('Some pitch values are lower than pitchFloor; lowering to 0.1 Hz')
+    }
+    if (any(pitchAnchors$value > samplingRate / 2)) {
+      samplingRate = max(pitchAnchors$value * 4)
+      message(paste('Some pitch values exceed Nyquist frequency;',
+                    'raising samplingRate to', samplingRate, 'Hz'))
+    }
+    if (any(pitchAnchors$value > pitchSamplingRate) |
+        any(pitchAnchors$value > pitchCeiling)) {
+      pitchSamplingRate = samplingRate
+      pitchCeiling = samplingRate
+      message(paste('Some pitch values exceed pitchSamplingRate or pitchCeiling.',
+                    'Resetting both to the value of samplingRate.'))
+    }
+  }
 
   # check amplitude anchors and make all values negative
   if (is.list(amplAnchors) && any(amplAnchors$value > 0)) {

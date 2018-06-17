@@ -113,5 +113,12 @@ noise = generateNoise(len = samplingRate,
   samplingRate = samplingRate, filterNoise = filterNoise)
 # playme(noise, samplingRate = samplingRate)
 # spectrogram(noise, samplingRate)
+
+# Compare to a similar sound created with soundgen()
+# (unvoiced only, a single formant at 4 kHz)
+noise_s = soundgen(pitchAnchors = NULL,
+  noiseAnchors = data.frame(time = c(0, 1000), value = c(0, 0)),
+  formants = list(f1 = data.frame(freq = 4000, amp = 80, width = 20)))
+# playme(noise_s)
 }
 }
