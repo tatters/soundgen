@@ -18,11 +18,11 @@
 #' breathing noise.
 #' @param len length of output
 #' @param filterNoise (optional): as an alternative to using rolloffNoise, we
-#'   can provide the exact filter - a vector specifying the power in each
-#'   frequency bin on a linear scale (interpolated to length equal to
-#'   windowLength_points/2). A matrix specifying the filter for each STFT step
-#'   is also accepted. The easiest way to create this matrix is to call
-#'   soundgen:::getSpectralEnvelope, but then you might as well just use
+#'   can provide the exact filter - a vector of non-negative numbers specifying
+#'   the power in each frequency bin on a linear scale (interpolated to length
+#'   equal to windowLength_points/2). A matrix specifying the filter for each
+#'   STFT step is also accepted. The easiest way to create this matrix is to
+#'   call soundgen:::getSpectralEnvelope, but then you might as well just use
 #'   soundgen()
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points
@@ -35,11 +35,11 @@
 #' # playme(noise1, samplingRate)
 #' # seewave::meanspec(noise1, f = samplingRate)
 #'
-#' # Percussion
-#' noise2 = generateNoise(len = samplingRate * .15, noiseAnchors = c(0, -120),
-#'   rolloffNoise = c(4, -6), attackLen = 5)
+#' # Percussion (run a few times to notice stochasticity due to temperature = .25)
+#' noise2 = generateNoise(len = samplingRate * .15, noiseAnchors = c(0, -80),
+#'   rolloffNoise = c(4, -6), attackLen = 5, temperature = .25)
 #' noise3 = generateNoise(len = samplingRate * .25, noiseAnchors = c(0, -40),
-#'   rolloffNoise = c(4, -24), attackLen = 5)
+#'   rolloffNoise = c(4, -24), attackLen = 5, temperature = .25)
 #' # playme(c(noise2, noise3), samplingRate)
 #'
 #' \dontrun{
@@ -82,13 +82,51 @@ generateNoise = function(len,
                          noiseFlatSpec = 1200,
                          filterNoise = NULL,
                          noiseAnchors = NULL,
+                         temperature = .1,
                          attackLen = 10,
                          windowLength_points = 1024,
                          samplingRate = 16000,
                          overlap = 75,
                          throwaway = -80) {
+  # wiggle pars
+  if (temperature > 0) {
+    len = rnorm_bounded(n = 1,
+                        mean = len,
+                        sd = len * temperature * .5,
+                        low = 0, high = samplingRate * 10,  # max 10 s
+                        roundToInteger = TRUE)
+    rolloffNoise = rnorm_bounded(n = length(rolloffNoise),
+                                 mean = rolloffNoise,
+                                 sd = rolloffNoise * temperature * .5,
+                                 low = -50, high = 10)
+    noiseFlatSpec = rnorm_bounded(n = 1,
+                                  mean = noiseFlatSpec,
+                                  sd = noiseFlatSpec * temperature * .5,
+                                  low = 0, high = samplingRate / 2)
+    attackLen = rnorm_bounded(n = length(attackLen),
+                                  mean = attackLen,
+                                  sd = attackLen * temperature * .5,
+                                  low = 0, high = len / samplingRate * 1000 / 2)
+    noiseAnchors = wiggleAnchors(
+      reformatAnchors(noiseAnchors),
+      temperature = temperature,
+      temp_coef = .5,
+      low = c(0, throwaway),
+      high = c(1, 0),
+      wiggleAllRows = TRUE
+    )
+    if (is.vector(filterNoise)) {
+      filterNoise = rnorm_bounded(
+        n = length(filterNoise),
+        mean = filterNoise + .1,  # to wiggle zeros
+        sd = filterNoise * temperature * .5,
+        low = 0, high = Inf
+      )
+    }
+  }
+
   # convert anchors to a smooth contour of breathing amplitudes
-  if (!is.null(noiseAnchors)) {
+  if (is.list(noiseAnchors)) {
     breathingStrength = getSmoothContour(
       len = len,
       anchors = noiseAnchors,

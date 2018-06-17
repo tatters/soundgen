@@ -783,6 +783,7 @@ soundgen = function(repeatBout = 1,
           noiseAnchors = noiseAnchors_syl[[s]],
           rolloffNoise = rolloffNoise_syl,
           noiseFlatSpec = noiseFlatSpec,
+          temperature = 0,  # wiggled separately in soundgen
           attackLen = attackLen,
           samplingRate = samplingRate,
           windowLength_points = windowLength_points,

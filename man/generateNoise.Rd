@@ -5,9 +5,9 @@
 \title{Generate noise}
 \usage{
 generateNoise(len, rolloffNoise = 0, noiseFlatSpec = 1200,
-  filterNoise = NULL, noiseAnchors = NULL, attackLen = 10,
-  windowLength_points = 1024, samplingRate = 16000, overlap = 75,
-  throwaway = -80)
+  filterNoise = NULL, noiseAnchors = NULL, temperature = 0.1,
+  attackLen = 10, windowLength_points = 1024, samplingRate = 16000,
+  overlap = 75, throwaway = -80)
 }
 \arguments{
 \item{len}{length of output}
@@ -18,18 +18,20 @@ component, dB/kHz (vectorized)}
 \item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
 
 \item{filterNoise}{(optional): as an alternative to using rolloffNoise, we
-can provide the exact filter - a vector specifying the power in each
-frequency bin on a linear scale (interpolated to length equal to
-windowLength_points/2). A matrix specifying the filter for each STFT step
-is also accepted. The easiest way to create this matrix is to call
-soundgen:::getSpectralEnvelope, but then you might as well just use
-soundgen() or, if we want moving formants, a matrix with
-windowLength_points/2 rows and an arbitrary number of columns}
+can provide the exact filter - a vector of non-negative numbers specifying
+the power in each frequency bin on a linear scale (interpolated to length
+equal to windowLength_points/2). A matrix specifying the filter for each
+STFT step is also accepted. The easiest way to create this matrix is to
+call soundgen:::getSpectralEnvelope, but then you might as well just use
+soundgen()}
 
 \item{noiseAnchors}{a numeric vector of noise amplitudes (throwaway dB = none, 0
 dB = as loud as voiced component) or a dataframe specifying the time (ms)
 and amplitude (dB) of anchors for generating the noise component such as
 aspiration, hissing, etc}
+
+\item{temperature}{hyperparameter for regulating the amount of stochasticity
+in sound generation}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
@@ -70,11 +72,11 @@ noise1 = generateNoise(len = samplingRate * .5,
 # playme(noise1, samplingRate)
 # seewave::meanspec(noise1, f = samplingRate)
 
-# Percussion
-noise2 = generateNoise(len = samplingRate * .15, noiseAnchors = c(0, -120),
-  rolloffNoise = c(4, -6), attackLen = 5)
+# Percussion (run a few times to notice stochasticity due to temperature = .25)
+noise2 = generateNoise(len = samplingRate * .15, noiseAnchors = c(0, -80),
+  rolloffNoise = c(4, -6), attackLen = 5, temperature = .25)
 noise3 = generateNoise(len = samplingRate * .25, noiseAnchors = c(0, -40),
-  rolloffNoise = c(4, -24), attackLen = 5)
+  rolloffNoise = c(4, -24), attackLen = 5, temperature = .25)
 # playme(c(noise2, noise3), samplingRate)
 
 \dontrun{
