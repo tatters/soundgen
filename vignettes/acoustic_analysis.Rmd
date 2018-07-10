@@ -92,17 +92,19 @@ There are several key parameters that control the behavior of STFT and affect al
 Apart from pitch tracking, `analyze` calculates and returns several acoustic characteristics from each non-silent FFT frame:
 
 * `time`: time of the middle of each frame (ms)
-* `ampl`: perceived intensity - root mean square of amplitude per frame, calculated as `sqrt(mean(frame ^ 2))`
+* `ampl`: root mean square of amplitude per frame, calculated as `sqrt(mean(frame ^ 2))`
 * `amplVoiced`: the same as `ampl` for voiced frames and `NA` for unvoiced frames
 * `dom`: lowest dominant frequency band (Hz) (see "Pitch tracking methods / Dominant frequency")
 * `entropy`: Weiner entropy of the spectrum of the current frame. Close to 0: pure tone or tonal sound with nearly all energy in harmonics; close to 1: white noise
 * `f1_freq`, `f1_width`, ...: the frequency and bandwidth of the first `nFormants` formants per FFT frame, as calculated by `phonTools::findformants` with default settings
 * `harmonics`: the amount of energy in upper harmonics, namely the ratio of total spectral power above 1.25 x F0 to the total spectral power below 1.25 x F0 (dB)
 * `HNR`: harmonics-to-noise ratio (dB), a measure of harmonicity returned by `soundgen:::getPitchAutocor` (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as in noise
-* `meanFreq`: the center of gravity of the frame's spectrum, first spectral moment (Hz)
+* `medianFreq`: 50th quantile of the frame's spectrum
 * `peakFreq`: the frequency with maximum spectral power (Hz)
 * `peakFreqCut`: the frequency with maximum spectral power below `cutFreq` (Hz)
 * `quartile25`, `quartile50`, `quartile75`: the 25th, 50th, and 75th quantiles of the spectrum below `cutFreq` (Hz)
+* `specCentroid`: the center of gravity of the frame’s spectrum, first spectral moment (Hz)
+* `specCentroidCut`: the center of gravity of the frame’s spectrum below cutFreq
 * `specSlope`: the slope of linear regression fit to the spectrum below `cutFreq`
 * `voiced`: is the current FFT frame voiced? TRUE / FALSE
 

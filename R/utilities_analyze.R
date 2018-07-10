@@ -42,31 +42,36 @@ analyzeFrame = function(frame,
                         pitchCeiling = 3500,
                         nCands = 1) {
   ## DESCRIPTIVES
-  meanSpec = data.frame('freq' = 1000 * as.numeric(names(frame)),
+  powerSpec = data.frame('freq' = 1000 * as.numeric(names(frame)),
                         'amp' = frame)
   amplitude = sum(frame)
-  peakFreq = meanSpec$freq[which.max(frame)] # absolute peak
-  meanFreq = meanSpec$freq[min(which(cumsum(frame) > amplitude / 2))] # center of mass
+  powerSpec$w = powerSpec$amp / amplitude
+  specCentroid = sum(powerSpec$freq * powerSpec$w)  # spectral centroid (center of mass)
+  peakFreq = powerSpec$freq[which.max(frame)]  # absolute peak
+  medianFreq = powerSpec$freq[min(which(cumsum(frame) > amplitude / 2))]  # median frequency
 
   # Cut spectral band from pitchFloor to cutFreq Hz
-  meanSpec_cut = meanSpec[meanSpec$freq > pitchFloor &
-                            meanSpec$freq < cutFreq,] # Above 5-6 kHz or so,
+  powerSpec_cut = powerSpec[powerSpec$freq > pitchFloor &
+                            powerSpec$freq < cutFreq,] # Above 5-6 kHz or so,
   # spectral energy depends too much on the original sampling rate, noises etc.
   # Besides, those frequencies are not super relevant to human vocalizations in
   # any case. So we cut away all info above 5 kHz before we calculate quartiles
   # of spectral energy
-  peakFreqCut = meanSpec_cut$freq[which.max(frame)] # peakFreq under cutFreq
-  amplitude_cut = sum(meanSpec_cut$amp)
+  peakFreqCut = powerSpec_cut$freq[which.max(frame)] # peakFreq under cutFreq
+  amplitude_cut = sum(powerSpec_cut$amp)
+  powerSpec_cut$w = powerSpec_cut$amp / amplitude_cut
+  # spectral centroid under cutFreq
+  specCentroidCut = sum(powerSpec_cut$freq * powerSpec_cut$w)
   # first quartile of spectral energy distribution in the band from pitchFloor
   # to cutFreq kHz
-  cum_cut = cumsum(meanSpec_cut$amp)
-  quartile25 = meanSpec_cut$freq[min(which(cum_cut >= 0.25 * amplitude_cut))]
-  # second quartile (same as mean freq within this spectral band)
-  quartile50 = meanSpec_cut$freq[min(which(cum_cut >= 0.5 * amplitude_cut))]
+  cum_cut = cumsum(powerSpec_cut$amp)
+  quartile25 = powerSpec_cut$freq[min(which(cum_cut >= 0.25 * amplitude_cut))]
+  # second quartile (same as medianFreq within this spectral band)
+  quartile50 = powerSpec_cut$freq[min(which(cum_cut >= 0.5 * amplitude_cut))]
   # third quartile. Note: half the energy in the band from pitchFloor to
   # cutFreq kHz lies between quartile25 and quartile75
-  quartile75 = meanSpec_cut$freq[min(which(cum_cut >= 0.75 * amplitude_cut))]
-  specSlope = summary(lm(amp ~ freq, data = meanSpec_cut))$coef[2, 1]
+  quartile75 = powerSpec_cut$freq[min(which(cum_cut >= 0.75 * amplitude_cut))]
+  specSlope = summary(lm(amp ~ freq, data = powerSpec_cut))$coef[2, 1]
 
   ## PITCH TRACKING
   frame = frame / max(frame) # plot (frame, type='l')
@@ -158,14 +163,16 @@ analyzeFrame = function(frame,
     # plot (a, b, ylim = c(0, 1))
   }
 
-  return (list(
+  return(list(
     'pitch_array' = pitch_array,
     'summaries' = data.frame(
       HNR = HNR,
       dom = dom,
+      specCentroid = specCentroid,
+      specCentroidCut = specCentroidCut,
       peakFreq = peakFreq,
       peakFreqCut = peakFreqCut,
-      meanFreq = meanFreq,
+      medianFreq = medianFreq,
       quartile25 = quartile25,
       quartile50 = quartile50,
       quartile75 = quartile75,

@@ -4,13 +4,15 @@ MAJOR:
   *
 
 NEW FUNCTIONS:
-  * generateNoise(): a simplified version of soundgen() for producing purely voiced vocalizations. Unlike soundgen(), it also accepts a manually specified spectral filter for flexible generation of non-biological sounds
+  * generateNoise(): a simplified version of soundgen() for producing purely voiced vocalizations. Unlike soundgen(), it also accepts a manually specified spectral filter of an arbitrary shape instead of formants for flexible generation of non-biological sounds
 
 MINOR:
+  * analyze(): median frequency and spectral centroid added as separate outputs; type ?analyze() for details
   * soundgen(): a new argument noiseFlatSpec for more advanced control of the spectrum of the unvoiced component
   * soundgen(): more intelligent automatic adjustment of pitch ceiling, floor, pitch sampling rate, and sampling rate for extreme pitch values
   * crossFade(): accepts different shapes of fade-in/out
   * Updated url's in documentation
+
 
           CHANGES IN SOUNDGEN VERSION 1.2.0 [04-March-2018]
 
