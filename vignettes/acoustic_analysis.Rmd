@@ -108,7 +108,51 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `specSlope`: the slope of linear regression fit to the spectrum below `cutFreq`
 * `voiced`: is the current FFT frame voiced? TRUE / FALSE
 
-*TIP The currently implemented spectral characteristics are the ones I personally found most helpful for analyzing human emotional vocalizations. If you need more variables, say higher spectral moments, it should be straightforward to add the necessary code to the internal function `soundgen:::analyzeFrame` and to `soundgen::analyze`. If you want deltas, they can be extracted directly from the output of `analyze(..., summary = FALSE)`*
+*TIP The currently implemented spectral characteristics are the ones I personally found most helpful for analyzing human emotional vocalizations. If you need more variables, say higher spectral moments, it should be straightforward to add the necessary code to the internal function `soundgen:::analyzeFrame` and to `soundgen::analyze`. If you want deltas, they can be extracted directly from the output of `analyze(..., summary = FALSE)`. An even simpler solution is to work directly with the spectrogram (see below)*
+
+# Custom spectral descriptives
+The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame` and to `soundgen::analyze`. If you want deltas, they can be extracted directly from the output of `analyze(..., summary = FALSE)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the power spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
+For the average spectrum of an entire sound, go no further than `seewave::spec` `seewave::meanspec`: 
+```{r}
+spec = seewave::spec(s1, f = 16000, plot = FALSE)  # FFT of the entire sound
+avSpec = seewave::meanspec(s1, f = 16000, plot = FALSE)  # STFT followed by averaging
+# either way, you get a dataframe with two columns: frequencies and their power
+```
+If you are interested in how the spectrum changes over time, extract frame-by-frame spectra - for example, with `spectrogram(..., output = 'original')`:
+```{r}
+spgm = spectrogram(s1, samplingRate = 16000, output = 'original', plot = FALSE)
+# rownames give you frequencies, colnames are time stamps
+```
+Let's say you are working with frame-by-frame spectra and want to calculate skewness, the 66.6th percentile, and the ratio of energy above/below 500 Hz. Once you have normalized the power spectrum to add up to 1, it basically becomes a probability density function (pdf), so you can summarize it in the same way as you would any other distribution of a random variable. Look up the formulas you need and just do the raw math:
+```{r}
+# Transform power to pdf (all columns should sum to 1):
+spgm_norm = apply(spgm, 2, function(x) x / sum(x))
+# Set up a dataframe to store the output
+out = data.frame(skew = rep(NA, ncol(spgm)),
+                 quantile66 = NA,
+                 ratio500 = NA)
+# Process each STFT frame
+for (i in 1:ncol(spgm_norm)) {
+  # Power spectrum for this frame
+  df = data.frame(
+    freq = as.numeric(rownames(spgm_norm)),  # frequency (kHz)
+    d = spgm_norm[, i]                       # density
+  )
+  # plot(df, type = 'l')
+  
+  # Skewness (see https://en.wikipedia.org/wiki/Central_moment)
+  m = sum(df$freq * df$d)  # spectral centroid, kHz
+  out$skew[i] = sum((df$freq - m)^3 * df$d)
+  
+  # 66.6th percentile (2/3 of density below this frequency)
+  out$quantile66[i] = df$freq[min(which(cumsum(df$d) >= 2/3))]  # in kHz
+  
+  # Energy above/below 500 Hz
+  out$ratio500[i] = sum(df$d[df$freq >= .5]) / sum(df$d[df$freq < .5])
+}
+summary(out)
+```
+If you need to do this analysis repeatedly, just wrap the code into your own function that takes a wav file as input and returns all these spectral descriptives. You can also save the actual spectra of different sound files and add them up to obtain an average spectrum across multiple sound files, work with cochleograms instead of power spectra (check out `tuneR::melfcc`), etc. Be your own boss!
 
 ## Pitch tracking
 If you look at the source code of `soundgen::analyze`, you will see that almost all of it deals with a single acoustic characteristic: fundamental frequency (F0) or its perceptual equivalent, pitch. That's because pitch is both highly salient to listeners and notoriously difficult to measure accurately. The approach followed with soundgen's pitch tracker is to use several different estimates of F0, each of which is better suited to certain types of sounds. You can use any pitch tracker individually, but their output is also automatically integrated and postprocessed so as to generate the best overall estimate of frame-by-frame pitch. There are four currently implemented classes of pitch estimates in soundgen: autocorrelation, lowest dominant frequency, cepstrum, and spectrum (ratios of harmonics). These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an FFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative. 

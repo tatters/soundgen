@@ -11,6 +11,7 @@ MINOR:
   * soundgen(): a new argument noiseFlatSpec for more advanced control of the spectrum of the unvoiced component
   * soundgen(): more intelligent automatic adjustment of pitch ceiling, floor, pitch sampling rate, and sampling rate for extreme pitch values
   * crossFade(): accepts different shapes of fade-in/out
+  * schwa() returns relative formant frequencies in both percentages and semitones
   * Updated url's in documentation
 
 

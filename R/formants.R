@@ -956,7 +956,7 @@ addFormants = function(sound,
 
 #' Schwa-related formant conversion
 #'
-#' This function performs several types of conceptually related conversion of
+#' This function performs several conceptually related types of conversion of
 #' formant frequencies in relation to the neutral schwa sound based on the
 #' one-tube model of the vocal tract. Case 1: if we know vocal tract length
 #' (VTL) but not formant frequencies, \code{schwa()} estimates formants
@@ -987,7 +987,10 @@ addFormants = function(sound,
 #'   user-provided relative formant frequencies, Hz}
 #'   \item{ff_relative}{deviation of formant frequencies from those expected for
 #'   a schwa, \% (e.g. if the first ff_relative is -25, it means that F1 is 25\%
-#' lower than expected for a schwa in this vocal tract)} }
+#'   lower than expected for a schwa in this vocal tract)}
+#'   \item{ff_relative_semitones}{deviation of formant frequencies from those expected for
+#'   a schwa, semitones}
+#' }
 #' @param formants a numeric vector of observed (measured) formant frequencies,
 #'   Hz
 #' @param vocalTract the length of vocal tract, cm
@@ -1011,8 +1014,8 @@ addFormants = function(sound,
 #' # We get an estimate of VTL (s_a$vtl_apparent = 15.2 cm),
 #' #   same as with estimateVTL(formants_a)
 #' # We also get theoretical schwa formants: s_a$ff_schwa
-#' # And we get the difference (%) in observed vs expected
-#' #   formant frequencies: s_a$ff_relative
+#' # And we get the difference (% and semitones) in observed vs expected
+#' #   formant frequencies: s_a[c('ff_relative', 'ff_relative_semitones')]
 #' # [a]: F1 much higher than expected, F2 slightly lower
 #'
 #' formants_i = c(300, 2700, 3400, 4400, 5300, 6400)
@@ -1105,6 +1108,7 @@ schwa = function(formants = NULL,
     }
     ff_schwa = (2 * idx - 1) / 2 * formantDispersion
     ff_relative = (formants / ff_schwa - 1) * 100
+    ff_relative_semitones = HzToSemitones(formants) - HzToSemitones(ff_schwa)
     ff_theoretical = NULL
   } else {
     ## we know formants_relative and vocalTract and want to convert ff to Hz
@@ -1130,7 +1134,8 @@ schwa = function(formants = NULL,
              ff_measured = formants,
              ff_schwa = ff_schwa,
              ff_theoretical = ff_theoretical,
-             ff_relative = ff_relative)
+             ff_relative = ff_relative,
+             ff_relative_semitones = ff_relative_semitones)
   # do not return empty elements
   out = out[lapply(out, length) > 0]
   return(out)
