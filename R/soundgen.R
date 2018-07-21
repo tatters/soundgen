@@ -1,4 +1,4 @@
-# TODO: check schwa() - % change in formants should be calculated from semitones not Hz; noise duration should correspond to synLen if temp>0; use Hilbert-transformed amplitude envelopes in segment(); check spectral centroid calculation, dB vs raw power scale in spectrograms; add shimmerLen (for unstead, trembling voice); maybe check if shimmer can be generated differently. Currently linear interpolation, so the ampl contour might be a bit weird; analyze() should export the spectrum of each frame (a long list) instead of only summaries - then the user can extract whatever measures of spectral shape they like
+# TODO: use Hilbert-transformed amplitude envelopes in segment(); check spectral centroid calculation, dB vs raw power scale in spectrograms; add shimmerLen (for unstead, trembling voice); maybe check if shimmer can be generated differently. Currently linear interpolation, so the ampl contour might be a bit weird; analyze() should export the spectrum of each frame (a long list) instead of only summaries - then the user can extract whatever measures of spectral shape they like
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -635,8 +635,9 @@ soundgen = function(repeatBout = 1,
 
     for (s in 1:nrow(syllables)) {
       # scale noise anchors for polysyllabic sounds with lengh(sylLen) > 1
-      noiseAnchors_syl[[s]] = scaleNoiseAnchors(
-        noiseAnchors = noiseAnchors,
+      noiseAnchors_syl[[s]] = noiseAnchors
+      noiseAnchors_syl[[s]]$time = scaleNoiseAnchors(
+        noiseTime = noiseAnchors_syl[[s]]$time,
         sylLen_old = sylLen[1],
         sylLen_new = syllables$dur[s]
       )

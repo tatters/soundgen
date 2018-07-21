@@ -1043,24 +1043,21 @@ fade = function(x,
 #' the actual syllable duration re the average expected duration (which the user
 #' sees in the UI when choosing time anchors). Time anchors beyond sylLen are
 #' scaled to preserve post-aspiration duration.
-#' @param noiseAnchors dataframe of noise anchors
+#' @param noiseTime vector of time points at which noiseAnchors are defined
 #' @param sylLen_old syllable length relative to which the timing of noise anchors is
 #' specified
 #' @param sylLen_new the new syllable length
 #' @keywords internal
 #' @examples
-#' noiseAnchors = data.frame(time = c(-20, 50, 120),
-#'                             value = c(-50, -10, -60))
-#' soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 200)
-#' soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 50)
-#' soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 200, sylLen_new = 300)
-scaleNoiseAnchors = function(noiseAnchors, sylLen_old, sylLen_new) {
-  idx_mid = which(noiseAnchors$time > 0 &             # not before syl
-                    noiseAnchors$time < sylLen_old)   # not after syl
-  idx_after = which(noiseAnchors$time >= sylLen_old)  # after syl
-  noiseAnchors$time[idx_mid] =
-    noiseAnchors$time[idx_mid] * sylLen_new / sylLen_old
-  noiseAnchors$time[idx_after] =
-    noiseAnchors$time[idx_after] - sylLen_old + sylLen_new
-  return(noiseAnchors)
+#' noiseTime = c(-20, 50, 120)
+#' soundgen:::scaleNoiseAnchors(noiseTime, sylLen_old = 100, sylLen_new = 200)
+#' soundgen:::scaleNoiseAnchors(noiseTime, sylLen_old = 100, sylLen_new = 50)
+#' soundgen:::scaleNoiseAnchors(noiseTime, sylLen_old = 200, sylLen_new = 300)
+scaleNoiseAnchors = function(noiseTime, sylLen_old, sylLen_new) {
+  idx_mid = which(noiseTime > 0 &             # not before syl
+                    noiseTime < sylLen_old)   # not after syl
+  idx_after = which(noiseTime >= sylLen_old)  # after syl
+  noiseTime[idx_mid] = noiseTime[idx_mid] * sylLen_new / sylLen_old
+  noiseTime[idx_after] = noiseTime[idx_after] - sylLen_old + sylLen_new
+  return(noiseTime)
 }
