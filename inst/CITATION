@@ -1,16 +1,14 @@
-citHeader("To cite package 'soundgen' in publications, use:")
+citHeader("To cite soundgen in publications use:")
 
-     year = sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
-     vers = paste("R package version", meta$Version)
+citEntry(entry = "Article",
+  title        = "Soundgen: An open-source tool for synthesizing nonverbal vocalizations",
+  author       = as.person("Andrey Anikin"),
+  journal      = "Behavior Research Methods",
+  year         = "2018",
+  pages        = "1--15",
+  issn="1554-3528",
+  doi="10.3758/s13428-018-1095-7",
+  url="https://doi.org/10.3758/s13428-018-1095-7",
 
-     citEntry(entry = "Manual",
-              title = "soundgen: Parametric Voice Synthesis.",
-              author = personList(as.person("Andrey Anikin")),
-              year = year,
-              note = vers,
-
-              textVersion =
-              paste("A. Anikin (",
-                    year,
-                    "). soundgen: Parametric Voice Synthesis. ",
-                    vers, ".", sep = ""))
+  textVersion  = "Anikin, A. (2018). Soundgen: an open-source tool for synthesizing nonverbal vocalizations. Behavoir Research Methods, 1-15. https://doi.org/10.3758/s13428-018-1095-7"
+)
