@@ -195,7 +195,9 @@ ui = fluidPage(
                                                                         sliderInput('jitterLen', 'Jitter period, ms', value=permittedValues['jitterLen','default'], min=permittedValues['jitterLen', 'low'], max=permittedValues['jitterLen', 'high'], step=permittedValues['jitterLen','step']),
                                                                         shinyBS:::bsPopover(id='jitterLen', title=NULL, content='The pitch jumps every ... ms. Low ~ harsh noise, high ~ shaky voice', placement="right", trigger="hover"),
                                                                         sliderInput('shimmerDep', 'Shimmer depth, %', value=permittedValues['shimmerDep','default'], min=permittedValues['shimmerDep', 'low'], max=permittedValues['shimmerDep', 'high'], step=permittedValues['shimmerDep','step']),
-                                                                        shinyBS:::bsPopover(id='shimmerDep', title=NULL, content='Random variation in amplitude per glottal cycle', placement="right", trigger="hover")
+                                                                        shinyBS:::bsPopover(id='shimmerDep', title=NULL, content='Random variation in amplitude per glottal cycle', placement="right", trigger="hover"),
+                                                                        sliderInput('shimmerLen', 'Shimmer period, ms', value=permittedValues['shimmerLen','default'], min=permittedValues['shimmerLen', 'low'], max=permittedValues['shimmerLen', 'high'], step=permittedValues['shimmerLen','step']),
+                                                                        shinyBS:::bsPopover(id='shimmerLen', title=NULL, content='The amplitude jumps every ... ms. Low ~ harsh noise, high ~ shaky voice', placement="right", trigger="hover")
                                                ), width=6
                                              ),
                                              mainPanel(

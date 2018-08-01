@@ -1134,6 +1134,7 @@ server = function(input, output, session) {
       vibratoFreq = input$vibratoFreq,
       vibratoDep = input$vibratoDep,
       shimmerDep = input$shimmerDep,
+      shimmerLen = input$shimmerLen,
       attackLen = input$attackLen,
       rolloff = input$rolloff,
       rolloffOct = input$rolloffOct,

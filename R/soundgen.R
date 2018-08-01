@@ -1,4 +1,4 @@
-# TODO: use Hilbert-transformed amplitude envelopes in segment(); check spectral centroid calculation, dB vs raw power scale in spectrograms; add shimmerLen (for unstead, trembling voice); maybe check if shimmer can be generated differently. Currently linear interpolation, so the ampl contour might be a bit weird; analyze() should export the spectrum of each frame (a long list) instead of only summaries - then the user can extract whatever measures of spectral shape they like
+# TODO: use Hilbert-transformed amplitude envelopes in segment()
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -67,6 +67,8 @@ NULL
 #' @param vibratoDep the depth of vibrato, semitones (vectorized)
 #' @param shimmerDep random variation in amplitude between individual glottal
 #'   cycles (0 to 100\% of original amplitude of each cycle) (vectorized)
+#' @param shimmerLen duration of stable periods between amplitude jumps, ms. Use
+#'   a low value for harsh noise, a high value for shaky voice (vectorized)
 #' @param attackLen duration of fade-in / fade-out at each end of syllables and
 #'   noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
 #'   and fade-out)
@@ -249,6 +251,7 @@ soundgen = function(repeatBout = 1,
                     vibratoFreq = 5,
                     vibratoDep = 0,
                     shimmerDep = 0,
+                    shimmerLen = 1,
                     attackLen = 50,
                     rolloff = -9,
                     rolloffOct = -3,
@@ -515,7 +518,9 @@ soundgen = function(repeatBout = 1,
     'nonlinDep',
     'attackLen',
     'jitterDep',
+    'jitterLen',
     'shimmerDep',
+    'shimmerLen',
     'rolloff',
     'rolloffOct',
     'shortestEpoch',
@@ -531,6 +536,7 @@ soundgen = function(repeatBout = 1,
     'vibratoFreq' = vibratoFreq,
     'vibratoDep' = vibratoDep,
     'shimmerDep' = shimmerDep,
+    'shimmerLen' = shimmerLen,
     'creakyBreathy' = creakyBreathy,
     'rolloff' = rolloff,
     'rolloffOct' = rolloffOct,

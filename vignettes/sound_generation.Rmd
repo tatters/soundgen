@@ -548,14 +548,17 @@ spectrogram(s, 16000, windowLength = 50, ylim = c(0, 5), contrast = .7)
 *TIP The parameters regulating nonlinear effects are vectorized, so you can write `subDep = c(0, 130), jitterDep = c(0, 1)`, etc (console only, not available in the app)*
 
 ### Jitter / shimmer
-As for jitter in pitch regime 3, it wiggles both f0 and g0 harmonic stacks, blurring the spectrum. Parameter `jitterDep` ("Jitter depth, semitones" in the app) defines how much the pitch fluctuates, while `jitterLen` ("Jitter period, ms") defines how rapid these fluctuations are. Slow jitter with a period of ~50 ms produces the effect of a shaky, unsteady voice. It may sound similar to a vibrato, but jitter is irregular. Rapid jitter with a period of ~1 ms, especially in combination with subharmonics, may be used to imitate deterministic chaos, which is found in voiced but highly irregular animal sounds such as barks, roars, noisy screams, etc. This works best for high-pitched sounds like screams.
+As for jitter in pitch regime 3, it wiggles both f0 and g0 harmonic stacks, blurring the spectrum. Parameter `jitterDep` ("Jitter depth, semitones" in the app) defines how much the pitch fluctuates, while `jitterLen` ("Jitter period, ms") defines how rapid these fluctuations are. Slow jitter with a period of ~50 ms produces the effect of a shaky, unsteady voice. It may sound similar to a vibrato, but jitter is irregular. Rapid jitter with a period of ~1 ms, especially in combination with subharmonics, may be used to imitate deterministic chaos, which is found in voiced but highly irregular animal sounds such as barks, roars, noisy screams, etc. This works best for high-pitched sounds like screams. Shimmer is similar to jitter, except that it defines random fluctuations of the amplitude rather than frequency. It is controlled by two arguments, `shimmerDep` (percent) and `shimmerLen` (ms).
 ```{r}
-# To get jitter without subharmonics, set `temperature = 0, subDep = 0` 
+# To get jitter/shimmer without subharmonics, set `temperature = 0, subDep = 0`
+# or a positive temperature and `nonlinBalance = 100, subDep = 0`
 # and specify the required jitter depth and period
 s1 = soundgen(jitterLen = 50, jitterDep = 1,  # shaky voice
+              shimmerLen = 30, shimmerDep = 10,   
               sylLen = 1000, subDep = 0, nonlinBalance = 100,
               pitchAnchors =  c(150, 170), play = playback)
 s2 = soundgen(jitterLen = 1, jitterDep = 1,   # harsh voice
+              shimmerLen = 1, shimmerDep = 10, 
               sylLen = 1000, subDep = 0, nonlinBalance = 100,
               pitchAnchors =  c(150, 170), play = playback)
 ```

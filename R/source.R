@@ -286,6 +286,7 @@ generateHarmonics = function(pitch,
                              vibratoFreq = 5,
                              vibratoDep = 0,
                              shimmerDep = 0,
+                             shimmerLen = 1,
                              creakyBreathy = 0,
                              rolloff = -9,
                              rolloffOct = -3,
@@ -385,30 +386,12 @@ generateHarmonics = function(pitch,
 
   # calculate jitter (random variation of F0)
   if (any(jitterDep > 0) & any(jitter_on)) {
-    if (length(jitterDep) > 1) jitterDep = getSmoothContour(jitterDep, len = nGC)
-    if (length(jitterLen) > 1) jitterLen = getSmoothContour(jitterLen, len = nGC)
-    ratio = pitch_per_gc * jitterLen / 1000 # the number of gc that make
-    #   up one jitter period (vector of length nGC)
-    idx = 1
-    i = 1
-    while (i < nGC) {
-      i = tail(idx, 1) + ratio[i]
-      idx = c(idx, i)
-    }
-    idx = round(idx)
-    idx = idx[idx <= nGC] # pitch for these gc will be wiggled
-    idx = unique(idx)
-
-    jitter = 2 ^ (rnorm(
-      n = length(idx),
-      mean = 0,
-      sd = jitterDep / 12
-    ) * rw[idx] * jitter_on[idx])
-    # plot(jitter, type = 'l')
-    # jitter_per_gc = approx(jitter, n = nGC, x = idx, method = 'constant')$y
-    jitter_per_gc = spline(jitter, n = nGC, x = idx)$y
-    # plot(jitter_per_gc, type = 'l')
-    # a simpler alternative: jitter = 2^(rnorm(n=length(pitch_per_gc), mean=0, sd=jitterDep/12)*rw*jitter_on)
+    jitter_per_gc = wiggleGC(dep = jitterDep / 12,
+                             len = jitterLen,
+                             nGC = nGC,
+                             pitch_per_gc = pitch_per_gc,
+                             rw = rw,
+                             effect_on = jitter_on)
     pitch_per_gc = pitch_per_gc * jitter_per_gc
     # plot(pitch_per_gc, type = 'l')
   }
@@ -473,15 +456,15 @@ generateHarmonics = function(pitch,
 
   # add shimmer (random variation in amplitude)
   if (any(shimmerDep > 0) & any(shimmer_on)) {
-    if (length(shimmerDep) > 1) shimmerDep = getSmoothContour(shimmerDep, len = nGC)
-    shimmer = 2 ^ (rnorm (
-      n = ncol(rolloff_source),
-      mean = 0,
-      sd = shimmerDep / 100
-    ) * rw * shimmer_on)
-    # plot(shimmer, type = 'l')
-    rolloff_source = t(t(rolloff_source) * shimmer)  # multiplies the first
-    # column of rolloff_source by shimmer[1], the second column by shimmer[2], etc
+    shimmer_per_gc = wiggleGC(dep = shimmerDep / 100,
+                              len = shimmerLen,
+                              nGC = nGC,
+                              pitch_per_gc = pitch_per_gc,
+                              rw = rw,
+                              effect_on = shimmer_on)
+    rolloff_source = t(t(rolloff_source) * shimmer_per_gc)  # multiplies the first
+    # column of rolloff_source by shimmer_per_gc[1],
+    # the second column by shimmer_per_gc[2], etc
   }
 
   # synthesize one glottal cycle at a time or a whole epoch at once?

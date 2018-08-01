@@ -10,18 +10,18 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   tempEffects = list(), maleFemale = 0, creakyBreathy = 0,
   nonlinBalance = 0, nonlinDep = 50, nonlinRandomWalk = NULL,
   jitterLen = 1, jitterDep = 1, vibratoFreq = 5, vibratoDep = 0,
-  shimmerDep = 0, attackLen = 50, rolloff = -9, rolloffOct = -3,
-  rolloffKHz = -3, rolloffParab = 0, rolloffParabHarm = 3, lipRad = 6,
-  noseRad = 4, mouthOpenThres = 0, formants = c(860, 1430, 2900),
-  formantDep = 1, formantDepStoch = 20, formantWidth = 1,
-  vocalTract = NA, subFreq = 100, subDep = 100, shortestEpoch = 300,
-  amDep = 0, amFreq = 30, amShape = 0, noiseAnchors = NULL,
-  formantsNoise = NA, rolloffNoise = -4, noiseFlatSpec = 1200,
-  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  amplAnchors = NA, amplAnchorsGlobal = NA, interpol = c("approx",
-  "spline", "loess")[3], discontThres = 0.05, jumpThres = 0.01,
-  samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
+  shimmerDep = 0, shimmerLen = 1, attackLen = 50, rolloff = -9,
+  rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
+  rolloffParabHarm = 3, lipRad = 6, noseRad = 4, mouthOpenThres = 0,
+  formants = c(860, 1430, 2900), formantDep = 1, formantDepStoch = 20,
+  formantWidth = 1, vocalTract = NA, subFreq = 100, subDep = 100,
+  shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
+  noiseAnchors = NULL, formantsNoise = NA, rolloffNoise = -4,
+  noiseFlatSpec = 1200, mouthAnchors = data.frame(time = c(0, 1), value =
+  c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
+  interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
+  jumpThres = 0.01, samplingRate = 16000, windowLength = 50,
+  overlap = 75, addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
   pitchSamplingRate = 3500, throwaway = -80,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
@@ -98,6 +98,9 @@ voice (vectorized)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
 cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
+
+\item{shimmerLen}{duration of stable periods between amplitude jumps, ms. Use
+a low value for harsh noise, a high value for shaky voice (vectorized)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in

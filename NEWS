@@ -7,7 +7,8 @@ NEW FUNCTIONS:
   * generateNoise(): a simplified version of soundgen() for producing purely voiced vocalizations. Unlike soundgen(), it also accepts a manually specified spectral filter of an arbitrary shape instead of formants for flexible generation of non-biological sounds
 
 MINOR:
-  * analyze(): median frequency and spectral centroid added as separate outputs; type ?analyze() for details
+  * analyze(): spectral median (medianFreq) and spectral centroid (specCentroid) added as separate outputs; type ?analyze() for details
+  * soundgen(): a new argument shimmerLen for controlling the period of shimmer (cf. jitterLen)
   * soundgen(): a new argument noiseFlatSpec for more advanced control of the spectrum of the unvoiced component
   * soundgen(): more intelligent automatic adjustment of pitch ceiling, floor, pitch sampling rate, and sampling rate for extreme pitch values
   * crossFade(): accepts different shapes of fade-in/out

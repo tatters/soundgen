@@ -4,10 +4,10 @@
 \alias{scaleNoiseAnchors}
 \title{Scale noise anchors}
 \usage{
-scaleNoiseAnchors(noiseAnchors, sylLen_old, sylLen_new)
+scaleNoiseAnchors(noiseTime, sylLen_old, sylLen_new)
 }
 \arguments{
-\item{noiseAnchors}{dataframe of noise anchors}
+\item{noiseTime}{vector of time points at which noiseAnchors are defined}
 
 \item{sylLen_old}{syllable length relative to which the timing of noise anchors is
 specified}
@@ -27,10 +27,9 @@ sees in the UI when choosing time anchors). Time anchors beyond sylLen are
 scaled to preserve post-aspiration duration.
 }
 \examples{
-noiseAnchors = data.frame(time = c(-20, 50, 120),
-                            value = c(-50, -10, -60))
-soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 200)
-soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 100, sylLen_new = 50)
-soundgen:::scaleNoiseAnchors(noiseAnchors, sylLen_old = 200, sylLen_new = 300)
+noiseTime = c(-20, 50, 120)
+soundgen:::scaleNoiseAnchors(noiseTime, sylLen_old = 100, sylLen_new = 200)
+soundgen:::scaleNoiseAnchors(noiseTime, sylLen_old = 100, sylLen_new = 50)
+soundgen:::scaleNoiseAnchors(noiseTime, sylLen_old = 200, sylLen_new = 300)
 }
 \keyword{internal}

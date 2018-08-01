@@ -7,11 +7,11 @@
 generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
   nonlinBalance = 0, nonlinDep = 50, nonlinRandomWalk = NULL,
   jitterDep = 0, jitterLen = 1, vibratoFreq = 5, vibratoDep = 0,
-  shimmerDep = 0, creakyBreathy = 0, rolloff = -9, rolloffOct = -3,
-  rolloffKHz = -3, rolloffParab = 0, rolloffParabHarm = 3,
-  rolloff_perAmpl = 3, temperature = 0.025, pitchDriftDep = 0.5,
-  pitchDriftFreq = 0.125, amplDriftDep = 5, subDriftDep = 4,
-  rolloffDriftDep = 3, randomWalk_trendStrength = 0.5,
+  shimmerDep = 0, shimmerLen = 1, creakyBreathy = 0, rolloff = -9,
+  rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
+  rolloffParabHarm = 3, rolloff_perAmpl = 3, temperature = 0.025,
+  pitchDriftDep = 0.5, pitchDriftFreq = 0.125, amplDriftDep = 5,
+  subDriftDep = 4, rolloffDriftDep = 3, randomWalk_trendStrength = 0.5,
   shortestEpoch = 300, subFreq = 100, subDep = 0, amplAnchors = NA,
   overlap = 75, samplingRate = 16000, pitchFloor = 75,
   pitchCeiling = 3500, pitchSamplingRate = 3500, throwaway = -80)
@@ -54,6 +54,9 @@ voice (vectorized)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
 cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
+
+\item{shimmerLen}{duration of stable periods between amplitude jumps, ms. Use
+a low value for harsh noise, a high value for shaky voice (vectorized)}
 
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
 from creaky (-1) to breathy (+1); 0 = no change}

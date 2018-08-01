@@ -1061,3 +1061,65 @@ scaleNoiseAnchors = function(noiseTime, sylLen_old, sylLen_new) {
   noiseTime[idx_after] = noiseTime[idx_after] - sylLen_old + sylLen_new
   return(noiseTime)
 }
+
+
+#' Wiggle glottal cycles
+#'
+#' Internal soundgen function
+#'
+#' Helper function for preparing a vector of multiplication factors for adding
+#' jitter and shimmer per glottal cycle. Generates a random anchors for each
+#' jitter/shimmer period and draws a smooth contour between them by spline
+#' interpolation.
+#' @param dep a vector of any length specifying the strengh of applied effect as
+#'   2 ^ rnorm(..., 0, dep))
+#' @param len a vector of any length specifying the period of applied effect in
+#'   ms
+#' @param nGC number of glottal cycles
+#' @param pitch_per_gc vector of length nGC specifying pitch per glottal cycle,
+#'   Hz
+#' @param rw vector of length nGC specifying a random walk around 1 to multiply
+#'   the effect with
+#' @param effect_on vector of length nGC specifying glottal cycles to which the
+#'   effect should be applied (0 = off, 1 = on)
+#' @examples
+#' plot(wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
+#'               pitch_per_gc = rnorm(100, 150, 10),
+#'               rw = rep(1, 100), effect_on = rep(1, 100)),
+#'      type = 'b')
+#' plot(wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
+#'               pitch_per_gc = rnorm(100, 150, 10),
+#'               rw = rep(1, 100),
+#'               effect_on = c(rep(1, 30), rep(0, 20), rep(1, 50))),
+#'      type = 'b')
+#' plot(wiggleGC(dep = c(1/12, 10/12), len = c(3, 50), nGC = 100,
+#'               pitch_per_gc = rnorm(100, 150, 10),
+#'               rw = rep(1, 100), effect_on = rep(1, 100)),
+#'      type = 'b')
+wiggleGC = function(dep = jitterDep / 12, len = jitterLen, nGC, pitch_per_gc, rw, effect_on = jitter_on) {
+  if (length(dep) > 1) dep = getSmoothContour(dep, len = nGC)
+  if (length(len) > 1) len = getSmoothContour(len, len = nGC)
+  ratio = pitch_per_gc * len / 1000 # the number of gc that make
+  #   up one period of effect (vector of length nGC)
+  idx = 1
+  i = 1
+  while (i < nGC) {
+    i = tail(idx, 1) + ratio[i]
+    idx = c(idx, i)
+  }
+  idx = round(idx)
+  idx = idx[idx <= nGC]
+  idx = unique(idx)  # pitch for these gc will be wiggled
+
+  effect = 2 ^ (rnorm(
+    n = length(idx),
+    mean = 0,
+    sd = dep
+  ) * rw[idx] * effect_on[idx])
+  # plot(effect, type = 'b')
+
+  # upsample to length nGC
+  effect_per_gc = spline(effect, n = nGC, x = idx)$y
+  # plot(effect_per_gc, type = 'b')
+  return(effect_per_gc)
+}
