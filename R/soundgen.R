@@ -1,4 +1,4 @@
-# TODO: use Hilbert-transformed amplitude envelopes in segment()
+# TODO:
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

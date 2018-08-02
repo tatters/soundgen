@@ -64,27 +64,24 @@
 #' @export
 #' @examples
 #' sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
-#'   pitchAnchors = list(time = c(0, 1), value = c(368, 284)), temperature = 0.1,
+#'   pitchAnchors = c(368, 284), temperature = 0.1,
 #'   noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
-#'   rolloff_noise = -8, amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 20)))
+#'   rolloff_noise = -8, amplAnchorsGlobal = c(0, -30))
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #'  # playme(sound, samplingRate = 16000)
 #'
 #' s = segment(sound, samplingRate = 16000, plot = TRUE)
 #' # accept quicker and quieter syllables
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
-#'   shortestSyl = 25, shortestPause = 25, sylThres = .6)
-#' # look for narrower, sharper bursts
-#' s = segment(sound, samplingRate = 16000, plot = TRUE,
-#'   shortestSyl = 25, shortestPause = 25, sylThres = .6,
-#'   interburstMult = 1)
+#'   shortestSyl = 25, shortestPause = 25, sylThres = .2, burstThres = .05)
 #'
 #' # just a summary
 #' segment(sound, samplingRate = 16000, summary = TRUE)
 #'
 #' # customizing the plot
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
-#'             shortestSyl = 25, shortestPause = 25, sylThres = .6,
+#'             shortestSyl = 25, shortestPause = 25,
+#'             sylThres = .2, burstThres = .05,
 #'             col = 'black', lwd = .5,
 #'             sylPlot = list(lty = 2, col = 'gray20'),
 #'             burstPlot = list(pch = 16, col = 'gray80'),
@@ -130,7 +127,7 @@ segment = function(x,
                      col = 'red'
                    ),
                    ...) {
-  mergeSyl = ifelse(is.null(shortestPause) || is.na(shortestPause), F, T)
+  mergeSyl = ifelse(is.null(shortestPause) || is.na(shortestPause), FALSE, TRUE)
   if (windowLength < 10) {
     warning('windowLength < 10 ms is slow and usually not very useful')
   }
@@ -156,10 +153,8 @@ segment = function(x,
   }
 
   ## normalize
-  if (min(sound) > 0) {
-    sound = scale(sound)
-  }
-  sound = sound / max(abs(max(sound)), abs(min(sound)))
+  sound = sound - mean(sound)  # center around 0
+  sound = sound / max(abs(sound))  # range approx. -1 to 1
   # plot(sound, type='l')
 
   ## extract amplitude envelope
@@ -171,6 +166,7 @@ segment = function(x,
   sound_downsampled = seewave::env(
     sound,
     f = samplingRate,
+    envt = 'hil',
     msmooth = c(windowLength_points, overlap),
     fftw = FALSE,
     plot = FALSE
@@ -197,8 +193,8 @@ segment = function(x,
   if (is.null(interburst)) {
     median_scaled = suppressWarnings(median(syllables$sylLen) * interburstMult)
     interburst = ifelse(is.numeric(median_scaled) && length(median_scaled) > 0,
-                               median_scaled,
-                               shortestSyl)
+                        median_scaled,
+                        shortestSyl)
   }
   bursts = findBursts(envelope = envelope,
                       timestep = timestep,
@@ -290,9 +286,8 @@ segment = function(x,
 #' @export
 #' @examples
 #' \dontrun{
-#' # download 260 sounds from Anikin & Persson (2017)
-#' # http://cogsci.se/personal/results/
-#' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
+#' # Download 260 sounds from the supplements to Anikin & Persson (2017) at
+#' # http://cogsci.se/publications.html
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
 #' s = segmentFolder(myfolder, verbose = TRUE)
@@ -304,44 +299,44 @@ segment = function(x,
 #' boxplot(trial ~ as.integer(key), xlab='key')
 #' abline(a=0, b=1, col='red')
 #' }
-segmentFolder = function (myfolder,
-                          htmlPlots = TRUE,
-                          shortestSyl = 40,
-                          shortestPause = 40,
-                          sylThres = 0.9,
-                          interburst = NULL,
-                          interburstMult = 1,
-                          burstThres = 0.075,
-                          peakToTrough = 3,
-                          troughLeft = TRUE,
-                          troughRight = FALSE,
-                          windowLength = 40,
-                          overlap = 80,
-                          summary = TRUE,
-                          plot = FALSE,
-                          savePlots = FALSE,
-                          savePath = NA,
-                          verbose = TRUE,
-                          reportEvery = 10,
-                          col = 'green',
-                          xlab = 'Time, ms',
-                          ylab = 'Amplitude',
-                          main = NULL,
-                          width = 900,
-                          height = 500,
-                          units = 'px',
-                          res = NA,
-                          sylPlot = list(
-                            lty = 1,
-                            lwd = 2,
-                            col = 'blue'
-                          ),
-                          burstPlot = list(
-                            pch = 8,
-                            cex = 3,
-                            col = 'red'
-                          ),
-                          ...) {
+segmentFolder = function(myfolder,
+                         htmlPlots = TRUE,
+                         shortestSyl = 40,
+                         shortestPause = 40,
+                         sylThres = 0.9,
+                         interburst = NULL,
+                         interburstMult = 1,
+                         burstThres = 0.075,
+                         peakToTrough = 3,
+                         troughLeft = TRUE,
+                         troughRight = FALSE,
+                         windowLength = 40,
+                         overlap = 80,
+                         summary = TRUE,
+                         plot = FALSE,
+                         savePlots = FALSE,
+                         savePath = NA,
+                         verbose = TRUE,
+                         reportEvery = 10,
+                         col = 'green',
+                         xlab = 'Time, ms',
+                         ylab = 'Amplitude',
+                         main = NULL,
+                         width = 900,
+                         height = 500,
+                         units = 'px',
+                         res = NA,
+                         sylPlot = list(
+                           lty = 1,
+                           lwd = 2,
+                           col = 'blue'
+                         ),
+                         burstPlot = list(
+                           pch = 8,
+                           cex = 3,
+                           col = 'red'
+                         ),
+                         ...) {
   # deprecated pars
   if (!missing(savePath)) {
     message('savePath is deprecated; use savePlots = TRUE instead')
