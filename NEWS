@@ -1,10 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.2.1 [...date...]
 
-MAJOR:
-  *
-
 NEW FUNCTIONS:
-  * generateNoise(): a simplified version of soundgen() for producing purely voiced vocalizations. Unlike soundgen(), it also accepts a manually specified spectral filter of an arbitrary shape instead of formants for flexible generation of non-biological sounds
+  * generateNoise(): a simplified version of soundgen() for producing purely voiceless vocalizations such as hissing. Unlike soundgen(), it also accepts a manually specified spectral filter of an arbitrary shape instead of formants for flexible generation of non-biological sounds
 
 MINOR:
   * analyze(): spectral median (medianFreq) and spectral centroid (specCentroid) added as separate outputs; type ?analyze() for details
@@ -12,6 +9,7 @@ MINOR:
   * soundgen(): a new argument noiseFlatSpec for more advanced control of the spectrum of the unvoiced component
   * soundgen(): more intelligent automatic adjustment of pitch ceiling, floor, pitch sampling rate, and sampling rate for extreme pitch values
   * crossFade(): accepts different shapes of fade-in/out
+  * flatEnv(): minor debugging, default method is now "hil" (see ?seewave::env)
   * schwa() returns relative formant frequencies in both percentages and semitones
   * Updated url's in documentation
 
@@ -22,7 +20,7 @@ Back-compatibible with soundgen 1.1.x. Old code will mostly produce the same res
 
 MAJOR:
   * soundgen(): the argument "formantsNoise" (formants in the unvoiced component) now affects polysyllabic bouts in the same way as "formants" (formants in the voiced component), i.e. moving formants in "noiseFormants" span multiple syllables (see vignette 2.12)
-  * soundgen(): vectorized parameters sylLen, pauseLen, vibratoFreq, vibratoDep, jitterDep, jitterLen, and shimmerLen. For ex., "nSyl = 15, sylLen = 300:150" produces 15 progressively shorter syllables from 300 ms to 150 ms in length (see vignette 2.5)
+  * soundgen(): vectorized parameters sylLen, pauseLen, vibratoFreq, vibratoDep, jitterDep, jitterLen, and shimmerDep. For ex., "nSyl = 15, sylLen = 300:150" produces 15 progressively shorter syllables from 300 ms to 150 ms in length (see vignette 2.5)
   * soundgen(): a new argument, "nonlinRandomWalk", for specifying the exact timing of each vocal regime (0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer). This is intended for making reproducible examples of sounds with nonlinear effects (see vignette 2.11.5)
   * soundgen(): "amplAnchorsGlobal" adjusts the amplitude from syllable to syllable in discrete steps, instead of applying a smooth amplitude envelope to the entire bout, and it also applies to the unvoiced component (turbulent noise)
   * depends on seewave >=2.1.0 because of changes in the seewave package

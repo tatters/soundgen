@@ -99,27 +99,24 @@ research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
 }
 \examples{
 sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
-  pitchAnchors = list(time = c(0, 1), value = c(368, 284)), temperature = 0.1,
+  pitchAnchors = c(368, 284), temperature = 0.1,
   noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
-  rolloff_noise = -8, amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 20)))
+  rolloff_noise = -8, amplAnchorsGlobal = c(0, -30))
 spectrogram(sound, samplingRate = 16000, osc = TRUE)
  # playme(sound, samplingRate = 16000)
 
 s = segment(sound, samplingRate = 16000, plot = TRUE)
 # accept quicker and quieter syllables
 s = segment(sound, samplingRate = 16000, plot = TRUE,
-  shortestSyl = 25, shortestPause = 25, sylThres = .6)
-# look for narrower, sharper bursts
-s = segment(sound, samplingRate = 16000, plot = TRUE,
-  shortestSyl = 25, shortestPause = 25, sylThres = .6,
-  interburstMult = 1)
+  shortestSyl = 25, shortestPause = 25, sylThres = .2, burstThres = .05)
 
 # just a summary
 segment(sound, samplingRate = 16000, summary = TRUE)
 
 # customizing the plot
 s = segment(sound, samplingRate = 16000, plot = TRUE,
-            shortestSyl = 25, shortestPause = 25, sylThres = .6,
+            shortestSyl = 25, shortestPause = 25,
+            sylThres = .2, burstThres = .05,
             col = 'black', lwd = .5,
             sylPlot = list(lty = 2, col = 'gray20'),
             burstPlot = list(pch = 16, col = 'gray80'),

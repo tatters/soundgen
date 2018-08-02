@@ -4,9 +4,9 @@
 \alias{flatEnv}
 \title{Flat envelope}
 \usage{
-flatEnv(sound, windowLength = 200, samplingRate = 16000, method = c("rms",
-  "peak")[1], windowLength_points = NULL, killDC = FALSE, throwaway = -80,
-  plot = FALSE)
+flatEnv(sound, windowLength = 200, samplingRate = 16000, method = c("hil",
+  "rms", "peak")[1], windowLength_points = NULL, killDC = FALSE,
+  throwaway = -80, plot = FALSE)
 }
 \arguments{
 \item{sound}{input vector oscillating about zero}
@@ -16,8 +16,8 @@ flatEnv(sound, windowLength = 200, samplingRate = 16000, method = c("rms",
 \item{samplingRate}{the sampling rate, Hz. Only needed if the length of
 smoothing window is specified in ms rather than points}
 
-\item{method}{'peak' for peak amplitude per window, 'rms' for root mean
-square amplitude}
+\item{method}{'hil' for Hilbert envelope, 'rms' for root mean square
+amplitude, 'peak' for peak amplitude per window}
 
 \item{windowLength_points}{the length of smoothing window, points. If
 specified, overrides both \code{windowLength} and \code{samplingRate}}
@@ -38,10 +38,17 @@ mean square).
 }
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
-b = flatEnv(a, plot = TRUE, killDC = TRUE, method = 'peak',
+b = flatEnv(a, plot = TRUE, killDC = TRUE,
             windowLength_points = 5)         # too short
 c = flatEnv(a, plot = TRUE, killDC = TRUE,
             windowLength_points = 250)       # too long
 d = flatEnv(a, plot = TRUE, killDC = TRUE,
             windowLength_points = 50)        # about right
+
+\dontrun{
+s = soundgen(sylLen = 1000, amplAnchors = c(0, -40, 0), plot = TRUE, osc = TRUE)
+# playme(s)
+s_flat = flatEnv(sound, plot = TRUE, windowLength = 50)
+# playme(s_flat)
+}
 }

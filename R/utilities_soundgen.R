@@ -780,8 +780,8 @@ getEnv = function(sound,
 #' @param windowLength the length of smoothing window, ms
 #' @param samplingRate the sampling rate, Hz. Only needed if the length of
 #'   smoothing window is specified in ms rather than points
-#' @param method 'peak' for peak amplitude per window, 'rms' for root mean
-#'   square amplitude
+#' @param method 'hil' for Hilbert envelope, 'rms' for root mean square
+#'   amplitude, 'peak' for peak amplitude per window
 #' @param windowLength_points the length of smoothing window, points. If
 #'   specified, overrides both \code{windowLength} and \code{samplingRate}
 #' @param killDC if TRUE, dynamically removes DC offset or similar deviations of
@@ -793,16 +793,23 @@ getEnv = function(sound,
 #' @export
 #' @examples
 #' a = rnorm(500) * seq(1, 0, length.out = 500)
-#' b = flatEnv(a, plot = TRUE, killDC = TRUE, method = 'peak',
+#' b = flatEnv(a, plot = TRUE, killDC = TRUE,
 #'             windowLength_points = 5)         # too short
 #' c = flatEnv(a, plot = TRUE, killDC = TRUE,
 #'             windowLength_points = 250)       # too long
 #' d = flatEnv(a, plot = TRUE, killDC = TRUE,
 #'             windowLength_points = 50)        # about right
+#'
+#' \dontrun{
+#' s = soundgen(sylLen = 1000, amplAnchors = c(0, -40, 0), plot = TRUE, osc = TRUE)
+#' # playme(s)
+#' s_flat = flatEnv(sound, plot = TRUE, windowLength = 50)
+#' # playme(s_flat)
+#' }
 flatEnv = function(sound,
                    windowLength = 200,
                    samplingRate = 16000,
-                   method = c('rms', 'peak')[1],
+                   method = c('hil', 'rms', 'peak')[1],
                    windowLength_points = NULL,
                    killDC = FALSE,
                    throwaway = -80,
@@ -820,15 +827,30 @@ flatEnv = function(sound,
 
   m = max(abs(sound))       # original scale (eg -1 to +1 gives m = 1)
   soundNorm = sound / m    # normalize
-  throwaway_lin = 2 ^ (throwaway / 10)  # from dB to linear
+  throwaway_lin = 10 ^ (throwaway / 20)  # from dB to linear
   # get smoothed amplitude envelope
-  env = getEnv(sound = soundNorm,
-               windowLength_points = windowLength_points,
-               method = method)
+  if (method == 'hil') {
+    env = seewave::env(
+      soundNorm,
+      f = samplingRate,
+      envt = 'hil',
+      ssmooth = windowLength_points,
+      fftw = FALSE,
+      plot = FALSE
+    )
+    env = as.numeric(env)
+  } else {
+    env = getEnv(sound = soundNorm,
+                 windowLength_points = windowLength_points,
+                 method = method)
+  }
+  env = env / max(abs(env))
+
   # don't amplify very quiet sections
-  env[env < throwaway_lin] = 1
+  env_cut = env
+  env_cut[env_cut < throwaway_lin] = 1
   # flatten amplitude envelope
-  soundFlat = soundNorm / env
+  soundFlat = soundNorm / env_cut
   # re-normalize to original scale
   soundFlat = soundFlat / max(abs(soundFlat)) * m
   # remove DC offset

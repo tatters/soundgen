@@ -115,9 +115,8 @@ settings, running time should be about a second per minute of audio.
 }
 \examples{
 \dontrun{
-# download 260 sounds from Anikin & Persson (2017)
-# http://cogsci.se/personal/results/
-# 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
+# Download 260 sounds from the supplements to Anikin & Persson (2017) at
+# http://cogsci.se/publications.html
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
 s = segmentFolder(myfolder, verbose = TRUE)
