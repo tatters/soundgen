@@ -12,6 +12,7 @@ MINOR:
   * flatEnv(): minor debugging, default method is now "hil" (see ?seewave::env)
   * schwa() returns relative formant frequencies in both percentages and semitones
   * Updated url's in documentation
+  * Updated vignettes on sound synthesis and particularly on sound analysis, including a new section on DIY extraction of custom spectral descriptors
 
 
           CHANGES IN SOUNDGEN VERSION 1.2.0 [04-March-2018]
