@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.2.1 [...date...]
+          CHANGES IN SOUNDGEN VERSION 1.2.1 [04-August-2018]
 
 NEW FUNCTIONS:
   * generateNoise(): a simplified version of soundgen() for producing purely voiceless vocalizations such as hissing. Unlike soundgen(), it also accepts a manually specified spectral filter of an arbitrary shape instead of formants for flexible generation of non-biological sounds
