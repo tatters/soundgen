@@ -48,7 +48,7 @@ d = flatEnv(a, plot = TRUE, killDC = TRUE,
 \dontrun{
 s = soundgen(sylLen = 1000, amplAnchors = c(0, -40, 0), plot = TRUE, osc = TRUE)
 # playme(s)
-s_flat = flatEnv(sound, plot = TRUE, windowLength = 50)
+s_flat = flatEnv(s, plot = TRUE, windowLength = 50)
 # playme(s_flat)
 }
 }

@@ -59,7 +59,8 @@ e.g. Stevens (2000) "Acoustic phonetics", p. 139. Basically, we estimate
 vocal tract length and see if each formant is higher or lower than expected
 for this vocal tract. For this to work, we have to know either the
 frequencies of enough formants (not just the first two) or the true length of
-the vocal tract.
+the vocal tract. See also \code{\link{estimateVTL}} on the algorithm for
+estimating formant dispersion if VTL is not known.
 }
 \examples{
 ## CASE 1: known VTL

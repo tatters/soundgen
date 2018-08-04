@@ -1,4 +1,4 @@
-# TODO:
+# TODO: calculate intensity in analyze()
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -226,7 +226,8 @@ NULL
 #' a = c(rep(0, 100), rep(1, 100), rep(2, 100))
 #' s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
 #'              subFreq = 100, subDep = 70, jitterDep = 1,
-#'              nonlinRandomWalk = a, plot = T, ylim = c(0, 4))
+#'              nonlinRandomWalk = a, plot = TRUE, ylim = c(0, 4))
+#' # playme(s)
 #'
 #' # See the vignette on sound generation for more examples and in-depth
 #' # explanation of the arguments to soundgen()

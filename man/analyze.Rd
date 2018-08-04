@@ -239,11 +239,11 @@ sound1 = soundgen(sylLen = 900, pitchAnchors = list(
   temperature = 0.001, addSilence = 0)
 # improve the quality of postprocessing:
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
-median(a1$pitch, na.rm = TRUE)  # 578 Hz
+median(a1$pitch, na.rm = TRUE)
 # (can vary, since postprocessing is stochastic)
 # compare to the true value:
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
-  value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
+  value = c(300, 900, 400, 2300)), len = 1000))
 
 # the same pitch contour, but harder b/c of subharmonics and jitter
 sound2 = soundgen(sylLen = 900, pitchAnchors = list(

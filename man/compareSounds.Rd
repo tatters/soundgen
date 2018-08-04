@@ -102,6 +102,9 @@ for (i in 1:nrow(df)) {
   )
 }
 df$av = rowMeans(df, na.rm = TRUE)
-df  # row 1 = wrong pitch & formants, ..., row 4 = right pitch & formants
+# row 1 = wrong pitch & formants, ..., row 4 = right pitch & formants
+df$formants = c('wrong', 'wrong', 'right', 'right')
+df$pitch = c('wrong', 'right', 'wrong', 'right')
+df
 }
 }

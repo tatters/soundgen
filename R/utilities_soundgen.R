@@ -803,7 +803,7 @@ getEnv = function(sound,
 #' \dontrun{
 #' s = soundgen(sylLen = 1000, amplAnchors = c(0, -40, 0), plot = TRUE, osc = TRUE)
 #' # playme(s)
-#' s_flat = flatEnv(sound, plot = TRUE, windowLength = 50)
+#' s_flat = flatEnv(s, plot = TRUE, windowLength = 50)
 #' # playme(s_flat)
 #' }
 flatEnv = function(sound,
@@ -975,7 +975,7 @@ killDC = function(sound,
 #'          fadeIn = 1500,
 #'          fadeOut = 500,
 #'          shape = 'log',
-#'          steepness = 6,
+#'          steepness = 8,
 #'          plot = TRUE)
 #' y = fade(x,
 #'          fadeIn = 1000,

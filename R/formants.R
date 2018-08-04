@@ -733,7 +733,11 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' Estimate vocal tract length
 #'
 #' Estimates the length of vocal tract based on formant frequencies, assuming
-#' that the vocal tract can be modeled as a tube open as both ends.
+#' that the vocal tract can be modeled as a tube open as both ends. Algorithm:
+#' first formant dispersion is estimated using the regression method described
+#' in Reby et al. (2005) "Red deer stags use formants as assessment cues during
+#' intrasexual agonistic interactions". The length of vocal tract is then
+#' calculated as speed of sound / 2 / formant dispersion.
 #' @inheritParams getSpectralEnvelope
 #' @param formants a character string like "aaui" referring to default presets
 #'   for speaker "M1"; a vector of formant frequencies; or a list of formant
@@ -811,7 +815,8 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #' @inheritParams soundgen
 #' @export
 #' @examples
-#' sound = runif(16000)  # white noise
+#' sound = c(rep(0, 1000), runif(16000), rep(0, 1000))  # white noise
+#' # NB: pad with silence to avoid artefacts if removing formants
 #' # playme(sound)
 #' # spectrogram(sound, samplingRate = 16000)
 #'
@@ -938,7 +943,10 @@ addFormants = function(sound,
       )
     )
     # normalize
-    if (normalize) soundFiltered = soundFiltered / max(soundFiltered)
+    if (normalize) {
+      soundFiltered = soundFiltered - mean(soundFiltered)
+      soundFiltered = soundFiltered / max(abs(soundFiltered))
+    }
   }
 
   # remove zero padding
@@ -976,7 +984,8 @@ addFormants = function(sound,
 #' vocal tract length and see if each formant is higher or lower than expected
 #' for this vocal tract. For this to work, we have to know either the
 #' frequencies of enough formants (not just the first two) or the true length of
-#' the vocal tract.
+#' the vocal tract. See also \code{\link{estimateVTL}} on the algorithm for
+#' estimating formant dispersion if VTL is not known.
 #' @return Returns a list with the following components: \describe{
 #'   \item{vtl_measured}{VTL as provided by the user, cm}
 #'   \item{vocalTract_apparent}{VTL estimated based on formants frequencies
@@ -1126,6 +1135,7 @@ schwa = function(formants = NULL,
     ff_theoretical = ff_schwa * (1 + formants_relative / 100)
     vocalTract_apparent = NULL
     ff_relative = formants_relative
+    ff_relative_semitones = HzToSemitones(ff_theoretical) - HzToSemitones(ff_schwa)
   }
 
   # prepare the output

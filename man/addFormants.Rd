@@ -88,7 +88,8 @@ a time series via inverse STFT. This is a subroutine in
 \code{\link{soundgen}}, but it can also be used on any existing sound.
 }
 \examples{
-sound = runif(16000)  # white noise
+sound = c(rep(0, 1000), runif(16000), rep(0, 1000))  # white noise
+# NB: pad with silence to avoid artefacts if removing formants
 # playme(sound)
 # spectrogram(sound, samplingRate = 16000)
 

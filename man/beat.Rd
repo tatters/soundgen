@@ -38,21 +38,21 @@ specific purpose, this is vastly faster and easier than to tinker with
 to be very short.
 }
 \examples{
-play = c(TRUE, FALSE)[2]
+playback = c(TRUE, FALSE)[2]
 # a drum-like sound
 s = beat(nSyl = 1, sylLen = 200,
-                 pitchAnchors = c(200, 100), play = play)
+                 pitchAnchors = c(200, 100), play = playback)
 # plot(s, type = 'l')
 
 # a dry, muted drum
 s = beat(nSyl = 1, sylLen = 200,
-                 pitchAnchors = c(200, 10), play = play)
+                 pitchAnchors = c(200, 10), play = playback)
 
 # sci-fi laser guns
 s = beat(nSyl = 3, sylLen = 300,
-                 pitchAnchors = c(1000, 50), play = play)
+                 pitchAnchors = c(1000, 50), play = playback)
 
 # machine guns
 s = beat(nSyl = 10, sylLen = 10, pauseLen = 50,
-                 pitchAnchors = c(2300, 300), play = play)
+                 pitchAnchors = c(2300, 300), play = playback)
 }

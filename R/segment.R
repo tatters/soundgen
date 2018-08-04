@@ -66,7 +66,7 @@
 #' sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
 #'   pitchAnchors = c(368, 284), temperature = 0.1,
 #'   noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
-#'   rolloff_noise = -8, amplAnchorsGlobal = c(0, -30))
+#'   rolloff_noise = -8, amplAnchorsGlobal = c(0, -20))
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #'  # playme(sound, samplingRate = 16000)
 #'
