@@ -4,8 +4,7 @@
 \alias{wiggleGC}
 \title{Wiggle glottal cycles}
 \usage{
-wiggleGC(dep = jitterDep/12, len = jitterLen, nGC, pitch_per_gc, rw,
-  effect_on = jitter_on)
+wiggleGC(dep, len, nGC, pitch_per_gc, rw, effect_on)
 }
 \arguments{
 \item{dep}{a vector of any length specifying the strengh of applied effect as
@@ -35,16 +34,16 @@ jitter/shimmer period and draws a smooth contour between them by spline
 interpolation.
 }
 \examples{
-plot(wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
+plot(soundgen:::wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
               pitch_per_gc = rnorm(100, 150, 10),
               rw = rep(1, 100), effect_on = rep(1, 100)),
      type = 'b')
-plot(wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
+plot(soundgen:::wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
               pitch_per_gc = rnorm(100, 150, 10),
               rw = rep(1, 100),
               effect_on = c(rep(1, 30), rep(0, 20), rep(1, 50))),
      type = 'b')
-plot(wiggleGC(dep = c(1/12, 10/12), len = c(3, 50), nGC = 100,
+plot(soundgen:::wiggleGC(dep = c(1/12, 10/12), len = c(3, 50), nGC = 100,
               pitch_per_gc = rnorm(100, 150, 10),
               rw = rep(1, 100), effect_on = rep(1, 100)),
      type = 'b')

@@ -57,8 +57,8 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' # download 260 sounds from Anikin & Persson (2017)
-#' # http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/anikin-persson_2017_nonlinguistic-vocs.html/260sounds_wav.zip
+#' # download 260 sounds from the supplements in Anikin & Persson (2017)
+#' # - see http://cogsci.se/publications.html
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
 #'

@@ -1105,20 +1105,20 @@ scaleNoiseAnchors = function(noiseTime, sylLen_old, sylLen_new) {
 #' @param effect_on vector of length nGC specifying glottal cycles to which the
 #'   effect should be applied (0 = off, 1 = on)
 #' @examples
-#' plot(wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
+#' plot(soundgen:::wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
 #'               pitch_per_gc = rnorm(100, 150, 10),
 #'               rw = rep(1, 100), effect_on = rep(1, 100)),
 #'      type = 'b')
-#' plot(wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
+#' plot(soundgen:::wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
 #'               pitch_per_gc = rnorm(100, 150, 10),
 #'               rw = rep(1, 100),
 #'               effect_on = c(rep(1, 30), rep(0, 20), rep(1, 50))),
 #'      type = 'b')
-#' plot(wiggleGC(dep = c(1/12, 10/12), len = c(3, 50), nGC = 100,
+#' plot(soundgen:::wiggleGC(dep = c(1/12, 10/12), len = c(3, 50), nGC = 100,
 #'               pitch_per_gc = rnorm(100, 150, 10),
 #'               rw = rep(1, 100), effect_on = rep(1, 100)),
 #'      type = 'b')
-wiggleGC = function(dep = jitterDep / 12, len = jitterLen, nGC, pitch_per_gc, rw, effect_on = jitter_on) {
+wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
   if (length(dep) > 1) dep = getSmoothContour(dep, len = nGC)
   if (length(len) > 1) len = getSmoothContour(len, len = nGC)
   ratio = pitch_per_gc * len / 1000 # the number of gc that make
