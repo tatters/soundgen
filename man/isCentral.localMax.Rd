@@ -14,10 +14,6 @@ isCentral.localMax(x, threshold)
 \description{
 Internal soundgen function.
 }
-\details{
-Peak detection with \code{\link[zoo]{rollapply}}. Less versatile but x 10
-faster than \code{\link[seewave]{fpeaks}}.
-}
 \examples{
 soundgen:::isCentral.localMax(c(1,1,3,2,1), 2.5)
 }

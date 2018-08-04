@@ -642,8 +642,6 @@ clumper = function(s, minLength) {
 #'
 #' Internal soundgen function.
 #'
-#' Peak detection with \code{\link[zoo]{rollapply}}. Less versatile but x 10
-#' faster than \code{\link[seewave]{fpeaks}}.
 #' @param x input vector
 #' @param threshold threshold for peak detection
 #' @keywords internal

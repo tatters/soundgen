@@ -212,7 +212,7 @@ getDom = function(frame,
   # width of smoothing interval (in bins), forced to be an odd number
   domSmooth_bins = 2 * ceiling(domSmooth / bin / 2) - 1
 
-  # find peaks in the smoothed spectrum
+  # find peaks in the smoothed spectrum (much faster than seewave::fpeaks)
   temp = zoo::rollapply(zoo::as.zoo(frame),
                         width = domSmooth_bins,
                         align = 'center',
