@@ -172,6 +172,8 @@ getRolloff = function(pitch_per_gc = c(440),
   if (is.numeric(throwaway)) {
     # if not null and not NA
     r[r < throwaway] = -Inf
+  } else {
+    throwaway = -120  # for plotting
   }
 
   # normalize so the amplitude of F0 is always 0
@@ -198,9 +200,13 @@ getRolloff = function(pitch_per_gc = c(440),
       freqs_max = rows_max * pitch_max / 1000
       rolloff_min = r[rows_min, idx_min]
       rolloff_max = r[rows_max, idx_max]
+      ymin = min(rolloff_min, rolloff_max)
+      if (ymin < throwaway) ymin = throwaway
+      ymax = max(rolloff_min, rolloff_max)
       plot(freqs_min, rolloff_min, type = 'b', col = 'blue',
            xlim = c(0, x_max), xlab = 'Frequency, Hz',
-           ylab = 'Amplitude, dB', main = 'Glottal source rolloff')
+           ylim = c(ymin, ymax), ylab = 'Amplitude, dB',
+           main = 'Glottal source rolloff')
       text(x = x_max, y = -10, labels = 'Lowest pitch',
            col = 'blue', pos = 2)
       points(freqs_max, rolloff_max, type = 'b', col = 'red')
