@@ -55,6 +55,16 @@ s = soundgen(
   play = playback
 )
 
+## ----fig.width = 7, fig.height = 5---------------------------------------
+s = soundgen(
+  repeatBout = 2,
+  sylLen = c(300, 100), 
+  pauseLen = -50,     
+  plot = TRUE, osc = TRUE,
+  play = playback,
+  invalidArgAction = 'ignore'
+)
+
 ## ------------------------------------------------------------------------
 sound = soundgen(pitchAnchors = 440, play = playback)  # steady pitch at 440 Hz
 sound = soundgen(pitchAnchors = 3000:2000, play = playback)  # downward chirp
@@ -296,12 +306,15 @@ s = soundgen(subFreq = 75,
 spectrogram(s, 16000, windowLength = 50, ylim = c(0, 5), contrast = .7)
 
 ## ------------------------------------------------------------------------
-# To get jitter without subharmonics, set `temperature = 0, subDep = 0` 
+# To get jitter/shimmer without subharmonics, set `temperature = 0, subDep = 0`
+# or a positive temperature and `nonlinBalance = 100, subDep = 0`
 # and specify the required jitter depth and period
 s1 = soundgen(jitterLen = 50, jitterDep = 1,  # shaky voice
+              shimmerLen = 30, shimmerDep = 10,   
               sylLen = 1000, subDep = 0, nonlinBalance = 100,
               pitchAnchors =  c(150, 170), play = playback)
 s2 = soundgen(jitterLen = 1, jitterDep = 1,   # harsh voice
+              shimmerLen = 1, shimmerDep = 10, 
               sylLen = 1000, subDep = 0, nonlinBalance = 100,
               pitchAnchors =  c(150, 170), play = playback)
 
@@ -320,7 +333,7 @@ s = soundgen(sylLen = 1200,
            851, 1020, 1021, 1085),
   value = c(700, 1130, 1000, 1200, 1860, 1840, 
             # random f0 jumps b/w 1.2 & 1.8 KHz 
-            sample(c(1200, 1800), size = 500, replace = T), 
+            sample(c(1200, 1800), size = 500, replace = TRUE), 
             1620, 1540, 1220, 900)),
   temperature = 0.05, 
   tempEffects = list(pitchAnchorsDep = 0),
@@ -329,6 +342,7 @@ s = soundgen(sylLen = 1200,
   samplingRate = 22000, play = playback, plot = TRUE, osc = TRUE)
 
 ## ------------------------------------------------------------------------
+# run several times to appreciate the randomness
 s = soundgen(sylLen = 800, 
              mouthAnchors = rnorm(n = 5, mean = .5, sd = .3),
              play = playback)
@@ -337,7 +351,8 @@ s = soundgen(sylLen = 800,
 rw_bin = c(rep(0, 100), rep(1, 100), rep(2, 100))
 s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
              subFreq = 100, subDep = 70, jitterDep = 1,
-             nonlinRandomWalk = rw_bin, plot = TRUE, ylim = c(0, 4))
+             nonlinRandomWalk = rw_bin, 
+             play = playback, plot = TRUE, ylim = c(0, 4))
 
 ## ----fig.show = "hold", fig.width = 5, fig.height = 3--------------------
 # set up a random walk (repeat until satisfied with the contour)
@@ -347,26 +362,49 @@ rw_bin = getIntegerRandomWalk(rw, minLength = 100, plot = TRUE)
 # synthesize two sounds with identical nonlinear effects but different f0
 s1 = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
               subFreq = 100, subDep = 70, jitterDep = 1,
-              nonlinRandomWalk = rw_bin, plot = TRUE, ylim = c(0, 4))
+              nonlinRandomWalk = rw_bin, 
+              play = playback, plot = TRUE, ylim = c(0, 4))
 s2 = soundgen(sylLen = 800, pitchAnchors = 500, temperature = 0.001,
               subFreq = 100, subDep = 70, jitterDep = 1,
-              nonlinRandomWalk = rw_bin, plot = TRUE, ylim = c(0, 4))
+              nonlinRandomWalk = rw_bin, 
+              play = playback, plot = TRUE, ylim = c(0, 4))
 
-## ------------------------------------------------------------------------
-s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
-         formantsNoise = NA,  # breathing - same formants as for voiced
-         sylLen = 500, play = playback)
+## ----fig.show = "hold", fig.width = 5, fig.height = 5--------------------
+s = soundgen(
+  # nonlinear settings
+  nonlinBalance = 100, subDep = 0,  
+  jitterDep = c(0, 0, 1.5, .5), shimmerDep = c(0, 0, 15, 5),
+  # settings for high precision
+  temperature = .001, throwaway = -120,             
+  samplingRate = 22050, pitchSamplingRate = 22050,  
+  # other settings
+  sylLen = 1800, pitchAnchors = c(240, 200),
+  rolloff = c(-20, -18, -23, -28), vibratoDep = .2,
+  formants = c(800, 1400, 2500, 3700, 5000, 6800),
+  noiseAnchors = data.frame(time = c(0, 640, 1800, 2000), 
+                            value = c(-60, -45, -60, -80) + 5),
+  rolloffNoise = -8,
+  mouthAnchors = c(.55, .5, .45, .6),
+  play = playback, plot = TRUE, osc = TRUE, ylim = c(0, 4)
+)
 
 ## ----fig.width = 5, fig.height = 5---------------------------------------
-s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
+s = soundgen(noiseAnchors = data.frame(time = c(0, 800), value = c(-40, 0)),
+         formantsNoise = NA,  # breathing - same formants as for voiced
+         sylLen = 500, play = playback, plot = TRUE)
+# observe that the voiced and unvoiced components have exactly the same formants
+
+## ----fig.width = 5, fig.height = 5---------------------------------------
+s = soundgen(noiseAnchors = data.frame(time = c(0, 800), value = c(-60, -30)),
          # specify noise filter ≠ voiced filter to get ~[s]
          formantsNoise = list(
            f1 = data.frame(freq = 6000,
                            amp = 50, 
                            width = 1000)
            ), 
-         rolloffNoise = 0, pitchAnchors = NA,
+         rolloffNoise = 0,
          sylLen = 500, play = playback, plot = TRUE)
+# observe that the voiced and unvoiced components have different formants
 
 ## ------------------------------------------------------------------------
 s1 = soundgen(vocalTract = 17.5,  # ~human throat (17.5 cm)
@@ -381,13 +419,16 @@ s2 = soundgen(vocalTract = 30,    # a large animal
 # NB: voiced component is not generated if noiseAnchors$value >= 40 dB
 # Another way to remove the voiced component is to write pitchAnchors = NULL
 
-## ----fig.width = 4, fig.height = 3---------------------------------------
+## ----fig.width = 4, fig.height = 4---------------------------------------
 # only two specified formants
-s3 = soundgen(formantsNoise = c(1000, 2000),  
+s3 = soundgen(pitchAnchors = NULL, 
+              formantsNoise = c(1000, 2000),  
               noiseAnchors = 40, sylLen = 800,
               play = playback, plot = TRUE)
 # two specified formants plus extra formants based on vocalTract
-s4 = soundgen(vocalTract = 15.5, formantsNoise = c(1000, 2000),  
+s4 = soundgen(vocalTract = 15.5, 
+              pitchAnchors = NULL,
+              formantsNoise = c(1000, 2000),  
               noiseAnchors = 40, sylLen = 800,
               play = playback, plot = TRUE)
 
@@ -477,10 +518,12 @@ spectrogram(s, 16000, osc=T, ylim = c(0, 4))
 sound1 = soundgen(sylLen = 700, pitchAnchors = 250:180, 
                   formants = 'aaao', 
                   addSilence = 100, play = playback)
-sound2 = soundgen(nSyl = 2, sylLen = 150, 
+# suppress warnings related to very high pitch values
+sound2 = suppressWarnings(soundgen(nSyl = 2, sylLen = 150, 
                   pitchAnchors = 4300:2200, attackLen = 10,
-                  formants = NA, temperature = 0, 
-                  addSilence = 0, play = playback)
+                  formants = NA, temperature = .001, 
+                  pitchCeiling = 8000, pitchSamplingRate = 8000,  # >pitch
+                  addSilence = 0, play = playback))
 
 insertionTime = .1 + .15  # silence + 150 ms
 samplingRate = 16000

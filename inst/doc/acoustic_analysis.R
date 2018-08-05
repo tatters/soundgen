@@ -1,10 +1,11 @@
-## ------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5---------------------------------------
 library(soundgen)
 s1 = soundgen(sylLen = 900, temperature = 0,
               pitchAnchors = list(time = c(0, .3, .8, 1), 
                                   value = c(300, 900, 400, 2300)),
               noiseAnchors = c(-40, 0), subDep = 100, 
-              jitterDep = 0.5, nonlinBalance = 100)
+              jitterDep = 0.5, nonlinBalance = 100,
+              plot = TRUE, ylim = c(0, 4))
 # playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
 
 ## ------------------------------------------------------------------------
@@ -14,15 +15,54 @@ true_pitch = getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
 median(true_pitch)  # 611 Hz
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
-a1 = analyze(s1, samplingRate = 16000, plot = TRUE)
+a1 = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4))
 # summary(a1)  # many acoustic predictors measured for each FFT frame
 median(true_pitch)  # true value, as synthesized above
 median(a1$pitch, na.rm = TRUE)  # our estimate
 # Pitch postprocessing is stochastic (see below), so the contour may vary.
 # Many candidates are off target, mainly b/c of misleading subharmonics.
 
+## ------------------------------------------------------------------------
+spec = seewave::spec(s1, f = 16000, plot = FALSE)  # FFT of the entire sound
+avSpec = seewave::meanspec(s1, f = 16000, plot = FALSE)  # STFT followed by averaging
+# either way, you get a dataframe with two columns: frequencies and their power
+head(avSpec)
+
+## ------------------------------------------------------------------------
+spgm = spectrogram(s1, samplingRate = 16000, output = 'original', plot = FALSE)
+# rownames give you frequencies, colnames are time stamps
+str(spgm)
+
+## ------------------------------------------------------------------------
+# Transform power to pdf (all columns should sum to 1):
+spgm_norm = apply(spgm, 2, function(x) x / sum(x))
+# Set up a dataframe to store the output
+out = data.frame(skew = rep(NA, ncol(spgm)),
+                 quantile66 = NA,
+                 ratio500 = NA)
+# Process each STFT frame
+for (i in 1:ncol(spgm_norm)) {
+  # Power spectrum for this frame
+  df = data.frame(
+    freq = as.numeric(rownames(spgm_norm)),  # frequency (kHz)
+    d = spgm_norm[, i]                       # density
+  )
+  # plot(df, type = 'l')
+  
+  # Skewness (see https://en.wikipedia.org/wiki/Central_moment)
+  m = sum(df$freq * df$d)  # spectral centroid, kHz
+  out$skew[i] = sum((df$freq - m)^3 * df$d)
+  
+  # 66.6th percentile (2/3 of density below this frequency)
+  out$quantile66[i] = df$freq[min(which(cumsum(df$d) >= 2/3))]  # in kHz
+  
+  # Energy above/below 500 Hz
+  out$ratio500[i] = sum(df$d[df$freq >= .5]) / sum(df$d[df$freq < .5])
+}
+summary(out)
+
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
-a = analyze(s1, samplingRate = 16000, plot = TRUE, 
+a = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4),
             pitchMethods = c('autocor', 'cep', 'dom', 'spec'))
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
@@ -36,32 +76,38 @@ a2 = analyze(s1, samplingRate = 16000, plot = FALSE, priorPlot = TRUE,
 par(mfrow = c(1, 1))
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
-a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
+a = analyze(s1, samplingRate = 16000, 
+            plot = TRUE, ylim = c(0, 4), priorMean = NA,
             pitchMethods = 'autocor',
             autocorThres = .45,
             nCands = 3)
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
-a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
+a = analyze(s1, 
+            samplingRate = 16000, plot = TRUE, ylim = c(0, 4), priorMean = NA,
             pitchMethods = 'dom',
             domThres = .1,
             domSmooth = 500)
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
-a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
+a = analyze(s1, 
+            samplingRate = 16000, plot = TRUE, ylim = c(0, 4), priorMean = NA,
             pitchMethods = 'cep',
             cepThres = .3,
             cepSmooth = 3,
             nCands = 2)
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
-a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
+a = analyze(s1, 
+            samplingRate = 16000, plot = TRUE, ylim = c(0, 4), priorMean = NA,
             pitchMethods = 'spec',
             specPeak = .4,
             nCands = 2)
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
-a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
+a = analyze(
+  s1, 
+  samplingRate = 16000, plot = TRUE, ylim = c(0, 4), priorMean = NA,
   shortestSyl = 0, shortestPause = 0,  # any length of voiced fragments
   interpolWin = NULL,     # don't interpolate missing F0 values
   pathfinding = 'none',   # don't look for optimal path through candidates
@@ -72,10 +118,10 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
 ## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
 par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .3, step = 25,
+             pitchMethods = 'cep', cepThres = .35, step = 25,
              snakeStep = NULL, smooth = 0)  
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .3, step = 25,
+             pitchMethods = 'cep', cepThres = .35, step = 25,
              snakeStep = NULL, smooth = 0,
              interpolWin = NULL, pathfinding = 'none')  # disable interpolation
 par(mfrow = c(1, 1))
@@ -146,7 +192,7 @@ s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
               pitchAnchors = c(368, 284),
               noiseAnchors = list(time = c(0, 67, 86, 186), 
                                   value = c(-45, -47, -89, -120)),
-              rolloffNoise = -8, amplAnchorsGlobal = c(80, 50))
+              rolloffNoise = -8, amplAnchorsGlobal = c(0, -20))
 # spectrogram(s2, samplingRate = 16000, osc = TRUE)
 # playme(s2, samplingRate = 16000)
 a = segment(s2, samplingRate = 16000, plot = TRUE)
