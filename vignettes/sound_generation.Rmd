@@ -839,10 +839,12 @@ If you want the two sounds to overlap, you can use `addVectors()`, which simply 
 sound1 = soundgen(sylLen = 700, pitchAnchors = 250:180, 
                   formants = 'aaao', 
                   addSilence = 100, play = playback)
-sound2 = soundgen(nSyl = 2, sylLen = 150, 
+# suppress warnings related to very high pitch values
+sound2 = suppressWarnings(soundgen(nSyl = 2, sylLen = 150, 
                   pitchAnchors = 4300:2200, attackLen = 10,
                   formants = NA, temperature = .001, 
-                  addSilence = 0, play = playback)
+                  pitchCeiling = 8000, pitchSamplingRate = 8000,  # >pitch
+                  addSilence = 0, play = playback))
 
 insertionTime = .1 + .15  # silence + 150 ms
 samplingRate = 16000

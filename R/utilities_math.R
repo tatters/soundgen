@@ -228,9 +228,9 @@ rnorm_bounded = function(n = 1,
 
   if (any(mean > high | mean < low)) {
     warning(paste('Some of the specified means are outside the low/high bounds!',
-                  'Mean =', paste(mean, collapse = ', '),
-                  'Low =', paste(low, collapse = ', '),
-                  'High = ', paste(high, collapse = ', ')))
+                  'Mean =', paste(head(mean, 3), collapse = ', '),
+                  'Low =', paste(head(low, 3), collapse = ', '),
+                  'High = ', paste(head(high, 3), collapse = ', ')))
     if (invalidArgAction == 'abort') {
       stop('Aborting rnorm_bounded()')
     } else if (invalidArgAction == 'adjust') {
