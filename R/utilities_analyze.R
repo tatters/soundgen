@@ -323,8 +323,8 @@ getPitchAutocor = function(autoCorrelation,
   }
   # very occasionally HNR can be calculated as 1.01 etc. To prevent this nonsense:
   if (!is.na(HNR) & HNR >= 1) {
-    HNR = 0.9999
-  } # analogous to 40 dB
+    HNR = 1 / HNR  # See Boersma, 1993. Up to soundgen 1.2.1, it was just set to 0.9999 (40 dB)
+  }
 
   return(list(pitchAutocor_array = pitchAutocor_array,
               HNR = HNR))
