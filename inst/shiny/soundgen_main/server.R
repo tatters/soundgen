@@ -290,7 +290,7 @@ server = function(input, output, session) {
     # pre-syllable aspiration depending on the syllable duration)
     if (myPars$updateDur == TRUE) {
       # doesn't run if updateDur == FALSE (set to F in reset_all())
-      myPars$noiseAnchors$time = scaleNoiseAnchors(
+      myPars$noiseAnchors$time = soundgen:::scaleNoiseAnchors(
         noiseTime = myPars$noiseAnchors$time,
         sylLen_old = myPars$sylDur_previous,
         sylLen_new = input$sylLen

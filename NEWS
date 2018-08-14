@@ -1,4 +1,6 @@
           CHANGES IN SOUNDGEN VERSION 1.2.2 [...date...]
+MINOR:
+  * soundgen_app(): fixed a bug that crashed the app when changing sylLen
 
           CHANGES IN SOUNDGEN VERSION 1.2.1 [04-August-2018]
 
