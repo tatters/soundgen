@@ -1,4 +1,4 @@
-# TODO: calculate intensity in analyze()
+# TODO: calculate intensity in analyze(); oscillogram on dB scale, as in Audacity;
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

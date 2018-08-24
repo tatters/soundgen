@@ -1145,3 +1145,106 @@ wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
   # plot(effect_per_gc, type = 'b')
   return(effect_per_gc)
 }
+
+
+#' Oscillogram dB
+#'
+#' Plots the oscillogram (waveform) of a sound on a logarithmic scale, in dB.
+#' Analogous to "Waveform (dB)" view in Audacity.
+#'
+#' Algorithm: centers and normalizes the sound, then takes a logarithm of the
+#' positive part and a flipped negative part.
+#' @return Returns the input waveform on a dB scale: a centered vector with
+#'   range from `-range` to `range`.
+#' @param x path to a .wav file or a vector of amplitudes with specified
+#'   samplingRate
+#' @param range dynamic range of the oscillogram, dB
+#' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
+#'   numeric vector, rather than a .wav file)
+#' @param plot if TRUE, plots the oscillogram; if FALSE, simply returns the
+#'   log-transformed waveform
+#' @param xlab,ylab axis labels
+#' @param bty box type (see `?par`)
+#' @param midline if TRUE, draws a line at 0 dB
+#' @param ... Other graphical parameters passed on to `plot()`
+#' @export
+#' @examples
+#' sound = sin(1:2000/10) *
+#'         getSmoothContour(anchors = c(1, .01, .5), len = 2000)
+#'
+#' # Oscillogram on a linear scale
+#' plot(sound, type = 'l')
+#' # or, for fancy plotting options: seewave::oscillo(sound, f = 1000)
+#'
+#' # Oscillogram on a dB scale
+#' o = osc_dB(sound)
+#'
+#' # Time in ms if samplingRate is specified
+#' o = osc_dB(sound, samplingRate = 5000)
+#'
+#' # Assuming that the waveform can range up to 50 instead of 1
+#' o = osc_dB(sound, maxAmpl = 50)
+#'
+#' # Embellish and customize the plot
+#' o = osc_dB(sound, samplingRate = 1000, midline = FALSE,
+#'            main = 'My waveform', col = 'blue')
+#' abline(0, 0, col = 'orange', lty = 3)
+osc_dB = function(x,
+                  range = 60,
+                  maxAmpl = NULL,
+                  samplingRate = NULL,
+                  plot = TRUE,
+                  xlab = NULL,
+                  ylab = 'dB',
+                  bty = 'n',
+                  midline = TRUE,
+                  ...) {
+  # import a sound
+  if (class(x) == 'character') {
+    sound = tuneR::readWave(x)
+    samplingRate = sound@samp.rate
+    sound = sound@left
+  } else if (class(x) == 'numeric' & length(x) > 1) {
+    sound = x
+  }
+
+  # get original range
+  if (!is.null(maxAmpl)) {
+    mult = diff(range(sound)) / 2 / maxAmpl
+  } else {
+    mult = 1  # assume max loudness
+  }
+
+  # normalize to range from -1 to +1, unless it is quieter than maxAmpl
+  s1 = sound - mean(sound)
+  s1 = s1 / max(abs(s1)) * mult
+
+  # indices of values above/below midline
+  floor = 10^(-range / 20)  # treat smaller values as 0 (beyond dynamic range)
+  zero = which(abs(s1) < floor)
+  pos = which(s1 > floor)
+  neg = which(s1 < -floor)
+
+  # log-transform
+  sound[pos] = 20 * log10(s1[pos]) + range
+  sound[neg] = -20 * log10(-s1[neg]) - range
+  sound[zero] = 0
+
+  # plot
+  if (plot) {
+    if (!is.null(samplingRate)) {
+      time = 1:length(sound) / samplingRate * 1000
+      if (is.null(xlab)) xlab = 'Time, ms'
+    } else {
+      time = 1:length(sound)
+      if (is.null(xlab)) xlab = 'Time, points'
+    }
+    # plot(time, sound, type = 'l', xlab = xlab, ylab = ylab, ...)
+    plot(time, sound, type = 'l', xlab = xlab, ylab = ylab,
+         bty = bty, yaxt = 'n', ylim = c(-range, range), ...)
+    axis(side = 2, at = seq(0, range, by = 10))
+    if (midline) abline(a = 0, b = 0, lty = 2, col = 'gray70')
+  }
+
+  return(sound)
+}
