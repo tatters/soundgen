@@ -4,7 +4,7 @@
 \alias{osc_dB}
 \title{Oscillogram dB}
 \usage{
-osc_dB(x, dynamicRange = 60, maxAmpl = NULL, samplingRate = NULL,
+osc_dB(x, dynamicRange = 80, maxAmpl = NULL, samplingRate = NULL,
   returnWave = FALSE, plot = TRUE, xlab = NULL, ylab = "dB",
   bty = "n", midline = TRUE, ...)
 }
@@ -65,5 +65,5 @@ osc_dB(sound, maxAmpl = 50)
 # Embellish and customize the plot
 o = osc_dB(sound, samplingRate = 1000, midline = FALSE,
            main = 'My waveform', col = 'blue')
-abline(0, 0, col = 'orange', lty = 3)
+abline(h = 0, col = 'orange', lty = 3)
 }

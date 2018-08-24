@@ -1,4 +1,4 @@
-# TODO: calculate intensity in analyze(); oscillogram on dB scale, as in Audacity;
+# TODO: calculate intensity in analyze(); consider normalizing noise amplitude so it's exactly like noiseAnchors regardless of formantsNoise;
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

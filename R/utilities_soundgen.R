@@ -1191,9 +1191,9 @@ wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
 #' # Embellish and customize the plot
 #' o = osc_dB(sound, samplingRate = 1000, midline = FALSE,
 #'            main = 'My waveform', col = 'blue')
-#' abline(0, 0, col = 'orange', lty = 3)
+#' abline(h = 0, col = 'orange', lty = 3)
 osc_dB = function(x,
-                  dynamicRange = 60,
+                  dynamicRange = 80,
                   maxAmpl = NULL,
                   samplingRate = NULL,
                   returnWave = FALSE,
@@ -1247,7 +1247,7 @@ osc_dB = function(x,
     plot(time, sound, type = 'l', xlab = xlab, ylab = ylab,
          bty = bty, yaxt = 'n', ylim = c(-dynamicRange, dynamicRange), ...)
     axis(side = 2, at = seq(0, dynamicRange, by = 10))
-    if (midline) abline(a = 0, b = 0, lty = 2, col = 'gray70')
+    if (midline) abline(h = 0, lty = 2, col = 'gray70')
   }
 
   if (returnWave) return(sound)
