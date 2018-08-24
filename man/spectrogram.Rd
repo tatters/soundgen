@@ -9,8 +9,9 @@ spectrogram(x, samplingRate = NULL, windowLength = 50, step = NULL,
   smoothTime = 0, qTime = 0, percentNoise = 10, noiseReduction = 0,
   contrast = 0.2, brightness = 0, method = c("spectrum",
   "spectralDerivative")[1], output = c("none", "original", "processed")[1],
-  ylim = NULL, plot = TRUE, osc = FALSE, colorTheme = c("bw", "seewave",
-  "...")[1], xlab = "Time, ms", ylab = "Frequency, KHz", main = "",
+  ylim = NULL, plot = TRUE, osc = FALSE, osc_dB = FALSE,
+  heights = c(3, 1), colorTheme = c("bw", "seewave", "...")[1],
+  xlab = "Time, ms", ylab = "Frequency, KHz", main = "",
   frameBank = NULL, duration = NULL, ...)
 }
 \arguments{
@@ -68,6 +69,12 @@ spectrogram ('original'), or denoised and/or smoothed spectrogram
 
 \item{osc}{should an oscillogram be shown under the spectrogram? TRUE / FALSE}
 
+\item{osc_dB}{if TRUE, the oscillogram is displayed on a dB scale. See
+\code{\link{osc_dB}} for details}
+
+\item{heights}{a vector of length two specifying the relative height of the
+spectrogram and the oscillogram}
+
 \item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
 or any palette from \code{\link[grDevices]{palette}} such as
 'heat.colors', 'cm.colors', etc}
@@ -106,6 +113,11 @@ spectrogram(sound, samplingRate = 16000)
 \dontrun{
 # add an oscillogram
 spectrogram(sound, samplingRate = 16000, osc = TRUE)
+
+# oscillogram on a dB scale, same height as spectrogram
+spectrogram(sound, samplingRate = 16000,
+            osc = TRUE, osc_dB = TRUE, heights = c(1, 1))
+
 # broad-band instead of narrow-band
 spectrogram(sound, samplingRate = 16000, windowLength = 5)
 
