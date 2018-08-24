@@ -1154,15 +1154,18 @@ wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
 #'
 #' Algorithm: centers and normalizes the sound, then takes a logarithm of the
 #' positive part and a flipped negative part.
-#' @return Returns the input waveform on a dB scale: a centered vector with
+#' @return Returns the input waveform on a dB scale: a vector with
 #'   range from `-range` to `range`.
-#' @param x path to a .wav file or a vector of amplitudes with specified
-#'   samplingRate
-#' @param range dynamic range of the oscillogram, dB
+#' @param x path to a .wav file or a CENTERED (mean ~= 0) vector of amplitudes
+#'   with specified samplingRate
+#' @param dynamicRange dynamic range of the oscillogram, dB
+#' @param maxAmpl the maximum theoretically possible value indicating on which
+#'   scale the sound is coded: 1 if the range is -1 to +1, 2^15 for 16-bit wav
+#'   files, etc
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
 #'   numeric vector, rather than a .wav file)
-#' @param plot if TRUE, plots the oscillogram; if FALSE, simply returns the
-#'   log-transformed waveform
+#' @param returnWave if TRUE, returns a log-transformed waveform as a numeric vector
+#' @param plot if TRUE, plots the oscillogram
 #' @param xlab,ylab axis labels
 #' @param bty box type (see `?par`)
 #' @param midline if TRUE, draws a line at 0 dB
@@ -1177,22 +1180,23 @@ wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
 #' # or, for fancy plotting options: seewave::oscillo(sound, f = 1000)
 #'
 #' # Oscillogram on a dB scale
-#' o = osc_dB(sound)
+#' osc_dB(sound)
 #'
 #' # Time in ms if samplingRate is specified
-#' o = osc_dB(sound, samplingRate = 5000)
+#' osc_dB(sound, samplingRate = 5000)
 #'
 #' # Assuming that the waveform can range up to 50 instead of 1
-#' o = osc_dB(sound, maxAmpl = 50)
+#' osc_dB(sound, maxAmpl = 50)
 #'
 #' # Embellish and customize the plot
 #' o = osc_dB(sound, samplingRate = 1000, midline = FALSE,
 #'            main = 'My waveform', col = 'blue')
 #' abline(0, 0, col = 'orange', lty = 3)
 osc_dB = function(x,
-                  range = 60,
+                  dynamicRange = 60,
                   maxAmpl = NULL,
                   samplingRate = NULL,
+                  returnWave = FALSE,
                   plot = TRUE,
                   xlab = NULL,
                   ylab = 'dB',
@@ -1201,10 +1205,11 @@ osc_dB = function(x,
                   ...) {
   # import a sound
   if (class(x) == 'character') {
-    sound = tuneR::readWave(x)
-    samplingRate = sound@samp.rate
-    sound = sound@left
-  } else if (class(x) == 'numeric' & length(x) > 1) {
+    sound_wav = tuneR::readWave(x)
+    samplingRate = sound_wav@samp.rate
+    sound = sound_wav@left
+    if (is.null(maxAmpl)) maxAmpl = 2^(sound_wav@bit - 1)
+  } else if (length(x) > 1 && class(x) %in% c('numeric', 'integer')) {
     sound = x
   }
 
@@ -1216,18 +1221,17 @@ osc_dB = function(x,
   }
 
   # normalize to range from -1 to +1, unless it is quieter than maxAmpl
-  s1 = sound - mean(sound)
-  s1 = s1 / max(abs(s1)) * mult
+  s1 = sound / max(abs(sound)) * mult
 
   # indices of values above/below midline
-  floor = 10^(-range / 20)  # treat smaller values as 0 (beyond dynamic range)
+  floor = 10^(-dynamicRange / 20)  # treat smaller values as 0 (beyond dynamic range)
   zero = which(abs(s1) < floor)
   pos = which(s1 > floor)
   neg = which(s1 < -floor)
 
   # log-transform
-  sound[pos] = 20 * log10(s1[pos]) + range
-  sound[neg] = -20 * log10(-s1[neg]) - range
+  sound[pos] = 20 * log10(s1[pos]) + dynamicRange
+  sound[neg] = -20 * log10(-s1[neg]) - dynamicRange
   sound[zero] = 0
 
   # plot
@@ -1241,10 +1245,10 @@ osc_dB = function(x,
     }
     # plot(time, sound, type = 'l', xlab = xlab, ylab = ylab, ...)
     plot(time, sound, type = 'l', xlab = xlab, ylab = ylab,
-         bty = bty, yaxt = 'n', ylim = c(-range, range), ...)
-    axis(side = 2, at = seq(0, range, by = 10))
+         bty = bty, yaxt = 'n', ylim = c(-dynamicRange, dynamicRange), ...)
+    axis(side = 2, at = seq(0, dynamicRange, by = 10))
     if (midline) abline(a = 0, b = 0, lty = 2, col = 'gray70')
   }
 
-  return(sound)
+  if (returnWave) return(sound)
 }

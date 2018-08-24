@@ -10,6 +10,8 @@
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than a .wav file)
+#' @param dynamicRange dynamic range, dB. All values with power more than one
+#'   dynamicRange under maximum are treated as zero
 #' @param windowLength length of FFT window, ms
 #' @param overlap overlap between successive FFT frames, \%
 #' @param step you can override \code{overlap} by specifying FFT step, ms
@@ -70,6 +72,10 @@
 #' spectrogram(sound, samplingRate = 16000)
 #'
 #' \dontrun{
+#' # change dynamic range
+#' spectrogram(sound, samplingRate = 16000, dynamicRange = 40)
+#' spectrogram(sound, samplingRate = 16000, dynamicRange = 120)
+#'
 #' # add an oscillogram
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #'
@@ -102,6 +108,7 @@
 #' }
 spectrogram = function(x,
                        samplingRate = NULL,
+                       dynamicRange = 80,
                        windowLength = 50,
                        step = NULL,
                        overlap = 70,
@@ -139,6 +146,7 @@ spectrogram = function(x,
     samplingRate = sound_wav@samp.rate
     windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
     sound = sound_wav@left
+    maxAmpl = 2^(sound_wav@bit - 1)
     if (windowLength_points > (length(sound) / 2)) {
       windowLength_points = floor(length(sound) / 4) * 2
       step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
@@ -161,6 +169,7 @@ spectrogram = function(x,
       stop ('Please specify samplingRate, eg 44100')
     } else {
       sound = x
+      maxAmpl = max(abs(sound))
       duration = length(sound) / samplingRate
       windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
       if (windowLength_points > (length(sound) / 2)) {
@@ -225,13 +234,17 @@ spectrogram = function(x,
 
   if (method == 'spectralDerivative') {
     # first derivative of spectrum by time
-    dZ_dt = cbind (rep(0, nrow(Z)), t(apply(Z, 1, diff)))
+    dZ_dt = cbind(rep(0, nrow(Z)), t(apply(Z, 1, diff)))
     # first derivative of spectrum by frequency
-    dZ_df = rbind (rep(0, ncol(Z)), apply(Z, 2, diff))
+    dZ_df = rbind(rep(0, ncol(Z)), apply(Z, 2, diff))
     Z1 = sqrt(dZ_dt ^ 2 + dZ_df ^ 2)  # length of gradient vector
   } else {
     Z1 = Z # this is our raw spectrogram
   }
+
+  # set to zero under dynamic range
+  threshold = max(Z1) / 10^(dynamicRange/20)
+  Z1[Z1 < threshold] = 0
 
   # removing noise. NB: the order of these operations is crucial,
   # don't change it!
@@ -301,19 +314,29 @@ spectrogram = function(x,
   if (plot) {
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     if (osc) {
-      if (osc_dB) sound = osc_dB(sound, plot = FALSE)
+      if (osc_dB) {
+        sound = osc_dB(sound,
+                       dynamicRange = dynamicRange,
+                       maxAmpl = maxAmpl,
+                       plot = FALSE,
+                       returnWave = TRUE)
+        ylim_osc = c(-dynamicRange, dynamicRange)
+      } else {
+        ylim_osc = c(-maxAmpl, maxAmpl)
+      }
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
       par(mar = c(5.1, 4.1, 0, 2.1), xaxt = 's', yaxt = 's')
       plot(
         seq(1, duration * 1000, length.out = length(sound)),
         sound,
         type = "l",
+        ylim = ylim_osc,
         axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
         xlab = xlab, ylab = '', main = '', ...)
       box()
       axis(side = 1)
       if (osc_dB) {
-        axis(side = 2, at = seq(0, 60, by = 10))
+        axis(side = 4, at = seq(0, dynamicRange, by = 10))
         mtext("dB", side = 2, line = 3)
       }
       abline(h = 0, lty = 2)

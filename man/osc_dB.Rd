@@ -4,20 +4,26 @@
 \alias{osc_dB}
 \title{Oscillogram dB}
 \usage{
-osc_dB(x, range = 60, maxAmpl = NULL, samplingRate = NULL, plot = TRUE,
-  xlab = NULL, ylab = "dB", bty = "n", midline = TRUE, ...)
+osc_dB(x, dynamicRange = 60, maxAmpl = NULL, samplingRate = NULL,
+  returnWave = FALSE, plot = TRUE, xlab = NULL, ylab = "dB",
+  bty = "n", midline = TRUE, ...)
 }
 \arguments{
-\item{x}{path to a .wav file or a vector of amplitudes with specified
-samplingRate}
+\item{x}{path to a .wav file or a CENTERED (mean ~= 0) vector of amplitudes
+with specified samplingRate}
 
-\item{range}{dynamic range of the oscillogram, dB}
+\item{dynamicRange}{dynamic range of the oscillogram, dB}
+
+\item{maxAmpl}{the maximum theoretically possible value indicating on which
+scale the sound is coded: 1 if the range is -1 to +1, 2^15 for 16-bit wav
+files, etc}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than a .wav file)}
 
-\item{plot}{if TRUE, plots the oscillogram; if FALSE, simply returns the
-log-transformed waveform}
+\item{returnWave}{if TRUE, returns a log-transformed waveform as a numeric vector}
+
+\item{plot}{if TRUE, plots the oscillogram}
 
 \item{xlab, ylab}{axis labels}
 
@@ -28,7 +34,7 @@ log-transformed waveform}
 \item{...}{Other graphical parameters passed on to `plot()`}
 }
 \value{
-Returns the input waveform on a dB scale: a centered vector with
+Returns the input waveform on a dB scale: a vector with
   range from `-range` to `range`.
 }
 \description{
@@ -48,13 +54,13 @@ plot(sound, type = 'l')
 # or, for fancy plotting options: seewave::oscillo(sound, f = 1000)
 
 # Oscillogram on a dB scale
-o = osc_dB(sound)
+osc_dB(sound)
 
 # Time in ms if samplingRate is specified
-o = osc_dB(sound, samplingRate = 5000)
+osc_dB(sound, samplingRate = 5000)
 
 # Assuming that the waveform can range up to 50 instead of 1
-o = osc_dB(sound, maxAmpl = 50)
+osc_dB(sound, maxAmpl = 50)
 
 # Embellish and customize the plot
 o = osc_dB(sound, samplingRate = 1000, midline = FALSE,

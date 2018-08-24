@@ -4,8 +4,8 @@
 \alias{spectrogram}
 \title{Spectrogram}
 \usage{
-spectrogram(x, samplingRate = NULL, windowLength = 50, step = NULL,
-  overlap = 70, wn = "gaussian", zp = 0, smoothFreq = 0,
+spectrogram(x, samplingRate = NULL, dynamicRange = 80, windowLength = 50,
+  step = NULL, overlap = 70, wn = "gaussian", zp = 0, smoothFreq = 0,
   smoothTime = 0, qTime = 0, percentNoise = 10, noiseReduction = 0,
   contrast = 0.2, brightness = 0, method = c("spectrum",
   "spectralDerivative")[1], output = c("none", "original", "processed")[1],
@@ -20,6 +20,9 @@ samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
+
+\item{dynamicRange}{dynamic range, dB. All values with power more than one
+dynamicRange under maximum are treated as zero}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -111,6 +114,10 @@ sound = soundgen(sylLen = 1000, temperature = 0.001, noiseAnchors = list(
 spectrogram(sound, samplingRate = 16000)
 
 \dontrun{
+# change dynamic range
+spectrogram(sound, samplingRate = 16000, dynamicRange = 40)
+spectrogram(sound, samplingRate = 16000, dynamicRange = 120)
+
 # add an oscillogram
 spectrogram(sound, samplingRate = 16000, osc = TRUE)
 

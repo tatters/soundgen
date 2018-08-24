@@ -1,10 +1,11 @@
           CHANGES IN SOUNDGEN VERSION 1.2.2 [...date...]
 
-NEW FUNCTION:
+NEW FUNCTIONS:
   * osc_dB(): draws an oscillogram (waveform) on a log-tranformed, dB scale. Analogous to the "Waveform (dB)" view in Audacity
 
 MINOR:
-  * soundgen_app(): fixed a bug that crashed the app when changing sylLen
+  * spectrogram(): added dynamic range and support for plotting the oscillogram on a dB scale
+  * soundgen_app(): fixed a bug introduced in 1.2.1 that crashed the app when changing sylLen
 
 
           CHANGES IN SOUNDGEN VERSION 1.2.1 [04-August-2018]
