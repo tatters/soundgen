@@ -332,6 +332,23 @@ generateHarmonics = function(pitch,
   gc = getGlottalCycles(pitch, samplingRate = pitchSamplingRate)  # our "glottal cycles"
   pitch_per_gc = pitch[gc]
   nGC = length(pitch_per_gc)
+  # to avoid recalculating gc for each contour like jitterDep,
+  # we can upsample them to length nGC and just take gc indices
+  # scaled to length nGC instead of length(pitch)
+  gc1 = ceiling(gc * nGC / length(pitch))
+
+  # vectorized par-s should be converted from ms to gc scale
+  update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
+                  'rolloffParabHarm', 'rolloffKHz',
+                  'jitterDep', 'jitterLen', 'shimmerDep', 'shimmerLen',
+                  'subFreq', 'subDep', 'vibratoFreq', 'vibratoDep')
+  for (p in update_pars) {
+    old = get(p)
+    if (length(old) > 1) {
+      new = spline(old, n = nGC)$y[gc1]
+      assign(p, new)
+    }
+  }
 
   # generate a short amplitude contour to adjust rolloff per glottal cycle
   if (!is.na(amplAnchors) && any(amplAnchors$value != 0)) {
@@ -412,7 +429,7 @@ generateHarmonics = function(pitch,
       1.2 / (1 + exp(-.008 * (length(pitch_per_gc) - 10))) + .6
     rw_range = temperature * pitchDriftDep +
       length(pitch_per_gc) / 1000 / 12
-    drift = getRandomWalk (
+    drift = getRandomWalk(
       len = length(pitch_per_gc),
       rw_range = rw_range,
       rw_smoothing = rw_smoothing,
@@ -473,8 +490,6 @@ generateHarmonics = function(pitch,
   # add vocal fry (subharmonics)
   if (!synthesize_per_gc &&  # can't add subharmonics if doing one gc at a time (one f0 period)
       any(subDep > 0) & any(vocalFry_on)) {
-    if (length(subFreq) > 1) subFreq = getSmoothContour(subFreq, len = nGC)
-    if (length(subDep) > 1) subDep = getSmoothContour(subDep, len = nGC, valueFloor = .001)
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,

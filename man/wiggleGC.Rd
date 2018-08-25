@@ -29,7 +29,7 @@ Internal soundgen function
 }
 \details{
 Helper function for preparing a vector of multiplication factors for adding
-jitter and shimmer per glottal cycle. Generates a random anchors for each
+jitter and shimmer per glottal cycle. Generates random anchors for each
 jitter/shimmer period and draws a smooth contour between them by spline
 interpolation.
 }

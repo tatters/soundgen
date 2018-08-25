@@ -658,10 +658,10 @@ s = soundgen(
   temperature = .001, throwaway = -120,             
   samplingRate = 22050, pitchSamplingRate = 22050,  
   # other settings
-  sylLen = 1800, pitchAnchors = c(240, 200),
+  sylLen = 1000, pitchAnchors = c(240, 200),
   rolloff = c(-20, -18, -23, -28), vibratoDep = .2,
   formants = c(800, 1400, 2500, 3700, 5000, 6800),
-  noiseAnchors = data.frame(time = c(0, 640, 1800, 2000), 
+  noiseAnchors = data.frame(time = c(0, 340, 900, 1000), 
                             value = c(-60, -45, -60, -80) + 5),
   rolloffNoise = -8,
   mouthAnchors = c(.55, .5, .45, .6),
@@ -670,6 +670,34 @@ s = soundgen(
 ```
 
 *TIP For analytical-precision work, set `pitchSamplingRate` to the same (high) value as `samplingRate`, say 22050. By default, `pitchSamplingRate` is much lower to speed up the synthesis, but this way sound duration can vary considerably depending on nonliear regimes, especially in sounds like screams with highly variable pitch.*
+
+In the example above `jitterDep = c(0, 0, 1.5, .5)` means that there is no jitter roughly in the first half of the voiced fragment, then a jitter of 1.5 semitones, and then .5 semitones towards the end. To control jitter more precisely, in the same way as pitch is controlled with `pitchAnchors`, `jitterDep` can be created with `getSmoothContours()`. The same goes for all vectorized parameters: jitterLen, shimmerDep, shimmerLen, subFreq, subDep, rolloff settings, etc. For example, to turn on jitter abruptly at 300 ms and turn it off again at 500 ms, and to have shimmer only between 600 and 800 ms, we can modify the code as follows (it still won't be precise to a millisecond):
+```{r fig.show = "hold", fig.width = 5, fig.height = 5}
+s = soundgen(
+  # nonlinear settings
+  nonlinBalance = 100, subDep = 0,  
+  jitterDep = getSmoothContour(anchors = data.frame(
+    time = c(0, 300, 301, 500, 501, 1000), value = c(0, 0, 1.5, 1.5, 0, 0)
+  ), len = 100),   # any reasonable length will do
+  shimmerDep = getSmoothContour(anchors = data.frame(
+    time = c(0, 600, 601, 800, 801, 1000), value = c(0, 0, 40, 40, 0, 0)
+  ), len = 100),
+  # settings for high precision
+  temperature = .001, throwaway = -120,             
+  samplingRate = 22050, pitchSamplingRate = 22050,  
+  # other settings
+  addSilence = 0,  # easier to check timing
+  sylLen = 1000, pitchAnchors = c(240, 200),
+  rolloff = c(-20, -18, -23, -28), vibratoDep = .2,
+  formants = c(800, 1400, 2500, 3700, 5000, 6800),
+  noiseAnchors = data.frame(time = c(0, 340, 900, 1000), 
+                            value = c(-60, -45, -60, -80) + 5),
+  rolloffNoise = -8,
+  mouthAnchors = c(.55, .5, .45, .6),
+  play = playback, plot = TRUE, osc = TRUE, ylim = c(0, 4)
+)
+```
+
 
 ## Unvoiced component (turbulent noise)
 In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. It's strongly recommended to include at least some noise in most vocalizations, if only because it's more natural to have white noise instead of harmonics in the upper part of the spectrum.

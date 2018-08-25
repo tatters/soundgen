@@ -93,7 +93,7 @@ getRolloff = function(pitch_per_gc = c(440),
                       throwaway = -120,
                       samplingRate = 16000,
                       plot = FALSE) {
-  ## In case rolloff pars are dynamic, make them the same length as pitch_per-gc
+  ## In case rolloff pars are dynamic, make them the same length as pitch_per_gc
   nGC = length(pitch_per_gc)
   update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
                   'rolloffParabHarm', 'rolloffParabCeiling', 'rolloffKHz')

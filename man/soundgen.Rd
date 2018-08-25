@@ -158,12 +158,12 @@ opens and closes. If \code{NULL} or \code{NA}, the length is estimated
 based on specified formant frequencies (if any)}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
-dynamically so f0 is always a multiple of subFreq)}
+dynamically so f0 is always a multiple of subFreq) (vectorized)}
 
 \item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
 strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
-strong subharmonics}
+strong subharmonics (vectorized)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}

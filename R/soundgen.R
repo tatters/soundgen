@@ -1,4 +1,4 @@
-# TODO: calculate intensity in analyze(); consider normalizing noise amplitude so it's exactly like noiseAnchors regardless of formantsNoise;
+# TODO: calculate intensity in analyze(); consider normalizing noise amplitude so it's exactly like noiseAnchors regardless of formantsNoise; automatic addition of pitch jumps at high temp (?); all vectorized par-s could accept the data.frame(time = ..., value = ...) format, basically like anchors, which could then be renamed to simply pitch, ampl, etc;
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -111,11 +111,11 @@ NULL
 #'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated
 #'   based on specified formant frequencies (if any)
 #' @param subFreq target frequency of subharmonics, Hz (lower than f0, adjusted
-#'   dynamically so f0 is always a multiple of subFreq)
+#'   dynamically so f0 is always a multiple of subFreq) (vectorized)
 #' @param subDep the width of subharmonic band, Hz. Regulates how quickly the
 #'   strength of subharmonics fades as they move away from harmonics in f0
 #'   stack. Low values produce narrow sidebands, high values produce uniformly
-#'   strong subharmonics
+#'   strong subharmonics (vectorized)
 #' @param shortestEpoch minimum duration of each epoch with unchanging
 #'   subharmonics regime, in ms
 #' @param amDep amplitude modulation depth, \%. 0: no change; 100: amplitude
@@ -438,8 +438,10 @@ soundgen = function(repeatBout = 1,
   if (creakyBreathy < 0) {
     # for creaky voice
     nonlinBalance = min(100, nonlinBalance - creakyBreathy * 100)
-    jitterDep = max(0, jitterDep - creakyBreathy / 2)
-    shimmerDep = max(0, shimmerDep - creakyBreathy * 5)
+    jitterDep = jitterDep - creakyBreathy / 2
+    jitterDep[jitterDep < 0] = 0
+    shimmerDep = shimmerDep - creakyBreathy * 5
+    shimmerDep[shimmerDep < 0] = 0
     subDep = subDep * 2 ^ (-creakyBreathy)
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing

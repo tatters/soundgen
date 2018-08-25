@@ -106,12 +106,12 @@ effect amplitude in the middle of a sound)}
 subharmonics regime, in ms}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
-dynamically so f0 is always a multiple of subFreq)}
+dynamically so f0 is always a multiple of subFreq) (vectorized)}
 
 \item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
 strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
-strong subharmonics}
+strong subharmonics (vectorized)}
 
 \item{amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
 specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}

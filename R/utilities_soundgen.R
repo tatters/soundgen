@@ -1090,7 +1090,7 @@ scaleNoiseAnchors = function(noiseTime, sylLen_old, sylLen_new) {
 #' Internal soundgen function
 #'
 #' Helper function for preparing a vector of multiplication factors for adding
-#' jitter and shimmer per glottal cycle. Generates a random anchors for each
+#' jitter and shimmer per glottal cycle. Generates random anchors for each
 #' jitter/shimmer period and draws a smooth contour between them by spline
 #' interpolation.
 #' @param dep a vector of any length specifying the strengh of applied effect as
@@ -1119,8 +1119,8 @@ scaleNoiseAnchors = function(noiseTime, sylLen_old, sylLen_new) {
 #'               rw = rep(1, 100), effect_on = rep(1, 100)),
 #'      type = 'b')
 wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
-  if (length(dep) > 1) dep = getSmoothContour(dep, len = nGC)
-  if (length(len) > 1) len = getSmoothContour(len, len = nGC)
+  # if (length(dep) > 1) dep = getSmoothContour(dep, len = nGC)
+  # if (length(len) > 1) len = getSmoothContour(len, len = nGC)
   ratio = pitch_per_gc * len / 1000 # the number of gc that make
   #   up one period of effect (vector of length nGC)
   idx = 1
@@ -1132,11 +1132,12 @@ wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
   idx = round(idx)
   idx = idx[idx <= nGC]
   idx = unique(idx)  # pitch for these gc will be wiggled
+  dep_idx = getSmoothContour(dep, len = length(idx))
 
   effect = 2 ^ (rnorm(
     n = length(idx),
     mean = 0,
-    sd = dep
+    sd = dep_idx
   ) * rw[idx] * effect_on[idx])
   # plot(effect, type = 'b')
 
