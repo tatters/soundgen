@@ -337,7 +337,7 @@ generateHarmonics = function(pitch,
   # scaled to length nGC instead of length(pitch)
   gc1 = ceiling(gc * nGC / length(pitch))
 
-  # vectorized par-s should be converted from ms to gc scale
+  # vectorized par-s should be upsampled and converted from ms to gc scale
   update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
                   'rolloffParabHarm', 'rolloffKHz',
                   'jitterDep', 'jitterLen', 'shimmerDep', 'shimmerLen',
@@ -345,7 +345,11 @@ generateHarmonics = function(pitch,
   for (p in update_pars) {
     old = get(p)
     if (length(old) > 1) {
-      new = spline(old, n = nGC)$y[gc1]
+      new = getSmoothContour(
+        anchors = old,
+        len = nGC,
+        valueFloor = permittedValues[p, 'low'],
+        valueCeiling = permittedValues[p, 'high'])[gc1]
       assign(p, new)
     }
   }

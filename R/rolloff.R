@@ -74,11 +74,20 @@
 #'                      rolloff = c(-12, -18, -24), plot = TRUE)
 #' rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
 #'                     rolloffParabHarm = 1:5, plot = TRUE)
+#'
 #' \dontrun{
-#' # only rolloff for the first glottal cycle is plotted, but the sound varies:
+#' # Note: getRolloff() is called internally by soundgen()
+#' # using the data.frame format for all vectorized parameters.
+#' # Compare:
 #' s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
-#'               rolloff = c(-12, -24, -2), plot = TRUE)
+#'               rolloff = c(-24, -2, -18), plot = TRUE)
 #' s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
+#'               rolloff = data.frame(time = c(0, .2, 1),
+#'                                    value = c(-24, -2, -18)),
+#'               plot = TRUE)
+#'
+#' # Also works for rolloffOct, rolloffParab, etc:
+#' s3 = soundgen(sylLen = 1000, pitchAnchors = 250,
 #'              rolloffParab = 20, rolloffParabHarm = 1:15, plot = TRUE)
 #' }
 getRolloff = function(pitch_per_gc = c(440),
@@ -93,23 +102,50 @@ getRolloff = function(pitch_per_gc = c(440),
                       throwaway = -120,
                       samplingRate = 16000,
                       plot = FALSE) {
-  ## In case rolloff pars are dynamic, make them the same length as pitch_per_gc
+  ## Convert rolloff pars from df to a single number (if static)
+  #  or to a vector of length nGC (if dynamic)
   nGC = length(pitch_per_gc)
   update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
-                  'rolloffParabHarm', 'rolloffParabCeiling', 'rolloffKHz')
-  max_length = max(sapply(update_pars, function(x) length(get(x))))
+                  'rolloffParabHarm', 'rolloffKHz')
+
+  # if any of the par-s have more values than gc (unlikely), upsample pitch
+  # NB: for numeric par values only, since soundgen() uses dataframes,
+  # and we do NOT want to mess with pitch values when getRolloff()
+  # is called internally by soundgen()
+  max_length = max(sapply(update_pars, function(x) {
+    if (is.numeric(get(x))) length(get(x)) else 1
+  }))
   if (max_length > nGC) {
     pitch_per_gc = spline(pitch_per_gc, n = max_length)$y
     nGC = length(pitch_per_gc)
   }
+
+  # make all par-s vectors of length 1 or nGC
   for (p in update_pars) {
     old = get(p)
-    if (length(old) > 1 && length(old) != nGC) {
-      new = spline(old, n = nGC)$y
-      assign(p, new)
+    if (is.list(old)) {  # par is data.frame(time = ..., value = ...)
+      if (length(unique(old$value)) > 1 &&
+          nrow(old) != nGC) {
+        # if not all values are the same and the length is off, upsample them
+        values_upsampled = getSmoothContour(
+          anchors = old, len = nGC,
+          valueFloor = permittedValues[p, 'low'],
+          valueCeiling = permittedValues[p, 'high'])
+        assign(p, values_upsampled)
+      } else {
+        assign(p, unique(old$value))  # just one number
+      }
+    } else {             # par is numeric
+      if (length(old) != nGC) {
+        new = spline(old, n = nGC)$y
+        assign(p, new)
+      }
     }
   }
   rolloffParabHarm = round(rolloffParabHarm)
+  if (is.numeric(rolloffParabCeiling)) {
+    rolloffParabCeiling = spline(rolloffParabCeiling, n = nGC)$y
+  }
 
   ## Exponential decay
   deltas = matrix(0, nrow = nHarmonics, ncol = nGC)
@@ -137,9 +173,6 @@ getRolloff = function(pitch_per_gc = c(440),
       rolloffParabHarm = round(rolloffParabCeiling / pitch_per_gc)  # vector of
       # length pitch_per_gc specifying the number of harmonics whose amplitude
       # is to be adjusted
-    } else if (length(rolloffParabHarm) < ncol(r)) {
-      rolloffParabHarm = rep(rolloffParabHarm, ncol(r))
-      # if the original length was >1, it was upsampled at the beginning of fun
     }
     rolloffParabHarm[rolloffParabHarm == 2] = 3 # will have the effect of boosting
     # H1 (2 * F0)
@@ -158,8 +191,8 @@ getRolloff = function(pitch_per_gc = c(440),
     # plot (s, myf(s, a, b, c))
 
     # for a single affected harmonic, just change the amplitude of F0
-    r[1, which(rolloffParabHarm < 3)] =
-      r[1, which(rolloffParabHarm < 3)] + rolloffParab
+    ph_idx = which(rolloffParabHarm < 3)
+    r[1, ph_idx] = r[1, ph_idx] + rolloffParab[ph_idx]
     # if at least 2 harmonics are to be adjusted, calculate a parabola
     for (i in which(rolloffParabHarm >= 3)) {
       rowIdx = 1:rolloffParabHarm[i]

@@ -4,7 +4,8 @@
 \alias{wiggleAnchors}
 \title{Randomly modify anchors}
 \usage{
-wiggleAnchors(df, temperature, temp_coef, low, high, wiggleAllRows = FALSE,
+wiggleAnchors(df, temperature = 0.05, temp_coef = 1, low = c(0, -Inf),
+  high = c(1, Inf), wiggleAllRows = FALSE, sd_values = NULL,
   invalidArgAction = c("adjust", "abort", "ignore")[1])
 }
 \arguments{
@@ -25,6 +26,9 @@ bound on "time"=0, low bound on "value"=1}
 
 \item{wiggleAllRows}{should the first and last time anchors be wiggled? (TRUE
 for breathing, FALSE for other anchors)}
+
+\item{sd_values}{(optional) the exact value of sd used by rnorm_bounded in
+columns 2 and beyond}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the
 range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
@@ -49,7 +53,7 @@ soundgen:::wiggleAnchors(df = data.frame(
   wiggleAllRows = FALSE) # pitch
 soundgen:::wiggleAnchors(df = data.frame(time = 0, value = 240),
   temperature = .2, temp_coef = .1, low = c(0, 50), high = c(1, 1000),
-  wiggleAllRows = FALSE) # pitch, sinle anchor
+  wiggleAllRows = FALSE) # pitch, single anchor
 soundgen:::wiggleAnchors(df = data.frame(
   time = c(-100, 100, 600, 900), value = c(-120, -80, 0, -120)),
   temperature = .4, temp_coef = .5, low = c(-Inf, -120), high = c(+Inf, 30),
@@ -68,5 +72,10 @@ for (f in 1:length(formants)) {
   )
 }
 print(formants)
+
+# manually provided sd (temp only affects prob of adding/dropping anchors)
+soundgen:::wiggleAnchors(df = data.frame(
+  time = c(0, .1, .8, 1), value = c(100, 230, 180, 90)),
+  wiggleAllRows = FALSE, sd_values = 5)
 }
 \keyword{internal}

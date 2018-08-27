@@ -484,7 +484,7 @@ reformatAnchors = function(anchors, normalizeTime = TRUE) {
         value = anchors_df[, 1]
       )
     } else if (!identical(colnames(anchors_df), c('time', 'value'))) {
-      warning(paste('Anchors should be either numeric or a dataframe',
+      warning(paste('An anchor should be either numeric or a dataframe',
                     'with two columns: time and value.'))
       return(NA)
     }

@@ -114,11 +114,20 @@ rolloff = getRolloff(pitch_per_gc = c(150, 250),
                      rolloff = c(-12, -18, -24), plot = TRUE)
 rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
                     rolloffParabHarm = 1:5, plot = TRUE)
+
 \dontrun{
-# only rolloff for the first glottal cycle is plotted, but the sound varies:
+# Note: getRolloff() is called internally by soundgen()
+# using the data.frame format for all vectorized parameters.
+# Compare:
 s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
-              rolloff = c(-12, -24, -2), plot = TRUE)
+              rolloff = c(-24, -2, -18), plot = TRUE)
 s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
+              rolloff = data.frame(time = c(0, .2, 1),
+                                   value = c(-24, -2, -18)),
+              plot = TRUE)
+
+# Also works for rolloffOct, rolloffParab, etc:
+s3 = soundgen(sylLen = 1000, pitchAnchors = 250,
              rolloffParab = 20, rolloffParabHarm = 1:15, plot = TRUE)
 }
 }

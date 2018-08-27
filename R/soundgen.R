@@ -305,11 +305,12 @@ soundgen = function(repeatBout = 1,
 
   # check that values of numeric arguments are valid and within range
   for (p in rownames(permittedValues)[1:which(
-    rownames(permittedValues) == 'rolloffNoise'
+    rownames(permittedValues) == 'noiseFlatSpec'
   )]) {
-    if (!is.numeric(get(p)) ||
-        any(get(p) < permittedValues[p, 'low']) ||
-        any(get(p) > permittedValues[p, 'high'])) {
+    gp = try(get(p), silent = TRUE)
+    if (class(gp) != "try-error" && is.numeric(gp) &&
+          (any(gp < permittedValues[p, 'low']) ||
+          any(gp > permittedValues[p, 'high']))) {
       if (invalidArgAction == 'abort') {
         # exit with a warning
         stop(paste(p, 'must be between',
@@ -360,7 +361,11 @@ soundgen = function(repeatBout = 1,
 
   # check and, if necessary, reformat anchors to dataframes
   for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
-                   'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
+                   'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors',
+                   'vibratoFreq', 'vibratoDep', 'subFreq', 'subDep',
+                   'jitterLen', 'jitterDep', 'shimmerLen', 'shimmerDep',
+                   'rolloff', 'rolloffOct', 'rolloffKHz',
+                   'rolloffParab', 'rolloffParabHarm')) {
     assign(anchor, reformatAnchors(get(anchor)))
   }
   if (is.numeric(noiseAnchors) && length(noiseAnchors) > 0) {
@@ -438,11 +443,11 @@ soundgen = function(repeatBout = 1,
   if (creakyBreathy < 0) {
     # for creaky voice
     nonlinBalance = min(100, nonlinBalance - creakyBreathy * 100)
-    jitterDep = jitterDep - creakyBreathy / 2
-    jitterDep[jitterDep < 0] = 0
-    shimmerDep = shimmerDep - creakyBreathy * 5
-    shimmerDep[shimmerDep < 0] = 0
-    subDep = subDep * 2 ^ (-creakyBreathy)
+    jitterDep$value = jitterDep$value - creakyBreathy / 2
+    jitterDep$value[jitterDep$value < 0] = 0
+    shimmerDep$value = shimmerDep$value - creakyBreathy * 5
+    shimmerDe$valuep[shimmerDep$value < 0] = 0
+    subDep$value = subDep$value * 2 ^ (-creakyBreathy)
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
     if (!is.list(noiseAnchors)) {
@@ -461,16 +466,16 @@ soundgen = function(repeatBout = 1,
     }
   }
   # adjust rolloff for both creaky and breathy voices
-  rolloff = rolloff - creakyBreathy * 10
+  rolloff$value = rolloff$value - creakyBreathy * 10
   if (invalidArgAction != 'ignore') {
-    rolloff[rolloff < permittedValues['rolloff', 'low']] =
+    rolloff$value[rolloff$value < permittedValues['rolloff', 'low']] =
       permittedValues['rolloff', 'low']
-    rolloff[rolloff > permittedValues['rolloff', 'high']] =
+    rolloff$value[rolloff$value > permittedValues['rolloff', 'high']] =
       permittedValues['rolloff', 'high']
-    rolloffOct = rolloffOct - creakyBreathy * 5
-    rolloffOct[rolloffOct < permittedValues['rolloffOct', 'low']] =
+    rolloffOct$value = rolloffOct$value - creakyBreathy * 5
+    rolloffOct$value[rolloffOct$value < permittedValues['rolloffOct', 'low']] =
       permittedValues['rolloffOct', 'low']
-    rolloffOct[rolloffOct > permittedValues['rolloffOct', 'high']] =
+    rolloffOct$value[rolloffOct$value > permittedValues['rolloffOct', 'high']] =
       permittedValues['rolloffOct', 'high']
   }
 
@@ -483,16 +488,16 @@ soundgen = function(repeatBout = 1,
   }
 
   # effects of nonlinDep hyper
-  subFreq = 2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50
+  subFreq$value = 2 * (subFreq$value - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50
   # subFreq unchanged for nonlinDep=50%, raised for lower and
   # lowered for higher noise intensities. Max set at 2*subFreq-50, min at 50 Hz.
   # Jitter and shimmer go to 0 if nonlinDep = 0 and double if nonlinDep = 1
   # Illustration: subFreq=250; nonlinDep=0:100; plot(nonlinDep,
   #   2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50, type = 'l')
-  jitterDep = 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep)))
+  jitterDep$value = 2 * jitterDep$value / (1 + exp(.1 * (50 - nonlinDep)))
   # Illustration: jitterDep = 1; nonlinDep = 0:100;
   # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))), type = 'l')
-  shimmerDep = 2 * shimmerDep / (1 + exp(.1 * (50 - nonlinDep)))
+  shimmerDep$value = 2 * shimmerDep$value / (1 + exp(.1 * (50 - nonlinDep)))
   # Illustration: shimmerDep = 1.5; nonlinDep = 0:100;
   # plot(nonlinDep, 2 * shimmerDep / (1 + exp(.1 * (50 - nonlinDep))), type = 'l')
 
@@ -520,17 +525,15 @@ soundgen = function(repeatBout = 1,
   pars_to_vary = c(
     'nonlinDep',
     'attackLen',
-    'jitterDep',
-    'jitterLen',
-    'shimmerDep',
-    'shimmerLen',
-    'rolloff',
-    'rolloffOct',
-    'shortestEpoch',
-    'subFreq',
-    'subDep'
-  )
-  # don't add nonlinBalance, otherwise there is no simple way to remove noise at temp>0
+    'shortestEpoch'
+  )  # don't add nonlinBalance, otherwise there is no simple way to remove noise at temp>0
+  anchors_to_wiggle = c(
+    'pitchAnchors', 'amplAnchors', 'glottisAnchors',
+    'vibratoFreq', 'vibratoDep',
+    'jitterLen', 'jitterDep',
+    'shimmerLen', 'shimmerDep',
+    'rolloff', 'rolloffKHz', 'rolloffOct',
+    'rolloffParab', 'rolloffParabHarm')
   pars_to_round = c('attackLen', 'subFreq', 'subDep')
   pars_list = list(
     'attackLen' = attackLen,
@@ -653,9 +656,10 @@ soundgen = function(repeatBout = 1,
 
       # wiggle par values for this particular syllable, making sure
       #   they are within the permitted range for each variable
-      pitchAnchors_per_syl = pitchAnchors
-      amplAnchors_per_syl = amplAnchors
-      glottisAnchors_per_syl = glottisAnchors
+      for (anchor in anchors_to_wiggle) {
+        newName = paste0(anchor, '_per_syl')
+        assign(newName, get(anchor))  # just create a copy with name _per_syl
+      }
 
       if (temperature > 0) {
         # OR if (temperature>0 & nrow(syllables)>1)
@@ -715,6 +719,23 @@ soundgen = function(repeatBout = 1,
             temp_coef = tempEffects$glottisAnchorsDep,
             invalidArgAction = invalidArgAction
           )
+        }
+        # wiggle anchors except special cases (pitch, ampl, glottis)
+        for (i in 4:length(anchors_to_wiggle)) {
+          anchor = anchors_to_wiggle[i]
+          anchor_per_syl = paste0(anchor, '_per_syl')
+          l = permittedValues[anchor, 'low']
+          h = permittedValues[anchor, 'high']
+          anchor_new = wiggleAnchors(
+            df = get(anchor),
+            temperature = temperature,
+            low = c(0, l),
+            high = c(1, h),
+            temp_coef = tempEffects$specDep,
+            sd_values = (h - l) * temperature * tempEffects$specDep,
+            invalidArgAction = invalidArgAction
+          )
+          assign(anchor_per_syl, anchor_new)
         }
       }
 

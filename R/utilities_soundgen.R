@@ -577,6 +577,8 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'   bound on "time"=0, low bound on "value"=1
 #' @param wiggleAllRows should the first and last time anchors be wiggled? (TRUE
 #'   for breathing, FALSE for other anchors)
+#' @param sd_values (optional) the exact value of sd used by rnorm_bounded in
+#'   columns 2 and beyond
 #' @inheritParams soundgen
 #' @return Modified original dataframe.
 #' @keywords internal
@@ -587,7 +589,7 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'   wiggleAllRows = FALSE) # pitch
 #' soundgen:::wiggleAnchors(df = data.frame(time = 0, value = 240),
 #'   temperature = .2, temp_coef = .1, low = c(0, 50), high = c(1, 1000),
-#'   wiggleAllRows = FALSE) # pitch, sinle anchor
+#'   wiggleAllRows = FALSE) # pitch, single anchor
 #' soundgen:::wiggleAnchors(df = data.frame(
 #'   time = c(-100, 100, 600, 900), value = c(-120, -80, 0, -120)),
 #'   temperature = .4, temp_coef = .5, low = c(-Inf, -120), high = c(+Inf, 30),
@@ -607,12 +609,18 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'   )
 #' }
 #' print(formants)
+#'
+#' # manually provided sd (temp only affects prob of adding/dropping anchors)
+#' soundgen:::wiggleAnchors(df = data.frame(
+#'   time = c(0, .1, .8, 1), value = c(100, 230, 180, 90)),
+#'   wiggleAllRows = FALSE, sd_values = 5)
 wiggleAnchors = function(df,
-                         temperature,
-                         temp_coef,
-                         low,
-                         high,
+                         temperature = .05,
+                         temp_coef = 1,
+                         low = c(0, -Inf),
+                         high = c(1, Inf),
                          wiggleAllRows = FALSE,
+                         sd_values = NULL,
                          invalidArgAction = c('adjust', 'abort', 'ignore')[1]) {
   if (temperature == 0 | temp_coef == 0) return(df)
   if (any(is.na(df))) return(NA)
@@ -635,7 +643,9 @@ wiggleAnchors = function(df,
       newAnchor = try(rnorm_bounded(
         n = ncol(df) - 1,
         mean = as.numeric(df[1, idx]),
-        sd = as.numeric(df[1, idx] * temperature * temp_coef),
+        sd = ifelse(is.numeric(sd_values),
+                    sd_values,
+                    as.numeric(df[1, idx] * temperature * temp_coef)),
         low = low[idx],
         high = high[idx],
         invalidArgAction = invalidArgAction))
@@ -694,7 +704,9 @@ wiggleAnchors = function(df,
     w = try(rnorm_bounded(
       n = nrow(df),
       mean = as.numeric(df[, i]),
-      sd = as.numeric(ranges[i] * temperature * temp_coef),
+      sd = ifelse(i > 1 && !is.null(sd_values),
+                  sd_values,
+                  as.numeric(ranges[i] * temperature * temp_coef)),
       low = low[i],
       high = high[i],
       roundToInteger = FALSE,
