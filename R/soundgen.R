@@ -20,14 +20,14 @@ NULL
 #' @param sylLen average duration of each syllable, ms
 #' @param pauseLen average duration of pauses between syllables, ms (can be
 #'   negative between bouts: force with invalidArgAction = 'ignore')
-#' @param pitchAnchors a numeric vector of f0 values in Hz or a dataframe
+#' @param pitch, pitchAnchors a numeric vector of f0 values in Hz or a dataframe
 #'   specifying the time (ms or 0 to 1) and value (Hz) of each anchor. These
 #'   anchors are used to create a smooth contour of fundamental frequency f0
 #'   (pitch) within one syllable
-#' @param pitchAnchorsGlobal unlike \code{pitchAnchors}, these anchors are used
+#' @param pitchGlobal,pitchAnchorsGlobal unlike \code{pitch}, these anchors are used
 #'   to create a smooth contour of average f0 across multiple syllables. The
 #'   values are in semitones relative to the existing pitch, i.e. 0 = no change
-#' @param glottisAnchors anchors for specifying the proportion of a glottal
+#' @param glottis,glottisAnchors anchors for specifying the proportion of a glottal
 #'   cycle with closed glottis, % (0 = no modification, 100 = closed phase as
 #'   long as open phase); numeric vector or dataframe specifying time and value
 #' @param temperature hyperparameter for regulating the amount of stochasticity
@@ -123,7 +123,7 @@ NULL
 #' @param amFreq amplitude modulation frequency, Hz (vectorized)
 #' @param amShape amplitude modulation shape (-1 to +1, defaults to 0)
 #'   (vectorized)
-#' @param noiseAnchors a numeric vector of noise amplitudes (throwaway dB = none, 0
+#' @param noise,noiseAnchors a numeric vector of noise amplitudes (throwaway dB = none, 0
 #'   dB = as loud as voiced component) or a dataframe specifying the time (ms)
 #'   and amplitude (dB) of anchors for generating the noise component such as
 #'   aspiration, hissing, etc
@@ -134,12 +134,12 @@ NULL
 #' @param rolloffNoise linear rolloff of the excitation source for the unvoiced
 #'   component, dB/kHz (vectorized)
 #' @param noiseFlatSpec keeps noise spectrum flat to this frequency, Hz
-#' @param mouthAnchors a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
+#' @param mouth,mouthAnchors a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 #'   i.e. no modification) or a dataframe specifying the time (ms) and value of
 #'   mouth opening
-#' @param amplAnchors a numeric vector of amplitude envelope (dB) or a dataframe
+#' @param ampl,amplAnchors a numeric vector of amplitude envelope (dB) or a dataframe
 #'   specifying the time (ms) and value of amplitude anchors (0 = max amplitude)
-#' @param amplAnchorsGlobal a numeric vector of global amplitude envelope
+#' @param amplGlobal,amplAnchorsGlobal a numeric vector of global amplitude envelope
 #'   spanning multiple syllables or a dataframe specifying the time (ms) and
 #'   value (dB) of each anchor; 0 = no change
 #' @param interpol the method of smoothing envelopes based on provided anchors:
@@ -236,10 +236,13 @@ soundgen = function(repeatBout = 1,
                     nSyl = 1,
                     sylLen = 300,
                     pauseLen = 200,
-                    pitchAnchors = data.frame(time = c(0, .1, .9, 1),
-                                              value = c(100, 150, 135, 100)),
-                    pitchAnchorsGlobal = NA,
-                    glottisAnchors = 0,
+                    pitch = data.frame(time = c(0, .1, .9, 1),
+                                      value = c(100, 150, 135, 100)),
+                    pitchAnchors = 'deprecated',
+                    pitchGlobal = NA,
+                    pitchAnchorsGlobal = 'deprecated',
+                    glottis = 0,
+                    glottisAnchors = 'deprecated',
                     temperature = 0.025,
                     tempEffects = list(),
                     maleFemale = 0,
@@ -273,14 +276,18 @@ soundgen = function(repeatBout = 1,
                     amDep = 0,
                     amFreq = 30,
                     amShape = 0,
-                    noiseAnchors = NULL,
+                    noise = NULL,
+                    noiseAnchors = 'deprecated',
                     formantsNoise = NA,
                     rolloffNoise = -4,
                     noiseFlatSpec = 1200,
-                    mouthAnchors = data.frame(time = c(0, 1),
-                                              value = c(.5, .5)),
-                    amplAnchors = NA,
-                    amplAnchorsGlobal = NA,
+                    mouth = data.frame(time = c(0, 1),
+                                       value = c(.5, .5)),
+                    mouthAnchors = 'deprecated',
+                    ampl = NA,
+                    amplAnchors = 'deprecated',
+                    amplGlobal = NA,
+                    amplAnchorsGlobal = 'deprecated',
                     interpol = c('approx', 'spline', 'loess')[3],
                     discontThres = .05,
                     jumpThres = .01,
@@ -298,10 +305,21 @@ soundgen = function(repeatBout = 1,
                     savePath = NA,
                     ...) {
   # deprecated pars
-  # if (!missing(rolloffLip)) {
-  #   lipRad = rolloffLip
-  #   message('rolloffLip is deprecated; use lipRad instead')
-  # }
+  formerAnchors = c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
+                    'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')
+  newAnchors = c('pitch', 'pitchGlobal', 'glottis', 'ampl', 'amplGlobal', 'mouth')
+  for (i in 1:length(formerAnchors)) {
+    p = formerAnchors[i]
+    q = newAnchors[i]
+    # simply missing(noquote(p)) doesn't work, so use do.call
+    if (!do.call(missing, list(noquote(p)))) {
+      # user wrote "pitchAnchors = ..." etc
+      message(paste(p, 'is deprecated; use', q, 'instead'))
+    } else {
+      assign(p, get(q))
+    }
+  }
+
 
   # check that values of numeric arguments are valid and within range
   for (p in rownames(permittedValues)[1:which(

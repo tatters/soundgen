@@ -5,8 +5,10 @@
 \title{Generate a sound}
 \usage{
 soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
-  pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
-  100)), pitchAnchorsGlobal = NA, glottisAnchors = 0, temperature = 0.025,
+  pitch = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135, 100)),
+  pitchAnchors = "deprecated", pitchGlobal = NA,
+  pitchAnchorsGlobal = "deprecated", glottis = 0,
+  glottisAnchors = "deprecated", temperature = 0.025,
   tempEffects = list(), maleFemale = 0, creakyBreathy = 0,
   nonlinBalance = 0, nonlinDep = 50, nonlinRandomWalk = NULL,
   jitterLen = 1, jitterDep = 1, vibratoFreq = 5, vibratoDep = 0,
@@ -16,12 +18,14 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   formants = c(860, 1430, 2900), formantDep = 1, formantDepStoch = 20,
   formantWidth = 1, vocalTract = NA, subFreq = 100, subDep = 100,
   shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
-  noiseAnchors = NULL, formantsNoise = NA, rolloffNoise = -4,
-  noiseFlatSpec = 1200, mouthAnchors = data.frame(time = c(0, 1), value =
-  c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
-  interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
-  jumpThres = 0.01, samplingRate = 16000, windowLength = 50,
-  overlap = 75, addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
+  noise = NULL, noiseAnchors = "deprecated", formantsNoise = NA,
+  rolloffNoise = -4, noiseFlatSpec = 1200, mouth = data.frame(time = c(0,
+  1), value = c(0.5, 0.5)), mouthAnchors = "deprecated", ampl = NA,
+  amplAnchors = "deprecated", amplGlobal = NA,
+  amplAnchorsGlobal = "deprecated", interpol = c("approx", "spline",
+  "loess")[3], discontThres = 0.05, jumpThres = 0.01,
+  samplingRate = 16000, windowLength = 50, overlap = 75,
+  addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
   pitchSamplingRate = 3500, throwaway = -80,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
@@ -37,16 +41,16 @@ formants contours span multiple syllables, but not multiple bouts}
 \item{pauseLen}{average duration of pauses between syllables, ms (can be
 negative between bouts: force with invalidArgAction = 'ignore')}
 
-\item{pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
+\item{pitch, }{pitchAnchors a numeric vector of f0 values in Hz or a dataframe
 specifying the time (ms or 0 to 1) and value (Hz) of each anchor. These
 anchors are used to create a smooth contour of fundamental frequency f0
 (pitch) within one syllable}
 
-\item{pitchAnchorsGlobal}{unlike \code{pitchAnchors}, these anchors are used
+\item{pitchGlobal, pitchAnchorsGlobal}{unlike \code{pitch}, these anchors are used
 to create a smooth contour of average f0 across multiple syllables. The
 values are in semitones relative to the existing pitch, i.e. 0 = no change}
 
-\item{glottisAnchors}{anchors for specifying the proportion of a glottal
+\item{glottis, glottisAnchors}{anchors for specifying the proportion of a glottal
 cycle with closed glottis, % (0 = no modification, 100 = closed phase as
 long as open phase); numeric vector or dataframe specifying time and value}
 
@@ -176,7 +180,7 @@ modulation with amplitude range equal to the dynamic range of the sound}
 \item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0)
 (vectorized)}
 
-\item{noiseAnchors}{a numeric vector of noise amplitudes (throwaway dB = none, 0
+\item{noise, noiseAnchors}{a numeric vector of noise amplitudes (throwaway dB = none, 0
 dB = as loud as voiced component) or a dataframe specifying the time (ms)
 and amplitude (dB) of anchors for generating the noise component such as
 aspiration, hissing, etc}
@@ -191,14 +195,14 @@ component, dB/kHz (vectorized)}
 
 \item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
 
-\item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
+\item{mouth, mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
 i.e. no modification) or a dataframe specifying the time (ms) and value of
 mouth opening}
 
-\item{amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
+\item{ampl, amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
 specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
 
-\item{amplAnchorsGlobal}{a numeric vector of global amplitude envelope
+\item{amplGlobal, amplAnchorsGlobal}{a numeric vector of global amplitude envelope
 spanning multiple syllables or a dataframe specifying the time (ms) and
 value (dB) of each anchor; 0 = no change}
 
