@@ -84,7 +84,15 @@ noise3 = generateNoise(len = samplingRate * .25, noiseAnchors = c(0, -40),
 noise = generateNoise(len = samplingRate * 1.2,
   rolloffNoise = c(0, -12), noiseFlatSpec = 2000, samplingRate = samplingRate)
 # playme(noise, samplingRate = samplingRate)
-# spectrogram(noise, samplingRate)
+# spectrogram(noise, samplingRate, osc = TRUE)
+
+# Similar, but using the dataframe format to specify a more complicated
+# contour for rolloffNoise:
+noise = generateNoise(len = samplingRate * 1.2,
+  rolloffNoise = data.frame(time = c(0, .2, 1), value = c(-12, 0, -12)),
+  noiseFlatSpec = 2000, samplingRate = samplingRate)
+# playme(noise, samplingRate = samplingRate)
+# spectrogram(noise, samplingRate, osc = TRUE)
 
 # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 windowLength_points = 1024

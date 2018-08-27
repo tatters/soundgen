@@ -683,14 +683,26 @@ getSigmoid = function(len,
   # print(c(len, freq))
   if (length(freq) > 1 | length(shape) > 1 | length(spikiness) > 1) {
     # get preliminary frequency contour to estimate how many cycles are needed
-    freqContour_prelim = getSmoothContour(anchors = freq, len = 100, valueFloor = 0.001, method = 'spline')
+    if (length(freq) != len) {
+      freqContour_prelim = getSmoothContour(
+        anchors = freq,
+        len = 100,
+        valueFloor = 0.001,
+        method = 'spline'
+      )
+    } else {
+      freqContour_prelim = freq
+    }
     # plot(freqContour_prelim, type = 'l')
     n = ceiling(len / samplingRate / mean(1 / freqContour_prelim))
 
     # get actual contours
-    freqContour = getSmoothContour(anchors = freq, len = n, valueFloor = 0.001, method = 'spline')
-    shapeContour = getSmoothContour(anchors = shape, len = n, method = 'spline')
-    spikinessContour = getSmoothContour(anchors = spikiness, len = n, method = 'spline')
+    freqContour = getSmoothContour(anchors = freq, len = n,
+                                   valueFloor = 0.001, method = 'spline')
+    shapeContour = getSmoothContour(anchors = shape, len = n,
+                                    method = 'spline')
+    spikinessContour = getSmoothContour(anchors = spikiness,
+                                        len = n, method = 'spline')
 
     # set up par vectors
     from = -exp(-shapeContour * spikinessContour)
@@ -701,7 +713,8 @@ getSigmoid = function(len,
     out = vector()
     i = 1
     while (length(out) < len) {
-      a = seq(from = from[i], to = to[i], length.out = samplingRate / freqContour[i] / 2)
+      a = seq(from = from[i], to = to[i],
+              length.out = samplingRate / freqContour[i] / 2)
       b = 1 / (1 + exp(-a * slope[i]))
       b = zeroOne(b)  # plot(b, type = 'l')
       out = c(out, b, rev(b))

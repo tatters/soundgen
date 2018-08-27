@@ -365,7 +365,8 @@ soundgen = function(repeatBout = 1,
                    'vibratoFreq', 'vibratoDep', 'subFreq', 'subDep',
                    'jitterLen', 'jitterDep', 'shimmerLen', 'shimmerDep',
                    'rolloff', 'rolloffOct', 'rolloffKHz',
-                   'rolloffParab', 'rolloffParabHarm')) {
+                   'rolloffParab', 'rolloffParabHarm',
+                   'amDep', 'amFreq', 'amShape')) {
     assign(anchor, reformatAnchors(get(anchor)))
   }
   if (is.numeric(noiseAnchors) && length(noiseAnchors) > 0) {
@@ -805,11 +806,25 @@ soundgen = function(repeatBout = 1,
       # generate the unvoiced part, but don't add it to the sound just yet
       if (!is.na(noiseAnchors) &&
           any(noiseAnchors$value > throwaway)) {
-        rolloffNoise_syl = rnorm(
-          n = length(rolloffNoise),
-          mean = rolloffNoise,
-          sd = abs(rolloffNoise) * temperature * tempEffects$specDep
-        )
+        if (is.list(rolloffNoise)) {
+          rolloffNoise_syl = wiggleAnchors(
+            rolloffNoise,
+            temperature = temperature,
+            temp_coef = tempEffects$specDep,
+            low = c(-Inf, permittedValues['rolloffNoise', 'low']),
+            high = c(Inf, permittedValues['rolloffNoise', 'high']),
+            wiggleAllRows = TRUE,
+            invalidArgAction = invalidArgAction
+          )
+        } else {
+          rolloffNoise_syl = rnorm_bounded(
+            n = length(rolloffNoise),
+            mean = rolloffNoise,
+            sd = abs(rolloffNoise) * temperature * tempEffects$specDep,
+            low = permittedValues['rolloffNoise', 'low'],
+            high = permittedValues['rolloffNoise', 'high']
+          )
+        }
         # synthesize the unvoiced part
         unvoiced[[s]] = generateNoise(
           len = round(diff(range(noiseAnchors_syl[[s]]$time)) * samplingRate / 1000),
@@ -951,21 +966,34 @@ soundgen = function(repeatBout = 1,
 
     # trill - rapid regular amplitude modulation
     # (affects both voiced and unvoiced)
-    if (any(amDep > 0)) {
-      # trill = 1 - sin(2 * pi * (1:length(soundFiltered)) /
-      #                  samplingRate * amFreq) * amDep / 100
-      if (length(amDep) > 1) {
-        amDep = getSmoothContour(anchors = amDep,
-                                 len = length(soundFiltered),
-                                 interpol = 'spline',
-                                 valueFloor = 0)
+    if (is.list(amDep) && any(amDep$value > 0)) {
+      # vectorize
+      amPar_vect = c('amDep', 'amFreq', 'amShape')
+      for (p in amPar_vect) {
+        p_unique_value = unique(get(p)$value)
+        if (length(p_unique_value) > 1) {
+          p_vectorized = getSmoothContour(
+            anchors = get(p),
+            len = length(soundFiltered),
+            interpol = 'spline',
+            valueFloor = permittedValues[p, 'low'],
+            valueCeiling = permittedValues[p, 'high']
+          )
+          assign(paste0(p, '_vector'), p_vectorized)
+        } else {
+          assign(paste0(p, '_vector'), p_unique_value)
+        }
       }
+
+      # prepare am
       sig = getSigmoid(len = length(soundFiltered),
                        samplingRate = samplingRate,
-                       freq = amFreq,
-                       shape = amShape)
-      trill = 1 - sig * amDep / 100
+                       freq = amFreq_vector,
+                       shape = amShape_vector)
+      trill = 1 - sig * amDep_vector / 100
       # plot(trill, type='l')
+
+      # apply am
       soundFiltered = soundFiltered * trill
     }
 

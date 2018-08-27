@@ -47,7 +47,15 @@
 #' noise = generateNoise(len = samplingRate * 1.2,
 #'   rolloffNoise = c(0, -12), noiseFlatSpec = 2000, samplingRate = samplingRate)
 #' # playme(noise, samplingRate = samplingRate)
-#' # spectrogram(noise, samplingRate)
+#' # spectrogram(noise, samplingRate, osc = TRUE)
+#'
+#' # Similar, but using the dataframe format to specify a more complicated
+#' # contour for rolloffNoise:
+#' noise = generateNoise(len = samplingRate * 1.2,
+#'   rolloffNoise = data.frame(time = c(0, .2, 1), value = c(-12, 0, -12)),
+#'   noiseFlatSpec = 2000, samplingRate = samplingRate)
+#' # playme(noise, samplingRate = samplingRate)
+#' # spectrogram(noise, samplingRate, osc = TRUE)
 #'
 #' # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 #' windowLength_points = 1024
@@ -96,16 +104,30 @@ generateNoise = function(len,
                          overlap = 75,
                          throwaway = -80) {
   # wiggle pars
-  if (temperature > 0) {
+  if (temperature > 0) {  # set to 0 when called internally by soundgen()
     len = rnorm_bounded(n = 1,
                         mean = len,
                         sd = len * temperature * .5,
                         low = 0, high = samplingRate * 10,  # max 10 s
                         roundToInteger = TRUE)
-    rolloffNoise = rnorm_bounded(n = length(rolloffNoise),
-                                 mean = rolloffNoise,
-                                 sd = rolloffNoise * temperature * .5,
-                                 low = -50, high = 10)
+    if (is.list(rolloffNoise)) {
+      rolloffNoise = wiggleAnchors(
+        rolloffNoise,
+        temperature = temperature,
+        temp_coef = .5,
+        low = c(-Inf, permittedValues['rolloffNoise', 'low']),
+        high = c(Inf, permittedValues['rolloffNoise', 'high']),
+        wiggleAllRows = TRUE
+      )
+    } else {
+      rolloffNoise = rnorm_bounded(
+        n = length(rolloffNoise),
+        mean = rolloffNoise,
+        sd = abs(rolloffNoise) * temperature * .5,
+        low = -20,
+        high = 20
+      )
+    }
     noiseFlatSpec = rnorm_bounded(n = 1,
                                   mean = noiseFlatSpec,
                                   sd = noiseFlatSpec * temperature * .5,
@@ -167,8 +189,14 @@ generateNoise = function(len,
     binsPerKHz = round(1000 / bin)
     flatBins = round(noiseFlatSpec / bin)
     idx = (flatBins + 1):nr  # the bins affected by rolloffNoise
-    if (length(rolloffNoise) > 1) {
-      rolloffNoise = getSmoothContour(anchors = rolloffNoise, len = nc)
+    if (is.list(rolloffNoise) |
+        (is.numeric(rolloffNoise) && length(rolloffNoise) > 1)) {
+      rolloffNoise = getSmoothContour(
+        anchors = rolloffNoise,
+        len = nc,
+        valueFloor = permittedValues['rolloffNoise', 'low'],
+        valueCeiling = permittedValues['rolloffNoise', 'high']
+      )
       filterNoise = matrix(1, nrow = nr, ncol = nc)
       for (c in 1:nc) {
         filterNoise[idx, c] = 10 ^ (rolloffNoise[c] / 20 * (idx - flatBins) / binsPerKHz)
