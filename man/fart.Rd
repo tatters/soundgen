@@ -9,17 +9,23 @@ fart(glottisAnchors = c(350, 700), pitchAnchors = 75, temperature = 0.25,
   plot = FALSE)
 }
 \arguments{
-\item{glottisAnchors}{anchors for specifying the proportion of a glottal
-cycle with closed glottis, % (0 = no modification, 100 = closed phase as
-long as open phase); numeric vector or dataframe specifying time and value}
+\item{glottisAnchors}{anchors for specifying the proportion of a
+glottal cycle with closed glottis, \% (0 = no modification, 100 = closed
+phase as long as open phase); numeric vector or dataframe specifying time
+and value (anchor format)}
+
+\item{pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
+specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
+"anchor format". These anchors are used to create a smooth contour of
+fundamental frequency f0 (pitch) within one syllable}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
 
-\item{sylLen}{average duration of each syllable, ms}
+\item{sylLen}{average duration of each syllable, ms (vectorized)}
 
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
-(exponential decay). All rolloff parameters are vectorized. See
+(exponential decay). All rolloff parameters are in anchor format. See
 \code{\link{getRolloff}} for more details}
 
 \item{samplingRate}{sampling frequency, Hz}

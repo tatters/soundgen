@@ -10,9 +10,14 @@ beat(nSyl = 10, sylLen = 200, pauseLen = 50, pitchAnchors = c(200, 10),
 \arguments{
 \item{nSyl}{the number of syllables to generate}
 
-\item{sylLen}{average duration of each syllable, ms}
+\item{sylLen}{average duration of each syllable, ms (vectorized)}
 
 \item{pauseLen}{average duration of pauses between syllables, ms}
+
+\item{pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
+specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
+"anchor format". These anchors are used to create a smooth contour of
+fundamental frequency f0 (pitch) within one syllable}
 
 \item{samplingRate}{sampling frequency, Hz}
 

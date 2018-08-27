@@ -13,7 +13,7 @@ generateNoise(len, rolloffNoise = 0, noiseFlatSpec = 1200,
 \item{len}{length of output}
 
 \item{rolloffNoise}{linear rolloff of the excitation source for the unvoiced
-component, dB/kHz (vectorized)}
+component, dB/kHz (anchor format)}
 
 \item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
 
@@ -25,10 +25,9 @@ STFT step is also accepted. The easiest way to create this matrix is to
 call soundgen:::getSpectralEnvelope, but then you might as well just use
 soundgen()}
 
-\item{noiseAnchors}{a numeric vector of noise amplitudes (throwaway dB = none, 0
-dB = as loud as voiced component) or a dataframe specifying the time (ms)
-and amplitude (dB) of anchors for generating the noise component such as
-aspiration, hissing, etc}
+\item{noiseAnchors}{loudness of turbulent noise (0 dB = as loud as
+voiced component, negative values = quieter) such as aspiration, hissing,
+etc (anchor format)}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}

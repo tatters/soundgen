@@ -13,8 +13,9 @@ generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
   pitchDriftDep = 0.5, pitchDriftFreq = 0.125, amplDriftDep = 5,
   subDriftDep = 4, rolloffDriftDep = 3, randomWalk_trendStrength = 0.5,
   shortestEpoch = 300, subFreq = 100, subDep = 0, amplAnchors = NA,
-  overlap = 75, samplingRate = 16000, pitchFloor = 75,
-  pitchCeiling = 3500, pitchSamplingRate = 3500, throwaway = -80)
+  interpol = c("approx", "spline", "loess")[3], overlap = 75,
+  samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, throwaway = -80)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
@@ -22,9 +23,10 @@ computational efficiency, provide the pitch contour at a reduced sampling
 rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be
 upsampled before synthesis.}
 
-\item{glottisAnchors}{anchors for specifying the proportion of a glottal
-cycle with closed glottis, % (0 = no modification, 100 = closed phase as
-long as open phase); numeric vector or dataframe specifying time and value}
+\item{glottisAnchors}{anchors for specifying the proportion of a
+glottal cycle with closed glottis, \% (0 = no modification, 100 = closed
+phase as long as open phase); numeric vector or dataframe specifying time
+and value (anchor format)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
@@ -35,49 +37,50 @@ proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{nonlinDep}{hyperparameter for regulating the intensity of
-subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
-specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
+\item{nonlinDep}{hyperparameter for regulating the intensity of subharmonics
+and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified,
+<50\% weaker, >50\% stronger). Ignored if temperature = 0}
 
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 
-\item{jitterDep}{cycle-to-cycle random pitch variation, semitones (vectorized)}
+\item{jitterDep}{cycle-to-cycle random pitch variation, semitones (anchor
+format)}
 
 \item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
 low value for harsh noise, a high value for irregular vibrato or shaky
-voice (vectorized)}
+voice (anchor format)}
 
-\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz (vectorized)}
+\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz
+(anchor format)}
 
-\item{vibratoDep}{the depth of vibrato, semitones (vectorized)}
+\item{vibratoDep}{the depth of vibrato, semitones (anchor format)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
-cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
+cycles (0 to 100\% of original amplitude of each cycle) (anchor format)}
 
 \item{shimmerLen}{duration of stable periods between amplitude jumps, ms. Use
-a low value for harsh noise, a high value for shaky voice (vectorized)}
+a low value for harsh noise, a high value for shaky voice (anchor format)}
 
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
 from creaky (-1) to breathy (+1); 0 = no change}
 
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
-(exponential decay). All rolloff parameters are vectorized. See
+(exponential decay). All rolloff parameters are in anchor format. See
 \code{\link{getRolloff}} for more details}
 
-\item{rolloffOct}{basic rolloff changes from lower to upper
-harmonics (regardless of f0) by \code{rolloffOct} dB/oct. For
-example, we can get steeper rolloff in the upper part of the spectrum}
+\item{rolloffOct}{basic rolloff changes from lower to upper harmonics
+(regardless of f0) by \code{rolloffOct} dB/oct. For example, we can get
+steeper rolloff in the upper part of the spectrum}
 
-\item{rolloffKHz}{rolloff changes linearly with f0 by
-\code{rolloffKHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
-steeper basic rolloff as f0 goes up by 1000 Hz}
+\item{rolloffKHz}{rolloff changes linearly with f0 by \code{rolloffKHz}
+dB/kHz. For ex., -6 dB/kHz gives a 6 dB steeper basic rolloff as f0 goes up
+by 1000 Hz}
 
-\item{rolloffParab}{an optional quadratic term affecting only the
-first \code{rolloffParabHarm} harmonics. The middle harmonic
-of the first \code{rolloffParabHarm} harmonics is amplified or
-dampened by \code{rolloffParab} dB relative to the basic
-exponential decay}
+\item{rolloffParab}{an optional quadratic term affecting only the first
+\code{rolloffParabHarm} harmonics. The middle harmonic of the first
+\code{rolloffParabHarm} harmonics is amplified or dampened by
+\code{rolloffParab} dB relative to the basic exponential decay}
 
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
@@ -106,15 +109,19 @@ effect amplitude in the middle of a sound)}
 subharmonics regime, in ms}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
-dynamically so f0 is always a multiple of subFreq) (vectorized)}
+dynamically so f0 is always a multiple of subFreq) (anchor format)}
 
 \item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
-strength of subharmonics fades as they move away from harmonics in f0
-stack. Low values produce narrow sidebands, high values produce uniformly
-strong subharmonics (vectorized)}
+strength of subharmonics fades as they move away from harmonics in f0 stack
+(anchor format)}
 
-\item{amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
-specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
+\item{amplAnchors}{amplitude envelope (dB, 0 = max amplitude) (anchor
+format)}
+
+\item{interpol}{the method of smoothing envelopes based on provided anchors:
+'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
+= polynomial local smoothing function. NB: this does not affect
+noiseAnchors, glottalAnchors, and the smoothing of formants}
 
 \item{overlap}{FFT window overlap, \%. For allowed values, see
 \code{\link[seewave]{istft}}}
@@ -126,9 +133,8 @@ specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
 \item{pitchCeiling}{lower & upper bounds of f0}
 
 \item{pitchSamplingRate}{sampling frequency of the pitch contour only, Hz.
-Low values reduce processing time. A rule of thumb is to set this to the
-same value as \code{pitchCeiling} for optimal speed and to
-\code{samplingRate} for optimal quality}
+Low values reduce processing time. Set to \code{pitchCeiling} for optimal
+speed or to \code{samplingRate} for optimal quality}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB, defaults to -80) to save computational resources}

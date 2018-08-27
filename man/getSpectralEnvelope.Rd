@@ -31,17 +31,15 @@ to amplitudes in \code{formants})}
 
 \item{formantWidth}{= scale factor of formant bandwidth (1 = no change)}
 
-\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct
-(the default of +6 dB/oct produces a high-frequency boost when the mouth is
+\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct (the
+default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
-\item{noseRad}{the effect of radiation through the nose on source
-spectrum, dB/oct (the alternative to \code{lipRad} when the mouth is
-closed)}
+\item{noseRad}{the effect of radiation through the nose on source spectrum,
+dB/oct (the alternative to \code{lipRad} when the mouth is closed)}
 
-\item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
-i.e. no modification) or a dataframe specifying the time (ms) and value of
-mouth opening}
+\item{mouthAnchors}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
+modification) (anchor format)}
 
 \item{interpol}{the method of smoothing envelopes based on provided mouth
 anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
@@ -49,7 +47,7 @@ anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
 the smoothing of formant anchors}
 
 \item{mouthOpenThres}{open the lips (switch from nose radiation to lip
-radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1}
+radiation) when the mouth is open \code{>mouthOpenThres}, 0 to 1}
 
 \item{openMouthBoost}{amplify the voice when the mouth is open by
 \code{openMouthBoost} dB}

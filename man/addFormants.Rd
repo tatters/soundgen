@@ -19,7 +19,8 @@ addFormants(sound, formants, action = c("add", "remove")[1],
 presets for speaker "M1" or a list of formant times, frequencies,
 amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
 to schwa. Time stamps for formants and mouthOpening can be specified in ms
-or an any other arbitrary scale. See \code{\link{getSpectralEnvelope}} for more details}
+or an any other arbitrary scale. See \code{\link{getSpectralEnvelope}} for
+more details}
 
 \item{action}{'add' = add formants to the sound, 'remove' = remove formants
 (inverse filtering)}
@@ -32,25 +33,23 @@ based on specified formant frequencies (if any)}
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}
 
-\item{formantDepStoch}{the amplitude of additional stochastic formants added above
-the highest specified formant, dB (only if temperature > 0)}
+\item{formantDepStoch}{the amplitude of additional stochastic formants added
+above the highest specified formant, dB (only if temperature > 0)}
 
 \item{formantWidth}{= scale factor of formant bandwidth (1 = no change)}
 
-\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct
-(the default of +6 dB/oct produces a high-frequency boost when the mouth is
+\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct (the
+default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
-\item{noseRad}{the effect of radiation through the nose on source
-spectrum, dB/oct (the alternative to \code{lipRad} when the mouth is
-closed)}
+\item{noseRad}{the effect of radiation through the nose on source spectrum,
+dB/oct (the alternative to \code{lipRad} when the mouth is closed)}
 
 \item{mouthOpenThres}{open the lips (switch from nose radiation to lip
-radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1}
+radiation) when the mouth is open \code{>mouthOpenThres}, 0 to 1}
 
-\item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
-i.e. no modification) or a dataframe specifying the time (ms) and value of
-mouth opening}
+\item{mouthAnchors}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
+modification) (anchor format)}
 
 \item{interpol}{the method of smoothing envelopes based on provided mouth
 anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'

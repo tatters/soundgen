@@ -16,18 +16,17 @@ getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -6,
 harmonics with amplitude < \code{throwaway} will be discarded)}
 
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
-(exponential decay). All rolloff parameters are vectorized. See
+(exponential decay). All rolloff parameters are in anchor format. See
 \code{\link{getRolloff}} for more details}
 
-\item{rolloffOct}{basic rolloff changes from lower to upper
-harmonics (regardless of f0) by \code{rolloffOct} dB/oct. For
-example, we can get steeper rolloff in the upper part of the spectrum}
+\item{rolloffOct}{basic rolloff changes from lower to upper harmonics
+(regardless of f0) by \code{rolloffOct} dB/oct. For example, we can get
+steeper rolloff in the upper part of the spectrum}
 
-\item{rolloffParab}{an optional quadratic term affecting only the
-first \code{rolloffParabHarm} harmonics. The middle harmonic
-of the first \code{rolloffParabHarm} harmonics is amplified or
-dampened by \code{rolloffParab} dB relative to the basic
-exponential decay}
+\item{rolloffParab}{an optional quadratic term affecting only the first
+\code{rolloffParabHarm} harmonics. The middle harmonic of the first
+\code{rolloffParabHarm} harmonics is amplified or dampened by
+\code{rolloffParab} dB relative to the basic exponential decay}
 
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
@@ -36,9 +35,9 @@ exponential decay}
 \code{rolloffParabCeiling}, Hz. If not NULL, it overrides
 \code{rolloffParabHarm}}
 
-\item{rolloffKHz}{rolloff changes linearly with f0 by
-\code{rolloffKHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
-steeper basic rolloff as f0 goes up by 1000 Hz}
+\item{rolloffKHz}{rolloff changes linearly with f0 by \code{rolloffKHz}
+dB/kHz. For ex., -6 dB/kHz gives a 6 dB steeper basic rolloff as f0 goes up
+by 1000 Hz}
 
 \item{baseline}{The "neutral" frequency, at which no adjustment of rolloff
 takes place regardless of \code{rolloffKHz}}

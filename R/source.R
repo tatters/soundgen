@@ -133,9 +133,9 @@ generateNoise = function(len,
                                   sd = noiseFlatSpec * temperature * .5,
                                   low = 0, high = samplingRate / 2)
     attackLen = rnorm_bounded(n = length(attackLen),
-                                  mean = attackLen,
-                                  sd = attackLen * temperature * .5,
-                                  low = 0, high = len / samplingRate * 1000 / 2)
+                              mean = attackLen,
+                              sd = attackLen * temperature * .5,
+                              low = 0, high = len / samplingRate * 1000 / 2)
     noiseAnchors = wiggleAnchors(
       reformatAnchors(noiseAnchors),
       temperature = temperature,
@@ -333,6 +333,7 @@ generateHarmonics = function(pitch,
                              subFreq = 100,
                              subDep = 0,
                              amplAnchors = NA,
+                             interpol = c('approx', 'spline', 'loess')[3],
                              overlap = 75,
                              samplingRate = 16000,
                              pitchFloor = 75,
@@ -341,14 +342,19 @@ generateHarmonics = function(pitch,
                              throwaway = -80) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
-  if (any(vibratoDep > 0)) {
-    if (length(vibratoFreq) > 1) {
-      vibratoFreq = getSmoothContour(anchors = vibratoFreq,
-                                     len = length(pitch))
-    }
-    if (length(vibratoDep) > 1) {
-      vibratoDep = getSmoothContour(anchors = vibratoDep,
-                                    len = length(pitch))
+  if (any(vibratoDep$value > 0)) {
+    lp = length(pitch)
+    for (p in c('vibratoFreq', 'vibratoDep')) {
+      old = get(p)
+      if (length(old) > 1) {
+        new = getSmoothContour(
+          anchors = old,
+          len = lp,
+          valueFloor = permittedValues[p, 'low'],
+          valueCeiling = permittedValues[p, 'high'],
+          interpol = interpol)
+        assign(p, new)
+      }
     }
     vibrato = 2 ^ (sin(2 * pi * (1:length(pitch)) * vibratoFreq /
                          pitchSamplingRate) * vibratoDep / 12)
@@ -366,10 +372,10 @@ generateHarmonics = function(pitch,
   gc1 = ceiling(gc * nGC / length(pitch))
 
   # vectorized par-s should be upsampled and converted from ms to gc scale
-  update_pars = c('rolloff', 'rolloffOct', 'rolloffParab',
-                  'rolloffParabHarm', 'rolloffKHz',
-                  'jitterDep', 'jitterLen', 'shimmerDep', 'shimmerLen',
-                  'subFreq', 'subDep', 'vibratoFreq', 'vibratoDep')
+  update_pars = c(
+    'rolloff', 'rolloffOct', 'rolloffParab', 'rolloffParabHarm', 'rolloffKHz',
+    'jitterDep', 'jitterLen', 'shimmerDep', 'shimmerLen', 'subFreq', 'subDep'
+  )
   for (p in update_pars) {
     old = get(p)
     if (length(old) > 1) {
@@ -377,7 +383,8 @@ generateHarmonics = function(pitch,
         anchors = old,
         len = nGC,
         valueFloor = permittedValues[p, 'low'],
-        valueCeiling = permittedValues[p, 'high'])[gc1]
+        valueCeiling = permittedValues[p, 'high'],
+        interpol = interpol)[gc1]
       assign(p, new)
     }
   }

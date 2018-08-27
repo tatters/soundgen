@@ -15,12 +15,11 @@ returned by \code{\link{getRolloff}} (columns=time, rows=frequency bins)}
 one value per glottal cycle}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
-dynamically so f0 is always a multiple of subFreq) (vectorized)}
+dynamically so f0 is always a multiple of subFreq) (anchor format)}
 
 \item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
-strength of subharmonics fades as they move away from harmonics in f0
-stack. Low values produce narrow sidebands, high values produce uniformly
-strong subharmonics (vectorized)}
+strength of subharmonics fades as they move away from harmonics in f0 stack
+(anchor format)}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB, defaults to -80) to save computational resources}

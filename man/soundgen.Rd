@@ -33,26 +33,29 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
 \arguments{
 \item{repeatBout}{number of times the whole bout should be repeated}
 
-\item{nSyl}{number of syllables in the bout. Intonation, amplitude, and
-formants contours span multiple syllables, but not multiple bouts}
+\item{nSyl}{number of syllables in the bout. `pitchGlobal`, `amplGlobal`, and
+`formants` span multiple syllables, but not multiple bouts}
 
-\item{sylLen}{average duration of each syllable, ms}
+\item{sylLen}{average duration of each syllable, ms (vectorized)}
 
 \item{pauseLen}{average duration of pauses between syllables, ms (can be
-negative between bouts: force with invalidArgAction = 'ignore')}
+negative between bouts: force with invalidArgAction = 'ignore')
+(vectorized)}
 
-\item{pitch, }{pitchAnchors a numeric vector of f0 values in Hz or a dataframe
-specifying the time (ms or 0 to 1) and value (Hz) of each anchor. These
-anchors are used to create a smooth contour of fundamental frequency f0
-(pitch) within one syllable}
+\item{pitch, pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
+specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
+"anchor format". These anchors are used to create a smooth contour of
+fundamental frequency f0 (pitch) within one syllable}
 
-\item{pitchGlobal, pitchAnchorsGlobal}{unlike \code{pitch}, these anchors are used
-to create a smooth contour of average f0 across multiple syllables. The
-values are in semitones relative to the existing pitch, i.e. 0 = no change}
+\item{pitchGlobal, pitchAnchorsGlobal}{unlike \code{pitch}, these anchors are
+used to create a smooth contour of average f0 across multiple syllables.
+The values are in semitones relative to the existing pitch, i.e. 0 = no
+change (anchor format)}
 
-\item{glottis, glottisAnchors}{anchors for specifying the proportion of a glottal
-cycle with closed glottis, % (0 = no modification, 100 = closed phase as
-long as open phase); numeric vector or dataframe specifying time and value}
+\item{glottis, glottisAnchors}{anchors for specifying the proportion of a
+glottal cycle with closed glottis, \% (0 = no modification, 100 = closed
+phase as long as open phase); numeric vector or dataframe specifying time
+and value (anchor format)}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
@@ -69,7 +72,7 @@ mirroring pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring
 pitch drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}:
 random fluctuations of user-specified pitch / noise / amplitude anchors;
 \code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis;
-\code{specDep}: rolloff, nonlinear effects, attack}
+\code{specDep}: rolloff, rolloffNoise, nonlinear effects, attack}
 
 \item{maleFemale}{hyperparameter for shifting f0 contour, formants, and
 vocalTract to make the speaker appear more male (-1...0) or more female
@@ -83,76 +86,77 @@ proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{nonlinDep}{hyperparameter for regulating the intensity of
-subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
-specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
+\item{nonlinDep}{hyperparameter for regulating the intensity of subharmonics
+and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified,
+<50\% weaker, >50\% stronger). Ignored if temperature = 0}
 
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 
 \item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
 low value for harsh noise, a high value for irregular vibrato or shaky
-voice (vectorized)}
+voice (anchor format)}
 
-\item{jitterDep}{cycle-to-cycle random pitch variation, semitones (vectorized)}
+\item{jitterDep}{cycle-to-cycle random pitch variation, semitones (anchor
+format)}
 
-\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz (vectorized)}
+\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz
+(anchor format)}
 
-\item{vibratoDep}{the depth of vibrato, semitones (vectorized)}
+\item{vibratoDep}{the depth of vibrato, semitones (anchor format)}
 
 \item{shimmerDep}{random variation in amplitude between individual glottal
-cycles (0 to 100\% of original amplitude of each cycle) (vectorized)}
+cycles (0 to 100\% of original amplitude of each cycle) (anchor format)}
 
 \item{shimmerLen}{duration of stable periods between amplitude jumps, ms. Use
-a low value for harsh noise, a high value for shaky voice (vectorized)}
+a low value for harsh noise, a high value for shaky voice (anchor format)}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms): a vector of length 1 (symmetric) or 2 (separately for fade-in
 and fade-out)}
 
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
-(exponential decay). All rolloff parameters are vectorized. See
+(exponential decay). All rolloff parameters are in anchor format. See
 \code{\link{getRolloff}} for more details}
 
-\item{rolloffOct}{basic rolloff changes from lower to upper
-harmonics (regardless of f0) by \code{rolloffOct} dB/oct. For
-example, we can get steeper rolloff in the upper part of the spectrum}
+\item{rolloffOct}{basic rolloff changes from lower to upper harmonics
+(regardless of f0) by \code{rolloffOct} dB/oct. For example, we can get
+steeper rolloff in the upper part of the spectrum}
 
-\item{rolloffKHz}{rolloff changes linearly with f0 by
-\code{rolloffKHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
-steeper basic rolloff as f0 goes up by 1000 Hz}
+\item{rolloffKHz}{rolloff changes linearly with f0 by \code{rolloffKHz}
+dB/kHz. For ex., -6 dB/kHz gives a 6 dB steeper basic rolloff as f0 goes up
+by 1000 Hz}
 
-\item{rolloffParab}{an optional quadratic term affecting only the
-first \code{rolloffParabHarm} harmonics. The middle harmonic
-of the first \code{rolloffParabHarm} harmonics is amplified or
-dampened by \code{rolloffParab} dB relative to the basic
-exponential decay}
+\item{rolloffParab}{an optional quadratic term affecting only the first
+\code{rolloffParabHarm} harmonics. The middle harmonic of the first
+\code{rolloffParabHarm} harmonics is amplified or dampened by
+\code{rolloffParab} dB relative to the basic exponential decay}
 
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
 
-\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct
-(the default of +6 dB/oct produces a high-frequency boost when the mouth is
+\item{lipRad}{the effect of lip radiation on source spectrum, dB/oct (the
+default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
-\item{noseRad}{the effect of radiation through the nose on source
-spectrum, dB/oct (the alternative to \code{lipRad} when the mouth is
-closed)}
+\item{noseRad}{the effect of radiation through the nose on source spectrum,
+dB/oct (the alternative to \code{lipRad} when the mouth is closed)}
 
 \item{mouthOpenThres}{open the lips (switch from nose radiation to lip
-radiation) when the mouth is more than \code{mouthOpenThres} open, 0 to 1}
+radiation) when the mouth is open \code{>mouthOpenThres}, 0 to 1}
 
 \item{formants}{either a character string like "aaui" referring to default
 presets for speaker "M1" or a list of formant times, frequencies,
 amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
 to schwa. Time stamps for formants and mouthOpening can be specified in ms
-or an any other arbitrary scale. See \code{\link{getSpectralEnvelope}} for more details}
+or an any other arbitrary scale. See \code{\link{getSpectralEnvelope}} for
+more details}
 
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}
 
-\item{formantDepStoch}{the amplitude of additional stochastic formants added above
-the highest specified formant, dB (only if temperature > 0)}
+\item{formantDepStoch}{the amplitude of additional stochastic formants added
+above the highest specified formant, dB (only if temperature > 0)}
 
 \item{formantWidth}{= scale factor of formant bandwidth (1 = no change)}
 
@@ -162,49 +166,46 @@ opens and closes. If \code{NULL} or \code{NA}, the length is estimated
 based on specified formant frequencies (if any)}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
-dynamically so f0 is always a multiple of subFreq) (vectorized)}
+dynamically so f0 is always a multiple of subFreq) (anchor format)}
 
 \item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
-strength of subharmonics fades as they move away from harmonics in f0
-stack. Low values produce narrow sidebands, high values produce uniformly
-strong subharmonics (vectorized)}
+strength of subharmonics fades as they move away from harmonics in f0 stack
+(anchor format)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}
 
 \item{amDep}{amplitude modulation depth, \%. 0: no change; 100: amplitude
-modulation with amplitude range equal to the dynamic range of the sound}
+modulation with amplitude range equal to the dynamic range of the sound
+(anchor format)}
 
-\item{amFreq}{amplitude modulation frequency, Hz (vectorized)}
+\item{amFreq}{amplitude modulation frequency, Hz (anchor format)}
 
-\item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0)
-(vectorized)}
+\item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0) (anchor
+format)}
 
-\item{noise, noiseAnchors}{a numeric vector of noise amplitudes (throwaway dB = none, 0
-dB = as loud as voiced component) or a dataframe specifying the time (ms)
-and amplitude (dB) of anchors for generating the noise component such as
-aspiration, hissing, etc}
+\item{noise, noiseAnchors}{loudness of turbulent noise (0 dB = as loud as
+voiced component, negative values = quieter) such as aspiration, hissing,
+etc (anchor format)}
 
-\item{formantsNoise}{the same as \code{formants}, but for the
-unvoiced component instead of the voiced component. If NA (default), the
-unvoiced component will be filtered through the same formants as the voiced
-component, approximating aspiration noise [h]}
+\item{formantsNoise}{the same as \code{formants}, but for unvoiced instead of
+voiced component. If NA (default), the unvoiced component will be filtered
+through the same formants as the voiced component, approximating aspiration
+noise [h]}
 
 \item{rolloffNoise}{linear rolloff of the excitation source for the unvoiced
-component, dB/kHz (vectorized)}
+component, dB/kHz (anchor format)}
 
 \item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
 
-\item{mouth, mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
-i.e. no modification) or a dataframe specifying the time (ms) and value of
-mouth opening}
+\item{mouth, mouthAnchors}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
+modification) (anchor format)}
 
-\item{ampl, amplAnchors}{a numeric vector of amplitude envelope (dB) or a dataframe
-specifying the time (ms) and value of amplitude anchors (0 = max amplitude)}
+\item{ampl, amplAnchors}{amplitude envelope (dB, 0 = max amplitude) (anchor
+format)}
 
-\item{amplGlobal, amplAnchorsGlobal}{a numeric vector of global amplitude envelope
-spanning multiple syllables or a dataframe specifying the time (ms) and
-value (dB) of each anchor; 0 = no change}
+\item{amplGlobal, amplAnchorsGlobal}{global amplitude envelope spanning
+multiple syllables (dB, 0 = no change) (anchor format)}
 
 \item{interpol}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
@@ -229,9 +230,8 @@ adding pitch jumps)}
 \item{pitchFloor, pitchCeiling}{lower & upper bounds of f0}
 
 \item{pitchSamplingRate}{sampling frequency of the pitch contour only, Hz.
-Low values reduce processing time. A rule of thumb is to set this to the
-same value as \code{pitchCeiling} for optimal speed and to
-\code{samplingRate} for optimal quality}
+Low values reduce processing time. Set to \code{pitchCeiling} for optimal
+speed or to \code{samplingRate} for optimal quality}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB, defaults to -80) to save computational resources}
@@ -265,13 +265,22 @@ animal or human non-linguistic vocalizations. For more information, see
 }
 \examples{
 # NB: GUI for soundgen is available as a Shiny app.
-# Type "soundgen_app()" to start it
+# Type "soundgen_app()" to open it in default browser
 
 playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
 
 sound = soundgen(play = playback)
 # spectrogram(sound, 16000, osc = TRUE)
 # playme(sound)
+
+# Control of intonation, amplitude envelope, formants
+s0 = soundgen(
+  pitch = c(300, 390, 250),
+  ampl = data.frame(time = c(0, 50, 300), value = c(-5, -10, 0)),
+  attack = c(10, 50),
+  formants = c(600, 900, 2200),
+  play = playback
+)
 
 # Use the in-built collection of presets:
 # names(presets)  # speakers
@@ -290,13 +299,13 @@ sound = soundgen(formants = 'uai', nSyl = 3, play = playback)
 
 # Intonation contours per syllable and globally:
 sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
-  play = playback, pitchAnchors = data.frame(
+  play = playback, pitch = data.frame(
     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
-  pitchAnchorsGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
+  pitchGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 
 # Subharmonics in sidebands (noisy scream)
 sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
-  pitchAnchors = data.frame(
+  pitch = data.frame(
     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
   sylLen = 800,
   play = playback, plot = TRUE)
@@ -304,8 +313,8 @@ sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
 # Jitter and mouth opening (bark, dog-like)
 sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
   nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
-  pitchAnchors = c(559, 785, 557),
-  mouthAnchors = c(0, 0.5, 0),
+  pitch = c(559, 785, 557),
+  mouth = c(0, 0.5, 0),
   vocalTract = 5, play = playback)
 
 # Use nonlinRandomWalk to crease reproducible examples of sounds with
@@ -320,5 +329,7 @@ s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
 
 # See the vignette on sound generation for more examples and in-depth
 # explanation of the arguments to soundgen()
+# Examples of code for creating human and animal vocalizations are available
+# on project's homepage: http://cogsci.se/soundgen.htlm
 }
 }
