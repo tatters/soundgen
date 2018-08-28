@@ -5,7 +5,7 @@
 \title{Subharmonics}
 \usage{
 getVocalFry(rolloff, pitch_per_gc, subFreq = 100, subDep = 100,
-  throwaway = -120, shortestEpoch = 300)
+  dynamicRange = 80, shortestEpoch = 300)
 }
 \arguments{
 \item{rolloff}{matrix of original amplitudes of each harmonic in f0 stack
@@ -21,8 +21,9 @@ dynamically so f0 is always a multiple of subFreq) (anchor format)}
 strength of subharmonics fades as they move away from harmonics in f0 stack
 (anchor format)}
 
-\item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -80) to save computational resources}
+\item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
+dynamicRange under maximum amplitude are discarded to save computational
+resources}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}

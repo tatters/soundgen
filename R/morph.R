@@ -67,8 +67,8 @@ morph = function(formula1,
     formula2$formantsNoise = reformatFormants(formula2$formantsNoise)
   }
 
-  for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
-                   'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
+  for (anchor in c('pitch', 'pitchGlobal', 'glottis',
+                   'ampl', 'amplGlobal', 'mouth')) {
     if(!is.null(formula1[[anchor]])) {
       formula1[[anchor]] = reformatAnchors(formula1[[anchor]])
     }
@@ -76,23 +76,23 @@ morph = function(formula1,
       formula2[[anchor]] = reformatAnchors(formula2[[anchor]])
     }
   }
-  if (is.numeric(formula1$noiseAnchors) && length(formula1$noiseAnchors) > 0) {
-    formula1$noiseAnchors = data.frame(
+  if (is.numeric(formula1$noise) && length(formula1$noise) > 0) {
+    formula1$noise = data.frame(
       time = seq(0,
                  ifelse(is.numeric(formula1$sylLen),
                         formula1$sylLen,
                         defaults$sylLen),
-                 length.out = max(2, length(formula1$noiseAnchors))),
-      value = formula1$noiseAnchors)
+                 length.out = max(2, length(formula1$noise))),
+      value = formula1$noise)
   }
-  if (is.numeric(formula2$noiseAnchors) && length(formula2$noiseAnchors) > 0) {
-    formula2$noiseAnchors = data.frame(
+  if (is.numeric(formula2$noise) && length(formula2$noise) > 0) {
+    formula2$noise = data.frame(
       time = seq(0,
                  ifelse(is.numeric(formula2$sylLen),
                         formula2$sylLen,
                         defaults$sylLen),
-                 length.out = max(2, length(formula2$noiseAnchors))),
-      value = formula2$noiseAnchors)
+                 length.out = max(2, length(formula2$noise))),
+      value = formula2$noise)
   }
 
   # which pars are different from the defaults of soundgen()?
@@ -162,20 +162,20 @@ morph = function(formula1,
     }
   })
 
-  # NULL noiseAnchors means they should be set to the default throwaway
-  if ('noiseAnchors' %in% notDefaultNames) {
-    if (is.null(f1$noiseAnchors) || is.na(f1$noiseAnchors)) {
-      f1$noiseAnchors = reformatAnchors(defaults$throwaway)
+  # NULL noise means these anchors should be set to the default -dynamicRange
+  if ('noise' %in% notDefaultNames) {
+    if (is.null(f1$noise) || is.na(f1$noise)) {
+      f1$noise = reformatAnchors(-defaults$dynamicRange)
     }
-    if (is.null(f2$noiseAnchors) || is.na(f2$noiseAnchors)) {
-      f2$noiseAnchors = reformatAnchors(defaults$throwaway)
+    if (is.null(f2$noise) || is.na(f2$noise)) {
+      f2$noise = reformatAnchors(-defaults$dynamicRange)
     }
   }
 
   # log-transform pitch and formant frequencies before morphing
-  if ('pitchAnchors' %in% names(f1)) {
-    if (is.numeric(f1$pitchAnchors$value)) f1$pitchAnchors$value = log(f1$pitchAnchors$value)
-    if (is.numeric(f2$pitchAnchors$value)) f2$pitchAnchors$value = log(f2$pitchAnchors$value)
+  if ('pitch' %in% names(f1)) {
+    if (is.numeric(f1$pitch$value)) f1$pitch$value = log(f1$pitch$value)
+    if (is.numeric(f2$pitch$value)) f2$pitch$value = log(f2$pitch$value)
   }
   if ('formants' %in% names(f1)) {
     for (l in 1:length(f1$formants)) {
@@ -228,10 +228,10 @@ morph = function(formula1,
   # END OF MORPHING THE FORMULAS
 
   # exponentiate pitch and formant frequencies after morphing
-  if ('pitchAnchors' %in% names(f1)) {
+  if ('pitch' %in% names(f1)) {
     for (h in 1:nMorphs) {
-      if (is.numeric(formulas[[h]]$pitchAnchors$value)) {
-        formulas[[h]]$pitchAnchors$value = exp(formulas[[h]]$pitchAnchors$value)
+      if (is.numeric(formulas[[h]]$pitch$value)) {
+        formulas[[h]]$pitch$value = exp(formulas[[h]]$pitch$value)
       }
     }
   }

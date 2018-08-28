@@ -109,7 +109,7 @@ getVocalFry = function(rolloff,
                        pitch_per_gc,
                        subFreq = 100,
                        subDep = 100,
-                       throwaway = -120,
+                       dynamicRange = 80,
                        shortestEpoch = 300) {
   # force subFreq to be a multiple of f0 at each point
   nSubharm = round(pitch_per_gc / subFreq, 0) - 1
@@ -121,7 +121,7 @@ getVocalFry = function(rolloff,
     ))
   }
 
-  throwaway01 = 2 ^ (throwaway / 10)
+  throwaway01 = 10 ^ (-dynamicRange / 20)
   period_ms = 1000 / pitch_per_gc
   min_epoch_length_points = round(shortestEpoch / period_ms)
 

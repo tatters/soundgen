@@ -311,7 +311,7 @@ s = soundgen(nSyl = 4,
              plot = TRUE, osc = TRUE, heights = c(1, 1), play = playback)
 ```
 
-The dynamic amplitude range is determined by `throwaway`. This parameter sets the minimum level of loudness, below which components are discarded as essentially silence. For maximum sound quality, set a lower throwaway, like -120 dB. This helps to avoid artifacts like audibly clicking harmonics, but it also slows down sound generation.
+The dynamic amplitude range is determined by `dynamicRange`. This parameter sets the minimum level of loudness, below which components are discarded as essentially silence. For maximum sound quality, set a high dynamicRange, like 120 dB. This helps to avoid artifacts like audibly clicking harmonics, but it also slows down sound generation. The default is 80 dB.
 
 Rapid amplitude modulation imitating a trill is implemented by multiplying the synthesized waveform by a wave with adjustable shape `amShape` (defaults to approximately sine), frequency `amFreq`, and amplitude `amDep`:
 ```{r fig.width = 5, fig.height = 5}
@@ -654,7 +654,7 @@ s = soundgen(
   nonlinBalance = 100, subDep = 0,  
   jitterDep = c(0, 0, 1.5, .5), shimmerDep = c(0, 0, 15, 5),
   # settings for high precision
-  temperature = .001, throwaway = -120,             
+  temperature = .001, dynamicRange = 120,             
   samplingRate = 22050, pitchSamplingRate = 22050,  
   # other settings
   sylLen = 1000, pitch = c(240, 200),
@@ -684,7 +684,7 @@ s = soundgen(
     value = c(0, 0, 40, 40, 0, 0)
   ),
   # settings for high precision
-  temperature = .001, throwaway = -120,             
+  temperature = .001, dynamicRange = 120,             
   samplingRate = 22050, pitchSamplingRate = 22050,  
   # other settings
   addSilence = 0,  # easier to check timing
@@ -910,10 +910,10 @@ par(mfrow = c(1, 1))
 
 Here is an example of morphing the default neutral [a] into a dog's bark:
 ```{r}
-m = morph(formula1 = list(repeatBout = 2),
+m = suppressMessages(morph(formula1 = list(repeatBout = 2),
           # equivalently: formula1 = 'soundgen(repeatBout = 2)',
           formula2 = presets$Misc$Dog_bark,
-          nMorphs = 5, playMorphs = playback)
+          nMorphs = 5, playMorphs = playback))
 # use $formulas to access formulas for each morph, $sounds for waveforms
 # m$formulas[[4]]
 # playme(m$sounds[[3]])

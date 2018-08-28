@@ -1,4 +1,4 @@
-# TODO: calculate intensity in analyze(); automatic addition of pitch jumps at high temp (?); rename throwaway to dynamicRange; check morphing, matchPars, optimizing with new par names
+# TODO: calculate intensity in analyze(); automatic addition of pitch jumps at high temp (?); check morphing, matchPars, optimizing with new par names
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -161,8 +161,10 @@ NULL
 #' @param pitchSamplingRate sampling frequency of the pitch contour only, Hz.
 #'   Low values reduce processing time. Set to \code{pitchCeiling} for optimal
 #'   speed or to \code{samplingRate} for optimal quality
-#' @param throwaway discard harmonics and noise that are quieter than this
-#'   number (in dB, defaults to -80) to save computational resources
+#' @param dynamicRange dynamic range, dB. Harmonics and noise more than
+#'   dynamicRange under maximum amplitude are discarded to save computational
+#'   resources
+#' @param throwaway (deprecated) same as dynamicRange, but negative
 #' @param invalidArgAction what to do if an argument is invalid or outside the
 #'   range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 #'   = stop execution, 'ignore' = throw a warning and continue (may crash)
@@ -249,11 +251,12 @@ soundgen = function(repeatBout = 1,
                     pauseLen = 200,
                     pitch = data.frame(time = c(0, .1, .9, 1),
                                       value = c(100, 150, 135, 100)),
-                    pitchAnchors = 'deprecated',
+                    pitchAnchors = data.frame(time = c(0, .1, .9, 1),
+                                              value = c(100, 150, 135, 100)),
                     pitchGlobal = NA,
-                    pitchAnchorsGlobal = 'deprecated',
+                    pitchAnchorsGlobal = NA,
                     glottis = 0,
-                    glottisAnchors = 'deprecated',
+                    glottisAnchors = 0,
                     temperature = 0.025,
                     tempEffects = list(),
                     maleFemale = 0,
@@ -288,17 +291,18 @@ soundgen = function(repeatBout = 1,
                     amFreq = 30,
                     amShape = 0,
                     noise = NULL,
-                    noiseAnchors = 'deprecated',
+                    noiseAnchors = NULL,
                     formantsNoise = NA,
                     rolloffNoise = -4,
                     noiseFlatSpec = 1200,
                     mouth = data.frame(time = c(0, 1),
                                        value = c(.5, .5)),
-                    mouthAnchors = 'deprecated',
+                    mouthAnchors = data.frame(time = c(0, 1),
+                                              value = c(.5, .5)),
                     ampl = NA,
-                    amplAnchors = 'deprecated',
+                    amplAnchors = NA,
                     amplGlobal = NA,
-                    amplAnchorsGlobal = 'deprecated',
+                    amplAnchorsGlobal = NA,
                     interpol = c('approx', 'spline', 'loess')[3],
                     discontThres = .05,
                     jumpThres = .01,
@@ -309,6 +313,7 @@ soundgen = function(repeatBout = 1,
                     pitchFloor = 1,
                     pitchCeiling = 3500,
                     pitchSamplingRate = 3500,
+                    dynamicRange = 80,
                     throwaway = -80,
                     invalidArgAction = c('adjust', 'abort', 'ignore')[1],
                     plot = FALSE,
@@ -316,6 +321,10 @@ soundgen = function(repeatBout = 1,
                     savePath = NA,
                     ...) {
   # deprecated pars
+  if (!missing('throwaway')) {
+    dynamicRange = -throwaway
+    message('throwaway is deprecated; used dynamicRange instead')
+  }
   formerAnchors = c(
     'pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
     'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors', 'noiseAnchors'
@@ -427,9 +436,9 @@ soundgen = function(repeatBout = 1,
 
   # check amplitude anchors and make all values negative
   if (is.list(amplAnchors) && any(amplAnchors$value > 0)) {
-    amplAnchors$value = amplAnchors$value + throwaway
-    message(paste('The recommended range for amplAnchors is (throwaway, 0).',
-                  'If positive, values are transformed by adding throwaway'))
+    amplAnchors$value = amplAnchors$value - dynamicRange
+    message(paste('The recommended range for amplAnchors is (-dynamicRange, 0).',
+                  'If positive, values are transformed by subtracting dynamicRange'))
   }
 
   # for amplAnchorsGlobal, make the first value 0
@@ -484,9 +493,9 @@ soundgen = function(repeatBout = 1,
     # for breathy voice, add breathing
     if (!is.list(noiseAnchors)) {
       noiseAnchors = data.frame(time = c(0, sylLen[1] + 100),
-                                value = c(throwaway, throwaway))
+                                value = c(-dynamicRange, -dynamicRange))
     }
-    noiseAnchors$value = noiseAnchors$value + creakyBreathy * (-throwaway)
+    noiseAnchors$value = noiseAnchors$value + creakyBreathy * dynamicRange
     noiseAnchors$value[noiseAnchors$value >
                          permittedValues['noiseAmpl', 'high']] =
       permittedValues['noiseAmpl', 'high']
@@ -515,7 +524,7 @@ soundgen = function(repeatBout = 1,
   if (!is.list(noiseAnchors)) {
     noiseAnchors = data.frame(
       time = c(0, sylLen[1]),
-      value = c(throwaway, throwaway)
+      value = c(-dynamicRange, -dynamicRange)
     )
   }
 
@@ -596,7 +605,7 @@ soundgen = function(repeatBout = 1,
     'pitchFloor' = pitchFloor,
     'pitchCeiling' = pitchCeiling,
     'pitchSamplingRate' = pitchSamplingRate,
-    'throwaway' = throwaway,
+    'dynamicRange' = dynamicRange,
     'interpol' = interpol,
     'samplingRate' = samplingRate,
     'overlap' = overlap
@@ -630,10 +639,10 @@ soundgen = function(repeatBout = 1,
 
   wiggleNoise = temperature > 0 &&
     class(noiseAnchors) == 'data.frame' &&
-    any(noiseAnchors$value > throwaway)
+    any(noiseAnchors$value > -dynamicRange)
   wiggleAmpl_per_syl = temperature > 0 &&
     !is.na(amplAnchors) &&
-    any(amplAnchors$value < -throwaway)
+    any(amplAnchors$value < dynamicRange)
   wiggleGlottis = temperature > 0 &&
     class(glottisAnchors) == 'data.frame' &&
     any(glottisAnchors$value > 0)
@@ -648,8 +657,8 @@ soundgen = function(repeatBout = 1,
       interpol = interpol,
       discontThres = discontThres,
       jumpThres = jumpThres,
-      valueFloor = throwaway,
-      valueCeiling = -throwaway,
+      valueFloor = -dynamicRange,
+      valueCeiling = dynamicRange,
       samplingRate = samplingRate
     )
     # convert from dB to linear multiplier
@@ -726,7 +735,7 @@ soundgen = function(repeatBout = 1,
           noiseAnchors_syl[[s]] = wiggleAnchors(
             df = noiseAnchors_syl[[s]],
             temperature = temperature,
-            low = c(-Inf, throwaway),
+            low = c(-Inf, -dynamicRange),
             high = c(+Inf, permittedValues['noiseAmpl', 'high']),
             wiggleAllRows = TRUE,
             temp_coef = tempEffects$noiseAnchorsDep,
@@ -737,7 +746,7 @@ soundgen = function(repeatBout = 1,
           amplAnchors_per_syl = wiggleAnchors(
             df = amplAnchors_per_syl,
             temperature = temperature,
-            low = c(0, throwaway),
+            low = c(0, -dynamicRange),
             high = c(1, 0),
             temp_coef = tempEffects$amplAnchorsDep,
             invalidArgAction = invalidArgAction
@@ -837,7 +846,7 @@ soundgen = function(repeatBout = 1,
 
       # generate the unvoiced part, but don't add it to the sound just yet
       if (!is.na(noiseAnchors) &&
-          any(noiseAnchors$value > throwaway)) {
+          any(noiseAnchors$value > -dynamicRange)) {
         if (is.list(rolloffNoise)) {
           rolloffNoise_syl = wiggleAnchors(
             rolloffNoise,
@@ -868,7 +877,7 @@ soundgen = function(repeatBout = 1,
           samplingRate = samplingRate,
           windowLength_points = windowLength_points,
           overlap = overlap,
-          throwaway = throwaway,
+          dynamicRange = dynamicRange,
           filterNoise = NULL # spectralEnvelopeNoise
         ) * amplEnvelope[s]  # correction of amplitude per syllable
         # plot(unvoiced[[s]], type = 'l')

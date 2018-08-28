@@ -6,7 +6,7 @@
 \usage{
 flatEnv(sound, windowLength = 200, samplingRate = 16000, method = c("hil",
   "rms", "peak")[1], windowLength_points = NULL, killDC = FALSE,
-  throwaway = -80, plot = FALSE)
+  dynamicRange = 80, plot = FALSE)
 }
 \arguments{
 \item{sound}{input vector oscillating about zero}
@@ -25,8 +25,8 @@ specified, overrides both \code{windowLength} and \code{samplingRate}}
 \item{killDC}{if TRUE, dynamically removes DC offset or similar deviations of
 average waveform from zero}
 
-\item{throwaway}{parts of sound quieter than \code{throwaway} dB will not be
-amplified}
+\item{dynamicRange}{parts of sound quieter than \code{-dynamicRange} dB will
+not be amplified}
 
 \item{plot}{if TRUE, plots the original sound, smoothed envelope, and
 flattened sound}
@@ -46,7 +46,7 @@ d = flatEnv(a, plot = TRUE, killDC = TRUE,
             windowLength_points = 50)        # about right
 
 \dontrun{
-s = soundgen(sylLen = 1000, amplAnchors = c(0, -40, 0), plot = TRUE, osc = TRUE)
+s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE, osc = TRUE)
 # playme(s)
 s_flat = flatEnv(s, plot = TRUE, windowLength = 50)
 # playme(s_flat)

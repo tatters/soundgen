@@ -15,7 +15,7 @@ generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
   shortestEpoch = 300, subFreq = 100, subDep = 0, amplAnchors = NA,
   interpol = c("approx", "spline", "loess")[3], overlap = 75,
   samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, throwaway = -80)
+  pitchSamplingRate = 3500, dynamicRange = 80)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
@@ -86,7 +86,7 @@ by 1000 Hz}
 \code{rolloffParab}}
 
 \item{rolloff_perAmpl}{as amplitude goes down from max to
-\code{throwaway}, \code{rolloff} increases by \code{rolloff_perAmpl}
+\code{-dynamicRange}, \code{rolloff} increases by \code{rolloff_perAmpl}
 dB/octave. The effect is to make loud parts brighter by increasing energy
 in higher frequencies}
 
@@ -136,8 +136,9 @@ noiseAnchors, glottalAnchors, and the smoothing of formants}
 Low values reduce processing time. Set to \code{pitchCeiling} for optimal
 speed or to \code{samplingRate} for optimal quality}
 
-\item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -80) to save computational resources}
+\item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
+dynamicRange under maximum amplitude are discarded to save computational
+resources}
 }
 \description{
 Internal soundgen function.

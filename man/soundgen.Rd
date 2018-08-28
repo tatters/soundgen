@@ -6,27 +6,26 @@
 \usage{
 soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   pitch = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135, 100)),
-  pitchAnchors = "deprecated", pitchGlobal = NA,
-  pitchAnchorsGlobal = "deprecated", glottis = 0,
-  glottisAnchors = "deprecated", temperature = 0.025,
-  tempEffects = list(), maleFemale = 0, creakyBreathy = 0,
-  nonlinBalance = 0, nonlinDep = 50, nonlinRandomWalk = NULL,
-  jitterLen = 1, jitterDep = 1, vibratoFreq = 5, vibratoDep = 0,
-  shimmerDep = 0, shimmerLen = 1, attackLen = 50, rolloff = -9,
-  rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
-  rolloffParabHarm = 3, lipRad = 6, noseRad = 4, mouthOpenThres = 0,
-  formants = c(860, 1430, 2900), formantDep = 1, formantDepStoch = 20,
-  formantWidth = 1, vocalTract = NA, subFreq = 100, subDep = 100,
-  shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
-  noise = NULL, noiseAnchors = "deprecated", formantsNoise = NA,
-  rolloffNoise = -4, noiseFlatSpec = 1200, mouth = data.frame(time = c(0,
-  1), value = c(0.5, 0.5)), mouthAnchors = "deprecated", ampl = NA,
-  amplAnchors = "deprecated", amplGlobal = NA,
-  amplAnchorsGlobal = "deprecated", interpol = c("approx", "spline",
-  "loess")[3], discontThres = 0.05, jumpThres = 0.01,
-  samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, throwaway = -80,
+  pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
+  100)), pitchGlobal = NA, pitchAnchorsGlobal = NA, glottis = 0,
+  glottisAnchors = 0, temperature = 0.025, tempEffects = list(),
+  maleFemale = 0, creakyBreathy = 0, nonlinBalance = 0, nonlinDep = 50,
+  nonlinRandomWalk = NULL, jitterLen = 1, jitterDep = 1,
+  vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0, shimmerLen = 1,
+  attackLen = 50, rolloff = -9, rolloffOct = -3, rolloffKHz = -3,
+  rolloffParab = 0, rolloffParabHarm = 3, lipRad = 6, noseRad = 4,
+  mouthOpenThres = 0, formants = c(860, 1430, 2900), formantDep = 1,
+  formantDepStoch = 20, formantWidth = 1, vocalTract = NA,
+  subFreq = 100, subDep = 100, shortestEpoch = 300, amDep = 0,
+  amFreq = 30, amShape = 0, noise = NULL, noiseAnchors = NULL,
+  formantsNoise = NA, rolloffNoise = -4, noiseFlatSpec = 1200,
+  mouth = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
+  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)), ampl = NA,
+  amplAnchors = NA, amplGlobal = NA, amplAnchorsGlobal = NA,
+  interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
+  jumpThres = 0.01, samplingRate = 16000, windowLength = 50,
+  overlap = 75, addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, dynamicRange = 80, throwaway = -80,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
 }
@@ -233,8 +232,11 @@ adding pitch jumps)}
 Low values reduce processing time. Set to \code{pitchCeiling} for optimal
 speed or to \code{samplingRate} for optimal quality}
 
-\item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -80) to save computational resources}
+\item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
+dynamicRange under maximum amplitude are discarded to save computational
+resources}
+
+\item{throwaway}{(deprecated) same as dynamicRange, but negative}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the
 range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'

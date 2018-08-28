@@ -301,9 +301,9 @@ findZeroCrossing = function(ampl, location) {
 #'
 #' \dontrun{
 #' # Actual sounds, alternative shapes of fade-in/out
-#' sound3 = soundgen(formants = 'a', pitchAnchors = 200,
+#' sound3 = soundgen(formants = 'a', pitch = 200,
 #'                   addSilence = 0, attackLen = c(50, 0))
-#' sound4 = soundgen(formants = 'u', pitchAnchors = 200,
+#' sound4 = soundgen(formants = 'u', pitch = 200,
 #'                   addSilence = 0, attackLen = c(0, 50))
 #'
 #' # simple concatenation (with a click)
@@ -798,8 +798,8 @@ getEnv = function(sound,
 #'   specified, overrides both \code{windowLength} and \code{samplingRate}
 #' @param killDC if TRUE, dynamically removes DC offset or similar deviations of
 #'   average waveform from zero
-#' @param throwaway parts of sound quieter than \code{throwaway} dB will not be
-#'   amplified
+#' @param dynamicRange parts of sound quieter than \code{-dynamicRange} dB will
+#'   not be amplified
 #' @param plot if TRUE, plots the original sound, smoothed envelope, and
 #'   flattened sound
 #' @export
@@ -813,7 +813,7 @@ getEnv = function(sound,
 #'             windowLength_points = 50)        # about right
 #'
 #' \dontrun{
-#' s = soundgen(sylLen = 1000, amplAnchors = c(0, -40, 0), plot = TRUE, osc = TRUE)
+#' s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE, osc = TRUE)
 #' # playme(s)
 #' s_flat = flatEnv(s, plot = TRUE, windowLength = 50)
 #' # playme(s_flat)
@@ -824,7 +824,7 @@ flatEnv = function(sound,
                    method = c('hil', 'rms', 'peak')[1],
                    windowLength_points = NULL,
                    killDC = FALSE,
-                   throwaway = -80,
+                   dynamicRange = 80,
                    plot = FALSE) {
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
@@ -839,7 +839,7 @@ flatEnv = function(sound,
 
   m = max(abs(sound))       # original scale (eg -1 to +1 gives m = 1)
   soundNorm = sound / m    # normalize
-  throwaway_lin = 10 ^ (throwaway / 20)  # from dB to linear
+  throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
   # get smoothed amplitude envelope
   if (method == 'hil') {
     env = seewave::env(

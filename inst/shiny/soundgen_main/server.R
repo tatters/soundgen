@@ -40,7 +40,7 @@ server = function(input, output, session) {
   })
 
   durSyl_withNoise = reactive({ # the duration of a single syllable with noise
-    ifelse(!sum(myPars$noiseAnchors$value > input$throwaway) > 0,
+    ifelse(!sum(myPars$noiseAnchors$value > -input$dynamicRange) > 0,
            input$sylLen,
            min(0, myPars$noiseAnchors$time[1]) +
              max(input$sylLen,
@@ -173,7 +173,7 @@ server = function(input, output, session) {
       if (!is.list(preset$noiseAnchors) & is.numeric(preset$sylLen)) {
         myPars$noiseAnchors = data.frame(
           time = c(0, preset$sylLen),
-          value = c(input$throwaway, input$throwaway)
+          value = c(-input$dynamicRange, -input$dynamicRange)
         )
         myPars$sylDur_previous = input$sylLen
       }
@@ -552,7 +552,7 @@ server = function(input, output, session) {
   myUnvoicedContour = reactive({
     br_xlim_low = min(input$noiseTime[1], 0)
     br_xlim_high = max(input$noiseTime[2], input$sylLen)
-    br_ylim_low = input$throwaway  # permittedValues['noiseAmpl', 'low']
+    br_ylim_low = -input$dynamicRange  # permittedValues['noiseAmpl', 'low']
     br_ylim_high = permittedValues['noiseAmpl', 'high']
     nTicks = length(seq(br_ylim_low, br_ylim_high, by = 20)) - 1
     getSmoothContour(anchors = myPars$noiseAnchors,
@@ -721,8 +721,8 @@ server = function(input, output, session) {
     getSmoothContour(anchors = myPars$amplAnchors,
                      xaxs = "i",
                      xlim = c(0, input$sylLen),
-                     ylim = c(input$throwaway, 0),
-                     valueFloor = input$throwaway,
+                     ylim = c(-input$dynamicRange, 0),
+                     valueFloor = -input$dynamicRange,
                      valueCeiling = 0,
                      len = input$sylLen / 1000 * 1000,
                      samplingRate = 1000, plot = TRUE)
@@ -734,7 +734,7 @@ server = function(input, output, session) {
     click_y = round(input$plotAmplSyl_click$y)
     # if the click is outside the allowed range of y, re-interpret the click
     # as within the range
-    if (click_y < input$throwaway) click_y = input$throwaway
+    if (click_y < -input$dynamicRange) click_y = -input$dynamicRange
     if (click_y > 0) click_y = 0
 
     closest_point_in_time = which.min(abs(myPars$amplAnchors$time - click_x))
@@ -798,9 +798,9 @@ server = function(input, output, session) {
       getSmoothContour(anchors = myPars$amplAnchorsGlobal,
                        xaxs = "i",
                        xlim = c(0, durTotal()),
-                       ylim = c(input$throwaway / 2, -input$throwaway / 2),
-                       valueFloor = input$throwaway / 2,
-                       valueCeiling = -input$throwaway / 2,
+                       ylim = c(-input$dynamicRange / 2, input$dynamicRange / 2),
+                       valueFloor = -input$dynamicRange / 2,
+                       valueCeiling = input$dynamicRange / 2,
                        len = durTotal() / 1000 * 100,
                        samplingRate = 100, plot = TRUE)
     } else {
@@ -813,8 +813,8 @@ server = function(input, output, session) {
     click_x = round(input$plotAmplGlobal_click$x / durTotal(), 2)
     click_y = round(input$plotAmplGlobal_click$y)
     # if the click is outside the allowed range of y, re-interpret the click as within the range
-    if (click_y < (input$throwaway / 2)) click_y = input$throwaway / 2
-    if (click_y > (-input$throwaway / 2)) click_y = -input$throwaway / 2
+    if (click_y < (-input$dynamicRange / 2)) click_y = -input$dynamicRange / 2
+    if (click_y > (input$dynamicRange / 2)) click_y = input$dynamicRange / 2
 
     closest_point_in_time = which.min(abs(myPars$amplAnchorsGlobal$time - click_x))
     delta_x = abs(myPars$amplAnchorsGlobal$time[closest_point_in_time] - click_x)
@@ -927,7 +927,7 @@ server = function(input, output, session) {
       rolloffParabHarm = input$rolloffParabHarm,
       rolloffKHz = input$rolloffKHz,
       baseline = 200,
-      throwaway = input$throwaway,
+      dynamicRange = input$dynamicRange,
       samplingRate = input$samplingRate,
       plot = TRUE
     )
@@ -1108,7 +1108,7 @@ server = function(input, output, session) {
       seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
                         wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
                         flim = c(input$spec_ylim[1], input$spec_ylim[2]),
-                        alim = c(input$throwaway, 0),
+                        alim = c(-input$dynamicRange, 0),
                         main = 'Spectrum')
     }
   })
@@ -1166,7 +1166,7 @@ server = function(input, output, session) {
       pitchFloor = input$pitchFloorCeiling[1],
       pitchCeiling = input$pitchFloorCeiling[2],
       pitchSamplingRate = input$pitchSamplingRate,
-      throwaway = input$throwaway
+      dynamicRange = input$dynamicRange
     )
     # simplify arg_list by removing values that are the same as defaults
     idx_same = apply(matrix(1:length(arg_list)), 1, function(x) {

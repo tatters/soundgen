@@ -7,13 +7,13 @@
 getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -6,
   rolloffOct = -3, rolloffParab = 0, rolloffParabHarm = 3,
   rolloffParabCeiling = NULL, rolloffKHz = -3, baseline = 200,
-  throwaway = -120, samplingRate = 16000, plot = FALSE)
+  dynamicRange = 80, samplingRate = 16000, plot = FALSE)
 }
 \arguments{
 \item{pitch_per_gc}{a vector of f0 per glottal cycle, Hz}
 
 \item{nHarmonics}{maximum number of harmonics to generate (very weak
-harmonics with amplitude < \code{throwaway} will be discarded)}
+harmonics with amplitude < \code{-dynamicRange} will be discarded)}
 
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
 (exponential decay). All rolloff parameters are in anchor format. See
@@ -42,8 +42,9 @@ by 1000 Hz}
 \item{baseline}{The "neutral" frequency, at which no adjustment of rolloff
 takes place regardless of \code{rolloffKHz}}
 
-\item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -80) to save computational resources}
+\item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
+dynamicRange under maximum amplitude are discarded to save computational
+resources}
 
 \item{samplingRate}{sampling rate (needed to stop at Nyquist frequency and
 for plotting purposes)}

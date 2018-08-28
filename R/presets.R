@@ -67,7 +67,7 @@ permittedValues = matrix(c(
   'pitchFloor', 1, 1, 1000, 1,
   'pitchCeiling', 3500, 10, 100000, 10,
   'pitchSamplingRate', 3500, 10, 100000, 10,
-  'throwaway', -80, -200, -10, 10,
+  'dynamicRange', 80, 10, 200, 10,
   'noiseFlatSpec', 1200, 0, 4000, 100,
 
   # soundgen_app() settings, which are not needed for soundgen()
@@ -131,7 +131,7 @@ defaults = list(
   pitchFloor = 1,
   pitchCeiling = 3500,
   pitchSamplingRate = 3500,
-  throwaway = -80,
+  dynamicRange = 80,
   pitchAnchors = list(
     time = c(0, .1, .9, 1),
     value = c(100, 150, 135, 100)
@@ -144,7 +144,7 @@ defaults = list(
   pitchGlobal = list(time = c(0, 1), value = c(0, 0)),
   glottisAnchors = 0,
   glottis = 0,
-  noiseAnchors = list(time = c(0, 300), value = c(-80, -80)),
+  noise = list(time = c(0, 300), value = c(-80, -80)),
   noise = list(time = c(0, 300), value = c(-80, -80)),
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   mouth = list(time = c(0, 1), value = c(.5, .5)),

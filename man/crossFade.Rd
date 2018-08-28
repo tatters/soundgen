@@ -54,9 +54,9 @@ length(sound) # but note that cross-fading costs us ~60 points
 
 \dontrun{
 # Actual sounds, alternative shapes of fade-in/out
-sound3 = soundgen(formants = 'a', pitchAnchors = 200,
+sound3 = soundgen(formants = 'a', pitch = 200,
                   addSilence = 0, attackLen = c(50, 0))
-sound4 = soundgen(formants = 'u', pitchAnchors = 200,
+sound4 = soundgen(formants = 'u', pitch = 200,
                   addSilence = 0, attackLen = c(0, 50))
 
 # simple concatenation (with a click)

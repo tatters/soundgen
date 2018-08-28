@@ -15,7 +15,7 @@
 #' effectively.
 #' @param pitch_per_gc a vector of f0 per glottal cycle, Hz
 #' @param nHarmonics maximum number of harmonics to generate (very weak
-#'   harmonics with amplitude < \code{throwaway} will be discarded)
+#'   harmonics with amplitude < \code{-dynamicRange} will be discarded)
 #' @inheritParams soundgen
 #' @param rolloffParabCeiling quadratic adjustment is applied only up to
 #'   \code{rolloffParabCeiling}, Hz. If not NULL, it overrides
@@ -99,7 +99,7 @@ getRolloff = function(pitch_per_gc = c(440),
                       rolloffParabCeiling = NULL,
                       rolloffKHz = -3,
                       baseline = 200,
-                      throwaway = -120,
+                      dynamicRange = 80,
                       samplingRate = 16000,
                       plot = FALSE) {
   ## Convert rolloff pars from df to a single number (if static)
@@ -201,12 +201,12 @@ getRolloff = function(pitch_per_gc = c(440),
     }
   }
 
-  # set values under throwaway to zero
-  if (is.numeric(throwaway)) {
+  # set values under -dynamicRange to zero
+  if (is.numeric(dynamicRange)) {
     # if not null and not NA
-    r[r < throwaway] = -Inf
+    r[r < -dynamicRange] = -Inf
   } else {
-    throwaway = -120  # for plotting
+    dynamicRange = 80  # for plotting
   }
 
   # normalize so the amplitude of F0 is always 0
@@ -234,7 +234,7 @@ getRolloff = function(pitch_per_gc = c(440),
       rolloff_min = r[rows_min, idx_min]
       rolloff_max = r[rows_max, idx_max]
       ymin = min(rolloff_min, rolloff_max)
-      if (ymin < throwaway) ymin = throwaway
+      if (ymin < -dynamicRange) ymin = -dynamicRange
       ymax = max(rolloff_min, rolloff_max)
       plot(freqs_min, rolloff_min, type = 'b', col = 'blue',
            xlim = c(0, x_max), xlab = 'Frequency, Hz',

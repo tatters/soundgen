@@ -102,7 +102,7 @@ generateNoise = function(len,
                          windowLength_points = 1024,
                          samplingRate = 16000,
                          overlap = 75,
-                         throwaway = -80) {
+                         dynamicRange = 80) {
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
     len = rnorm_bounded(n = 1,
@@ -140,7 +140,7 @@ generateNoise = function(len,
       reformatAnchors(noiseAnchors),
       temperature = temperature,
       temp_coef = .5,
-      low = c(0, throwaway),
+      low = c(0, -dynamicRange),
       high = c(1, 0),
       wiggleAllRows = TRUE
     )
@@ -299,7 +299,7 @@ generateNoise = function(len,
 #'   is to get high in the middle and low at the beginning and end (i.e. max
 #'   effect amplitude in the middle of a sound)
 #' @param rolloff_perAmpl as amplitude goes down from max to
-#'   \code{throwaway}, \code{rolloff} increases by \code{rolloff_perAmpl}
+#'   \code{-dynamicRange}, \code{rolloff} increases by \code{rolloff_perAmpl}
 #'   dB/octave. The effect is to make loud parts brighter by increasing energy
 #'   in higher frequencies
 #' @keywords internal
@@ -339,7 +339,7 @@ generateHarmonics = function(pitch,
                              pitchFloor = 75,
                              pitchCeiling = 3500,
                              pitchSamplingRate = 3500,
-                             throwaway = -80) {
+                             dynamicRange = 80) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
   if (any(vibratoDep$value > 0)) {
@@ -394,12 +394,12 @@ generateHarmonics = function(pitch,
     amplContour = getSmoothContour(
       anchors = amplAnchors,
       len = nGC,
-      valueFloor = throwaway,
+      valueFloor = -dynamicRange,
       valueCeiling = 0,
       samplingRate = samplingRate
     )
     # plot(amplContour, type='l')
-    amplContour = (amplContour + abs(throwaway)) / abs(throwaway) - 1
+    amplContour = (amplContour + dynamicRange) / dynamicRange - 1
     rolloffAmpl = amplContour * rolloff_perAmpl
   } else {
     rolloffAmpl = rep(0, nGC)
@@ -503,7 +503,7 @@ generateHarmonics = function(pitch,
     rolloffParab = rolloffParab,
     rolloffParabHarm = rolloffParabHarm,
     samplingRate = samplingRate,
-    throwaway = throwaway
+    dynamicRange = dynamicRange
   )
   # NB: this whole pitch_per_gc trick is purely for computational efficiency.
   #   The entire pitch contour can be fed in, but then it takes up to 1 s
@@ -535,7 +535,7 @@ generateHarmonics = function(pitch,
       subFreq = subFreq * rw ^ subDriftDep,
       subDep = subDep * rw ^ subDriftDep * vocalFry_on,
       shortestEpoch = shortestEpoch,
-      throwaway = throwaway
+      dynamicRange = dynamicRange
     )
     rolloff_source = vocalFry$rolloff # list of matrices
     epochs = vocalFry$epochs # dataframe
@@ -585,7 +585,7 @@ generateHarmonics = function(pitch,
     amplEnvelope = getSmoothContour(
       anchors = amplAnchors,
       len = length(waveform),
-      valueFloor = throwaway,
+      valueFloor = -dynamicRange,
       samplingRate = samplingRate
     )
     # plot(amplEnvelope, type = 'l')

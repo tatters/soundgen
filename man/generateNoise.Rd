@@ -7,7 +7,7 @@
 generateNoise(len, rolloffNoise = 0, noiseFlatSpec = 1200,
   filterNoise = NULL, noiseAnchors = NULL, temperature = 0.1,
   attackLen = 10, windowLength_points = 1024, samplingRate = 16000,
-  overlap = 75, throwaway = -80)
+  overlap = 75, dynamicRange = 80)
 }
 \arguments{
 \item{len}{length of output}
@@ -43,8 +43,9 @@ and fade-out)}
 \item{overlap}{FFT window overlap, \%. For allowed values, see
 \code{\link[seewave]{istft}}}
 
-\item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB, defaults to -80) to save computational resources}
+\item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
+dynamicRange under maximum amplitude are discarded to save computational
+resources}
 }
 \description{
 Generates noise of length \code{len} and with spectrum defined by linear
