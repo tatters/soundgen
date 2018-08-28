@@ -1121,9 +1121,9 @@ server = function(input, output, session) {
       nSyl = input$nSyl,
       sylLen = input$sylLen,
       pauseLen = input$pauseLen,
-      pitchAnchors = myPars$pitchAnchors,
-      pitchAnchorsGlobal = myPars$pitchAnchorsGlobal,
-      glottisAnchors = input$glottisAnchors,
+      pitch = myPars$pitchAnchors,
+      pitchGlobal = myPars$pitchAnchorsGlobal,
+      glottis = input$glottisAnchors,
       temperature = input$temperature,
       maleFemale = input$maleFemale,
       creakyBreathy = input$creakyBreathy,
@@ -1155,12 +1155,12 @@ server = function(input, output, session) {
       amDep = input$amDep,
       amFreq = input$amFreq,
       amShape = input$amShape,
-      noiseAnchors = myPars$noiseAnchors,
+      noise = myPars$noiseAnchors,
       formantsNoise = myPars$formantsNoise,
       rolloffNoise = input$rolloffNoise,
-      mouthAnchors = myPars$mouthAnchors,
-      amplAnchors = myPars$amplAnchors,
-      amplAnchorsGlobal = myPars$amplAnchorsGlobal,
+      mouth = myPars$mouthAnchors,
+      ampl = myPars$amplAnchors,
+      amplGlobal = myPars$amplAnchorsGlobal,
       samplingRate = input$samplingRate,
       windowLength = input$windowLength,
       pitchFloor = input$pitchFloorCeiling[1],
@@ -1230,6 +1230,19 @@ server = function(input, output, session) {
     # create a new preset
     new_presetID = paste(sample(c(letters, 0:9), 8, replace = TRUE),
                          collapse = '')
+    # if the new preset contains "pitch", "ampl" etc, rename to "pitchAnchors", "amplAchors"
+    formerAnchors = c(
+      'pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
+      'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors', 'noiseAnchors'
+    )
+    newAnchors = c('pitch', 'pitchGlobal', 'glottis', 'ampl', 'amplGlobal', 'mouth', 'noise')
+    for (a in 1:length(newAnchors)) {
+      old = formerAnchors[a]
+      new = newAnchors[a]
+      if (new %in% names(new_preset_list)) {
+        names(new_preset_list)[which(names(new_preset_list) == new)] = old
+      }
+    }
     myPars$loaded_presets[[new_presetID]] = new_preset_list
 
     # update sliders
@@ -1239,7 +1252,7 @@ server = function(input, output, session) {
 
   observeEvent(input$about, {
     id <<- showNotification(
-      ui = 'SoundGen 1.1.0. Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!',
+      ui = paste0("SoundGen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
       duration = 10,
       closeButton = TRUE,
       type = 'default'

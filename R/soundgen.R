@@ -1,4 +1,4 @@
-# TODO: calculate intensity in analyze(); consider normalizing noise amplitude so it's exactly like noiseAnchors regardless of formantsNoise; automatic addition of pitch jumps at high temp (?); all vectorized par-s could accept the data.frame(time = ..., value = ...) format, basically like anchors, which could then be renamed to simply pitch, ampl, etc;
+# TODO: calculate intensity in analyze(); automatic addition of pitch jumps at high temp (?); rename throwaway to dynamicRange; check morphing, matchPars, optimizing with new par names
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -316,9 +316,11 @@ soundgen = function(repeatBout = 1,
                     savePath = NA,
                     ...) {
   # deprecated pars
-  formerAnchors = c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
-                    'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')
-  newAnchors = c('pitch', 'pitchGlobal', 'glottis', 'ampl', 'amplGlobal', 'mouth')
+  formerAnchors = c(
+    'pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
+    'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors', 'noiseAnchors'
+  )
+  newAnchors = c('pitch', 'pitchGlobal', 'glottis', 'ampl', 'amplGlobal', 'mouth', 'noise')
   for (i in 1:length(formerAnchors)) {
     p = formerAnchors[i]
     q = newAnchors[i]
@@ -476,7 +478,7 @@ soundgen = function(repeatBout = 1,
     jitterDep$value = jitterDep$value - creakyBreathy / 2
     jitterDep$value[jitterDep$value < 0] = 0
     shimmerDep$value = shimmerDep$value - creakyBreathy * 5
-    shimmerDe$valuep[shimmerDep$value < 0] = 0
+    shimmerDep$value[shimmerDep$value < 0] = 0
     subDep$value = subDep$value * 2 ^ (-creakyBreathy)
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing

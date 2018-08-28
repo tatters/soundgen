@@ -256,7 +256,7 @@ generateNoise = function(len,
       )
     )
     breathing = matchLengths(breathing, len = len)  # pad with 0s or trim
-    breathing = breathing / max(breathing) * breathingStrength # normalize
+    breathing = breathing / max(abs(breathing)) * breathingStrength # normalize
 
     # add attack
     if (is.numeric(attackLen) && any(attackLen > 0)) {
@@ -770,14 +770,31 @@ generateEpoch = function(pitch_per_gc,
 #' @examples
 #' f = fart()
 #' # playme(f)
-fart = function(glottisAnchors = c(350, 700),
-                pitchAnchors = 75,
+fart = function(glottis = c(350, 700),
+                glottisAnchors = 'deprecated',
+                pitch = 75,
+                pitchAnchors = 'deprecated',
                 temperature = 0.25,
                 sylLen = 600,
                 rolloff = -20,
                 samplingRate = 16000,
                 play = FALSE,
                 plot = FALSE) {
+  # deprecated pars
+  formerAnchors = c('pitchAnchors', 'glottisAnchors')
+  newAnchors = c('pitch', 'glottis')
+  for (i in 1:length(formerAnchors)) {
+    p = formerAnchors[i]
+    q = newAnchors[i]
+    # simply missing(noquote(p)) doesn't work, so use do.call
+    if (!do.call(missing, list(noquote(p)))) {
+      # user wrote "pitchAnchors = ..." etc
+      message(paste(p, 'is deprecated; use', q, 'instead'))
+    } else {
+      assign(p, get(q))
+    }
+  }
+
   glottisAnchors = reformatAnchors(glottisAnchors)
   pitchAnchors = reformatAnchors(pitchAnchors)
 
@@ -792,8 +809,14 @@ fart = function(glottisAnchors = c(350, 700),
                            sd = sylLen * temperature * .5,
                            low = 0, high = 10000)
 
-    glottisAnchors = wiggleAnchors(glottisAnchors, temperature, temp_coef = .5, low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE)
-    pitchAnchors = wiggleAnchors(pitchAnchors, temperature, temp_coef = 1, low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE)
+    glottisAnchors = wiggleAnchors(
+      glottisAnchors, temperature, temp_coef = .5,
+      low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
+      )
+    pitchAnchors = wiggleAnchors(
+      pitchAnchors, temperature, temp_coef = 1,
+      low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
+      )
   }
 
   # preliminary glottis contour
@@ -805,7 +828,8 @@ fart = function(glottisAnchors = c(350, 700),
   pitchAnchors = pitchAnchors * (mean_closed + 1)
 
   # prepare pitch contour
-  pitch = getSmoothContour(anchors = pitchAnchors, len = sylLen * samplingRate / 1000)
+  pitch = getSmoothContour(anchors = pitchAnchors,
+                           len = sylLen * samplingRate / 1000)
 
   # get pitch per glottal cycle
   gc = getGlottalCycles(pitch, samplingRate = samplingRate)
@@ -877,27 +901,33 @@ fart = function(glottisAnchors = c(350, 700),
 #' playback = c(TRUE, FALSE)[2]
 #' # a drum-like sound
 #' s = beat(nSyl = 1, sylLen = 200,
-#'                  pitchAnchors = c(200, 100), play = playback)
+#'          pitch = c(200, 100), play = playback)
 #' # plot(s, type = 'l')
 #'
 #' # a dry, muted drum
 #' s = beat(nSyl = 1, sylLen = 200,
-#'                  pitchAnchors = c(200, 10), play = playback)
+#'          pitch = c(200, 10), play = playback)
 #'
 #' # sci-fi laser guns
 #' s = beat(nSyl = 3, sylLen = 300,
-#'                  pitchAnchors = c(1000, 50), play = playback)
+#'          pitch = c(1000, 50), play = playback)
 #'
 #' # machine guns
 #' s = beat(nSyl = 10, sylLen = 10, pauseLen = 50,
-#'                  pitchAnchors = c(2300, 300), play = playback)
+#'          pitch = c(2300, 300), play = playback)
 beat = function(nSyl = 10,
                 sylLen = 200,
                 pauseLen = 50,
-                pitchAnchors = c(200, 10),
+                pitch = c(200, 10),
+                pitchAnchors = 'deprecated',
                 samplingRate = 16000,
                 fadeOut = TRUE,
                 play = FALSE) {
+  if (!missing(pitchAnchors)) {
+    message(paste('pitchAnchors is deprecated; use pitch instead'))
+  } else {
+    pitchAnchors = pitch
+  }
   len = sylLen * samplingRate / 1000
   pitchContour = getSmoothContour(anchors = pitchAnchors,
                                   len = len,
