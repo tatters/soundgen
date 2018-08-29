@@ -27,9 +27,9 @@ their values.
 soundgen:::wigglePars(
   parList = list(
     sylLen = 250,
-    pitchAnchors = data.frame(time = c(0, 1), value = c(200, 300))
+    pitch = data.frame(time = c(0, 1), value = c(200, 300))
   ),
-  parsToWiggle = c('sylLen', 'pitchAnchors'),
+  parsToWiggle = c('sylLen', 'pitch'),
   probMutation = .75,
   stepVariance = .5
 )

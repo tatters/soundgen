@@ -19,7 +19,7 @@
 #'   \code{m$formulas[[2]]}, and the waveform is \code{m$sounds[[2]]}
 #' @export
 #' @examples
-#' # write two formulas or copy-paste them from soundgen_app() or presets, for example:
+#' # write two formulas or copy-paste them from soundgen_app() or presets:
 #' m = morph(formula1 = list(repeatBout = 2),
 #'           # equivalently: formula1 = 'soundgen(repeatBout = 2)',
 #'           formula2 = presets$Misc$Dog_bark,
@@ -27,6 +27,27 @@
 #'  # use $formulas to access formulas for each morph, $sounds for waveforms
 #'  # m$formulas[[4]]
 #'  # playme(m$sounds[[3]])
+#'
+#' \dontrun{
+#' m = morph(
+#'   'soundgen(pitch = c(300, 250, 400), formants = c(350, 2900, 3600, 4700))',
+#'   'soundgen(pitch = c(300, 700, 500, 300), formants = c(800, 1250, 3100, 4500))',
+#'   nMorphs = 5, playMorphs = TRUE
+#' )
+#'
+#' m = morph(
+#'   formula1 = 'soundgen(sylLen = 180, pitch = c(160, 160, 120), rolloff = -12,
+#'     nonlinBalance = 70, subFreq = 75, subDep = 35, jitterDep = 2,
+#'     formants = c(550, 1200, 2100, 4300, 4700, 6500, 7300),
+#'     noise = data.frame(time = c(0, 180, 270), value = c(-25, -25, -40)),
+#'     rolloffNoise = 0)',
+#'   formula2 = 'soundgen(sylLen = 320, pitch = c(340, 330, 300),
+#'     rolloff = c(-18, -16, -30), ampl = c(0, -10), formants = c(950, 1700, 3700),
+#'     noise = data.frame(time = c(0, 300, 440), value = c(-35, -25, -65)),
+#'     mouth = c(.4, .5), rolloffNoise = -5, attackLen = 30)',
+#'   nMorphs = 8, playMorphs = TRUE
+#' )
+#' }
 morph = function(formula1,
                  formula2,
                  nMorphs,
@@ -200,6 +221,15 @@ morph = function(formula1,
       if (is.numeric(f2$formantsNoise[[l]]$freq)) {
         f2$formantsNoise[[l]]$freq = log(f2$formantsNoise[[l]]$freq)
       }
+    }
+  }
+
+  # expand vectorized pars, if any, to anchors
+  for (i in 1:length(f1)) {
+    if (is.numeric(f1[[i]]) && is.numeric(f2[[i]]) &&
+        (length(f1[[i]]) != length(f2[[i]]))) {
+      f1[[i]] = reformatAnchors(f1[[i]])
+      f2[[i]] = reformatAnchors(f2[[i]])
     }
   }
 

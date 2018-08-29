@@ -47,16 +47,16 @@
 #' @param penalizeLengthDif if TRUE, sounds of different length are considered
 #'   to be less similar; if FALSE, only the overlapping parts of two sounds are
 #'   compared
-#' @param throwaway parts of the spectra quieter than \code{throwaway} dB are
-#'   not compared
+#' @param dynamicRange parts of the spectra quieter than \code{-dynamicRange} dB
+#'   are not compared
 #' @param maxFreq parts of the spectra above \code{maxFreq} Hz are not compared
 #' @export
 #' @examples
 #' playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
 #'
 #' target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-#'   pitchAnchors = c(300, 200),
-#'   rolloff = -5, play = playback)  # we hope to reproduce this sound
+#'   pitch = c(300, 200), rolloff = -5, play = playback)
+#' # we hope to reproduce this sound
 #'
 #' \dontrun{
 #' # Match pars based on acoustic analysis alone, without any optimization.
@@ -74,7 +74,7 @@
 #'                pars = 'rolloff',
 #'                maxIter = 100,
 #'                verbose = playback)
-#' # rolloff should be moving from default (-12) to target (-5):
+#' # rolloff should be moving from default (-9) to target (-5):
 #' sapply(m2$history, function(x) x$pars$rolloff)
 #' cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
 #' }
@@ -93,7 +93,7 @@ matchPars = function(target,
                      verbose = TRUE,
                      padWith = NA,
                      penalizeLengthDif = TRUE,
-                     throwaway = -120,
+                     dynamicRange = 80,
                      maxFreq = NULL) {
   parsToRound = c('repeatBout', 'nSyl', 'rolloffParabHarm')
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
@@ -114,7 +114,7 @@ matchPars = function(target,
                           windowLength = windowLength,
                           overlap = overlap,
                           step = step,
-                          throwaway = throwaway,
+                          dynamicRange = dynamicRange,
                           maxFreq = maxFreq,
                           plot = FALSE)
 
@@ -139,10 +139,10 @@ matchPars = function(target,
   p = as.numeric(na.omit(aa$pitch))
   p = downsample(p, srNew = 5, srOld = 1 / step * 1000)  # downsample F0 measures to 5 Hz
   if (length(p) > 1) {
-    parDefault$pitchAnchors = data.frame(
+    parDefault$pitch = data.frame(
       time = round(seq(0, 1, length.out = length(p)), 2),
       value = round(p)
-  )}
+    )}
   if (is.list(af) && nrow(af) > 0) {
     for (f in 1:min(3, nrow(af))) {  # add max 3 formants
       parDefault$formants[[paste0('f', f)]] = list(
@@ -180,7 +180,7 @@ matchPars = function(target,
     step = step,
     padWith = padWith,
     penalizeLengthDif = penalizeLengthDif,
-    throwaway = throwaway,
+    dynamicRange = dynamicRange,
     maxFreq = maxFreq,
     summary = TRUE
   )
@@ -190,7 +190,7 @@ matchPars = function(target,
   while (i < maxIter) {
     if (!is.numeric(length(pars)) || length(pars) < 1) {
       stop(paste("No parameters for optimization are specified!",
-                    "Either list them in 'pars' or set 'maxIter = 0'"))
+                 "Either list them in 'pars' or set 'maxIter = 0'"))
     }
     # mutate pars
     parMut = parLoop
@@ -218,7 +218,7 @@ matchPars = function(target,
         step = step,
         padWith = padWith,
         penalizeLengthDif = penalizeLengthDif,
-        throwaway = throwaway,
+        dynamicRange = dynamicRange,
         maxFreq = maxFreq,
         summary = TRUE
       )
@@ -267,23 +267,23 @@ matchPars = function(target,
 #' @examples
 #' \dontrun{
 #' target = soundgen(sylLen = 500, formants = 'a',
-#'                   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
-#'                                             value = c(100, 150, 135, 100)),
+#'                   pitch = data.frame(time = c(0, 0.1, 0.9, 1),
+#'                                      value = c(100, 150, 135, 100)),
 #'                   temperature = 0.001)
 #' targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
 
 #' parsToTry = list(
 #'   list(formants = 'i',                                            # wrong
-#'        pitchAnchors = data.frame(time = c(0, 1),                  # wrong
-#'                                  value = c(200, 300))),
+#'        pitch = data.frame(time = c(0, 1),                         # wrong
+#'                           value = c(200, 300))),
 #'   list(formants = 'i',                                            # wrong
-#'        pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),        # right
+#'        pitch = data.frame(time = c(0, 0.1, 0.9, 1),               # right
 #'                                  value = c(100, 150, 135, 100))),
 #'   list(formants = 'a',                                            # right
-#'        pitchAnchors = data.frame(time = c(0,1),                   # wrong
+#'        pitch = data.frame(time = c(0,1),                          # wrong
 #'                                  value = c(200, 300))),
 #'   list(formants = 'a',
-#'        pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),        # right
+#'        pitch = data.frame(time = c(0, 0.1, 0.9, 1),               # right
 #'                                  value = c(100, 150, 135, 100)))  # right
 #' )
 #'
@@ -325,7 +325,7 @@ compareSounds = function(target,
                          step = NULL,
                          padWith = NA,
                          penalizeLengthDif = TRUE,
-                         throwaway = -120,
+                         dynamicRange = 80,
                          maxFreq = NULL,
                          summary = TRUE) {
   # extract spectrums
@@ -335,7 +335,7 @@ compareSounds = function(target,
                             windowLength = windowLength,
                             overlap = overlap,
                             step = step,
-                            throwaway = throwaway,
+                            dynamicRange = dynamicRange,
                             maxFreq = maxFreq)
   }
   candSpec = getMelSpec(cand,
@@ -343,7 +343,7 @@ compareSounds = function(target,
                         windowLength = windowLength,
                         overlap = overlap,
                         step = step,
-                        throwaway = throwaway,
+                        dynamicRange = dynamicRange,
                         maxFreq = maxFreq)
 
   # make sure the number of columns (frames) is equal for comparing the two
@@ -414,9 +414,9 @@ compareSounds = function(target,
 #' soundgen:::wigglePars(
 #'   parList = list(
 #'     sylLen = 250,
-#'     pitchAnchors = data.frame(time = c(0, 1), value = c(200, 300))
+#'     pitch = data.frame(time = c(0, 1), value = c(200, 300))
 #'   ),
-#'   parsToWiggle = c('sylLen', 'pitchAnchors'),
+#'   parsToWiggle = c('sylLen', 'pitch'),
 #'   probMutation = .75,
 #'   stepVariance = .5
 #' )
@@ -471,18 +471,18 @@ wigglePars = function(parList,
         }
       } else {  # pitch / ampl / etc
         wiggleAllRows = FALSE
-        if (p == 'pitchAnchors') {
+        if (p == 'pitch') {
           low = c(0, permittedValues['pitchFloor', 'default'])
           high = c(1, permittedValues['pitchCeiling', 'default'])
-        } else if (p == 'pitchAnchorsGlobal') {
+        } else if (p == 'pitchGlobal') {
           low = c(0, permittedValues['pitchDeltas', 'low'])
           high = c(1, permittedValues['pitchDeltas', 'high'])
-        } else if (p == 'amplAnchors' |
-                   p == 'amplAnchorsGlobal') {
+        } else if (p == 'ampl' |
+                   p == 'amplGlobal') {
           low = c(0, 0)
-          high = c(1, -permittedValues['throwaway', 'default'])
-        } else if (p == 'noiseAnchors') {
-          low = c(-Inf, permittedValues['throwaway', 'default'])
+          high = c(1, permittedValues['dynamicRange', 'default'])
+        } else if (p == 'noise') {
+          low = c(-Inf, -permittedValues['dynamicRange', 'default'])
           high = c(+Inf, 40)
           wiggleAllRows = TRUE
         }
@@ -517,11 +517,11 @@ getMelSpec = function(s,
                       windowLength = 40,
                       overlap = 50,
                       step = NULL,
-                      throwaway = -120,
+                      dynamicRange = 80,
                       maxFreq = NULL,
                       plot = FALSE) {
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  throwaway01 = 2 ^ (throwaway / 10)
+  throwaway01 = 2 ^ (-dynamicRange / 10)
 
   if (is.character(s)) {
     sWave = tuneR::readWave(s)

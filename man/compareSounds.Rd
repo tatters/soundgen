@@ -7,7 +7,7 @@
 compareSounds(target, targetSpec = NULL, cand, samplingRate = NULL,
   method = c("cor", "cosine", "pixel", "dtw")[1:4], windowLength = 40,
   overlap = 50, step = NULL, padWith = NA, penalizeLengthDif = TRUE,
-  throwaway = -120, maxFreq = NULL, summary = TRUE)
+  dynamicRange = 80, maxFreq = NULL, summary = TRUE)
 }
 \arguments{
 \item{target}{the sound we want to reproduce using soundgen: path to a .wav
@@ -45,8 +45,8 @@ rather than NA's improves the fit to target measured by \code{method =
 to be less similar; if FALSE, only the overlapping parts of two sounds are
 compared}
 
-\item{throwaway}{parts of the spectra quieter than \code{throwaway} dB are
-not compared}
+\item{dynamicRange}{parts of the spectra quieter than \code{-dynamicRange} dB
+are not compared}
 
 \item{maxFreq}{parts of the spectra above \code{maxFreq} Hz are not compared}
 
@@ -60,22 +60,22 @@ spectra (auditory spectra). Called by \code{\link{matchPars}}.
 \examples{
 \dontrun{
 target = soundgen(sylLen = 500, formants = 'a',
-                  pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
-                                            value = c(100, 150, 135, 100)),
+                  pitch = data.frame(time = c(0, 0.1, 0.9, 1),
+                                     value = c(100, 150, 135, 100)),
                   temperature = 0.001)
 targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
 parsToTry = list(
   list(formants = 'i',                                            # wrong
-       pitchAnchors = data.frame(time = c(0, 1),                  # wrong
-                                 value = c(200, 300))),
+       pitch = data.frame(time = c(0, 1),                         # wrong
+                          value = c(200, 300))),
   list(formants = 'i',                                            # wrong
-       pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),        # right
+       pitch = data.frame(time = c(0, 0.1, 0.9, 1),               # right
                                  value = c(100, 150, 135, 100))),
   list(formants = 'a',                                            # right
-       pitchAnchors = data.frame(time = c(0,1),                   # wrong
+       pitch = data.frame(time = c(0,1),                          # wrong
                                  value = c(200, 300))),
   list(formants = 'a',
-       pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),        # right
+       pitch = data.frame(time = c(0, 0.1, 0.9, 1),               # right
                                  value = c(100, 150, 135, 100)))  # right
 )
 

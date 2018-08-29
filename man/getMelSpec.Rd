@@ -5,7 +5,7 @@
 \title{Mel-transformed spectrum}
 \usage{
 getMelSpec(s, samplingRate = NULL, windowLength = 40, overlap = 50,
-  step = NULL, throwaway = -120, maxFreq = NULL, plot = FALSE)
+  step = NULL, dynamicRange = 80, maxFreq = NULL, plot = FALSE)
 }
 \arguments{
 \item{s}{input sound (path to a .wav file or numeric vector)}
@@ -19,8 +19,8 @@ a numeric vector, rather than a .wav file)}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
-\item{throwaway}{parts of the spectra quieter than \code{throwaway} dB are
-not compared}
+\item{dynamicRange}{parts of the spectra quieter than \code{-dynamicRange} dB
+are not compared}
 
 \item{maxFreq}{parts of the spectra above \code{maxFreq} Hz are not compared}
 

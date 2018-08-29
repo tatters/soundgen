@@ -8,7 +8,7 @@ matchPars(target, samplingRate = NULL, pars = NULL, init = NULL,
   method = c("cor", "cosine", "pixel", "dtw"), probMutation = 0.25,
   stepVariance = 0.1, maxIter = 50, minExpectedDelta = 0.001,
   windowLength = 40, overlap = 50, step = NULL, verbose = TRUE,
-  padWith = NA, penalizeLengthDif = TRUE, throwaway = -120,
+  padWith = NA, penalizeLengthDif = TRUE, dynamicRange = 80,
   maxFreq = NULL)
 }
 \arguments{
@@ -62,8 +62,8 @@ rather than NA's improves the fit to target measured by \code{method =
 to be less similar; if FALSE, only the overlapping parts of two sounds are
 compared}
 
-\item{throwaway}{parts of the spectra quieter than \code{throwaway} dB are
-not compared}
+\item{dynamicRange}{parts of the spectra quieter than \code{-dynamicRange} dB
+are not compared}
 
 \item{maxFreq}{parts of the spectra above \code{maxFreq} Hz are not compared}
 }
@@ -86,8 +86,8 @@ for more information.
 playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
 
 target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-  pitchAnchors = c(300, 200),
-  rolloff = -5, play = playback)  # we hope to reproduce this sound
+  pitch = c(300, 200), rolloff = -5, play = playback)
+# we hope to reproduce this sound
 
 \dontrun{
 # Match pars based on acoustic analysis alone, without any optimization.
@@ -105,7 +105,7 @@ m2 = matchPars(target = target,
                pars = 'rolloff',
                maxIter = 100,
                verbose = playback)
-# rolloff should be moving from default (-12) to target (-5):
+# rolloff should be moving from default (-9) to target (-5):
 sapply(m2$history, function(x) x$pars$rolloff)
 cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
 }

@@ -8,32 +8,32 @@ output:
     number_sections: true
     css: custom.css
 vignette: >
-%\VignetteIndexEntry{Sound generation with soundgen}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
-  ---
+ %\VignetteIndexEntry{Sound generation with soundgen}
+ %\VignetteEngine{knitr::rmarkdown}
+ %\VignetteEncoding{UTF-8}
+---
   
-  # Intro
-  ## Purpose
-  The function `soundgen` is intended for the synthesis of animal vocalizations, including human non-linguistic vocalizations like sighs, moans, screams, etc. It can also create non-biological sounds that require precise control over spectral and temporal modulations, such as special sound effects in computer games or acoustic stimuli for scientific experiments. Soundgen is NOT meant to be used for text-to-speech conversion. It can be adapted for this purpose, but existing specialized tools will probably serve better.
+# Intro
+## Purpose
+The function `soundgen` is intended for the synthesis of animal vocalizations, including human non-linguistic vocalizations like sighs, moans, screams, etc. It can also create non-biological sounds that require precise control over spectral and temporal modulations, such as special sound effects in computer games or acoustic stimuli for scientific experiments. Soundgen is NOT meant to be used for text-to-speech conversion. It can be adapted for this purpose, but existing specialized tools will probably serve better.
   
-  Soundgen uses a parametric algorithm, which means that sounds are synthesized de novo, and the output is completely determined by the values of control parameters, as opposed to concatenating or modifying existing audio recordings. Under the hood, the current version of soundgen generates and filters two sources of excitation: sine waves and white noise. 
+Soundgen uses a parametric algorithm, which means that sounds are synthesized de novo, and the output is completely determined by the values of control parameters, as opposed to concatenating or modifying existing audio recordings. Under the hood, the current version of soundgen generates and filters two sources of excitation: sine waves and white noise. 
   
-  The rest of this vignette will unpack this last statement and demonstrate how soundgen can be used in practice. To simplify setting the control parameters and visualizing the output, soundgen library includes an interactive Shiny app. To start the app, type `soundgen_app()` from R or try it online at <a href="http://cogsci.se/soundgen.html">cogsci.se/soundgen.html</a>. To generate sounds from the console, use the function `soundgen`. Each section of the vignette focuses on a particular aspect of sound generation, both describing the relevant arguments of `soundgen` and explaining how they can be set in the Shiny app. Note that some advanced features, notably vectorization of several arguments, are not implemented in the app and are only accessible from the console.
+The rest of this vignette will unpack this last statement and demonstrate how soundgen can be used in practice. To simplify setting the control parameters and visualizing the output, soundgen library includes an interactive Shiny app. To start the app, type `soundgen_app()` from R or try it online at <a href="http://cogsci.se/soundgen.html">cogsci.se/soundgen.html</a>. To generate sounds from the console, use the function `soundgen`. Each section of the vignette focuses on a particular aspect of sound generation, both describing the relevant arguments of `soundgen` and explaining how they can be set in the Shiny app. Note that some advanced features, notably vectorization of several arguments, are not implemented in the app and are only accessible from the console.
   
-  *TIP: this vignette is a hands-on, non-technical tutorial focusing on how to use soundgen in order to synthesize new sounds. For a more rigorous and theoretical discussion, please refer to Anikin, A. (2018). Soundgen: an open-source tool for synthesizing nonverbal vocalizations. Behavoir Research Methods, 1-15.*
+*TIP: this vignette is a hands-on, non-technical tutorial focusing on how to use soundgen in order to synthesize new sounds. For a more rigorous and theoretical discussion, please refer to Anikin, A. (2018). Soundgen: an open-source tool for synthesizing nonverbal vocalizations. Behavoir Research Methods, 1-15.*
   
-  ## Before you proceed: consider the alternatives
-  There are several other R packages that offer sound synthesis, notably `tuneR`, `seewave`, and `phonTools`. Both `seewave` and `tuneR` implement straightforward ways to synthesize pulses and square, triangular, or sine waves as well as noise with adjustable (linear) spectral slope. You can also create multiple harmonics with both amplitude and frequency modulation using `seewave::synth()` and `seewave::synth2()`. There is even a function available for adding formants and thus creating different vowels: `phonTools::vowelsynth()`. Basic tonal synthesis and many acoustic manipulations can also be performed using the open-source program PRAAT. If this is ample for your needs, you might want to try these alternatives first. 
+## Before you proceed: consider the alternatives
+There are several other R packages that offer sound synthesis, notably `tuneR`, `seewave`, and `phonTools`. Both `seewave` and `tuneR` implement straightforward ways to synthesize pulses and square, triangular, or sine waves as well as noise with adjustable (linear) spectral slope. You can also create multiple harmonics with both amplitude and frequency modulation using `seewave::synth()` and `seewave::synth2()`. There is even a function available for adding formants and thus creating different vowels: `phonTools::vowelsynth()`. Basic tonal synthesis and many acoustic manipulations can also be performed using the open-source program PRAAT. If this is ample for your needs, you might want to try these alternatives first. 
   
-  So why bother with soundgen? First, it takes customization and flexibility of sound synthesis much further. You will appreciate this flexibility if your aim is to produce convincing biological sounds. And second, it's a higher-level tool with dedicated subroutines for things like controlling the rolloff (relative energy of different harmonics), adding moving formants and antiformants, mixing harmonic and noise components, controlling voice changes over multiple syllables, adding stochasticity to imitate unpredictable voice changes common in biological sound production, and more. In other words, soundgen offers powerful control over low-level acoustic characteristics of synthesized sounds with the benefit of also offering transparent, meaningful high-level parameters intended for rapid and straightforward specification of whole bouts of vocalizing. 
+So why bother with soundgen? First, it takes customization and flexibility of sound synthesis much further. You will appreciate this flexibility if your aim is to produce convincing biological sounds. And second, it's a higher-level tool with dedicated subroutines for things like controlling the rolloff (relative energy of different harmonics), adding moving formants and antiformants, mixing harmonic and noise components, controlling voice changes over multiple syllables, adding stochasticity to imitate unpredictable voice changes common in biological sound production, and more. In other words, soundgen offers powerful control over low-level acoustic characteristics of synthesized sounds with the benefit of also offering transparent, meaningful high-level parameters intended for rapid and straightforward specification of whole bouts of vocalizing. 
   
-  Because of this high-level control, you don't really have to think about the math of sound synthesis in order to use soundgen (although if you do, that helps). This vignette also assumes that the reader has some training in phonetics or bioacoustics, particularly for sections on formants and subharmonics.
+Because of this high-level control, you don't really have to think about the math of sound synthesis in order to use soundgen (although if you do, that helps). This vignette also assumes that the reader has some training in phonetics or bioacoustics, particularly for sections on formants and subharmonics.
   
-  ## Basic principles of sound synthesis in soundgen
-  Feel free to skip this section if you are only interested in using soundgen, not in how it works under the hood.
+## Basic principles of sound synthesis in soundgen
+Feel free to skip this section if you are only interested in using soundgen, not in how it works under the hood.
   
-  Soundgen's credo is to start with a few control parameters (e.g., the intonation contour, the amount of noise, the number of syllables and their duration, etc.) and to generate a corresponding audio stream, which will sound like a biological vocalization (a bark, a laugh, etc). The core algorithm for generating a single voiced segment implements the standard source-filter model (Fant, 1971). The voiced component is generated as a sum of sine waves and the noise component as filtered white noise, and both components are then passed through a frequency filter simulating the effect of human vocal tract. This process can be conceptually divided into three stages:
+Soundgen's credo is to start with a few control parameters (e.g., the intonation contour, the amount of noise, the number of syllables and their duration, etc.) and to generate a corresponding audio stream, which will sound like a biological vocalization (a bark, a laugh, etc). The core algorithm for generating a single voiced segment implements the standard source-filter model (Fant, 1971). The voiced component is generated as a sum of sine waves and the noise component as filtered white noise, and both components are then passed through a frequency filter simulating the effect of human vocal tract. This process can be conceptually divided into three stages:
   
   1.  Generation of the harmonic component (glottal source).
   At this crucial stage, we "paint" the spectrogram of the glottal source based on the desired intonation contour and spectral envelope by specifying the frequencies, phases, and amplitudes of a number of sine waves, one for each harmonic of the fundamental frequency (f0). If needed, we also add stochastic and non-linear effects at this stage: jitter and shimmer (random fluctuation in frequency and amplitude), subharmonics, slower random drift of control parameters, etc. Once the spectrogram "painting" is complete, we synthesize the corresponding waveform by generating and adding up as many sine waves as there are harmonics in the spectrum.
@@ -53,15 +53,15 @@ vignette: >
   Having briefly looked at the fundamental principles of sound generation, we proceed to control parameters. The aim of the following presentation is to offer practical tips on using soundgen. For further information on more fundamental principles of acoustics and sound synthesis, you may find the vignettes in `seewave` very helpful, or you can check out the book on sound synthesis in R by Jerome Sueur, the author of the `seewave` package. Some essential references are also listed at the end of this vignette, especially those sources that have inspired particular routines in soundgen.
   
   
-  # Using soundgen
-  ## Where to start
-  To generate a sound, you can either type `soundgen_app()` to open an interactive Shiny app or call `soundgen()` from R console with manually specified parameters. `presets` contains a collection of presets that demonstrate some of the possibilities. More information is available on the project's homepage at <a href="http://cogsci.se/soundgen.html">http://cogsci.se/soundgen.html</a>.
+# Using soundgen
+## Where to start
+To generate a sound, you can either type `soundgen_app()` to open an interactive Shiny app or call `soundgen()` from R console with manually specified parameters. `presets` contains a collection of presets that demonstrate some of the possibilities. More information is available on the project's homepage at <a href="http://cogsci.se/soundgen.html">http://cogsci.se/soundgen.html</a>.
   
-  ## Audio playback
-  Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback, via a wrapper function called `playme()` that accepts both Wave objects and simple numeric vectors. If `soundgen(play = TRUE)` throws an error, make sure the audio can be played before you proceed with using soundgen. To do so, save some sound as a vector first: `sound = soundgen(play = FALSE)` or even simply `sound = rnorm(10000)`. Then try to find a way to play this vector `sound`. You may need to change the default player in `tuneR` or install additional software. See the <a href="https://CRAN.R-project.org/package=seewave">seewave vignette</a> on sound input/output for an in-depth discussion of audio playback in R. Some tips are also available <a href="http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf">here</a>.
+## Audio playback
+Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback, via a wrapper function called `playme()` that accepts both Wave objects and simple numeric vectors. If `soundgen(play = TRUE)` throws an error, make sure the audio can be played before you proceed with using soundgen. To do so, save some sound as a vector first: `sound = soundgen(play = FALSE)` or even simply `sound = rnorm(10000)`. Then try to find a way to play this vector `sound`. You may need to change the default player in `tuneR` or install additional software. See the <a href="https://CRAN.R-project.org/package=seewave">seewave vignette</a> on sound input/output for an in-depth discussion of audio playback in R. Some tips are also available <a href="http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf">here</a>.
   
-  Because of possible errors, audio playback is disabled by default in the rest of this vignette. To turn it on without changing any code, simply set the global variable `playback = TRUE`:
-  ```{r}
+Because of possible errors, audio playback is disabled by default in the rest of this vignette. To turn it on without changing any code, simply set the global variable `playback = TRUE`:
+```{r}
 playback = c(TRUE, FALSE)[2]
 ```
 
@@ -225,7 +225,7 @@ s = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, plot = TRUE, play = playbac
 
 ### Vibrato
 Vibrato adds frequency modulation (FM) to f0 contour by modifying f0 per glottal cycle. In contrast to irregular jitter and temperature-related random drift, however, this FM is regular, namely sinusoidal:
-```{r}
+```{r fig.width = 5, fig.height = 5}
 s1 = soundgen(vibratoDep = 0:3, vibratoFreq = 7:5, sylLen = 2000, play = playback,
               pitch = c(300, 280), plot = TRUE)
 ```
@@ -324,7 +324,7 @@ s = soundgen(sylLen = 1000, formants = NA,
              amShape = 0,  
              # asymmetrical attack: 20 ms at the beginning and 140 ms at the end
              attackLen = c(20, 140),
-             plot = TRUE, osc = TRUE, play = playback)
+             plot = TRUE, osc = TRUE, heights = c(1, 1), play = playback)
 ```
 
 A common special case of modifying the amplitude envelope of a synthesized or recorded sound is to flatten it, making sure the amplitude remains relatively stable throughout the duration of the signal. There is a separate function for achieving this, namely `flatEnv()`:
@@ -391,7 +391,7 @@ estimateVTL(formants = c(300, 1100, 2000))  # 22.8 cm
 
 It is usually useful to allow soundgen to create upper formants automatically based on the estimated VTL, since upper formants are typically less perceptually salient. As a result, we don't want to spend too much time specifying them manually, but still we don't want them to be completely absent, either, since that makes for very weak high frequencies in the spectrum. An approximation based on standard open-ended tube models is often good enough for calculating the missing formant frequencies. You can remove them by setting `temperature = 0` or `formantDepStoch = 0`, but note that without higher formants the entire spectrum loses energy at higher frequencies:
 
-```{r fig.show = "hold", fig.width = 7, fig.height = 4}
+```{r fig.width = 7, fig.height = 4}
 s1 = soundgen(formants = c(800, 1200), play = playback, plot = TRUE)
 s1 = soundgen(formants = c(800, 1200), formantDepStoch = 0,
               play = playback, plot = TRUE)
@@ -399,7 +399,7 @@ s1 = soundgen(formants = c(800, 1200), formantDepStoch = 0,
 
 Another useful method is to specify vocal tract length without any formants. In this case soundgen() approximates a neutral schwa sound for an animal with a vocal tract that looks like a uniform tube of this length. Crude, but often sufficient. A toy example (check presets for some more realistic sounds created using this method):
 
-```{r fig.show = "hold", fig.width = 7, fig.height = 4}
+```{r fig.width = 7, fig.height = 4}
 s1 = soundgen(formants = NULL, vocalTract = 24, play = playback, plot = TRUE)
 s1 = soundgen(formants = NULL, vocalTract = 12, play = playback, plot = TRUE)
 ```
