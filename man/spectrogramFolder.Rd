@@ -29,7 +29,9 @@ blackman, flattop}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 
-\item{osc}{should an oscillogram be shown under the spectrogram? TRUE / FALSE}
+\item{osc}{should an oscillogram be shown under the spectrogram? TRUE
+/ FALSE, If `osc_dB`, the oscillogram is displayed on a dB scale. See
+\code{\link{osc_dB}} for details}
 
 \item{xlab}{graphical parameters}
 
@@ -62,10 +64,12 @@ spectrogramFolder supports plotting both a spectrogram and an oscillogram if
 }
 \examples{
 \dontrun{
-spectrogramFolder('~/Downloads/temp',
-                  windowLength = 40, overlap = 75,  # spectrogram pars
-                  width = 1500, height = 900        # passed to jpeg()
-                  )
+spectrogramFolder(
+  '~/Downloads/temp',
+  windowLength = 40, overlap = 75,  # spectrogram pars
+  width = 1500, height = 900,        # passed to jpeg()
+  osc = TRUE, osc_dB = TRUE, heights = c(1, 1)
+)
 # note that the folder now also contains an html file with clickable plots
 }
 }

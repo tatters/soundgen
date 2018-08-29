@@ -43,8 +43,8 @@
 #'   ('processed')
 #' @param ylim frequency range to plot, kHz (defaults to 0 to Nyquist frequency)
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
-#' @param osc should an oscillogram be shown under the spectrogram? TRUE / FALSE
-#' @param osc_dB if TRUE, the oscillogram is displayed on a dB scale. See
+#' @param osc,osc_dB should an oscillogram be shown under the spectrogram? TRUE
+#'   / FALSE, If `osc_dB`, the oscillogram is displayed on a dB scale. See
 #'   \code{\link{osc_dB}} for details
 #' @param heights a vector of length two specifying the relative height of the
 #'   spectrogram and the oscillogram
@@ -81,7 +81,7 @@
 #'
 #' # oscillogram on a dB scale, same height as spectrogram
 #' spectrogram(sound, samplingRate = 16000,
-#'             osc = TRUE, osc_dB = TRUE, heights = c(1, 1))
+#'             osc_dB = TRUE, heights = c(1, 1))
 #'
 #' # broad-band instead of narrow-band
 #' spectrogram(sound, samplingRate = 16000, windowLength = 5)
@@ -313,7 +313,7 @@ spectrogram = function(x,
 
   if (plot) {
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
-    if (osc) {
+    if (osc | osc_dB) {
       if (osc_dB) {
         sound = osc_dB(sound,
                        dynamicRange = dynamicRange,
@@ -383,10 +383,12 @@ spectrogram = function(x,
 #' @export
 #' @examples
 #' \dontrun{
-#' spectrogramFolder('~/Downloads/temp',
-#'                   windowLength = 40, overlap = 75,  # spectrogram pars
-#'                   width = 1500, height = 900        # passed to jpeg()
-#'                   )
+#' spectrogramFolder(
+#'   '~/Downloads/temp',
+#'   windowLength = 40, overlap = 75,  # spectrogram pars
+#'   width = 1500, height = 900,        # passed to jpeg()
+#'   osc = TRUE, osc_dB = TRUE, heights = c(1, 1)
+#' )
 #' # note that the folder now also contains an html file with clickable plots
 #' }
 spectrogramFolder = function(myfolder,

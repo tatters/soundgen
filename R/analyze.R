@@ -144,16 +144,16 @@
 #' }
 #' @export
 #' @examples
-#' sound = soundgen(sylLen = 300, pitchAnchors = c(900, 400, 2300),
-#'   noiseAnchors = list(time = c(0, 300), value = c(-40, 00)),
+#' sound = soundgen(sylLen = 300, pitch = c(900, 400, 2300),
+#'   noise = list(time = c(0, 300), value = c(-40, 00)),
 #'   temperature = 0.001, addSilence = 0)
 #' # playme(sound, 16000)
 #' a = analyze(sound, samplingRate = 16000, plot = TRUE)
 #'
 #' \dontrun{
-#' sound1 = soundgen(sylLen = 900, pitchAnchors = list(
+#' sound1 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .9, 1), value = c(300, 900, 400, 2300)),
-#'   noiseAnchors = list(time = c(0, 300), value = c(-40, 00)),
+#'   noise = list(time = c(0, 300), value = c(-40, 00)),
 #'   temperature = 0.001, addSilence = 0)
 #' # improve the quality of postprocessing:
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
@@ -164,9 +164,9 @@
 #'   value = c(300, 900, 400, 2300)), len = 1000))
 #'
 #' # the same pitch contour, but harder b/c of subharmonics and jitter
-#' sound2 = soundgen(sylLen = 900, pitchAnchors = list(
+#' sound2 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-#'   noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+#'   noise = list(time = c(0, 900), value = c(-40, 20)),
 #'   subDep = 100, jitterDep = 0.5, nonlinBalance = 100, temperature = 0.001)
 #' # playme(sound2, 16000)
 #' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
@@ -267,14 +267,18 @@ analyze = function(x,
     samplingRate = sound@samp.rate
     sound = sound@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
-    plotname = substring(plotname, first = 1,
-                         last = (nchar(plotname) - 4))
+    plotname = ifelse(
+      !missing(main) && !is.null(main),
+      main,
+      substring(plotname, first = 1,
+                last = (nchar(plotname) - 4))
+    )
   } else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop('Please specify "samplingRate", eg 44100')
     } else {
       sound = x
-      plotname = ''
+      plotname = ifelse(!missing(main) && !is.null(main), main, '')
     }
   } else {
     stop('Input not recognized')
@@ -777,6 +781,7 @@ analyze = function(x,
            ylim = ylim,
            xlab = xlab,
            ylab = ylab,
+           main = plotname,
            ...)
     }
     # add pitch candidates to the plot
