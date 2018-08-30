@@ -1010,6 +1010,8 @@ soundgen = function(repeatBout = 1,
     if (is.list(amDep) && any(amDep$value > 0)) {
       # vectorize
       amPar_vect = c('amDep', 'amFreq', 'amShape')
+      # just to get rid of of NOTE on CRAN:
+      amDep_vector = amFreq_vector = amShape_vector = vector()
       for (p in amPar_vect) {
         p_unique_value = unique(get(p)$value)
         if (length(p_unique_value) > 1) {

@@ -4,6 +4,12 @@ formantsPerVowel = data.frame(  # Ladefoged 2012 "Vowels & consonants, 3rd ed.",
   f2 = c(2300, 1950, 1800, 1750, 1100, 1200, 850, 1050, 880)
 )
 
+formerAnchors = c(
+  'pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
+  'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors', 'noiseAnchors'
+)
+newAnchors = c('pitch', 'pitchGlobal', 'glottis', 'ampl', 'amplGlobal', 'mouth', 'noise')
+
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
   files = list.files('www/')
@@ -88,6 +94,15 @@ server = function(input, output, session) {
     if (class(preset) == 'list') {
       if(class(preset$formants) == 'character') {
         preset$vowelString = preset$formants  # in case formants = 'aui' etc
+      }
+
+      # if the preset contains "pitch", "ampl" etc, rename to "pitchAnchors", "amplAchors"
+      for (a in 1:length(formerAnchors)) {
+        old = formerAnchors[a]
+        new = newAnchors[a]
+        if (new %in% names(preset)) {
+          names(preset)[which(names(preset) == new)] = old
+        }
       }
 
       sliders_to_reset = names(preset)[which(names(preset) %in% names(input))]
@@ -452,7 +467,7 @@ server = function(input, output, session) {
       soundgen:::getDiscreteContour(
         anchors = myPars$pitchAnchorsGlobal,
         len = input$nSyl,
-        method = 'spline',
+        interpol = 'spline',
         plot = TRUE,
         ylab = 'Pitch delta, semitones',
         valueFloor = permittedValues['pitchDeltas', 'low'],
@@ -1094,16 +1109,28 @@ server = function(input, output, session) {
 
   output$spectrogram = renderPlot({
     if (input$spectrogram_or_spectrum == 'spectrogram') {
-      spectrogram(myPars$sound,
-                  samplingRate = input$samplingRate,
-                  wn = 'gaussian', windowLength = input$specWindowLength,
-                  step = round(input$specWindowLength / 4),
-                  osc = TRUE, xlab = 'Time, ms', ylab = 'Frequency, kHz',
-                  main = 'Spectrogram', contrast = input$specContrast,
-                  brightness = input$specBrightness,
-                  colorTheme = input$spec_colorTheme,
-                  method = input$spec_method,
-                  ylim = c(input$spec_ylim[1], input$spec_ylim[2]))
+      if (input$osc_heights < 0) {
+        heights = c(-input$osc_heights, 1)
+      } else if (input$osc_heights == 0) {
+        heights = c(1, 1)
+      } else {
+        heights = c(1, input$osc_heights)
+      }
+      spectrogram(
+        myPars$sound,
+        samplingRate = input$samplingRate,
+        wn = 'gaussian', windowLength = input$specWindowLength,
+        step = round(input$specWindowLength / 4),
+        osc = input$osc == 'linear',
+        osc_dB = input$osc == 'dB',
+        heights = heights,
+        xlab = 'Time, ms', ylab = 'Frequency, kHz',
+        main = 'Spectrogram', contrast = input$specContrast,
+        brightness = input$specBrightness,
+        colorTheme = input$spec_colorTheme,
+        method = input$spec_method,
+        ylim = c(input$spec_ylim[1], input$spec_ylim[2])
+      )
     } else {
       seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
                         wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
@@ -1231,11 +1258,6 @@ server = function(input, output, session) {
     new_presetID = paste(sample(c(letters, 0:9), 8, replace = TRUE),
                          collapse = '')
     # if the new preset contains "pitch", "ampl" etc, rename to "pitchAnchors", "amplAchors"
-    formerAnchors = c(
-      'pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
-      'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors', 'noiseAnchors'
-    )
-    newAnchors = c('pitch', 'pitchGlobal', 'glottis', 'ampl', 'amplGlobal', 'mouth', 'noise')
     for (a in 1:length(newAnchors)) {
       old = formerAnchors[a]
       new = newAnchors[a]

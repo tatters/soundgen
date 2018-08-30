@@ -78,7 +78,8 @@ permittedValues = matrix(c(
   'pitch', 100, 1, 3500, 1,  # set pitch range per species
   'pitchDeltas', 0, -24, 24, 1,  # amplPitchGlobal range
   'time', 0, 0, 5000, 1,
-  'noiseAmpl', 0, -80, 40, 1  # for plotting - noise ylim
+  'noiseAmpl', 0, -80, 40, 1,  # for plotting - noise ylim
+  'oscHeight', -3, -5, 5, 1   # relative size of spectrogram vs oscillogram
 ), ncol=5, byrow=TRUE)
 temp = permittedValues[,1]
 permittedValues = apply (permittedValues[,2:5], 2, as.numeric)
@@ -144,7 +145,7 @@ defaults = list(
   pitchGlobal = list(time = c(0, 1), value = c(0, 0)),
   glottisAnchors = 0,
   glottis = 0,
-  noise = list(time = c(0, 300), value = c(-80, -80)),
+  noiseAnchors = list(time = c(0, 300), value = c(-80, -80)),
   noise = list(time = c(0, 300), value = c(-80, -80)),
   mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   mouth = list(time = c(0, 1), value = c(.5, .5)),
