@@ -5,7 +5,7 @@
 \title{Generate beat}
 \usage{
 beat(nSyl = 10, sylLen = 200, pauseLen = 50, pitch = c(200, 10),
-  pitchAnchors = "deprecated", samplingRate = 16000, fadeOut = TRUE,
+  pitchAnchors = c(200, 10), samplingRate = 16000, fadeOut = TRUE,
   play = FALSE)
 }
 \arguments{

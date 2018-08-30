@@ -764,6 +764,9 @@ generateEpoch = function(pitch_per_gc,
 #' cycles with harmonics, but no formants. See \code{\link{soundgen}} for more
 #' details.
 #' @inheritParams soundgen
+#' @param sylLen syllable length, ms (not vectorized)
+#' @param rolloff rolloff of harmonics in source spectrum, dB/octave (not
+#'   vectorized)
 #' @param plot if TRUE, plots the waveform
 #' @return Returns a normalized waveform.
 #' @export
@@ -919,7 +922,7 @@ beat = function(nSyl = 10,
                 sylLen = 200,
                 pauseLen = 50,
                 pitch = c(200, 10),
-                pitchAnchors = 'deprecated',
+                pitchAnchors = c(200, 10),
                 samplingRate = 16000,
                 fadeOut = TRUE,
                 play = FALSE) {

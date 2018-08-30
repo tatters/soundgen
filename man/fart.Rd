@@ -32,11 +32,10 @@ fundamental frequency f0 (pitch) within one syllable}
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
 
-\item{sylLen}{average duration of each syllable, ms (vectorized)}
+\item{sylLen}{syllable length, ms (not vectorized)}
 
-\item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
-(exponential decay). All rolloff parameters are in anchor format. See
-\code{\link{getRolloff}} for more details}
+\item{rolloff}{rolloff of harmonics in source spectrum, dB/octave (not
+vectorized)}
 
 \item{samplingRate}{sampling frequency, Hz}
 
