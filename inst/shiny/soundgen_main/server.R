@@ -107,7 +107,16 @@ server = function(input, output, session) {
 
       sliders_to_reset = names(preset)[which(names(preset) %in% names(input))]
       for (v in sliders_to_reset) {
-        try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
+        if (is.numeric(preset[[v]])) {
+          new_value = preset[[v]][1]  # the first value if a vector
+        } else if (is.list(preset[[v]])) {
+          new_value = preset[[v]][1, 2]  # the first value if a df of anchors
+        } else {
+          new_value = NULL
+        }
+        if (length(new_value) > 0) {
+          try(updateSliderInput(session, v, value = new_value))
+        }
       }
 
       # reformat anchors from the preset

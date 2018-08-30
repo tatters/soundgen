@@ -1,9 +1,9 @@
 ## ----fig.width = 5, fig.height = 5---------------------------------------
 library(soundgen)
 s1 = soundgen(sylLen = 900, temperature = 0,
-              pitchAnchors = list(time = c(0, .3, .8, 1), 
-                                  value = c(300, 900, 400, 2300)),
-              noiseAnchors = c(-40, 0), subDep = 100, 
+              pitch = list(time = c(0, .3, .8, 1), 
+                           value = c(300, 900, 400, 2300)),
+              noise = c(-40, 0), subDep = 100, 
               jitterDep = 0.5, nonlinBalance = 100,
               plot = TRUE, ylim = c(0, 4))
 # playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
@@ -119,11 +119,13 @@ a = analyze(
 par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
-             snakeStep = NULL, smooth = 0)  
+             snakeStep = NULL, smooth = 0,
+             interpolWin = NULL, pathfinding = 'none',  # disable interpolation
+             main = 'No interpolation')
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
-             snakeStep = NULL, smooth = 0,
-             interpolWin = NULL, pathfinding = 'none')  # disable interpolation
+             snakeStep = NULL, smooth = 0, main = 'Interpolation')  
+
 par(mfrow = c(1, 1))
 
 ## ----fig.show = "hold", fig.height = 3, fig.width = 7--------------------
@@ -131,11 +133,13 @@ par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
-             certWeight = 0)  # minimize pitch jumps
+             certWeight = 0,  # minimize pitch jumps
+             main = 'Minimize jumps')  
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
-             certWeight = 1)  # minimize deviation from candidates
+             certWeight = 1,  # minimize deviation from high-certainty candidates
+             main = 'Pass through candidates')  
 par(mfrow = c(1, 1))
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
@@ -150,11 +154,11 @@ par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
-             smooth = 0)
+             smooth = 0, main = 'No smoothing')
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
-             smooth = 1)
+             smooth = 1, main = 'Default smoothing')
 par(mfrow = c(1, 1))
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
@@ -189,10 +193,10 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
 ## ----fig.height = 3, fig.width = 7---------------------------------------
 # for info on using soundgen() function, see the vignette on sound synthesis 
 s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
-              pitchAnchors = c(368, 284),
-              noiseAnchors = list(time = c(0, 67, 86, 186), 
-                                  value = c(-45, -47, -89, -120)),
-              rolloffNoise = -8, amplAnchorsGlobal = c(0, -20))
+              pitch = c(368, 284),
+              noise = list(time = c(0, 67, 86, 186), 
+                           value = c(-45, -47, -89, -120)),
+              rolloffNoise = -8, amplGlobal = c(0, -20))
 # spectrogram(s2, samplingRate = 16000, osc = TRUE)
 # playme(s2, samplingRate = 16000)
 a = segment(s2, samplingRate = 16000, plot = TRUE)
@@ -228,7 +232,7 @@ par(mfrow = c(1, 1))
 
 ## ----fig.show = "hold", fig.height = 6, fig.width = 7--------------------
 s3 = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70, 
-       formants = NA, pitchAnchors = c(500, 330)))
+       formants = NA, pitch = c(500, 330)))
 # playme(s3, 16000)
 m = ssm(s3, samplingRate = 16000)
 
