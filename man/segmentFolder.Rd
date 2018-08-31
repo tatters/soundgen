@@ -11,8 +11,9 @@ segmentFolder(myfolder, htmlPlots = TRUE, shortestSyl = 40,
   overlap = 80, summary = TRUE, plot = FALSE, savePlots = FALSE,
   savePath = NA, verbose = TRUE, reportEvery = 10, col = "green",
   xlab = "Time, ms", ylab = "Amplitude", main = NULL, width = 900,
-  height = 500, units = "px", res = NA, sylPlot = list(lty = 1, lwd = 2,
-  col = "blue"), burstPlot = list(pch = 8, cex = 3, col = "red"), ...)
+  height = 500, units = "px", res = NA, sylPlot = list(lty = 1, lwd
+  = 2, col = "blue"), burstPlot = list(pch = 8, cex = 3, col = "red"),
+  ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}

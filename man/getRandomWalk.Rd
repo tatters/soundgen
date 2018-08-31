@@ -4,8 +4,8 @@
 \alias{getRandomWalk}
 \title{Random walk}
 \usage{
-getRandomWalk(len, rw_range = 1, rw_smoothing = 0.2, method = c("linear",
-  "spline")[2], trend = 0)
+getRandomWalk(len, rw_range = 1, rw_smoothing = 0.2,
+  method = c("linear", "spline")[2], trend = 0)
 }
 \arguments{
 \item{len}{an integer specifying the required length of random walk. If len

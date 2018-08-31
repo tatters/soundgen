@@ -5,10 +5,11 @@
 \title{Optimize parameters for acoustic analysis}
 \usage{
 optimizePars(myfolder, key, myfun, pars, bounds = NULL, fitnessPar,
-  fitnessFun = function(x) 1 - cor(x, key, use = "pairwise.complete.obs"),
-  nIter = 10, init = NULL, initSD = 0.2, control = list(maxit = 50,
-  reltol = 0.01, trace = 0), otherPars = list(plot = FALSE, verbose = FALSE),
-  mygrid = NULL, verbose = TRUE)
+  fitnessFun = function(x) 1 - cor(x, key, use =
+  "pairwise.complete.obs"), nIter = 10, init = NULL, initSD = 0.2,
+  control = list(maxit = 50, reltol = 0.01, trace = 0),
+  otherPars = list(plot = FALSE, verbose = FALSE), mygrid = NULL,
+  verbose = TRUE)
 }
 \arguments{
 \item{myfolder}{path to where the .wav files live}

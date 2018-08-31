@@ -6,11 +6,11 @@
 \usage{
 analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
   trackPitch = TRUE, pitchMethods = c("autocor", "cep", "spec", "dom"),
-  cutFreq = 6000, domThres = 0.1, domSmooth = 220, autocorThres = 0.75,
-  autocorSmooth = NULL, cepThres = 0.45, cepSmooth = 3, cepZp = 2^13,
-  specThres = 0.45, specPeak = 0.8, specSinglePeakCert = 0.6,
-  specSmooth = 100, specHNRslope = 0.1, specMerge = 1, pitchFloor = 75,
-  pitchCeiling = 3500, nCands = 1)
+  cutFreq = 6000, domThres = 0.1, domSmooth = 220,
+  autocorThres = 0.75, autocorSmooth = NULL, cepThres = 0.45,
+  cepSmooth = 3, cepZp = 2^13, specThres = 0.45, specPeak = 0.8,
+  specSinglePeakCert = 0.6, specSmooth = 100, specHNRslope = 0.1,
+  specMerge = 1, pitchFloor = 75, pitchCeiling = 3500, nCands = 1)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by

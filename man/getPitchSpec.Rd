@@ -5,7 +5,8 @@
 \title{BaNa pitch tracker}
 \usage{
 getPitchSpec(frame, specSmooth, specHNRslope, bin, HNR = NULL, specThres,
-  specPeak, specSinglePeakCert, pitchFloor, pitchCeiling, specMerge, nCands)
+  specPeak, specSinglePeakCert, pitchFloor, pitchCeiling, specMerge,
+  nCands)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by

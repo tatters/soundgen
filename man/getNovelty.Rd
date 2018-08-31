@@ -4,7 +4,7 @@
 \alias{getNovelty}
 \title{SSM novelty}
 \usage{
-getNovelty(ssm, kernelSize, kernelSD)
+getNovelty(ssm, kernelSize, kernelSD, padWith = 0)
 }
 \arguments{
 \item{ssm}{self-similarity matrix, as produced by \code{\link{selfsim}}}

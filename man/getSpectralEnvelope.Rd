@@ -11,7 +11,8 @@ getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1,
   formDrift = 0.3, formDisp = 0.2, formantDepStoch = 20,
   smoothLinearFactor = 1, samplingRate = 16000, speedSound = 35400,
   plot = FALSE, duration = NULL, colorTheme = c("bw", "seewave",
-  "...")[1], nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
+  "...")[1], nCols = 100, xlab = "Time", ylab = "Frequency, kHz",
+  ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where

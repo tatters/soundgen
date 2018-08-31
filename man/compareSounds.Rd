@@ -6,8 +6,9 @@
 \usage{
 compareSounds(target, targetSpec = NULL, cand, samplingRate = NULL,
   method = c("cor", "cosine", "pixel", "dtw")[1:4], windowLength = 40,
-  overlap = 50, step = NULL, padWith = NA, penalizeLengthDif = TRUE,
-  dynamicRange = 80, maxFreq = NULL, summary = TRUE)
+  overlap = 50, step = NULL, padWith = NA,
+  penalizeLengthDif = TRUE, dynamicRange = 80, maxFreq = NULL,
+  summary = TRUE)
 }
 \arguments{
 \item{target}{the sound we want to reproduce using soundgen: path to a .wav

@@ -10,8 +10,9 @@ segment(x, samplingRate = NULL, windowLength = 40, overlap = 80,
   peakToTrough = 3, troughLeft = TRUE, troughRight = FALSE,
   summary = FALSE, plot = FALSE, savePath = NA, col = "green",
   xlab = "Time, ms", ylab = "Amplitude", main = NULL, width = 900,
-  height = 500, units = "px", res = NA, sylPlot = list(lty = 1, lwd = 2,
-  col = "blue"), burstPlot = list(pch = 8, cex = 3, col = "red"), ...)
+  height = 500, units = "px", res = NA, sylPlot = list(lty = 1, lwd
+  = 2, col = "blue"), burstPlot = list(pch = 8, cex = 3, col = "red"),
+  ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified

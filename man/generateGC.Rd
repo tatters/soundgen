@@ -4,7 +4,8 @@
 \alias{generateGC}
 \title{Generate glottal cycles}
 \usage{
-generateGC(pitch_per_gc, glottisClosed_per_gc, rolloff_per_gc, samplingRate)
+generateGC(pitch_per_gc, glottisClosed_per_gc, rolloff_per_gc,
+  samplingRate)
 }
 \arguments{
 \item{pitch_per_gc}{pitch per glottal cycle, Hz}

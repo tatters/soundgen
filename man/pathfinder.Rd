@@ -4,10 +4,10 @@
 \alias{pathfinder}
 \title{Pathfinder}
 \usage{
-pathfinder(pitchCands, pitchCert, certWeight = 0.5, pathfinding = c("none",
-  "fast", "slow")[2], annealPars = list(maxit = 5000, temp = 1000),
-  interpolWin = 3, interpolTol = 0.05, interpolCert = 0.3,
-  snakeStep = 0.05, snakePlot = FALSE)
+pathfinder(pitchCands, pitchCert, certWeight = 0.5,
+  pathfinding = c("none", "fast", "slow")[2], annealPars = list(maxit =
+  5000, temp = 1000), interpolWin = 3, interpolTol = 0.05,
+  interpolCert = 0.3, snakeStep = 0.05, snakePlot = FALSE)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each

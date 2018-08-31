@@ -11,11 +11,11 @@ generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
   rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
   rolloffParabHarm = 3, rolloff_perAmpl = 3, temperature = 0.025,
   pitchDriftDep = 0.5, pitchDriftFreq = 0.125, amplDriftDep = 5,
-  subDriftDep = 4, rolloffDriftDep = 3, randomWalk_trendStrength = 0.5,
-  shortestEpoch = 300, subFreq = 100, subDep = 0, amplAnchors = NA,
-  interpol = c("approx", "spline", "loess")[3], overlap = 75,
-  samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, dynamicRange = 80)
+  subDriftDep = 4, rolloffDriftDep = 3,
+  randomWalk_trendStrength = 0.5, shortestEpoch = 300, subFreq = 100,
+  subDep = 0, amplAnchors = NA, interpol = c("approx", "spline",
+  "loess")[3], overlap = 75, samplingRate = 16000, pitchFloor = 75,
+  pitchCeiling = 3500, pitchSamplingRate = 3500, dynamicRange = 80)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for

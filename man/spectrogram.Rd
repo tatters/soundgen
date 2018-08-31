@@ -4,15 +4,16 @@
 \alias{spectrogram}
 \title{Spectrogram}
 \usage{
-spectrogram(x, samplingRate = NULL, dynamicRange = 80, windowLength = 50,
-  step = NULL, overlap = 70, wn = "gaussian", zp = 0, smoothFreq = 0,
-  smoothTime = 0, qTime = 0, percentNoise = 10, noiseReduction = 0,
-  contrast = 0.2, brightness = 0, method = c("spectrum",
-  "spectralDerivative")[1], output = c("none", "original", "processed")[1],
-  ylim = NULL, plot = TRUE, osc = FALSE, osc_dB = FALSE,
-  heights = c(3, 1), colorTheme = c("bw", "seewave", "...")[1],
-  xlab = "Time, ms", ylab = "Frequency, KHz", main = "",
-  frameBank = NULL, duration = NULL, ...)
+spectrogram(x, samplingRate = NULL, dynamicRange = 80,
+  windowLength = 50, step = NULL, overlap = 70, wn = "gaussian",
+  zp = 0, smoothFreq = 0, smoothTime = 0, qTime = 0,
+  percentNoise = 10, noiseReduction = 0, contrast = 0.2,
+  brightness = 0, method = c("spectrum", "spectralDerivative")[1],
+  output = c("none", "original", "processed")[1], ylim = NULL,
+  plot = TRUE, osc = FALSE, osc_dB = FALSE, heights = c(3, 1),
+  colorTheme = c("bw", "seewave", "...")[1], xlab = "Time, ms",
+  ylab = "Frequency, KHz", main = "", frameBank = NULL,
+  duration = NULL, ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified

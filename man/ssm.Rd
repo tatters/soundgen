@@ -8,12 +8,13 @@ ssm(x, samplingRate = NULL, windowLength = 40, overlap = 75,
   step = NULL, ssmWin = 40, maxFreq = NULL, nBands = NULL,
   MFCC = 2:13, input = c("mfcc", "audiogram", "spectrum")[1],
   norm = FALSE, simil = c("cosine", "cor")[1], returnSSM = TRUE,
-  kernelLen = 200, kernelSD = 0.2, plot = TRUE, specPars = list(levels =
-  seq(0, 1, length = 30), color.palette = seewave::spectro.colors, xlab =
-  "Time, s", ylab = "kHz", ylim = c(0, maxFreq/1000)), ssmPars = list(levels =
-  seq(0, 1, length = 30), color.palette = seewave::spectro.colors, xlab =
-  "Time, s", ylab = "Time, s", main = "Self-similarity matrix"),
-  noveltyPars = list(type = "b", pch = 16, col = "black", lwd = 3))
+  kernelLen = 200, kernelSD = 0.2, padWith = 0, plot = TRUE,
+  heights = c(2, 1), specPars = list(levels = seq(0, 1, length = 30),
+  color.palette = seewave::spectro.colors, xlab = "Time, s", ylab = "kHz",
+  ylim = c(0, maxFreq/1000)), ssmPars = list(levels = seq(0, 1, length =
+  30), color.palette = seewave::spectro.colors, xlab = "Time, s", ylab =
+  "Time, s", main = "Self-similarity matrix"), noveltyPars = list(type =
+  "b", pch = 16, col = "black", lwd = 3))
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -53,7 +54,12 @@ larger, the more global vs. local the novelty)}
 
 \item{kernelSD}{SD of checkerboard kernel for calculating novelty}
 
+\item{padWith}{how to treat edges when calculating novelty: NA = treat sound
+before and after the recording as unknown, 0 = treat it as silence}
+
 \item{plot}{if TRUE, plots the SSM}
+
+\item{heights}{relative sizes of the SSM and spectrogram/novelty plot}
 
 \item{specPars}{graphical parameters passed to
 \code{seewave::filled.contour.modif2} and affecting the spectrogram}

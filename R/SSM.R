@@ -34,8 +34,11 @@
 #' @param kernelLen length of checkerboard kernel for calculating novelty, ms (the
 #'   larger, the more global vs. local the novelty)
 #' @param kernelSD SD of checkerboard kernel for calculating novelty
+#' @param padWith how to treat edges when calculating novelty: NA = treat sound
+#'   before and after the recording as unknown, 0 = treat it as silence
 #' @param returnSSM if TRUE, returns the SSM
 #' @param plot if TRUE, plots the SSM
+#' @param heights relative sizes of the SSM and spectrogram/novelty plot
 #' @param specPars graphical parameters passed to
 #'   \code{seewave::filled.contour.modif2} and affecting the spectrogram
 #' @param ssmPars graphical parameters passed to
@@ -74,7 +77,9 @@ ssm = function(x,
                returnSSM = TRUE,
                kernelLen = 200,
                kernelSD = .2,
+               padWith = 0,
                plot = TRUE,
+               heights = c(2, 1),
                specPars = list(
                  levels = seq(0, 1, length = 30),
                  color.palette = seewave::spectro.colors,
@@ -157,13 +162,14 @@ ssm = function(x,
   # s = zeroOne(s^2)  # hist(s)
 
   ## compute novelty
-  novelty = getNovelty(ssm = s, kernelSize = kernelSize, kernelSD = kernelSD)
+  novelty = getNovelty(ssm = s, kernelSize = kernelSize,
+                       kernelSD = kernelSD, padWith = padWith)
 
   ## plot
   if (plot) {
     spec = zeroOne(log(mel$pspectrum) ^ 2)
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
-    layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(2, 1))
+    layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
     par(mar = c(5.1, 4.1, 0, 2.1),
         xaxt = 's',
         yaxt = 's')
@@ -182,7 +188,7 @@ ssm = function(x,
     # novelty
     do.call(lines, c(list(
       x = seq(0, duration, length.out = length(novelty)),
-      y = novelty / max(novelty) * maxFreq / 1000
+      y = novelty / max(novelty, na.rm = TRUE) * maxFreq / 1000
       ), noveltyPars
     ))
     axis(side = 1, labels = TRUE)
@@ -333,11 +339,11 @@ getCheckerboardKernel = function(size,
 #' @param kernelSD the SD of gaussian kernel
 #' @return Returns a numeric vector of length \code{nrow(ssm)}
 #' @keywords internal
-getNovelty = function(ssm, kernelSize, kernelSD) {
+getNovelty = function(ssm, kernelSize, kernelSD, padWith = 0) {
   kernel = getCheckerboardKernel(size = kernelSize, kernelSD = kernelSD)
   ## pad matrix with size / 2 zeros, so that we can correlate it with the
   #  kernel starting from the very edge
-  ssm_padded = matrix(0,
+  ssm_padded = matrix(padWith,
                       nrow = nrow(ssm) + kernelSize,
                       ncol = nrow(ssm) + kernelSize)
   # indices in the padded matrix where we'll paste the original ssm
@@ -351,9 +357,10 @@ getNovelty = function(ssm, kernelSize, kernelSD) {
   for (i in idx[1]:idx[2]) {
     n = (i - kernelSize / 2):(i + kernelSize / 2 - 1)
     # suppress warnings, b/c otherwise cor complains of sd = 0 for silent segments
-    novelty[i - kernelSize / 2] =  suppressWarnings(cor(as.vector(ssm_padded[n, n]),
-                                        as.vector(kernel)))
+    novelty[i - kernelSize / 2] =  suppressWarnings(
+      cor(as.vector(ssm_padded[n, n]),
+          as.vector(kernel))) #'pairwise.complete.obs'))
   }
-  novelty[is.na(novelty)] = 0
-  return (novelty)
+  # novelty[is.na(novelty)] = 0
+  return(novelty)
 }

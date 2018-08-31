@@ -4,9 +4,10 @@
 \alias{fart}
 \title{Fart}
 \usage{
-fart(glottis = c(350, 700), glottisAnchors = "deprecated", pitch = 75,
-  pitchAnchors = "deprecated", temperature = 0.25, sylLen = 600,
-  rolloff = -20, samplingRate = 16000, play = FALSE, plot = FALSE)
+fart(glottis = c(350, 700), glottisAnchors = "deprecated",
+  pitch = 75, pitchAnchors = "deprecated", temperature = 0.25,
+  sylLen = 600, rolloff = -20, samplingRate = 16000, play = FALSE,
+  plot = FALSE)
 }
 \arguments{
 \item{glottis}{anchors for specifying the proportion of a
