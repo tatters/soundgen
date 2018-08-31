@@ -109,8 +109,14 @@ server = function(input, output, session) {
       for (v in sliders_to_reset) {
         if (is.numeric(preset[[v]])) {
           new_value = preset[[v]][1]  # the first value if a vector
-        } else if (is.list(preset[[v]])) {
-          new_value = preset[[v]][1, 2]  # the first value if a df of anchors
+        } else if (is.list(preset[[v]]) &&
+                   !names(preset)[v] %in% c(formerAnchors, 'formants', 'formantsNoise')) {
+          v1 = try(preset[[v]]$value[1])
+          if (class(v1) == 'try-error') {
+            print(preset[[v]])
+          } else {
+            new_value = v1  # the first value if a df of anchors
+          }
         } else {
           new_value = NULL
         }
