@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.3.0 [30-August-2018]
+          CHANGES IN SOUNDGEN VERSION 1.3.0 [31-August-2018]
 
 Back-compatible with soundgen 1.2.X. The main change is abolishing the distinction between anchors (previously pitchAnchors, ampAnchors, etc.) and other vectorized arguments to soundgen (jitterDep, rolloff, etc.) Most vectorized arguments can now be either numeric vectors or dataframes.
 

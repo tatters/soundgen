@@ -1,4 +1,4 @@
-# TODO: calculate intensity in analyze(); automatic addition of pitch jumps at high temp (?); check matchPars, optimizing with new par names
+# TODO: calculate intensity in analyze(); automatic addition of pitch jumps at high temp (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
