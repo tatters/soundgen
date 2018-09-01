@@ -145,6 +145,7 @@ ssm = function(x,
     # the first cepstrum presumably makes no sense with amplitude normalization
     # (?), and it overestimates the similarity of different frames
     target_spec = t(mel$cepstra)[MFCC, ]
+    target_spec[is.na(target_spec)] = 0  # MFCC are NaN for silent frames
   } else if (input == 'audiogram') {
     target_spec = t(mel$aspectrum)
   } else if (input == 'spectrum') {
@@ -160,6 +161,7 @@ ssm = function(x,
     win = win
   )
   # s = zeroOne(s^2)  # hist(s)
+  # image(s)
 
   ## compute novelty
   novelty = getNovelty(ssm = s, kernelSize = kernelSize,
@@ -167,7 +169,11 @@ ssm = function(x,
 
   ## plot
   if (plot) {
-    spec = zeroOne(log(mel$pspectrum) ^ 2)
+    if (input == 'audiogram') {
+      spec = zeroOne(log(mel$aspectrum + 1e-16))
+    } else {
+      spec = zeroOne(log(mel$pspectrum + 1e-16))
+    }
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
     par(mar = c(5.1, 4.1, 0, 2.1),
@@ -241,7 +247,7 @@ selfsim = function(m,
 
   # normalize input by column, if needed
   if (norm) {
-    m = apply(m, 2, zeroOne)
+    m = apply(m, 2, zeroOne, na.rm = TRUE)
   }
 
   # calculate windows for averaging self-similarity
@@ -255,18 +261,22 @@ selfsim = function(m,
     for (j in 1:length(winIdx)) {
       mi = as.vector(m[, winIdx[i]:(winIdx[i] + win - 1)])
       mj = as.vector(m[, winIdx[j]:(winIdx[j] + win - 1)])
-      if (simil == 'cosine') {
-        # http://stackoverflow.com/questions/6597005/cosine-similarity-between-two-vectors-in-language-r
-        out[i, j] = mean(crossprod(mi, mj) /
-                           sqrt(crossprod(mi) * crossprod(mj)),
-                         na.rm = TRUE)
-      } else if (simil == 'cor') {
-        out[i, j] = mean(cor(mi, mj), na.rm = TRUE)
+      if (any(mi != 0) && any(mj != 0)) {
+        if (simil == 'cosine') {
+          # http://stackoverflow.com/questions/6597005/cosine-similarity-between-two-vectors-in-language-r
+          out[i, j] = crossprod(mi, mj) / sqrt(crossprod(mi) * crossprod(mj))
+        } else if (simil == 'cor') {
+          out[i, j] = cor(mi, mj)
+        }
+      }
+      else {
+        # if at least one is a vector of zeros, set result to 0 (otherwise NA)
+        out[i, j] = 0
       }
     }
   }
-  out = zeroOne(out)
-  return (out)
+  out = zeroOne(out, na.rm = TRUE)
+  return(out)
 }
 
 

@@ -4,10 +4,12 @@
 \alias{zeroOne}
 \title{Normalize 0 to 1}
 \usage{
-zeroOne(x)
+zeroOne(x, na.rm = FALSE)
 }
 \arguments{
 \item{x}{numeric vector or matrix}
+
+\item{na.rm}{if TRUE, removed NA's when calculating min/max for normalization}
 }
 \description{
 Internal soundgen function
