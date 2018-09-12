@@ -43,24 +43,24 @@
 #'   ('processed')
 #' @param ylim frequency range to plot, kHz (defaults to 0 to Nyquist frequency)
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
-#' @param osc,osc_dB should an oscillogram be shown under the spectrogram? TRUE
-#'   / FALSE, If `osc_dB`, the oscillogram is displayed on a dB scale. See
+#' @param osc,osc_dB should an oscillogram be shown under the spectrogram? TRUE/
+#'   FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 #'   \code{\link{osc_dB}} for details
 #' @param heights a vector of length two specifying the relative height of the
 #'   spectrogram and the oscillogram
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
 #'   or any palette from \code{\link[grDevices]{palette}} such as
 #'   'heat.colors', 'cm.colors', etc
-#' @param xlab,ylab,main graphical parameters
+#' @param xlab,ylab,main,mar graphical parameters
 #' @param ... other graphical parameters passed to
 #'   \code{seewave:::filled.contour.modif2}
 #' @param frameBank ignore (only needed for pitch tracking)
 #' @param duration ignore (only needed for pitch tracking)
 #' @export
-#' @return Returns nothing (if output = 'none'), raw spectrum (if output =
-#'   'original'), denoised and/or smoothed spectrum (if output = 'processed'),
-#'   or spectral derivatives (if method = 'spectralDerivative') as a matrix of
-#'   real numbers.
+#' @return Returns nothing (if output = 'none'), absolute - not power! -
+#'   spectrum (if output = 'original'), denoised and/or smoothed spectrum (if
+#'   output = 'processed'), or spectral derivatives (if method =
+#'   'spectralDerivative') as a matrix of real numbers.
 #' @examples
 #' # synthesize a sound 1 s long, with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 1000, temperature = 0.001, noiseAnchors = list(
@@ -131,6 +131,7 @@ spectrogram = function(x,
                        colorTheme = c('bw', 'seewave', '...')[1],
                        xlab = 'Time, ms',
                        ylab = 'Frequency, KHz',
+                       mar = c(5.1, 4.1, 4.1, 2),
                        main = '',
                        frameBank = NULL,
                        duration = NULL,
@@ -325,7 +326,7 @@ spectrogram = function(x,
         ylim_osc = c(-maxAmpl, maxAmpl)
       }
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
-      par(mar = c(5.1, 4.1, 0, 2.1), xaxt = 's', yaxt = 's')
+      par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
       plot(
         seq(1, duration * 1000, length.out = length(sound)),
         sound,
@@ -340,8 +341,10 @@ spectrogram = function(x,
         mtext("dB", side = 2, line = 3)
       }
       abline(h = 0, lty = 2)
-      par(mar = c(0, 4.1, 2.1, 2.1), xaxt = 'n', yaxt = 's')
+      par(mar = c(0, mar[2:4]), xaxt = 'n', yaxt = 's')
       xlab = ''
+    } else {
+      par(mar = mar)
     }
 
     seewave::filled.contour.modif2(
