@@ -1,122 +1,84 @@
-# WORK IN PROGRESS: functions for estimating subjective loudness based on auditory spectrum. See Timoney et al. (2004) "Implementing loudness models in MATLAB"
-
-
-#' Scale SPL
+#' Get loudness
 #'
-#' Internal soundgen function
+#' Estimates subjective loudness per frame, in sone. Based on EMBSD speech
+#' quality measure, particularly the matlab code in Yang (1999) and Timoney et
+#' al. (2004). Note that there are many ways to estimate loudness and many other
+#' factors, ignored by this model, that could influence subjectively experienced
+#' loudness. Please treat the output with a healthy dose of skepticism! Also
+#' note that the absolute value of calculated loudness critically depends on the
+#' chosen "measured" sound pressure level (SPL). \code{getLoudness} estimates
+#' how loud a sound will be experienced if it is played back at an SPL of
+#' \code{SPL_measured} dB. The most meaningful way to use the output is to
+#' compare the loudness of several sounds analyzed with identical settings or of
+#' different segments within the same recording.
 #'
-#' Converts a sound from SPL on a scale [-1, 1] to a desired level of dB SPL.
-#' See Timoney et al. (2004) "Implementing loudness models in MATLAB"
-#' @param x numeric vector ranging from -1 to +1
-#' @param SPLmeas approximate level of original recording, dB (just a guess)
+#' Algorithm: calibrates the sound to the desired SPL (Timoney et al., 2004),
+#' extracts a spectrogram, converts to bark scale
+#' (\code{\link[tuneR]{audSpec}}), spreads the spectrum to account for frequency
+#' masking across the critical bands (Yang, 1999), converts dB to phon by using
+#' standard equal loudness curves (ISO 226), converts phon to sone (Timoney et
+#' al., 2004), sums across all critical bands, and applies a correction
+#' coefficient to standardize output. Calibrated so as to return a loudness of 1
+#' sone for a 1 kHz pure tone with SPL of 40 dB.
+#' @inheritParams spectrogram
+#' @param SPL_measured estimated sound pressure level, dB (just a guess)
 #' @param Pref reference pressure, Pa
-#' @keywords internal
+#' @param spreadSpectrum if TRUE, applies a spreading function to account for
+#'   frequency masking
+#' @param mar margins of the spectrogram
+#' @param ... other plotting parameters passed to \code{\link{spectrogram}}
+#' @return Returns a list of length two: \describe{
+#'   \item{specSone}{spectrum in sone: a matrix with frequency on the bark
+#'   scale in rows and time (STFT frames) in columns}
+#'   \item{loudness}{a vector of loudness per STFT frame (sone)}
+#'   }
+#' @references \itemize{
+#'   \item ISO 226 as implemented by Jeff Tackett (2005) on
+#'   https://www.mathworks.com/matlabcentral/fileexchange/
+#'   7028-iso-226-equal-loudness-level-contour-signal \item Timoney, J.,
+#'   Lysaght, T., Schoenwiesner, M., & MacManus, L. (2004). Implementing
+#'   loudness models in matlab. \item Yang, W. (1999). Enhanced Modified Bark
+#'   Spectral Distortion (EMBSD): An Objective Speech Quality Measure Based on
+#'   Audible Distortion and Cognitive Model. Temple University. }
+#' @export
 #' @examples
-#' sound = runif(1000, -1, 1) * getSmoothContour(c(0, 1, 0), len = 1000)
-#' # plot(sound, type = 'l')
-#' sound_scaled = scaleSPL(sound)
-#' # plot(sound_scaled, type = 'l')
-scaleSPL = function(x, SPL_measured = 70, Pref = 2e-5) {
-  x_refScaled = (x / Pref)  # range(x_refScaled)
-  RMS = sqrt(mean(x_refScaled ^ 2))
-  SPL_internal = 20 * log10(RMS)  # dB-SPL
-  c = 10 ^ ((SPL_measured - SPL_internal) / 20)
-  x_scaled = c * x_refScaled
-  # plot(x_scaled[5000:6000], type = 'l')
-  return(x_scaled)
-}
-
-
-#' iso226
+#' sounds = list(
+#'   sound1 = runif(8000, -1, 1),  # white noise
+#'   sound2 = sin(2*pi*1000/16000*(1:8000))  # pure tone at 1 kHz
+#' )
+#' loud = rep(0, length(sounds))
+#' for (i in 1:length(sounds)) {
+#'   # playme(sounds[[i]], 16000)
+#'   l = getLoudness(
+#'     x = sounds[[i]], samplingRate = 16000,
+#'     windowLength = 20, step = NULL,
+#'     overlap = 50, SPL_measured = 64,
+#'     Pref = 2e-5, plot = FALSE)
+#'   loud[i] = mean(l$loudness)
+#' }
+#' loud  # white noise is twice as loud
 #'
-#' Internal soundgen function
+#' \dontrun{
+#'   l = getLoudness(soundgen(), SPL_measured = 70,
+#'                   samplingRate = 16000, plot = TRUE, osc = TRUE)
+#'   # The estimated loudness in sone depends on target SPL
+#'   l = getLoudness(soundgen(), SPL_measured = 40,
+#'                   samplingRate = 16000, plot = TRUE)
 #'
-#' Calculates equal loudness curves according to the ISO226 standard. Expected
-#' range of input values in phon is 0 to 90 (1 phon is 1 dB at 1 kHz). The range
-#' of evaluated frequencies is 20 to 12500 Hz, with a total of 29 values (so
-#' upsample if more resolution is needed). Translated from the matlab
-#' implementation by Jeff Tackett (03/01/05) available from
-#' https://www.mathworks.com/matlabcentral/fileexchange/
-#' 7028-iso-226-equal-loudness-level-contour-signal
-#' @return A dataframe containing evaluated frequencies and SPL values
-#' @param phon the phon value in dB SPL represented by the loudness curve
-#' @keywords internal
-#' @examples
-#' i = iso226(40)
-#' plot(i$curve29, type = 'l')
-#' plot(i$curveBark$freq_Hz, i$curveBark$spl, type = 'l')
-iso226 = function(phon) {
-  #  Table from ISO 226
-  f = c(20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160,
-        200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600,
-        2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500)
-
-  af = c(0.532, 0.506, 0.480, 0.455, 0.432, 0.409, 0.387, 0.367, 0.349, 0.330,
-         0.315, 0.301, 0.288, 0.276, 0.267, 0.259, 0.253, 0.250, 0.246, 0.244,
-         0.243, 0.243, 0.243, 0.242, 0.242, 0.245, 0.254, 0.271, 0.301)
-
-  Lu = c(-31.6, -27.2, -23.0, -19.1, -15.9, -13.0, -10.3, -8.1, -6.2, -4.5,
-         -3.1, -2.0, -1.1, -0.4, 0.0, 0.3, 0.5, 0.0, -2.7, -4.1,
-         -1.0, 1.7, 2.5, 1.2, -2.1, -7.1, -11.2, -10.7, -3.1)
-
-  Tf = c(78.5, 68.7, 59.5, 51.1, 44.0, 37.5, 31.5, 26.5, 22.1, 17.9,
-         14.4, 11.4, 8.6, 6.2, 4.4, 3.0, 2.2, 2.4, 3.5, 1.7,
-         -1.3, -4.2, -6.0, -5.4, -1.5, 6.0, 12.6, 13.9, 12.3)
-
-  # Warn if phon is outside the covered range
-  if (phon < 0 | phon > 90) {
-    warning('Valid range 0 to 90; extrapolating beyond may be incorrect')
-  }
-
-  # Deriving sound pressure level from loudness level (iso226 sect 4.1)
-  Af = 4.47e-3 * (10 ^ (0.025 * phon) - 1.15) +
-    (0.4 * 10 ^ (((Tf + Lu) / 10) - 9)) ^ af
-  Lp = ((10 / af) * log10(Af)) - Lu + 94
-
-  # Calculate on the bark scale
-  barkFreqs_hz = 600 * sinh(1:24 / 6)
-  s = spline(y = Lp, x = f, n = 1000)
-  ups = data.frame(freq = s$x, spl = s$y)  # upsampled curve
-  b = data.frame(
-    freq_bark = 1:24,
-    freq_Hz = barkFreqs_hz
-  )
-  for (i in 1:nrow(b)) {
-    b$spl[i] = ups$spl[which.min(abs(ups$freq - barkFreqs_hz[i]))]
-  }
-  return(list(
-    curve29 = data.frame(freq = f, spl = Lp),
-    curveBark = b
-  ))
-}
-
-phon2sone = function(phon) {
-  sone = phon
-  idx1 = which(phon < 40)
-  idx2 = which(phon >= 40)
-  sone[idx1] = (phon[idx1] / 40) ^ 2.642
-  sone[idx2] = 2 ^ ((phon[idx2] - 40) / 10)
-  return(sone)
-}
-# idx_phon = seq(0, 140, 10)
-# idx_sone = phon2sone(idx_phon)
-# plot(idx_phon, idx_sone, type = 'b')
-
-phonLevels = seq(0, 90, 5)
-phonCurves = vector('list', length(phonLevels))
-names(phonCurves) = phonLevels
-for (p in 1:length(phonLevels)) {
-  phonCurves[[p]] = iso226(phonLevels[p])$curveBark
-}
-# NB: add phonCurves to data saved with package!
-
+#'   # ...but not (much) on windowLength etc
+#'   l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,
+#'                   samplingRate = 16000, plot = TRUE)
+#' }
 getLoudness = function(x,
                        samplingRate = NULL,
-                       windowLength = 20,
+                       windowLength = 30,
                        step = NULL,
                        overlap = 75,
+                       SPL_measured = 70,
+                       Pref = 2e-5,
+                       spreadSpectrum = TRUE,
                        plot = TRUE,
-                       mar = c(5.1, 4.1, 4.1, 2.1),
+                       mar = c(5.1, 4.1, 4.1, 4.1),
                        ...) {
   # import sound
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
@@ -124,6 +86,7 @@ getLoudness = function(x,
     sound_wav = tuneR::readWave(x)
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
+    scale = 2 ^ sound_wav@bit  # range(sound)
   } else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
@@ -132,89 +95,151 @@ getLoudness = function(x,
     }
   }
 
-  # get auditory spectrum
-  # powerSpec = tuneR::powspec(sound, sr = samplingRate, wintime = windowLength / 1000, step = step / 1000)
-  spctrgm = spectrogram(sound, samplingRate = samplingRate, windowLength = windowLength, step = step, output = 'original', plot = plot, mar = mar, ...)
-  powerSpec = spctrgm ^ 2
-  # image(t(powerSpec))
-  audSpec = tuneR::audspec(powerSpec, sr = samplingRate, fbtype = 'bark')$aspectrum
-  # image(t(audSpec))
+  # scale to dB SPL
+  sound_scaled = scaleSPL(sound, SPL_measured = SPL_measured, Pref = Pref)
+  # range(sound); range(sound_scaled)
+  # log10(sqrt(mean(sound_scaled ^ 2))) * 20  # should be the same as SPL_measured
 
-  # convert spectrum to sones
-  specSones = matrix(0, nrow = nrow(audSpec), ncol = ncol(audSpec))
-  for (i in 1:ncol(specSones)) {
-    # power spectrum in dB SPL
+  # get power spectrum
+  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  powerSpec = spectrogram(
+    sound_scaled, samplingRate = samplingRate,
+    windowLength = windowLength, step = step,
+    output = 'original', normalize = FALSE,
+    plot = plot, mar = mar, ...) ^ 2
+  # range(log10(powerSpec) * 10)
+  powerSpec_scaled = (2 * powerSpec) / windowLength_points
+  # powerSpec_scaled = powerSpec
+  # range(log10(powerSpec_scaled) * 10)
+  # image(t(powerSpec_scaled))
+
+  # get auditory spectrum
+  audSpec = tuneR::audspec(
+    powerSpec_scaled,
+    sr = samplingRate,
+    fbtype = 'bark')$aspectrum
+  # image(t(audSpec))
+  # range(log10(audSpec) * 10)
+  # plot(audSpec[, 1], type = 'l')
+  # plot(log10(audSpec[, 1]) * 10, type = 'l')
+
+  # apply spreading function (NB: linear, not dB scale!)
+  if (spreadSpectrum) {
+    nonZeroCols = which(colSums(audSpec) > 0)
+    for (c in nonZeroCols) {
+      audSpec[, c] = spreadSpec(audSpec[, c])
+    }
+    # image(t(audSpec))
+    # range(log10(audSpec) * 10)
+    # plot(audSpec[, 1], type = 'l')
+    # plot(log10(audSpec[, 1]) * 10, type = 'l')
+  }
+
+  # convert spectrum to sone
+  specSone = matrix(0, nrow = nrow(audSpec), ncol = ncol(audSpec))
+  for (i in 1:ncol(specSone)) {
+    # spectrum in dB SPL
     y = 10 * log10(audSpec[, i])
     # plot(y, type = 'b')
 
-    # dB SPL to phons
-    n_phonCurve = which.min(abs(y[9] - as.numeric(names(phonCurves))))  # 9 barks = 1000 Hz
+    # dB SPL to phons (8 barks ~= 1 kHz, reference value for equal loudness curves)
+    n_phonCurve = which.min(abs(y[8] - as.numeric(names(phonCurves))))
     curve = phonCurves[[n_phonCurve]][1:length(y), ]  # correction curve for frame i
-    y_phon = y + curve$spl[9] - curve$spl
+    y_phon = y + curve$spl[8] - curve$spl
     # plot(y_phon, type = 'b')
 
     # ignore frequency bins below hearing threshold
-    y_phon[y_phon < 0] = 0  # change to freq-dependent hearing threshold instead of 0!
+    y_phon[y_phon < curve$hearingThres_dB | y_phon < 0] = 0
 
-    # phons to sones
-    specSones[, i] = phon2sone(y_phon)
-    # plot(specSones[, i], type = 'b')
+    # phons to sone
+    specSone[, i] = phon2sone(y_phon)
+    # plot(specSone[, i], type = 'b')
   }
-  # image(t(specSones))
-  loudness = apply(specSones, 2, sum)
+  # image(t(specSone))
+  loudness = apply(specSone, 2, sum)
+
+  # empirical normalization (see commented-out code below the function)
+  loudness = loudness / (5.73 +  6.56 * windowLength ^ .35) /
+    (.0357 + .0345 * samplingRate ^ .3113)
 
   # plotting
   if (plot) {
     # spectrogram(sound, samplingRate = 16000, osc = TRUE)
     op = par(c('mar', 'new')) # save user's original pars
-    par(new = TRUE)
+    par(new = TRUE, mar = mar)
     plot(x = seq(1, length(sound) / samplingRate * 1000, length.out = length(loudness)),
          y = loudness,
          type = "b", axes = FALSE, bty = "n", xlab = "", ylab = "")
     axis(side = 4, at = pretty(range(loudness)))
     mtext("Loudness, sone", side = 4, line = 3)
-    par(new = FALSE, mar = mar)
     par('mar' = op$mar, 'new' = op$new)  # restore original pars
   }
-  return(specSones)
+  return(list(specSone = specSone, loudness = loudness))
 }
-# sound = soundgen()
-# spectrogram(sound, 16000)
-# spectrogram(sound, 16000, osc = TRUE)
-# spectrogram(sound, 16000, osc = TRUE, mar = c(5, 4, 1, 7))
-# l = getLoudness(sound, samplingRate = 16000, windowLength = 20, overlap = 75, plot = TRUE, mar = c(5.1, 4.1, 4.1, 4.1))
 
-
-# dB2phon = function(Ci) {  # see Wonhos_Dissertation.pdf, function dbtophon()
-#   T = 10 * log10(Ci[4:18]) # COMPUTE BARK 4 TO 18 ONLY IN dB
-#   for (i in 1:15) {
-#     j = 1
-#     while T(i) >= eqlcon(j,i)
-#     j = j + 1;
-#     if j == 16
-#     fprintf(1,'ERROR\n')
-#   }
-#
-#   if j == 1
-#   P_XX(i) = phons(1);
-#   else
-#     t1 = (T(i) - eqlcon(j-1,i))/(eqlcon(j,i) - eqlcon(j-1,i));
-#   P_XX(i) = phons(j-1) + t1*(phons(j) - phons(j-1));
+# ## EMPIRICAL CALIBRATION OF LOUDNESS (SONE) RETURNED BY getLoudness()
+# # Simple linear scaling can correct for a given windowLength, but
+# # how does scaling coef depend on windowLength and samplingRate?
+# wl = expand.grid(windowLength = seq(10, 150, by = 10),
+#                  samplingRate = c(16000, 24000, 32000, 44000))
+# wl$windowLength_points = 2 ^ (ceiling(log2(wl$windowLength * samplingRate / 1000)))
+# for (i in 1:nrow(wl)) {
+#   sound = sin(2*pi*1000/wl$samplingRate[i]*(1:20000))
+#   wl$loudness[i] = getLoudness(x = sound, samplingRate = wl$samplingRate[i], windowLength = wl$windowLength[i], step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
 # }
+# # plot(wl$windowLength, wl$loudness)
+# library(ggplot2)
+# ggplot(wl, aes(x = windowLength, y = loudness, color = as.factor(samplingRate))) +
+#   geom_point() +
+#   geom_line()
+#
+# # account for windowLength
+# samplingRate = 44100
+# sound = sin(2*pi*1000/samplingRate*(1:20000))
+# wl = data.frame(windowLength = seq(5, 200, by = 5))
+# wl$windowLength_points = 2 ^ (ceiling(log2(wl$windowLength * samplingRate / 1000)))
+# for (i in 1:nrow(wl)) {
+#   wl$loudness[i] = getLoudness(x = sound, samplingRate = samplingRate, windowLength = wl$windowLength[i], step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
+# }
+# plot(wl$windowLength, wl$loudness)
+# # wl
+# # plot(wl$windowLength_points, wl$loudness)
+#
+# mod = nls(loudness ~ a + b * windowLength ^ c, wl, start = list(a = 0, b = 1, c = .5))
+# plot(wl$windowLength, wl$loudness)
+# lines(wl$windowLength, predict(mod, list(windowLength = wl$windowLength)))
+# summary(mod)
+# # use these regression coefficients to calculate scaling factor
+# # as a function of windowLength
+#
+#
+# # account for samplingRate
+# windowLength = 30
+# wl = data.frame(samplingRate = seq(16000, 44000, by = 1000))
+# for (i in 1:nrow(wl)) {
+#   sound = sin(2*pi*1000/wl$samplingRate[i]*(1:20000))
+#   wl$loudness[i] = getLoudness(x = sound, samplingRate = wl$samplingRate[i], windowLength = windowLength, step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
+# }
+# plot(wl$samplingRate, wl$loudness)
+# mod = nls(loudness ~ a + b * samplingRate ^ c, wl, start = list(a = 0, b = 1, c = .5))
+# plot(wl$samplingRate, wl$loudness)
+# lines(wl$samplingRate, predict(mod, list(samplingRate = wl$samplingRate)))
+# summary(mod)
+#
+# # CHECKING THE CALIBRATION
+# samplingRate = 24000
+# sound = sin(2*pi*1000/samplingRate*(1:20000))
+# cal = data.frame(SPL_measured = seq(40, 80, by = 10))
+# for (i in 1:nrow(cal)) {
+#   cal$loudness[i] = mean(getLoudness(x = sound, samplingRate = samplingRate, windowLength = 20, step = NULL, overlap = 50, SPL_measured = cal$SPL_measured[i], Pref = 2e-5, plot = FALSE)$loudness)
+# }
+# cal  # loudness should be 1, 2, 4, 8, 16 sone
+# cal$loudness / cal$loudness[1]
+# plot(cal$SPL_measured, cal$loudness / cal$loudness[1] - c(1, 2, 4, 8, 16))
 
 
-#
-# sound = soundgen()
-# s = spectrogram(sound, samplingRate = 16000, output = 'original', windowLength = 40, step = 10)
-# image(s ^ 2)
-# p = tuneR::powspec(sound, sr = 16000, wintime = .04, step = .01)
-# image(p)
-#
-# a = tuneR::audspec(p, sr = 16000, fbtype = 'bark')$aspectrum
-# image(a)
-# View(a)
-# range(a)
-# range(20*log10(as.numeric(a)))
-#
-# a = analyze('~/Downloads/117.wav')
-# mean(a$specCentroid, na.rm = T)
+
+getLoudnessPerFrame = function() {
+
+}
+

@@ -17,6 +17,7 @@
 #' @param step you can override \code{overlap} by specifying FFT step, ms
 #' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular,
 #'   blackman, flattop
+#' @param normalize if TRUE, scales input prior to FFT
 #' @param zp window length after zero padding, points
 #' @param smoothFreq,smoothTime length of the window, in data points (0 to
 #'   +inf), for calculating a rolling median. Applies median smoothing to
@@ -114,6 +115,7 @@ spectrogram = function(x,
                        overlap = 70,
                        wn = 'gaussian',
                        zp = 0,
+                       normalize = TRUE,
                        smoothFreq = 0,
                        smoothTime = 0,
                        qTime = 0,
@@ -162,6 +164,7 @@ spectrogram = function(x,
       windowLength_points = windowLength_points,
       step = step,
       zp = zp,
+      normalize = normalize,
       wn = wn,
       filter = NULL
     )
@@ -186,6 +189,7 @@ spectrogram = function(x,
         windowLength_points = windowLength_points,
         step = step,
         zp = zp,
+        normalize = normalize,
         wn = wn,
         filter = NULL
       )
@@ -512,6 +516,7 @@ getFrameBank = function(sound,
                         wn,
                         step,
                         zp,
+                        normalize = TRUE,
                         filter = NULL) {
   # # normalize to range from no less than -1 to no more than +1
   if (!is.numeric(sound)) {
@@ -520,7 +525,7 @@ getFrameBank = function(sound,
   if (any(is.na(sound))) {
     sound[is.na(sound)] = 0
   }
-  if (any(sound != 0)) {
+  if (normalize && any(sound != 0)) {
     sound = sound - mean(sound)
     sound = sound / max(abs(max(sound)), abs(min(sound)))
   }

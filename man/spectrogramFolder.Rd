@@ -30,8 +30,8 @@ blackman, flattop}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 
-\item{osc}{should an oscillogram be shown under the spectrogram? TRUE
-/ FALSE, If `osc_dB`, the oscillogram is displayed on a dB scale. See
+\item{osc}{should an oscillogram be shown under the spectrogram? TRUE/
+FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 \code{\link{osc_dB}} for details}
 
 \item{xlab}{graphical parameters}

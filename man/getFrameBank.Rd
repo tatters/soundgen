@@ -5,7 +5,7 @@
 \title{Frame bank}
 \usage{
 getFrameBank(sound, samplingRate, windowLength_points, wn, step, zp,
-  filter = NULL)
+  normalize = TRUE, filter = NULL)
 }
 \arguments{
 \item{sound}{numeric vector}
@@ -21,6 +21,8 @@ blackman, flattop}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
 \item{zp}{window length after zero padding, points}
+
+\item{normalize}{if TRUE, scales input prior to FFT}
 
 \item{filter}{fft window filter (defaults to NULL)}
 }

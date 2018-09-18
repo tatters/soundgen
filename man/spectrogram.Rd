@@ -6,14 +6,14 @@
 \usage{
 spectrogram(x, samplingRate = NULL, dynamicRange = 80,
   windowLength = 50, step = NULL, overlap = 70, wn = "gaussian",
-  zp = 0, smoothFreq = 0, smoothTime = 0, qTime = 0,
-  percentNoise = 10, noiseReduction = 0, contrast = 0.2,
+  zp = 0, normalize = TRUE, smoothFreq = 0, smoothTime = 0,
+  qTime = 0, percentNoise = 10, noiseReduction = 0, contrast = 0.2,
   brightness = 0, method = c("spectrum", "spectralDerivative")[1],
   output = c("none", "original", "processed")[1], ylim = NULL,
   plot = TRUE, osc = FALSE, osc_dB = FALSE, heights = c(3, 1),
   colorTheme = c("bw", "seewave", "...")[1], xlab = "Time, ms",
-  ylab = "Frequency, KHz", main = "", frameBank = NULL,
-  duration = NULL, ...)
+  ylab = "Frequency, KHz", mar = c(5.1, 4.1, 4.1, 2), main = "",
+  frameBank = NULL, duration = NULL, ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -35,6 +35,8 @@ dynamicRange under maximum are treated as zero}
 blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
+
+\item{normalize}{if TRUE, scales input prior to FFT}
 
 \item{smoothFreq, smoothTime}{length of the window, in data points (0 to
 +inf), for calculating a rolling median. Applies median smoothing to
@@ -71,8 +73,8 @@ spectrogram ('original'), or denoised and/or smoothed spectrogram
 
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
-\item{osc, osc_dB}{should an oscillogram be shown under the spectrogram? TRUE
-/ FALSE, If `osc_dB`, the oscillogram is displayed on a dB scale. See
+\item{osc, osc_dB}{should an oscillogram be shown under the spectrogram? TRUE/
+FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 \code{\link{osc_dB}} for details}
 
 \item{heights}{a vector of length two specifying the relative height of the
@@ -82,7 +84,7 @@ spectrogram and the oscillogram}
 or any palette from \code{\link[grDevices]{palette}} such as
 'heat.colors', 'cm.colors', etc}
 
-\item{xlab, ylab, main}{graphical parameters}
+\item{xlab, ylab, main, mar}{graphical parameters}
 
 \item{frameBank}{ignore (only needed for pitch tracking)}
 
@@ -92,10 +94,10 @@ or any palette from \code{\link[grDevices]{palette}} such as
 \code{seewave:::filled.contour.modif2}}
 }
 \value{
-Returns nothing (if output = 'none'), raw spectrum (if output =
-  'original'), denoised and/or smoothed spectrum (if output = 'processed'),
-  or spectral derivatives (if method = 'spectralDerivative') as a matrix of
-  real numbers.
+Returns nothing (if output = 'none'), absolute - not power! -
+  spectrum (if output = 'original'), denoised and/or smoothed spectrum (if
+  output = 'processed'), or spectral derivatives (if method =
+  'spectralDerivative') as a matrix of real numbers.
 }
 \description{
 Produces the spectrogram of a sound using short-term Fourier transform. This

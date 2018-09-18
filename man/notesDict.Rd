@@ -3,12 +3,13 @@
 \docType{data}
 \name{notesDict}
 \alias{notesDict}
-\title{Conversion table from Hz to semitones above C0 to musical notation}
+\title{Conversion table from Hz to musical notation}
 \format{An object of class \code{data.frame} with 192 rows and 2 columns.}
 \usage{
 notesDict
 }
 \description{
-A dataframe of 132 rows and 2 columns: "note" and "freq" (Hz)
+A dataframe of 192 rows and 2 columns: "note" and "freq" (Hz). Range: C-5
+(0.51 Hz) to B10 (31608.53 Hz)
 }
 \keyword{datasets}
