@@ -92,9 +92,11 @@
 #' @param summary if TRUE, returns only a summary of the measured acoustic
 #'   variables (mean, median and SD). If FALSE, returns a list containing
 #'   frame-by-frame values
+#' @param summaryStats a vector of names of functions used to summarize each
+#'   acoustic characteristic
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
-#' @param savePath if a valid path is specified, a plot is saved in this
-#'   folder (defaults to NA)
+#' @param savePath if a valid path is specified, a plot is saved in this folder
+#'   (defaults to NA)
 #' @param specPlot deprecated since soundgen 1.1.2. Pass its arguments directly
 #'   to the main function or set \code{plotSpec = FALSE} to remove the
 #'   spectrogram
@@ -184,6 +186,11 @@
 #'
 #'# Plot pitch candidates w/o a spectrogram
 #' a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
+#'
+#' # Different formatting options for output
+#' a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
+#' a = analyze(sound2, samplingRate = 16000, summary = TRUE,
+#'             summaryStats = c('mean', 'range'))  # one row per sound
 #' }
 analyze = function(x,
                    samplingRate = NULL,
@@ -233,6 +240,7 @@ analyze = function(x,
                    smooth = 1,
                    smoothVars = c('pitch', 'dom'),
                    summary = FALSE,
+                   summaryStats = c('mean', 'median', 'sd'),
                    plot = TRUE,
                    savePath = NA,
                    plotSpec = TRUE,
@@ -857,36 +865,43 @@ analyze = function(x,
   }
 
   if (summary) {
-    vars = colnames(result)[3:ncol(result)]
-    vars = vars[vars != 'voiced']  # except dur, time and voiced
+    vars = colnames(result)[!colnames(result) %in% c('duration', 'time', 'voiced')]
+    ls = length(summaryStats)
     out = as.data.frame(matrix(
-      ncol = 2 + 3 * length(vars),
+      ncol = 2 + ls * length(vars),  # 2 b/c dur & voiced are not summarized
       nrow = 1
     ))
     colnames(out)[c(1:2)] = c('duration', 'voiced')
     for (c in 1:length(vars)) {
       # specify how to summarize pitch etc values for each frame within each file
-      # - save mean, median, sd, ... "2+2*c-1": "2" because of dur/voiced above,
-      # "+3*c" because for each acoustic variable, we save mean, median and sd
-      colnames(out)[2 + 3 * c - 2] = paste0(vars[c], '_', 'mean')
-      colnames(out)[2 + 3 * c - 1] = paste0(vars[c], '_', 'median')
-      colnames(out)[2 + 3 * c] = paste0(vars[c], '_', 'sd')
+      # - save mean, median, sd, ...
+      for (s in 1:ls) {
+        colnames(out)[2 + ls * (c - 1) + s] = paste0(vars[c], '_', summaryStats[s])
+      }
     }
-    # which columns in the output of pitch_per_sound to save as median + sd
-    myseq = (1:length(vars)) + 2
     out$duration = result$duration[1]  # duration, ms
     out$voiced = mean(result$voiced)  # proportion of voiced frames
-
-    for (v in 1:length(myseq)) {
-      myvar = colnames(result)[myseq[v]]
-      out[1, 3 * v] = mean(result[, myvar], na.rm = TRUE)
-      out[1, 3 * v + 1] = median(result[, myvar], na.rm = TRUE)
-      out[1, 3 * v + 2] = sd(result[, myvar], na.rm = TRUE)
+    # apply the specified summary function to each column of result
+    for (v in 3:(ncol(result) - 1)) {  # -1 for voiced (not summarized)
+      for (s in 1:length(summaryStats)) {
+        if (any(is.finite(result[, colnames(result)[v]]))) {
+          mySummary = do.call(
+            summaryStats[s],
+            list(result[, colnames(result)[v]], na.rm = TRUE)
+          )
+          # for smth like range, collapse and convert to character
+          if (length(mySummary) > 1) {
+            mySummary = paste0(mySummary, collapse = ', ')
+          }
+          out[1, ls * (v - 2 - 1) + s + 2] = mySummary
+        } else {  # not finite, eg NA or -Inf - don't bother to calculate
+          out[1, ls * (v - 2 - 1) + s + 2] = NA
+        }
+      }
     }
   } else {
     out = result
   }
-
   return(out)
 }
 
@@ -971,6 +986,7 @@ analyzeFolder = function(myfolder,
                          smooth = 1,
                          smoothVars = c('pitch', 'dom'),
                          summary = TRUE,
+                         summaryStats = c('mean', 'median', 'sd'),
                          plot = FALSE,
                          savePlots = FALSE,
                          savePath = NA,

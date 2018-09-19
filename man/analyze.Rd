@@ -19,7 +19,8 @@ analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   interpolCert = 0.3, pathfinding = c("none", "fast", "slow")[2],
   annealPars = list(maxit = 5000, temp = 1000), certWeight = 0.5,
   snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
-  smoothVars = c("pitch", "dom"), summary = FALSE, plot = TRUE,
+  smoothVars = c("pitch", "dom"), summary = FALSE,
+  summaryStats = c("mean", "median", "sd"), plot = TRUE,
   savePath = NA, plotSpec = TRUE, specPlot = NULL,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
   candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
@@ -165,10 +166,13 @@ deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
 variables (mean, median and SD). If FALSE, returns a list containing
 frame-by-frame values}
 
+\item{summaryStats}{a vector of names of functions used to summarize each
+acoustic characteristic}
+
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
-\item{savePath}{if a valid path is specified, a plot is saved in this
-folder (defaults to NA)}
+\item{savePath}{if a valid path is specified, a plot is saved in this folder
+(defaults to NA)}
 
 \item{plotSpec}{if \code{FALSE}, the spectrogram will not be plotted}
 
@@ -275,5 +279,10 @@ a = analyze(sound2, samplingRate = 16000, plot = TRUE,
 
 # Plot pitch candidates w/o a spectrogram
 a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
+
+# Different formatting options for output
+a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
+a = analyze(sound2, samplingRate = 16000, summary = TRUE,
+            summaryStats = c('mean', 'range'))  # one row per sound
 }
 }
