@@ -5,10 +5,11 @@
 \title{Analyze folder}
 \usage{
 analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
-  samplingRate = NULL, silence = 0.04, windowLength = 50,
-  step = NULL, overlap = 50, wn = "gaussian", zp = 0,
-  cutFreq = 6000, nFormants = 3, pitchMethods = c("autocor", "spec",
-  "dom"), entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
+  samplingRate = NULL, dynamicRange = 80, silence = 0.04,
+  SPL_measured = 70, Pref = 20, windowLength = 50, step = NULL,
+  overlap = 50, wn = "gaussian", zp = 0, cutFreq = 6000,
+  nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
+  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
   priorMean = HzToSemitones(300), priorSD = 6, priorPlot = FALSE,
   nCands = 1, minVoicedCands = "autom", domThres = 0.1,
   domSmooth = 220, autocorThres = 0.7, autocorSmooth = NULL,
@@ -37,10 +38,17 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
 
+\item{dynamicRange}{dynamic range, dB. All values with power more than one
+dynamicRange under maximum are treated as zero}
+
 \item{silence}{(0 to 1) frames with mean abs amplitude below silence
 threshold are not analyzed at all. NB: this number is dynamically updated:
 the actual silence threshold may be higher depending on the quietest frame,
 but it will never be lower than this specified number.}
+
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
+
+\item{Pref}{reference pressure, Pa}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -244,7 +252,8 @@ If \code{summary} is TRUE, returns a dataframe with one row per audio
   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
 }
 \description{
-Acoustic analysis of all .wav files in a folder.
+Acoustic analysis of all .wav files in a folder. See \code{\link{analyze}}
+for further details.
 }
 \examples{
 \dontrun{

@@ -9,7 +9,7 @@ scaleSPL(x, SPL_measured = 70, Pref = 2e-05)
 \arguments{
 \item{x}{numeric vector ranging from -1 to +1}
 
-\item{SPL_measured}{estimated sound pressure level, dB (just a guess)}
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 
 \item{Pref}{reference pressure, Pa}
 }

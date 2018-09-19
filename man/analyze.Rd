@@ -4,10 +4,11 @@
 \alias{analyze}
 \title{Analyze sound}
 \usage{
-analyze(x, samplingRate = NULL, silence = 0.04, windowLength = 50,
-  step = NULL, overlap = 50, wn = "gaussian", zp = 0,
-  cutFreq = 6000, nFormants = 3, pitchMethods = c("autocor", "spec",
-  "dom"), entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
+analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
+  SPL_measured = 70, Pref = 20, windowLength = 50, step = NULL,
+  overlap = 50, wn = "gaussian", zp = 0, cutFreq = 6000,
+  nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
+  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
   priorMean = HzToSemitones(300), priorSD = 6, priorPlot = FALSE,
   nCands = 1, minVoicedCands = "autom", domThres = 0.1,
   domSmooth = 220, autocorThres = 0.7, autocorSmooth = NULL,
@@ -33,10 +34,17 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
 
+\item{dynamicRange}{dynamic range, dB. All values with power more than one
+dynamicRange under maximum are treated as zero}
+
 \item{silence}{(0 to 1) frames with mean abs amplitude below silence
 threshold are not analyzed at all. NB: this number is dynamically updated:
 the actual silence threshold may be higher depending on the quietest frame,
 but it will never be lower than this specified number.}
+
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
+
+\item{Pref}{reference pressure, Pa}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -206,7 +214,9 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
   by soundgen:::getPitchAutocor (see “Pitch tracking methods /
   Autocorrelation”). If HNR = 0 dB, there is as much energy in harmonics as
-  in noise} \item{medianFreq}{50th quantile of the frame's spectrum}
+  in noise} \item{loudness}{subjective loudness, in sone, corresponding to
+  the chosen SPL_measured - see \code{\link{getLoudness}}}
+  \item{medianFreq}{50th quantile of the frame's spectrum}
   \item{peakFreq}{the frequency with maximum spectral power (Hz)}
   \item{peakFreqCut}{the frequency with maximum spectral power below cutFreq
   (Hz)} \item{pitch}{post-processed pitch contour based on all F0 estimates}

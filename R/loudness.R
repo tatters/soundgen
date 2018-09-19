@@ -21,7 +21,7 @@
 #' coefficient to standardize output. Calibrated so as to return a loudness of 1
 #' sone for a 1 kHz pure tone with SPL of 40 dB.
 #' @inheritParams spectrogram
-#' @param SPL_measured estimated sound pressure level, dB (just a guess)
+#' @param SPL_measured sound pressure level at which the sound is presented, dB
 #' @param Pref reference pressure, Pa
 #' @param spreadSpectrum if TRUE, applies a spreading function to account for
 #'   frequency masking
@@ -101,15 +101,16 @@ getLoudness = function(x,
   # log10(sqrt(mean(sound_scaled ^ 2))) * 20  # should be the same as SPL_measured
 
   # get power spectrum
-  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   powerSpec = spectrogram(
     sound_scaled, samplingRate = samplingRate,
     windowLength = windowLength, step = step,
     output = 'original', normalize = FALSE,
     plot = plot, mar = mar, ...) ^ 2
   # range(log10(powerSpec) * 10)
-  powerSpec_scaled = (2 * powerSpec) / windowLength_points
-  # powerSpec_scaled = powerSpec
+
+  # normalize power spectrum by the size of STFT frame
+  # windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  powerSpec_scaled = powerSpec / nrow(powerSpec)  # same as * 2 / windowLength_points
   # range(log10(powerSpec_scaled) * 10)
   # image(t(powerSpec_scaled))
 
@@ -236,10 +237,3 @@ getLoudness = function(x,
 # cal  # loudness should be 1, 2, 4, 8, 16 sone
 # cal$loudness / cal$loudness[1]
 # plot(cal$SPL_measured, cal$loudness / cal$loudness[1] - c(1, 2, 4, 8, 16))
-
-
-
-getLoudnessPerFrame = function() {
-
-}
-

@@ -8,6 +8,7 @@
 #' details.
 #'
 #' @inheritParams spectrogram
+#' @inheritParams getLoudness
 #' @param silence (0 to 1) frames with mean abs amplitude below silence
 #'   threshold are not analyzed at all. NB: this number is dynamically updated:
 #'   the actual silence threshold may be higher depending on the quietest frame,
@@ -128,7 +129,9 @@
 #'   \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
 #'   by soundgen:::getPitchAutocor (see “Pitch tracking methods /
 #'   Autocorrelation”). If HNR = 0 dB, there is as much energy in harmonics as
-#'   in noise} \item{medianFreq}{50th quantile of the frame's spectrum}
+#'   in noise} \item{loudness}{subjective loudness, in sone, corresponding to
+#'   the chosen SPL_measured - see \code{\link{getLoudness}}}
+#'   \item{medianFreq}{50th quantile of the frame's spectrum}
 #'   \item{peakFreq}{the frequency with maximum spectral power (Hz)}
 #'   \item{peakFreqCut}{the frequency with maximum spectral power below cutFreq
 #'   (Hz)} \item{pitch}{post-processed pitch contour based on all F0 estimates}
@@ -184,7 +187,10 @@
 #' }
 analyze = function(x,
                    samplingRate = NULL,
+                   dynamicRange = 80,
                    silence = 0.04,
+                   SPL_measured = 70,
+                   Pref = 20,
                    windowLength = 50,
                    step = NULL,
                    overlap = 50,
@@ -263,9 +269,9 @@ analyze = function(x,
 
   # import a sound
   if (class(x) == 'character') {
-    sound = tuneR::readWave(x)
-    samplingRate = sound@samp.rate
-    sound = sound@left
+    sound_wav = tuneR::readWave(x)
+    samplingRate = sound_wav@samp.rate
+    sound = sound_wav@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = ifelse(
       !missing(main) && !is.null(main),
@@ -284,11 +290,17 @@ analyze = function(x,
     stop('Input not recognized')
   }
 
+  # calculate scaling coefficient, but don't convert yet,
+  # since most routines in analyze() require scale [-1, 1]
+  scaleCorrection = scaleSPL(c(-1, 1),  # internal scale
+                             SPL_measured = SPL_measured,
+                             Pref = Pref)[2]
+
   # normalize to range from no less than -1 to no more than +1
   if (min(sound) > 0) {
-    sound = scale(sound)
+    sound = sound - mean(sound)  # center
   }
-  sound = sound / max(abs(max(sound)), abs(min(sound)))
+  sound = sound / max(abs(sound))
 
   # some derived pars, defaults
   if (!is.numeric(silence) || silence < 0 || silence > 1) {
@@ -480,10 +492,11 @@ analyze = function(x,
     wn = wn,
     step = step,
     zp = zp,
+    normalize = TRUE,
     filter = NULL
   )
 
-  if (plot == TRUE && plotSpec) { #
+  if (plot == TRUE && plotSpec) {
     plot_spec = TRUE
   } else {
     plot_spec = FALSE
@@ -494,6 +507,7 @@ analyze = function(x,
   s = do.call(spectrogram, c(list(
     x = NULL,
     frameBank = frameBank,
+    dynamicRange = dynamicRange,
     duration = duration,
     samplingRate = samplingRate,
     windowLength = windowLength,
@@ -572,6 +586,7 @@ analyze = function(x,
       row.names = NULL
     ),
     'summaries' = data.frame(
+      'loudness' = NA,
       'HNR' = NA,
       'dom' = NA,
       'specCentroid' = NA,
@@ -594,6 +609,7 @@ analyze = function(x,
       frame = s[, i],
       autoCorrelation = autocorBank[, i],
       samplingRate = samplingRate,
+      scaleCorrection = scaleCorrection,
       trackPitch = cond_entropy[i],
       pitchMethods = pitchMethods,
       cutFreq = cutFreq,
@@ -877,11 +893,13 @@ analyze = function(x,
 
 #' Analyze folder
 #'
-#' Acoustic analysis of all .wav files in a folder.
+#' Acoustic analysis of all .wav files in a folder. See \code{\link{analyze}}
+#' for further details.
 #' @param myfolder full path to target folder
 #' @param verbose if TRUE, reports progress and estimated time left
 #' @inheritParams analyze
 #' @inheritParams spectrogram
+#' @inheritParams getLoudness
 #' @param savePlots if TRUE, saves plots as .jpg files
 #' @param htmlPlots if TRUE, saves an html file with clickable plots
 #' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
@@ -907,7 +925,10 @@ analyzeFolder = function(myfolder,
                          htmlPlots = TRUE,
                          verbose = TRUE,
                          samplingRate = NULL,
+                         dynamicRange = 80,
                          silence = 0.04,
+                         SPL_measured = 70,
+                         Pref = 20,
                          windowLength = 50,
                          step = NULL,
                          overlap = 50,

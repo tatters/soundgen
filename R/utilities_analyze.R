@@ -22,6 +22,7 @@
 analyzeFrame = function(frame,
                         autoCorrelation = NULL,
                         samplingRate = 44100,
+                        scaleCorrection = 1,
                         trackPitch = TRUE,
                         pitchMethods = c('autocor', 'cep', 'spec', 'dom'),
                         cutFreq = 6000,
@@ -46,9 +47,13 @@ analyzeFrame = function(frame,
                        'amp' = frame)
   amplitude = sum(frame)
   absSpec$w = absSpec$amp / amplitude
-  specCentroid = sum(absSpec$freq * absSpec$w)  # spectral centroid (center of mass)
-  peakFreq = absSpec$freq[which.max(frame)]  # absolute peak
-  medianFreq = absSpec$freq[min(which(cumsum(frame) > amplitude / 2))]  # median frequency
+  specCentroid = sum(absSpec$freq * absSpec$w)
+  peakFreq = absSpec$freq[which.max(frame)]
+  medianFreq = absSpec$freq[min(which(cumsum(frame) > amplitude / 2))]
+  loudness = getLoudnessPerFrame(
+    spec = absSpec$amp * scaleCorrection,
+    samplingRate = samplingRate
+  )  # in sone, assuming scaling by SPL_measured in analyze()
 
   # Cut spectral band from pitchFloor to cutFreq Hz
   absSpec_cut = absSpec[absSpec$freq > pitchFloor &
@@ -166,6 +171,7 @@ analyzeFrame = function(frame,
   return(list(
     'pitch_array' = pitch_array,
     'summaries' = data.frame(
+      loudness = loudness,
       HNR = HNR,
       dom = dom,
       specCentroid = specCentroid,

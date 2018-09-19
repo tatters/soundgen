@@ -22,7 +22,7 @@ samplingRate}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{SPL_measured}{estimated sound pressure level, dB (just a guess)}
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 
 \item{Pref}{reference pressure, Pa}
 
