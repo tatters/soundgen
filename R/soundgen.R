@@ -1,4 +1,4 @@
-# TODO: analyze() - calculate rms amplitude before windowing; automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

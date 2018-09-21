@@ -58,7 +58,7 @@ different segments within the same recording.
 \details{
 Algorithm: calibrates the sound to the desired SPL (Timoney et al., 2004),
 extracts a spectrogram, converts to bark scale
-(\code{\link[tuneR]{audSpec}}), spreads the spectrum to account for frequency
+(\code{\link[tuneR]{audspec}}), spreads the spectrum to account for frequency
 masking across the critical bands (Yang, 1999), converts dB to phon by using
 standard equal loudness curves (ISO 226), converts phon to sone (Timoney et
 al., 2004), sums across all critical bands, and applies a correction

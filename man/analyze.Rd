@@ -35,8 +35,8 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
 
-\item{dynamicRange}{dynamic range, dB. All values with power more than one
-dynamicRange under maximum are treated as zero}
+\item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
+under maximum are treated as zero}
 
 \item{silence}{(0 to 1) frames with mean abs amplitude below silence
 threshold are not analyzed at all. NB: this number is dynamically updated:

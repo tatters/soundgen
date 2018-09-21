@@ -22,8 +22,8 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
 
-\item{dynamicRange}{dynamic range, dB. All values with power more than one
-dynamicRange under maximum are treated as zero}
+\item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
+under maximum are treated as zero}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -130,7 +130,7 @@ spectrogram(sound, samplingRate = 16000,
 # broad-band instead of narrow-band
 spectrogram(sound, samplingRate = 16000, windowLength = 5)
 
-# focus only on values in the upper 5\% of power for each frequency bin
+# focus only on values in the upper 5\% for each frequency bin
 spectrogram(sound, samplingRate = 16000, qTime = 0.95)
 
 # detect 10\% of the noisiest frames based on entropy and remove the pattern

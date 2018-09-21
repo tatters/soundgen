@@ -14,7 +14,7 @@
 #'
 #' Algorithm: calibrates the sound to the desired SPL (Timoney et al., 2004),
 #' extracts a spectrogram, converts to bark scale
-#' (\code{\link[tuneR]{audSpec}}), spreads the spectrum to account for frequency
+#' (\code{\link[tuneR]{audspec}}), spreads the spectrum to account for frequency
 #' masking across the critical bands (Yang, 1999), converts dB to phon by using
 #' standard equal loudness curves (ISO 226), converts phon to sone (Timoney et
 #' al., 2004), sums across all critical bands, and applies a correction
@@ -144,8 +144,9 @@ getLoudness = function(x,
     # plot(y, type = 'b')
 
     # dB SPL to phons (8 barks ~= 1 kHz, reference value for equal loudness curves)
-    n_phonCurve = which.min(abs(y[8] - as.numeric(names(phonCurves))))
-    curve = phonCurves[[n_phonCurve]][1:length(y), ]  # correction curve for frame i
+    n_phonCurve = which.min(abs(y[8] - as.numeric(names(soundgen::phonCurves))))
+    # correction curve for frame i
+    curve = soundgen::phonCurves[[n_phonCurve]][1:length(y), ]
     y_phon = y + curve$spl[8] - curve$spl
     # plot(y_phon, type = 'b')
 

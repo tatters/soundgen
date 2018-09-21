@@ -23,8 +23,8 @@ getLoudnessPerFrame = function(spec,
   if (spreadSpectrum) audSpec = spreadSpec(audSpec)
   audSpec_dB = 10 * log10(audSpec)
   n_phonCurve = which.min(abs(
-    audSpec_dB[8] - as.numeric(names(phonCurves))))  # 8 barks = 1 kHz
-  curve = phonCurves[[n_phonCurve]][1:length(audSpec_dB), ]
+    audSpec_dB[8] - as.numeric(names(soundgen::phonCurves))))  # 8 barks = 1 kHz
+  curve = soundgen::phonCurves[[n_phonCurve]][1:length(audSpec_dB), ]
   audSpec_phon = audSpec_dB + curve$spl[8] - curve$spl
   audSpec_phon[audSpec_phon < curve$hearingThres_dB | audSpec_phon < 0] = 0
   # plot(audSpec_phon, type = 'l')
@@ -179,7 +179,7 @@ spreadSpec = function(barkSpec) {
   n = length(barkSpec)
   barkSpec_spread = vector('numeric', n)
   for (i in 1:n) {
-    barkSpec_spread[i] = sum(spreadSpecCoef[i, 1:n] * barkSpec)
+    barkSpec_spread[i] = sum(soundgen::spreadSpecCoef[i, 1:n] * barkSpec)
   }
   return(barkSpec_spread)
 }

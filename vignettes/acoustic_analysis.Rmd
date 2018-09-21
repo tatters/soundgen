@@ -100,11 +100,11 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `dom`: lowest dominant frequency band (Hz) (see "Pitch tracking methods / Dominant frequency")
 * `entropy`: Weiner entropy of the spectrum of the current frame. Close to 0: pure tone or tonal sound with nearly all energy in harmonics; close to 1: white noise
 * `f1_freq`, `f1_width`, ...: the frequency and bandwidth of the first `nFormants` formants per FFT frame, as calculated by `phonTools::findformants` with default settings
-* `harmonics`: the amount of energy in upper harmonics, namely the ratio of total spectral power above 1.25 x F0 to the total spectral power below 1.25 x F0 (dB)
+* `harmonics`: the amount of energy in upper harmonics, namely the ratio of total spectral energy above 1.25 x F0 to the total spectral energy below 1.25 x F0 (dB)
 * `HNR`: harmonics-to-noise ratio (dB), a measure of harmonicity returned by `soundgen:::getPitchAutocor()` (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as in noise
 * `medianFreq`: 50th quantile of the frame's spectrum
-* `peakFreq`: the frequency with maximum spectral power (Hz)
-* `peakFreqCut`: the frequency with maximum spectral power below `cutFreq` (Hz)
+* `peakFreq`: the frequency with maximum spectral energy (Hz)
+* `peakFreqCut`: the frequency with maximum spectral energy below `cutFreq` (Hz)
 * `quartile25`, `quartile50`, `quartile75`: the 25th, 50th, and 75th quantiles of the spectrum below `cutFreq` (Hz)
 * `specCentroid`: the center of gravity of the frame’s spectrum, first spectral moment (Hz)
 * `specCentroidCut`: the center of gravity of the frame’s spectrum below cutFreq
@@ -112,7 +112,7 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `voiced`: is the current FFT frame voiced? TRUE / FALSE
 
 ## Custom spectral descriptives
-The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame()` and to `soundgen::analyze()`. If you want deltas, they can be extracted directly from the output of `analyze(..., summary = FALSE)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze()`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the power spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
+The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame()` and to `soundgen::analyze()`. If you want deltas, they can be extracted directly from the output of `analyze(..., summary = FALSE)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze()`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
 
 For the average spectrum of an entire sound, go no further than `seewave::spec` or `seewave::meanspec`:
 ```{r}
@@ -129,9 +129,9 @@ spgm = spectrogram(s1, samplingRate = 16000, output = 'original', plot = FALSE)
 str(spgm)
 ```
 
-Let's say you are working with frame-by-frame spectra and want to calculate skewness, the 66.6th percentile, and the ratio of energy above/below 500 Hz. Before you go hunting for a piece of software that returns exactly those descriptors, consider this. Once you have normalized the power spectrum to add up to 1, it basically becomes a probability density function (pdf), so you can summarize it in the same way as you would any other distribution of a random variable. Look up the formulas you need and just do the raw math:
+Let's say you are working with frame-by-frame spectra and want to calculate skewness, the 66.6th percentile, and the ratio of energy above/below 500 Hz. Before you go hunting for a piece of software that returns exactly those descriptors, consider this. Once you have normalized the spectrum to add up to 1, it basically becomes a probability density function (pdf), so you can summarize it in the same way as you would any other distribution of a random variable. Look up the formulas you need and just do the raw math:
 ```{r}
-# Transform power to pdf (all columns should sum to 1):
+# Transform spectrum to pdf (all columns should sum to 1):
 spgm_norm = apply(spgm, 2, function(x) x / sum(x))
 # Set up a dataframe to store the output
 out = data.frame(skew = rep(NA, ncol(spgm)),
@@ -139,7 +139,7 @@ out = data.frame(skew = rep(NA, ncol(spgm)),
                  ratio500 = NA)
 # Process each STFT frame
 for (i in 1:ncol(spgm_norm)) {
-  # Power spectrum for this frame
+  # Absolute spectrum for this frame
   df = data.frame(
     freq = as.numeric(rownames(spgm_norm)),  # frequency (kHz)
     d = spgm_norm[, i]                       # density
@@ -159,7 +159,43 @@ for (i in 1:ncol(spgm_norm)) {
 summary(out)
 ```
 
-If you need to do this analysis repeatedly, just wrap the code into your own function that takes a wav file as input and returns all these spectral descriptives. You can also save the actual spectra of different sound files and add them up to obtain an average spectrum across multiple sound files, work with cochleograms instead of power spectra (check out `tuneR::melfcc`), etc. Be your own boss!
+If you need to do this analysis repeatedly, just wrap the code into your own function that takes a wav file as input and returns all these spectral descriptives. You can also save the actual spectra of different sound files and add them up to obtain an average spectrum across multiple sound files, work with cochleograms instead of raw spectra (check out `tuneR::melfcc`), etc. Be your own boss!
+
+## Loudness
+The digital representation of a sound is a long vector of numbers on some arbitrary scale, say [-1, 1]. Values further from zero correspond to a higher amplitude - in physical terms, to greater pertubations of sound pressure level caused by the propagating sound wave. A smoothed line following peak amplitude values is known as an amplitude envelope. However, there is no simple correspondence between the absolute height of amplitude peaks and the subjectively experienced loudness of the corresponding sound. A commonly reported measure of sound intensity is its root mean square (RMS) amplitude, which takes into account the average value of sound pressure, and not only the height of peaks. More sophisticated estimates of loudness also take into account the relative sensitivity of human hearing to different frequencies, masking of adjacent tones in the time and frequency domains, etc. 
+
+To illustrate the differences between these estimates, let's look at a pure tone sweeping with fixed absolute amplitude from 100 to 4000 Hz over 2 s:
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+dur = 2  # 2 s duration
+samplingRate = 16000
+f0 = seq(100, 8000, length.out = samplingRate * dur)
+sweep = sin(2 * pi * cumsum(f0) / samplingRate)
+# playme(sweep)
+# spectrogram(sweep, 16000)
+# plot(sweep, type = 'l')
+```
+
+Smoothed absolute amplitude envelope (flat):
+```{r fig.height = 4, fig.width = 7}
+seewave::env(sweep, f = samplingRate, envt = 'abs', msmooth=c(50, 0))
+```
+
+RMS amplitude per STFT frame, as returned by `analyze()`, column "ampl":
+```{r fig.height = 4, fig.width = 7}
+a = analyze(sweep, samplingRate = samplingRate, pitchMethods = NULL, plot = FALSE)
+plot(seq(0, dur, length.out = length(a$ampl)), a$ampl, type = 'b', xlab= 'Time, s')
+```
+
+An estimate of subjectively experienced loudness in sone, column "loudness":
+```{r fig.height = 4, fig.width = 7}
+plot(seq(0, dur, length.out = length(a$loudness)), a$loudness, type = 'b', xlab= 'Time, s')
+```
+
+Soundgen also has a dedicated function for calculating the loudness and plotting the output, `getLoudness()`. Loudness values are overlaid on the spectrogram - observe how the loudness peaks as F0 reaches about 2-3 kHz and then drops. The absolute values in sone are only an approximation, since they are dictated by the playback device (e.g. your headphones), but the change of loudness within one sound, or across different sounds analyzed with the same settings, is informative.
+```{r fig.height = 6, fig.width = 7}
+l = getLoudness(sweep, samplingRate = samplingRate)
+```
+
 
 ## Pitch tracking
 If you look at the source code of `soundgen::analyze()` and embedded functions, you will see that almost all of this code deals with a single acoustic characteristic: fundamental frequency (F0) or its perceptual equivalent, pitch. That's because pitch is both highly salient to listeners and notoriously difficult to measure accurately. The approach followed with soundgen's pitch tracker is to use several different estimates of F0, each of which is better suited to certain types of sounds. You can use any pitch tracker individually, but their output is also automatically integrated and postprocessed so as to generate the best overall estimate of frame-by-frame pitch. There are four currently implemented classes of pitch estimates in soundgen: autocorrelation, lowest dominant frequency, cepstrum, and spectrum (ratios of harmonics). These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an FFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative. 
