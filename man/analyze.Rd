@@ -21,8 +21,8 @@ analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
   smoothVars = c("pitch", "dom"), summary = FALSE,
   summaryStats = c("mean", "median", "sd"), plot = TRUE,
-  savePath = NA, plotSpec = TRUE, specPlot = NULL,
-  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  showLegend = TRUE, savePath = NA, plotSpec = TRUE,
+  specPlot = NULL, pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
   candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
   c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2),
   ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
@@ -171,6 +171,8 @@ acoustic characteristic}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
+\item{showLegend}{if TRUE, adds a legend with pitch tracking methods}
+
 \item{savePath}{if a valid path is specified, a plot is saved in this folder
 (defaults to NA)}
 
@@ -191,7 +193,7 @@ individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
 \item{xlab, ylab, main}{plotting parameters}
 
 \item{width, height, units, res}{parameters passed to
-\code{\link[grDevices]{jpeg}} if the plot is saved}
+\code{\link[grDevices]{png}} if the plot is saved}
 
 \item{...}{other graphical parameters passed to \code{\link{spectrogram}}}
 }
@@ -284,5 +286,10 @@ a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
 a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
 a = analyze(sound2, samplingRate = 16000, summary = TRUE,
             summaryStats = c('mean', 'range'))  # one row per sound
+
+# Save the plot
+a = analyze(sound, samplingRate = 16000,
+            savePath = '~/Downloads/',
+            width = 20, height = 15, units = 'cm', res = 300)
 }
 }

@@ -5,7 +5,9 @@ NEW FUNCTIONS:
 
 MINOR:
   * analyze(), analyzeFolder(): also returns loudness per frame, in sone (new arguments: SPL_measured and Pref)
-  # analyze(), analyzeFolder(): new argument "summaryStats" for specifying how to summarize the output (mean, sd, etc.)
+  * analyze(), analyzeFolder(): new argument "summaryStats" for specifying how to summarize the output (mean, sd, etc.)
+  * analyze(): a legend can be added to plot (thanks to Jerome Sueur for the idea)
+  * analyze(): plots are saved in .png instead of .jpg
   * ssm(): new argument "padWith" for dealing with edges and "heights" for controlling relative plot sizes
   * soundgen_app(): fixed a bug introduced in 1.3.0 that caused the app to crash when switching to a new preset
 

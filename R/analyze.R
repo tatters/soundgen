@@ -95,6 +95,7 @@
 #' @param summaryStats a vector of names of functions used to summarize each
 #'   acoustic characteristic
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
+#' @param showLegend if TRUE, adds a legend with pitch tracking methods
 #' @param savePath if a valid path is specified, a plot is saved in this folder
 #'   (defaults to NA)
 #' @param specPlot deprecated since soundgen 1.1.2. Pass its arguments directly
@@ -107,7 +108,7 @@
 #'   pitch contour. Set to \code{NULL} or \code{NA} to suppress
 #' @param xlab,ylab,main plotting parameters
 #' @param width,height,units,res parameters passed to
-#'   \code{\link[grDevices]{jpeg}} if the plot is saved
+#'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link{spectrogram}}
 #' @return If \code{summary = TRUE}, returns a dataframe with one row and three
 #'   columns per acoustic variable (mean / median / SD). If \code{summary =
@@ -191,6 +192,11 @@
 #' a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
 #' a = analyze(sound2, samplingRate = 16000, summary = TRUE,
 #'             summaryStats = c('mean', 'range'))  # one row per sound
+#'
+#' # Save the plot
+#' a = analyze(sound, samplingRate = 16000,
+#'             savePath = '~/Downloads/',
+#'             width = 20, height = 15, units = 'cm', res = 300)
 #' }
 analyze = function(x,
                    samplingRate = NULL,
@@ -242,6 +248,7 @@ analyze = function(x,
                    summary = FALSE,
                    summaryStats = c('mean', 'median', 'sd'),
                    plot = TRUE,
+                   showLegend = TRUE,
                    savePath = NA,
                    plotSpec = TRUE,
                    specPlot = NULL,
@@ -490,7 +497,7 @@ analyze = function(x,
     f = ifelse(plotname == '',
                'sound',
                plotname)
-    jpeg(filename = paste0(savePath, f, ".jpg"),
+    png(filename = paste0(savePath, f, ".png"),
          width = width, height = height, units = units, res = res)
   }
   frameBank = getFrameBank(
@@ -850,6 +857,19 @@ analyze = function(x,
         pitchPlot)
         )
       }
+      # add a legend
+      if (showLegend) {
+        pm_all = c('autocor', 'cep', 'spec', 'dom')
+        pm = which(pm_all %in% pitchMethods)
+        legend("topright",
+               legend = c(pm_all[pm], 'combined'),
+               pch = c(candPlot$pch[pm], NA), # c(16, 7, 2, 3, NA)[pm_present],
+               lty = c(rep(NA, length(pm)),
+                       ifelse(!is.null(pitchPlot$lty), pitchPlot$lty, 1)),
+               lwd = c(rep(NA, length(pm)), pitchPlot$lwd),
+               col = c(candPlot$col[pm], pitchPlot$col), # c('green', 'violet', 'red', 'orange', 'blue')[pm_present],
+               bg = "white")
+      }
     }
   }
   if (is.character(savePath)) {
@@ -915,7 +935,7 @@ analyze = function(x,
 #' @inheritParams analyze
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
-#' @param savePlots if TRUE, saves plots as .jpg files
+#' @param savePlots if TRUE, saves plots as .png files
 #' @param htmlPlots if TRUE, saves an html file with clickable plots
 #' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
 #'   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
@@ -988,6 +1008,7 @@ analyzeFolder = function(myfolder,
                          summary = TRUE,
                          summaryStats = c('mean', 'median', 'sd'),
                          plot = FALSE,
+                         showLegend = TRUE,
                          savePlots = FALSE,
                          savePath = NA,
                          plotSpec = TRUE,

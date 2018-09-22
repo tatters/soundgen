@@ -39,16 +39,16 @@ FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 \item{ylab}{graphical parameters}
 
 \item{width}{parameters passed to
-\code{\link[grDevices]{jpeg}} if the plot is saved}
+\code{\link[grDevices]{png}} if the plot is saved}
 
 \item{height}{parameters passed to
-\code{\link[grDevices]{jpeg}} if the plot is saved}
+\code{\link[grDevices]{png}} if the plot is saved}
 
 \item{units}{parameters passed to
-\code{\link[grDevices]{jpeg}} if the plot is saved}
+\code{\link[grDevices]{png}} if the plot is saved}
 
 \item{res}{parameters passed to
-\code{\link[grDevices]{jpeg}} if the plot is saved}
+\code{\link[grDevices]{png}} if the plot is saved}
 
 \item{...}{other parameters passed to \code{\link{spectrogram}}}
 }

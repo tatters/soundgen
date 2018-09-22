@@ -1,4 +1,4 @@
-# TODO: automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check that all plots are saved as .png instead of .jpg; automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
