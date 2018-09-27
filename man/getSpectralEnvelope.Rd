@@ -103,13 +103,10 @@ Returns a spectral filter (matrix nr x nc, where nr is the number of
 }
 \description{
 Prepares a spectral envelope for filtering a sound to add formants, lip
-radiation, and some stochastic component regulated by temperature.
-Formants are specified as a list containing time, frequency, amplitude,
-and width values for each formant (see examples). NB: each formant is
-generated as a gamma distribution with mean = freq and SD = width. Formant
-bandwidths in soundgen are therefore NOT compatible with formant bandwidths
-used in Klatt synthesizer and other algorithms that rely on FIR instead of
-FFT.
+radiation, and some stochastic component regulated by temperature. Formants
+are specified as a list containing time, frequency, amplitude, and width
+values for each formant (see examples). See vignette('sound_generation',
+package = 'soundgen') for more information.
 }
 \examples{
 # [a] with F1-F3 visible

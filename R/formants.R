@@ -1,13 +1,10 @@
 #' Spectral envelope
 #'
 #' Prepares a spectral envelope for filtering a sound to add formants, lip
-#' radiation, and some stochastic component regulated by temperature.
-#' Formants are specified as a list containing time, frequency, amplitude,
-#' and width values for each formant (see examples). NB: each formant is
-#' generated as a gamma distribution with mean = freq and SD = width. Formant
-#' bandwidths in soundgen are therefore NOT compatible with formant bandwidths
-#' used in Klatt synthesizer and other algorithms that rely on FIR instead of
-#' FFT.
+#' radiation, and some stochastic component regulated by temperature. Formants
+#' are specified as a list containing time, frequency, amplitude, and width
+#' values for each formant (see examples). See vignette('sound_generation',
+#' package = 'soundgen') for more information.
 #' @param nr the number of frequency bins = windowLength_points/2, where
 #'   windowLength_points is the size of window for Fourier transform
 #' @param nc the number of time steps for Fourier transform
@@ -572,7 +569,8 @@ reformatFormants = function(formants) {
 #' original formula from Tappert, Martony, and Fant (TMF)-1963, and below 500 Hz
 #' it applies a correction to allow for energy losses at low frequencies. See
 #' Khodai-Joopari & Clermont (2002), "Comparison of formulae for estimating
-#' formant bandwidths".
+#' formant bandwidths". Below 250 Hz the bandwidth is forces to drop again to
+#' avoid very large values near zero (just guesswork!)
 #' @param f a vector of formant frequencies, Hz
 #' @keywords internal
 #' @examples
@@ -581,10 +579,15 @@ reformatFormants = function(formants) {
 #'   xlab = 'Formant frequency, Hz', ylab = 'Estimated bandwidth, Hz')
 getBandwidth = function(f) {
   b = rep(NA, length(f))
-  f1 = which(f < 500)
-  f2 = which(f >= 500)
-  b[f1] =  52.08333 * (1 + (f[f1]-500) ^ 2/ 10 ^ 5)
-  b[f2] = 50 * (1 + f[f2] ^ 2 / 6 / 10 ^ 6)
+  f1 = which(f < 250)
+  f2 = which(f >= 250 & f < 500)
+  f3 = which(f >= 500)
+  # just guesswork below 250 Hz - no data for such low freqs,
+  # apart from elephant rumbles etc.
+  b[f1] = 26.38541 - .042 * f[f1] + .0011 * f[f1] ^ 2
+  # see Khodai-Joopari & Clermont 2002
+  b[f2] =  52.08333 * (1 + (f[f2]-500) ^ 2/ 10 ^ 5)
+  b[f3] = 50 * (1 + f[f3] ^ 2 / 6 / 10 ^ 6)
   # plot(f, b, type = 'l')
   return(b)
 }
