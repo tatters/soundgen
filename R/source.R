@@ -4,12 +4,12 @@
 #'
 #' Generates noise of length \code{len} and with spectrum defined by linear
 #' decay of \code{rolloffNoise} dB/kHz above \code{noiseFlatSpec} Hz OR by a
-#' specified filter \code{filterNoise}. This function is called internally by
+#' specified filter \code{spectralEnvelope}. This function is called internally by
 #' \code{\link{soundgen}}, but it may be more convenient to call it directly
 #' when synthesizing non-biological noises defined by specific spectral and
 #' amplitude envelopes rather than formants: the wind, whistles, impact noises,
 #' etc. See \code{\link{fart}} and \code{\link{beat}} for similarly simplified
-#' functions for voiced non-biological sounds.
+#' functions for tonal non-biological sounds.
 #'
 #' Algorithm: paints a spectrum with desired characteristics, sets phase to
 #' zero, and generates a time sequence via inverse FFT. Noise can then be used
@@ -17,13 +17,13 @@
 #' source has been formant-filtered, or BEFORE formant-filtering for glottal
 #' breathing noise.
 #' @param len length of output
-#' @param filterNoise (optional): as an alternative to using rolloffNoise, we
+#' @param spectralEnvelope (optional): as an alternative to using rolloffNoise, we
 #'   can provide the exact filter - a vector of non-negative numbers specifying
 #'   the power in each frequency bin on a linear scale (interpolated to length
 #'   equal to windowLength_points/2). A matrix specifying the filter for each
 #'   STFT step is also accepted. The easiest way to create this matrix is to
-#'   call soundgen:::getSpectralEnvelope, but then you might as well just use
-#'   soundgen()
+#'   call soundgen:::getSpectralEnvelope or use the spectrum of a recorded sound
+#' @param filterNoise (deprecated) same as spectralEnvelope
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points
 #' @export
@@ -39,70 +39,93 @@
 #' noise2 = generateNoise(len = samplingRate * .15, noiseAnchors = c(0, -80),
 #'   rolloffNoise = c(4, -6), attackLen = 5, temperature = .25)
 #' noise3 = generateNoise(len = samplingRate * .25, noiseAnchors = c(0, -40),
-#'   rolloffNoise = c(4, -24), attackLen = 5, temperature = .25)
+#'   rolloffNoise = c(4, -20), attackLen = 5, temperature = .25)
 #' # playme(c(noise2, noise3), samplingRate)
 #'
 #' \dontrun{
+#' playback = c(TRUE, FALSE)[2]
 #' # 1.2 s of noise with rolloff changing from 0 to -12 dB above 2 kHz
 #' noise = generateNoise(len = samplingRate * 1.2,
-#'   rolloffNoise = c(0, -12), noiseFlatSpec = 2000, samplingRate = samplingRate)
-#' # playme(noise, samplingRate = samplingRate)
+#'   rolloffNoise = c(0, -12), noiseFlatSpec = 2000,
+#'   samplingRate = samplingRate, play = playback)
 #' # spectrogram(noise, samplingRate, osc = TRUE)
 #'
 #' # Similar, but using the dataframe format to specify a more complicated
 #' # contour for rolloffNoise:
 #' noise = generateNoise(len = samplingRate * 1.2,
-#'   rolloffNoise = data.frame(time = c(0, .2, 1), value = c(-12, 0, -12)),
-#'   noiseFlatSpec = 2000, samplingRate = samplingRate)
-#' # playme(noise, samplingRate = samplingRate)
+#'   rolloffNoise = data.frame(time = c(0, .3, 1), value = c(-12, 0, -12)),
+#'   noiseFlatSpec = 2000, samplingRate = samplingRate, play = playback)
 #' # spectrogram(noise, samplingRate, osc = TRUE)
 #'
 #' # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 #' windowLength_points = 1024
-#' filterNoise = soundgen:::getSpectralEnvelope(
+#' spectralEnvelope = soundgen:::getSpectralEnvelope(
 #'   nr = windowLength_points / 2, nc = 1, samplingRate = samplingRate,
 #'  formants = list('f1' = data.frame(time = 0, freq = 7000,
 #'                                    amp = 50, width = 2000)))
 #' noise = generateNoise(len = samplingRate,
-#'   samplingRate = samplingRate, filterNoise = as.numeric(filterNoise))
-#' # plot(filterNoise, type = 'l')
-#' # playme(noise, samplingRate = samplingRate)
+#'   samplingRate = samplingRate, spectralEnvelope = as.numeric(spectralEnvelope),
+#'   play = playback)
+#' # plot(spectralEnvelope, type = 'l')
 #'
 #' # Low-frequency, wind-like noise
-#' filterNoise = soundgen:::getSpectralEnvelope(
+#' spectralEnvelope = soundgen:::getSpectralEnvelope(
 #'   nr = windowLength_points / 2, nc = 1, lipRad = 0,
 #'   samplingRate = samplingRate, formants = list('f1' = data.frame(
 #'     time = 0, freq = 150, amp = 30, width = 90)))
 #' noise = generateNoise(len = samplingRate,
-#'   samplingRate = samplingRate, filterNoise = as.numeric(filterNoise))
-#' # playme(noise, samplingRate = samplingRate)
+#'   samplingRate = samplingRate, spectralEnvelope = as.numeric(spectralEnvelope),
+#'   play = playback)
 #'
 #' # Manual filter, e.g. for a kettle-like whistle (narrow-band noise)
-#' filterNoise = c(rep(0, 100), 120, rep(0, 100))  # any length is fine
-#' # plot(filterNoise, type = 'b')  # notch filter at Nyquist / 2, here 4 kHz
-#' noise = generateNoise(len = samplingRate,
-#'   samplingRate = samplingRate, filterNoise = filterNoise)
-#' # playme(noise, samplingRate = samplingRate)
-#' # spectrogram(noise, samplingRate)
+#' spectralEnvelope = c(rep(0, 100), 120, rep(0, 100))  # any length is fine
+#' # plot(spectralEnvelope, type = 'b')  # notch filter at Nyquist / 2, here 4 kHz
+#' noise = generateNoise(len = samplingRate, spectralEnvelope = spectralEnvelope,
+#'   samplingRate = samplingRate, play = playback)
 #'
 #' # Compare to a similar sound created with soundgen()
 #' # (unvoiced only, a single formant at 4 kHz)
-#' noise_s = soundgen(pitchAnchors = NULL,
-#'   noiseAnchors = data.frame(time = c(0, 1000), value = c(0, 0)),
-#'   formants = list(f1 = data.frame(freq = 4000, amp = 80, width = 20)))
-#' # playme(noise_s)
+#' noise_s = soundgen(pitch = NULL,
+#'   noise = data.frame(time = c(0, 1000), value = c(0, 0)),
+#'   formants = list(f1 = data.frame(freq = 4000, amp = 80, width = 20)),
+#'   play = playback)
+#'
+#' # Use the spectral envelope of an existing recording (bleating of a sheep)
+#' # (see also the same example with tonal source in ?addFormants)
+#' data(sheep, package = 'seewave')  # import a recording from seewave
+#' sound_orig = as.numeric(sheep@left)
+#' samplingRate = sheep@samp.rate
+#' # playme(sound_orig, samplingRate)
+#' spectralEnvelope = spectrogram(sound_orig, samplingRate = samplingRate, output = 'original')
+#' sound_noise = generateNoise(len = length(sound_orig),
+#'   spectralEnvelope = spectralEnvelope, rolloffNoise = 0,
+#'   samplingRate = samplingRate, play = playback)
+#' # The spectral envelope is similar to the original recording,
+#' # but with white noise instead of glottal pulses as source. Compare:
+#' par(mfrow = c(1, 2))
+#' seewave::meanspec(sound_orig, f = samplingRate, dB = 'max0')
+#' seewave::meanspec(sound_noise, f = samplingRate, dB = 'max0')
+#' par(mfrow = c(1, 1))
 #' }
 generateNoise = function(len,
                          rolloffNoise = 0,
                          noiseFlatSpec = 1200,
-                         filterNoise = NULL,
+                         spectralEnvelope = NULL,
+                         filterNoise = 'deprecated',
                          noiseAnchors = NULL,
                          temperature = .1,
                          attackLen = 10,
                          windowLength_points = 1024,
                          samplingRate = 16000,
                          overlap = 75,
-                         dynamicRange = 80) {
+                         dynamicRange = 80,
+                         play = FALSE) {
+  # deprecated pars
+  if (!missing('filterNoise')) {
+    spectralEnvelope = filterNoise
+    message('filterNoise is deprecated; used spectralEnvelope instead')
+  }
+
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
     len = rnorm_bounded(n = 1,
@@ -144,11 +167,11 @@ generateNoise = function(len,
       high = c(1, 0),
       wiggleAllRows = TRUE
     )
-    if (is.vector(filterNoise)) {
-      filterNoise = rnorm_bounded(
-        n = length(filterNoise),
-        mean = filterNoise + .1,  # to wiggle zeros
-        sd = filterNoise * temperature * .5,
+    if (is.vector(spectralEnvelope)) {
+      spectralEnvelope = rnorm_bounded(
+        n = length(spectralEnvelope),
+        mean = spectralEnvelope + .1,  # to wiggle zeros
+        sd = spectralEnvelope * temperature * .5,
         low = 0, high = Inf
       )
     }
@@ -183,7 +206,7 @@ generateNoise = function(len,
   #   the sequence is a bit shorter than needed after i-fft
   nr = windowLength_points / 2
   nc = length(step)
-  if (is.null(filterNoise)) {
+  if (is.null(spectralEnvelope)) {
     # basic linear rolloff above noiseFlatSpec Hz
     bin = samplingRate / 2 / nr
     binsPerKHz = round(1000 / bin)
@@ -197,43 +220,42 @@ generateNoise = function(len,
         valueFloor = permittedValues['rolloffNoise', 'low'],
         valueCeiling = permittedValues['rolloffNoise', 'high']
       )
-      filterNoise = matrix(1, nrow = nr, ncol = nc)
+      spectralEnvelope = matrix(1, nrow = nr, ncol = nc)
       for (c in 1:nc) {
-        filterNoise[idx, c] = 10 ^ (rolloffNoise[c] / 20 * (idx - flatBins) / binsPerKHz)
+        spectralEnvelope[idx, c] = 10 ^ (rolloffNoise[c] / 20 * (idx - flatBins) / binsPerKHz)
       }
       # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 7.1: spectrum of turbulent noise
     } else {
       a = rep(1, nr)
       a[idx] = 10 ^ (rolloffNoise / 20 * (idx - flatBins) / binsPerKHz)
-      filterNoise = matrix(rep(a, nc), ncol = nc)
+      spectralEnvelope = matrix(rep(a, nc), ncol = nc)
     }
-    # image(t(filterNoise))
+    # image(t(spectralEnvelope))
   } else {
     # user-specified exact spectral envelope
-    if (is.vector(filterNoise)) {
-      filterNoise = filterNoise[!is.na(filterNoise)]
-      if (length(filterNoise) != nr) {
+    if (is.vector(spectralEnvelope)) {
+      spectralEnvelope = spectralEnvelope[!is.na(spectralEnvelope)]
+      if (length(spectralEnvelope) != nr) {
         # interpolate to correct freq resolution
-        filterNoise = getSmoothContour(filterNoise, len = nr)
-        # filterNoise = approx(filterNoise, n = nr, method = 'linear')$y
+        spectralEnvelope = getSmoothContour(spectralEnvelope, len = nr)
+        # spectralEnvelope = approx(spectralEnvelope, n = nr, method = 'linear')$y
       }
-      filterNoise = matrix(rep(filterNoise, nc), ncol = nc)
-    } else {
-      filterNoise = na.omit(filterNoise)
-      if (ncol(filterNoise) != nc | nrow(filterNoise) != nr) {
-        message('Incorrect dimensions of filterNoise matrix.')
-        filterRowIdx = round(seq(1, nrow(filterNoise), length.out = nr))
-        filterColIdx = round(seq(1, ncol(filterNoise), length.out = nc))
-        filterNoise = filterNoise[filterRowIdx, filterColIdx]
+      spectralEnvelope = matrix(rep(spectralEnvelope, nc), ncol = nc)
+    } else {  # interpolate the matrix
+      spectralEnvelope = na.omit(spectralEnvelope)
+      if (ncol(spectralEnvelope) != nc | nrow(spectralEnvelope) != nr) {
+        message('Incorrect dimensions of spectralEnvelope matrix. Interpolating...')
+        spectralEnvelope = interpolMatrix(spectralEnvelope,
+                                     nr = nr, nc = nc,
+                                     interpol = 'approx')
       }
     }
-
   }
-  # image(t(filterNoise))
-  # plot(filterNoise[, 1], type = 'l')
-  # plot(log10(filterNoise[, 1]) * 20, type = 'l')
+  # image(t(spectralEnvelope))
+  # plot(spectralEnvelope[, 1], type = 'l')
+  # plot(log10(spectralEnvelope[, 1]) * 20, type = 'l')
 
-  if (sum(filterNoise) == 0) {
+  if (sum(spectralEnvelope) == 0) {
     # zero filter - nothing to synthesize
     warning('These settings will result in silence!')
     breathing = rep(0, len)
@@ -244,7 +266,7 @@ generateNoise = function(len,
     # set up spectrum with white noise
     z1 = matrix(as.complex(runif(nr * nc)), nrow = nr, ncol = nc)
     # multiply by filter
-    z1_filtered = z1 * filterNoise
+    z1_filtered = z1 * spectralEnvelope
     # do inverse FFT
     breathing = as.numeric(
       seewave::istft(
@@ -270,7 +292,7 @@ generateNoise = function(len,
     }
   }
   # plot(breathing, type = 'l')
-  # playme(breathing, samplingRate = samplingRate)
+  if (play) playme(breathing, samplingRate = samplingRate)
   # spectrogram(breathing, samplingRate = samplingRate)
   # seewave::meanspec(breathing, f = samplingRate, wl = windowLength_points, dB = 'max0')
   return(breathing)
@@ -757,12 +779,11 @@ generateEpoch = function(pitch_per_gc,
 
 #' Fart
 #'
-#' While the same sounds can be created with soundgen(), this dedicated
-#' facetious function produces the same effect more efficiently and with very
-#' few control parameters. With default settings, execution time is ~ 10 ms per
-#' second of audio sampled at 16000 Hz. Principle: creates separate glottal
-#' cycles with harmonics, but no formants. See \code{\link{soundgen}} for more
-#' details.
+#' While the same sounds can be created with soundgen(), this facetious function
+#' produces the same effect more efficiently and with very few control
+#' parameters. With default settings, execution time is ~ 10 ms per second of
+#' audio sampled at 16000 Hz. Principle: creates separate glottal cycles with
+#' harmonics, but no formants. See \code{\link{soundgen}} for more details.
 #' @inheritParams soundgen
 #' @param sylLen syllable length, ms (not vectorized)
 #' @param rolloff rolloff of harmonics in source spectrum, dB/octave (not

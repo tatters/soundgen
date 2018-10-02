@@ -43,10 +43,10 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
 
-\item{silence}{(0 to 1) frames with mean abs amplitude below silence
-threshold are not analyzed at all. NB: this number is dynamically updated:
-the actual silence threshold may be higher depending on the quietest frame,
-but it will never be lower than this specified number.}
+\item{silence}{(0 to 1) frames with RMS amplitude below silence threshold are
+not analyzed at all. NB: this number is dynamically updated: the actual
+silence threshold may be higher depending on the quietest frame, but it
+will never be lower than this specified number.}
 
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 
@@ -260,7 +260,7 @@ If \code{summary} is TRUE, returns a dataframe with one row per audio
 }
 \description{
 Acoustic analysis of all .wav files in a folder. See \code{\link{analyze}}
-for further details.
+and vignette('acoustic_analysis', package = 'soundgen') for further details.
 }
 \examples{
 \dontrun{
@@ -270,6 +270,12 @@ for further details.
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
 s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 15-30 minutes!
+
+# Save spectrograms with pitch contours plus an html file for easy access
+a = analyzeFolder('~/Downloads/temp', savePlots = TRUE,
+  showLegend = TRUE,
+  width = 20, height = 12,
+  units = 'cm', res = 300)
 
 # Check accuracy: import manually verified pitch values (our "key")
 key = pitchManual  # a vector of 260 floats

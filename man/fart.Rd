@@ -49,12 +49,11 @@ setting another default player for \code{\link[tuneR]{play}}}
 Returns a normalized waveform.
 }
 \description{
-While the same sounds can be created with soundgen(), this dedicated
-facetious function produces the same effect more efficiently and with very
-few control parameters. With default settings, execution time is ~ 10 ms per
-second of audio sampled at 16000 Hz. Principle: creates separate glottal
-cycles with harmonics, but no formants. See \code{\link{soundgen}} for more
-details.
+While the same sounds can be created with soundgen(), this facetious function
+produces the same effect more efficiently and with very few control
+parameters. With default settings, execution time is ~ 10 ms per second of
+audio sampled at 16000 Hz. Principle: creates separate glottal cycles with
+harmonics, but no formants. See \code{\link{soundgen}} for more details.
 }
 \examples{
 f = fart()

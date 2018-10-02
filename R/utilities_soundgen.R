@@ -171,7 +171,7 @@ htmlPlots = function(myfolder, myfiles) {
       "var table = document.createElement('table'), tr, td, row, cell;",
       "for (row = 0; row < mylist.length; row++) {",
       "  sound[row] = mylist[row] + '.wav';",
-      "  image[row] = mylist[row] + '.jpg';",
+      "  image[row] = mylist[row] + '.png';",
       "  tr = document.createElement('tr');",
       "  td = document.createElement('td');",
       "  tr.appendChild(td);",
@@ -270,13 +270,13 @@ findZeroCrossing = function(ampl, location) {
 
 #' Join two waveforms by cross-fading
 #'
-#' \code{crossFade} joins two input vectors (waveforms) by cross-fading. It
-#' truncates both input vectors, so that \code{ampl1} ends with a zero crossing
-#' and \code{ampl2} starts with a zero crossing, both on an upward portion of
-#' the soundwave. Then it cross-fades both vectors linearly with an overlap of
-#' crossLen or crossLenPoints. If the input vectors are too short for the
-#' specified length of cross-faded region, the two vectors are concatenated at
-#' zero crossings instead of cross-fading. Soundgen uses \code{crossFade} for
+#' \code{crossFade} joins two input vectors (waveforms) by cross-fading. First
+#' it truncates both input vectors, so that \code{ampl1} ends with a zero
+#' crossing and \code{ampl2} starts with a zero crossing, both on an upward
+#' portion of the soundwave. Then it cross-fades both vectors linearly with an
+#' overlap of crossLen or crossLenPoints. If the input vectors are too short for
+#' the specified length of cross-faded region, the two vectors are concatenated
+#' at zero crossings instead of cross-fading. Soundgen uses \code{crossFade} for
 #' gluing together epochs with different regimes of pitch effects (see the
 #' vignette on sound generation), but it can also be useful for joining two
 #' separately generated sounds without audible artifacts.
@@ -786,8 +786,8 @@ getEnv = function(sound,
 #' Flat envelope
 #'
 #' Flattens the amplitude envelope of a waveform. This is achieved by dividing
-#' the waveform by some function of its smoothed rolling amplitude (peak or root
-#' mean square).
+#' the waveform by some function of its smoothed amplitude envelope (peak or
+#' root mean square).
 #' @param sound input vector oscillating about zero
 #' @param windowLength the length of smoothing window, ms
 #' @param samplingRate the sampling rate, Hz. Only needed if the length of
@@ -817,6 +817,12 @@ getEnv = function(sound,
 #' # playme(s)
 #' s_flat = flatEnv(s, plot = TRUE, windowLength = 50)
 #' # playme(s_flat)
+#'
+#' # Remove DC offset
+#' s1 = c(rep(0, 50), runif(1000, -1, 1), rep(0, 50)) +
+#'      seq(.3, 1, length.out = 1100)
+#' s2 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = FALSE)
+#' s3 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = TRUE)
 #' }
 flatEnv = function(sound,
                    windowLength = 200,
@@ -867,7 +873,7 @@ flatEnv = function(sound,
   soundFlat = soundFlat / max(abs(soundFlat)) * m
   # remove DC offset
   if (killDC) {
-    sound_norm = killDC(sound = soundFlat,
+    soundFlat = killDC(sound = soundFlat,
                         windowLength_points = windowLength_points,
                         plot = FALSE)
   }

@@ -834,8 +834,40 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #'                                  action = 'remove')
 #' # playme(sound_inverse_filt)
 #' # spectrogram(sound_inverse_filt, samplingRate = 16000)
+#'
+#' \dontrun{
+#' # Use the spectral envelope of an existing recording (bleating of a sheep)
+#' # (see also the same example with noise as source in ?generateNoise)
+#' data(sheep, package = 'seewave')  # import a recording from seewave
+#' sound_orig = as.numeric(scale(sheep@left))
+#' sound_orig = sound_orig / max(abs(sound_orig))  # range -1 to +1
+#' # playme(sound_orig, samplingRate)
+#' samplingRate = sheep@samp.rate
+#' pitch = analyze(sound_orig, samplingRate = samplingRate,
+#'   pitchMethod = c('autocor', 'dom'))$pitch
+#' pitch = pitch[!is.na(pitch)]
+#' filter = spectrogram(sound_orig, samplingRate = samplingRate, output = 'original')
+#' sound_unfilt = soundgen(sylLen = length(sound_orig) / samplingRate * 1000,
+#'   pitch = pitch,
+#'   rolloff = 0, rolloffOct = 0, rolloffKHz = 0,
+#'   formants = NULL,
+#'   samplingRate = samplingRate
+#' )
+#' # playme(sound_unfilt, samplingRate)
+#' sound_filt = addFormants(sound_unfilt, formants = NULL,
+#'   spectralEnvelope = filter, samplingRate = samplingRate)
+#' # playme(sound_filt, samplingRate)
+#' # The spectral envelope is similar to the original recording. Compare:
+#' par(mfrow = c(1, 2))
+#' seewave::meanspec(sound_orig, f = samplingRate, dB = 'max0', alim = c(-50, 20))
+#' seewave::meanspec(sound_filt, f = samplingRate, dB = 'max0', alim = c(-50, 20))
+#' par(mfrow = c(1, 1))
+#' # NB: the source of excitation in the original is actually a mix of
+#' # harmonics and noise
+#' }
 addFormants = function(sound,
                        formants,
+                       spectralEnvelope = NULL,
                        action = c('add', 'remove')[1],
                        vocalTract = NA,
                        formantDep = 1,
@@ -874,35 +906,53 @@ addFormants = function(sound,
     nr = windowLength_points / 2 # number of frequency bins for fft
 
     # are formants moving or stationary?
-    if (is.list(formants)) {
-      movingFormants = max(sapply(formants, function(x) sapply(x, length))) > 1
-    } else {
-      movingFormants = FALSE
-    }
-    if (is.list(mouthAnchors) && sum(mouthAnchors$value != .5) > 0) {
-      movingFormants = TRUE
-    }
-    nInt = ifelse(movingFormants, nc, 1)
+    if (is.null(spectralEnvelope)) {
+      if (is.list(formants)) {
+        movingFormants = max(sapply(formants, function(x) sapply(x, length))) > 1
+      } else {
+        movingFormants = FALSE
+      }
+      if (is.list(mouthAnchors) && sum(mouthAnchors$value != .5) > 0) {
+        movingFormants = TRUE
+      }
+      nInt = ifelse(movingFormants, nc, 1)
 
-    # prepare the filter
-    spectralEnvelope = getSpectralEnvelope(
-      nr = nr,
-      nc = nInt,
-      formants = formants,
-      formantDep = formantDep,
-      formantDepStoch = formantDepStoch,
-      formantWidth = formantWidth,
-      lipRad = lipRad,
-      noseRad = noseRad,
-      mouthOpenThres = mouthOpenThres,
-      mouthAnchors = mouthAnchors,
-      interpol = interpol,
-      temperature = temperature,
-      formDrift = formDrift,
-      formDisp = formDisp,
-      samplingRate = samplingRate,
-      vocalTract = vocalTract
-    )
+      # prepare the filter
+      spectralEnvelope = getSpectralEnvelope(
+        nr = nr,
+        nc = nInt,
+        formants = formants,
+        formantDep = formantDep,
+        formantDepStoch = formantDepStoch,
+        formantWidth = formantWidth,
+        lipRad = lipRad,
+        noseRad = noseRad,
+        mouthOpenThres = mouthOpenThres,
+        mouthAnchors = mouthAnchors,
+        interpol = interpol,
+        temperature = temperature,
+        formDrift = formDrift,
+        formDisp = formDisp,
+        samplingRate = samplingRate,
+        vocalTract = vocalTract
+      )
+    } else {  # user-provided spectralEnvelope
+      spectralEnvelope = as.matrix(spectralEnvelope)  # if a vector,
+      # becomes a matrix with one row
+      if (nrow(spectralEnvelope) > 1) {
+        nInt = nc
+        movingFormants = TRUE
+      } else {  # vector
+        nInt = 1
+        vingFormants = FALSE
+      }
+      spectralEnvelope = interpolMatrix(
+        spectralEnvelope,
+        nr = nr,
+        nc = nInt,
+        interpol = 'approx'
+      )
+    }
     # image(t(spectralEnvelope))
 
     # fft and filtering

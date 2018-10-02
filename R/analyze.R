@@ -2,17 +2,18 @@
 
 #' Analyze sound
 #'
-#' Acoustic analysis of a single sound file: pitch tracking and basic spectral
-#' characteristics. The default values of arguments are optimized for human
-#' non-linguistic vocalizations. See the vignette on acoustic analysis for
+#' Acoustic analysis of a single sound file: pitch tracking, basic spectral
+#' characteristics, and estimated loudness (see \code{\link{getLoudness}}. The
+#' default values of arguments are optimized for human non-linguistic
+#' vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
 #' details.
 #'
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
-#' @param silence (0 to 1) frames with mean abs amplitude below silence
-#'   threshold are not analyzed at all. NB: this number is dynamically updated:
-#'   the actual silence threshold may be higher depending on the quietest frame,
-#'   but it will never be lower than this specified number.
+#' @param silence (0 to 1) frames with RMS amplitude below silence threshold are
+#'   not analyzed at all. NB: this number is dynamically updated: the actual
+#'   silence threshold may be higher depending on the quietest frame, but it
+#'   will never be lower than this specified number.
 #' @param cutFreq (>0 to Nyquist, Hz) repeat the calculation of spectral
 #'   descriptives after discarding all info above \code{cutFreq}.
 #'   Recommended if the original sampling rate varies across different analyzed
@@ -127,8 +128,8 @@
 #'   to 1: white noise} \item{f1_freq, f1_width, ...}{the frequency and
 #'   bandwidth of the first nFormants formants per FFT frame, as calculated by
 #'   phonTools::findformants with default settings} \item{harmonics}{the amount
-#'   of energy in upper harmonics, namely the ratio of total spectral power
-#'   above 1.25 x F0 to the total spectral power below 1.25 x F0 (dB)}
+#'   of energy in upper harmonics, namely the ratio of total spectral mass
+#'   above 1.25 x F0 to the total spectral mass below 1.25 x F0 (dB)}
 #'   \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
 #'   by soundgen:::getPitchAutocor (see “Pitch tracking methods /
 #'   Autocorrelation”). If HNR = 0 dB, there is as much energy in harmonics as
@@ -276,7 +277,8 @@ analyze = function(x,
   if (!missing(specPlot)) {
     message('specPlot is deprecated; pass its arguments directly to the main function or set plotSpec = FALSE to remove the spectrogram')
   }
-  if ('osc' %in% names(match.call())) {
+  if ('osc' %in% names(match.call()) |
+      'osc_dB' %in% names(match.call())) {
     # we are working with frameBank, not raw waveform
     osc = FALSE
     message('Plotting a spectrogram with oscillogram from analyze() is currently not implemented')
@@ -372,9 +374,9 @@ analyze = function(x,
     zp = 0
     warning('"zp" must be non-negative; defaulting to 0')
   }
-  if (!is.numeric(cutFreq) || cutFreq <= 0) {
+  if (!is.numeric(cutFreq) || cutFreq <= 0 || cutFreq > (samplingRate / 2)) {
     cutFreq = samplingRate / 2
-    warning(paste('"cutFreq" must be positive;',
+    warning(paste('"cutFreq" must be between 0 and samplingRate / 2;',
                   'defaulting to samplingRate / 2'))
   }
   if (!is.numeric(pitchFloor) || pitchFloor <= 0 ||
@@ -547,9 +549,10 @@ analyze = function(x,
   silence = max(silence, min(ampl))
 
   # calculate entropy of each frame within the most relevant
-  # vocal range only: 50 to 6000 Hz
-  rowLow = which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
-  rowHigh = which(as.numeric(rownames(s)) > 6)[1] # 6000 Hz
+  # vocal range only (up to to cutFreq Hz)
+  rowLow = 1 # which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
+  rowHigh = tail(which(as.numeric(rownames(s)) * 1000 <= cutFreq), 1) # 6000 Hz etc
+  if (length(rowHigh) < 1 || !is.finite(rowHigh)) rowHigh = nrow(s)
   entropy = apply(as.matrix(1:ncol(s)), 1, function(x) {
     getEntropy(s[rowLow:rowHigh, x], type = 'weiner')
   })
@@ -929,7 +932,7 @@ analyze = function(x,
 #' Analyze folder
 #'
 #' Acoustic analysis of all .wav files in a folder. See \code{\link{analyze}}
-#' for further details.
+#' and vignette('acoustic_analysis', package = 'soundgen') for further details.
 #' @param myfolder full path to target folder
 #' @param verbose if TRUE, reports progress and estimated time left
 #' @inheritParams analyze
@@ -948,6 +951,12 @@ analyze = function(x,
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
 #' s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 15-30 minutes!
+#'
+#' # Save spectrograms with pitch contours plus an html file for easy access
+#' a = analyzeFolder('~/Downloads/temp', savePlots = TRUE,
+#'   showLegend = TRUE,
+#'   width = 20, height = 12,
+#'   units = 'cm', res = 300)
 #'
 #' # Check accuracy: import manually verified pitch values (our "key")
 #' key = pitchManual  # a vector of 260 floats

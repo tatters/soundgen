@@ -9,4 +9,4 @@ names(phonCurves) = phonLevels
 for (p in 1:length(phonLevels)) {
   phonCurves[[p]] = iso226(phonLevels[p], nBarks = max_Barks)$curveBark
 }
-# devtools::use_data(phonCurves, overwrite = TRUE)
+# devtools::use_data(phonCurves, overwrite = TRUE, internal = TRUE)

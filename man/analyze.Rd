@@ -38,10 +38,10 @@ samplingRate}
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
 
-\item{silence}{(0 to 1) frames with mean abs amplitude below silence
-threshold are not analyzed at all. NB: this number is dynamically updated:
-the actual silence threshold may be higher depending on the quietest frame,
-but it will never be lower than this specified number.}
+\item{silence}{(0 to 1) frames with RMS amplitude below silence threshold are
+not analyzed at all. NB: this number is dynamically updated: the actual
+silence threshold may be higher depending on the quietest frame, but it
+will never be lower than this specified number.}
 
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 
@@ -215,8 +215,8 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   to 1: white noise} \item{f1_freq, f1_width, ...}{the frequency and
   bandwidth of the first nFormants formants per FFT frame, as calculated by
   phonTools::findformants with default settings} \item{harmonics}{the amount
-  of energy in upper harmonics, namely the ratio of total spectral power
-  above 1.25 x F0 to the total spectral power below 1.25 x F0 (dB)}
+  of energy in upper harmonics, namely the ratio of total spectral mass
+  above 1.25 x F0 to the total spectral mass below 1.25 x F0 (dB)}
   \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
   by soundgen:::getPitchAutocor (see “Pitch tracking methods /
   Autocorrelation”). If HNR = 0 dB, there is as much energy in harmonics as
@@ -238,9 +238,10 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
 }
 }
 \description{
-Acoustic analysis of a single sound file: pitch tracking and basic spectral
-characteristics. The default values of arguments are optimized for human
-non-linguistic vocalizations. See the vignette on acoustic analysis for
+Acoustic analysis of a single sound file: pitch tracking, basic spectral
+characteristics, and estimated loudness (see \code{\link{getLoudness}}. The
+default values of arguments are optimized for human non-linguistic
+vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
 details.
 }
 \examples{

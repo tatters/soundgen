@@ -1,4 +1,4 @@
-# TODO: check that all plots are saved as .png instead of .jpg; automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: addFormants etc: check spectralEnvelope integration instead of filterNoise etc; speed up interpolMatrix - maybe just approx instead of getSmoothContour; check that all plots are saved as .png instead of .jpg; automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -878,7 +878,7 @@ soundgen = function(repeatBout = 1,
           windowLength_points = windowLength_points,
           overlap = overlap,
           dynamicRange = dynamicRange,
-          filterNoise = NULL # spectralEnvelopeNoise
+          spectralEnvelope = NULL # spectralEnvelopeNoise
         ) * amplEnvelope[s]  # correction of amplitude per syllable
         # plot(unvoiced[[s]], type = 'l')
       }

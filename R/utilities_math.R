@@ -771,3 +771,59 @@ reportCI = function(n, digits = 2) {
     paste0(n[1], ' [', n[2], ', ', n[3], ']')
   }
 }
+
+
+#' Interpolate matrix
+#'
+#' Internal soundgen function
+#'
+#' Performs a chosen type of interpolation (linear or smooth) across both rows and columns of a matrix, in effect up- or downsampling a matrix to required dimensions
+#' @param m input matrix of numeric values
+#' @param nr,nc target dimensions
+#' @inheritParams getSmoothContour
+#' @keywords internal
+#' @examples
+#' m = matrix(1:12, nrow = 3)
+#' interpolMatrix(m, nr = 10, nc = 7)
+#' interpolMatrix(m, nr = 10, nc = 7, interpol = 'loess')
+#' interpolMatrix(m, nr = 2, nc = 7)
+#' interpolMatrix(m, nr = 2, nc = 2)
+interpolMatrix = function(m,
+                          nr,
+                          nc,
+                          interpol = c("approx", "spline", "loess")[1]) {
+  if (nr < 2) stop('nr must be >1')
+  if (nc < 2) stop('nc msut be >1')
+
+  # Downsample rows if necessary
+  if (nrow(m) > nr) {
+    m = m[seq(1, nrow(m), length.out = nr), ]
+  }
+
+  # Downsample columns if necessary
+  if (ncol(m) > nc) {
+    # can downsample columns first
+    m = m[, seq(1, ncol(m), length.out = nc)]
+  }
+
+  # Interpolate rows if necessary
+  if (nrow(m) < nr) {
+    temp = matrix(1, nrow = nr, ncol = ncol(m))
+    for (c in 1:ncol(m)) {
+      temp[, c] = getSmoothContour(m[, c], len = nr, interpol = interpol)
+    }
+  } else {
+    temp = m
+  }
+
+  # Interpolate columns if necessary
+  if (ncol(m) < nc) {
+    out = matrix(1, nrow = nr, ncol = nc)
+    for (r in 1:nr) {
+      out[r, ] = getSmoothContour(temp[r, ], len = nc, interpol = interpol)
+    }
+  } else {
+    out = temp
+  }
+  return(out)
+}

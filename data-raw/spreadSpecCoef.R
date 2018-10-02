@@ -11,4 +11,4 @@ for (i in 1:nrow(spreadSpecCoef)) {
 spreadSpecCoef = 10 ^ (spreadSpecCoef / 10)
 # image(spreadSpecCoef)
 
-# devtools::use_data(spreadSpecCoef, overwrite = TRUE)
+# devtools::use_data(spreadSpecCoef, overwrite = TRUE, internal = TRUE)

@@ -33,8 +33,8 @@ flattened sound}
 }
 \description{
 Flattens the amplitude envelope of a waveform. This is achieved by dividing
-the waveform by some function of its smoothed rolling amplitude (peak or root
-mean square).
+the waveform by some function of its smoothed amplitude envelope (peak or
+root mean square).
 }
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
@@ -50,5 +50,11 @@ s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE, osc = TRUE)
 # playme(s)
 s_flat = flatEnv(s, plot = TRUE, windowLength = 50)
 # playme(s_flat)
+
+# Remove DC offset
+s1 = c(rep(0, 50), runif(1000, -1, 1), rep(0, 50)) +
+     seq(.3, 1, length.out = 1100)
+s2 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = FALSE)
+s3 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = TRUE)
 }
 }

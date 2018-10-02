@@ -10,7 +10,7 @@ Description: Tools for sound synthesis and acoustic analysis.
     Performs parametric synthesis of sounds with harmonic and noise components
     such as animal vocalizations or human voice. Also includes tools for
     spectral analysis, pitch tracking, audio segmentation, self-similarity
-    matrices, and morphing.
+    matrices, morphing, etc.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
