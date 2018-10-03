@@ -34,12 +34,13 @@ To summarize, you might want to look at soundgen's tools for acoustic analysis i
   
 The most relevant functions are:
   
-* `analyze`: analyzes a single sound and extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per FFT frame.
+* `analyze`: analyzes a single sound and extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per STFT frame.
 * `analyzeFolder`: same as `analyze` but applied to all .wav files in a folder
 * `segment`: finds syllables and bursts of energy in a single sound using its amplitude envelope
 * `segmentFolder`: same as `segment` but applied to all .wav files in a folder
 * `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
 * `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
+* `getLoudness`: estimates the subjective loudness per STFT frame, in sone
   
 *TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use an interactive program like PRAAT and check everything manually. A good approach may be to start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages, software, or manual measurements. You can also customize `soundgen::analyze` to extract additional predictors.*
   
@@ -70,13 +71,13 @@ median(true_pitch)  # 611 Hz
 
 
 ## Basic principles
-At the heart of acoustic analysis with soundgen is the short-time Fourier transform (STFT): we look at one short segment of sound at a time (one FFT frame), analyze its spectrum using Fast Fourier Transform (FFT), and then move on to the next - perhaps overlapping - frame. As the analysis window slides along the signal, STFT shows which frequencies it contains at different points of time. The nuts and bolts of STFT are beyond the scope of this vignette, but they can be found in just about any textbook on phonetics, acoustics, digital signal processing, etc. For a quick R-friendly introduction, see <a href="https://CRAN.R-project.org/package=seewave">seewave</a>vignette on acoustic analysis. 
+At the heart of acoustic analysis with soundgen is the short-time Fourier transform (STFT): we look at one short segment of sound at a time (one STFT frame), analyze its spectrum using Fast Fourier Transform (FFT), and then move on to the next - perhaps overlapping - frame. As the analysis window slides along the signal, STFT shows which frequencies it contains at different points of time. The nuts and bolts of STFT are beyond the scope of this vignette, but they can be found in just about any textbook on phonetics, acoustics, digital signal processing, etc. For a quick R-friendly introduction, see <a href="https://CRAN.R-project.org/package=seewave">seewave</a> vignette on acoustic analysis. 
 
 Putting the spectra of all frames together, we get a spectrogram. `analyze` calls another function from soundgen package, `spectrogram`, to produce a spectrogram and then plot pitch candidates on top of it. `spectrogram` is a modified version of `seewave::spectro` with added routines for removing background noise, controlling contrast and brightness, adding median smoothing, etc (see the examples in `?spectrogram`). To analyze a sound with default settings and plot its spectrogram, all we need to specify is its sampling rate (the default in soundgen is 16000 Hz):
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 a1 = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4))
-# summary(a1)  # many acoustic predictors measured for each FFT frame
+# summary(a1)  # many acoustic predictors measured for each STFT frame
 median(true_pitch)  # true value, as synthesized above
 median(a1$pitch, na.rm = TRUE)  # our estimate
 # Pitch postprocessing is stochastic (see below), so the contour may vary.
@@ -89,19 +90,20 @@ There are several key parameters that control the behavior of STFT and affect al
 * `step`: the step of sliding STFT window. For example, if `windowLength = 50` and `step = 25`, each time we move the analysis frame, there is a 50% overlap with the previous frame. This introduces redundancy into the analysis, but it also - to some limited extent - improves time resolution while maintaining relatively high frequency resolution. The main cost of small steps (large overlap) is processing time, but very large overlap is not always desirable, even when processing time is not an issue. If some audio segments are problematic (e.g., very noisy), pitch contour may actually be more accurate with relatively large steps and more smoothing. It is therefore best to check the results with different steps and/or run formal optimization (remember to adjust smoothing and other postprocessing parameters together with STFT settings).
 * `wn`: the type of windowing function used to taper the analysis frame during STFT. In practice the windowing function doesn't seem to have a major effect on the result, as long as you choose something reasonable like gaussian, hanning, or bartlett. 
 * `zp`: zero-padding. You can use a short STFT window and improve its frequency resolution by padding each frame with zeroes. This is a computational trick that - again, to some limited extent - improves frequency resolution while maintaining relatively high time resolution. 
-* `silence`: frames with amplitude below silence threshold are not analyzed at all. Quiet frames are harder to analyze, because their signal-to-noise ratio is lower. As a result, we want to strike a good balance. Setting `silence` too low (close to 0) produces a lot of garbage, as the algorithm tries to analyze frames that are essentially just background noise without any signal. Setting `silence` too high (close to 1) excludes too many perfectly good frames, misrepresenting the signal. In soundgen `silence` is dynamically updated: it can never be lower than specified, but it may be raised to the minimum root mean square amplitude of all frames, if this minimum is higher than `silence`. This ensures that empty frames are not analyzed in recordings with unusually high levels of steady background noise (e.g., microphone hiss).
+* `silence`: frames with root mean square (RMS) amplitude below silence threshold are not analyzed at all. Quiet frames are harder to analyze, because their signal-to-noise ratio is lower. As a result, we want to strike a good balance. Setting `silence` too low (close to 0) produces a lot of garbage, as the algorithm tries to analyze frames that are essentially just background noise without any signal. Setting `silence` too high (close to 1) excludes too many perfectly good frames, misrepresenting the signal. In soundgen `silence` is dynamically updated: it can never be lower than specified, but it may be raised to the minimum root mean square amplitude of all frames, if this minimum is higher than `silence`. This ensures that empty frames are not analyzed in recordings with unusually high levels of steady background noise (e.g., microphone hiss).
 
 ## Basic spectral descriptives
-Apart from pitch tracking, `analyze` calculates and returns several acoustic characteristics from each non-silent FFT frame:
+Apart from pitch tracking, `analyze` calculates and returns several acoustic characteristics from each non-silent STFT frame:
 
 * `time`: time of the middle of each frame (ms)
 * `ampl`: root mean square of amplitude per frame, calculated as `sqrt(mean(frame ^ 2))`
 * `amplVoiced`: the same as `ampl` for voiced frames and `NA` for unvoiced frames
 * `dom`: lowest dominant frequency band (Hz) (see "Pitch tracking methods / Dominant frequency")
 * `entropy`: Weiner entropy of the spectrum of the current frame. Close to 0: pure tone or tonal sound with nearly all energy in harmonics; close to 1: white noise
-* `f1_freq`, `f1_width`, ...: the frequency and bandwidth of the first `nFormants` formants per FFT frame, as calculated by `phonTools::findformants` with default settings
+* `f1_freq`, `f1_width`, ...: the frequency and bandwidth of the first `nFormants` formants per STFT frame, as calculated by `phonTools::findformants` with default settings
 * `harmonics`: the amount of energy in upper harmonics, namely the ratio of total spectral energy above 1.25 x F0 to the total spectral energy below 1.25 x F0 (dB)
 * `HNR`: harmonics-to-noise ratio (dB), a measure of harmonicity returned by `soundgen:::getPitchAutocor()` (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as in noise
+* `loudness`: subjective loudness in sone, assuming a certain sound pressure level (takes into account the energy in different frequency bands as well as the sensitivity of human ears to different frequencies); see `getLoudness()` and section on Loudness below for details
 * `medianFreq`: 50th quantile of the frame's spectrum
 * `peakFreq`: the frequency with maximum spectral energy (Hz)
 * `peakFreqCut`: the frequency with maximum spectral energy below `cutFreq` (Hz)
@@ -109,7 +111,7 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `specCentroid`: the center of gravity of the frame’s spectrum, first spectral moment (Hz)
 * `specCentroidCut`: the center of gravity of the frame’s spectrum below cutFreq
 * `specSlope`: the slope of linear regression fit to the spectrum below `cutFreq`
-* `voiced`: is the current FFT frame voiced? TRUE / FALSE
+* `voiced`: is the current STFT frame voiced? TRUE / FALSE
 
 ## Custom spectral descriptives
 The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame()` and to `soundgen::analyze()`. If you want deltas, they can be extracted directly from the output of `analyze(..., summary = FALSE)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze()`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
@@ -118,14 +120,14 @@ For the average spectrum of an entire sound, go no further than `seewave::spec` 
 ```{r}
 spec = seewave::spec(s1, f = 16000, plot = FALSE)  # FFT of the entire sound
 avSpec = seewave::meanspec(s1, f = 16000, plot = FALSE)  # STFT followed by averaging
-# either way, you get a dataframe with two columns: frequencies and their power
+# either way, you get a dataframe with two columns: frequencies and their strength
 head(avSpec)
 ```
 
 If you are interested in how the spectrum changes over time, extract frame-by-frame spectra - for example, with `spectrogram(..., output = 'original')`:
 ```{r}
 spgm = spectrogram(s1, samplingRate = 16000, output = 'original', plot = FALSE)
-# rownames give you frequencies, colnames are time stamps
+# rownames give you frequencies in KHz, colnames are time stamps in ms
 str(spgm)
 ```
 
@@ -198,9 +200,9 @@ l = getLoudness(sweep, samplingRate = samplingRate)
 
 
 ## Pitch tracking
-If you look at the source code of `soundgen::analyze()` and embedded functions, you will see that almost all of this code deals with a single acoustic characteristic: fundamental frequency (F0) or its perceptual equivalent, pitch. That's because pitch is both highly salient to listeners and notoriously difficult to measure accurately. The approach followed with soundgen's pitch tracker is to use several different estimates of F0, each of which is better suited to certain types of sounds. You can use any pitch tracker individually, but their output is also automatically integrated and postprocessed so as to generate the best overall estimate of frame-by-frame pitch. There are four currently implemented classes of pitch estimates in soundgen: autocorrelation, lowest dominant frequency, cepstrum, and spectrum (ratios of harmonics). These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an FFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative. 
+If you look at the source code of `soundgen::analyze()` and embedded functions, you will see that almost all of this code deals with a single acoustic characteristic: fundamental frequency (F0) or its perceptual equivalent, pitch. That's because pitch is both highly salient to listeners and notoriously difficult to measure accurately. The approach followed by soundgen's pitch tracker is to use several different estimates of F0, each of which is better suited to certain types of sounds. You can use any pitch tracker individually, but their output is also automatically integrated and postprocessed so as to generate the best overall estimate of frame-by-frame pitch. There are four currently implemented classes of pitch estimates in soundgen: autocorrelation, lowest dominant frequency, cepstrum, and spectrum (ratios of harmonics). These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an STFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative. 
 
-The plot below shows a spectrogram of the sound with overlaid pitch candidates: yellow circles = autocorrelation pitch estimate (`pitchAutocor`), red triangles = spectral pitch estimate (`pitchSpec`), orange crosses = lowest dominant frequency band (`dom`). The size of each point shows the certainty of estimation: smaller points are calculated with lower certainty and have less weight when all candidates are integrated into the final pitch contour (blue line). To specify which pitch tracking methods should be employed, use `pitchMethods`. For example, we can also include cepstral estimates (violet envelopes):
+The plot below shows a spectrogram of the sound with overlaid pitch candidates: yellow circles = autocorrelation pitch estimate (`pitchAutocor`), red triangles = spectral pitch estimate (`pitchSpec`), orange crosses = lowest dominant frequency band (`dom`). The size of each point shows the certainty of estimation: smaller points are calculated with lower certainty and have less weight when all candidates are integrated into the final pitch contour (blue line). To specify which pitch tracking methods should be employed, use `pitchMethods`. For example, we can also include cepstral estimates (violet "envelope" symbols):
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 a = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4),
             pitchMethods = c('autocor', 'cep', 'dom', 'spec'))
@@ -257,7 +259,7 @@ If the sound is harmonic and relatively noise-free, the spectrum of a frame typi
 The settings that control `dom` are:
 
 * `domThres` (defaults to 0.1, range 0 to 1): to find the lowest dominant frequency band, we look for the lowest frequency with amplitude at least `domThres`. This key setting has to be high enough to exclude accidental low-frequency noises, but low enough not to miss F0. As a result, the optimal level depends a lot on the type of sound analyzed and recording conditions.
-* `domSmooth` (defaults to 220 Hz): the width of smoothing interval (Hz) for finding the lowest spectral peak. The idea is that we are less likely to hit upon some accidental spectral noise and find the lowest harmonic (or the lowest spectral band with significant power) if we apply some smoothing to the spectrum of an FFT frame, in this case a moving median. 
+* `domSmooth` (defaults to 220 Hz): the width of smoothing interval (Hz) for finding the lowest spectral peak. The idea is that we are less likely to hit upon some accidental spectral noise and find the lowest harmonic (or the lowest spectral band with significant power) if we apply some smoothing to the spectrum of an STFT frame, in this case a moving median. 
 
 For the sound we are trying to analyze, we can increase `domSmooth` and/or raise `domThres` to ignore the subharmonics and trace the true pitch contour:
 
@@ -329,7 +331,7 @@ a = analyze(
 When the sound is not too tricky and enough pitch candidates are available, postprocessing actually makes little difference. In terms of the accuracy of median estimate of F0, you are likely to get a good result even with postprocessing is completely disabled. However, if you are interested in the actual intonation contours, not just the global average, postprocessing can help a lot.
 
 ### Continuous voiced fragments
-It often makes sense to make assumptions about the possible temporal structure of voiced fragments, such as their minimum expected length (`shortestSyl`) and spacing (`shortestPause`). If these two parameters are positive numbers, the first stage of postprocessing is to divide the sound into continuous voiced fragments that satisfy these assumptions. The default minimum length of a voiced fragment is a single FFT frame. If `shortestSyl` is longer than a single frame, then we need at least two adjacent voiced frames to start a new voiced fragment. A single voiced frame surrounded by unvoiced frames then gets discarded (assumed to be unvoiced). If two voiced fragments are separated by less than `shortestPause`, they are merged. What this means is simply that they are processed as a single syllable by `pathfinder()` (see below). No interpolation takes place at this stage.
+It often makes sense to make assumptions about the possible temporal structure of voiced fragments, such as their minimum expected length (`shortestSyl`) and spacing (`shortestPause`). If these two parameters are positive numbers, the first stage of postprocessing is to divide the sound into continuous voiced fragments that satisfy these assumptions. The default minimum length of a voiced fragment is a single STFT frame. If `shortestSyl` is longer than a single frame, then we need at least two adjacent voiced frames to start a new voiced fragment. A single voiced frame surrounded by unvoiced frames then gets discarded (assumed to be unvoiced). If two voiced fragments are separated by less than `shortestPause`, they are merged. What this means is simply that they are processed as a single syllable by `pathfinder()` (see below). No interpolation takes place at this stage.
 
 The next few blocks of postprocessing are performed by an internal function, `soundgen:::pathfinder()`. Its input is a matrix of pitch candidates for each frame of a single voiced syllable, usually with multiple candidates per frame. Each candidate is also associated with a different certainty. We want to find a good path through these candidates - that is, a pitch contour that both passes close to the strongest candidates and minimizes pitch jumps, producing a relatively smooth contour. The simplest first approximation is to take a mean of all pitch candidates per frame weighted by their certainty - the "center of gravity" of pitch candidates - and for each frame to select the candidate that lies closest to this center of gravity. This initial guess at a reasonable path may or may not be processed further, depending on the settings described below.
 
@@ -343,10 +345,11 @@ a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
              snakeStep = NULL, smooth = 0,
              interpolWin = NULL, pathfinding = 'none',  # disable interpolation
-             main = 'No interpolation')
+             main = 'No interpolation', showLegend = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
-             snakeStep = NULL, smooth = 0, main = 'Interpolation')  
+             snakeStep = NULL, smooth = 0, 
+             main = 'Interpolation', showLegend = FALSE)  
 
 par(mfrow = c(1, 1))
 ```
@@ -362,12 +365,12 @@ a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 0,  # minimize pitch jumps
-             main = 'Minimize jumps')  
+             main = 'Minimize jumps', showLegend = FALSE)  
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 1,  # minimize deviation from high-certainty candidates
-             main = 'Pass through candidates')  
+             main = 'Pass through candidates', showLegend = FALSE)  
 par(mfrow = c(1, 1))
 ```
 
@@ -399,11 +402,11 @@ par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
-             smooth = 0, main = 'No smoothing')
+             smooth = 0, main = 'No smoothing', showLegend = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
-             smooth = 1, main = 'Default smoothing')
+             smooth = 1, main = 'Default smoothing', showLegend = FALSE)
 par(mfrow = c(1, 1))
 ```
 
@@ -486,17 +489,17 @@ Some other settings worth mentioning are:
 ```{r fig.show = "hold", fig.height = 7, fig.width = 5}
 par(mfrow = c(3, 1))
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             windowLength = 40, overlap = 0)   # overlap too low
+             windowLength = 40, overlap = 0, main = 'overlap too low')
 a2 = suppressWarnings(segment(s2, samplingRate = 16000, plot = TRUE, 
-             windowLength = 5, overlap = 80))  # window too short
+             windowLength = 5, overlap = 80, main = 'window too short'))
 a3 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             windowLength = 150, overlap = 80) # window too long
+             windowLength = 150, overlap = 80, main = 'window too long')
 par(mfrow = c(1, 1))
 ```
 
 * `shortestSyl` and `shortestPause` incorporate our prior knowledge by expecting the syllables and pauses between them to be at least 40 ms long (by default). Setting `shortestSyl` and `shortestPause` too low may inflate the number of discovered syllables, but burst detection should not be affected as much. If `shortestSyl` is too high, excluding shorter fragments, we won't find any syllables, but burst detection can still succeed. The most damaging mistake is to set `shortestPause` too high, because separate syllables are then merged and the expected interburst interval becomes inflated, preventing the algorithm from recognizing closely spaced bursts (see the example below). 
 
-```{r fig.show = "hold", fig.height = 5, fig.width = 5}
+```{r fig.show = "hold", fig.height = 7, fig.width = 5}
 par(mfrow = c(2, 1))
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
              shortestSyl = 80)    # too long, but at least bursts are detected
@@ -541,7 +544,7 @@ The results of SSM analysis can vary dramatically, depending on how it is perfor
 
   1. Spectrogram extraction is controlled by some already familiar settings such as `windowLength` and `overlap` (or `step` if you prefer). However, it can often be helpful to base the SSM on some other spectral characteristics than the usual spectrogram. Under the hood, `ssm` calls `tuneR::melfcc` to return the power spectrum (as in a spectrogram, `input = 'spectrum'`), mel-transformed spectrum (auditory spectrum, which is supposed to be closer to how humans perceive sounds, `input = 'audiogram'`), or mel-frequency cepstral coefficients (MFCCs - a popular choice of input for automatic sound classification, as in speech recognition software, `input = 'mfcc'`). There are also several arguments that are passed to `tuneR::melfcc`: `maxFreq` controls the highest frequency analyzed, `MFCC` controls the number of mel-frequency cepstral coefficients to extract, and `nBands` basically controls the frequency resolution. 
 
-  1. SSM calculation starts with the spectrogram (or the MFCCs matrix) produced at the previous stage. This input is divided into windows, each of which can be one or several FFT frames in length, and then each window is compared to each other window using either cosine similarity (`simil = 'cosine'`) or Pearson's correlation (`simil = 'cor'`). Prior to this the input matrix can be normalized column-wise, so as to level out the differences in sound intensity across frames (`norm = TRUE`). The size of analysis window is controlled by the argument `ssmWin`, ms. Note that as you increase `ssmWin`, the resulting SSM literally shrinks in size, reducing its resolution. This is a great feature if your sound is very long, but it is seldom needed for shorter sounds. As you decrease `ssmWin`, it ultimately reaches the size of a single FFT frame (`step`) and can't go down any further, unless you improve time resolution of the spectrogram itself by reducing `windowLength` and/or increasing `overlap`. 
+  1. SSM calculation starts with the spectrogram (or the MFCCs matrix) produced at the previous stage. This input is divided into windows, each of which can be one or several STFT frames in length, and then each window is compared to each other window using either cosine similarity (`simil = 'cosine'`) or Pearson's correlation (`simil = 'cor'`). Prior to this the input matrix can be normalized column-wise, so as to level out the differences in sound intensity across frames (`norm = TRUE`). The size of analysis window is controlled by the argument `ssmWin`, ms. Note that as you increase `ssmWin`, the resulting SSM literally shrinks in size, reducing its resolution. This is a great feature if your sound is very long, but it is seldom needed for shorter sounds. As you decrease `ssmWin`, it ultimately reaches the size of a single STFT frame (`step`) and can't go down any further, unless you improve time resolution of the spectrogram itself by reducing `windowLength` and/or increasing `overlap`. 
 
   1. Novelty calculation starts with the SSM computed at the previous step. Here the idea is to move along the diagonal and multiply the SSM by a Gaussian checkerboard matrix, so as to detect changes in the spectral structure (see Foote, 2000). The settings that control this algorithm are `kernelLen` and `kernelSD`. The crucial parameter is `kernelLen` (ms): a large kernel is good for detecting global changes in the sound, such as transitions between different vocalizations, whereas a small kernel is good for detecting rapid changes, such as individual bursts in a laugh. If you are curious about the kernel itself, take a look at `?soundgen:::getCheckerboardKernel()`.
 

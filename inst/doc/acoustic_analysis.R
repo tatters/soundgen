@@ -16,7 +16,7 @@ median(true_pitch)  # 611 Hz
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
 a1 = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4))
-# summary(a1)  # many acoustic predictors measured for each FFT frame
+# summary(a1)  # many acoustic predictors measured for each STFT frame
 median(true_pitch)  # true value, as synthesized above
 median(a1$pitch, na.rm = TRUE)  # our estimate
 # Pitch postprocessing is stochastic (see below), so the contour may vary.
@@ -25,16 +25,16 @@ median(a1$pitch, na.rm = TRUE)  # our estimate
 ## ------------------------------------------------------------------------
 spec = seewave::spec(s1, f = 16000, plot = FALSE)  # FFT of the entire sound
 avSpec = seewave::meanspec(s1, f = 16000, plot = FALSE)  # STFT followed by averaging
-# either way, you get a dataframe with two columns: frequencies and their power
+# either way, you get a dataframe with two columns: frequencies and their strength
 head(avSpec)
 
 ## ------------------------------------------------------------------------
 spgm = spectrogram(s1, samplingRate = 16000, output = 'original', plot = FALSE)
-# rownames give you frequencies, colnames are time stamps
+# rownames give you frequencies in KHz, colnames are time stamps in ms
 str(spgm)
 
 ## ------------------------------------------------------------------------
-# Transform power to pdf (all columns should sum to 1):
+# Transform spectrum to pdf (all columns should sum to 1):
 spgm_norm = apply(spgm, 2, function(x) x / sum(x))
 # Set up a dataframe to store the output
 out = data.frame(skew = rep(NA, ncol(spgm)),
@@ -42,7 +42,7 @@ out = data.frame(skew = rep(NA, ncol(spgm)),
                  ratio500 = NA)
 # Process each STFT frame
 for (i in 1:ncol(spgm_norm)) {
-  # Power spectrum for this frame
+  # Absolute spectrum for this frame
   df = data.frame(
     freq = as.numeric(rownames(spgm_norm)),  # frequency (kHz)
     d = spgm_norm[, i]                       # density
@@ -60,6 +60,28 @@ for (i in 1:ncol(spgm_norm)) {
   out$ratio500[i] = sum(df$d[df$freq >= .5]) / sum(df$d[df$freq < .5])
 }
 summary(out)
+
+## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
+dur = 2  # 2 s duration
+samplingRate = 16000
+f0 = seq(100, 8000, length.out = samplingRate * dur)
+sweep = sin(2 * pi * cumsum(f0) / samplingRate)
+# playme(sweep)
+# spectrogram(sweep, 16000)
+# plot(sweep, type = 'l')
+
+## ----fig.height = 4, fig.width = 7---------------------------------------
+seewave::env(sweep, f = samplingRate, envt = 'abs', msmooth=c(50, 0))
+
+## ----fig.height = 4, fig.width = 7---------------------------------------
+a = analyze(sweep, samplingRate = samplingRate, pitchMethods = NULL, plot = FALSE)
+plot(seq(0, dur, length.out = length(a$ampl)), a$ampl, type = 'b', xlab= 'Time, s')
+
+## ----fig.height = 4, fig.width = 7---------------------------------------
+plot(seq(0, dur, length.out = length(a$loudness)), a$loudness, type = 'b', xlab= 'Time, s')
+
+## ----fig.height = 6, fig.width = 7---------------------------------------
+l = getLoudness(sweep, samplingRate = samplingRate)
 
 ## ----fig.show = "hold", fig.height = 5, fig.width = 7--------------------
 a = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4),
@@ -121,10 +143,11 @@ a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
              snakeStep = NULL, smooth = 0,
              interpolWin = NULL, pathfinding = 'none',  # disable interpolation
-             main = 'No interpolation')
+             main = 'No interpolation', showLegend = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
-             snakeStep = NULL, smooth = 0, main = 'Interpolation')  
+             snakeStep = NULL, smooth = 0, 
+             main = 'Interpolation', showLegend = FALSE)  
 
 par(mfrow = c(1, 1))
 
@@ -134,12 +157,12 @@ a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 0,  # minimize pitch jumps
-             main = 'Minimize jumps')  
+             main = 'Minimize jumps', showLegend = FALSE)  
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
              certWeight = 1,  # minimize deviation from high-certainty candidates
-             main = 'Pass through candidates')  
+             main = 'Pass through candidates', showLegend = FALSE)  
 par(mfrow = c(1, 1))
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
@@ -154,11 +177,11 @@ par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
-             smooth = 0, main = 'No smoothing')
+             smooth = 0, main = 'No smoothing', showLegend = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = NULL, interpolTol = Inf,
-             smooth = 1, main = 'Default smoothing')
+             smooth = 1, main = 'Default smoothing', showLegend = FALSE)
 par(mfrow = c(1, 1))
 
 ## ----fig.height = 5, fig.width = 7---------------------------------------
@@ -204,14 +227,14 @@ a = segment(s2, samplingRate = 16000, plot = TRUE)
 ## ----fig.show = "hold", fig.height = 7, fig.width = 5--------------------
 par(mfrow = c(3, 1))
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             windowLength = 40, overlap = 0)   # overlap too low
+             windowLength = 40, overlap = 0, main = 'overlap too low')
 a2 = suppressWarnings(segment(s2, samplingRate = 16000, plot = TRUE, 
-             windowLength = 5, overlap = 80))  # window too short
+             windowLength = 5, overlap = 80, main = 'window too short'))
 a3 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             windowLength = 150, overlap = 80) # window too long
+             windowLength = 150, overlap = 80, main = 'window too long')
 par(mfrow = c(1, 1))
 
-## ----fig.show = "hold", fig.height = 5, fig.width = 5--------------------
+## ----fig.show = "hold", fig.height = 7, fig.width = 5--------------------
 par(mfrow = c(2, 1))
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
              shortestSyl = 80)    # too long, but at least bursts are detected
