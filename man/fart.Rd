@@ -23,12 +23,16 @@ and value (anchor format)}
 \item{pitch}{a numeric vector of f0 values in Hz or a dataframe
 specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
 "anchor format". These anchors are used to create a smooth contour of
-fundamental frequency f0 (pitch) within one syllable}
+fundamental frequency f0 (pitch) within one syllable. NB: "pitchAnchors" is
+deprecated; use simply "pitch" instead (same for other arguments with
+"Anchors" below)}
 
 \item{pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
 specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
 "anchor format". These anchors are used to create a smooth contour of
-fundamental frequency f0 (pitch) within one syllable}
+fundamental frequency f0 (pitch) within one syllable. NB: "pitchAnchors" is
+deprecated; use simply "pitch" instead (same for other arguments with
+"Anchors" below)}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
@@ -58,4 +62,11 @@ harmonics, but no formants. See \code{\link{soundgen}} for more details.
 \examples{
 f = fart()
 # playme(f)
+
+\dontrun{
+while (TRUE) {
+  fart(sylLen = 200, temperature = .4, play = TRUE)
+  Sys.sleep(rexp(1, rate = 1))
+}
+}
 }

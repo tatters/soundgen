@@ -25,8 +25,11 @@ phonetics", p. 138}
 Returns a list with the following components: \describe{
   \item{vtl_measured}{VTL as provided by the user, cm}
   \item{vocalTract_apparent}{VTL estimated based on formants frequencies
-  provided by the user, cm} \item{ff_measured}{formant frequencies as
-  provided by the user, Hz} \item{ff_schwa}{formant frequencies corresponding
+  provided by the user, cm}
+  \item{formantDispersion}{average distance between formants, Hz}
+  \item{ff_measured}{formant frequencies as
+  provided by the user, Hz}
+  \item{ff_schwa}{formant frequencies corresponding
   to a neutral schwa sound in this vocal tract, Hz}
   \item{ff_theoretical}{formant frequencies corresponding to the
   user-provided relative formant frequencies, Hz}

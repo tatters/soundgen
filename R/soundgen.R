@@ -1,4 +1,4 @@
-# TODO: soundgen: perhaps lipRad shouldn't affect the output if formant = NULL (don't get any spectral env at all, just flat?); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -13,7 +13,8 @@ NULL
 #' formants. Intonation and amplitude contours can be applied both within each
 #' syllable and across multiple syllables. Suggested application: synthesis of
 #' animal or human non-linguistic vocalizations. For more information, see
-#' \url{http://cogsci.se/soundgen.html} and the vignette on sound generation.
+#' \url{http://cogsci.se/soundgen.html} and vignette('sound_generation', package
+#' = 'soundgen').
 #' @param repeatBout number of times the whole bout should be repeated
 #' @param nSyl number of syllables in the bout. `pitchGlobal`, `amplGlobal`, and
 #'   `formants` span multiple syllables, but not multiple bouts
@@ -24,7 +25,9 @@ NULL
 #' @param pitch,pitchAnchors a numeric vector of f0 values in Hz or a dataframe
 #'   specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
 #'   "anchor format". These anchors are used to create a smooth contour of
-#'   fundamental frequency f0 (pitch) within one syllable
+#'   fundamental frequency f0 (pitch) within one syllable. NB: "pitchAnchors" is
+#'   deprecated; use simply "pitch" instead (same for other arguments with
+#'   "Anchors" below)
 #' @param pitchGlobal,pitchAnchorsGlobal unlike \code{pitch}, these anchors are
 #'   used to create a smooth contour of average f0 across multiple syllables.
 #'   The values are in semitones relative to the existing pitch, i.e. 0 = no
@@ -145,8 +148,8 @@ NULL
 #'   multiple syllables (dB, 0 = no change) (anchor format)
 #' @param interpol the method of smoothing envelopes based on provided anchors:
 #'   'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-#'   = polynomial local smoothing function. NB: this does not affect
-#'   noiseAnchors, glottalAnchors, and the smoothing of formants
+#'   = polynomial local smoothing function. NB: this does not affect contours for
+#'   "noise", "glottal", and the smoothing of formants
 #' @param discontThres,jumpThres if two anchors are closer in time than
 #'   \code{discontThres}, the contour is broken into segments with a linear
 #'   transition between these anchors; if anchors are closer than
@@ -235,7 +238,7 @@ NULL
 #' third, subharmonics in the second third, and jitter in the final third of the
 #' total duration:
 #' a = c(rep(0, 100), rep(1, 100), rep(2, 100))
-#' s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
+#' s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
 #'              subFreq = 100, subDep = 70, jitterDep = 1,
 #'              nonlinRandomWalk = a, plot = TRUE, ylim = c(0, 4))
 #' # playme(s)
@@ -243,7 +246,7 @@ NULL
 #' # See the vignette on sound generation for more examples and in-depth
 #' # explanation of the arguments to soundgen()
 #' # Examples of code for creating human and animal vocalizations are available
-#' # on project's homepage: http://cogsci.se/soundgen.htlm
+#' # on project's homepage: http://cogsci.se/soundgen.html
 #' }
 soundgen = function(repeatBout = 1,
                     nSyl = 1,

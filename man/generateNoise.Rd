@@ -56,19 +56,16 @@ setting another default player for \code{\link[tuneR]{play}}}
 \description{
 Generates noise of length \code{len} and with spectrum defined by linear
 decay of \code{rolloffNoise} dB/kHz above \code{noiseFlatSpec} Hz OR by a
-specified filter \code{spectralEnvelope}. This function is called internally by
-\code{\link{soundgen}}, but it may be more convenient to call it directly
+specified filter \code{spectralEnvelope}. This function is called internally
+by \code{\link{soundgen}}, but it may be more convenient to call it directly
 when synthesizing non-biological noises defined by specific spectral and
 amplitude envelopes rather than formants: the wind, whistles, impact noises,
 etc. See \code{\link{fart}} and \code{\link{beat}} for similarly simplified
 functions for tonal non-biological sounds.
 }
 \details{
-Algorithm: paints a spectrum with desired characteristics, sets phase to
-zero, and generates a time sequence via inverse FFT. Noise can then be used
-as an additional source to be added to the glottal source AFTER the glottal
-source has been formant-filtered, or BEFORE formant-filtering for glottal
-breathing noise.
+Algorithm: paints a spectrogram with desired characteristics, sets phase to
+zero, and generates a time sequence via inverse FFT.
 }
 \examples{
 # .5 s of white noise

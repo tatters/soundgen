@@ -86,7 +86,7 @@ Finds syllables and bursts. Syllables are defined as continuous segments with
 amplitude above threshold. Bursts are defined as local maxima in amplitude
 envelope that are high enough both in absolute terms (relative to the global
 maximum) and with respect to the surrounding region (relative to local
-mimima). See the vignette on acoustic analysis for details.
+mimima). See vignette('acoustic_analysis', package = 'soundgen') for details.
 }
 \details{
 The algorithm is very flexible, but the parameters may be hard to optimize by

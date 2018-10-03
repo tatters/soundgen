@@ -20,8 +20,8 @@ can be on any scale.}
 
 \item{interpol}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-= polynomial local smoothing function. NB: this does not affect
-noiseAnchors, glottalAnchors, and the smoothing of formants}
+= polynomial local smoothing function. NB: this does not affect contours for
+"noise", "glottal", and the smoothing of formants}
 
 \item{valueFloor}{lower/upper bounds for the contour}
 

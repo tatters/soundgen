@@ -46,7 +46,9 @@ negative between bouts: force with invalidArgAction = 'ignore')
 \item{pitch, pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
 specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
 "anchor format". These anchors are used to create a smooth contour of
-fundamental frequency f0 (pitch) within one syllable}
+fundamental frequency f0 (pitch) within one syllable. NB: "pitchAnchors" is
+deprecated; use simply "pitch" instead (same for other arguments with
+"Anchors" below)}
 
 \item{pitchGlobal, pitchAnchorsGlobal}{unlike \code{pitch}, these anchors are
 used to create a smooth contour of average f0 across multiple syllables.
@@ -210,8 +212,8 @@ multiple syllables (dB, 0 = no change) (anchor format)}
 
 \item{interpol}{the method of smoothing envelopes based on provided anchors:
 'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-= polynomial local smoothing function. NB: this does not affect
-noiseAnchors, glottalAnchors, and the smoothing of formants}
+= polynomial local smoothing function. NB: this does not affect contours for
+"noise", "glottal", and the smoothing of formants}
 
 \item{discontThres, jumpThres}{if two anchors are closer in time than
 \code{discontThres}, the contour is broken into segments with a linear
@@ -265,7 +267,8 @@ noise component. Both components can be filtered with independently specified
 formants. Intonation and amplitude contours can be applied both within each
 syllable and across multiple syllables. Suggested application: synthesis of
 animal or human non-linguistic vocalizations. For more information, see
-\url{http://cogsci.se/soundgen.html} and the vignette on sound generation.
+\url{http://cogsci.se/soundgen.html} and vignette('sound_generation', package
+= 'soundgen').
 }
 \examples{
 # NB: GUI for soundgen is available as a Shiny app.
@@ -326,7 +329,7 @@ nonlinear effects. For ex., to make a sound with no effect in the first
 third, subharmonics in the second third, and jitter in the final third of the
 total duration:
 a = c(rep(0, 100), rep(1, 100), rep(2, 100))
-s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
+s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
              subFreq = 100, subDep = 70, jitterDep = 1,
              nonlinRandomWalk = a, plot = TRUE, ylim = c(0, 4))
 # playme(s)
@@ -334,6 +337,6 @@ s = soundgen(sylLen = 800, pitchAnchors = 300, temperature = 0.001,
 # See the vignette on sound generation for more examples and in-depth
 # explanation of the arguments to soundgen()
 # Examples of code for creating human and animal vocalizations are available
-# on project's homepage: http://cogsci.se/soundgen.htlm
+# on project's homepage: http://cogsci.se/soundgen.html
 }
 }

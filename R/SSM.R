@@ -27,12 +27,12 @@
 #'   windowLength / 20}. See \code{\link[tuneR]{melfcc}}
 #' @param input either MFCCs ("cepstrum") or mel-filtered spectrum ("audiogram")
 #' @param MFCC which mel-frequency cepstral coefficients to use; defaults to
-#'   \code{2:13})
-#' @param norm if TRUE, each FFT frame is normalized by max power
+#'   \code{2:13}
+#' @param norm if TRUE, the spectrum of each STFT frame is normalized
 #' @param simil method for comparing frames: "cosine" = cosine similarity, "cor"
 #'   = Pearson's correlation
-#' @param kernelLen length of checkerboard kernel for calculating novelty, ms (the
-#'   larger, the more global vs. local the novelty)
+#' @param kernelLen length of checkerboard kernel for calculating novelty, ms
+#'   (larger values favor global vs. local novelty)
 #' @param kernelSD SD of checkerboard kernel for calculating novelty
 #' @param padWith how to treat edges when calculating novelty: NA = treat sound
 #'   before and after the recording as unknown, 0 = treat it as silence

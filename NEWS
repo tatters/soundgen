@@ -4,13 +4,13 @@ NEW FUNCTIONS:
   * getLoudness(): estimates subjective loudness per frame, in sone
 
 MINOR:
-  * analyze(), analyzeFolder(): also returns loudness per frame, in sone (new arguments: SPL_measured and Pref)
+  * analyze(), analyzeFolder(): also return loudness per frame, in sone (new arguments: SPL_measured and Pref)
   * analyze(), analyzeFolder(): new argument "summaryStats" for specifying how to summarize the output (mean, sd, etc.)
   * analyzeFolder(): the result is returned with correct class (numeric instead of factor)
   * analyze(): a legend can be added to plot (thanks to Jerome Sueur for the idea)
-  * analyze(): plots are saved in .png instead of .jpg
+  * analyze(), analyzeFolder(), segment(), segmentFolder(), spectrogram(): plots are saved as .png instead of .jpg
   * ssm(): new argument "padWith" for dealing with edges and "heights" for controlling relative plot sizes
-  * flatEnv(): fixed a bug that preventing correct removal of DC offset ("killDC")
+  * flatEnv(): fixed a bug that prevented correct removal of DC offset ("killDC")
   * generateNoise(): proper interpolation of user-specified "spectralEnvelope" (renamed from "filterNoise")
   * addFormants(): support for user-specified "spectralEnvelope" (a new argument)
   * soundgen(): adjusted bandwidth calculation for very low formant frequencies (under 250 Hz)

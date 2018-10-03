@@ -119,6 +119,7 @@ e = getSpectralEnvelope(nr = 512, nc = 50,
 e = getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
   temperature = 0.1, formantDepStoch = 20, plot = TRUE)
+
 # a schwa based on the length of vocal tract = 15.5 cm
 e = getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
   temperature = .1, vocalTract = 15.5, plot = TRUE)

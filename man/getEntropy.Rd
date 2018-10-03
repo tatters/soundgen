@@ -8,7 +8,7 @@ getEntropy(x, type = c("weiner", "shannon")[1], normalize = FALSE,
   convertNonPositive = 1e-10)
 }
 \arguments{
-\item{x}{vector of positive floats, such as a power spectrum}
+\item{x}{vector of positive floats}
 
 \item{type}{'shannon' for Shannon (information) entropy, 'weiner' for Weiner
 entropy}
@@ -20,9 +20,9 @@ input vector to range from 0 to 1. It has no affect on Weiner entropy}
 \code{convertNonPositive}}
 }
 \description{
-Returns Weiner or Shannon entropy of an input vector such as the power
-spectrum of a sound. Non-positive input values are converted a small positive
-number (convertNonPositive). If all elements are zero, returns NA.
+Returns Weiner or Shannon entropy of an input vector such as the spectrum of
+a sound. Non-positive input values are converted to a small positive number
+(convertNonPositive). If all elements are zero, returns NA.
 }
 \examples{
 # Here are four simplified power spectra, each with 9 frequency bins:

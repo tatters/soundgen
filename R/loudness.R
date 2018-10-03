@@ -13,7 +13,7 @@
 #' different segments within the same recording.
 #'
 #' Algorithm: calibrates the sound to the desired SPL (Timoney et al., 2004),
-#' extracts a spectrogram, converts to bark scale
+#' extracts a \code{\link{spectrogram}}, converts to bark scale
 #' (\code{\link[tuneR]{audspec}}), spreads the spectrum to account for frequency
 #' masking across the critical bands (Yang, 1999), converts dB to phon by using
 #' standard equal loudness curves (ISO 226), converts phon to sone (Timoney et
@@ -65,7 +65,7 @@
 #'   l = getLoudness(soundgen(), SPL_measured = 40,
 #'                   samplingRate = 16000, plot = TRUE)
 #'
-#'   # ...but not (much) on windowLength etc
+#'   # ...but not (much) on windowLength and samplingRate
 #'   l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,
 #'                   samplingRate = 16000, plot = TRUE)
 #' }

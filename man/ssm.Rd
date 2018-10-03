@@ -38,19 +38,19 @@ numeric vector, rather than a .wav file)}
 windowLength / 20}. See \code{\link[tuneR]{melfcc}}}
 
 \item{MFCC}{which mel-frequency cepstral coefficients to use; defaults to
-\code{2:13})}
+\code{2:13}}
 
 \item{input}{either MFCCs ("cepstrum") or mel-filtered spectrum ("audiogram")}
 
-\item{norm}{if TRUE, each FFT frame is normalized by max power}
+\item{norm}{if TRUE, the spectrum of each STFT frame is normalized}
 
 \item{simil}{method for comparing frames: "cosine" = cosine similarity, "cor"
 = Pearson's correlation}
 
 \item{returnSSM}{if TRUE, returns the SSM}
 
-\item{kernelLen}{length of checkerboard kernel for calculating novelty, ms (the
-larger, the more global vs. local the novelty)}
+\item{kernelLen}{length of checkerboard kernel for calculating novelty, ms
+(larger values favor global vs. local novelty)}
 
 \item{kernelSD}{SD of checkerboard kernel for calculating novelty}
 

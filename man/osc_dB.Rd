@@ -35,7 +35,7 @@ numeric vector, rather than a .wav file)}
 }
 \value{
 Returns the input waveform on a dB scale: a vector with
-  range from `-range` to `range`.
+  range from `-dynamicRange` to `dynamicRange`.
 }
 \description{
 Plots the oscillogram (waveform) of a sound on a logarithmic scale, in dB.

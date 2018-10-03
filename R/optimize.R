@@ -35,8 +35,8 @@
 #' @param fitnessFun the function used to evaluate how well the output of
 #'   \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
 #'   perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
-#'   good fitness criterion is \code{function(x) 1 - cor(log(x), log(key), use =
-#'   'pairwise.complete.obs')}
+#'   good fitness criterion is "function(x) 1 - cor(log(x), log(key), use =
+#'   'pairwise.complete.obs')"
 #' @param nIter repeat the optimization several times to check convergence
 #' @param init initial values of optimized parameters (if NULL, the default
 #'   values are taken from the definition of \code{myfun})
@@ -57,22 +57,25 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' # download 260 sounds from the supplements in Anikin & Persson (2017)
+#' # Download 260 sounds from the supplements in Anikin & Persson (2017)
 #' # - see http://cogsci.se/publications.html
-#' # unzip them into a folder, say '~/Downloads/temp'
+#' # Unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
 #'
 #' # Optimization of SEGMENTATION
-#' # import manual counts of syllables in 260 sounds from Anikin & Persson (2017) (our "key")
+#' # Import manual counts of syllables in 260 sounds from
+#' # Anikin & Persson (2017) (our "key")
 #' key = segmentManual  # a vector of 260 integers
-#' # run optimization loop several times with random initial values to check convergence
+#'
+#' # Run optimization loop several times with random initial values
+#' # to check convergence
 #' # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
 #' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = key,
 #'   pars = c('shortestSyl', 'shortestPause', 'sylThres'),
 #'   fitnessPar = 'nBursts',
 #'   nIter = 3, control = list(maxit = 50, reltol = .01, trace = 0))
 #'
-#' # examine the results
+#' # Examine the results
 #' print(res)
 #' for (c in 2:ncol(res)) {
 #'   plot(res[, c], res[, 1], main = colnames(res)[c])
@@ -105,7 +108,7 @@
 #'                      1 - cor(log(x), key, use = 'pairwise.complete.obs') *
 #'                        (1 - mean(is.na(x) & !is.na(key)))  # penalize failing to detect F0
 #'                      })
-#' }  # end of dontrun
+#' }
 optimizePars = function(myfolder,
                         key,
                         myfun,

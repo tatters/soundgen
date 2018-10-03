@@ -9,7 +9,7 @@ selfsim(m, norm = FALSE, simil = c("cosine", "cor")[1], win = 1)
 \arguments{
 \item{m}{input matrix such as a spectrogram}
 
-\item{norm}{if TRUE, each FFT frame is normalized by max power}
+\item{norm}{if TRUE, the spectrum of each STFT frame is normalized}
 
 \item{simil}{method for comparing frames: "cosine" = cosine similarity, "cor"
 = Pearson's correlation}

@@ -58,6 +58,7 @@
 #' e = getSpectralEnvelope(nr = 512, nc = 50,
 #'   formants = soundgen:::convertStringToFormants('a'),
 #'   temperature = 0.1, formantDepStoch = 20, plot = TRUE)
+#'
 #' # a schwa based on the length of vocal tract = 15.5 cm
 #' e = getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
 #'   temperature = .1, vocalTract = 15.5, plot = TRUE)
@@ -736,11 +737,13 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' Estimate vocal tract length
 #'
 #' Estimates the length of vocal tract based on formant frequencies, assuming
-#' that the vocal tract can be modeled as a tube open as both ends. Algorithm:
+#' that the vocal tract can be modeled as a tube open at both ends. Algorithm:
 #' first formant dispersion is estimated using the regression method described
 #' in Reby et al. (2005) "Red deer stags use formants as assessment cues during
 #' intrasexual agonistic interactions". The length of vocal tract is then
-#' calculated as speed of sound / 2 / formant dispersion.
+#' calculated as \eqn{speed of sound / 2 / formant dispersion}. See also
+#' \code{\link{schwa}} for VTL estimation with additional information on formant
+#' frequencies.
 #' @inheritParams getSpectralEnvelope
 #' @param formants a character string like "aaui" referring to default presets
 #'   for speaker "M1"; a vector of formant frequencies; or a list of formant
@@ -1054,8 +1057,11 @@ addFormants = function(sound,
 #' @return Returns a list with the following components: \describe{
 #'   \item{vtl_measured}{VTL as provided by the user, cm}
 #'   \item{vocalTract_apparent}{VTL estimated based on formants frequencies
-#'   provided by the user, cm} \item{ff_measured}{formant frequencies as
-#'   provided by the user, Hz} \item{ff_schwa}{formant frequencies corresponding
+#'   provided by the user, cm}
+#'   \item{formantDispersion}{average distance between formants, Hz}
+#'   \item{ff_measured}{formant frequencies as
+#'   provided by the user, Hz}
+#'   \item{ff_schwa}{formant frequencies corresponding
 #'   to a neutral schwa sound in this vocal tract, Hz}
 #'   \item{ff_theoretical}{formant frequencies corresponding to the
 #'   user-provided relative formant frequencies, Hz}
@@ -1206,6 +1212,7 @@ schwa = function(formants = NULL,
   # prepare the output
   out = list(vtl_measured = vocalTract,
              vtl_apparent = vocalTract_apparent,
+             formantDispersion = formantDispersion,
              ff_measured = formants,
              ff_schwa = ff_schwa,
              ff_theoretical = ff_theoretical,

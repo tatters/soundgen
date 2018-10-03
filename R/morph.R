@@ -8,33 +8,37 @@
 #'   \code{\link{soundgen}} that produce the two target sounds between which
 #'   morphing will occur. Character strings containing the full call to soundgen
 #'   are also accepted (see examples)
-#' @param nMorphs the length of morphing sequence, including target sounds
-#' @param playMorphs if TRUE, the morphing sequence will be played
+#' @param nMorphs the number of morphs to produce, including target sounds
+#' @param playMorphs if TRUE, the morphs will be played
 #' @param savePath if it is the path to an existing directory, morphs will be
 #'   saved there as individual .wav files (defaults to NA)
 #' @param samplingRate sampling rate of output, Hz. NB: must be the same as in
 #'   \code{formula1} and \code{formula2}!
 #' @return A list of two sublists (\code{$formulas} and \code{$sounds}), each
-#'   sublist of length nMorphs. For ex., the formula for the second hybrid is
+#'   of length \code{nMorphs}. For ex., the formula for the second hybrid is
 #'   \code{m$formulas[[2]]}, and the waveform is \code{m$sounds[[2]]}
 #' @export
 #' @examples
 #' # write two formulas or copy-paste them from soundgen_app() or presets:
+#' playback = c(TRUE, FALSE)[2]
+#' # [a] to barking
 #' m = morph(formula1 = list(repeatBout = 2),
 #'           # equivalently: formula1 = 'soundgen(repeatBout = 2)',
 #'           formula2 = presets$Misc$Dog_bark,
-#'           nMorphs = 5, playMorphs = FALSE)
+#'           nMorphs = 5, playMorphs = playback)
 #'  # use $formulas to access formulas for each morph, $sounds for waveforms
 #'  # m$formulas[[4]]
 #'  # playme(m$sounds[[3]])
 #'
 #' \dontrun{
+#' # morph intonation and vowel quality
 #' m = morph(
 #'   'soundgen(pitch = c(300, 250, 400), formants = c(350, 2900, 3600, 4700))',
 #'   'soundgen(pitch = c(300, 700, 500, 300), formants = c(800, 1250, 3100, 4500))',
-#'   nMorphs = 5, playMorphs = TRUE
+#'   nMorphs = 5, playMorphs = playback
 #' )
 #'
+#' # from a grunt of disgust to a moan of pleasure
 #' m = morph(
 #'   formula1 = 'soundgen(sylLen = 180, pitch = c(160, 160, 120), rolloff = -12,
 #'     nonlinBalance = 70, subFreq = 75, subDep = 35, jitterDep = 2,
@@ -45,7 +49,7 @@
 #'     rolloff = c(-18, -16, -30), ampl = c(0, -10), formants = c(950, 1700, 3700),
 #'     noise = data.frame(time = c(0, 300, 440), value = c(-35, -25, -65)),
 #'     mouth = c(.4, .5), rolloffNoise = -5, attackLen = 30)',
-#'   nMorphs = 8, playMorphs = TRUE
+#'   nMorphs = 8, playMorphs = playback
 #' )
 #' }
 morph = function(formula1,

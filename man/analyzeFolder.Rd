@@ -22,13 +22,12 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
   smoothVars = c("pitch", "dom"), summary = TRUE,
   summaryStats = c("mean", "median", "sd"), plot = FALSE,
-  showLegend = TRUE, savePlots = FALSE, savePath = NA,
-  plotSpec = TRUE, specPlot = NULL, pitchPlot = list(col = rgb(0, 0,
-  1, 0.75), lwd = 3), candPlot = list(levels = c("autocor", "spec",
-  "dom", "cep"), col = c("green", "red", "orange", "violet"), pch = c(16,
-  2, 3, 7), cex = 2), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
-  main = NULL, width = 900, height = 500, units = "px", res = NA,
-  ...)
+  showLegend = TRUE, savePlots = FALSE, plotSpec = TRUE,
+  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
+  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2),
+  ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
+  width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -217,14 +216,7 @@ acoustic characteristic}
 
 \item{savePlots}{if TRUE, saves plots as .png files}
 
-\item{savePath}{if a valid path is specified, a plot is saved in this folder
-(defaults to NA)}
-
 \item{plotSpec}{if \code{FALSE}, the spectrogram will not be plotted}
-
-\item{specPlot}{deprecated since soundgen 1.1.2. Pass its arguments directly
-to the main function or set \code{plotSpec = FALSE} to remove the
-spectrogram}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{NULL} or \code{NA} to suppress}

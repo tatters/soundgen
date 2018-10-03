@@ -619,6 +619,7 @@ scaleNoiseAnchors = function(noiseTime, sylLen_old, sylLen_new) {
 #'   the effect with
 #' @param effect_on vector of length nGC specifying glottal cycles to which the
 #'   effect should be applied (0 = off, 1 = on)
+#' @keywords internal
 #' @examples
 #' plot(soundgen:::wiggleGC(dep = 5 / 12, len = c(3, 50), nGC = 100,
 #'               pitch_per_gc = rnorm(100, 150, 10),

@@ -79,8 +79,8 @@ existing sound. The principle is to mutate control parameters, trying to
 improve fit to target. The currently implemented optimization algorithm is
 simple hill climbing. Disclaimer: this function is experimental and may or
 may not work for particular tasks. It is intended as a supplement to - not
-replacement of - manual optimization. See the vignette on sound generation
-for more information.
+replacement of - manual optimization. See vignette('sound_generation',
+package = 'soundgen') for more information.
 }
 \examples{
 playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples

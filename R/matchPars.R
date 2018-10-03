@@ -7,8 +7,8 @@
 #' improve fit to target. The currently implemented optimization algorithm is
 #' simple hill climbing. Disclaimer: this function is experimental and may or
 #' may not work for particular tasks. It is intended as a supplement to - not
-#' replacement of - manual optimization. See the vignette on sound generation
-#' for more information.
+#' replacement of - manual optimization. See vignette('sound_generation',
+#' package = 'soundgen') for more information.
 #'
 #' @return Returns a list of length 2: \code{$history} contains the tried
 #'   parameter values together with their fit to target (\code{$history$sim}),

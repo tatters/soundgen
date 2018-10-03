@@ -5,7 +5,8 @@
 #' Produces the spectrogram of a sound using short-term Fourier transform. This
 #' is a simplified version of \code{\link[seewave]{spectro}} with fewer plotting
 #' options, but with added routines for noise reduction, smoothing in time and
-#' frequency domains, and controlling contrast and brightness.
+#' frequency domains, and controlling contrast and brightness. It also provides
+#' an options to plot the oscillogram on a dB scale.
 #' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if
@@ -560,7 +561,7 @@ getFrameBank = function(sound,
 #' Algorithm: centers and normalizes the sound, then takes a logarithm of the
 #' positive part and a flipped negative part.
 #' @return Returns the input waveform on a dB scale: a vector with
-#'   range from `-range` to `range`.
+#'   range from `-dynamicRange` to `dynamicRange`.
 #' @param x path to a .wav file or a CENTERED (mean ~= 0) vector of amplitudes
 #'   with specified samplingRate
 #' @param dynamicRange dynamic range of the oscillogram, dB

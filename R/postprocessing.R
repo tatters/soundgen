@@ -167,8 +167,8 @@ fade = function(x,
 #' Flat envelope
 #'
 #' Flattens the amplitude envelope of a waveform. This is achieved by dividing
-#' the waveform by some function of its smoothed amplitude envelope (peak or
-#' root mean square).
+#' the waveform by some function of its smoothed amplitude envelope (Hilbert,
+#' peak or root mean square).
 #' @param sound input vector oscillating about zero
 #' @param windowLength the length of smoothing window, ms
 #' @param samplingRate the sampling rate, Hz. Only needed if the length of
@@ -186,18 +186,16 @@ fade = function(x,
 #' @export
 #' @examples
 #' a = rnorm(500) * seq(1, 0, length.out = 500)
-#' b = flatEnv(a, plot = TRUE, killDC = TRUE,
-#'             windowLength_points = 5)         # too short
-#' c = flatEnv(a, plot = TRUE, killDC = TRUE,
-#'             windowLength_points = 250)       # too long
-#' d = flatEnv(a, plot = TRUE, killDC = TRUE,
-#'             windowLength_points = 50)        # about right
+#' b = flatEnv(a, plot = TRUE, windowLength_points = 5)    # too short
+#' c = flatEnv(a, plot = TRUE, windowLength_points = 250)  # too long
+#' d = flatEnv(a, plot = TRUE, windowLength_points = 50)   # about right
 #'
 #' \dontrun{
 #' s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE, osc = TRUE)
 #' # playme(s)
-#' s_flat = flatEnv(s, plot = TRUE, windowLength = 50)
-#' # playme(s_flat)
+#' s_flat1 = flatEnv(s, plot = TRUE, windowLength = 50, method = 'hil')
+#' s_flat2 = flatEnv(s, plot = TRUE, windowLength = 10, method = 'rms')
+#' # playme(s_flat2)
 #'
 #' # Remove DC offset
 #' s1 = c(rep(0, 50), runif(1000, -1, 1), rep(0, 50)) +

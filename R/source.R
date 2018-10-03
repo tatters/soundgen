@@ -4,18 +4,15 @@
 #'
 #' Generates noise of length \code{len} and with spectrum defined by linear
 #' decay of \code{rolloffNoise} dB/kHz above \code{noiseFlatSpec} Hz OR by a
-#' specified filter \code{spectralEnvelope}. This function is called internally by
-#' \code{\link{soundgen}}, but it may be more convenient to call it directly
+#' specified filter \code{spectralEnvelope}. This function is called internally
+#' by \code{\link{soundgen}}, but it may be more convenient to call it directly
 #' when synthesizing non-biological noises defined by specific spectral and
 #' amplitude envelopes rather than formants: the wind, whistles, impact noises,
 #' etc. See \code{\link{fart}} and \code{\link{beat}} for similarly simplified
 #' functions for tonal non-biological sounds.
 #'
-#' Algorithm: paints a spectrum with desired characteristics, sets phase to
-#' zero, and generates a time sequence via inverse FFT. Noise can then be used
-#' as an additional source to be added to the glottal source AFTER the glottal
-#' source has been formant-filtered, or BEFORE formant-filtering for glottal
-#' breathing noise.
+#' Algorithm: paints a spectrogram with desired characteristics, sets phase to
+#' zero, and generates a time sequence via inverse FFT.
 #' @param len length of output
 #' @param spectralEnvelope (optional): as an alternative to using rolloffNoise,
 #'   we can provide the exact filter - a vector of non-negative numbers
@@ -797,6 +794,13 @@ generateEpoch = function(pitch_per_gc,
 #' @examples
 #' f = fart()
 #' # playme(f)
+#'
+#' \dontrun{
+#' while (TRUE) {
+#'   fart(sylLen = 200, temperature = .4, play = TRUE)
+#'   Sys.sleep(rexp(1, rate = 1))
+#' }
+#' }
 fart = function(glottis = c(350, 700),
                 glottisAnchors = 'deprecated',
                 pitch = 75,
@@ -920,7 +924,11 @@ fart = function(glottis = c(350, 700),
 #' to be very short.
 #' @inheritParams soundgen
 #' @param nSyl the number of syllables to generate
+#' @param sylLen average duration of each syllable, ms
 #' @param pauseLen average duration of pauses between syllables, ms
+#' @param pitch fundamental frequency, Hz - a vector or data.frame(time = ...,
+#'   value = ...)
+#' @param pitchAnchors same of pitch (deprecated)
 #' @param fadeOut if TRUE, a linear fade-out is applied to the entire syllable
 #' @return Returns a non-normalized waveform centered at zero.
 #' @export
@@ -946,7 +954,7 @@ beat = function(nSyl = 10,
                 sylLen = 200,
                 pauseLen = 50,
                 pitch = c(200, 10),
-                pitchAnchors = c(200, 10),
+                pitchAnchors = 'deprecated',
                 samplingRate = 16000,
                 fadeOut = TRUE,
                 play = FALSE) {

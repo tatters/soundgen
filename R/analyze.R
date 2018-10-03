@@ -99,9 +99,6 @@
 #' @param showLegend if TRUE, adds a legend with pitch tracking methods
 #' @param savePath if a valid path is specified, a plot is saved in this folder
 #'   (defaults to NA)
-#' @param specPlot deprecated since soundgen 1.1.2. Pass its arguments directly
-#'   to the main function or set \code{plotSpec = FALSE} to remove the
-#'   spectrogram
 #' @param plotSpec if \code{FALSE}, the spectrogram will not be plotted
 #' @param candPlot a list of graphical parameters for displaying
 #' individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress
@@ -252,7 +249,6 @@ analyze = function(x,
                    showLegend = TRUE,
                    savePath = NA,
                    plotSpec = TRUE,
-                   specPlot = NULL,
                    pitchPlot = list(
                      col = rgb(0, 0, 1, .75),
                      lwd = 3
@@ -273,10 +269,6 @@ analyze = function(x,
                    res = NA,
                    ...) {
   ## preliminaries
-  # deprecated args
-  if (!missing(specPlot)) {
-    message('specPlot is deprecated; pass its arguments directly to the main function or set plotSpec = FALSE to remove the spectrogram')
-  }
   if ('osc' %in% names(match.call()) |
       'osc_dB' %in% names(match.call())) {
     # we are working with frameBank, not raw waveform
@@ -1019,9 +1011,7 @@ analyzeFolder = function(myfolder,
                          plot = FALSE,
                          showLegend = TRUE,
                          savePlots = FALSE,
-                         savePath = NA,
                          plotSpec = TRUE,
-                         specPlot = NULL,
                          pitchPlot = list(
                            col = rgb(0, 0, 1, .75),
                            lwd = 3
@@ -1047,14 +1037,6 @@ analyzeFolder = function(myfolder,
   # check the size of all files in the target folder
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
 
-  # deprecated args
-  if (!missing(specPlot)) {
-    message('specPlot is deprecated; pass its arguments directly to the main function or set plotSpec = FALSE to remove the spectrogram')
-  }
-  if (!missing(savePath)) {
-    message('savePath is deprecated; use savePlots = TRUE instead')
-  }
-
   # as.list(match.call()) also works, but we want to get default args as well,
   # since plot should default to TRUE for analyze() and FALSE for analyzeFolder(),
   # and summary vice versa.
@@ -1063,7 +1045,7 @@ analyzeFolder = function(myfolder,
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
     'myfolder' , 'htmlPlots', 'verbose', 'savePlots',
-    'specPlot', 'pitchPlot', 'candPlot')]
+    'pitchPlot', 'candPlot')]
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
   # add plot pars correctly, without flattening the lists

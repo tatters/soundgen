@@ -5,8 +5,8 @@
 \title{Control rolloff of harmonics}
 \usage{
 getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -6,
-  rolloffOct = -3, rolloffParab = 0, rolloffParabHarm = 3,
-  rolloffParabCeiling = NULL, rolloffKHz = -3, baseline = 200,
+  rolloffOct = 0, rolloffParab = 0, rolloffParabHarm = 3,
+  rolloffParabCeiling = NULL, rolloffKHz = 0, baseline = 200,
   dynamicRange = 80, samplingRate = 16000, plot = FALSE)
 }
 \arguments{
@@ -53,8 +53,9 @@ for plotting purposes)}
 }
 \value{
 Returns a matrix of amplitude multiplication factors for adjusting
-  the amplitude of harmonics relative to f0. Each row of output contains one
-  harmonic, and each column contains one glottal cycle.
+  the amplitude of harmonics relative to f0 (1 = no adjustment, 0 = silent).
+  Each row of output contains one harmonic, and each column contains one
+  glottal cycle.
 }
 \description{
 Harmonics are generated as separate sine waves. But we don't want each
@@ -81,12 +82,12 @@ rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
   rolloffOct = -2, plot = TRUE)
 
 # variable f0: the lower f0, the more harmonics are non-zero
-rolloff = getRolloff(pitch_per_gc = c(150, 800, 3000),
-  rolloffOct = 0, plot = TRUE)
+rolloff = getRolloff(pitch_per_gc = c(150, 400, 800),
+  rolloffOct = 0, rolloffKHz = -3, plot = TRUE)
 # without the correction for f0 (rolloffKHz),
   # high-pitched sounds have the same rolloff as low-pitched sounds,
   # producing unnaturally strong high-frequency harmonics
-rolloff = getRolloff(pitch_per_gc = c(150, 800, 3000),
+rolloff = getRolloff(pitch_per_gc = c(150, 400, 800),
   rolloffOct = 0, rolloffKHz = 0, plot = TRUE)
 
 # parabolic adjustment of lower harmonics
@@ -119,15 +120,15 @@ rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
 # Note: getRolloff() is called internally by soundgen()
 # using the data.frame format for all vectorized parameters.
 # Compare:
-s1 = soundgen(sylLen = 1000, pitchAnchors = 250,
+s1 = soundgen(sylLen = 1000, pitch = 250,
               rolloff = c(-24, -2, -18), plot = TRUE)
-s2 = soundgen(sylLen = 1000, pitchAnchors = 250,
+s2 = soundgen(sylLen = 1000, pitch = 250,
               rolloff = data.frame(time = c(0, .2, 1),
                                    value = c(-24, -2, -18)),
               plot = TRUE)
 
 # Also works for rolloffOct, rolloffParab, etc:
-s3 = soundgen(sylLen = 1000, pitchAnchors = 250,
+s3 = soundgen(sylLen = 1000, pitch = 250,
              rolloffParab = 20, rolloffParabHarm = 1:15, plot = TRUE)
 }
 }

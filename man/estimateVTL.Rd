@@ -25,11 +25,13 @@ Returns the estimated vocal tract length in cm.
 }
 \description{
 Estimates the length of vocal tract based on formant frequencies, assuming
-that the vocal tract can be modeled as a tube open as both ends. Algorithm:
+that the vocal tract can be modeled as a tube open at both ends. Algorithm:
 first formant dispersion is estimated using the regression method described
 in Reby et al. (2005) "Red deer stags use formants as assessment cues during
 intrasexual agonistic interactions". The length of vocal tract is then
-calculated as speed of sound / 2 / formant dispersion.
+calculated as \eqn{speed of sound / 2 / formant dispersion}. See also
+\code{\link{schwa}} for VTL estimation with additional information on formant
+frequencies.
 }
 \examples{
 estimateVTL(NA)

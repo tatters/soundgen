@@ -2,9 +2,9 @@
 
 #' Convert Hz to semitones
 #'
-#' Converts from Hz to semitones above C-5 (~0.5109875 Hz). This may not seem very
-#' useful, but note that (1) this gives you a nice logarithmic scale for
-#' generating natural pitch transitions, (2) with the added benefit of getting
+#' Converts from Hz to semitones above C-5 (~0.5109875 Hz). This may not seem
+#' very useful, but note that this gives us a nice logarithmic scale for
+#' generating natural pitch transitions with the added benefit of getting
 #' musical notation for free from \code{notesDict} (see examples).
 #' @param h vector or matrix of frequencies (Hz)
 #' @param ref frequency of the reference value (defaults to C-5, 0.51 Hz)
@@ -13,14 +13,15 @@
 #' s = HzToSemitones(c(440, 293, 115))
 #' # to convert to musical notation
 #' notesDict$note[1 + round(s)]
-#' # note the "1 +": semitones ABOVE C0, i.e. notesDict[1, ] is C0
+#' # note the "1 +": semitones ABOVE C-5, i.e. notesDict[1, ] is C-5
 HzToSemitones = function(h, ref = 0.5109875) {
   return(log2(h / ref) * 12)
 }
 
 #' Convert semitones to Hz
 #'
-#' Converts from semitones above C-5 (~0.5109875 Hz) to Hz. See \code{\link{HzToSemitones}}
+#' Converts from semitones above C-5 (~0.5109875 Hz) to Hz. See
+#' \code{\link{HzToSemitones}}
 #' @param s vector or matrix of frequencies (semitones above C0)
 #' @param ref frequency of the reference value (defaults to C-5, 0.51 Hz)
 #' @export
@@ -112,11 +113,11 @@ downsample = function(s, srNew = 10, srOld = 120, minLen = 3){
 
 #' Entropy
 #'
-#' Returns Weiner or Shannon entropy of an input vector such as the power
-#' spectrum of a sound. Non-positive input values are converted a small positive
-#' number (convertNonPositive). If all elements are zero, returns NA.
+#' Returns Weiner or Shannon entropy of an input vector such as the spectrum of
+#' a sound. Non-positive input values are converted to a small positive number
+#' (convertNonPositive). If all elements are zero, returns NA.
 #'
-#' @param x vector of positive floats, such as a power spectrum
+#' @param x vector of positive floats
 #' @param type 'shannon' for Shannon (information) entropy, 'weiner' for Weiner
 #'   entropy
 #' @param normalize if TRUE, Shannon entropy is normalized by the length of
@@ -303,6 +304,7 @@ Mode = function(x) {
 #' @export
 #' @examples
 #' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .2))
+#' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .5))
 #' plot(getRandomWalk(len = 1000, rw_range = 15,
 #'   rw_smoothing = .2, trend = c(.5, -.5)))
 #' plot(getRandomWalk(len = 1000, rw_range = 15,

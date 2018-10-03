@@ -48,3 +48,4 @@ plot(soundgen:::wiggleGC(dep = c(1/12, 10/12), len = c(3, 50), nGC = 100,
               rw = rep(1, 100), effect_on = rep(1, 100)),
      type = 'b')
 }
+\keyword{internal}

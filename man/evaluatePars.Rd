@@ -29,8 +29,8 @@ key, e.g. 'nBursts' or 'pitch_median'}
 \item{fitnessFun}{the function used to evaluate how well the output of
 \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
 perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
-good fitness criterion is \code{function(x) 1 - cor(log(x), log(key), use =
-'pairwise.complete.obs')}}
+good fitness criterion is "function(x) 1 - cor(log(x), log(key), use =
+'pairwise.complete.obs')"}
 
 \item{myfolder}{path to where the .wav files live}
 
