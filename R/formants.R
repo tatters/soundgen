@@ -807,6 +807,13 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
 #' @param sound numeric vector with \code{samplingRate}
 #' @param action 'add' = add formants to the sound, 'remove' = remove formants
 #'   (inverse filtering)
+#' @param spectralEnvelope (optional): as an alternative to specifying formant
+#'   frequencies, we can provide the exact filter - a vector of non-negative
+#'   numbers specifying the power in each frequency bin on a linear scale
+#'   (interpolated to length equal to windowLength_points/2). A matrix
+#'   specifying the filter for each STFT step is also accepted. The easiest way
+#'   to create this matrix is to call soundgen:::getSpectralEnvelope or to use
+#'   the spectrum of a recorded sound
 #' @param formDrift,formDisp scaling factors for the effect of temperature on
 #'   formant drift and dispersal, respectively
 #' @param windowLength_points length of FFT window, points

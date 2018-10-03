@@ -18,12 +18,13 @@ component, dB/kHz (anchor format)}
 
 \item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
 
-\item{spectralEnvelope}{(optional): as an alternative to using rolloffNoise, we
-can provide the exact filter - a vector of non-negative numbers specifying
-the power in each frequency bin on a linear scale (interpolated to length
-equal to windowLength_points/2). A matrix specifying the filter for each
-STFT step is also accepted. The easiest way to create this matrix is to
-call soundgen:::getSpectralEnvelope or use the spectrum of a recorded sound}
+\item{spectralEnvelope}{(optional): as an alternative to using rolloffNoise,
+we can provide the exact filter - a vector of non-negative numbers
+specifying the power in each frequency bin on a linear scale (interpolated
+to length equal to windowLength_points/2). A matrix specifying the filter
+for each STFT step is also accepted. The easiest way to create this matrix
+is to call soundgen:::getSpectralEnvelope or to use the spectrum of a
+recorded sound}
 
 \item{filterNoise}{(deprecated) same as spectralEnvelope}
 

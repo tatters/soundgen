@@ -239,7 +239,7 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
 }
 \description{
 Acoustic analysis of a single sound file: pitch tracking, basic spectral
-characteristics, and estimated loudness (see \code{\link{getLoudness}}. The
+characteristics, and estimated loudness (see \code{\link{getLoudness}}). The
 default values of arguments are optimized for human non-linguistic
 vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
 details.

@@ -446,7 +446,7 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, savePath = '~/Downloads',
             width = 900, height = 500, units = 'px')
 ```
 
-This creates a file called 'sound.jpg' 900 x 500 pixels in size in the indicated folder. This is mostly useful when you do batch processing of multiple files with `analyzeFolder` and want to save the plots for manual checking of extracted plot contours (see below).
+This creates a file called 'sound.png' 900 x 500 pixels in size in the indicated folder. This is mostly useful when you do batch processing of multiple files with `analyzeFolder` and want to save the plots for manual checking of extracted plot contours (see below).
 
 ## Batch processing with `analyzeFolder`
 You may not feel too excited to learn that soundgen contains a wrapper around `analyze` that is meant for analyzing all .wav files in a folder. Indeed, calling `analyze` in a loop will achieve the same result. However, `analyzedFolder` can save you a bit of manual coding. If you want to preserve frame-by-frame information for each file in a folder, you can either loop through the files manually or call `analyzeFolder(myfolder, summary = FALSE)`, which returns a list of dataframes. In contrast, `analyzeFolder(myfolder, summary = TRUE)` returns a single dataframe, in which each acoustic predictor is summarized as the mean, median, and SD of frame-by-frame measurements. Since this is the kind of data you would normally use as input for things like classification of sounds or cluster analysis, this is a convenient shortcut for generating an acoustic dataset for further statistical modeling. In addition, `analyzeFolder` allows you to simultaneously save the plots and prints out estimated time to completion. 

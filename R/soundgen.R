@@ -1,4 +1,4 @@
-# TODO: soundgen: perhaps lipRad shouldn't affect the output if formant = NULL (don't get any spectral env at all, just flat?); addFormants etc: check spectralEnvelope integration instead of filterNoise etc; speed up interpolMatrix - maybe just approx instead of getSmoothContour; check that all plots are saved as .png instead of .jpg; automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: soundgen: perhaps lipRad shouldn't affect the output if formant = NULL (don't get any spectral env at all, just flat?); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

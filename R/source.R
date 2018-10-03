@@ -17,12 +17,13 @@
 #' source has been formant-filtered, or BEFORE formant-filtering for glottal
 #' breathing noise.
 #' @param len length of output
-#' @param spectralEnvelope (optional): as an alternative to using rolloffNoise, we
-#'   can provide the exact filter - a vector of non-negative numbers specifying
-#'   the power in each frequency bin on a linear scale (interpolated to length
-#'   equal to windowLength_points/2). A matrix specifying the filter for each
-#'   STFT step is also accepted. The easiest way to create this matrix is to
-#'   call soundgen:::getSpectralEnvelope or use the spectrum of a recorded sound
+#' @param spectralEnvelope (optional): as an alternative to using rolloffNoise,
+#'   we can provide the exact filter - a vector of non-negative numbers
+#'   specifying the power in each frequency bin on a linear scale (interpolated
+#'   to length equal to windowLength_points/2). A matrix specifying the filter
+#'   for each STFT step is also accepted. The easiest way to create this matrix
+#'   is to call soundgen:::getSpectralEnvelope or to use the spectrum of a
+#'   recorded sound
 #' @param filterNoise (deprecated) same as spectralEnvelope
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points

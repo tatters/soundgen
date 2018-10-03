@@ -55,7 +55,7 @@
 #' @param burstPlot a list of graphical parameters for displaying the bursts
 #' @param col,xlab,ylab,main main plotting parameters
 #' @param width,height,units,res parameters passed to
-#'   \code{\link[grDevices]{jpeg}} if the plot is saved
+#'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link[graphics]{plot}}
 #' @return If \code{summary = TRUE}, returns only a summary of the number and
 #'   spacing of syllables and vocal bursts. If \code{summary = FALSE}, returns a
@@ -220,7 +220,7 @@ segment = function(x,
       # make sure the last character of savePath is "/"
       last_char = substr(savePath, nchar(savePath), nchar(savePath))
       if(last_char != '/') savePath = paste0(savePath, '/')
-      jpeg(filename = paste0(savePath, plotname, ".jpg"),
+      png(filename = paste0(savePath, plotname, ".png"),
            width = width, height = height, units = units, res = res)
     }
     plot(x = envelope$time, y = envelope$value, type = 'l', col = col,
@@ -277,7 +277,7 @@ segment = function(x,
 #'
 #' @param myfolder full path to target folder
 #' @inheritParams segment
-#' @param savePlots if TRUE, saves plots as .jpg files
+#' @param savePlots if TRUE, saves plots as .png files
 #' @param htmlPlots if TRUE, saves an html file with clickable plots
 #' @param verbose,reportEvery if TRUE, reports progress every \code{reportEvery}
 #'   files and estimated time left
@@ -290,7 +290,7 @@ segment = function(x,
 #' # http://cogsci.se/publications.html
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
-#' s = segmentFolder(myfolder, verbose = TRUE)
+#' s = segmentFolder(myfolder, verbose = TRUE, savePlot = TRUE)
 #'
 #' # Check accuracy: import a manual count of syllables (our "key")
 #' key = segmentManual  # a vector of 260 integers

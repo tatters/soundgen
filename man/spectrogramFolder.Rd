@@ -53,7 +53,7 @@ FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 \item{...}{other parameters passed to \code{\link{spectrogram}}}
 }
 \description{
-Creates spectrograms of all .wav files in a folder and save them as .jpeg
+Creates spectrograms of all .wav files in a folder and save them as .png
 files in the same folder. This is a lot faster than running
 \code{\link{analyzeFolder}} if you don't need pitch tracking. By default it
 also creates an html file with a list of audio files and their spectrograms
@@ -68,7 +68,7 @@ spectrogramFolder supports plotting both a spectrogram and an oscillogram if
 spectrogramFolder(
   '~/Downloads/temp',
   windowLength = 40, overlap = 75,  # spectrogram pars
-  width = 1500, height = 900,        # passed to jpeg()
+  width = 1500, height = 900,        # passed to png()
   osc = TRUE, osc_dB = TRUE, heights = c(1, 1)
 )
 # note that the folder now also contains an html file with clickable plots

@@ -67,7 +67,7 @@ to NA}
 \item{col, xlab, ylab, main}{main plotting parameters}
 
 \item{width, height, units, res}{parameters passed to
-\code{\link[grDevices]{jpeg}} if the plot is saved}
+\code{\link[grDevices]{png}} if the plot is saved}
 
 \item{sylPlot}{a list of graphical parameters for displaying the syllables}
 

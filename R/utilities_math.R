@@ -826,3 +826,20 @@ interpolMatrix = function(m,
   }
   return(out)
 }
+
+
+#' sampleModif
+#'
+#' Internal soundgen function
+#'
+#' Same as \code{\link[base]{sample}}, but without defaulting to x = 1:x if
+#' length(x) = 1. See
+#' https://stackoverflow.com/questions/7547758/using-sample-with-sample-space-size-1
+#' @param x vector
+#' @param ... other arguments passed to \code{sample}
+#' @keywords internal
+#' @examples
+#' soundgen:::sampleModif(x = 3, n = 1)
+#' # never returns 1 or 2: cf. sample(x = 3, n = 1)
+sampleModif = function(x, ...) x[sample.int(length(x), ...)]
+

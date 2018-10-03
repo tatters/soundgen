@@ -107,7 +107,7 @@ frequency domains, and controlling contrast and brightness.
 }
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise
-sound = soundgen(sylLen = 1000, temperature = 0.001, noiseAnchors = list(
+sound = soundgen(sylLen = 1000, temperature = 0.001, noise = list(
   time = c(0, 1300), value = c(-120, 0)), formantsNoise = list(
   f1 = list(freq = 5000, width = 10000)))
 # playme(sound, samplingRate = 16000)
@@ -136,7 +136,7 @@ spectrogram(sound, samplingRate = 16000, qTime = 0.95)
 # detect 10\% of the noisiest frames based on entropy and remove the pattern
 # found in those frames (in this cases, breathing)
 spectrogram(sound, samplingRate = 16000,  noiseReduction = 1.1,
-  brightness = -2)  # white noise gone
+  brightness = -2)  # white noise attenuated
 
 # apply median smoothing in both time and frequency domains
 spectrogram(sound, samplingRate = 16000, smoothFreq = 5,

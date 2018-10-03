@@ -22,6 +22,14 @@ to schwa. Time stamps for formants and mouthOpening can be specified in ms
 or an any other arbitrary scale. See \code{\link{getSpectralEnvelope}} for
 more details}
 
+\item{spectralEnvelope}{(optional): as an alternative to specifying formant
+frequencies, we can provide the exact filter - a vector of non-negative
+numbers specifying the power in each frequency bin on a linear scale
+(interpolated to length equal to windowLength_points/2). A matrix
+specifying the filter for each STFT step is also accepted. The easiest way
+to create this matrix is to call soundgen:::getSpectralEnvelope or to use
+the spectrum of a recorded sound}
+
 \item{action}{'add' = add formants to the sound, 'remove' = remove formants
 (inverse filtering)}
 

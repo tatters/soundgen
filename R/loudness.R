@@ -144,9 +144,9 @@ getLoudness = function(x,
     # plot(y, type = 'b')
 
     # dB SPL to phons (8 barks ~= 1 kHz, reference value for equal loudness curves)
-    n_phonCurve = which.min(abs(y[8] - as.numeric(names(soundgen::phonCurves))))
+    n_phonCurve = which.min(abs(y[8] - as.numeric(names(phonCurves))))
     # correction curve for frame i
-    curve = soundgen::phonCurves[[n_phonCurve]][1:length(y), ]
+    curve = phonCurves[[n_phonCurve]][1:length(y), ]
     y_phon = y + curve$spl[8] - curve$spl
     # plot(y_phon, type = 'b')
 
