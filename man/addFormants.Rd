@@ -109,29 +109,34 @@ sound_inverse_filt = addFormants(sound_filtered,
 # (see also the same example with noise as source in ?generateNoise)
 data(sheep, package = 'seewave')  # import a recording from seewave
 sound_orig = as.numeric(scale(sheep@left))
+samplingRate = sheep@samp.rate
 sound_orig = sound_orig / max(abs(sound_orig))  # range -1 to +1
 # playme(sound_orig, samplingRate)
-samplingRate = sheep@samp.rate
 pitch = analyze(sound_orig, samplingRate = samplingRate,
   pitchMethod = c('autocor', 'dom'))$pitch
 pitch = pitch[!is.na(pitch)]
-filter = spectrogram(sound_orig, samplingRate = samplingRate, output = 'original')
-sound_unfilt = soundgen(sylLen = length(sound_orig) / samplingRate * 1000,
-  pitch = pitch,
+specEnv_bleating = spectrogram(sound_orig, samplingRate = samplingRate,
+  output = 'original', plot = FALSE)
+# image(t(log(specEnv_bleating)))
+
+# Synthesize source only, with flat spectrum
+sound_unfilt = soundgen(sylLen = 2500, pitch = pitch,
   rolloff = 0, rolloffOct = 0, rolloffKHz = 0,
-  formants = NULL,
-  samplingRate = samplingRate
-)
+  temperature = 0, jitterDep = 0, subDep = 0,
+  formants = NULL, lipRad = 0, samplingRate = samplingRate)
 # playme(sound_unfilt, samplingRate)
+# seewave::meanspec(sound_unfilt, f = samplingRate, dB = 'max0')  # ~flat
+
+# Force spectral envelope to the shape of target
 sound_filt = addFormants(sound_unfilt, formants = NULL,
-  spectralEnvelope = filter, samplingRate = samplingRate)
+  spectralEnvelope = specEnv_bleating, samplingRate = samplingRate)
 # playme(sound_filt, samplingRate)
-# The spectral envelope is similar to the original recording. Compare:
+# The spectral envelope is now similar to the original recording. Compare:
 par(mfrow = c(1, 2))
 seewave::meanspec(sound_orig, f = samplingRate, dB = 'max0', alim = c(-50, 20))
 seewave::meanspec(sound_filt, f = samplingRate, dB = 'max0', alim = c(-50, 20))
 par(mfrow = c(1, 1))
-# NB: the source of excitation in the original is actually a mix of
-# harmonics and noise
+# NB: but the source of excitation in the original is actually a mix of
+# harmonics and noise, while the new sound is purely tonal
 }
 }

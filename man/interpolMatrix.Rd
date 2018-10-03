@@ -4,7 +4,7 @@
 \alias{interpolMatrix}
 \title{Interpolate matrix}
 \usage{
-interpolMatrix(m, nr, nc, interpol = c("approx", "spline", "loess")[1])
+interpolMatrix(m, nr, nc, interpol = c("approx", "spline")[1])
 }
 \arguments{
 \item{m}{input matrix of numeric values}
@@ -23,10 +23,10 @@ Internal soundgen function
 Performs a chosen type of interpolation (linear or smooth) across both rows and columns of a matrix, in effect up- or downsampling a matrix to required dimensions
 }
 \examples{
-m = matrix(1:12, nrow = 3)
-interpolMatrix(m, nr = 10, nc = 7)
-interpolMatrix(m, nr = 10, nc = 7, interpol = 'loess')
-interpolMatrix(m, nr = 2, nc = 7)
-interpolMatrix(m, nr = 2, nc = 2)
+m = matrix(1:12 + rnorm(12, 0, .2), nrow = 3)
+soundgen:::interpolMatrix(m, nr = 10, nc = 7)
+soundgen:::interpolMatrix(m, nr = 10, nc = 7, interpol = 'spline')
+soundgen:::interpolMatrix(m, nr = 2, nc = 7)
+soundgen:::interpolMatrix(m, nr = 2, nc = 2)
 }
 \keyword{internal}

@@ -96,16 +96,18 @@
 #' sound_orig = as.numeric(sheep@left)
 #' samplingRate = sheep@samp.rate
 #' # playme(sound_orig, samplingRate)
-#' spectralEnvelope = spectrogram(sound_orig, samplingRate = samplingRate, output = 'original')
+#' spectralEnvelope = spectrogram(sound_orig, samplingRate = samplingRate,
+#'   output = 'original')
 #' sound_noise = generateNoise(len = length(sound_orig),
 #'   spectralEnvelope = spectralEnvelope, rolloffNoise = 0,
 #'   samplingRate = samplingRate, play = playback)
-#' # The spectral envelope is similar to the original recording,
-#' # but with white noise instead of glottal pulses as source. Compare:
+#' # playme(sound_noise, samplingRate)
+#' # The spectral envelope is similar to the original recording. Compare:
 #' par(mfrow = c(1, 2))
 #' seewave::meanspec(sound_orig, f = samplingRate, dB = 'max0')
 #' seewave::meanspec(sound_noise, f = samplingRate, dB = 'max0')
 #' par(mfrow = c(1, 1))
+#' # However, the excitation source is now white noise.
 #' }
 generateNoise = function(len,
                          rolloffNoise = 0,
@@ -246,8 +248,8 @@ generateNoise = function(len,
       if (ncol(spectralEnvelope) != nc | nrow(spectralEnvelope) != nr) {
         message('Incorrect dimensions of spectralEnvelope matrix. Interpolating...')
         spectralEnvelope = interpolMatrix(spectralEnvelope,
-                                     nr = nr, nc = nc,
-                                     interpol = 'approx')
+                                          nr = nr, nc = nc,
+                                          interpol = 'approx')
       }
     }
   }

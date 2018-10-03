@@ -783,15 +783,15 @@ reportCI = function(n, digits = 2) {
 #' @inheritParams getSmoothContour
 #' @keywords internal
 #' @examples
-#' m = matrix(1:12, nrow = 3)
-#' interpolMatrix(m, nr = 10, nc = 7)
-#' interpolMatrix(m, nr = 10, nc = 7, interpol = 'loess')
-#' interpolMatrix(m, nr = 2, nc = 7)
-#' interpolMatrix(m, nr = 2, nc = 2)
+#' m = matrix(1:12 + rnorm(12, 0, .2), nrow = 3)
+#' soundgen:::interpolMatrix(m, nr = 10, nc = 7)
+#' soundgen:::interpolMatrix(m, nr = 10, nc = 7, interpol = 'spline')
+#' soundgen:::interpolMatrix(m, nr = 2, nc = 7)
+#' soundgen:::interpolMatrix(m, nr = 2, nc = 2)
 interpolMatrix = function(m,
                           nr,
                           nc,
-                          interpol = c("approx", "spline", "loess")[1]) {
+                          interpol = c("approx", "spline")[1]) {
   if (nr < 2) stop('nr must be >1')
   if (nc < 2) stop('nc msut be >1')
 
@@ -802,7 +802,6 @@ interpolMatrix = function(m,
 
   # Downsample columns if necessary
   if (ncol(m) > nc) {
-    # can downsample columns first
     m = m[, seq(1, ncol(m), length.out = nc)]
   }
 
@@ -810,7 +809,7 @@ interpolMatrix = function(m,
   if (nrow(m) < nr) {
     temp = matrix(1, nrow = nr, ncol = ncol(m))
     for (c in 1:ncol(m)) {
-      temp[, c] = getSmoothContour(m[, c], len = nr, interpol = interpol)
+      temp[, c] = do.call(interpol, list(x = m[, c], n = nr))$y
     }
   } else {
     temp = m
@@ -820,7 +819,7 @@ interpolMatrix = function(m,
   if (ncol(m) < nc) {
     out = matrix(1, nrow = nr, ncol = nc)
     for (r in 1:nr) {
-      out[r, ] = getSmoothContour(temp[r, ], len = nc, interpol = interpol)
+      out[r, ] = do.call(interpol, list(x = temp[r, ], n = nc))$y
     }
   } else {
     out = temp
