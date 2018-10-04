@@ -484,7 +484,7 @@ server = function(input, output, session) {
         len = input$nSyl,
         interpol = 'spline',
         plot = TRUE,
-        ylab = 'Pitch delta, semitones',
+        ylab = 'Semitones',
         valueFloor = permittedValues['pitchDeltas', 'low'],
         valueCeiling = permittedValues['pitchDeltas', 'high'],
         ylim = c(permittedValues['pitchDeltas', 'low'],
@@ -566,7 +566,7 @@ server = function(input, output, session) {
     if (is.list(myPars$pitchAnchorsGlobal)) {
       data.frame(
         'Time 0 to 1' = round(myPars$pitchAnchorsGlobal$time, 2),
-        'Pitch delta, semitones' = round(myPars$pitchAnchorsGlobal$value, 0))
+        'Adjustment, semitones' = round(myPars$pitchAnchorsGlobal$value, 0))
     } else {
       'None'
     }
@@ -824,15 +824,17 @@ server = function(input, output, session) {
   })
 
   amplEnvelopeGlobal = reactive({
-    if (input$nSyl > 1) {
-      getSmoothContour(anchors = myPars$amplAnchorsGlobal,
-                       xaxs = "i",
-                       xlim = c(0, durTotal()),
-                       ylim = c(-input$dynamicRange / 2, input$dynamicRange / 2),
-                       valueFloor = -input$dynamicRange / 2,
-                       valueCeiling = input$dynamicRange / 2,
-                       len = durTotal() / 1000 * 100,
-                       samplingRate = 100, plot = TRUE)
+    if (input$nSyl > 1  && is.list(myPars$amplAnchorsGlobal)) {
+      soundgen:::getDiscreteContour(
+        anchors = myPars$amplAnchorsGlobal,
+        len = input$nSyl,
+        interpol = 'spline',
+        ylab = 'dB',
+        ylim = c(-input$dynamicRange / 2, input$dynamicRange / 2),
+        valueFloor = -input$dynamicRange / 2,
+        valueCeiling = input$dynamicRange / 2,
+        plot = TRUE
+      )
     } else {
       plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
       text(x = 5, y = 5, labels = 'Need >1 syllable!', adj = .5, col = 'blue', cex = 1)
@@ -840,40 +842,43 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$plotAmplGlobal_click, {
-    click_x = round(input$plotAmplGlobal_click$x / durTotal(), 2)
-    click_y = round(input$plotAmplGlobal_click$y)
-    # if the click is outside the allowed range of y, re-interpret the click as within the range
-    if (click_y < (-input$dynamicRange / 2)) click_y = -input$dynamicRange / 2
-    if (click_y > (input$dynamicRange / 2)) click_y = input$dynamicRange / 2
+    if (is.list(myPars$amplAnchorsGlobal)) {
+      timeRange = input$nSyl - 1
+      click_x = (input$plotAmplGlobal_click$x - 1) / timeRange  # ranges 0 to 1
+      click_y = round(input$plotAmplGlobal_click$y)
+      # if the click is outside the allowed range of y, re-interpret the click as within the range
+      if (click_y < (-input$dynamicRange / 2)) click_y = -input$dynamicRange / 2
+      if (click_y > (input$dynamicRange / 2)) click_y = input$dynamicRange / 2
 
-    closest_point_in_time = which.min(abs(myPars$amplAnchorsGlobal$time - click_x))
-    delta_x = abs(myPars$amplAnchorsGlobal$time[closest_point_in_time] - click_x)
-    # if the click is near (within 5% of the time range) an existing anchor
-    # point, we update the pitch of this anchor according to click location and time
-    if (delta_x < 0.05) {
-      myPars$amplAnchorsGlobal$value[closest_point_in_time] = click_y
-      if (closest_point_in_time != 1 &
-          closest_point_in_time != length(myPars$amplAnchorsGlobal$time)) {
-        myPars$amplAnchorsGlobal$time[closest_point_in_time] =
-          click_x
+      closest_point_in_time = which.min(abs(myPars$amplAnchorsGlobal$time - click_x))
+      delta_x = abs(myPars$amplAnchorsGlobal$time[closest_point_in_time] - click_x)
+      # if the click is near (within 20% of the time range) an existing anchor
+      # point, we update the pitch of this anchor according to click location and time
+      if (delta_x < 0.2) {
+        myPars$amplAnchorsGlobal$value[closest_point_in_time] = click_y
+        if (closest_point_in_time != 1 &
+            closest_point_in_time != length(myPars$amplAnchorsGlobal$time)) {
+          myPars$amplAnchorsGlobal$time[closest_point_in_time] =
+            click_x
+        }
+      } else {  # otherwise, we simply add the new point as another anchor
+        myPars[['amplAnchorsGlobal']] = data.frame(
+          'time' = c(myPars$amplAnchorsGlobal$time, click_x),
+          'value' = c(myPars$amplAnchorsGlobal$value, click_y)
+        ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc
       }
-    } else {  # otherwise, we simply add the new point as another anchor
-      myPars[['amplAnchorsGlobal']] = data.frame(
-        'time' = c(myPars$amplAnchorsGlobal$time, click_x),
-        'value' = c(myPars$amplAnchorsGlobal$value, click_y)
-      ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc
+      # sort the updated dataframe of anchors to make sure the point are in the
+      # right order (otherwise it's hard to keep track of which are the first and
+      # last anchors - and we have to, since those cannot be removed)
+      idx_order = order(myPars$amplAnchorsGlobal$time)
+      myPars$amplAnchorsGlobal$time = myPars$amplAnchorsGlobal$time[idx_order]
+      myPars$amplAnchorsGlobal$value = myPars$amplAnchorsGlobal$value[idx_order]
     }
-    # sort the updated dataframe of anchors to make sure the point are in the
-    # right order (otherwise it's hard to keep track of which are the first and
-    # last anchors - and we have to, since those cannot be removed)
-    idx_order = order(myPars$amplAnchorsGlobal$time)
-    myPars$amplAnchorsGlobal$time = myPars$amplAnchorsGlobal$time[idx_order]
-    myPars$amplAnchorsGlobal$value = myPars$amplAnchorsGlobal$value[idx_order]
   })
 
   observeEvent(input$plotAmplGlobal_dblclick, {
     ref = as.data.frame(myPars[['amplAnchorsGlobal']])
-    ref$time = ref$time * durTotal()
+    ref$time = ref$time * (input$nSyl - 1) + 1
     closestPoint = nearPoints(ref, input$plotAmplGlobal_dblclick,  xvar = 'time',
                               yvar = 'value', threshold = 100000, maxpoints = 1)
     idx = as.numeric(rownames(closestPoint))
@@ -894,11 +899,16 @@ server = function(input, output, session) {
                                                'value' = c(0, 0))
   })
 
-  output$amplGlobal_anchors = renderTable(expr = data.frame(
-    'Time, ms' = as.integer(round(myPars$amplAnchorsGlobal$time * durTotal(), 0)),
-    'Amplitude' = myPars$amplAnchorsGlobal$value,
-    row.names = 1:length(myPars$amplAnchorsGlobal$time)),
-    digits = 0, align = 'c', rownames = FALSE)
+  output$amplGlobal_anchors = renderTable(expr = {
+    if (is.list(myPars$amplAnchorsGlobal)) {
+      data.frame(
+        'Time 0 to 1' = round(myPars$amplAnchorsGlobal$time, 2),
+        'Adjustment, dB' = round(myPars$amplAnchorsGlobal$value, 0))
+    } else {
+      'None'
+    }
+  },
+  digits = 2, align = 'c', rownames = FALSE)
 
 
   ## O T H E R    P L O T S
@@ -1105,17 +1115,17 @@ server = function(input, output, session) {
                             formants = myPars$formantsNoise,
                             formantDep = input$formantDep,
                             formantDepStoch = 0,
-                            formantWidth = formantWidth,
+                            formantWidth = input$formantWidth,
                             lipRad = input$lipRad,
                             mouthAnchors = myPars$mouthAnchors,
-                            vocalTract = input$vocalTract,
+                            vocalTract = vocalTract(),
                             temperature = input$temperature,
                             samplingRate = input$samplingRate,
                             plot = TRUE,
                             duration = durSyl_withNoise(),
                             xlab = 'Time, ms',
                             ylab = 'Frequency, kHz',
-                            xlim = c(input$spec_ylim[1], input$spec_ylim[2]) * 1000,
+                            ylim = input$spec_ylim,
                             colorTheme = input$spec_colorTheme
         )
       }
