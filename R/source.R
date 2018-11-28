@@ -488,8 +488,9 @@ generateHarmonics = function(pitch,
     # persp3D (as.numeric(rownames(out_pred)), as.numeric(colnames(out_pred)), out_pred, theta=40, phi=50, zlab='rw_smoothing', xlab='Temperature', ylab='# of glottal cycles', colkey=FALSE, ticktype='detailed', cex.axis=0.75)
     rw_smoothing = .9 - temperature * pitchDriftFreq -
       1.2 / (1 + exp(-.008 * (length(pitch_per_gc) - 10))) + .6
-    rw_range = temperature * pitchDriftDep +
-      length(pitch_per_gc) / 1000 / 12
+    # rw_range is 1 semitone per second at temp = .05 and pitchDriftDep = .5 (defaults)
+    rw_range = temperature * pitchDriftDep * 40 *  # 40 * .05 * .5 = 1
+      length(pitch) / pitchSamplingRate / 12
     drift = getRandomWalk(
       len = length(pitch_per_gc),
       rw_range = rw_range,
