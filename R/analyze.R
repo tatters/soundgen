@@ -180,7 +180,11 @@
 #' a = analyze(sound2, samplingRate = 16000, plot = TRUE,
 #'   xlab = 'Time, ms', colorTheme = 'seewave',
 #'   contrast = .5, ylim = c(0, 4),
-#'   candPlot = list(cex = 3, col = c('gray70', 'yellow', 'purple', 'maroon')),
+#'   pitchMethods = c('dom', 'autocor', 'spec'),
+#'   candPlot = list(
+#'     col = c('gray70', 'yellow', 'purple'),  # same order as pitchMethods
+#'     pch = c(1, 3, 5),
+#'     cex = 3),
 #'   pitchPlot = list(col = 'black', lty = 3, lwd = 3))
 #'
 #'# Plot pitch candidates w/o a spectrogram
@@ -253,12 +257,7 @@ analyze = function(x,
                      col = rgb(0, 0, 1, .75),
                      lwd = 3
                    ),
-                   candPlot = list(
-                     levels = c('autocor', 'spec', 'dom', 'cep'),
-                     col = c('green', 'red', 'orange', 'violet'),
-                     pch = c(16, 2, 3, 7),
-                     cex = 2
-                   ),
+                   candPlot = list(),
                    ylim = NULL,
                    xlab = 'Time, ms',
                    ylab = 'kHz',
@@ -814,13 +813,20 @@ analyze = function(x,
     if (nrow(pitchCands) > 0) {
       if (is.list(candPlot)) {
         if (is.null(candPlot$levels)) {
-          candPlot$levels = c('autocor', 'cep', 'spec', 'dom')
+          candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
         }
         if (is.null(candPlot$col)) {
-          candPlot$col = c('green', 'violet', 'red', 'orange')
+          candPlot$col[candPlot$levels == 'autocor'] = 'green'
+          candPlot$col[candPlot$levels == 'spec'] = 'red'
+          candPlot$col[candPlot$levels == 'dom'] = 'orange'
+          candPlot$col[candPlot$levels == 'cep'] = 'violet' # c('green', 'red', 'orange', 'violet')
         }
         if (is.null(candPlot$pch)) {
-          candPlot$pch = c(16, 7, 2, 3)
+          candPlot$pch[candPlot$levels == 'autocor'] = 16
+          candPlot$pch[candPlot$levels == 'spec'] = 2
+          candPlot$pch[candPlot$levels == 'dom'] = 3
+          candPlot$pch[candPlot$levels == 'cep'] = 7
+          # candPlot$pch = c(16, 2, 3, 7)
         }
         if (is.null(candPlot$cex)) {
           candPlot$cex = 2
@@ -854,15 +860,15 @@ analyze = function(x,
       }
       # add a legend
       if (showLegend) {
-        pm_all = c('autocor', 'cep', 'spec', 'dom')
-        pm = which(pm_all %in% pitchMethods)
+        candPlot = as.data.frame(candPlot)
+        candPlot = candPlot[candPlot$levels %in% c(pitchMethods, 'combined'), ]
         legend("topright",
-               legend = c(pm_all[pm], 'combined'),
-               pch = c(candPlot$pch[pm], NA), # c(16, 7, 2, 3, NA)[pm_present],
-               lty = c(rep(NA, length(pm)),
+               legend = c(as.character(candPlot$levels), 'combined'),
+               pch = c(candPlot$pch, NA),
+               lty = c(rep(NA, length(pitchMethods)),
                        ifelse(!is.null(pitchPlot$lty), pitchPlot$lty, 1)),
-               lwd = c(rep(NA, length(pm)), pitchPlot$lwd),
-               col = c(candPlot$col[pm], pitchPlot$col), # c('green', 'violet', 'red', 'orange', 'blue')[pm_present],
+               lwd = c(rep(NA, length(pitchMethods)), pitchPlot$lwd),
+               col = c(as.character(candPlot$col), pitchPlot$col),
                bg = "white")
       }
     }

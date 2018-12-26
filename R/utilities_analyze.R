@@ -90,7 +90,8 @@ analyzeFrame = function(frame,
                bin = bin,
                domSmooth = domSmooth,
                domThres = domThres,
-               pitchFloor = pitchFloor
+               pitchFloor = pitchFloor,
+               pitchCeiling = pitchCeiling
     )
     pitch_array = d$dom_array
     dom = d$dom
@@ -205,7 +206,8 @@ getDom = function(frame,
                   bin,
                   domSmooth,
                   domThres,
-                  pitchFloor
+                  pitchFloor,
+                  pitchCeiling
 ) {
   dom_array = data.frame(
     'pitchCand' = numeric(),
@@ -227,12 +229,13 @@ getDom = function(frame,
                         })
   idx = zoo::index(temp)[zoo::coredata(temp)]
   pitchFloor_idx = which(as.numeric(names(frame)) > pitchFloor / 1000)[1]
-  idx = idx[idx > pitchFloor_idx]
+  pitchCeiling_idx = which(as.numeric(names(frame)) > pitchCeiling / 1000)[1]
+  idx = idx[idx > pitchFloor_idx & idx < pitchCeiling_idx]
 
   if (length(idx) > 0) {
     # lowest dominant freq band - we take the first frequency in the spectrum at
     # least /domThres/ % of the amplitude of peak frequency, but high
-    # enough to be above pitchFloor
+    # enough to be above pitchFloor (and below pitchCeiling)
     dom = as.numeric(names(frame)[idx[1]]) * 1000
     dom_array = data.frame(
       'pitchCand' = dom,
