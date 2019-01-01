@@ -96,9 +96,8 @@ htmlPlots = function(myfolder, myfiles) {
   basenames_stripped = as.character(sapply(
     basenames,
     function(x) substr(x, 1, nchar(x) - 4)
-  )
-  )
-  n = paste0(basenames_stripped, collapse = "', '")
+  ))
+  n = paste0(basenames, collapse = "', '")
   n = paste0("var mylist = ['", n, "'];")
 
   # create an html file to display nice, clickable spectrograms
@@ -126,23 +125,21 @@ htmlPlots = function(myfolder, myfiles) {
       "<div id='container'> </div>",
       "<script>",
       "var sound = [];",
-      "var image = [];",
       "var table = document.createElement('table'), tr, td, row, cell;",
       "for (row = 0; row < mylist.length; row++) {",
-      "  sound[row] = mylist[row] + '.wav';",
-      "  image[row] = mylist[row] + '.png';",
+      "  sound[row] = mylist[row].substring(0, mylist[row].length - 4);",
       "  tr = document.createElement('tr');",
       "  td = document.createElement('td');",
       "  tr.appendChild(td);",
-      "  td.innerHTML = '<img src=\"' + image[row] + '\">';",
-      "  var mysound = sound[row];",
+      "  td.innerHTML = '<img src=\"' + sound[row] + '.png\">';",
+      "  var mysound = mylist[row];",
       "  td.onclick = (function(mysound) {",
       "    return function() {",
       "      var audioElement = document.createElement('audio');",
       "      audioElement.setAttribute('src', mysound);",
       "      audioElement.play();",
       "    };",
-      "  })(sound[row]);",
+      "  })(mysound);",
       "  table.appendChild(tr);",
       "}",
       "document.getElementById('container').appendChild(table);",

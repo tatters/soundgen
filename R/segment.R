@@ -16,10 +16,10 @@
 #' optimization against 260 human vocalizations in Anikin, A. & Persson, T.
 #' (2017). Non-linguistic vocalizations from online amateur videos for emotion
 #' research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
-#' @param x path to a .wav file or a vector of amplitudes with specified
+#' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
-#'   numeric vector, rather than a .wav file)
+#'   numeric vector, rather than an audio file)
 #' @param windowLength,overlap length (ms) and overlap (%) of the smoothing
 #'   window used to produce the amplitude envelope, see
 #'   \code{\link[seewave]{env}}
@@ -136,9 +136,16 @@ segment = function(x,
 
   ## import a sound
   if (class(x) == 'character') {
-    sound = tuneR::readWave(x)
-    samplingRate = sound@samp.rate
-    sound = sound@left
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    samplingRate = sound_wav@samp.rate
+    sound = sound_wav@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = substring(plotname, 1, nchar(plotname) - 4)
     if (is.null(main)) main = plotname
@@ -344,7 +351,7 @@ segmentFolder = function(myfolder,
 
   time_start = proc.time()  # timing
   # open all .wav files in folder
-  filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
+  filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args

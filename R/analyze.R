@@ -277,7 +277,14 @@ analyze = function(x,
 
   # import a sound
   if (class(x) == 'character') {
-    sound_wav = tuneR::readWave(x)
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
@@ -295,7 +302,7 @@ analyze = function(x,
       plotname = ifelse(!missing(main) && !is.null(main), main, '')
     }
   } else {
-    stop('Input not recognized')
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
 
   # calculate scaling coefficient, but don't convert yet,
@@ -1038,7 +1045,7 @@ analyzeFolder = function(myfolder,
                          res = NA,
                          ...) {
   time_start = proc.time()  # timing
-  filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
+  filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
