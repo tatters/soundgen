@@ -478,17 +478,34 @@ Soundgen allows a lot of flexibility when specifying source spectrum. You can ch
 ```{r fig.show = "hold", fig.width = 4, fig.height = 4}
 # strong F0, rolloff with a "shoulder"
 r = getRolloff(rolloff = c(-5, -20),  # rolloff parameters are vectorized
-               rolloffOct = -3,
                rolloffParab = -10, rolloffParabHarm = 13, 
                pitch_per_gc = c(170, 340), plot = TRUE)
 
 # to generate the corresponding sound:
-s = soundgen(sylLen = 1000, rolloff = c(-5, -20), rolloffOct = -3,
+s = soundgen(sylLen = 1000, rolloff = c(-5, -20), rolloffOct = 0,
              rolloffParab = -10, rolloffParabHarm = 13,
              pitch = c(170, 340),  play = playback)
 ```
 
 In the app the relevant parameters are found in the tab "Source / Rolloff". To develop an intuition for source spectrum settings, I recommend practicing with disabled formants in the app (set "Formants prominence" under "Tract / Formants" to 0). This way you can isolate the effects of source spectrum and use the preview plot for instant feedback – it shows the rolloff for the lowest and the highest pitch in your intonation contour. Rolloff parameters are vectorized, but this functionality is only available from R console. However, rolloff also varies over time if temperature is above zero (use `tempEffects$specDep` to control the amount of stochastic variation of rolloff and other spectral characteristics).
+
+### Specifying the strength of each harmonic
+Apart from using `rolloff` and related parameters to control the general shape of excitation spectrum, it is also possible to control each harmonic individually. Say, you have performed inverse filtering on a recording to estimate glottal source, giving you the strength of each harmonic in glottal pulses, and now you wish to hear the sound corresponding to this glottal source. To do so, use the `rolloffExact` argument and supply a matrix of numeric values on a scale of 0 to 1. Each row is one harmonic, and the sound will contain only as many partials as there are rows in `rolloffExact`:
+```{r fig.width = 4, fig.height = 4}
+rolloffExact = matrix(c(.1, .2, 1, .02, .2,  # strength of H1-H5 at time 0
+                        1, .2, .01, .1, .4), # strength of H1-H5 at time 1000
+                      ncol = 2)
+s = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
+             rolloffExact = rolloffExact, 
+             plot = TRUE, ylim = c(0, 4), play = playback)
+```
+
+If you do not want source spectrum to change over time, a single vector instead of a matrix will do:
+```{r fig.width = 4, fig.height = 4}
+s = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
+             rolloffExact = c(.1, .5, .25, 1, .25, .08, .05, .02), 
+             plot = TRUE, ylim = c(0, 4), play = playback)
+```
 
 ### Closed glottis
 If f0 is very low, as in vocal fry or some animal vocalizations like crocodile roaring or elephant rumbling, individual glottal pulses can be both seen on a spectrogram and peiceived as distinct percussion-like acoustic events separated by noticeable pauses. Soundgen can create such sounds by switching to a new mode of production: instead of synthesizing continous sine waves spanning the entire syllable, it creates each glottal pulse individually (each with its full set of harmonics) and then glues them together with pauses in between. 

@@ -325,6 +325,19 @@ generateNoise = function(len,
 #'   dB/octave. The effect is to make loud parts brighter by increasing energy
 #'   in higher frequencies
 #' @keywords internal
+#' @examples
+#' rolloffExact1 = c(.2, .2, 1, .2, .2)
+#' s1 = generateHarmonics(pitch = seq(400, 530, length.out = 1500),
+#'                        rolloffExact = rolloffExact1)
+#' spectrogram(s1, 16000, ylim = c(0, 4))
+#' playme(s1, 16000)
+#'
+#' rolloffExact2 = matrix(c(.2, .2, 1, .2, .2,
+#'                          1, .5, .2, .1, .05), ncol = 2)
+#' s2 = generateHarmonics(pitch = seq(400, 530, length.out = 1500),
+#'                        rolloffExact = rolloffExact2)
+#' spectrogram(s2, 16000, ylim = c(0, 4))
+#' playme(s2, 16000)
 generateHarmonics = function(pitch,
                              glottisAnchors = 0,
                              attackLen = 50,
@@ -344,6 +357,7 @@ generateHarmonics = function(pitch,
                              rolloffParab = 0,
                              rolloffParabHarm = 3,
                              rolloff_perAmpl = 3,
+                             rolloffExact = NULL,
                              temperature = .025,
                              pitchDriftDep = .5,
                              pitchDriftFreq = .125,
@@ -364,7 +378,7 @@ generateHarmonics = function(pitch,
                              dynamicRange = 80) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
-  if (any(vibratoDep$value > 0)) {
+  if (is.list(vibratoDep) && any(vibratoDep$value > 0)) {
     lp = length(pitch)
     for (p in c('vibratoFreq', 'vibratoDep')) {
       old = get(p)
@@ -511,23 +525,35 @@ generateHarmonics = function(pitch,
   pitch_per_gc[pitch_per_gc < pitchFloor] = pitchFloor
 
   ## prepare the harmonic stack
-  # calculate the number of harmonics to generate (from lowest pitch to nyquist)
-  nHarmonics = ceiling((samplingRate / 2 - min(pitch_per_gc)) / min(pitch_per_gc))
-  # get rolloff
-  if (length(rolloff) < nGC) {
-    rolloff = spline(rolloff, n = nGC)$y
+  if (is.null(rolloffExact)) {
+    # calculate the number of harmonics to generate (from lowest pitch to Nyquist)
+    nHarmonics = floor(samplingRate / 2 / min(pitch_per_gc))
+    # get rolloff
+    if (length(rolloff) < nGC) {
+      rolloff = spline(rolloff, n = nGC)$y
+    }
+    rolloff_source = getRolloff(
+      pitch_per_gc = pitch_per_gc,
+      nHarmonics = nHarmonics,
+      rolloff = (rolloff + rolloffAmpl) * rw ^ rolloffDriftDep,
+      rolloffOct = rolloffOct,
+      rolloffKHz = rolloffKHz,
+      rolloffParab = rolloffParab,
+      rolloffParabHarm = rolloffParabHarm,
+      samplingRate = samplingRate,
+      dynamicRange = dynamicRange
+    )
+  } else {
+    rolloff_user = as.matrix(rolloffExact)
+    rolloff_source = interpolMatrix(
+      rolloff_user,
+      nr = nrow(rolloff_user),  # don't change the number of harmonics
+      nc = nGC,                 # interpolate over time
+      interpol = 'approx'
+    )
   }
-  rolloff_source = getRolloff(
-    pitch_per_gc = pitch_per_gc,
-    nHarmonics = nHarmonics,
-    rolloff = (rolloff + rolloffAmpl) * rw ^ rolloffDriftDep,
-    rolloffOct = rolloffOct,
-    rolloffKHz = rolloffKHz,
-    rolloffParab = rolloffParab,
-    rolloffParabHarm = rolloffParabHarm,
-    samplingRate = samplingRate,
-    dynamicRange = dynamicRange
-  )
+  # NB: rolloff_source at this stage should be a matrix WITH NUMBERED ROWS
+
   # NB: this whole pitch_per_gc trick is purely for computational efficiency.
   #   The entire pitch contour can be fed in, but then it takes up to 1 s
   #   per s of audio

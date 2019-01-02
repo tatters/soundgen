@@ -95,6 +95,9 @@ NULL
 #' @param rolloffKHz rolloff changes linearly with f0 by \code{rolloffKHz}
 #'   dB/kHz. For ex., -6 dB/kHz gives a 6 dB steeper basic rolloff as f0 goes up
 #'   by 1000 Hz
+#' @param rolloffExact user-specified exact strength of harmonics: a vector or
+#'   matrix with one row per harmonic, scale 0 to 1 (overrides all other rolloff
+#'   parameters)
 #' @param lipRad the effect of lip radiation on source spectrum, dB/oct (the
 #'   default of +6 dB/oct produces a high-frequency boost when the mouth is
 #'   open)
@@ -279,6 +282,7 @@ soundgen = function(repeatBout = 1,
                     rolloffKHz = -3,
                     rolloffParab = 0,
                     rolloffParabHarm = 3,
+                    rolloffExact = NULL,
                     lipRad = 6,
                     noseRad = 4,
                     mouthOpenThres = 0,
@@ -598,6 +602,7 @@ soundgen = function(repeatBout = 1,
     'rolloffKHz' = rolloffKHz,
     'rolloffParab' = rolloffParab,
     'rolloffParabHarm' = rolloffParabHarm,
+    'rolloffExact' = rolloffExact,
     'temperature' = temperature,
     'pitchDriftDep' = tempEffects$pitchDriftDep,
     'pitchDriftFreq' = tempEffects$pitchDriftFreq,

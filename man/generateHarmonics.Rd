@@ -9,9 +9,9 @@ generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
   jitterDep = 0, jitterLen = 1, vibratoFreq = 5, vibratoDep = 0,
   shimmerDep = 0, shimmerLen = 1, creakyBreathy = 0, rolloff = -9,
   rolloffOct = -3, rolloffKHz = -3, rolloffParab = 0,
-  rolloffParabHarm = 3, rolloff_perAmpl = 3, temperature = 0.025,
-  pitchDriftDep = 0.5, pitchDriftFreq = 0.125, amplDriftDep = 5,
-  subDriftDep = 4, rolloffDriftDep = 3,
+  rolloffParabHarm = 3, rolloff_perAmpl = 3, rolloffExact = NULL,
+  temperature = 0.025, pitchDriftDep = 0.5, pitchDriftFreq = 0.125,
+  amplDriftDep = 5, subDriftDep = 4, rolloffDriftDep = 3,
   randomWalk_trendStrength = 0.5, shortestEpoch = 300, subFreq = 100,
   subDep = 0, amplAnchors = NA, interpol = c("approx", "spline",
   "loess")[3], overlap = 75, samplingRate = 16000, pitchFloor = 75,
@@ -90,6 +90,10 @@ by 1000 Hz}
 dB/octave. The effect is to make loud parts brighter by increasing energy
 in higher frequencies}
 
+\item{rolloffExact}{user-specified exact strength of harmonics: a vector or
+matrix with one row per harmonic, scale 0 to 1 (overrides all other rolloff
+parameters)}
+
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
 
@@ -146,5 +150,19 @@ Internal soundgen function.
 \details{
 Returns one continuous, unfiltered, voiced syllable consisting of several
 sine waves.
+}
+\examples{
+rolloffExact1 = c(.2, .2, 1, .2, .2)
+s1 = generateHarmonics(pitch = seq(400, 530, length.out = 1500),
+                       rolloffExact = rolloffExact1)
+spectrogram(s1, 16000, ylim = c(0, 4))
+playme(s1, 16000)
+
+rolloffExact2 = matrix(c(.2, .2, 1, .2, .2,
+                         1, .5, .2, .1, .05), ncol = 2)
+s2 = generateHarmonics(pitch = seq(400, 530, length.out = 1500),
+                       rolloffExact = rolloffExact2)
+spectrogram(s2, 16000, ylim = c(0, 4))
+playme(s2, 16000)
 }
 \keyword{internal}

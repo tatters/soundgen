@@ -14,22 +14,22 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   jitterLen = 1, jitterDep = 1, vibratoFreq = 5, vibratoDep = 0,
   shimmerDep = 0, shimmerLen = 1, attackLen = 50, rolloff = -9,
   rolloffOct = 0, rolloffKHz = -3, rolloffParab = 0,
-  rolloffParabHarm = 3, lipRad = 6, noseRad = 4,
-  mouthOpenThres = 0, formants = c(860, 1430, 2900), formantDep = 1,
-  formantDepStoch = 20, formantWidth = 1, vocalTract = NA,
-  subFreq = 100, subDep = 100, shortestEpoch = 300, amDep = 0,
-  amFreq = 30, amShape = 0, noise = NULL, noiseAnchors = NULL,
-  formantsNoise = NA, rolloffNoise = -4, noiseFlatSpec = 1200,
-  mouth = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  ampl = NA, amplAnchors = NA, amplGlobal = NA,
-  amplAnchorsGlobal = NA, interpol = c("approx", "spline", "loess")[3],
-  discontThres = 0.05, jumpThres = 0.01, samplingRate = 16000,
-  windowLength = 50, overlap = 75, addSilence = 100,
-  pitchFloor = 1, pitchCeiling = 3500, pitchSamplingRate = 3500,
-  dynamicRange = 80, throwaway = -80, invalidArgAction = c("adjust",
-  "abort", "ignore")[1], plot = FALSE, play = FALSE, savePath = NA,
-  ...)
+  rolloffParabHarm = 3, rolloffExact = NULL, lipRad = 6,
+  noseRad = 4, mouthOpenThres = 0, formants = c(860, 1430, 2900),
+  formantDep = 1, formantDepStoch = 20, formantWidth = 1,
+  vocalTract = NA, subFreq = 100, subDep = 100,
+  shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
+  noise = NULL, noiseAnchors = NULL, formantsNoise = NA,
+  rolloffNoise = -4, noiseFlatSpec = 1200, mouth = data.frame(time =
+  c(0, 1), value = c(0.5, 0.5)), mouthAnchors = data.frame(time = c(0,
+  1), value = c(0.5, 0.5)), ampl = NA, amplAnchors = NA,
+  amplGlobal = NA, amplAnchorsGlobal = NA, interpol = c("approx",
+  "spline", "loess")[3], discontThres = 0.05, jumpThres = 0.01,
+  samplingRate = 16000, windowLength = 50, overlap = 75,
+  addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, dynamicRange = 80, throwaway = -80,
+  invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
+  play = FALSE, savePath = NA, ...)
 }
 \arguments{
 \item{repeatBout}{number of times the whole bout should be repeated}
@@ -137,6 +137,10 @@ by 1000 Hz}
 
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
+
+\item{rolloffExact}{user-specified exact strength of harmonics: a vector or
+matrix with one row per harmonic, scale 0 to 1 (overrides all other rolloff
+parameters)}
 
 \item{lipRad}{the effect of lip radiation on source spectrum, dB/oct (the
 default of +6 dB/oct produces a high-frequency boost when the mouth is

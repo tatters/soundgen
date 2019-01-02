@@ -89,7 +89,7 @@
 #'              rolloffParab = 20, rolloffParabHarm = 1:15, plot = TRUE)
 #' }
 getRolloff = function(pitch_per_gc = c(440),
-                      nHarmonics = 100,
+                      nHarmonics = NULL,
                       rolloff = -6,
                       rolloffOct = 0,
                       rolloffParab = 0,

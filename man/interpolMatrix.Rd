@@ -4,29 +4,35 @@
 \alias{interpolMatrix}
 \title{Interpolate matrix}
 \usage{
-interpolMatrix(m, nr, nc, interpol = c("approx", "spline")[1])
+interpolMatrix(m, nr = NULL, nc = NULL, interpol = c("approx",
+  "spline")[1])
 }
 \arguments{
 \item{m}{input matrix of numeric values}
 
 \item{nr, nc}{target dimensions}
 
-\item{interpol}{the method of smoothing envelopes based on provided anchors:
-'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-= polynomial local smoothing function. NB: this does not affect contours for
-"noise", "glottal", and the smoothing of formants}
+\item{interpol}{interpolation method ('approx' for linear, 'spline' for
+spline)}
 }
 \description{
 Internal soundgen function
 }
 \details{
-Performs a chosen type of interpolation (linear or smooth) across both rows and columns of a matrix, in effect up- or downsampling a matrix to required dimensions
+Performs a chosen type of interpolation (linear or smooth) across both rows
+and columns of a matrix, in effect up- or downsampling a matrix to required
+dimensions
 }
 \examples{
 m = matrix(1:12 + rnorm(12, 0, .2), nrow = 3)
+soundgen:::interpolMatrix(m)  # just returns the original
 soundgen:::interpolMatrix(m, nr = 10, nc = 7)
 soundgen:::interpolMatrix(m, nr = 10, nc = 7, interpol = 'spline')
 soundgen:::interpolMatrix(m, nr = 2, nc = 7)
 soundgen:::interpolMatrix(m, nr = 2, nc = 2)
+
+# input matrices can have a single row/column
+soundgen:::interpolMatrix(matrix(1:5, nrow = 1), nc = 9)
+soundgen:::interpolMatrix(matrix(1:5, ncol = 1), nr = 5, nc = 3)
 }
 \keyword{internal}

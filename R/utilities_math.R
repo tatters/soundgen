@@ -779,23 +779,37 @@ reportCI = function(n, digits = 2) {
 #'
 #' Internal soundgen function
 #'
-#' Performs a chosen type of interpolation (linear or smooth) across both rows and columns of a matrix, in effect up- or downsampling a matrix to required dimensions
+#' Performs a chosen type of interpolation (linear or smooth) across both rows
+#' and columns of a matrix, in effect up- or downsampling a matrix to required
+#' dimensions
 #' @param m input matrix of numeric values
 #' @param nr,nc target dimensions
-#' @inheritParams getSmoothContour
+#' @param interpol interpolation method ('approx' for linear, 'spline' for
+#'   spline)
 #' @keywords internal
 #' @examples
 #' m = matrix(1:12 + rnorm(12, 0, .2), nrow = 3)
+#' soundgen:::interpolMatrix(m)  # just returns the original
 #' soundgen:::interpolMatrix(m, nr = 10, nc = 7)
 #' soundgen:::interpolMatrix(m, nr = 10, nc = 7, interpol = 'spline')
 #' soundgen:::interpolMatrix(m, nr = 2, nc = 7)
 #' soundgen:::interpolMatrix(m, nr = 2, nc = 2)
+#'
+#' # input matrices can have a single row/column
+#' soundgen:::interpolMatrix(matrix(1:5, nrow = 1), nc = 9)
+#' soundgen:::interpolMatrix(matrix(1:5, ncol = 1), nr = 5, nc = 3)
 interpolMatrix = function(m,
-                          nr,
-                          nc,
+                          nr = NULL,
+                          nc = NULL,
                           interpol = c("approx", "spline")[1]) {
-  if (nr < 2) stop('nr must be >1')
-  if (nc < 2) stop('nc msut be >1')
+  if (class(m) != 'matrix') {
+    m = as.matrix(m)
+    warning('non-matrix input m: converting to matrix')
+  }
+  if (is.null(nr)) nr = nrow(m)
+  if (is.null(nc)) nc = ncol(m)
+  # if (nr < 2) stop('nr must be >1')
+  # if (nc < 2) stop('nc must be >1')
 
   # Downsample rows if necessary
   if (nrow(m) > nr) {
@@ -809,9 +823,13 @@ interpolMatrix = function(m,
 
   # Interpolate rows if necessary
   if (nrow(m) < nr) {
-    temp = matrix(1, nrow = nr, ncol = ncol(m))
-    for (c in 1:ncol(m)) {
-      temp[, c] = do.call(interpol, list(x = m[, c], n = nr))$y
+    if (nrow(m) == 1) {
+      temp = matrix(rep(m, nr), nrow = nr, byrow = TRUE)
+    } else {
+      temp = matrix(1, nrow = nr, ncol = ncol(m))
+      for (c in 1:ncol(m)) {
+        temp[, c] = do.call(interpol, list(x = m[, c], n = nr))$y
+      }
     }
   } else {
     temp = m
@@ -819,13 +837,18 @@ interpolMatrix = function(m,
 
   # Interpolate columns if necessary
   if (ncol(m) < nc) {
-    out = matrix(1, nrow = nr, ncol = nc)
-    for (r in 1:nr) {
-      out[r, ] = do.call(interpol, list(x = temp[r, ], n = nc))$y
+    if (ncol(m) == 1) {
+      out = matrix(rep(m, nc), ncol = nc, byrow = FALSE)
+    } else {
+      out = matrix(1, nrow = nr, ncol = nc)
+      for (r in 1:nr) {
+        out[r, ] = do.call(interpol, list(x = temp[r, ], n = nc))$y
+      }
     }
   } else {
     out = temp
   }
+  rownames(out) = 1:nrow(out)  # number rows for generateHarmonics()
   return(out)
 }
 
