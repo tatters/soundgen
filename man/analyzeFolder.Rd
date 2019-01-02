@@ -37,7 +37,7 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
 \item{verbose}{if TRUE, reports progress and estimated time left}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than a .wav file)}
+\code{x} is a numeric vector, rather than an audio file)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}

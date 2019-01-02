@@ -39,7 +39,7 @@ steeper rolloff in the upper part of the spectrum}
 dB/kHz. For ex., -6 dB/kHz gives a 6 dB steeper basic rolloff as f0 goes up
 by 1000 Hz}
 
-\item{baseline}{The "neutral" frequency, at which no adjustment of rolloff
+\item{baseline}{The "neutral" f0, at which no adjustment of rolloff
 takes place regardless of \code{rolloffKHz}}
 
 \item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
@@ -73,15 +73,12 @@ effectively.
 \examples{
 # steady exponential rolloff of -12 dB per octave
 rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-  rolloffOct = 0, plot = TRUE)
-# the rate of rolloff slows down with each octave
+  rolloffOct = 0, rolloffKHz = 0, plot = TRUE)
+# the rate of rolloff slows down by 1 dB each octave
 rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-  rolloffOct = 2, plot = TRUE)
-# the rate of rolloff increases with each octave
-rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-  rolloffOct = -2, plot = TRUE)
+  rolloffOct = 1, rolloffKHz = 0, plot = TRUE)
 
-# variable f0: the lower f0, the more harmonics are non-zero
+# rolloff can be made to depend on f0 using rolloffKHz
 rolloff = getRolloff(pitch_per_gc = c(150, 400, 800),
   rolloffOct = 0, rolloffKHz = -3, plot = TRUE)
 # without the correction for f0 (rolloffKHz),
@@ -118,7 +115,7 @@ rolloff = getRolloff(pitch_per_gc = c(150, 250), rolloffParab = 40,
 
 \dontrun{
 # Note: getRolloff() is called internally by soundgen()
-# using the data.frame format for all vectorized parameters.
+# using the data.frame format for all vectorized parameters
 # Compare:
 s1 = soundgen(sylLen = 1000, pitch = 250,
               rolloff = c(-24, -2, -18), plot = TRUE)

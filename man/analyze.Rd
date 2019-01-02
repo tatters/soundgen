@@ -23,17 +23,16 @@ analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   summaryStats = c("mean", "median", "sd"), plot = TRUE,
   showLegend = TRUE, savePath = NA, plotSpec = TRUE,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
-  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2),
-  ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
-  width = 900, height = 500, units = "px", res = NA, ...)
+  candPlot = list(), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
+  main = NULL, width = 900, height = 500, units = "px", res = NA,
+  ...)
 }
 \arguments{
-\item{x}{path to a .wav file or a vector of amplitudes with specified
+\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
 samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than a .wav file)}
+\code{x} is a numeric vector, rather than an audio file)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
@@ -273,7 +272,11 @@ a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 a = analyze(sound2, samplingRate = 16000, plot = TRUE,
   xlab = 'Time, ms', colorTheme = 'seewave',
   contrast = .5, ylim = c(0, 4),
-  candPlot = list(cex = 3, col = c('gray70', 'yellow', 'purple', 'maroon')),
+  pitchMethods = c('dom', 'autocor', 'spec'),
+  candPlot = list(
+    col = c('gray70', 'yellow', 'purple'),  # same order as pitchMethods
+    pch = c(1, 3, 5),
+    cex = 3),
   pitchPlot = list(col = 'black', lty = 3, lwd = 3))
 
 # Plot pitch candidates w/o a spectrogram

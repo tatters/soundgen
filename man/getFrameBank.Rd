@@ -11,7 +11,7 @@ getFrameBank(sound, samplingRate, windowLength_points, wn, step, zp,
 \item{sound}{numeric vector}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than a .wav file)}
+\code{x} is a numeric vector, rather than an audio file)}
 
 \item{windowLength_points}{length of fft window (points)}
 

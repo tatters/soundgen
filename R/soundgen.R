@@ -1,4 +1,4 @@
-# TODO: more graceful handling of pitch values outside the range in permittedValues (eg simply raise pitchCeiling w/o the need to use invalidArgAction, both in soundgen and soundgen_app); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check the new behavior of rolloffOct; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -275,7 +275,7 @@ soundgen = function(repeatBout = 1,
                     shimmerLen = 1,
                     attackLen = 50,
                     rolloff = -9,
-                    rolloffOct = -3,
+                    rolloffOct = 0,
                     rolloffKHz = -3,
                     rolloffParab = 0,
                     rolloffParabHarm = 3,

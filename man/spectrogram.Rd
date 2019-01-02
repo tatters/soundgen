@@ -16,11 +16,11 @@ spectrogram(x, samplingRate = NULL, dynamicRange = 80,
   frameBank = NULL, duration = NULL, ...)
 }
 \arguments{
-\item{x}{path to a .wav file or a vector of amplitudes with specified
+\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
 samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than a .wav file)}
+\code{x} is a numeric vector, rather than an audio file)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}

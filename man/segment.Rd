@@ -15,11 +15,11 @@ segment(x, samplingRate = NULL, windowLength = 40, overlap = 80,
   ...)
 }
 \arguments{
-\item{x}{path to a .wav file or a vector of amplitudes with specified
+\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
 samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than a .wav file)}
+numeric vector, rather than an audio file)}
 
 \item{windowLength, overlap}{length (ms) and overlap (%) of the smoothing
 window used to produce the amplitude envelope, see

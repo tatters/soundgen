@@ -4,7 +4,8 @@
 \alias{getDom}
 \title{Get lowest dominant frequency band}
 \usage{
-getDom(frame, samplingRate, bin, domSmooth, domThres, pitchFloor)
+getDom(frame, samplingRate, bin, domSmooth, domThres, pitchFloor,
+  pitchCeiling)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -22,6 +23,8 @@ do short-term FFT and take the lowest frequency with amplitude at least
 domThres}
 
 \item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
+
+\item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 }
 \value{
 Returns a list of $dom (NA or numeric) and $dom_array

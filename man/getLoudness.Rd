@@ -10,11 +10,11 @@ getLoudness(x, samplingRate = NULL, windowLength = 30, step = NULL,
   ...)
 }
 \arguments{
-\item{x}{path to a .wav file or a vector of amplitudes with specified
+\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
 samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than a .wav file)}
+\code{x} is a numeric vector, rather than an audio file)}
 
 \item{windowLength}{length of FFT window, ms}
 

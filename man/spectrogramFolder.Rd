@@ -11,7 +11,7 @@ spectrogramFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   res = NA, ...)
 }
 \arguments{
-\item{myfolder}{full path to the folder containing .wav files}
+\item{myfolder}{full path to the folder containing wav/mp3 files}
 
 \item{htmlPlots}{if TRUE, saves an html file with clickable plots}
 
@@ -53,13 +53,13 @@ FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 \item{...}{other parameters passed to \code{\link{spectrogram}}}
 }
 \description{
-Creates spectrograms of all .wav files in a folder and save them as .png
+Creates spectrograms of all wav/mp3 files in a folder and saves them as .png
 files in the same folder. This is a lot faster than running
 \code{\link{analyzeFolder}} if you don't need pitch tracking. By default it
 also creates an html file with a list of audio files and their spectrograms
 in the same folder. If you open it in a browser that supports playing .wav
-files (e.g. Firefox or Chrome), you can view the spetrograms and click on
-them to play each sound. Unlike \code{\link{analyzeFolder}},
+and/or .mp3 files (e.g. Firefox or Chrome), you can view the spetrograms and
+click on them to play each sound. Unlike \code{\link{analyzeFolder}},
 spectrogramFolder supports plotting both a spectrogram and an oscillogram if
 \code{osc = TRUE}.
 }

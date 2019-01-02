@@ -20,7 +20,7 @@
 #' @param rolloffParabCeiling quadratic adjustment is applied only up to
 #'   \code{rolloffParabCeiling}, Hz. If not NULL, it overrides
 #'   \code{rolloffParabHarm}
-#' @param baseline The "neutral" frequency, at which no adjustment of rolloff
+#' @param baseline The "neutral" f0, at which no adjustment of rolloff
 #'   takes place regardless of \code{rolloffKHz}
 #' @param samplingRate sampling rate (needed to stop at Nyquist frequency and
 #'   for plotting purposes)
@@ -33,15 +33,12 @@
 #' @examples
 #' # steady exponential rolloff of -12 dB per octave
 #' rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-#'   rolloffOct = 0, plot = TRUE)
-#' # the rate of rolloff slows down with each octave
+#'   rolloffOct = 0, rolloffKHz = 0, plot = TRUE)
+#' # the rate of rolloff slows down by 1 dB each octave
 #' rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-#'   rolloffOct = 2, plot = TRUE)
-#' # the rate of rolloff increases with each octave
-#' rolloff = getRolloff(pitch_per_gc = 150, rolloff = -12,
-#'   rolloffOct = -2, plot = TRUE)
+#'   rolloffOct = 1, rolloffKHz = 0, plot = TRUE)
 #'
-#' # variable f0: the lower f0, the more harmonics are non-zero
+#' # rolloff can be made to depend on f0 using rolloffKHz
 #' rolloff = getRolloff(pitch_per_gc = c(150, 400, 800),
 #'   rolloffOct = 0, rolloffKHz = -3, plot = TRUE)
 #' # without the correction for f0 (rolloffKHz),
@@ -78,7 +75,7 @@
 #'
 #' \dontrun{
 #' # Note: getRolloff() is called internally by soundgen()
-#' # using the data.frame format for all vectorized parameters.
+#' # using the data.frame format for all vectorized parameters
 #' # Compare:
 #' s1 = soundgen(sylLen = 1000, pitch = 250,
 #'               rolloff = c(-24, -2, -18), plot = TRUE)
@@ -103,6 +100,9 @@ getRolloff = function(pitch_per_gc = c(440),
                       dynamicRange = 80,
                       samplingRate = 16000,
                       plot = FALSE) {
+  # Don't need extra harmonics above Nyquist
+  nHarmonics = min(nHarmonics, floor(samplingRate / 2 / min(pitch_per_gc)))
+
   ## Convert rolloff pars from df to a single number (if static)
   #  or to a vector of length nGC (if dynamic)
   nGC = length(pitch_per_gc)
@@ -149,24 +149,26 @@ getRolloff = function(pitch_per_gc = c(440),
   }
 
   ## Exponential decay
-  deltas = matrix(0, nrow = nHarmonics, ncol = nGC)
+  # adjust rolloff by rolloffKHz for every kHz above "baseline"
+  deltas_kHz = rolloffKHz * (pitch_per_gc - baseline) / 1000
+
+  # adjust rolloff by rolloffOct per octave for each octave above H2
+  deltas_oct = matrix(0, nrow = nHarmonics, ncol = nGC)
   if (sum(rolloffOct != 0) > 0 & nHarmonics > 1) {
     for (h in 2:nHarmonics) {
-      deltas[h, ] = rolloffOct * (pitch_per_gc * h - baseline) / 1000
-      # rolloff changes by rolloffOct per octave for each octave above H2
+      deltas_oct[h, ] = rolloffOct * (log2(h) - 1)
     }
   }
-  # plot(deltas[, 1])
+  # plot(deltas[, 1], type = 'b')
 
+  # create rolloff matrix
   r = matrix(0, nrow = nHarmonics, ncol = nGC)
   for (h in 1:nHarmonics) {
-    r[h, ] = ((rolloff + rolloffKHz *
-               (pitch_per_gc - baseline) / 1000) * log2(h)) + deltas[h,]
-    # note that rolloff is here adjusted as a linear function of
-    #   the difference between current f0 and baseline
-    r[h, which(h * pitch_per_gc >= samplingRate / 2)] = -Inf # to avoid
-    # aliasing, we discard all harmonics above Nyquist frequency
+    r[h, ] = (rolloff + deltas_kHz + deltas_oct[h, ]) * log2(h)
+    # to avoid aliasing, we discard all harmonics above Nyquist frequency
+    r[h, which(h * pitch_per_gc >= samplingRate / 2)] = -Inf
   }
+  # plot(r[, 1], type = 'b')
 
   ## QUADRATIC term affecting the first rolloffParabHarm harmonics only
   if (any(rolloffParab != 0)) {
