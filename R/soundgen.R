@@ -1,4 +1,4 @@
-# TODO: streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: more graceful handling of pitch values outside the range in permittedValues (eg simply raise pitchCeiling w/o the need to use invalidArgAction, both in soundgen and soundgen_app); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -347,9 +347,11 @@ soundgen = function(repeatBout = 1,
 
 
   # check that values of numeric arguments are valid and within range
-  for (p in rownames(permittedValues)[1:which(
+  pars_to_check = rownames(permittedValues)[1:which(
     rownames(permittedValues) == 'noiseFlatSpec'
-  )]) {
+  )]
+
+  for (p in pars_to_check) {
     gp = try(get(p), silent = TRUE)
     if (class(gp) != "try-error" && is.numeric(gp) &&
           (any(gp < permittedValues[p, 'low']) ||
@@ -366,7 +368,7 @@ soundgen = function(repeatBout = 1,
       } else {
         # reset p to default, with a warning
         assign(noquote(p), permittedValues[p, 'default'])
-        warning(paste0(p, " outside permitted range, reset to ", get(p),
+        warning(paste0("\n", p, " outside permitted range, reset to ", get(p),
                        ". Edit 'permittedValues' or use ",
                        "invalidArgAction = 'ignore' to force."))
       }
@@ -423,17 +425,20 @@ soundgen = function(repeatBout = 1,
       pitchFloor = 0.1
       message('Some pitch values are lower than pitchFloor; lowering to 0.1 Hz')
     }
-    if (any(pitchAnchors$value > samplingRate / 2)) {
+    if (any(pitchAnchors$value >= samplingRate / 2)) {
       samplingRate = max(pitchAnchors$value * 4)
       message(paste('Some pitch values exceed Nyquist frequency;',
                     'raising samplingRate to', samplingRate, 'Hz'))
     }
-    if (any(pitchAnchors$value > pitchSamplingRate) |
-        any(pitchAnchors$value > pitchCeiling)) {
+    if (any(pitchAnchors$value > pitchSamplingRate)) {
       pitchSamplingRate = samplingRate
-      pitchCeiling = samplingRate
-      message(paste('Some pitch values exceed pitchSamplingRate or pitchCeiling.',
-                    'Resetting both to the value of samplingRate.'))
+      message(paste('Some pitch values exceed pitchSamplingRate.',
+                    'Resetting pitchSamplingRate to samplingRate.'))
+    }
+    if (any(pitchAnchors$value > pitchCeiling)) {
+      pitchCeiling = samplingRate / 2
+      message(paste('Some pitch values exceed pitchCeiling.',
+                    'Resetting pitchCeiling to Nyquist frequency (samplingRate / 2).'))
     }
   }
 
@@ -728,8 +733,8 @@ soundgen = function(repeatBout = 1,
           pitchAnchors_per_syl = wiggleAnchors(
             df = pitchAnchors_per_syl,
             temperature = temperature,
-            low = c(0, permittedValues['pitch', 'low']),
-            high = c(1, permittedValues['pitch', 'high']),
+            low = c(0, pitchFloor),
+            high = c(1, pitchCeiling),
             temp_coef = tempEffects$pitchAnchorsDep,
             invalidArgAction = invalidArgAction
           )
@@ -809,7 +814,8 @@ soundgen = function(repeatBout = 1,
         #   and the voiced part is long enough to bother synthesizing it
         syllable = rep(0, round(dur_syl * samplingRate / 1000))
       } else {
-        # the actual synthesis is here
+
+        # ***THE ACTUAL SYNTHESIS IS HERE***
         # print(pars_syllable)
         syllable = try(do.call(generateHarmonics, c(
           pars_syllable,
@@ -821,6 +827,8 @@ soundgen = function(repeatBout = 1,
       }
       # spectrogram(syllable, samplingRate = samplingRate)
       # playme(syllable, samplingRate = samplingRate)
+      # ***THE ACTUAL SYNTHESIS IS HERE***
+
       if (class(syllable) == 'try-error') {
         stop('Failed to generate the new syllable!')
       }

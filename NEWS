@@ -4,6 +4,7 @@ MINOR:
   * analyze(): pitch candidates based on lowest dominant frequency band ("dom") respect pitchCeiling
   * analyze(): fixed a bug with plotting symbols for pitch candidates in plot legend
   * soundgen(): fixed a bug that prevented proper control of pitch drift with pitchDriftDep
+  * soundgen(), soundgen_app(): pitchFloor and pitchCeiling fully control pitch range, without needing to override permittedValues with "invalidArgAction = 'ignore'"
 
 
           CHANGES IN SOUNDGEN VERSION 1.3.1 [04-October-2018]

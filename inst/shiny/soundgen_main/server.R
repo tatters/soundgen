@@ -381,11 +381,11 @@ server = function(input, output, session) {
       pitch_y_lwr = min(input$pitchRange[1], min(myPars$pitchAnchors$value) / 1.1)
       pitch_y_upr = max(input$pitchRange[2], max(myPars$pitchAnchors$value) * 1.1)
       getSmoothContour(anchors = myPars$pitchAnchors,
-                       len = input$sylLen * permittedValues['pitch', 'high'] / 1000,
+                       len = input$sylLen * input$pitchRange[2]/ 1000,
                        ylim = c(pitch_y_lwr, pitch_y_upr),
                        valueFloor = input$pitchFloorCeiling[1],
                        valueCeiling = input$pitchFloorCeiling[2],
-                       samplingRate = permittedValues['pitch', 'high'],
+                       samplingRate = input$pitchRange[2],
                        thisIsPitch = TRUE, plot = TRUE)
     } else {
       plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
@@ -398,11 +398,11 @@ server = function(input, output, session) {
       click_x = round(input$plotIntonation_click$x / input$sylLen, 2)
       click_y = round(semitonesToHz(input$plotIntonation_click$y))
       # if the click is below or above thresholds, move within thresholds
-      if (click_y < permittedValues['pitch', 'low']) {
-        click_y = permittedValues['pitch', 'low']
+      if (click_y < input$pitchRange[1]) {
+        click_y = input$pitchRange[1]
       }
-      if (click_y > permittedValues['pitch', 'high']) {
-        click_y = permittedValues['pitch', 'high']
+      if (click_y > input$pitchRange[2]) {
+        click_y = input$pitchRange[2]
       }
 
       closest_point_in_time = which.min(abs(myPars$pitchAnchors$time - click_x))
