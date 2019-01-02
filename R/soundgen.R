@@ -1,4 +1,4 @@
-# TODO: check the new behavior of rolloffOct; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check the new behavior of rolloffOct; user-specified exact source spectrum (? vector of harmonic strengths?); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
