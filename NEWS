@@ -1,11 +1,12 @@
           CHANGES IN SOUNDGEN VERSION 1.3.2 [...Date...]
 MINOR:
   * soundgen(): new argument "rolloffExact" for controlling the strength of each individual harmonic in source spectrum
+  * soundgen(): interpolation of vectorized amDep, amShape, and amFreq changed from 'spline' to 'approx'
   * analyze(), analyzeFolder(), segment(), segmentFolder(), spectrogram(), spectrogramFolder(): support for mp3 files in addition to wav
   * analyze(): pitch candidates based on lowest dominant frequency band ("dom") respect pitchCeiling
 
 BUG FIXES:
-  * soundgen(), getRolloff(): effects of the rolloffOct argument
+  * soundgen(), getRolloff(): rolloffOct argument now really controls the change of rolloff per octave above the fundamental frequency (before it was per kHz); note that this affects many presets, which have been updated accordingly
   * soundgen(): proper control of pitch drift with pitchDriftDep
   * soundgen(), soundgen_app(): pitchFloor and pitchCeiling fully control pitch range, without needing to override permittedValues with "invalidArgAction = 'ignore'"
   * analyze(): plotting symbols for pitch candidates in plot legend

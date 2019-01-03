@@ -1,4 +1,4 @@
-# TODO: check the new behavior of rolloffOct; user-specified exact source spectrum (? vector of harmonic strengths?); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check the new behavior of rolloffOct, update human demos; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -1034,10 +1034,11 @@ soundgen = function(repeatBout = 1,
           p_vectorized = getSmoothContour(
             anchors = get(p),
             len = length(soundFiltered),
-            interpol = 'spline',
+            interpol = 'approx',
             valueFloor = permittedValues[p, 'low'],
             valueCeiling = permittedValues[p, 'high']
           )
+          # plot(p_vectorized, type = 'l')
           assign(paste0(p, '_vector'), p_vectorized)
         } else {
           assign(paste0(p, '_vector'), p_unique_value)
@@ -1054,6 +1055,7 @@ soundgen = function(repeatBout = 1,
 
       # apply am
       soundFiltered = soundFiltered * trill
+      # plot(soundFiltered, type = 'l')
     }
 
     # grow bout

@@ -120,11 +120,17 @@ sound_orig = as.numeric(scale(sheep@left))
 samplingRate = sheep@samp.rate
 sound_orig = sound_orig / max(abs(sound_orig))  # range -1 to +1
 # playme(sound_orig, samplingRate)
+
+# get a few pitch anchors to reproduce the original intonation
 pitch = analyze(sound_orig, samplingRate = samplingRate,
   pitchMethod = c('autocor', 'dom'))$pitch
 pitch = pitch[!is.na(pitch)]
-specEnv_bleating = spectrogram(sound_orig, samplingRate = samplingRate,
-  output = 'original', plot = FALSE)
+pitch = pitch[seq(1, length(pitch), length.out = 10)]
+
+# extract a frequency-smoothed version of the original spectrogram
+# to use as filter
+specEnv_bleating = spectrogram(sound_orig, windowLength = 5,
+ samplingRate = samplingRate, output = 'original', plot = FALSE)
 # image(t(log(specEnv_bleating)))
 
 # Synthesize source only, with flat spectrum
@@ -138,7 +144,9 @@ sound_unfilt = soundgen(sylLen = 2500, pitch = pitch,
 # Force spectral envelope to the shape of target
 sound_filt = addFormants(sound_unfilt, formants = NULL,
   spectralEnvelope = specEnv_bleating, samplingRate = samplingRate)
-# playme(sound_filt, samplingRate)
+# playme(sound_filt, samplingRate)  # playme(sound_orig, samplingRate)
+# spectrogram(sound_filt, samplingRate)  # spectrogram(sound_orig, samplingRate)
+
 # The spectral envelope is now similar to the original recording. Compare:
 par(mfrow = c(1, 2))
 seewave::meanspec(sound_orig, f = samplingRate, dB = 'max0', alim = c(-50, 20))

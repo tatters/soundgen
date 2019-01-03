@@ -130,23 +130,31 @@ noise_s = soundgen(pitch = NULL,
   formants = list(f1 = data.frame(freq = 4000, amp = 80, width = 20)),
   play = playback)
 
+
 # Use the spectral envelope of an existing recording (bleating of a sheep)
 # (see also the same example with tonal source in ?addFormants)
 data(sheep, package = 'seewave')  # import a recording from seewave
 sound_orig = as.numeric(sheep@left)
 samplingRate = sheep@samp.rate
 # playme(sound_orig, samplingRate)
-spectralEnvelope = spectrogram(sound_orig, samplingRate = samplingRate,
-  output = 'original')
+
+# extract the original spectrogram
+windowLength = c(5, 10, 50, 100)[1]  # try both narrow-band (eg 100 ms)
+# to get "harmonics" and wide-band (5 ms) to get only formants
+spectralEnvelope = spectrogram(sound_orig, windowLength = windowLength,
+  samplingRate = samplingRate, output = 'original')
 sound_noise = generateNoise(len = length(sound_orig),
   spectralEnvelope = spectralEnvelope, rolloffNoise = 0,
   samplingRate = samplingRate, play = playback)
 # playme(sound_noise, samplingRate)
+
 # The spectral envelope is similar to the original recording. Compare:
 par(mfrow = c(1, 2))
 seewave::meanspec(sound_orig, f = samplingRate, dB = 'max0')
 seewave::meanspec(sound_noise, f = samplingRate, dB = 'max0')
 par(mfrow = c(1, 1))
-# However, the excitation source is now white noise.
+# However, the excitation source is now white noise
+# (which sounds like noise if windowLength is ~5-10 ms,
+# but becomes more and more like the original at longer window lengths)
 }
 }
