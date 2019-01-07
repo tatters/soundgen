@@ -511,7 +511,7 @@ s = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
 If f0 is very low, as in vocal fry or some animal vocalizations like crocodile roaring or elephant rumbling, individual glottal pulses can be both seen on a spectrogram and peiceived as distinct percussion-like acoustic events separated by noticeable pauses. Soundgen can create such sounds by switching to a new mode of production: instead of synthesizing continous sine waves spanning the entire syllable, it creates each glottal pulse individually (each with its full set of harmonics) and then glues them together with pauses in between. 
 
 This is a lot slower than continuous sine wave synthesis and mostly justified for very low-pitched sounds, since with higher pitch there will be too few points per glottal cycle to sound convincing without increasing `samplingRate` to astronomical values. For example:
-```{r fig.width = 7, fig.height = 3}
+```{r fig.width = 7, fig.height = 7}
 # Not a good idea: samplingRate is too low
 s1 = soundgen(pitch = c(1500, 800), glottis = 75, 
               samplingRate = 16000, play = playback)
@@ -524,10 +524,13 @@ s2 = suppressWarnings(soundgen(pitch = c(1500, 800), glottis = 75,
 # to be accepted without question
 
 # Now this is what this feature is meant for: vocal fry
-s3 = soundgen(sylLen = 1500, pitch = c(75, 40), 
-              glottis = c(0, 700), 
-              samplingRate = 16000, play = playback)
-plot(s3, type = 'l', xlab = '', ylab = '')
+s3 = soundgen(sylLen = 1500, pitch = c(110, 90), rolloff = -12,
+              glottis = c(0, 500), 
+              nonlinBalance = 100,  
+              subDep = 0, # subharmonics with "glottis" not implemented
+              jitterDep = 1, shimmerDep = 20,
+              play = playback)
+spectrogram(s3, samplingRate = 16000, osc = TRUE, heights = c(1, 1))
 ```
 
 

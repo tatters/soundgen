@@ -212,7 +212,7 @@ spectrogram = function(x,
 
   # fix default settings
   if (is.null(ylim)) {
-    ylim = c(0, floor(samplingRate / 2 / 1000))
+    ylim = c(0, samplingRate / 2 / 1000)
   }
   contrast_exp = exp(3 * contrast)
   brightness_exp = exp(3 * brightness)

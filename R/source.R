@@ -726,6 +726,7 @@ generateGC = function(pitch_per_gc,
   rolloff_per_gc_adj = rolloff_per_gc[idx]
   gc_len_adj = round(samplingRate / pitch_per_gc_adj)
   gc_closed_adj = round(gc_len_adj * glottisClosed_per_gc_adj / 100)
+  # gc_closed_adj[nGC] = 1  # don't add silence after the last gc
 
   # synthesize one glottal cycle at a time
   waveform = 0
