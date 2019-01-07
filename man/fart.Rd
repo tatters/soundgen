@@ -4,10 +4,9 @@
 \alias{fart}
 \title{Fart}
 \usage{
-fart(glottis = c(350, 700), glottisAnchors = "deprecated",
-  pitch = 75, pitchAnchors = "deprecated", temperature = 0.25,
-  sylLen = 600, rolloff = -20, samplingRate = 16000, play = FALSE,
-  plot = FALSE)
+fart(glottis = c(50, 200), glottisAnchors = "deprecated", pitch = 65,
+  pitchAnchors = "deprecated", temperature = 0.25, sylLen = 600,
+  rolloff = -10, samplingRate = 16000, play = FALSE, plot = FALSE)
 }
 \arguments{
 \item{glottis}{anchors for specifying the proportion of a
@@ -65,7 +64,7 @@ f = fart()
 
 \dontrun{
 while (TRUE) {
-  fart(sylLen = 200, temperature = .4, play = TRUE)
+  fart(sylLen = 300, temperature = .5, play = TRUE)
   Sys.sleep(rexp(1, rate = 1))
 }
 }

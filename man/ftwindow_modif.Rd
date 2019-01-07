@@ -18,4 +18,13 @@ Internal soundgen function
 Generates different Fourier Transform windows. Just like
 \code{\link[seewave]{ftwindow}}, but with the addition of a gaussian window.
 }
+\examples{
+wns = c('bartlett', 'blackman', 'flattop', 'hamming', 'hanning', 'rectangle', 'gaussian')
+l = 200
+par(mfrow = c(4, 2))
+for (w in wns) {
+  plot(1:l, ftwindow_modif(wl = l, wn = w), type = 'b', main = w)
+}
+par(mfrow = c(1, 1))
+}
 \keyword{internal}

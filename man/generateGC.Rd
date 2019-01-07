@@ -5,7 +5,7 @@
 \title{Generate glottal cycles}
 \usage{
 generateGC(pitch_per_gc, glottisClosed_per_gc, rolloff_per_gc,
-  samplingRate)
+  samplingRate, wn = "none")
 }
 \arguments{
 \item{pitch_per_gc}{pitch per glottal cycle, Hz}
@@ -19,26 +19,29 @@ the ratio to F0 (eg 1.5 means it's a subharmonic added between f0 and its
 first harmonic)}
 
 \item{samplingRate}{the sampling rate of generated sound, Hz}
+
+\item{wn}{windowing function applied to each glottal cycle (see ftwindow_modif)}
 }
 \value{
 Returns a waveform as a non-normalized numeric vector centered at zero.
 }
 \description{
 Internal soundgen function.
-Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff)
-and creates a waveform consisting of a string of these glottal cycles
-separated by pauses (if there is a closed phase). The principle is to work
-with one glottal cycle at a time and create a sine wave for each harmonic,
-with amplitudes adjusted by rolloff.
+Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff -
+note that all three should be vectors of the same length, namely nGC) and
+creates a waveform consisting of a string of these glottal cycles separated
+by pauses (if there is a closed phase). The principle is to work with one
+glottal cycle at a time and create a sine wave for each harmonic, with
+amplitudes adjusted by rolloff.
 }
 \examples{
 pitch_per_gc = seq(100, 150, length.out = 25)
 glottisClosed_per_gc = seq(0, 300, length.out = 25)
 m = matrix(10 ^ (-6 * log2(1:200) / 20))
 rownames(m) = 1:nrow(m)
-rolloff_source = rep(list(m), 25)
-s = soundgen:::generateGC(pitch_per_gc,  glottisClosed_per_gc,
-                          rolloff_source,  samplingRate = 16000)
+rolloff_per_gc = rep(list(m), 25)
+s = soundgen:::generateGC(pitch_per_gc, glottisClosed_per_gc,
+                          rolloff_per_gc, samplingRate = 16000)
 # plot(s, type = 'l')
 # playme(s)
 }

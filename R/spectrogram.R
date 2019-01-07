@@ -469,6 +469,14 @@ spectrogramFolder = function(myfolder,
 #' @param wl window length, in points
 #' @param wn window type (defaults to gaussian)
 #' @keywords internal
+#' @examples
+#' wns = c('bartlett', 'blackman', 'flattop', 'hamming', 'hanning', 'rectangle', 'gaussian')
+#' l = 200
+#' par(mfrow = c(4, 2))
+#' for (w in wns) {
+#'   plot(1:l, ftwindow_modif(wl = l, wn = w), type = 'b', main = w)
+#' }
+#' par(mfrow = c(1, 1))
 ftwindow_modif = function (wl, wn = "gaussian") {
   if (wn == "bartlett")
     w = seewave::bartlett.w(wl)

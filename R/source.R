@@ -360,11 +360,11 @@ generateHarmonics = function(pitch,
                              shimmerLen = 1,
                              creakyBreathy = 0,
                              rolloff = -9,
-                             rolloffOct = -3,
-                             rolloffKHz = -3,
+                             rolloffOct = 0,
+                             rolloffKHz = 0,
                              rolloffParab = 0,
                              rolloffParabHarm = 3,
-                             rolloff_perAmpl = 3,
+                             rolloff_perAmpl = 0,
                              rolloffExact = NULL,
                              temperature = .025,
                              pitchDriftDep = .5,
@@ -634,7 +634,7 @@ generateHarmonics = function(pitch,
   # plot(waveform[], type = 'l')
   # spectrogram(waveform, samplingRate = samplingRate, osc = TRUE)
   # playme(waveform, samplingRate = samplingRate)
-  # seewave::meanspectrogram(waveform, f = samplingRate)
+  # seewave::meanspec(waveform, f = samplingRate)
 
   ## POST-SYNTHESIS EFFECTS
   # apply amplitude envelope and normalize to be on the same scale as breathing
@@ -680,11 +680,12 @@ generateHarmonics = function(pitch,
 #' Generate glottal cycles
 #'
 #' Internal soundgen function.
-#' Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff)
-#' and creates a waveform consisting of a string of these glottal cycles
-#' separated by pauses (if there is a closed phase). The principle is to work
-#' with one glottal cycle at a time and create a sine wave for each harmonic,
-#' with amplitudes adjusted by rolloff.
+#' Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff -
+#' note that all three should be vectors of the same length, namely nGC) and
+#' creates a waveform consisting of a string of these glottal cycles separated
+#' by pauses (if there is a closed phase). The principle is to work with one
+#' glottal cycle at a time and create a sine wave for each harmonic, with
+#' amplitudes adjusted by rolloff.
 #' @param pitch_per_gc pitch per glottal cycle, Hz
 #' @param glottisClosed_per_gc proportion of closed phase per glottal cycle, \%
 #' @param rolloff_per_gc a list of one-column matrices, one for each glottal
@@ -693,6 +694,7 @@ generateHarmonics = function(pitch,
 #'   the ratio to F0 (eg 1.5 means it's a subharmonic added between f0 and its
 #'   first harmonic)
 #' @param samplingRate the sampling rate of generated sound, Hz
+#' @param wn windowing function applied to each glottal cycle (see ftwindow_modif)
 #' @return Returns a waveform as a non-normalized numeric vector centered at zero.
 #' @keywords internal
 #' @examples
@@ -700,34 +702,63 @@ generateHarmonics = function(pitch,
 #' glottisClosed_per_gc = seq(0, 300, length.out = 25)
 #' m = matrix(10 ^ (-6 * log2(1:200) / 20))
 #' rownames(m) = 1:nrow(m)
-#' rolloff_source = rep(list(m), 25)
-#' s = soundgen:::generateGC(pitch_per_gc,  glottisClosed_per_gc,
-#'                           rolloff_source,  samplingRate = 16000)
+#' rolloff_per_gc = rep(list(m), 25)
+#' s = soundgen:::generateGC(pitch_per_gc, glottisClosed_per_gc,
+#'                           rolloff_per_gc, samplingRate = 16000)
 #' # plot(s, type = 'l')
 #' # playme(s)
 generateGC = function(pitch_per_gc,
                       glottisClosed_per_gc,
                       rolloff_per_gc,
-                      samplingRate) {
+                      samplingRate,
+                      wn = 'none') {
   gc_len = round(samplingRate / pitch_per_gc)  # length of each gc, points
-  pause_len = round(gc_len * glottisClosed_per_gc / 100)  # length of each pause, points
+  gc_closed = round(gc_len * glottisClosed_per_gc / 100)  # length of each pause, points
+
+  # adjust nGC to have ~the same duration as w/o closed phase
+  nGC_orig = length(pitch_per_gc)
+  dur_target = sum(gc_len)
+  dur_with_closed = dur_target + sum(gc_closed)
+  nGC = round(dur_target / dur_with_closed * length(pitch_per_gc))
+  idx = round(seq(1, nGC_orig, length.out = nGC))
+  pitch_per_gc_adj = pitch_per_gc[idx]
+  glottisClosed_per_gc_adj = glottisClosed_per_gc[idx]
+  rolloff_per_gc_adj = rolloff_per_gc[idx]
+  gc_len_adj = round(samplingRate / pitch_per_gc_adj)
+  gc_closed_adj = round(gc_len_adj * glottisClosed_per_gc_adj / 100)
 
   # synthesize one glottal cycle at a time
   waveform = 0
-  for (i in 1:length(gc_len)) {
+  for (i in 1:nGC) {
     cycle = 0
-    for (h in 1:nrow(rolloff_per_gc[[i]])) {
-      times_f0 = as.numeric(rownames(rolloff_per_gc[[i]])[h]) # freq of harmonic h
-      idx = 0:(gc_len[i] - 1)  # count from zero, ensuring the gc starts at sin(0) = 0
+    idx = 0:(gc_len_adj[i] - 1)  # count from zero, ensuring the gc starts at sin(0) = 0
+    for (h in 1:nrow(rolloff_per_gc_adj[[i]])) {
+      times_f0 = as.numeric(rownames(rolloff_per_gc_adj[[i]])[h]) # freq of harmonic h
       cycle = cycle +
-        sin(2 * pi * pitch_per_gc[i] * times_f0 * idx / samplingRate) *
-        rolloff_per_gc[[i]][h]
+        sin(2 * pi * pitch_per_gc_adj[i] * times_f0 * idx / samplingRate) *
+        rolloff_per_gc_adj[[i]][h]
     }
     # plot(cycle, type = 'l')
-    waveform = c(waveform, cycle, rep(0, pause_len[i]))
+    # spectrogram(cycle, samplingRate, ylim = c(0, 2))
+    # seewave::spec(rep(cycle,10), f = samplingRate, flim = c(0, 2), alim = c(-50, 0), dB = 'max0')
+
+    if (wn == 'none') {
+      waveform = c(waveform, cycle, rep(0, gc_closed_adj[i]))
+    } else {
+      # window before glueing gc with pauses
+      win = ftwindow_modif(wl = gc_len_adj[i], wn = wn)
+      # plot(win, type = 'b')
+      cycle_win = cycle * win
+      # plot(cycle_win, type = 'l')
+      # spectrogram(cycle_win, samplingRate, ylim = c(0, 10))
+      # seewave::spec(rep(cycle_win,10), f = samplingRate, flim = c(0, 2), alim = c(-50, 0), dB = 'max0')
+      waveform = c(waveform, cycle_win, rep(0, gc_closed_adj[i]))
+    }
   }
   # plot(waveform, type = 'l')
   # playme(waveform, samplingRate)
+  # spectrogram(waveform, samplingRate, ylim = c(0, 10))
+  # seewave::spec(waveform, f = samplingRate, flim = c(0, 2), alim = c(-50, 0), dB = 'max0')
   return(waveform)
 }
 
@@ -832,17 +863,17 @@ generateEpoch = function(pitch_per_gc,
 #'
 #' \dontrun{
 #' while (TRUE) {
-#'   fart(sylLen = 200, temperature = .4, play = TRUE)
+#'   fart(sylLen = 300, temperature = .5, play = TRUE)
 #'   Sys.sleep(rexp(1, rate = 1))
 #' }
 #' }
-fart = function(glottis = c(350, 700),
+fart = function(glottis = c(50, 200),
                 glottisAnchors = 'deprecated',
-                pitch = 75,
+                pitch = 65,
                 pitchAnchors = 'deprecated',
                 temperature = 0.25,
                 sylLen = 600,
-                rolloff = -20,
+                rolloff = -10,
                 samplingRate = 16000,
                 play = FALSE,
                 plot = FALSE) {
@@ -885,44 +916,21 @@ fart = function(glottis = c(350, 700),
       )
   }
 
-  # preliminary glottis contour
-  glottisClosed = getSmoothContour(anchors = glottisAnchors, len = 100)
-
-  # adjust length based on proportion of closed glottis (pauses added)
-  mean_closed = mean(glottisClosed) / 100
-  sylLen = sylLen / (mean_closed + 1)
-  pitchAnchors = pitchAnchors * (mean_closed + 1)
-
   # prepare pitch contour
   pitch = getSmoothContour(anchors = pitchAnchors,
-                           len = sylLen * samplingRate / 1000)
-
-  # get pitch per glottal cycle
-  gc = getGlottalCycles(pitch, samplingRate = samplingRate)
-  pitch_per_gc = pitch[gc]
-  gc_len = round(samplingRate / pitch_per_gc)
-
-  # final glottis contour
-  glottisClosed = getSmoothContour(anchors = glottisAnchors, len = length(gc))
-
-  # prepare rolloff
-  nHarmonics = ceiling((samplingRate / 2 - min(pitch)) / min(pitch))
-  roll_dB = log2(1:nHarmonics) * rolloff
-  roll_dB = roll_dB[roll_dB > -80]
-  roll = 10 ^ (roll_dB / 20)
+                           len = round(sylLen * 3500 / 1000))
 
   # synthesize the sound
-  pause_len = round(gc_len * glottisClosed / 100)
-  s = vector()
-  for (i in 1:length(gc)) {
-    cycle = 0
-    for (h in 1:length(roll)) {
-      cycle = cycle +
-        sin(2 * pi * pitch_per_gc[i] * (0:(gc_len[i] - 1)) *
-              h / samplingRate) * roll[h]
-    }  # plot(cycle, type = 'l')
-    s = c(s, cycle, rep(0, pause_len[i]))
-  }
+  s = generateHarmonics(
+    pitch = pitch,
+    glottisAnchors = glottisAnchors,
+    rolloff = rolloff,
+    samplingRate = samplingRate,
+    pitchSamplingRate = 3500
+  )
+  # plot(s, type = 'l')
+  # spectrogram(f, osc = T, samplingRate = samplingRate, ylim = c(0, 2))
+  # seewave::spec(f, f = samplingRate, dB = 'max0')
 
   # amplitude drift
   if (temperature > 0) {

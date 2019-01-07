@@ -1,4 +1,4 @@
-# TODO: check the new behavior of rolloffOct, update human demos; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: spectrogram with samplingRate 1000; check glottis & fart; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -466,14 +466,14 @@ soundgen = function(repeatBout = 1,
 
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
 
-  # preliminary glottis contour
-  glottisClosed = getSmoothContour(anchors = glottisAnchors, len = 100)
-  # adjust length based on proportion of closed glottis (pauses added)
-  mean_closed = mean(glottisClosed) / 100
-  sylLen = sylLen / (mean_closed + 1)
-  if (is.list(pitchAnchors)) {
-    pitchAnchors$value = pitchAnchors$value * (mean_closed + 1)
-  }
+  # # preliminary glottis contour
+  # glottisClosed = getSmoothContour(anchors = glottisAnchors, len = 100)
+  # # adjust length based on proportion of closed glottis (pauses added)
+  # mean_closed = mean(glottisClosed) / 100
+  # sylLen = sylLen / (mean_closed + 1)
+  # if (is.list(pitchAnchors)) {
+  #   pitchAnchors$value = pitchAnchors$value * (mean_closed + 1)
+  # }
 
   # tempEffects are either left at default levels or multiplied by user-supplied values
   es = c('sylLenDep', 'formDrift', 'formDisp', 'pitchDriftDep',
@@ -830,6 +830,7 @@ soundgen = function(repeatBout = 1,
         )) * amplEnvelope[s]  # correction of amplitude per syllable
         )
       }
+      # plot(syllable, type = 'l')
       # spectrogram(syllable, samplingRate = samplingRate)
       # playme(syllable, samplingRate = samplingRate)
       # ***THE ACTUAL SYNTHESIS IS HERE***
@@ -1007,6 +1008,7 @@ soundgen = function(repeatBout = 1,
       }
     } else {
       # no unvoiced component - just add formants to voiced
+      # plot(voiced, type = 'l')
       if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
         soundFiltered = do.call(addFormants, c(
           formantPars,
@@ -1088,7 +1090,9 @@ soundgen = function(repeatBout = 1,
     seewave::savewav(bout, filename = savePath, f = samplingRate)
   }
   if (plot) {
-    spectrogram(bout, samplingRate = samplingRate, ...)
+    spectrogram(bout, samplingRate = samplingRate,
+                windowLength = windowLength, overlap = overlap,
+                dynamicRange = dynamicRange, ...)
   }
   return(bout)
 }
