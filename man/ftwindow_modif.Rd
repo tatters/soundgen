@@ -23,7 +23,7 @@ wns = c('bartlett', 'blackman', 'flattop', 'hamming', 'hanning', 'rectangle', 'g
 l = 200
 par(mfrow = c(4, 2))
 for (w in wns) {
-  plot(1:l, ftwindow_modif(wl = l, wn = w), type = 'b', main = w)
+  plot(1:l, soundgen:::ftwindow_modif(wl = l, wn = w), type = 'b', main = w)
 }
 par(mfrow = c(1, 1))
 }
