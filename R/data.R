@@ -1,4 +1,4 @@
-# devtools::use_data(noiseThresholdsDict, BaNaRatios, spreadSpecCoef, phonCurves, internal = TRUE, overwrite = TRUE)
+# usethis::use_data(noiseThresholdsDict, BaNaRatios, spreadSpecCoef, phonCurves, internal = TRUE, overwrite = TRUE)
 
 #' Shiny app defaults
 #'

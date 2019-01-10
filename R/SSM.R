@@ -261,7 +261,7 @@ selfsim = function(m,
     for (j in 1:length(winIdx)) {
       mi = as.vector(m[, winIdx[i]:(winIdx[i] + win - 1)])
       mj = as.vector(m[, winIdx[j]:(winIdx[j] + win - 1)])
-      if (any(mi != 0) && any(mj != 0)) {
+      if (any(mi != 0) & any(mj != 0)) {
         if (simil == 'cosine') {
           # http://stackoverflow.com/questions/6597005/cosine-similarity-between-two-vectors-in-language-r
           out[i, j] = crossprod(mi, mj) / sqrt(crossprod(mi) * crossprod(mj))

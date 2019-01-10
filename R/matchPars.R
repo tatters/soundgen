@@ -143,12 +143,14 @@ matchPars = function(target,
       time = round(seq(0, 1, length.out = length(p)), 2),
       value = round(p)
     )}
-  if (is.list(af) && nrow(af) > 0) {
-    for (f in 1:min(3, nrow(af))) {  # add max 3 formants
-      parDefault$formants[[paste0('f', f)]] = list(
-        freq = round(af$formant[f]),
-        width = round(af$bandwidth[f])
-      )
+  if (is.list(af)) {
+    if (nrow(af) > 0) {
+      for (f in 1:min(3, nrow(af))) {  # add max 3 formants
+        parDefault$formants[[paste0('f', f)]] = list(
+          freq = round(af$formant[f]),
+          width = round(af$bandwidth[f])
+        )
+      }
     }
   }
 
@@ -188,7 +190,7 @@ matchPars = function(target,
   # iteratively mutate pars and save par values that improve fit to target ('sim')
   i = 1
   while (i < maxIter) {
-    if (!is.numeric(length(pars)) || length(pars) < 1) {
+    if (!is.numeric(length(pars)) | length(pars) < 1) {
       stop(paste("No parameters for optimization are specified!",
                  "Either list them in 'pars' or set 'maxIter = 0'"))
     }

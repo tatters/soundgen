@@ -125,8 +125,7 @@ getRolloff = function(pitch_per_gc = c(440),
   for (p in update_pars) {
     old = get(p)
     if (is.list(old)) {  # par is data.frame(time = ..., value = ...)
-      if (length(unique(old$value)) > 1 &&
-          nrow(old) != nGC) {
+      if (length(unique(old$value)) > 1 & nrow(old) != nGC) {
         # if not all values are the same and the length is off, upsample them
         values_upsampled = getSmoothContour(
           anchors = old, len = nGC,

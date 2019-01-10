@@ -85,11 +85,15 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             contourLabel = NULL,
                             ...) {
   anchors = reformatAnchors(anchors, normalizeTime = normalizeTime)
-  if (is.list(anchors) && nrow(anchors) > 10 && nrow(anchors) < 50 && interpol == 'loess') {
-    interpol = 'spline'
-    # warning('More than 10 anchors; changing interpolation method from loess to spline')
-  } else if (is.list(anchors) && nrow(anchors) > 50) {
-    interpol = 'approx'
+  if (is.list(anchors)) {
+    if (nrow(anchors) > 10 & nrow(anchors) < 50 & interpol == 'loess') {
+      interpol = 'spline'
+      # warning('More than 10 anchors; changing interpolation method from loess to spline')
+    } else if (nrow(anchors) > 50) {
+      interpol = 'approx'
+    }
+  } else {
+    stop('Invalid format of the "anchors" argument')
   }
 
   if (!is.null(valueFloor)) {
@@ -124,8 +128,9 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     anchors = anchors[idx, ]
   }
 
-  if (!is.numeric(duration_ms) || duration_ms == 0 ||
-      !is.numeric(len) || len == 0) {
+  if (!is.numeric(duration_ms) | !is.numeric(len)) {
+    return(NA)
+  } else if (duration_ms == 0 | len == 0) {
     return(NA)
   }
 
@@ -161,7 +166,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
         trans_len = round((anchors$time[sections$start[i + 1]] -
                              anchors$time[sections$end[i]]) /
                             diff(range(anchors$time)) * len)
-        if (sections$jump[i] && length(cont) > 0) {
+        if (sections$jump[i] & length(cont) > 0) {
           # upsample the segment before the jump to make up for skipped transition
           cont = approx(cont, n = length(cont) + trans_len)$y
         } else {
@@ -204,14 +209,15 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
 
     if (thisIsPitch) {
       # pitch - log-transformed
-      if (is.null(ylim) || (
-        min(smoothContour_downsampled) < HzToSemitones(ylim[1]) |
-        max(smoothContour_downsampled) > HzToSemitones(ylim[2])
-      )) {
-        ylim = round(c(
+      if (!is.numeric(ylim)) {
+        ylim = c(
           min(smoothContour_downsampled) / 1.1,  # can't be negative
           max(smoothContour_downsampled) * 1.1
-        ))
+        )
+      } else if (min(smoothContour_downsampled) < HzToSemitones(ylim[1])) {
+        ylim[1] = min(smoothContour_downsampled) / 1.1
+      } else if (max(smoothContour_downsampled) > HzToSemitones(ylim[2])) {
+        ylim[2] = max(smoothContour_downsampled) * 1.1
       } else {
         ylim = HzToSemitones(ylim)
       }

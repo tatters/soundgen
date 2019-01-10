@@ -101,23 +101,27 @@ morph = function(formula1,
       formula2[[anchor]] = reformatAnchors(formula2[[anchor]])
     }
   }
-  if (is.numeric(formula1$noise) && length(formula1$noise) > 0) {
-    formula1$noise = data.frame(
-      time = seq(0,
-                 ifelse(is.numeric(formula1$sylLen),
-                        formula1$sylLen,
-                        defaults$sylLen),
-                 length.out = max(2, length(formula1$noise))),
-      value = formula1$noise)
+  if (is.numeric(formula1$noise)) {
+    if (length(formula1$noise) > 0) {
+      formula1$noise = data.frame(
+        time = seq(0,
+                   ifelse(is.numeric(formula1$sylLen),
+                          formula1$sylLen,
+                          defaults$sylLen),
+                   length.out = max(2, length(formula1$noise))),
+        value = formula1$noise)
+    }
   }
-  if (is.numeric(formula2$noise) && length(formula2$noise) > 0) {
-    formula2$noise = data.frame(
-      time = seq(0,
-                 ifelse(is.numeric(formula2$sylLen),
-                        formula2$sylLen,
-                        defaults$sylLen),
-                 length.out = max(2, length(formula2$noise))),
-      value = formula2$noise)
+  if (is.numeric(formula2$noise)) {
+    if (length(formula2$noise) > 0) {
+      formula2$noise = data.frame(
+        time = seq(0,
+                   ifelse(is.numeric(formula2$sylLen),
+                          formula2$sylLen,
+                          defaults$sylLen),
+                   length.out = max(2, length(formula2$noise))),
+        value = formula2$noise)
+    }
   }
 
   # which pars are different from the defaults of soundgen()?
@@ -189,10 +193,10 @@ morph = function(formula1,
 
   # NULL noise means these anchors should be set to the default -dynamicRange
   if ('noise' %in% notDefaultNames) {
-    if (is.null(f1$noise) || is.na(f1$noise)) {
+    if (!is.numeric(f1$noise)) {
       f1$noise = reformatAnchors(-defaults$dynamicRange)
     }
-    if (is.null(f2$noise) || is.na(f2$noise)) {
+    if (!is.numeric(f2$noise)) {
       f2$noise = reformatAnchors(-defaults$dynamicRange)
     }
   }
@@ -230,10 +234,11 @@ morph = function(formula1,
 
   # expand vectorized pars, if any, to anchors
   for (i in 1:length(f1)) {
-    if (is.numeric(f1[[i]]) && is.numeric(f2[[i]]) &&
-        (length(f1[[i]]) != length(f2[[i]]))) {
-      f1[[i]] = reformatAnchors(f1[[i]])
-      f2[[i]] = reformatAnchors(f2[[i]])
+    if (is.numeric(f1[[i]]) & is.numeric(f2[[i]])) {
+      if (length(f1[[i]]) != length(f2[[i]])) {
+        f1[[i]] = reformatAnchors(f1[[i]])
+        f2[[i]] = reformatAnchors(f2[[i]])
+      }
     }
   }
 

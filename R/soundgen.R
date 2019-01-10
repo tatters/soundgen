@@ -1,4 +1,4 @@
-# TODO: streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: update presets croc + cat (from html); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -206,7 +206,7 @@ NULL
 #' # names(presets$Chimpanzee)  # calls per speaker
 #' s1 = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # screaming chimp
 #' # playme(s1)
-#' s2 = eval(parse(text = presets$F1$Scream))
+#' s2 = eval(parse(text = presets$F1$Scream))  # screaming woman
 #' # playme(s2)
 #' \dontrun{
 #' # unless temperature is 0, the sound is different every time
@@ -357,28 +357,31 @@ soundgen = function(repeatBout = 1,
 
   for (p in pars_to_check) {
     gp = try(get(p), silent = TRUE)
-    if (class(gp) != "try-error" && is.numeric(gp) &&
-          (any(gp < permittedValues[p, 'low']) ||
-          any(gp > permittedValues[p, 'high']))) {
-      if (invalidArgAction == 'abort') {
-        # exit with a warning
-        stop(paste(p, 'must be between',
-                   permittedValues[p, 'low'],
-                   'and',
-                   permittedValues[p, 'high']))
-      } else if (invalidArgAction == 'ignore') {
-        # throw a warning and continue
-        warning(paste(p, "outside its range in 'permittedValues'"))
-      } else {
-        # reset p to default, with a warning
-        assign(noquote(p), permittedValues[p, 'default'])
-        warning(paste0("\n", p, " outside permitted range, reset to ", get(p),
-                       ". Edit 'permittedValues' or use ",
-                       "invalidArgAction = 'ignore' to force."))
+    if (class(gp) != "try-error") {
+      if (is.numeric(gp)) {
+       if (any(gp < permittedValues[p, 'low']) |
+           any(gp > permittedValues[p, 'high'])) {
+         if (invalidArgAction == 'abort') {
+           # exit with a warning
+           stop(paste(p, 'must be between',
+                      permittedValues[p, 'low'],
+                      'and',
+                      permittedValues[p, 'high']))
+         } else if (invalidArgAction == 'ignore') {
+           # throw a warning and continue
+           warning(paste(p, "outside its range in 'permittedValues'"))
+         } else {
+           # reset p to default, with a warning
+           assign(noquote(p), permittedValues[p, 'default'])
+           warning(paste0("\n", p, " outside permitted range, reset to ", get(p),
+                          ". Edit 'permittedValues' or use ",
+                          "invalidArgAction = 'ignore' to force."))
+         }
+       }
       }
     }
   }
-  if (any(pauseLen < 0) && nSyl > 1) {
+  if (any(pauseLen < 0) & nSyl > 1) {
     stop(paste(
       'Negative pauseLen is allowed between bouts, but not between syllables.',
       'Use repeatBout instead of nSyl if you need syllables to overlap'
@@ -418,11 +421,13 @@ soundgen = function(repeatBout = 1,
                    'amDep', 'amFreq', 'amShape')) {
     assign(anchor, reformatAnchors(get(anchor)))
   }
-  if (is.numeric(noiseAnchors) && length(noiseAnchors) > 0) {
-    noiseAnchors = data.frame(
-      time = seq(0, sylLen[1], length.out = max(2, length(noiseAnchors))),
-      value = noiseAnchors
-    )
+  if (is.numeric(noiseAnchors)) {
+    if (length(noiseAnchors) > 0) {
+      noiseAnchors = data.frame(
+        time = seq(0, sylLen[1], length.out = max(2, length(noiseAnchors))),
+        value = noiseAnchors
+      )
+    }
   }
   if (is.list(pitchAnchors)) {
     if (any(pitchAnchors$value < pitchFloor)) {
@@ -447,15 +452,19 @@ soundgen = function(repeatBout = 1,
   }
 
   # check amplitude anchors and make all values negative
-  if (is.list(amplAnchors) && any(amplAnchors$value > 0)) {
-    amplAnchors$value = amplAnchors$value - dynamicRange
-    message(paste('The recommended range for amplAnchors is (-dynamicRange, 0).',
-                  'If positive, values are transformed by subtracting dynamicRange'))
+  if (is.list(amplAnchors)) {
+    if (any(amplAnchors$value > 0)) {
+      amplAnchors$value = amplAnchors$value - dynamicRange
+      message(paste('The recommended range for amplAnchors is (-dynamicRange, 0).',
+                    'If positive, values are transformed by subtracting dynamicRange'))
+    }
   }
 
   # for amplAnchorsGlobal, make the first value 0
-  if (is.list(amplAnchorsGlobal) && any(amplAnchorsGlobal$value != 0)) {
-    amplAnchorsGlobal$value = amplAnchorsGlobal$value - amplAnchorsGlobal$value[1]
+  if (is.list(amplAnchorsGlobal)) {
+    if (any(amplAnchorsGlobal$value != 0)) {
+      amplAnchorsGlobal$value = amplAnchorsGlobal$value - amplAnchorsGlobal$value[1]
+    }
   }
 
   # make sure sylLen and pauseLen are vectors of appropriate length
@@ -507,7 +516,8 @@ soundgen = function(repeatBout = 1,
       noiseAnchors = data.frame(time = c(0, sylLen[1] + 100),
                                 value = c(-dynamicRange, -dynamicRange))
     }
-    noiseAnchors$value = noiseAnchors$value + creakyBreathy * dynamicRange
+    noiseAnchors$value = noiseAnchors$value +
+      creakyBreathy * (dynamicRange + permittedValues['noiseAmpl', 'high'])
     noiseAnchors$value[noiseAnchors$value >
                          permittedValues['noiseAmpl', 'high']] =
       permittedValues['noiseAmpl', 'high']
@@ -520,12 +530,12 @@ soundgen = function(repeatBout = 1,
   }
   # adjust rolloff for both creaky and breathy voices
   rolloff$value = rolloff$value - creakyBreathy * 10
+  rolloffOct$value = rolloffOct$value - creakyBreathy * 1
   if (invalidArgAction != 'ignore') {
     rolloff$value[rolloff$value < permittedValues['rolloff', 'low']] =
       permittedValues['rolloff', 'low']
     rolloff$value[rolloff$value > permittedValues['rolloff', 'high']] =
       permittedValues['rolloff', 'high']
-    rolloffOct$value = rolloffOct$value - creakyBreathy * 5
     rolloffOct$value[rolloffOct$value < permittedValues['rolloffOct', 'low']] =
       permittedValues['rolloffOct', 'low']
     rolloffOct$value[rolloffOct$value > permittedValues['rolloffOct', 'high']] =
@@ -571,7 +581,9 @@ soundgen = function(repeatBout = 1,
       }
     }
     # vocalTract varies by 25% from the average
-    vocalTract = vocalTract * (1 - .25 * maleFemale)
+    if (is.numeric(vocalTract)) {
+      vocalTract = vocalTract * (1 - .25 * maleFemale)
+    }
   }
 
   # prepare a list of pars for calling generateHarmonics()
@@ -624,20 +636,20 @@ soundgen = function(repeatBout = 1,
     'overlap' = overlap
   )
   pars_syllable = pars_list
-  if (is.list(pitchAnchorsGlobal) &&
-      any(!is.na(pitchAnchorsGlobal)) &&
-      any(pitchAnchorsGlobal$value != 0) &&
-      nSyl > 1) {
-    pitchDeltas = 2 ^ (
-      getDiscreteContour(
-        len = nSyl,
-        anchors = pitchAnchorsGlobal,
-        interpol = 'spline',
-        plot = FALSE
-      ) / 12
-    )
-  } else {
-    pitchDeltas = rep(1, nSyl)
+  pitchDeltas = rep(1, nSyl)
+  if (is.list(pitchAnchorsGlobal)) {
+    if (any(!is.na(pitchAnchorsGlobal))) {
+      if (any(pitchAnchorsGlobal$value != 0) & nSyl > 1) {
+        pitchDeltas = 2 ^ (
+          getDiscreteContour(
+            len = nSyl,
+            anchors = pitchAnchorsGlobal,
+            interpol = 'spline',
+            plot = FALSE
+          ) / 12
+        )
+      }
+    }
   }
 
   # make sure pitchAnchors$time range from 0 to 1
@@ -650,32 +662,44 @@ soundgen = function(repeatBout = 1,
     }
   }
 
-  wiggleNoise = temperature > 0 &&
-    class(noiseAnchors) == 'data.frame' &&
-    any(noiseAnchors$value > -dynamicRange)
-  wiggleAmpl_per_syl = temperature > 0 &&
-    !is.na(amplAnchors) &&
-    any(amplAnchors$value < dynamicRange)
-  wiggleGlottis = temperature > 0 &&
-    class(glottisAnchors) == 'data.frame' &&
-    any(glottisAnchors$value > 0)
+  wiggleNoise = FALSE
+  if (is.numeric(noiseAnchors) | is.list(noiseAnchors)) {
+    if (temperature > 0 & any(noiseAnchors$value > -dynamicRange)) {
+      wiggleNoise = TRUE
+    }
+  }
+
+  wiggleAmpl_per_syl = FALSE
+  if (is.numeric(amplAnchors) | is.list(amplAnchors)) {
+    if (temperature > 0 & any(amplAnchors$value < dynamicRange)) {
+      wiggleAmpl_per_syl = TRUE
+    }
+  }
+
+  wiggleGlottis = FALSE
+  if (is.numeric(amplAnchors) | is.list(amplAnchors)) {
+    if (temperature > 0 & any(glottisAnchors$value > 0)) {
+      wiggleGlottis = TRUE
+    }
+  }
 
   # For polysyllabic vocalizations, calculate amplitude envelope correction
   # per voiced syllable
-  if (!is.na(amplAnchorsGlobal) &&
-      any(amplAnchorsGlobal$value != 0)) {
-    amplEnvelope = getSmoothContour(
-      anchors = amplAnchorsGlobal,
-      len = nSyl,
-      interpol = interpol,
-      discontThres = discontThres,
-      jumpThres = jumpThres,
-      valueFloor = -dynamicRange,
-      valueCeiling = dynamicRange,
-      samplingRate = samplingRate
-    )
-    # convert from dB to linear multiplier
-    amplEnvelope = 10 ^ (amplEnvelope / 20)
+  if (is.list(amplAnchorsGlobal)) {
+    if (any(amplAnchorsGlobal$value != 0)) {
+      amplEnvelope = getSmoothContour(
+        anchors = amplAnchorsGlobal,
+        len = nSyl,
+        interpol = interpol,
+        discontThres = discontThres,
+        jumpThres = jumpThres,
+        valueFloor = -dynamicRange,
+        valueCeiling = dynamicRange,
+        samplingRate = samplingRate
+      )
+      # convert from dB to linear multiplier
+      amplEnvelope = 10 ^ (amplEnvelope / 20)
+    }
   } else {
     amplEnvelope = rep(1, nSyl)
   }
@@ -811,15 +835,21 @@ soundgen = function(repeatBout = 1,
         # plot(pitchContour_syl, type = 'l')
       }
 
-      # generate the voiced part
-      if (dur_syl < permittedValues['sylLen', 'low'] |
-          (!is.na(noiseAnchors) && min(noiseAnchors$value) >= 40) |
-          !is.list(pitchAnchors_per_syl)) {
-        # only synthesize voiced part if noise is weaker than 40 dB
-        #   and the voiced part is long enough to bother synthesizing it
+      # generate the voiced part only if noise is weaker than 40 dB
+      #   and the voiced part is long enough to bother synthesizing it
+      generateVoiced = TRUE
+      if (dur_syl < permittedValues['sylLen', 'low'] | !is.list(pitchAnchors_per_syl)) {
+        generateVoiced = FALSE
+      }
+      if (is.list(noiseAnchors)) {
+        if (min(noiseAnchors$value) >= 40) {
+          generateVoiced = FALSE
+        }
+      }
+
+      if (!generateVoiced) {
         syllable = rep(0, round(dur_syl * samplingRate / 1000))
       } else {
-
         # ***THE ACTUAL SYNTHESIS IS HERE***
         # print(pars_syllable)
         syllable = try(do.call(generateHarmonics, c(
@@ -862,42 +892,43 @@ soundgen = function(repeatBout = 1,
       }
 
       # generate the unvoiced part, but don't add it to the sound just yet
-      if (!is.na(noiseAnchors) &&
-          any(noiseAnchors$value > -dynamicRange)) {
-        if (is.list(rolloffNoise)) {
-          rolloffNoise_syl = wiggleAnchors(
-            rolloffNoise,
-            temperature = temperature,
-            temp_coef = tempEffects$specDep,
-            low = c(-Inf, permittedValues['rolloffNoise', 'low']),
-            high = c(Inf, permittedValues['rolloffNoise', 'high']),
-            wiggleAllRows = TRUE,
-            invalidArgAction = invalidArgAction
-          )
-        } else {
-          rolloffNoise_syl = rnorm_bounded(
-            n = length(rolloffNoise),
-            mean = rolloffNoise,
-            sd = abs(rolloffNoise) * temperature * tempEffects$specDep,
-            low = permittedValues['rolloffNoise', 'low'],
-            high = permittedValues['rolloffNoise', 'high']
-          )
+      if (is.list(noiseAnchors)) {
+        if (any(noiseAnchors$value > -dynamicRange)) {
+          if (is.list(rolloffNoise)) {
+            rolloffNoise_syl = wiggleAnchors(
+              rolloffNoise,
+              temperature = temperature,
+              temp_coef = tempEffects$specDep,
+              low = c(-Inf, permittedValues['rolloffNoise', 'low']),
+              high = c(Inf, permittedValues['rolloffNoise', 'high']),
+              wiggleAllRows = TRUE,
+              invalidArgAction = invalidArgAction
+            )
+          } else {
+            rolloffNoise_syl = rnorm_bounded(
+              n = length(rolloffNoise),
+              mean = rolloffNoise,
+              sd = abs(rolloffNoise) * temperature * tempEffects$specDep,
+              low = permittedValues['rolloffNoise', 'low'],
+              high = permittedValues['rolloffNoise', 'high']
+            )
+          }
+          # synthesize the unvoiced part
+          unvoiced[[s]] = generateNoise(
+            len = round(diff(range(noiseAnchors_syl[[s]]$time)) * samplingRate / 1000),
+            noiseAnchors = noiseAnchors_syl[[s]],
+            rolloffNoise = rolloffNoise_syl,
+            noiseFlatSpec = noiseFlatSpec,
+            temperature = 0,  # wiggled separately in soundgen
+            attackLen = attackLen,
+            samplingRate = samplingRate,
+            windowLength_points = windowLength_points,
+            overlap = overlap,
+            dynamicRange = dynamicRange,
+            spectralEnvelope = NULL # spectralEnvelopeNoise
+          ) * amplEnvelope[s]  # correction of amplitude per syllable
+          # plot(unvoiced[[s]], type = 'l')
         }
-        # synthesize the unvoiced part
-        unvoiced[[s]] = generateNoise(
-          len = round(diff(range(noiseAnchors_syl[[s]]$time)) * samplingRate / 1000),
-          noiseAnchors = noiseAnchors_syl[[s]],
-          rolloffNoise = rolloffNoise_syl,
-          noiseFlatSpec = noiseFlatSpec,
-          temperature = 0,  # wiggled separately in soundgen
-          attackLen = attackLen,
-          samplingRate = samplingRate,
-          windowLength_points = windowLength_points,
-          overlap = overlap,
-          dynamicRange = dynamicRange,
-          spectralEnvelope = NULL # spectralEnvelopeNoise
-        ) * amplEnvelope[s]  # correction of amplitude per syllable
-        # plot(unvoiced[[s]], type = 'l')
       }
     }
     # plot(voiced, type = 'l')
@@ -948,7 +979,7 @@ soundgen = function(repeatBout = 1,
       overlap = overlap
     )
     if (length(unvoiced) > 0) {
-      if (is.null(formantsNoise) || is.na(formantsNoise)) {
+      if (!is.numeric(formantsNoise) & !is.list(formantsNoise)) {
         # OPTION 1: mix voiced + unvoiced, then apply the same format filter
         sound = addVectors(
           voiced,
@@ -1025,39 +1056,41 @@ soundgen = function(repeatBout = 1,
 
     # trill - rapid regular amplitude modulation
     # (affects both voiced and unvoiced)
-    if (is.list(amDep) && any(amDep$value > 0)) {
-      # vectorize
-      amPar_vect = c('amDep', 'amFreq', 'amShape')
-      # just to get rid of of NOTE on CRAN:
-      amDep_vector = amFreq_vector = amShape_vector = vector()
-      for (p in amPar_vect) {
-        p_unique_value = unique(get(p)$value)
-        if (length(p_unique_value) > 1) {
-          p_vectorized = getSmoothContour(
-            anchors = get(p),
-            len = length(soundFiltered),
-            interpol = 'approx',
-            valueFloor = permittedValues[p, 'low'],
-            valueCeiling = permittedValues[p, 'high']
-          )
-          # plot(p_vectorized, type = 'l')
-          assign(paste0(p, '_vector'), p_vectorized)
-        } else {
-          assign(paste0(p, '_vector'), p_unique_value)
+    if (is.list(amDep)) {
+      if (any(amDep$value > 0)) {
+        # vectorize
+        amPar_vect = c('amDep', 'amFreq', 'amShape')
+        # just to get rid of of NOTE on CRAN:
+        amDep_vector = amFreq_vector = amShape_vector = vector()
+        for (p in amPar_vect) {
+          p_unique_value = unique(get(p)$value)
+          if (length(p_unique_value) > 1) {
+            p_vectorized = getSmoothContour(
+              anchors = get(p),
+              len = length(soundFiltered),
+              interpol = 'approx',
+              valueFloor = permittedValues[p, 'low'],
+              valueCeiling = permittedValues[p, 'high']
+            )
+            # plot(p_vectorized, type = 'l')
+            assign(paste0(p, '_vector'), p_vectorized)
+          } else {
+            assign(paste0(p, '_vector'), p_unique_value)
+          }
         }
+
+        # prepare am
+        sig = getSigmoid(len = length(soundFiltered),
+                         samplingRate = samplingRate,
+                         freq = amFreq_vector,
+                         shape = amShape_vector)
+        trill = 1 - sig * amDep_vector / 100
+        # plot(trill, type='l')
+
+        # apply am
+        soundFiltered = soundFiltered * trill
+        # plot(soundFiltered, type = 'l')
       }
-
-      # prepare am
-      sig = getSigmoid(len = length(soundFiltered),
-                       samplingRate = samplingRate,
-                       freq = amFreq_vector,
-                       shape = amShape_vector)
-      trill = 1 - sig * amDep_vector / 100
-      # plot(trill, type='l')
-
-      # apply am
-      soundFiltered = soundFiltered * trill
-      # plot(soundFiltered, type = 'l')
     }
 
     # grow bout
@@ -1074,7 +1107,8 @@ soundgen = function(repeatBout = 1,
   }
 
   # normalize
-  bout = bout / max(abs(bout))
+  m = max(abs(bout))
+  if (m != 0) bout = bout / m
 
   # add some silence before and after the entire bout
   if (is.numeric(addSilence)) {

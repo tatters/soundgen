@@ -116,7 +116,7 @@ getSpectralEnvelope = function(nr,
   formants = reformatFormants(formants)
 
   ## estimate vocal tract length
-  if (!is.numeric(vocalTract) && is.list(formants)) {
+  if (!is.numeric(vocalTract) & is.list(formants)) {
     # if we don't know vocalTract, but at least one formant is defined,
     # we guess the length of vocal tract
     vocalTract = estimateVTL(formants = formants,
@@ -142,7 +142,7 @@ getSpectralEnvelope = function(nr,
     any_zeros = any(sapply(formants, function(f) {
       # check if there are any negative amp values, excluding NA's
       a = f$amp
-      any(is.numeric(a)) && any(a < 0, na.rm = TRUE)
+      any(is.numeric(a)) & any(a < 0, na.rm = TRUE)
     }))
     if (any_zeros) {
       for (f in 1:length(formants)) {
@@ -191,7 +191,7 @@ getSpectralEnvelope = function(nr,
                                      grepl('.', x, fixed = TRUE)
                                    })
       # create a few new, relatively high-frequency extra formants
-      if (!is.numeric(vocalTract) && length(formants) > 1) {
+      if (!is.numeric(vocalTract) & length(formants) > 1) {
         ff = unlist(lapply(formants[!non_integer_formants], function(x) x$freq[1]))
         formantDispersion = getFormantDispersion(ff,
                                                  speedSound = speedSound,
@@ -206,36 +206,38 @@ getSpectralEnvelope = function(nr,
       nFormants_integer = length(formants_upsampled) - sum(non_integer_formants)
       freq_max = max(formants_upsampled[[nFormants]][, 'freq'])
 
-      if (!is.na(sdG) && formantDepStoch > 0) {
+      if (!is.na(sdG) & formantDepStoch > 0) {
         # formant_f = (2 * f - 1) / 2 * formantDispersion,
         # therefore, to generate formants to 2 * Nyquist
         # (to compensate for downward drag of lower formants)
         # 2 * nyquist = (2 * nExtraFormants - 1) / 2 * formantDispersion
         # Solving for nExtraFormants gives (nyquist * 4 / formantDispersion + 1) / 2:
         nExtraFormants = round((samplingRate * 2 / formantDispersion + 1) / 2) - nFormants
-        if (is.numeric(nExtraFormants) && nExtraFormants > 0) {
-          extraFreqs_regular = (2 * ((nFormants_integer + 1):
-                                       (nFormants_integer + nExtraFormants)) - 1) /
-            2 * formantDispersion
-          extraFreqs = rgamma(nExtraFormants,
-                              # mean = extraFreqs_regular, sd = sdG
-                              extraFreqs_regular ^ 2 / sdG ^ 2,
-                              extraFreqs_regular / sdG ^ 2)
-          extraAmps = rgamma(
-            nExtraFormants,
-            # mean = formantDepStoch, sd = formantDepStoch * temperature
-            1 / temperature ^ 2,
-            1 / (formantDepStoch * temperature ^ 2)
-          )
-          extraWidths = getBandwidth(extraFreqs)
-          for (f in 1:nExtraFormants) {
-            formants_upsampled[[nFormants + 1]] = data.frame (
-              'time' = formants_upsampled[[1]][, 'time'],
-              'freq' = extraFreqs[f],
-              'amp' = ifelse(any_zeros, extraAmps[f], NA),
-              'width' = extraWidths[f]
+        if (is.numeric(nExtraFormants)) {
+          if (nExtraFormants > 0) {
+            extraFreqs_regular = (2 * ((nFormants_integer + 1):
+                                         (nFormants_integer + nExtraFormants)) - 1) /
+              2 * formantDispersion
+            extraFreqs = rgamma(nExtraFormants,
+                                # mean = extraFreqs_regular, sd = sdG
+                                extraFreqs_regular ^ 2 / sdG ^ 2,
+                                extraFreqs_regular / sdG ^ 2)
+            extraAmps = rgamma(
+              nExtraFormants,
+              # mean = formantDepStoch, sd = formantDepStoch * temperature
+              1 / temperature ^ 2,
+              1 / (formantDepStoch * temperature ^ 2)
             )
-            nFormants = length(formants_upsampled)
+            extraWidths = getBandwidth(extraFreqs)
+            for (f in 1:nExtraFormants) {
+              formants_upsampled[[nFormants + 1]] = data.frame (
+                'time' = formants_upsampled[[1]][, 'time'],
+                'freq' = extraFreqs[f],
+                'amp' = ifelse(any_zeros, extraAmps[f], NA),
+                'width' = extraWidths[f]
+              )
+              nFormants = length(formants_upsampled)
+            }
           }
         }
       }
@@ -293,22 +295,23 @@ getSpectralEnvelope = function(nr,
     # plot(mouthOpening_upsampled, type = 'l')
 
     # adjust formants for mouth opening
-    if (!is.null(vocalTract) && is.finite(vocalTract)) {
-      # is.finite() returns F for NaN, NA, inf, etc
-      adjustment_hz = (mouthOpening_upsampled - 0.5) * speedSound /
-        (4 * vocalTract) # speedSound = 35400 cm/s, speed of sound in warm
-      # air. The formula for mouth opening is adapted from Moore (2016)
-      # "A Real-Time Parametric General-Purpose Mammalian Vocal Synthesiser".
-      # mouthOpening = .5 gives no modification (neutral, "default" position).
-      # Basically we assume a closed-closed tube for closed mouth and a
-      # closed-open tube for open mouth, but since formants can be specified
-      # rather than calculated based on vocalTract, we just subtract half the
-      # total difference between open and closed tubes in Hz from each formant
-      # value as the mouth goes from half-open (neutral) to fully closed, or we
-      # add half that value as the mouth goes from neutral to max open
-      adjustment_bins = (adjustment_hz - bin_width / 2) / bin_width + 1
-    } else {
-      adjustment_bins = 0
+    adjustment_bins = 0
+    if (!is.null(vocalTract)) {
+      if (is.finite(vocalTract)) {
+        # is.finite() returns F for NaN, NA, inf, etc
+        adjustment_hz = (mouthOpening_upsampled - 0.5) * speedSound /
+          (4 * vocalTract) # speedSound = 35400 cm/s, speed of sound in warm
+        # air. The formula for mouth opening is adapted from Moore (2016)
+        # "A Real-Time Parametric General-Purpose Mammalian Vocal Synthesiser".
+        # mouthOpening = .5 gives no modification (neutral, "default" position).
+        # Basically we assume a closed-closed tube for closed mouth and a
+        # closed-open tube for open mouth, but since formants can be specified
+        # rather than calculated based on vocalTract, we just subtract half the
+        # total difference between open and closed tubes in Hz from each formant
+        # value as the mouth goes from half-open (neutral) to fully closed, or we
+        # add half that value as the mouth goes from neutral to max open
+        adjustment_bins = (adjustment_hz - bin_width / 2) / bin_width + 1
+      }
     }
     for (f in 1:length(formants_upsampled)) {
       formants_upsampled[[f]][, 'freq'] =
@@ -530,17 +533,19 @@ reformatFormants = function(formants) {
     }
     for (f in 1:length(formants)) {
       formant = formants[[f]]
-      if (is.list(formant) && 'freq' %in% names(formant)) {
-        # expand to full format from e.g. f1 = list(freq = 550, amp = 30)
-        formant = as.data.frame(formant)
-        if (is.null(formant$time)) {
-          formant$time = seq(0, 1, length.out = nrow(formant))
-        }
-        if (is.null(formant$amp)) {
-          formant$amp = NA
-        }
-        if (is.null(formant$width)) {
-          formant$width = getBandwidth(formant$freq)
+      if (is.list(formant)) {
+        if ('freq' %in% names(formant)) {
+          # expand to full format from e.g. f1 = list(freq = 550, amp = 30)
+          formant = as.data.frame(formant)
+          if (is.null(formant$time)) {
+            formant$time = seq(0, 1, length.out = nrow(formant))
+          }
+          if (is.null(formant$amp)) {
+            formant$amp = NA
+          }
+          if (is.null(formant$width)) {
+            formant$width = getBandwidth(formant$freq)
+          }
         }
       } else if (is.numeric(formant)) {
         # expand to full format from e.g. f1 = 550
@@ -553,9 +558,11 @@ reformatFormants = function(formants) {
       # make sure columns are in the right order (for esthetics & debugging)
       formants[[f]] = formant[, c('time', 'freq', 'amp', 'width')]
     }
-  } else if (!is.null(formants) && !is.na(formants)) {
-    stop('If defined, formants must be either a list or a string of characters
+  } else if (!is.null(formants)) {
+    if (!is.na(formants)) {
+      stop('If defined, formants must be either a list or a string of characters
          from dictionary presets: a, o, i, e, u, 0 (schwa)')
+    }
   }
   return(formants)
 }
@@ -768,24 +775,26 @@ estimateVTL = function(formants, speedSound = 35400, checkFormat = TRUE) {
   if (checkFormat) {
     formants = reformatFormants(formants)
   }
-  if (is.list(formants) && is.numeric(formants[[1]]$freq)) {
-    # if we don't know vocalTract, but at least one formant is defined,
-    # we guess the length of vocal tract
-    formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
-    non_integer_formants = apply(as.matrix(names(formant_freqs)),
-                                 1,
-                                 function(x) {
-                                   grepl('.', x, fixed = TRUE)
-                                 })
-    formant_freqs = formant_freqs[!non_integer_formants]
-    formantDispersion = getFormantDispersion(formant_freqs,
-                                             speedSound = speedSound,
-                                             method = 'accurate')
-    vocalTract = ifelse(
-      is.numeric(formantDispersion),
-      speedSound / 2 / formantDispersion,
-      speedSound / 4 / formants$f1$freq
-    )
+  if (is.list(formants)) {
+    if (is.numeric(formants[[1]]$freq)) {
+      # if we don't know vocalTract, but at least one formant is defined,
+      # we guess the length of vocal tract
+      formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
+      non_integer_formants = apply(as.matrix(names(formant_freqs)),
+                                   1,
+                                   function(x) {
+                                     grepl('.', x, fixed = TRUE)
+                                   })
+      formant_freqs = formant_freqs[!non_integer_formants]
+      formantDispersion = getFormantDispersion(formant_freqs,
+                                               speedSound = speedSound,
+                                               method = 'accurate')
+      vocalTract = ifelse(
+        is.numeric(formantDispersion),
+        speedSound / 2 / formantDispersion,
+        speedSound / 4 / formants$f1$freq
+      )
+    }
   } else {
     vocalTract = NA
   }
@@ -935,8 +944,10 @@ addFormants = function(sound,
       } else {
         movingFormants = FALSE
       }
-      if (is.list(mouthAnchors) && sum(mouthAnchors$value != .5) > 0) {
-        movingFormants = TRUE
+      if (is.list(mouthAnchors)) {
+        if (sum(mouthAnchors$value != .5) > 0) {
+          movingFormants = TRUE
+        }
       }
       nInt = ifelse(movingFormants, nc, 1)
 
@@ -1148,17 +1159,25 @@ schwa = function(formants = NULL,
   if (is.null(formants) & is.null(vocalTract)) {
     stop('Please pecify formant frequencies and/or vocal tract length')
   }
-  if (!is.null(formants) && (!is.numeric(formants) | any(formants < 0))) {
-    stop('formants must be positive numbers (Hz)')
+  if (!is.null(formants)) {
+    if (!is.numeric(formants) | any(formants < 0)) {
+      stop('formants must be positive numbers (Hz)')
+    }
   }
-  if (!is.null(formants_relative) && !is.numeric(formants_relative)) {
-    stop('formants_relative must be positive numbers (Hz)')
+  if (!is.null(formants_relative)) {
+    if (!is.numeric(formants_relative)) {
+      stop('formants_relative must be positive numbers (Hz)')
+    }
   }
-  if (!is.null(vocalTract) && (!is.numeric(vocalTract) | vocalTract < 0)) {
-    stop('vocalTract must be a positive number (cm)')
+  if (!is.null(vocalTract)) {
+    if (!is.numeric(vocalTract) | vocalTract < 0) {
+      stop('vocalTract must be a positive number (cm)')
+    }
   }
-  if (!is.null(formants_relative) && is.null(vocalTract)) {
-    stop('vocalTract must be specified to convert relative formants to Hz')
+  if (!is.null(formants_relative)) {
+    if (is.null(vocalTract)) {
+      stop('vocalTract must be specified to convert relative formants to Hz')
+    }
   }
 
   if (is.null(formants_relative)) {

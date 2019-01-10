@@ -193,7 +193,7 @@ findZeroCrossing = function(ampl, location) {
   if (location > 1) {
     i = location
     while (i > 1) {
-      if (ampl[i] > 0 && ampl[i - 1] < 0) {
+      if (ampl[i] > 0 & ampl[i - 1] < 0) {
         zc_left = i - 1
         break
       }
@@ -205,7 +205,7 @@ findZeroCrossing = function(ampl, location) {
   if (location < len)
     i = location
   while (i < (len - 1)) {
-    if (ampl[i + 1] > 0 && ampl[i] < 0) {
+    if (ampl[i + 1] > 0 & ampl[i] < 0) {
       zc_right = i
       break
     }
@@ -495,7 +495,7 @@ wiggleAnchors = function(df,
       # insert between any two existing anchors
       a1 = sample(1:nrow(df), size = 1)
       direction = sample(c(-1, 1), size = 1)
-      a2 = ifelse(a1 + direction < 1 || a1 + direction > nrow(df),
+      a2 = ifelse(a1 + direction < 1 | a1 + direction > nrow(df),
                   a1 - direction,
                   a1 + direction)
       i1 = min(a1, a2)
@@ -540,7 +540,7 @@ wiggleAnchors = function(df,
     w = try(rnorm_bounded(
       n = nrow(df),
       mean = as.numeric(df[, i]),
-      sd = ifelse(i > 1 && !is.null(sd_values),
+      sd = ifelse(i > 1 & !is.null(sd_values),
                   sd_values,
                   as.numeric(ranges[i] * temperature * temp_coef)),
       low = low[i],

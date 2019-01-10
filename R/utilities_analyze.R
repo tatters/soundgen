@@ -84,7 +84,7 @@ analyzeFrame = function(frame,
   # in Hz (~20 Hz for 44100 Hz with 50 ms window and zp = 0)
 
   # lowest dominant frequency band
-  if (trackPitch && 'dom' %in% pitchMethods) {
+  if (trackPitch & 'dom' %in% pitchMethods) {
     d = getDom(frame = frame,
                samplingRate = samplingRate,
                bin = bin,
@@ -107,7 +107,7 @@ analyzeFrame = function(frame,
   }
 
   # autocorrelation (PRAAT)
-  if (trackPitch && 'autocor' %in% pitchMethods) {
+  if (trackPitch & 'autocor' %in% pitchMethods) {
     pa = getPitchAutocor(autoCorrelation = autoCorrelation,
                          autocorThres = autocorThres,
                          autocorSmooth = autocorSmooth,
@@ -124,7 +124,7 @@ analyzeFrame = function(frame,
   }
 
   # cepstrum
-  if (trackPitch && 'cep' %in% pitchMethods) {
+  if (trackPitch & 'cep' %in% pitchMethods) {
     pitchCep_array = getPitchCep(frame = frame,
                                  cepZp = cepZp,
                                  samplingRate = samplingRate,
@@ -137,7 +137,7 @@ analyzeFrame = function(frame,
   }
 
   # spectral: ratios of harmonics (BaNa)
-  if (trackPitch && 'spec' %in% pitchMethods) {
+  if (trackPitch & 'spec' %in% pitchMethods) {
     pitchSpec_array = getPitchSpec(frame = frame,
                                    specSmooth = specSmooth,
                                    specHNRslope = specHNRslope,
@@ -563,11 +563,13 @@ getPitchSpec = function(frame,
         ]
     }
   }
-  if (!is.null(pitchSpec_array) && sum(!is.na(pitchSpec_array)) > 0) {
-    pitchSpec_array = pitchSpec_array[pitchSpec_array$pitchAmpl > specThres,
-                                      , drop = FALSE]
-    # how many pitchSpec candidates to use (max)
-    pitchSpec_array = pitchSpec_array[1:min(nrow(pitchSpec_array), nCands), ]
+  if (!is.null(pitchSpec_array)) {
+    if (sum(!is.na(pitchSpec_array)) > 0) {
+      pitchSpec_array = pitchSpec_array[pitchSpec_array$pitchAmpl > specThres,
+                                        , drop = FALSE]
+      # how many pitchSpec candidates to use (max)
+      pitchSpec_array = pitchSpec_array[1:min(nrow(pitchSpec_array), nCands), ]
+    }
   }
 
   return(pitchSpec_array)

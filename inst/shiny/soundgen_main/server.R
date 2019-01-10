@@ -109,13 +109,14 @@ server = function(input, output, session) {
       for (v in sliders_to_reset) {
         if (is.numeric(preset[[v]])) {
           new_value = preset[[v]][1]  # the first value if a vector
-        } else if (is.list(preset[[v]]) &&
-                   !names(preset)[v] %in% c(formerAnchors, 'formants', 'formantsNoise')) {
-          v1 = try(preset[[v]]$value[1])
-          if (class(v1) == 'try-error') {
-            print(preset[[v]])
-          } else {
-            new_value = v1  # the first value if a df of anchors
+        } else if (is.list(preset[[v]])) {
+          if (!names(preset)[v] %in% c(formerAnchors, 'formants', 'formantsNoise')) {
+            v1 = try(preset[[v]]$value[1])
+            if (class(v1) == 'try-error') {
+              print(preset[[v]])
+            } else {
+              new_value = v1  # the first value if a df of anchors
+            }
           }
         } else {
           new_value = NULL
@@ -128,19 +129,21 @@ server = function(input, output, session) {
       # reformat anchors from the preset
       for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal', 'glottisAnchors',
                        'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
-        if (!is.null(preset[[anchor]]) && !is.na(preset[[anchor]])) {
+        if (is.numeric(preset[[anchor]]) | is.list(preset[[anchor]])) {
           preset[[anchor]] = soundgen:::reformatAnchors(preset[[anchor]])
         }
       }
-      if (is.numeric(preset$noiseAnchors) && length(preset$noiseAnchors) > 0) {
-        preset$noiseAnchors = data.frame(
-          time = seq(0,
-                     ifelse(is.numeric(preset$sylLen),
-                            preset$sylLen,
-                            permittedValues['sylLen', 'default']),
-                     length.out = max(2, length(preset$noiseAnchors))),
-          value = preset$noiseAnchors
-        )
+      if (is.numeric(preset$noiseAnchors)) {
+        if (length(preset$noiseAnchors) > 0) {
+          preset$noiseAnchors = data.frame(
+            time = seq(0,
+                       ifelse(is.numeric(preset$sylLen),
+                              preset$sylLen,
+                              permittedValues['sylLen', 'default']),
+                       length.out = max(2, length(preset$noiseAnchors))),
+            value = preset$noiseAnchors
+          )
+        }
       }
 
       myPars_to_reset = names(myPars)[which(names(myPars) %in% names(preset))]
@@ -221,8 +224,9 @@ server = function(input, output, session) {
     }
 
     # update VTL if preset contains formants, but does not contain an explicit VTL value
-    if (!is.null(preset$formants) &&
-        any(!is.na(preset$formants)) &&
+    if ((is.numeric(preset$formants) |
+         is.list(preset$formants) |
+         is.character(preset$formants)) &
         !is.numeric(preset$vocalTract)) {
       v = estimateVTL(preset$formants)
       if (is.numeric(v)) {
@@ -254,10 +258,12 @@ server = function(input, output, session) {
   noiseType_alternatives = reactive({
     cons = names(presets[[input$speaker]]$Formants$consonants)
     choices = list(Breathing = 'b')
-    if (!is.null(cons) && length(cons) > 0) {
-      lbls = sapply(presets[[input$speaker]]$Formants$consonants, function(x) x$label)
-      choices = c(choices, as.list(cons))
-      names(choices)[2:length(choices)] = lbls
+    if (!is.null(cons)) {
+      if (length(cons) > 0) {
+        lbls = sapply(presets[[input$speaker]]$Formants$consonants, function(x) x$label)
+        choices = c(choices, as.list(cons))
+        names(choices)[2:length(choices)] = lbls
+      }
     }
     choices
   })
@@ -278,10 +284,11 @@ server = function(input, output, session) {
       try({
         converted = soundgen:::convertStringToFormants(input$vowelString,
                                                        speaker = input$speaker)
-        if (!class(converted) == 'logical' &&  # not NA
-            sum(unlist(converted)) > 0) { # if the converted formant list is not empty
-          myPars$formants = converted
-          # (...otherwise don't change myPars$formants to prevent crashing)
+        if (!class(converted) == 'logical') {  # not NA
+          if (sum(unlist(converted)) > 0) {  # if the converted formant list is not empty
+            myPars$formants = converted
+            # (...otherwise don't change myPars$formants to prevent crashing)
+          }
         }
         updateTextInput(session, inputId = 'formants',
                         value = as.character(call('print', converted)[2]))
@@ -339,7 +346,7 @@ server = function(input, output, session) {
   observeEvent({
     input$estimateVTL
     myPars$formants}, {
-      if (myPars$updateVTL && input$estimateVTL) {
+      if (myPars$updateVTL & input$estimateVTL) {
         v = estimateVTL(myPars$formants)
         if (is.numeric(v)) {
           if (v < permittedValues['vocalTract', 'low']) v = permittedValues['vocalTract', 'low']
@@ -412,7 +419,7 @@ server = function(input, output, session) {
       # the time as well, unless it is the first or the last anchor)
       if (delta_x < 0.05) {
         myPars$pitchAnchors$value[closest_point_in_time] = click_y
-        if (closest_point_in_time != 1 &&
+        if (closest_point_in_time != 1 &
             closest_point_in_time != length(myPars$pitchAnchors$time)) {
           myPars$pitchAnchors$time[closest_point_in_time] = click_x
         }
@@ -440,7 +447,7 @@ server = function(input, output, session) {
                                 xvar = 'time', yvar = 'value',
                                 threshold = 100000, maxpoints = 1)
       idx = as.numeric(rownames(closestPoint))
-      if (length(idx) > 0 && idx != 1 && idx != length(myPars$pitchAnchors$time)) {
+      if (length(idx) > 0 & idx != 1 & idx != length(myPars$pitchAnchors$time)) {
         # we can remove any anchor except the first and the last (because pitch at
         # start and end of sound has to be defined)
         myPars[['pitchAnchors']] = data.frame(
@@ -478,7 +485,7 @@ server = function(input, output, session) {
   })
 
   myPitchContourGlobal <- reactive({
-    if (input$nSyl > 1 && is.list(myPars$pitchAnchorsGlobal)) {
+    if (input$nSyl > 1 & is.list(myPars$pitchAnchorsGlobal)) {
       soundgen:::getDiscreteContour(
         anchors = myPars$pitchAnchorsGlobal,
         len = input$nSyl,
@@ -516,7 +523,7 @@ server = function(input, output, session) {
       # the time as well, unless it is the first or the last anchor)
       if (delta_x < 0.2) {
         myPars$pitchAnchorsGlobal$value[closest_point_in_time] = click_y
-        if (closest_point_in_time != 1 &&
+        if (closest_point_in_time != 1 &
             closest_point_in_time != length(myPars$pitchAnchorsGlobal$time)) {
           myPars$pitchAnchorsGlobal$time[closest_point_in_time] = click_x
         }
@@ -541,7 +548,7 @@ server = function(input, output, session) {
                                 xvar = 'time', yvar = 'value',
                                 threshold = 100000, maxpoints = 1)
       idx = as.numeric(rownames(closestPoint))
-      if (length(idx) > 0 && idx != 1 &&
+      if (length(idx) > 0 & idx != 1 &
           idx != length(myPars$pitchAnchorsGlobal$time)) {
         # we can remove any anchor except the first and the last (because pitch at
         # start and end of sound has to be defined)
@@ -634,7 +641,7 @@ server = function(input, output, session) {
                               input$plotUnvoiced_dblclick, xvar = 'time',
                               yvar = 'value', threshold = 100000, maxpoints = 1)
     idx = as.numeric(rownames(closestPoint))
-    if (length(idx) > 0 && length(myPars$noiseAnchors$time) > 2) {
+    if (length(idx) > 0 & length(myPars$noiseAnchors$time) > 2) {
       # we can remove any anchor, as long as there will be at least two anchors
       # left (to know what noise duration should be)
       myPars[['noiseAnchors']] = data.frame(
@@ -724,7 +731,7 @@ server = function(input, output, session) {
     idx = as.numeric(rownames(closestPoint))
     # we can remove any anchor except the first and the last (because mouth
     # opening at start and end of sound has to be defined)
-    if (length(idx) > 0 && idx != 1 && idx != length(myPars$mouthAnchors$time)) {
+    if (length(idx) > 0 & idx != 1 & idx != length(myPars$mouthAnchors$time)) {
       myPars[['mouthAnchors']] = data.frame('time' = myPars$mouthAnchors$time[-idx],
                                             'value' = myPars$mouthAnchors$value[-idx])
     }
@@ -799,7 +806,7 @@ server = function(input, output, session) {
     idx = as.numeric(rownames(closestPoint))
     # we can remove any anchor except the first and the last (because ampl
     # opening at start and end of sound has to be defined)
-    if (length(idx) > 0 && idx != 1 && idx != length(myPars$amplAnchors$time)) {
+    if (length(idx) > 0 & idx != 1 & idx != length(myPars$amplAnchors$time)) {
       myPars[['amplAnchors']] = data.frame('time' = myPars$amplAnchors$time[-idx],
                                            'value' = myPars$amplAnchors$value[-idx])
     }
@@ -824,7 +831,7 @@ server = function(input, output, session) {
   })
 
   amplEnvelopeGlobal = reactive({
-    if (input$nSyl > 1  && is.list(myPars$amplAnchorsGlobal)) {
+    if (input$nSyl > 1  & is.list(myPars$amplAnchorsGlobal)) {
       soundgen:::getDiscreteContour(
         anchors = myPars$amplAnchorsGlobal,
         len = input$nSyl,
@@ -884,7 +891,7 @@ server = function(input, output, session) {
     idx = as.numeric(rownames(closestPoint))
     # we can remove any anchor except the first and the last (because ampl
     # opening at start and end of sound has to be defined)
-    if (length(idx) > 0 && idx != 1 &&
+    if (length(idx) > 0 & idx != 1 &
         idx != length(myPars$amplAnchorsGlobal$time)) {
       myPars[['amplAnchorsGlobal']] = data.frame(
         'time' = myPars$amplAnchorsGlobal$time[-idx],
@@ -1086,10 +1093,9 @@ server = function(input, output, session) {
   })
 
   output$plotConsonant = renderPlot({
-    if (is.null(myPars$formantsNoise) || is.na(myPars$formantsNoise)) {
-      plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
-      text(x = 5, y = 5, labels = 'Same filter as for voiced', adj = .5, col = 'blue', cex = 1)
-    } else {
+    if (is.numeric(myPars$formantsNoise) |
+        is.list(myPars$formantsNoise) |
+        is.character(myPars$formantsNoise)) {
       nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2)
       if (input$formantsNoise_spectrogram_or_spectrum == 'spectrum') {
         s = getSpectralEnvelope(nr = nr,
@@ -1129,6 +1135,9 @@ server = function(input, output, session) {
                             colorTheme = input$spec_colorTheme
         )
       }
+    } else {
+      plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
+      text(x = 5, y = 5, labels = 'Same filter as for voiced', adj = .5, col = 'blue', cex = 1)
     }
   })
 
@@ -1276,25 +1285,27 @@ server = function(input, output, session) {
   observeEvent(input$import_preset, {
     # replace "soundgen" with "list" and parse
     new_preset_text = substr(input$user_preset, 9, nchar(input$user_preset))
-    new_preset_text = paste0('list', new_preset_text)
-    new_preset_list = try(eval(parse(text = new_preset_text)), silent = TRUE)
+    if (nchar(new_preset_text) > 0) {
+      new_preset_text = paste0('list', new_preset_text)
+      new_preset_list = try(eval(parse(text = new_preset_text)), silent = TRUE)
 
-    # create a new preset
-    new_presetID = paste(sample(c(letters, 0:9), 8, replace = TRUE),
-                         collapse = '')
-    # if the new preset contains "pitch", "ampl" etc, rename to "pitchAnchors", "amplAchors"
-    for (a in 1:length(newAnchors)) {
-      old = formerAnchors[a]
-      new = newAnchors[a]
-      if (new %in% names(new_preset_list)) {
-        names(new_preset_list)[which(names(new_preset_list) == new)] = old
+      # create a new preset
+      new_presetID = paste(sample(c(letters, 0:9), 8, replace = TRUE),
+                           collapse = '')
+      # if the new preset contains "pitch", "ampl" etc, rename to "pitchAnchors", "amplAchors"
+      for (a in 1:length(newAnchors)) {
+        old = formerAnchors[a]
+        new = newAnchors[a]
+        if (new %in% names(new_preset_list)) {
+          names(new_preset_list)[which(names(new_preset_list) == new)] = old
+        }
       }
-    }
-    myPars$loaded_presets[[new_presetID]] = new_preset_list
+      myPars$loaded_presets[[new_presetID]] = new_preset_list
 
-    # update sliders
-    reset_all()
-    mycall()
+      # update sliders
+      reset_all()
+      mycall()
+    }
   })
 
   observeEvent(input$about, {

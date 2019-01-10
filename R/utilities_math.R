@@ -596,9 +596,12 @@ addVectors = function(v1, v2, insertionPoint = 1, normalize = TRUE) {
 clumper = function(s, minLength) {
   if (max(minLength) < 2) return(s)
   minLength = round(minLength) # just in case it's not all integers
-  if (length(unique(s)) < 2 |
-      (length(minLength) == 1 && length(s) < minLength) |
-      length(s) < minLength[1]) {
+  if (length(minLength) == 1) {
+    if (length(s) < minLength) {
+      return(rep(round(median(s)), length(s)))
+    }
+  } else if (length(unique(s)) < 2 |
+             length(s) < minLength[1]) {
     return(rep(round(median(s)), length(s)))
   }
   if (length(minLength)==1 |length(minLength)!=length(s)) {

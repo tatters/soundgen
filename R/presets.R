@@ -2,7 +2,7 @@
 ### D E F A U L T   P A R   V A L U E S   &   P R E S E T S
 ###
 
-# devtools::use_data(permittedValues, defaults, presets, overwrite = TRUE)
+# usethis::use_data(permittedValues, defaults, presets, overwrite = TRUE)
 
 
 #' Defaults and ranges
@@ -37,10 +37,10 @@ permittedValues = matrix(c(
   'shimmerDep', 0, 0, 100, 1,
   'shimmerLen', 1, 1, 100, 1,
   'attackLen', 50, 0, 200, 10,
+  'glottisAnchors', 0, 0, 5000, 5,
+  'glottis', 0, 0, 5000, 5,
   'rolloff', -9, -30, 0, 1,
-  'glottisAnchors', 0, 0, 1000, 5,
-  'glottis', 0, 0, 1000, 5,
-  'rolloffOct', -3, -30, 10, 1,
+  'rolloffOct', 0, -30, 3, 1,
   'rolloffParab', 0, -30, 30, 1,
   'rolloffParabHarm', 3, 1, 20, 1,
   'rolloffKHz', -3, -20, 0, 1,
@@ -85,7 +85,7 @@ temp = permittedValues[,1]
 permittedValues = apply (permittedValues[,2:5], 2, as.numeric)
 colnames(permittedValues) = c('default', 'low', 'high', 'step')
 rownames(permittedValues) = temp
-# devtools::use_data(permittedValues, overwrite = TRUE)
+# usethis::use_data(permittedValues, overwrite = TRUE)
 
 # a list of default values for Shiny app - mostly the same as for
 # soundgen(). NB: if defaults change, this has to be updated!!!
@@ -107,7 +107,7 @@ defaults = list(
   shimmerLen = 1,
   attackLen = 50,
   rolloff = -9,
-  rolloffOct = -3,
+  rolloffOct = 0,
   rolloffParab = 0,
   rolloffParabHarm = 3,
   rolloffKHz = -3,
@@ -171,7 +171,7 @@ defaults = list(
   glottisAnchorsDep = .1,
   specDep = .1
 )
-# devtools::use_data(defaults, overwrite = TRUE)
+# usethis::use_data(defaults, overwrite = TRUE)
 
 # -------------------------------------------------------------
 # A library of presets for easy generation of a few nice sounds
@@ -326,7 +326,7 @@ presets = list(
   ),
 
   Cat = list(
-    Chirp = 'soundgen(sylLen = 120, pitch = c(828, 768, 423), nonlinBalance = 100, jitterDep = 0.3, shimmerDep = 11, attackLen = 1, rolloff = -3, rolloffOct = -1, formants = c(875, 1944, 2409), subDep = 0, noise = list(time = c(-1, 80, 161), value = c(-60, 14, -47)), ampl = list(time = c(0, 0.33, 1), value = c(0, 0, -11)), windowLength = 10)',
+    Chirp = 'soundgen(sylLen = 120, pitch = c(828, 768, 423), nonlinBalance = 100, jitterDep = 0.3, shimmerDep = 11, attackLen = 1, rolloff = -3, formants = c(875, 1944, 2409), subDep = 0, noise = list(time = c(-1, 80, 161), value = c(-60, 14, -47)), ampl = list(time = c(0, 0.33, 1), value = c(0, 0, -23)))',
 
     Growl = 'soundgen(sylLen = 2700, pitch = c(154, 121), nonlinBalance = 100, jitterDep = 1.3, jitterLen = 6, formants = c(200, 400, 700), vocalTract = 8, subFreq = 80, subDep = 50, shortestEpoch = 50)',
 
@@ -336,13 +336,13 @@ presets = list(
 
     Heat = 'soundgen(sylLen = 800, pitch = c(480, 552, 501), temperature = 0.1, nonlinBalance = 100, jitterDep = 0.3, jitterLen = 60, rolloff = -6, rolloffParabHarm = 1, formants = list(f1 = c(1500, 500), f2 = 2100, f3 = 5500), subDep = 0, amDep = 20, amFreq = 40, mouth = list(time = c(0, 0.12, 0.86, 1), value = c(0, 0.52, 0.57, 0)))',
 
-    Meow = 'soundgen(sylLen = 920, pitch = list(time = c(0, 0.2, 1), value = c(480, 550, 515)), attackLen = 150, rolloff = -6, rolloffOct = -2, formants = c(1594, 3600), mouth = list(time = c(0, 0.16, 0.91, 1), value = c(0, 1, 0.31, 0.06)))',
+    Meow = 'soundgen(sylLen = 920, pitch = list(time = c(0, 0.2, 1), value = c(480, 550, 515)), attackLen = 150, rolloff = -12, formants = c(1594, 3600), mouth = list(time = c(0, 0.16, 0.91, 1), value = c(0, 1, 0.31, 0.06)))',
 
-    Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 50, pitch = 25, glottis = 170, temperature = 0.1, jitterDep = 0, jitterLen = 34, rolloff = -30, lipRad = 0, formants = c(1200, 2600, 5200, 7000), subDep = 0, noise = list(time = c(-113, 96, 839), value = c(-80, -39, -58)))',
+    Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 20, pitch = 25, rolloff = -3, nonlinBalance = 100, subDep = 0, jitterDep = .5, shimmerDep = 20, formants = c(85, 230, 450, 1200, 2600, 5200, 7000), noise = list(time = c(-113, 96, 839), value = c(-80, -40, -70)), formantsNoise = c(1200, 2600, 5200, 7000), rolloffNoise = -3, temperature = 0.15, tempEffects = list(pitchDriftDep = 1))',
 
     Scream = 'soundgen(repeatBout = 2, sylLen = 1610, pauseLen = 500, pitch = list(time = c(0, 0.28, 0.53, 0.88, 1), value = c(388, 385, 669, 663, 392)), temperature = 0.05, nonlinBalance = 35, jitterDep = 1.9, rolloff = -6, formants = list(f1 = c(1800, 1000), f2 = 2400), subFreq = 150, subDep = 80)',
 
-    Snarl = 'soundgen(sylLen = 450, pitch = list(time = c(0, 0.08, 1), value = c(193, 454, 434)), temperature = 0.1, nonlinBalance = 75, jitterDep = 1.1, attackLen = 0, rolloff = -6, rolloffOct = -1, formants = list(f1 = list(freq = c(1500, 2000), width = 300), f2 = list(freq = 2500, width = 350)), subFreq = 230, subDep = 170, shortestEpoch = 75, noise = -8, mouth = list(time = c(0, 0.3, 0.63, 1), value = c(0, 1, 1, 0.5)), windowLength = 10)',
+    Snarl = 'soundgen(sylLen = 450, pitch = list(time = c(0, 0.08, 1), value = c(193, 454, 434)), temperature = 0.1, nonlinBalance = 75, jitterDep = 1.1, attackLen = 0, rolloff = -6, rolloffOct = -1, formants = list(f1 = list(freq = c(1500, 2000), width = 300), f2 = list(freq = 2500, width = 350)), subFreq = 230, subDep = 170, shortestEpoch = 75, noise = -8, mouth = list(time = c(0, 0.3, 0.63, 1), value = c(0, 1, 1, 0.5)))',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...
@@ -350,7 +350,7 @@ presets = list(
   ),
 
   Misc = list(
-    Crocodile = 'soundgen(sylLen = 2570, pitch = list(time = c(0, 0.36, 1), value = c(25, 42, 25)), glottis = c(150, 200), rolloff = -25, formants = c(200, 500, 1200, 1800), temperature = .25)',
+    Crocodile = 'soundgen(sylLen = 2570, pitch = list(time = c(0, 0.36, 1), value = c(25, 42, 25)), glottis = c(15, 80), rolloff = c(-30, -23, -22, -25), rolloffOct = 1.7, rolloffParab = -20, rolloffParabHarm = 1, nonlinBalance = 100, jitterDep = .5, shimmerDep = 20, formants = c(200, 500, 1200, 1700, 2280, 2680, 3350), formantDep = .8, noise = c(-60, -40, -60), dynamicRange = 120, temperature = .01)',
 
     Dog_bark = 'soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, pitch = list(time = c(0, 0.29, 1), value = c(559, 716, 647)), temperature = 0.05, nonlinBalance = 100, jitterDep = 2.1, formants = c(1500, 3300, 6000), vocalTract = 8.5, subDep = 0, noise = list(time = c(0, 78, 160), value = c(-80, 12, -80)), rolloffNoise = -9, mouth = c(0, 0.5, 0))',
 

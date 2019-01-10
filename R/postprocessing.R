@@ -105,8 +105,8 @@ fade = function(x,
                 shape = c('lin', 'exp', 'log', 'cos', 'logistic')[1],
                 steepness = 1,
                 plot = FALSE) {
-  if ((!is.numeric(fadeIn) || fadeIn < 1) &
-      (!is.numeric(fadeOut) || fadeOut < 1)) {
+  if ((!is.numeric(fadeIn) | fadeIn < 1) &
+      (!is.numeric(fadeOut) | fadeOut < 1)) {
     return(x)
   }
 

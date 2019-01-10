@@ -64,8 +64,8 @@
 #' @export
 #' @examples
 #' sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
-#'   pitchAnchors = c(368, 284), temperature = 0.1,
-#'   noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
+#'   pitch = c(368, 284), temperature = 0.1,
+#'   noise = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
 #'   rolloff_noise = -8, amplAnchorsGlobal = c(0, -20))
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #'  # playme(sound, samplingRate = 16000)
@@ -127,7 +127,7 @@ segment = function(x,
                      col = 'red'
                    ),
                    ...) {
-  mergeSyl = ifelse(is.null(shortestPause) || is.na(shortestPause), FALSE, TRUE)
+  mergeSyl = ifelse(is.numeric(shortestPause), TRUE, FALSE)
   if (windowLength < 10) {
     warning('windowLength < 10 ms is slow and usually not very useful')
   }
@@ -199,7 +199,7 @@ segment = function(x,
   # acceptable syllable length)
   if (is.null(interburst)) {
     median_scaled = suppressWarnings(median(syllables$sylLen) * interburstMult)
-    interburst = ifelse(is.numeric(median_scaled) && length(median_scaled) > 0,
+    interburst = ifelse(is.numeric(median_scaled) & length(median_scaled) > 0,
                         median_scaled,
                         shortestSyl)
   }

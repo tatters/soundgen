@@ -220,9 +220,11 @@ spectrogram = function(x,
 
   # FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-  if (exists('sound') && windowLength_points > (length(sound) / 2)) {
-    windowLength_points = floor(length(sound) / 4) * 2
-    step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
+  if (exists('sound')) {
+    if (windowLength_points > (length(sound) / 2)) {
+      windowLength_points = floor(length(sound) / 4) * 2
+      step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
+    }
   }
   if (windowLength_points == 0) {
     stop('The sound and/or the windowLength is too short for plotting a spectrogram')
@@ -541,7 +543,7 @@ getFrameBank = function(sound,
   if (any(is.na(sound))) {
     sound[is.na(sound)] = 0
   }
-  if (normalize && any(sound != 0)) {
+  if (normalize & any(sound != 0)) {
     sound = sound - mean(sound)
     sound = sound / max(abs(max(sound)), abs(min(sound)))
   }
@@ -630,7 +632,7 @@ osc_dB = function(x,
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
     if (is.null(maxAmpl)) maxAmpl = 2^(sound_wav@bit - 1)
-  } else if (length(x) > 1 && class(x) %in% c('numeric', 'integer')) {
+  } else if (is.numeric(x)) {
     sound = x
   }
 

@@ -298,7 +298,7 @@ s0 = soundgen(
 # names(presets$Chimpanzee)  # calls per speaker
 s1 = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # screaming chimp
 # playme(s1)
-s2 = eval(parse(text = presets$F1$Scream))
+s2 = eval(parse(text = presets$F1$Scream))  # screaming woman
 # playme(s2)
 \dontrun{
 # unless temperature is 0, the sound is different every time

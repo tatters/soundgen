@@ -221,7 +221,7 @@ generateNoise = function(len,
     flatBins = round(noiseFlatSpec / bin)
     idx = (flatBins + 1):nr  # the bins affected by rolloffNoise
     if (is.list(rolloffNoise) |
-        (is.numeric(rolloffNoise) && length(rolloffNoise) > 1)) {
+        (is.numeric(rolloffNoise) & length(rolloffNoise) > 1)) {
       rolloffNoise = getSmoothContour(
         anchors = rolloffNoise,
         len = nc,
@@ -289,14 +289,16 @@ generateNoise = function(len,
     breathing = breathing / max(abs(breathing)) * breathingStrength # normalize
 
     # add attack
-    if (is.numeric(attackLen) && any(attackLen > 0)) {
-      l = floor(attackLen * samplingRate / 1000)
-      if (length(l) == 1) l = c(l, l)
-      breathing = fade(
-        breathing,
-        fadeIn = l[1],
-        fadeOut = l[2]
-      )
+    if (is.numeric(attackLen)) {
+      if (any(attackLen > 0)) {
+        l = floor(attackLen * samplingRate / 1000)
+        if (length(l) == 1) l = c(l, l)
+        breathing = fade(
+          breathing,
+          fadeIn = l[1],
+          fadeOut = l[2]
+        )
+      }
     }
   }
   # plot(breathing, type = 'l')
@@ -386,24 +388,26 @@ generateHarmonics = function(pitch,
                              dynamicRange = 80) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
-  if (is.list(vibratoDep) && any(vibratoDep$value > 0)) {
-    lp = length(pitch)
-    for (p in c('vibratoFreq', 'vibratoDep')) {
-      old = get(p)
-      if (length(old) > 1) {
-        new = getSmoothContour(
-          anchors = old,
-          len = lp,
-          valueFloor = permittedValues[p, 'low'],
-          valueCeiling = permittedValues[p, 'high'],
-          interpol = interpol)
-        assign(p, new)
+  if (is.list(vibratoDep)) {
+    if (any(vibratoDep$value > 0)) {
+      lp = length(pitch)
+      for (p in c('vibratoFreq', 'vibratoDep')) {
+        old = get(p)
+        if (length(old) > 1) {
+          new = getSmoothContour(
+            anchors = old,
+            len = lp,
+            valueFloor = permittedValues[p, 'low'],
+            valueCeiling = permittedValues[p, 'high'],
+            interpol = interpol)
+          assign(p, new)
+        }
       }
+      vibrato = 2 ^ (sin(2 * pi * (1:length(pitch)) * vibratoFreq /
+                           pitchSamplingRate) * vibratoDep / 12)
+      # plot(vibrato[], type = 'l')
+      pitch = pitch * vibrato  # plot (pitch, type = 'l')
     }
-    vibrato = 2 ^ (sin(2 * pi * (1:length(pitch)) * vibratoFreq /
-                         pitchSamplingRate) * vibratoDep / 12)
-    # plot(vibrato[], type = 'l')
-    pitch = pitch * vibrato  # plot (pitch, type = 'l')
   }
 
   # transform f0 per s to f0 per glottal cycle
@@ -434,23 +438,24 @@ generateHarmonics = function(pitch,
   }
 
   # generate a short amplitude contour to adjust rolloff per glottal cycle
-  if (!is.na(amplAnchors) && any(amplAnchors$value != 0)) {
-    amplContour = getSmoothContour(
-      anchors = amplAnchors,
-      len = nGC,
-      valueFloor = -dynamicRange,
-      valueCeiling = 0,
-      samplingRate = samplingRate
-    )
-    # plot(amplContour, type='l')
-    amplContour = (amplContour + dynamicRange) / dynamicRange - 1
-    rolloffAmpl = amplContour * rolloff_perAmpl
-  } else {
-    rolloffAmpl = rep(0, nGC)
+  rolloffAmpl = rep(0, nGC)
+  if (is.numeric(amplAnchors) | is.list(amplAnchors)) {
+    if (any(amplAnchors$value != 0)) {
+      amplContour = getSmoothContour(
+        anchors = amplAnchors,
+        len = nGC,
+        valueFloor = -dynamicRange,
+        valueCeiling = 0,
+        samplingRate = samplingRate
+      )
+      # plot(amplContour, type='l')
+      amplContour = (amplContour + dynamicRange) / dynamicRange - 1
+      rolloffAmpl = amplContour * rolloff_perAmpl
+    }
   }
 
   # get a random walk for intra-syllable variation
-  if (temperature > 0 &&
+  if (temperature > 0 &
       (nonlinBalance < 100 | !is.null(nonlinRandomWalk))) {
     rw = getRandomWalk(
       len = nGC,
@@ -581,10 +586,16 @@ generateHarmonics = function(pitch,
   }
 
   # synthesize one glottal cycle at a time or a whole epoch at once?
-  synthesize_per_gc = is.list(glottisAnchors) && any(glottisAnchors$value > 0)
+  synthesize_per_gc = FALSE
+  if (is.list(glottisAnchors)) {
+    if (any(glottisAnchors$value > 0)) {
+      synthesize_per_gc = TRUE
+    }
+  }
 
   # add vocal fry (subharmonics)
-  if (!synthesize_per_gc &&  # can't add subharmonics if doing one gc at a time (one f0 period)
+  if (!synthesize_per_gc &  # can't add subharmonics if doing one gc
+      # at a time (one f0 period)
       any(subDep > 0) & any(vocalFry_on)) {
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
@@ -638,31 +649,35 @@ generateHarmonics = function(pitch,
 
   ## POST-SYNTHESIS EFFECTS
   # apply amplitude envelope and normalize to be on the same scale as breathing
-  if (!is.na(amplAnchors) && any(amplAnchors$value != 0)) {
-    amplEnvelope = getSmoothContour(
-      anchors = amplAnchors,
-      len = length(waveform),
-      valueFloor = -dynamicRange,
-      samplingRate = samplingRate
-    )
-    # plot(amplEnvelope, type = 'l')
-    # convert from dB to linear multiplier
-    amplEnvelope = 10 ^ (amplEnvelope / 20)
-    waveform = waveform * amplEnvelope
+  if (is.numeric(amplAnchors) | is.list(amplAnchors)) {
+    if (any(amplAnchors$value != 0)) {
+      amplEnvelope = getSmoothContour(
+        anchors = amplAnchors,
+        len = length(waveform),
+        valueFloor = -dynamicRange,
+        samplingRate = samplingRate
+      )
+      # plot(amplEnvelope, type = 'l')
+      # convert from dB to linear multiplier
+      amplEnvelope = 10 ^ (amplEnvelope / 20)
+      waveform = waveform * amplEnvelope
+    }
   }
 
   # add attack
-  if (is.numeric(attackLen) && any(attackLen > 0)) {
-    l = floor(attackLen * samplingRate / 1000)
-    if (length(l) == 1) l = c(l, l)
-    waveform = fade(waveform,
-                    fadeIn = l[1],
-                    fadeOut = l[2])
-    # plot(waveform, type = 'l')
+  if (is.numeric(attackLen)) {
+    if (any(attackLen > 0)) {
+      l = floor(attackLen * samplingRate / 1000)
+      if (length(l) == 1) l = c(l, l)
+      waveform = fade(waveform,
+                      fadeIn = l[1],
+                      fadeOut = l[2])
+      # plot(waveform, type = 'l')
+    }
   }
 
   # pitch drift is accompanied by amplitude drift
-  if (temperature > 0 && amplDriftDep > 0) {
+  if (temperature > 0 & amplDriftDep > 0) {
     gc_upsampled = upsample(pitch_per_gc, samplingRate = samplingRate)$gc
     drift_upsampled = approx(drift,
                              n = length(waveform),

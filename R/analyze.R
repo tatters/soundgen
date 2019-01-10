@@ -289,17 +289,17 @@ analyze = function(x,
     sound = sound_wav@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = ifelse(
-      !missing(main) && !is.null(main),
+      !missing(main) & !is.null(main),
       main,
       substring(plotname, first = 1,
                 last = (nchar(plotname) - 4))
     )
-  } else if (class(x) == 'numeric' & length(x) > 1) {
+  } else if (is.numeric(x)) {
     if (is.null(samplingRate)) {
       stop('Please specify "samplingRate", eg 44100')
     } else {
       sound = x
-      plotname = ifelse(!missing(main) && !is.null(main), main, '')
+      plotname = ifelse(!missing(main) & !is.null(main), main, '')
     }
   } else {
     stop('Input not recognized: must be a numeric vector or wav/mp3 file')
@@ -318,16 +318,16 @@ analyze = function(x,
   sound = sound / max(abs(sound))
 
   # some derived pars, defaults
-  if (!is.numeric(silence) || silence < 0 || silence > 1) {
+  if (!is.numeric(silence) | silence < 0 | silence > 1) {
     silence = 0.04
     warning('"silence" must be between 0 and 1; defaulting to 0.04')
   }
-  if (!is.numeric(entropyThres) || entropyThres < 0 || entropyThres > 1) {
+  if (!is.numeric(entropyThres) | entropyThres < 0 | entropyThres > 1) {
     entropyThres = 0.6
     warning('"entropyThres" must be between 0 and 1; defaulting to 0.6')
   }
   duration = length(sound) / samplingRate
-  if (!is.numeric(windowLength) || windowLength <= 0 ||
+  if (!is.numeric(windowLength) | windowLength <= 0 |
       windowLength > (duration * 1000)) {
     windowLength = min(50, duration / 2 * 1000)
     warning(paste0('"windowLength" must be between 0 and sound_duration ms;
@@ -337,7 +337,7 @@ analyze = function(x,
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:
   # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0)
   if (!is.numeric(step)) {
-    if (!is.numeric(overlap) || overlap < 0 || overlap > 99) {
+    if (!is.numeric(overlap) | overlap < 0 | overlap > 99) {
       overlap = 50
       warning('If "step" is not specified, overlap must be between 0 and 99%',
               '; overlap reset to 50%')
@@ -345,11 +345,11 @@ analyze = function(x,
       step = windowLength * (1 - overlap / 100)
     }
   } else {
-    if (is.numeric(overlap) && overlap != 50) {  # step specified, overlap != default
+    if (is.numeric(overlap) & overlap != 50) {  # step specified, overlap != default
       warning('"overlap" is ignored if "step" is not NULL')
     }
   }
-  if (step <= 0 || step > (duration * 1000)) {
+  if (step <= 0 | step > (duration * 1000)) {
     step = windowLength / 2
     warning('"step" must be between 0 and sound_duration ms;
             defaulting to windowLength / 2')
@@ -372,18 +372,18 @@ analyze = function(x,
     zp = 0
     warning('"zp" must be non-negative; defaulting to 0')
   }
-  if (!is.numeric(cutFreq) || cutFreq <= 0 || cutFreq > (samplingRate / 2)) {
+  if (!is.numeric(cutFreq) | cutFreq <= 0 | cutFreq > (samplingRate / 2)) {
     cutFreq = samplingRate / 2
     warning(paste('"cutFreq" must be between 0 and samplingRate / 2;',
                   'defaulting to samplingRate / 2'))
   }
-  if (!is.numeric(pitchFloor) || pitchFloor <= 0 ||
+  if (!is.numeric(pitchFloor) | pitchFloor <= 0 |
       pitchFloor > samplingRate / 2) {
     pitchFloor = 1
     warning(paste('"pitchFloor" must be between 0 and pitchCeiling;',
                   'defaulting to 1 Hz'))
   } # 1 Hz ~ 4 octraves below C0
-  if (!is.numeric(pitchCeiling) || pitchCeiling > samplingRate / 2) {
+  if (!is.numeric(pitchCeiling) | pitchCeiling > samplingRate / 2) {
     pitchCeiling = samplingRate / 2  # Nyquist
     warning(paste('"pitchCeiling" must be between 0 and Nyquist;',
                   'defaulting to samplingRate / 2'))
@@ -394,88 +394,91 @@ analyze = function(x,
     warning(paste('"pitchFloor" cannot be above "pitchCeiling";',
                   'defaulting to 1 Hz and samplingRate / 2, respectively'))
   }
-  if (is.numeric(priorMean) &&
-      (semitonesToHz(priorMean) > samplingRate / 2 ||
-       semitonesToHz(priorMean) <= 0)) {
-    priorMean = HzToSemitones(300)
-    warning(paste('"priorMean" must be between 0 and Nyquist;',
-                  'defaulting to HzToSemitones(300); set to NULL to disable prior'))
+  if (is.numeric(priorMean)) {
+    if (semitonesToHz(priorMean) > samplingRate / 2 |
+        semitonesToHz(priorMean) <= 0) {
+      priorMean = HzToSemitones(300)
+      warning(paste('"priorMean" must be between 0 and Nyquist;',
+                    'defaulting to HzToSemitones(300); set to NULL to disable prior'))
+    }
   }
-  if (is.numeric(priorMean) &&
-      (!is.numeric(priorSD)) || priorSD <= 0) {
-    priorSD = 6
-    warning('"priorSD" must be positive; defaulting to 6 semitones')
+  if (is.numeric(priorSD)) {
+    if (priorSD <= 0) {
+      priorSD = 6
+      warning('"priorSD" must be positive; defaulting to 6 semitones')
+    }
   }
-  if (!is.numeric(nCands) || nCands < 1) {
+  if (!is.numeric(nCands) | nCands < 1) {
     nCands = 1
     warning('"nCands" must be a positive integer; defaulting to 1')
   } else if (!is.integer(nCands)) {
     nCands = round(nCands)
   }
 
-  if (!is.numeric(domThres) || domThres < 0 || domThres > 1) {
+  if (!is.numeric(domThres) | domThres < 0 | domThres > 1) {
     domThres = 0.1
     warning('"domThres" must be between 0 and 1; defaulting to 0.1')
   }
-  if (!is.numeric(autocorThres) || autocorThres < 0 || autocorThres > 1) {
+  if (!is.numeric(autocorThres) | autocorThres < 0 | autocorThres > 1) {
     autocorThres = 0.7
     warning('"autocorThres" must be between 0 and 1; defaulting to 0.7')
   }
-  if (!is.numeric(cepThres) || cepThres < 0 || cepThres > 1) {
+  if (!is.numeric(cepThres) | cepThres < 0 | cepThres > 1) {
     cepThres = 0.3
     warning('"cepThres" must be between 0 and 1; defaulting to 0.3')
   }
-  if (!is.numeric(specThres) || specThres < 0 || specThres > 1) {
+  if (!is.numeric(specThres) | specThres < 0 | specThres > 1) {
     specThres = 0.3
     warning('"specThres" must be between 0 and 1; defaulting to 0.3')
   }
-  if (!is.numeric(specPeak) || specPeak < 0 || specPeak > 1) {
+  if (!is.numeric(specPeak) | specPeak < 0 | specPeak > 1) {
     specPeak = 0.35
     warning('"specPeak" must be between 0 and 1; defaulting to 0.35')
   }
-  if (!is.numeric(specSinglePeakCert) || specSinglePeakCert < 0 ||
+  if (!is.numeric(specSinglePeakCert) | specSinglePeakCert < 0 |
       specSinglePeakCert > 1) {
     specSinglePeakCert = 0.4
     warning('"specSinglePeakCert" must be between 0 and 1; defaulting to 0.4')
   }
-  if (!is.numeric(specMerge) || specMerge < 0) {
+  if (!is.numeric(specMerge) | specMerge < 0) {
     specMerge = 1
     warning('"specMerge" must be non-negative; defaulting to 1 semitone')
   }
 
-  if (!is.numeric(shortestSyl) || shortestSyl < 0) {
+  if (!is.numeric(shortestSyl) | shortestSyl < 0) {
     shortestSyl = 0
     warning('shortestSyl must be non-negative; defaulting to 0')
   }
   if (shortestSyl > duration * 1000) {
     warning('"shortestSyl" is longer than the sound')
   }
-  if (!is.numeric(shortestPause) || shortestPause < 0) {
+  if (!is.numeric(shortestPause) | shortestPause < 0) {
     shortestPause = 0
     warning('shortestPause must be a non-negative number; defaulting to 0')
   }
-  if (shortestPause > 0 && is.numeric(interpolWin) &&
-      interpolWin * step < shortestPause / 2) {
-    interpolWin = ceiling(shortestPause / 2 / step)
-    warning(paste('"interpolWin" reset to', interpolWin,
-                  ': interpolation must be able to bridge merged voiced fragments'))
+  if (shortestPause > 0 & is.numeric(interpolWin)) {
+    if (interpolWin * step < shortestPause / 2) {
+      interpolWin = ceiling(shortestPause / 2 / step)
+      warning(paste('"interpolWin" reset to', interpolWin,
+                    ': interpolation must be able to bridge merged voiced fragments'))
+    }
   }
-  if (is.numeric(interpolWin) &
-      (!is.numeric(interpolTol) || interpolTol <= 0)) {
-    interpolTol = 0.3
-    warning('"interpolTol" must be positive; defaulting to 0.3')
-  }
-  if (is.numeric(interpolWin) &
-      (!is.numeric(interpolCert) || interpolCert < 0 | interpolCert > 1)) {
-    interpolCert = 0.3
-    warning('"interpolTol" must be between 0 and 1; defaulting to 0.3')
+  if (is.numeric(interpolWin)) {
+    if (!is.numeric(interpolTol) | interpolTol <= 0) {
+      interpolTol = 0.3
+      warning('"interpolTol" must be positive; defaulting to 0.3')
+    }
+    if (!is.numeric(interpolCert) | interpolCert < 0 | interpolCert > 1) {
+      interpolCert = 0.3
+      warning('"interpolTol" must be between 0 and 1; defaulting to 0.3')
+    }
   }
   if (!pathfinding %in% c('none', 'fast', 'slow')) {
     pathfinding = 'fast'
     warning(paste('Implemented "pathfinding": "none", "fast", "slow";',
                   'defaulting to "fast"'))
   }
-  if (!is.numeric(certWeight) || certWeight < 0 | certWeight > 1) {
+  if (!is.numeric(certWeight) | certWeight < 0 | certWeight > 1) {
     certWeight = 0.5
     warning('"certWeight" must be between 0 and 1; defaulting to 0.5')
   }
@@ -511,7 +514,7 @@ analyze = function(x,
     filter = NULL
   )
 
-  if (plot == TRUE && plotSpec) {
+  if (plot == TRUE & plotSpec) {
     plot_spec = TRUE
   } else {
     plot_spec = FALSE
@@ -550,7 +553,7 @@ analyze = function(x,
   # vocal range only (up to to cutFreq Hz)
   rowLow = 1 # which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
   rowHigh = tail(which(as.numeric(rownames(s)) * 1000 <= cutFreq), 1) # 6000 Hz etc
-  if (length(rowHigh) < 1 || !is.finite(rowHigh)) rowHigh = nrow(s)
+  if (length(rowHigh) < 1 | !is.finite(rowHigh)) rowHigh = nrow(s)
   entropy = apply(as.matrix(1:ncol(s)), 1, function(x) {
     getEntropy(s[rowLow:rowHigh, x], type = 'weiner')
   })
@@ -581,7 +584,7 @@ analyze = function(x,
                                      fs = samplingRate,
                                      verify = FALSE),
              silent = TRUE)
-    if (class(ff) != 'try-error' && is.list(ff)) {
+    if (class(ff) != 'try-error' & is.list(ff)) {
       temp = matrix(NA, nrow = nFormants, ncol = 2)
       availableRows = 1:min(nFormants, nrow(ff))
       temp[availableRows, ] = as.matrix(ff[availableRows, ])
@@ -704,9 +707,9 @@ analyze = function(x,
   }
 
   # divide the file into continuous voiced syllables
-  if (!is.numeric(minVoicedCands) || minVoicedCands < 1 ||
+  if (!is.numeric(minVoicedCands) | minVoicedCands < 1 |
       minVoicedCands > length(pitchMethods)) {
-    if ('dom' %in% pitchMethods && length(pitchMethods) > 1) {
+    if ('dom' %in% pitchMethods & length(pitchMethods) > 1) {
       # since dom is usually defined, we want at least one more pitch candidate
       # (unless dom is the ONLY method that the user wants for pitch tracking)
       minVoicedCands = 2
@@ -759,17 +762,19 @@ analyze = function(x,
   }))
 
   ## Median smoothing of specified contours (by default pitch & dom)
-  if (is.numeric(smooth) && smooth > 0) {
-    points_per_sec = nrow(result) / duration
-    # smooth of 1 means that smoothing window is ~100 ms
-    smoothing_ww = round(smooth * points_per_sec / 10, 0)
-    # the larger smooth, the heavier the smoothing (lower tolerance
-    # threshold before values are replaced by median over smoothing window).
-    # smooth of 1 gives smoothingThres of 4 semitones
-    smoothingThres = 4 / smooth
-    result[smoothVars] = medianSmoother(result[smoothVars],
-                                        smoothing_ww = smoothing_ww,
-                                        smoothingThres = smoothingThres)
+  if (is.numeric(smooth)) {
+    if (smooth > 0) {
+      points_per_sec = nrow(result) / duration
+      # smooth of 1 means that smoothing window is ~100 ms
+      smoothing_ww = round(smooth * points_per_sec / 10, 0)
+      # the larger smooth, the heavier the smoothing (lower tolerance
+      # threshold before values are replaced by median over smoothing window).
+      # smooth of 1 gives smoothingThres of 4 semitones
+      smoothingThres = 4 / smooth
+      result[smoothVars] = medianSmoother(result[smoothVars],
+                                          smoothing_ww = smoothing_ww,
+                                          smoothingThres = smoothingThres)
+    }
   }
 
   ## Having decided upon the pitch for each frame, we save certain measurements

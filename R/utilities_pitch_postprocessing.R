@@ -52,16 +52,18 @@ pathfinder = function(pitchCands,
   # if a frame has no pitch candidate at all (NA) or no candidate
   # between the most likely candidates for the adjacent frames, add such a
   # candidate with ~low certainty
-  if (is.numeric(interpolWin) && interpolWin > 0) {
-    intplt = interpolate(pitchCands = pitchCands,
-                         pitchCert = pitchCert,
-                         pitchCenterGravity = pitchCenterGravity,
-                         interpolWin = interpolWin,
-                         interpolTol = interpolTol,
-                         interpolCert = interpolCert)
-    pitchCands = intplt$pitchCands
-    pitchCert = intplt$pitchCert
-    pitchCenterGravity = intplt$pitchCenterGravity
+  if (is.numeric(interpolWin)) {
+    if (interpolWin > 0) {
+      intplt = interpolate(pitchCands = pitchCands,
+                           pitchCert = pitchCert,
+                           pitchCenterGravity = pitchCenterGravity,
+                           interpolWin = interpolWin,
+                           interpolTol = interpolTol,
+                           interpolCert = interpolCert)
+      pitchCands = intplt$pitchCands
+      pitchCert = intplt$pitchCert
+      pitchCenterGravity = intplt$pitchCenterGravity
+    }
   }
 
   # order pitch candidates and certainties in each frame from lowest to highest
@@ -116,16 +118,18 @@ pathfinder = function(pitchCands,
   ## SNAKE
   # apply the snake algorithm to minimize the elastic forces acting on this
   # pitch contour without deviating too far from high-certainty anchors
-  if (is.numeric(snakeStep) && snakeStep > 0) {
-    bestPath = snake(
-      pitch = bestPath,
-      pitchCands = pitchCands,
-      pitchCert = pitchCert,
-      certWeight = certWeight,
-      pitchCenterGravity = pitchCenterGravity,
-      snakeStep = snakeStep,
-      snakePlot = snakePlot
-    )
+  if (is.numeric(snakeStep)) {
+    if (snakeStep > 0) {
+      bestPath = snake(
+        pitch = bestPath,
+        pitchCands = pitchCands,
+        pitchCert = pitchCert,
+        certWeight = certWeight,
+        pitchCenterGravity = pitchCenterGravity,
+        snakeStep = snakeStep,
+        snakePlot = snakePlot
+      )
+    }
   }
 
   return(2 ^ bestPath)
@@ -389,7 +393,7 @@ generatePath = function(path, pitchCands, ...) {
   while (i < 100) {
     point_to_wiggle = sample(1:length(path), 1)
     idx = which(!is.na(pitchCands[, point_to_wiggle])) [-path[point_to_wiggle]]
-    if (length(idx) > 0 && is.numeric(idx)) {
+    if (length(idx) > 0 & is.numeric(idx)) {
       path[point_to_wiggle] = sample(idx, size = 1)
       return(path)
     }
@@ -456,7 +460,7 @@ snake = function(pitch,
     force_new = mean(abs(force))
     force_delta = (force_old - force_new) / force_old
     force_old = force_new
-    if (is.na(force_delta) || force_delta < snakeStep) break
+    if (is.na(force_delta) | force_delta < snakeStep) break
     # wiggle the snake along the gradient of the total force acting on it
     # (elastic + attraction of high-certainty pitch candidates)
     pitch = pitch + snakeStep * force

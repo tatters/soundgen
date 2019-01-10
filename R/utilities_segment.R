@@ -161,7 +161,7 @@ findBursts = function(envelope,
     cond3_right = ifelse(troughRight,
                          envelope$value[i] / local_min_right > peakToTrough,
                          TRUE)  # always TRUE if we're not interested in what's right
-    if (cond1 && cond2 && cond3_left && cond3_right) {
+    if (cond1 & cond2 & cond3_left & cond3_right) {
       bursts = rbind(bursts, c(i * timestep, envelope$value[i]))
     }
   }
