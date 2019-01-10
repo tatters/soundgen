@@ -5,7 +5,7 @@ MINOR:
   * soundgen(): interpolation of vectorized amDep, amShape, and amFreq changed from 'spline' to 'approx'
   * analyze(), analyzeFolder(), segment(), segmentFolder(), spectrogram(), spectrogramFolder(): support for mp3 files in addition to wav
   * analyze(): pitch candidates based on lowest dominant frequency band ("dom") respect pitchCeiling
-  * Updated demos, vignettes, and documentation of exported functions
+  * Updated demos, vignettes, presets, and documentation of exported functions
 
 BUG FIXES:
   * soundgen(), getRolloff(): rolloffOct argument now really controls the change of rolloff per octave above the fundamental frequency, as intended; note that this affects many presets, which have been updated accordingly

@@ -1,4 +1,4 @@
-# TODO: update presets croc + cat (from html); streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
