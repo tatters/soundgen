@@ -4,5 +4,6 @@
 
 ## R CMD check results
 There were no ERRORs, WARNINGs, or NOTEs.
+I also tried check_rhub(), but it failed to install a dependency (seewave package)
 
 
