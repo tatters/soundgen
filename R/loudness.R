@@ -21,6 +21,8 @@
 #' coefficient to standardize output. Calibrated so as to return a loudness of 1
 #' sone for a 1 kHz pure tone with SPL of 40 dB.
 #' @inheritParams spectrogram
+#' @param samplingRate sampling rate of \code{x} (only needed if
+#'   \code{x} is a numeric vector, rather than an audio file), must be > 2000 Hz
 #' @param SPL_measured sound pressure level at which the sound is presented, dB
 #' @param Pref reference pressure, Pa
 #' @param spreadSpectrum if TRUE, applies a spreading function to account for
@@ -94,6 +96,7 @@ getLoudness = function(x,
       sound = x
     }
   }
+  if (samplingRate < 2000) return(NA)  # need at least 8 barks (1 kHz) Niquist
 
   # scale to dB SPL
   sound_scaled = scaleSPL(sound, SPL_measured = SPL_measured, Pref = Pref)

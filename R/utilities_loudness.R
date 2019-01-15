@@ -17,6 +17,7 @@
 getLoudnessPerFrame = function(spec,
                                samplingRate,
                                spreadSpectrum = TRUE) {
+  if (samplingRate < 2000) return(NA)  # need at least 8 barks (1 kHz) Niquist
   powerSpec_scaled = matrix(spec ^ 2 / length(spec), ncol = 1)
   audSpec = tuneR::audspec(powerSpec_scaled, sr = samplingRate,
                            fbtype = 'bark')$aspectrum  # plot(audSpec, type = 'l')
