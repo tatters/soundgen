@@ -172,9 +172,19 @@ getLoudness = function(x,
     # spectrogram(sound, samplingRate = 16000, osc = TRUE)
     op = par(c('mar', 'new')) # save user's original pars
     par(new = TRUE, mar = mar)
-    plot(x = seq(1, length(sound) / samplingRate * 1000, length.out = length(loudness)),
+    # adjust the timing of loudness to match the actual time stamps
+    # in getFrameBank (~the middle of each fft frame)
+    windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+    duration = length(sound) / samplingRate
+    X = seq(1, max(1, (length(sound) - windowLength_points)),
+            step / 1000 * samplingRate) / samplingRate * 1000 + windowLength / 2
+    plot(x = X,
          y = loudness,
-         type = "b", axes = FALSE, bty = "n", xlab = "", ylab = "")
+         type = "b",
+         xlim = c(0, duration * 1000),
+         xaxs = "i", yaxs = "i",
+         axes = FALSE, bty = "n",
+         xlab = "", ylab = "")
     axis(side = 4, at = pretty(range(loudness)))
     mtext("Loudness, sone", side = 4, line = 3)
     par('mar' = op$mar, 'new' = op$new)  # restore original pars

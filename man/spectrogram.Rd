@@ -109,7 +109,7 @@ an options to plot the oscillogram on a dB scale.
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise
 sound = soundgen(sylLen = 1000, temperature = 0.001, noise = list(
-  time = c(0, 1300), value = c(-120, 0)), formantsNoise = list(
+  time = c(0, 1300), value = c(-40, 0)), formantsNoise = list(
   f1 = list(freq = 5000, width = 10000)))
 # playme(sound, samplingRate = 16000)
 

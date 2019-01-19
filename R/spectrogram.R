@@ -66,7 +66,7 @@
 #' @examples
 #' # synthesize a sound 1 s long, with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 1000, temperature = 0.001, noise = list(
-#'   time = c(0, 1300), value = c(-120, 0)), formantsNoise = list(
+#'   time = c(0, 1300), value = c(-40, 0)), formantsNoise = list(
 #'   f1 = list(freq = 5000, width = 10000)))
 #' # playme(sound, samplingRate = 16000)
 #'
@@ -233,7 +233,10 @@ spectrogram = function(x,
   # fft of each frame
   z = apply(frameBank, 2, function(x) stats::fft(x)[1:(floor(nrow(frameBank) / 2))])
   if (!is.matrix(z)) z = matrix(z, ncol = 1)
-  X = seq(0, duration * 1000, length.out = ncol(z))  # time stamp
+  # adjust the timing of spectrogram to match the actual time stamps
+  # in getFrameBank (~the middle of each fft frame)
+  X = seq(1, max(1, (length(sound) - windowLength_points)),
+      step / 1000 * samplingRate) / samplingRate * 1000 + windowLength / 2
   if (length(X) < 2) {
     stop('The sound is too short for plotting a spectrogram')
   }
@@ -342,7 +345,7 @@ spectrogram = function(x,
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
       par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
       plot(
-        seq(1, duration * 1000, length.out = length(sound)),
+        seq(0, duration * 1000, length.out = length(sound)),
         sound,
         type = "l",
         ylim = ylim_osc,
@@ -367,6 +370,7 @@ spectrogram = function(x,
       color.palette = color.palette,
       ylim = ylim, main = main,
       xlab = xlab, ylab = ylab,
+      xlim = c(0, duration * 1000),
       ...
     )
     # restore original pars

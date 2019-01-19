@@ -14,7 +14,7 @@ getLoudness(x, samplingRate = NULL, windowLength = 30, step = NULL,
 samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than an audio file)}
+\code{x} is a numeric vector, rather than an audio file), must be > 2000 Hz}
 
 \item{windowLength}{length of FFT window, ms}
 
