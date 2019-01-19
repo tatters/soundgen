@@ -139,6 +139,7 @@ spectrogram = function(x,
                        frameBank = NULL,
                        duration = NULL,
                        ...) {
+  sound = NULL
   if (overlap < 0 | overlap > 100) {
     warning('overlap must be >0 and <= 100%; resetting to 70')
     overlap = 70
@@ -220,7 +221,7 @@ spectrogram = function(x,
 
   # FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-  if (exists('sound')) {
+  if (!is.null(sound)) {
     if (windowLength_points > (length(sound) / 2)) {
       windowLength_points = floor(length(sound) / 4) * 2
       step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
@@ -235,8 +236,14 @@ spectrogram = function(x,
   if (!is.matrix(z)) z = matrix(z, ncol = 1)
   # adjust the timing of spectrogram to match the actual time stamps
   # in getFrameBank (~the middle of each fft frame)
-  X = seq(1, max(1, (length(sound) - windowLength_points)),
-      step / 1000 * samplingRate) / samplingRate * 1000 + windowLength / 2
+  if (!is.null(sound)) {
+    X = seq(1, max(1, (length(sound) - windowLength_points)),
+            step / 1000 * samplingRate) / samplingRate * 1000 + windowLength / 2
+  } else {
+    # if calling spectrogram from analyze() with only frameBank
+    X = seq(0, duration * 1000 - windowLength,
+            length.out = ncol(z)) + windowLength / 2
+  }
   if (length(X) < 2) {
     stop('The sound is too short for plotting a spectrogram')
   }

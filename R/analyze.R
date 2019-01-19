@@ -658,12 +658,9 @@ analyze = function(x,
   result = cbind(result, formants)
   result$entropy = entropy
   result$ampl = ampl
-  result$time = round(seq(
-    step / 2,  # windowLength_points / 2 / samplingRate,
-    duration * 1000 - step / 2,
-    length.out = nrow(result)
-  ),
-  0)
+  result$time = round(seq(0,
+                          duration * 1000 - windowLength,
+                          length.out = nrow(result)) + windowLength / 2, 0)
   result$duration = duration
   c = ncol(result)
   result = result[, c(rev((c-3):c), 1:(c-4))]  # change the order of columns
