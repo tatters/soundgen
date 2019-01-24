@@ -284,19 +284,25 @@ selfsim = function(m,
 #'
 #' Internal soundgen function.
 #'
-#' Prepares a square matrix \code{size x size} specifying a gaussian kernel for measuring novelty of self-similarity matrices. Called by \code{\link{getNovelty}}
+#' Prepares a square matrix \code{size x size} specifying a gaussian kernel for
+#' measuring novelty of self-similarity matrices. Called by
+#' \code{\link{getNovelty}}
 #' @param size kernel size (points), preferably an even number
 #' @param kernel_mean,kernelSD mean and SD of the gaussian kernel
 #' @param plot if TRUE, shows a perspective plot of the kernel
+#' @param checker if TRUE, inverts two quadrants
 #' @return Returns a square matrix with \code{size} rows and columns.
 #' @keywords internal
 #' @examples
-#' kernel = soundgen:::getCheckerboardKernel(size = 64, kernelSD = 0.2, plot = TRUE)
+#' kernel = soundgen:::getCheckerboardKernel(size = 64, kernelSD = 0.1, plot = TRUE)
 #' dim(kernel)
+#' kernel = soundgen:::getCheckerboardKernel(size = 19, kernelSD = .5,
+#'   checker = FALSE, plot = TRUE)
 getCheckerboardKernel = function(size,
                                  kernel_mean = 0,
                                  kernelSD = 0.5,
-                                 plot = FALSE) {
+                                 plot = FALSE,
+                                 checker = TRUE) {
   x = seq(-1, 1, length.out = size)
   kernelSD = kernelSD  # just to get rid of the "unused arg" warning in CMD check :-)
   if (size < 50) {
@@ -318,12 +324,14 @@ getCheckerboardKernel = function(size,
     kernel = reshape2::acast(data = kernel_long, formula = x2 ~ x1, value.var = 'dd')
   }
 
-  # quadrant 0 to 3 o'clock
-  kernel[1:(floor(size / 2)), (ceiling(size / 2) + 1):size] =
-    -kernel[1:(floor(size / 2)), (ceiling(size / 2) + 1):size]
-  # quadrant 6 to 9 o'clock
-  kernel[(ceiling(size / 2) + 1):size, 1:(ceiling(size / 2))] =
-    -kernel[(ceiling(size / 2) + 1):size, 1:(ceiling(size / 2))]
+  if (checker) {
+    # quadrant 0 to 3 o'clock
+    kernel[1:(floor(size / 2)), (ceiling(size / 2) + 1):size] =
+      -kernel[1:(floor(size / 2)), (ceiling(size / 2) + 1):size]
+    # quadrant 6 to 9 o'clock
+    kernel[(ceiling(size / 2) + 1):size, 1:(ceiling(size / 2))] =
+      -kernel[(ceiling(size / 2) + 1):size, 1:(ceiling(size / 2))]
+  }
 
   kernel = kernel / max(kernel)
   if (plot) {
@@ -331,7 +339,7 @@ getCheckerboardKernel = function(size,
       kernel,
       theta = -20,
       phi = 25,
-      zlim = c(-1, 4),
+      # zlim = c(-1, 4),
       ticktype = 'detailed'
     )
   }
@@ -345,11 +353,16 @@ getCheckerboardKernel = function(size,
 #'
 #' Calculates novelty in a self-similarity matrix. Called by \code{\link{ssm}}.
 #' @param ssm self-similarity matrix, as produced by \code{\link{selfsim}}
-#' @param kernelSize the size of gaussian kernel (points)
+#' @param kernelSize the size of gausisan kernel (points)
 #' @param kernelSD the SD of gaussian kernel
+#' @param normalize if TRUE, normalizes so that max = 1
 #' @return Returns a numeric vector of length \code{nrow(ssm)}
 #' @keywords internal
-getNovelty = function(ssm, kernelSize, kernelSD, padWith = 0) {
+getNovelty = function(ssm,
+                      kernelSize,
+                      kernelSD,
+                      padWith = 0,
+                      normalize = TRUE) {
   kernel = getCheckerboardKernel(size = kernelSize, kernelSD = kernelSD)
   ## pad matrix with size / 2 zeros, so that we can correlate it with the
   #  kernel starting from the very edge

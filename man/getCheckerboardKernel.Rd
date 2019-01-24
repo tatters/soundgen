@@ -5,7 +5,7 @@
 \title{Checkerboard kernel}
 \usage{
 getCheckerboardKernel(size, kernel_mean = 0, kernelSD = 0.5,
-  plot = FALSE)
+  plot = FALSE, checker = TRUE)
 }
 \arguments{
 \item{size}{kernel size (points), preferably an even number}
@@ -13,6 +13,8 @@ getCheckerboardKernel(size, kernel_mean = 0, kernelSD = 0.5,
 \item{kernel_mean, kernelSD}{mean and SD of the gaussian kernel}
 
 \item{plot}{if TRUE, shows a perspective plot of the kernel}
+
+\item{checker}{if TRUE, inverts two quadrants}
 }
 \value{
 Returns a square matrix with \code{size} rows and columns.
@@ -21,10 +23,14 @@ Returns a square matrix with \code{size} rows and columns.
 Internal soundgen function.
 }
 \details{
-Prepares a square matrix \code{size x size} specifying a gaussian kernel for measuring novelty of self-similarity matrices. Called by \code{\link{getNovelty}}
+Prepares a square matrix \code{size x size} specifying a gaussian kernel for
+measuring novelty of self-similarity matrices. Called by
+\code{\link{getNovelty}}
 }
 \examples{
-kernel = soundgen:::getCheckerboardKernel(size = 64, kernelSD = 0.2, plot = TRUE)
+kernel = soundgen:::getCheckerboardKernel(size = 64, kernelSD = 0.1, plot = TRUE)
 dim(kernel)
+kernel = soundgen:::getCheckerboardKernel(size = 19, kernelSD = .5,
+  checker = FALSE, plot = TRUE)
 }
 \keyword{internal}

@@ -4,14 +4,16 @@
 \alias{getNovelty}
 \title{SSM novelty}
 \usage{
-getNovelty(ssm, kernelSize, kernelSD, padWith = 0)
+getNovelty(ssm, kernelSize, kernelSD, padWith = 0, normalize = TRUE)
 }
 \arguments{
 \item{ssm}{self-similarity matrix, as produced by \code{\link{selfsim}}}
 
-\item{kernelSize}{the size of gaussian kernel (points)}
+\item{kernelSize}{the size of gausisan kernel (points)}
 
 \item{kernelSD}{the SD of gaussian kernel}
+
+\item{normalize}{if TRUE, normalizes so that max = 1}
 }
 \value{
 Returns a numeric vector of length \code{nrow(ssm)}

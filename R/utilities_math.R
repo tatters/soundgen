@@ -871,3 +871,60 @@ interpolMatrix = function(m,
 #' # never returns 1 or 2: cf. sample(x = 3, n = 1)
 sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 
+
+#' Gaussian smoothing in 2D
+#'
+#' Takes a matrix of numeric values and smoothes it by convolution with a
+#' symmetric Gaussian window function.
+#'
+#' @return Returns a numeric matrix of the same dimensions as input.
+#' @param m input matrix (numeric, on any scale, doesn't have to be square)
+#' @param kernelSize the size of the Gaussian kernel, in points
+#' @param kernelSD the SD of the Gaussian kernel relative to its size (.5 = the
+#'   edge is two SD's away)
+#' @export
+#' @examples
+#' s = spectrogram(soundgen(), samplingRate = 16000,
+#'   output = 'original', plot = FALSE)
+#' # image(log(s))
+#' s1 = gaussianSmooth2D(s, kernelSize = 11)
+#' # image(log(s1))
+gaussianSmooth2D = function(m, kernelSize = 5, kernelSD = .5) {
+  nr = nrow(m)
+  nc = ncol(m)
+  if (kernelSize < 2) return(m)
+  if (kernelSize >= (nr / 2)) {
+    kernelSize = ceiling(nr / 2) - 1
+  }
+  if (kernelSize >= (nc / 2)) {
+    kernelSize = ceiling(nc / 2) - 1
+  }
+  if (kernelSize %% 2 == 0) kernelSize = kernelSize - 1  # make uneven
+
+  # set up 2D Gaussian filter
+  kernel = soundgen:::getCheckerboardKernel(
+    size = kernelSize,
+    kernelSD = kernelSD,
+    checker = FALSE,
+    plot = FALSE)
+  kernel = kernel / sum(kernel)  # convert to pdf
+
+  ## pad matrix with size / 2 zeros, so that we can correlate it with the
+  #  kernel starting from the very edge
+  m_padded = matrix(0,
+                    nrow = nr + kernelSize,
+                    ncol = nc + kernelSize)
+  # lower left corner in the padded matrix where we'll paste the original m
+  idx = (kernelSize + 1) / 2
+  # paste original. Now we have a padded matrix
+  m_padded[idx:(idx + nrow(m) - 1), idx:(idx + ncol(m) - 1)] = m
+
+  # kernel smoothing
+  out = matrix(NA, nrow = nr, ncol = nc)
+  for (i in 1:nr) {
+    for (j in 1:nc) {
+      out[i, j] = sum(m_padded[i : (i + 2 * idx - 2), j : (j + 2 * idx - 2)] * kernel)
+    }
+  }
+  return(out)
+}
