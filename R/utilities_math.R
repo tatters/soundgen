@@ -928,3 +928,32 @@ gaussianSmooth2D = function(m, kernelSize = 5, kernelSD = .5) {
   }
   return(out)
 }
+
+
+#' Proportion of total
+#'
+#' Internal soundgen function.
+#'
+#' Calculates the values in the input distribution that contain particular
+#' proportions of the sum of all values in the input distribution.
+#' @param x numeric vector of non-negative real numbers
+#' @param quantiles quantiles of the cumulative distribution
+#' @keywords internal
+#' @examples
+#' x = rnorm(100)
+#' x = x - min(x)  # must be non-negative
+#' hist(x)
+#' v = soundgen:::pDistr(x, quantiles = c(.5, .8, .9))
+#' sum(x[x > v['0.5']]) / sum(x)
+#' sum(x[x > v['0.9']]) / sum(x)
+pDistr = function(x, quantiles) {
+  a1 = rev(sort(x))  # plot(a1, type = 'l')
+  a2 = cumsum(a1)  # plot(a2, type = 'l')
+  total = sum(x)
+  out = rep(NA, length(quantiles))
+  names(out) = quantiles
+  for (q in 1:length(quantiles)) {
+    out[q] = a1[which(a2 > total * quantiles[q])[1]]
+  }
+  return(out)
+}

@@ -4,10 +4,10 @@
 \alias{modulationSpectrum}
 \title{Modulation spectrum}
 \usage{
-modulationSpectrum(x, samplingRate = NULL, dynamicRange = 80,
-  windowLength = 25, step = NULL, overlap = 75, wn = "gaussian",
-  zp = 0, power = FALSE, plot = TRUE, quantiles = c(0.8, 0.9,
-  0.99), kernelSize = 5, kernelSD = 0.5)
+modulationSpectrum(x, samplingRate = NULL, maxDur = Inf,
+  dynamicRange = 80, windowLength = 25, step = NULL, overlap = 75,
+  wn = "gaussian", zp = 0, power = FALSE, plot = TRUE,
+  quantiles = c(0.5, 0.8, 0.9), kernelSize = 5, kernelSD = 0.5, ...)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
@@ -15,6 +15,9 @@ waveform, or a list of numeric vectors}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than an audio file)}
+
+\item{maxDur}{maximum allowed duration of a single sound, s (longer sounds
+are split)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
@@ -40,6 +43,9 @@ blackman, flattop}
 
 \item{kernelSD}{the SD of Gaussian kernel used for smoothing, relative to its
 size}
+
+\item{...}{other graphical parameters passed on to
+\code{seewave::filled.contour.modif2} and \code{contour}}
 }
 \description{
 Produces a modulation spectrum. Bla-bla-bla...
@@ -53,10 +59,10 @@ for (i in 1:length(ss)) {
 ms = modulationSpectrum(ss[[1]], samplingRate = 16000)
 ms = modulationSpectrum(ss, samplingRate = 16000)
 
-ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav')
-ms = modulationSpectrum('/home/allgoodguys/Downloads/temp', digits = 5)
+ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav', kernelSize = 17)
+ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav', kernelSize = 17, xlim = c(-20, 20), ylim = c(0, 4), quantiles = c(.25, .5, .8), power = TRUE)
 
-ms = modulationSpectrum(ss, samplingRate = 16000, quantiles = c(.8, .9, .99), kernelSize = 6, power = FALSE)
+ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 17, power = TRUE)
 }
 \references{
 \itemize{
