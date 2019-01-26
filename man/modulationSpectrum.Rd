@@ -4,17 +4,19 @@
 \alias{modulationSpectrum}
 \title{Modulation spectrum}
 \usage{
-modulationSpectrum(x, samplingRate = NULL, maxDur = Inf,
+modulationSpectrum(x, samplingRate = NULL, maxDur = 5,
   dynamicRange = 80, windowLength = 25, step = NULL, overlap = 75,
   wn = "gaussian", zp = 0, power = FALSE, plot = TRUE,
-  quantiles = c(0.5, 0.8, 0.9), kernelSize = 5, kernelSD = 0.5, ...)
+  quantiles = c(0.5, 0.8, 0.9), kernelSize = 5, kernelSD = 0.5,
+  colorTheme = c("bw", "seewave", "...")[1], ...)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
 waveform, or a list of numeric vectors}
 
-\item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than an audio file)}
+\item{samplingRate}{sampling rate of x (only needed if x is a numeric vector,
+rather than an audio file). For a list of sounds, give either one
+samplingRate (the same for all) or as many values as there are input files}
 
 \item{maxDur}{maximum allowed duration of a single sound, s (longer sounds
 are split)}
@@ -37,32 +39,80 @@ blackman, flattop}
 
 \item{plot}{if TRUE, plots the modulation spectrum}
 
-\item{quantiles}{quantiles labeled as separate contours on the plot}
+\item{quantiles}{labeled contour values, % (e.g., "50" marks regions that
+contain 50% of the sum total of the entire modulation spectrum)}
 
 \item{kernelSize}{the size of Gaussian kernel used for smoothing}
 
 \item{kernelSD}{the SD of Gaussian kernel used for smoothing, relative to its
 size}
 
+\item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
+or any palette from \code{\link[grDevices]{palette}} such as
+'heat.colors', 'cm.colors', etc}
+
 \item{...}{other graphical parameters passed on to
-\code{seewave::filled.contour.modif2} and \code{contour}}
+\code{\link[seewave]{filled.contour.modif2}} and
+\code{\link[graphics]{contour}}}
+}
+\value{
+Returns a matrix of nonnegative values. Rownames are frequencies of
+  amplitude modulation (Hz), and colnames are frequencies of frequency
+  modulation (1/KHz).
 }
 \description{
-Produces a modulation spectrum. Bla-bla-bla...
+Produces a modulation spectrum of waveform(s) or audio file(s). Algorithm:
+prepares a \code{\link{spectrogram}} and takes its 2D Fourier transform (see
+also \code{\link[spectral]{spec.fft}}). For multiple inputs, the ensemble of
+modulation spectra is interpolated to the same spectral and temporal
+resolution and averaged. By default the plot is smoothed with Gaussian blur
+(see \code{\link{gaussianSmooth2D}}).
 }
 \examples{
+ms = modulationSpectrum(soundgen(), samplingRate = 16000)
+
+\dontrun{
+# Input can also be a list of waveforms (numeric vectors)
 ss = vector('list', 10)
 for (i in 1:length(ss)) {
-  ss[[i]] = soundgen(sylLen = runif(1, 100, 1000), temperature = .4, pitch = runif(3, 400, 600))
+  ss[[i]] = soundgen(sylLen = runif(1, 100, 1000), temperature = .4,
+    pitch = runif(3, 400, 600))
 }
 # lapply(ss, playme)
-ms = modulationSpectrum(ss[[1]], samplingRate = 16000)
-ms = modulationSpectrum(ss, samplingRate = 16000)
+ms = modulationSpectrum(ss[[1]], samplingRate = 16000)  # the first sound
+ms = modulationSpectrum(ss, samplingRate = 16000)  # all 10 sounds
 
-ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav', kernelSize = 17)
-ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav', kernelSize = 17, xlim = c(-20, 20), ylim = c(0, 4), quantiles = c(.25, .5, .8), power = TRUE)
+# As with spectrograms, there is a tradeoff in time-frequency resolution
+s = soundgen(pitch = 500, amFreq = 50, amDep = 100, samplingRate = 44100)
+# playme(s, samplingRate = 44100)
+spectrogram(s, samplingRate = 44100, osc = TRUE, ylim = c(0, 8))
+ms = modulationSpectrum(s, samplingRate = 44100,
+  windowLength = 50, overlap = 0)  # poor temporal resolution
+ms = modulationSpectrum(s, samplingRate = 44100,
+  windowLength = 5, overlap = 80)  # poor frequency resolution
+ms = modulationSpectrum(s, samplingRate = 44100,
+  windowLength = 30, overlap = 80)  # a reasonable compromise
 
+# Input can be a wav/mp3 file
+ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav')
+ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav',
+  kernelSize = 17,  # more smoothing
+  xlim = c(-20, 20), ylim = c(0, 4),  # zoom in on the central region
+  quantiles = c(.25, .5, .8),  # customize contour lines
+  colorTheme = 'heat.colors',  # alternative palette
+  power = TRUE)  # ^2
+
+# Input can be path to folder with audio files (average modulation spectrum)
 ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 17, power = TRUE)
+# NB: longer files will be split into fragments <maxDur in length
+
+# A sound with ~3 syllables per second and only downsweeps in F0 contour
+s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
+# playme(s)
+ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
+  xlim = c(-25, 25), power = TRUE, colorTheme = 'seewave')
+# note the asymmetry b/c of downsweeps
+}
 }
 \references{
 \itemize{

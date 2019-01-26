@@ -4,7 +4,8 @@
 \alias{gaussianSmooth2D}
 \title{Gaussian smoothing in 2D}
 \usage{
-gaussianSmooth2D(m, kernelSize = 5, kernelSD = 0.5)
+gaussianSmooth2D(m, kernelSize = 5, kernelSD = 0.5,
+  plotKernel = FALSE)
 }
 \arguments{
 \item{m}{input matrix (numeric, on any scale, doesn't have to be square)}
@@ -13,6 +14,8 @@ gaussianSmooth2D(m, kernelSize = 5, kernelSD = 0.5)
 
 \item{kernelSD}{the SD of the Gaussian kernel relative to its size (.5 = the
 edge is two SD's away)}
+
+\item{plotKernel}{if TRUE, plots the kernel}
 }
 \value{
 Returns a numeric matrix of the same dimensions as input.
@@ -25,6 +28,6 @@ symmetric Gaussian window function.
 s = spectrogram(soundgen(), samplingRate = 16000,
   output = 'original', plot = FALSE)
 # image(log(s))
-s1 = gaussianSmooth2D(s, kernelSize = 11)
+s1 = gaussianSmooth2D(s, kernelSize = 11, plotKernel = TRUE)
 # image(log(s1))
 }

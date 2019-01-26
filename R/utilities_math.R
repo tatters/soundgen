@@ -882,14 +882,18 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #' @param kernelSize the size of the Gaussian kernel, in points
 #' @param kernelSD the SD of the Gaussian kernel relative to its size (.5 = the
 #'   edge is two SD's away)
+#' @param plotKernel if TRUE, plots the kernel
 #' @export
 #' @examples
 #' s = spectrogram(soundgen(), samplingRate = 16000,
 #'   output = 'original', plot = FALSE)
 #' # image(log(s))
-#' s1 = gaussianSmooth2D(s, kernelSize = 11)
+#' s1 = gaussianSmooth2D(s, kernelSize = 11, plotKernel = TRUE)
 #' # image(log(s1))
-gaussianSmooth2D = function(m, kernelSize = 5, kernelSD = .5) {
+gaussianSmooth2D = function(m,
+                            kernelSize = 5,
+                            kernelSD = .5,
+                            plotKernel = FALSE) {
   nr = nrow(m)
   nc = ncol(m)
   if (kernelSize < 2) return(m)
@@ -906,7 +910,7 @@ gaussianSmooth2D = function(m, kernelSize = 5, kernelSD = .5) {
     size = kernelSize,
     kernelSD = kernelSD,
     checker = FALSE,
-    plot = FALSE)
+    plot = plotKernel)
   kernel = kernel / sum(kernel)  # convert to pdf
 
   ## pad matrix with size / 2 zeros, so that we can correlate it with the

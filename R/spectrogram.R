@@ -326,17 +326,17 @@ spectrogram = function(x,
     Z1[Z1 > 1] = 1 # otherwise values >1 are shown as white instead of black
   }
 
-  # spectrogram of the modified fft
-  if (colorTheme == 'bw') {
-    color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
-  } else if (colorTheme == 'seewave') {
-    color.palette = seewave::spectro.colors
-  } else {
-    colFun = match.fun(colorTheme)
-    color.palette = function(x) rev(colFun(x))
-  }
-
   if (plot) {
+    # spectrogram of the modified fft
+    if (colorTheme == 'bw') {
+      color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
+    } else if (colorTheme == 'seewave') {
+      color.palette = seewave::spectro.colors
+    } else {
+      colFun = match.fun(colorTheme)
+      color.palette = function(x) rev(colFun(x))
+    }
+
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     if (osc | osc_dB) {
       if (osc_dB) {
