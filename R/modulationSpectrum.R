@@ -19,8 +19,13 @@
 #' @inheritParams spectrogram
 #' @param maxDur maximum allowed duration of a single sound, s (longer sounds
 #'   are split)
+#' @param logSpec if TRUE, the spectrogram is log-transformed prior to taking 2D
+#'   FFT
 #' @param power if TRUE, returns power modulation spectrum (^2)
 #' @param plot if TRUE, plots the modulation spectrum
+#' @param logWarp the base of log for warping the modulation spectrum (ie log2
+#'   if logWarp = 2); set to NULL or NA if you don't want to log-transform the
+#'   axes
 #' @param quantiles labeled contour values, % (e.g., "50" marks regions that
 #'   contain 50% of the sum total of the entire modulation spectrum)
 #' @param kernelSize the size of Gaussian kernel used for smoothing
@@ -67,6 +72,7 @@
 #'   xlim = c(-20, 20), ylim = c(0, 4),  # zoom in on the central region
 #'   quantiles = c(.25, .5, .8),  # customize contour lines
 #'   colorTheme = 'heat.colors',  # alternative palette
+#'   logWarp = NULL,              # don't log-warp the modulation spectrum
 #'   power = TRUE)  # ^2
 #'
 #' # Input can be path to folder with audio files (average modulation spectrum)
@@ -77,13 +83,23 @@
 #' s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 #' # playme(s)
 #' ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
-#'   xlim = c(-25, 25), power = TRUE, colorTheme = 'seewave')
+#'   xlim = c(-25, 25), power = TRUE, colorTheme = 'seewave',
+#'   logWarp = NULL)
 #' # note the asymmetry b/c of downsweeps
+#'
+#' # Plotting with or without log-warping the modulation spectrum:
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = NA, plot = T)
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 2, plot = T)
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 4.5, plot = T)
+#'
+#' # Log-transform the spectrogram prior to 2D FFT:
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = FALSE)
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
 #' }
 modulationSpectrum = function(x,
                               samplingRate = NULL,
                               maxDur = 5,
-                              dynamicRange = 80,
+                              logSpec = FALSE,
                               windowLength = 25,
                               step = NULL,
                               overlap = 75,
@@ -91,6 +107,7 @@ modulationSpectrum = function(x,
                               zp = 0,
                               power = FALSE,
                               plot = TRUE,
+                              logWarp = 2,
                               quantiles = c(.5, .8, .9),
                               kernelSize = 5,
                               kernelSD = .5,
@@ -177,13 +194,18 @@ modulationSpectrum = function(x,
   for (i in 1:length(myInput)) {
     s1 = spectrogram(myInput[[i]],
                      samplingRate = samplingRate[i],
-                     dynamicRange = dynamicRange,
                      windowLength = windowLength,
                      step = step,
                      wn = wn,
                      zp = zp,
                      plot = FALSE,
                      output = 'original')
+    # image(t(s1))
+    # log-transform amplitudes
+    if (logSpec) {
+      s1 = log(s1)
+      s1 = s1 - min(s1) + 1e-16  # positive
+    }
     # center - see spectral::spec.fft
     s2 = s1 * (-1)^(row(s1) + col(s1))
     # 2D fft
@@ -196,21 +218,18 @@ modulationSpectrum = function(x,
     # normalize
     s5 = s4 - min(s4)
     s5 = s5 / max(s5)
+    # image(t(log(s5)))
     out[[i]] = t(s5)
   }
 
   # average modulation spectra across all sounds
   max_rows = max(unlist(lapply(out, nrow)))
+  if (max_rows %% 2 == 0) max_rows = max_rows + 1  # make uneven to have a clear 0
   # normally same samplingRate, but in case not, upsample frequency resolution
   max_cols = max(unlist(lapply(out, ncol)))
   sr = max(samplingRate)  # again, in case not the same
   out1 = lapply(out, function(x) interpolMatrix(x, nr = max_rows, nc = max_cols))
   out_aggreg = Reduce('+', out1) / length(myInput)
-
-  # smoothing
-  out_aggreg = gaussianSmooth2D(out_aggreg,
-                                kernelSize = kernelSize,
-                                kernelSD = kernelSD)
 
   # get time and frequency labels
   max_am = 1000 / step / 2
@@ -219,6 +238,23 @@ modulationSpectrum = function(x,
   Y = seq(0, max_fm, length.out = ncol(out_aggreg))  # frequency modulation
   rownames(out_aggreg) = X
   colnames(out_aggreg) = Y
+
+  # log-transform the axes (or, actually, warp the matrix itself)
+  if (is.numeric(logWarp)) {
+    zero_row = ceiling(max_rows / 2)
+    m_left = logMatrix(out_aggreg[zero_row:1, ], base = logWarp)  # NB: flip the left half!
+    m_right = logMatrix(out_aggreg[zero_row : max_rows, ], base = logWarp)
+    out_transf = rbind(m_left[nrow(m_left):1, ], m_right[2:nrow(m_right), ])
+    X1 = as.numeric(rownames(out_transf))  # warped by logMatrix
+    Y1 = as.numeric(colnames(out_transf))  # warped by logMatrix
+  } else {
+    out_transf = out_aggreg
+  }
+
+  # smoothing
+  out_transf = gaussianSmooth2D(out_transf,
+                                kernelSize = kernelSize,
+                                kernelSD = kernelSD)
 
   # plot
   if (plot) {
@@ -231,23 +267,78 @@ modulationSpectrum = function(x,
       color.palette = function(x) rev(colFun(x))
     }
 
-    seewave::filled.contour.modif2(
-      x = X, y = Y, z = out_aggreg,
-      levels = seq(0, 1, length = 30),
-      color.palette = color.palette,
-      xlab = 'Hz', ylab = '1/KHz',
-      bty = 'n', ...
-    )
+    if (is.numeric(logWarp)) {
+      seewave::filled.contour.modif2(
+        x = X, y = Y, z = out_transf,
+        levels = seq(0, 1, length = 30),
+        color.palette = color.palette,
+        xlab = 'Hz', ylab = '1/KHz',
+        bty = 'n', axisX = FALSE, axisY = FALSE,
+        ...
+      )
+      # add manually labeled x-axis
+      xseq = seq(1, length(X), length.out = 9)
+      digits = 0  # choosing the optimal rounding level
+      rx = round(X1[xseq], digits = digits)
+      while (length(rx) > length(unique(rx))) {  # eg it starts 0, 0, 1, ...
+        digits = digits + 1
+        rx = round(X1[xseq], digits = digits)  # thus 0.2, 0.4, 1.1, ...
+      }
+      axis(side = 1,
+           at  = round(X[xseq]),
+           labels = rx)
+      # max_tm = log(X[length(X)], logWarp)
+      # xl = logWarp ^ pretty(c(1, max_tm), n = 7)
+      # xl = unique(round(c(0, xl[xl < X[length(X)]])))
+      # xl1 = xl
+      # for (i in 1:length(xl)) {
+      #   xl1[i] = X[which.min(abs(X1 - xl[i]))]
+      # }
+      # axis(side = 1,
+      #      at  = xl1,
+      #      labels = xl)
+
+      # add manually labeled y-axis
+      yseq = seq(1, length(Y), length.out = 7)
+      digits = 0
+      ry = round(Y1[yseq], digits = digits)
+      while (length(ry) > length(unique(ry))) {
+        digits = digits + 1
+        ry = round(Y1[yseq], digits = digits)
+      }
+      axis(side = 2,
+           at  = round(Y[yseq]),
+           labels = ry)
+      # max_fm = log(Y[length(Y)], logWarp)
+      # yl = logWarp ^ pretty(c(0, max_fm))
+      # yl = unique(round(c(0, yl[yl < max(Y)])))
+      # yl1 = yl
+      # for (i in 1:length(yl)) {
+      #   yl1[i] = Y[which.min(abs(Y1 - yl[i]))]
+      # }
+      # axis(side = 2,
+      #      at  = yl1,
+      #      labels = yl)
+    } else {
+      seewave::filled.contour.modif2(
+        x = X, y = Y, z = out_transf,
+        levels = seq(0, 1, length = 30),
+        color.palette = color.palette,
+        xlab = 'Hz', ylab = '1/KHz',
+        bty = 'n', ...
+      )
+    }
+
     abline(v = 0, lty = 3)
     # qntls = quantile(out_aggreg, probs = quantiles)  # could try HDI instead
-    qntls = pDistr(as.numeric(out_aggreg), quantiles = quantiles)
+    qntls = pDistr(as.numeric(out_transf), quantiles = quantiles)
     par(new = TRUE)
-    contour(x = X, y = Y, z = out_aggreg,
+    contour(x = X, y = Y, z = out_transf,
             levels = qntls, labels = quantiles * 100,
             xaxs = 'i', yaxs = 'i',
             axes = FALSE, frame.plot = FALSE, ...)
     par(new = FALSE)
   }
 
-  return(out_aggreg)
+  return(list('original' = out_aggreg, 'processed' = out_transf))
 }

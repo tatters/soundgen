@@ -5,10 +5,10 @@
 \title{Modulation spectrum}
 \usage{
 modulationSpectrum(x, samplingRate = NULL, maxDur = 5,
-  dynamicRange = 80, windowLength = 25, step = NULL, overlap = 75,
+  logSpec = FALSE, windowLength = 25, step = NULL, overlap = 75,
   wn = "gaussian", zp = 0, power = FALSE, plot = TRUE,
-  quantiles = c(0.5, 0.8, 0.9), kernelSize = 5, kernelSD = 0.5,
-  colorTheme = c("bw", "seewave", "...")[1], ...)
+  logWarp = 2, quantiles = c(0.5, 0.8, 0.9), kernelSize = 5,
+  kernelSD = 0.5, colorTheme = c("bw", "seewave", "...")[1], ...)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
@@ -21,8 +21,8 @@ samplingRate (the same for all) or as many values as there are input files}
 \item{maxDur}{maximum allowed duration of a single sound, s (longer sounds
 are split)}
 
-\item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
-under maximum are treated as zero}
+\item{logSpec}{if TRUE, the spectrogram is log-transformed prior to taking 2D
+FFT}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -38,6 +38,10 @@ blackman, flattop}
 \item{power}{if TRUE, returns power modulation spectrum (^2)}
 
 \item{plot}{if TRUE, plots the modulation spectrum}
+
+\item{logWarp}{the base of log for warping the modulation spectrum (ie log2
+if logWarp = 2); set to NULL or NA if you don't want to log-transform the
+axes}
 
 \item{quantiles}{labeled contour values, % (e.g., "50" marks regions that
 contain 50% of the sum total of the entire modulation spectrum)}
@@ -100,6 +104,7 @@ ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav',
   xlim = c(-20, 20), ylim = c(0, 4),  # zoom in on the central region
   quantiles = c(.25, .5, .8),  # customize contour lines
   colorTheme = 'heat.colors',  # alternative palette
+  logWarp = NULL,              # don't log-warp the modulation spectrum
   power = TRUE)  # ^2
 
 # Input can be path to folder with audio files (average modulation spectrum)
@@ -110,8 +115,18 @@ ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 17, power = TRUE)
 s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 # playme(s)
 ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
-  xlim = c(-25, 25), power = TRUE, colorTheme = 'seewave')
+  xlim = c(-25, 25), power = TRUE, colorTheme = 'seewave',
+  logWarp = NULL)
 # note the asymmetry b/c of downsweeps
+
+# Plotting with or without log-warping the modulation spectrum:
+ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = NA, plot = T)
+ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 2, plot = T)
+ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 4.5, plot = T)
+
+# Log-transform the spectrogram prior to 2D FFT:
+ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = FALSE)
+ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
 }
 }
 \references{

@@ -930,6 +930,8 @@ gaussianSmooth2D = function(m,
       out[i, j] = sum(m_padded[i : (i + 2 * idx - 2), j : (j + 2 * idx - 2)] * kernel)
     }
   }
+  if (!is.null(rownames(m))) rownames(out) = rownames(m)
+  if (!is.null(colnames(m))) colnames(out) = colnames(m)
   return(out)
 }
 
@@ -978,6 +980,8 @@ pDistr = function(x, quantiles) {
 #' logMatrix(m, base = 2)
 #' logMatrix(m, base = 10)
 #'
+#' logMatrix(m = matrix(1:9, nrow = 1), base = 2)
+#'
 #' \dontrun{
 #' s = spectrogram(soundgen(), 16000, output = 'original')
 #' image(log(t(logMatrix(s, base = 2))))
@@ -986,17 +990,35 @@ logMatrix = function(m, base = 2) {
   # the key is to make a sequence of time locations within each row/column for
   # interpolation: (1:nrow(m)) ^ base (followed by normalization, so this index
   # will range from 1 to nrow(m) / ncol(m))
-  idx_row = (1:ncol(m)) ^ base - 1
-  idx_row = idx_row / max(idx_row)
-  idx_row = idx_row * (ncol(m) - 1) + 1
-  # interpolate rows at these time points
-  m1 = t(apply(m, 1, function(x) approx(x, xout = idx_row)$y))
+  if (ncol(m) > 1) {
+    idx_row = (1:ncol(m)) ^ base - 1
+    idx_row = idx_row / max(idx_row)
+    idx_row = idx_row * (ncol(m) - 1) + 1
+    # interpolate rows at these time points
+    m1 = t(apply(m, 1, function(x) approx(x, xout = idx_row)$y))
+  } else {
+    m1 = m
+  }
 
   # same for columns
-  idx_col = (1:nrow(m)) ^ base - 1
-  idx_col = idx_col / max(idx_col)
-  idx_col = idx_col * (nrow(m) - 1) + 1
-  # interpolate columns at these time points
-  m2 = apply(m1, 2, function(x) approx(x, xout = idx_col)$y)
+  if (nrow(m) > 1) {
+    idx_col = (1:nrow(m)) ^ base - 1
+    idx_col = idx_col / max(idx_col)
+    idx_col = idx_col * (nrow(m) - 1) + 1
+    # interpolate columns at these time points
+    m2 = apply(m1, 2, function(x) approx(x, xout = idx_col)$y)
+  } else {
+    m2 = m1
+  }
+
+  # interpolate row and column names
+  # (assuming numeric values, as when called from modulationSpectrum())
+  if (!is.null(colnames(m)) & ncol(m) > 1) {
+    colnames(m2) = approx(as.numeric(colnames(m)), xout = idx_row)$y
+  }
+  if (!is.null(rownames(m)) & nrow(m) > 1) {
+    rownames(m2) = approx(as.numeric(rownames(m)), xout = idx_col)$y
+  }
+
   return(m2)
 }
