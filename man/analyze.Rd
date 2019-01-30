@@ -5,10 +5,10 @@
 \title{Analyze sound}
 \usage{
 analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
-  SPL_measured = 70, Pref = 20, windowLength = 50, step = NULL,
-  overlap = 50, wn = "gaussian", zp = 0, cutFreq = 6000,
-  nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
-  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
+  scale = NULL, SPL_measured = 70, Pref = 20, windowLength = 50,
+  step = NULL, overlap = 50, wn = "gaussian", zp = 0,
+  cutFreq = 6000, nFormants = 3, pitchMethods = c("autocor", "spec",
+  "dom"), entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
   priorMean = HzToSemitones(300), priorSD = 6, priorPlot = FALSE,
   nCands = 1, minVoicedCands = "autom", domThres = 0.1,
   domSmooth = 220, autocorThres = 0.7, autocorSmooth = NULL,
@@ -41,6 +41,10 @@ under maximum are treated as zero}
 not analyzed at all. NB: this number is dynamically updated: the actual
 silence threshold may be higher depending on the quietest frame, but it
 will never be lower than this specified number.}
+
+\item{scale}{the maximum possible value of \code{x} (only needed if \code{x}
+is a numeric vector, rather than an audio file); defaults to observed
+\code{max(abs(x))} if it is greater than 1 and to 1 otherwise}
 
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 

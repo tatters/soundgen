@@ -204,6 +204,7 @@ analyze = function(x,
                    samplingRate = NULL,
                    dynamicRange = 80,
                    silence = 0.04,
+                   scale = NULL,
                    SPL_measured = 70,
                    Pref = 20,
                    windowLength = 50,
@@ -287,6 +288,8 @@ analyze = function(x,
     }
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
+    scale = 2 ^ sound_wav@bit
+    m = max(abs(sound))
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = ifelse(
       !missing(main) & !is.null(main),
@@ -301,13 +304,25 @@ analyze = function(x,
       sound = x
       plotname = ifelse(!missing(main) & !is.null(main), main, '')
     }
+    m = max(abs(sound))
+    if (is.null(scale)) {
+      scale = max(m, 1)
+      warning(paste('Scale not specified. Assuming that max amplitude is', scale))
+    } else if (is.numeric(scale)) {
+      if (scale < m) {
+        scale = m
+        warning(paste('Scale exceeds the observed range; resetting to', m))
+      }
+    }
   } else {
     stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
 
   # calculate scaling coefficient, but don't convert yet,
   # since most routines in analyze() require scale [-1, 1]
-  scaleCorrection = scaleSPL(c(-1, 1),  # internal scale
+  scaleCorrection = scaleSPL(c(-1, 1) * m / scale * 2,
+    # NB: m / scale * 2 = 1 if the sound is normalized  to 0 dB (max amplitude)
+                             scale = 1,
                              SPL_measured = SPL_measured,
                              Pref = Pref)[2]
 
