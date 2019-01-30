@@ -4,8 +4,8 @@
 \alias{getLoudness}
 \title{Get loudness}
 \usage{
-getLoudness(x, samplingRate = NULL, windowLength = 30, step = NULL,
-  overlap = 75, SPL_measured = 70, Pref = 2e-05,
+getLoudness(x, samplingRate = NULL, scale = NULL, windowLength = 30,
+  step = NULL, overlap = 75, SPL_measured = 70, Pref = 2e-05,
   spreadSpectrum = TRUE, plot = TRUE, mar = c(5.1, 4.1, 4.1, 4.1),
   ...)
 }
@@ -15,6 +15,10 @@ samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than an audio file), must be > 2000 Hz}
+
+\item{scale}{the maximum possible value of \code{x} (only needed if \code{x}
+is a numeric vector, rather than an audio file); defaults to observed
+\code{max(abs(x))} if it is greater than 1 and to 1 otherwise}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -67,20 +71,25 @@ sone for a 1 kHz pure tone with SPL of 40 dB.
 }
 \examples{
 sounds = list(
-  sound1 = runif(8000, -1, 1),  # white noise
-  sound2 = sin(2*pi*1000/16000*(1:8000))  # pure tone at 1 kHz
+  white_noise = runif(8000, -1, 1),
+  white_noise2 = runif(8000, -1, 1) / 2,  # ~6 dB quieter
+  pure_tone_1KHz = sin(2*pi*1000/16000*(1:8000))  # pure tone at 1 kHz
 )
-loud = rep(0, length(sounds))
+loud = rep(0, length(sounds)); names(loud) = names(sounds)
 for (i in 1:length(sounds)) {
   # playme(sounds[[i]], 16000)
   l = getLoudness(
-    x = sounds[[i]], samplingRate = 16000,
+    x = sounds[[i]], samplingRate = 16000, scale = 1,
     windowLength = 20, step = NULL,
     overlap = 50, SPL_measured = 64,
     Pref = 2e-5, plot = FALSE)
   loud[i] = mean(l$loudness)
 }
-loud  # white noise is twice as loud
+loud
+# white noise (sound 1) is twice as loud as pure tone at 1 KHz (sound 3),
+# and note that the same white noise with lower amplitude has lower loudness
+(provided that "scale" is specified)
+# compare: lapply(sounds, range)
 
 \dontrun{
   l = getLoudness(soundgen(), SPL_measured = 70,

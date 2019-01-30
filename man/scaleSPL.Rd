@@ -4,10 +4,14 @@
 \alias{scaleSPL}
 \title{Scale SPL}
 \usage{
-scaleSPL(x, SPL_measured = 70, Pref = 2e-05)
+scaleSPL(x, scale = NULL, SPL_measured = 70, Pref = 2e-05)
 }
 \arguments{
 \item{x}{numeric vector ranging from -1 to +1}
+
+\item{scale}{the maximum possible value of \code{x} (only needed if \code{x}
+is a numeric vector, rather than an audio file); defaults to observed
+\code{max(abs(x))} if it is greater than 1 and to 1 otherwise}
 
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 
@@ -21,9 +25,14 @@ Converts a sound from SPL on any scale to a desired level of dB SPL.
 See Timoney et al. (2004) "Implementing loudness models in MATLAB"
 }
 \examples{
-sound = runif(100) * getSmoothContour(c(0, 1, 0), len = 100)
+sound = rnorm(100) * getSmoothContour(c(0, 1, 0), len = 100)
+sound = sound / max(abs(sound))
 # plot(sound, type = 'l')
 sound_scaled = soundgen:::scaleSPL(sound)
 # plot(sound_scaled, type = 'l')
+
+sound2 = sound / 3
+range(soundgen:::scaleSPL(sound2, scale = NULL))
+range(soundgen:::scaleSPL(sound2, scale = 1))
 }
 \keyword{internal}

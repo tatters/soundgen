@@ -23,6 +23,9 @@
 #' @inheritParams spectrogram
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than an audio file), must be > 2000 Hz
+#' @param scale the maximum possible value of \code{x} (only needed if \code{x}
+#'   is a numeric vector, rather than an audio file); defaults to observed
+#'   \code{max(abs(x))} if it is greater than 1 and to 1 otherwise
 #' @param SPL_measured sound pressure level at which the sound is presented, dB
 #' @param Pref reference pressure, Pa
 #' @param spreadSpectrum if TRUE, applies a spreading function to account for
@@ -45,20 +48,25 @@
 #' @export
 #' @examples
 #' sounds = list(
-#'   sound1 = runif(8000, -1, 1),  # white noise
-#'   sound2 = sin(2*pi*1000/16000*(1:8000))  # pure tone at 1 kHz
+#'   white_noise = runif(8000, -1, 1),
+#'   white_noise2 = runif(8000, -1, 1) / 2,  # ~6 dB quieter
+#'   pure_tone_1KHz = sin(2*pi*1000/16000*(1:8000))  # pure tone at 1 kHz
 #' )
-#' loud = rep(0, length(sounds))
+#' loud = rep(0, length(sounds)); names(loud) = names(sounds)
 #' for (i in 1:length(sounds)) {
 #'   # playme(sounds[[i]], 16000)
 #'   l = getLoudness(
-#'     x = sounds[[i]], samplingRate = 16000,
+#'     x = sounds[[i]], samplingRate = 16000, scale = 1,
 #'     windowLength = 20, step = NULL,
 #'     overlap = 50, SPL_measured = 64,
 #'     Pref = 2e-5, plot = FALSE)
 #'   loud[i] = mean(l$loudness)
 #' }
-#' loud  # white noise is twice as loud
+#' loud
+#' # white noise (sound 1) is twice as loud as pure tone at 1 KHz (sound 3),
+#' # and note that the same white noise with lower amplitude has lower loudness
+#' (provided that "scale" is specified)
+#' # compare: lapply(sounds, range)
 #'
 #' \dontrun{
 #'   l = getLoudness(soundgen(), SPL_measured = 70,
@@ -73,6 +81,7 @@
 #' }
 getLoudness = function(x,
                        samplingRate = NULL,
+                       scale = NULL,
                        windowLength = 30,
                        step = NULL,
                        overlap = 75,
@@ -95,13 +104,27 @@ getLoudness = function(x,
     } else {
       sound = x
     }
+    m = max(abs(sound))
+    if (is.null(scale)) {
+      scale = max(m, 1)
+      warning(paste('Scale not specified. Assuming that max amplitude is', scale))
+    } else if (is.numeric(scale)) {
+      if (scale < m) {
+        scale = m
+        warning(paste('Scale exceeds the observed range; resetting to', m))
+      }
+    }
   }
   if (samplingRate < 2000) return(NA)  # need at least 8 barks (1 kHz) Niquist
 
   # scale to dB SPL
-  sound_scaled = scaleSPL(sound, SPL_measured = SPL_measured, Pref = Pref)
+  sound_scaled = scaleSPL(sound,
+                          scale = scale,
+                          SPL_measured = SPL_measured,
+                          Pref = Pref)
   # range(sound); range(sound_scaled)
-  # log10(sqrt(mean(sound_scaled ^ 2))) * 20  # should be the same as SPL_measured
+  # log10(sqrt(mean(sound_scaled ^ 2))) * 20
+  # (should be the same as SPL_measured w/o scale adjustment)
 
   # get power spectrum
   powerSpec = spectrogram(

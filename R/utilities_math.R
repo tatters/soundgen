@@ -961,3 +961,42 @@ pDistr = function(x, quantiles) {
   }
   return(out)
 }
+
+
+#' Log-transform matrix
+#'
+#' Internal soundgen function.
+#'
+#' Log-distorts a matrix, as if log-transforming plot axes.
+#'
+#' @param m a matrix of numeric values of any dimensions (not necessarily
+#'   square)
+#' @param base the base of logarithm
+#' @keywords internal
+#' @examples
+#' m = matrix(1:90, nrow = 10)
+#' logMatrix(m, base = 2)
+#' logMatrix(m, base = 10)
+#'
+#' \dontrun{
+#' s = spectrogram(soundgen(), 16000, output = 'original')
+#' image(log(t(logMatrix(s, base = 2))))
+#' }
+logMatrix = function(m, base = 2) {
+  # the key is to make a sequence of time locations within each row/column for
+  # interpolation: (1:nrow(m)) ^ base (followed by normalization, so this index
+  # will range from 1 to nrow(m) / ncol(m))
+  idx_row = (1:ncol(m)) ^ base - 1
+  idx_row = idx_row / max(idx_row)
+  idx_row = idx_row * (ncol(m) - 1) + 1
+  # interpolate rows at these time points
+  m1 = t(apply(m, 1, function(x) approx(x, xout = idx_row)$y))
+
+  # same for columns
+  idx_col = (1:nrow(m)) ^ base - 1
+  idx_col = idx_col / max(idx_col)
+  idx_col = idx_col * (nrow(m) - 1) + 1
+  # interpolate columns at these time points
+  m2 = apply(m1, 2, function(x) approx(x, xout = idx_col)$y)
+  return(m2)
+}
