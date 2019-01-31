@@ -1,21 +1,33 @@
 #' Modulation spectrum
 #'
-#' Produces a modulation spectrum of waveform(s) or audio file(s). Algorithm:
-#' prepares a \code{\link{spectrogram}} and takes its 2D Fourier transform (see
-#' also \code{\link[spectral]{spec.fft}}). For multiple inputs, the ensemble of
-#' modulation spectra is interpolated to the same spectral and temporal
-#' resolution and averaged. By default the plot is smoothed with Gaussian blur
-#' (see \code{\link{gaussianSmooth2D}}).
-#'
-#' @return Returns a matrix of nonnegative values. Rownames are frequencies of
-#'   amplitude modulation (Hz), and colnames are frequencies of frequency
-#'   modulation (1/KHz).
-#'
+#' Produces a modulation spectrum of waveform(s) or audio file(s), with temporal
+#' modulation along the X axis (Hz) and frequency modulation (1/KHz) along the Y
+#' axis. A good visual analogy is decomposing the spectrogram into a sum of
+#' ripples of various frequencies and directions. Algorithm: prepare a
+#' \code{\link{spectrogram}}, take its logarithm (if \code{logSpec = TRUE}),
+#' center, perform a 2D Fourier transform (see also
+#' \code{\link[spectral]{spec.fft}}), take the upper half of the resulting
+#' symmetric matrix, and square it (if \code{power = TRUE}). The result is
+#' returned as \code{$original}. Roughness is calculated as the proportion of
+#' energy / amplitude of the modulation spectrum within \code{roughRange} of
+#' temporal modulation frequencies. By default, the modulation matrix is then
+#' smoothed with Gaussian blur (see \code{\link{gaussianSmooth2D}}) and
+#' log-warped (if \code{logWarp} is a positive number) prior to plotting. This
+#' processed modulation spectrum is returned as \code{$processed}. For multiple
+#' inputs, the ensemble of modulation spectra is interpolated to the same
+#' spectral and temporal resolution and averaged.
+#' @references \itemize{
+#'   \item Singh, N. C., & Theunissen, F. E. (2003). Modulation spectra of
+#'   natural sounds and ethological theories of auditory processing. The Journal
+#'   of the Acoustical Society of America, 114(6), 3394-3411.
+#' }
 #' @param x folder, path to a wav/mp3 file, a numeric vector representing a
 #'   waveform, or a list of numeric vectors
 #' @param samplingRate sampling rate of x (only needed if x is a numeric vector,
 #'   rather than an audio file). For a list of sounds, give either one
 #'   samplingRate (the same for all) or as many values as there are input files
+#' @param roughRange the range of temporal modulation frequencies that
+#'   constitute the "roughness" zone, Hz
 #' @inheritParams spectrogram
 #' @param maxDur maximum allowed duration of a single sound, s (longer sounds
 #'   are split)
@@ -24,25 +36,28 @@
 #' @param power if TRUE, returns power modulation spectrum (^2)
 #' @param plot if TRUE, plots the modulation spectrum
 #' @param logWarp the base of log for warping the modulation spectrum (ie log2
-#'   if logWarp = 2); set to NULL or NA if you don't want to log-transform the
-#'   axes
-#' @param quantiles labeled contour values, % (e.g., "50" marks regions that
-#'   contain 50% of the sum total of the entire modulation spectrum)
+#'   if logWarp = 2); set to NULL or NA if you don't want to log-warp
+#' @param quantiles labeled contour values, \% (e.g., "50" marks regions that
+#'   contain 50\% of the sum total of the entire modulation spectrum)
 #' @param kernelSize the size of Gaussian kernel used for smoothing
 #' @param kernelSD the SD of Gaussian kernel used for smoothing, relative to its
 #' size
 #' @param ... other graphical parameters passed on to
 #'   \code{\link[seewave]{filled.contour.modif2}} and
 #'   \code{\link[graphics]{contour}}
-#' @references \itemize{
-#'   \item Singh, N. C., & Theunissen, F. E. (2003). Modulation spectra of
-#'   natural sounds and ethological theories of auditory processing. The Journal
-#'   of the Acoustical Society of America, 114(6), 3394-3411.
-#'   }
+#' @return Returns a list with three components:
+#' \itemize{
+#' \item \code{$original} modulation spectrum prior to blurring and log-warping,
+#' but after squaring if \code{power = TRUE}, a matrix of nonnegative values.
+#' Rownames are frequencies of amplitude modulation (Hz), and colnames are
+#' frequencies of frequency modulation (1/KHz).
+#' \item \code{$processed} modulation spectrum after blurring and log-warping
+#' \item \code{$roughness} proportion of energy / amplitude of the modulation
+#' spectrum within \code{roughRange} of temporal modulation frequencies, \%
+#' }
 #' @export
 #' @examples
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000)
-#'
 #' \dontrun{
 #' # Input can also be a list of waveforms (numeric vectors)
 #' ss = vector('list', 10)
@@ -79,20 +94,35 @@
 #' ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 17, power = TRUE)
 #' # NB: longer files will be split into fragments <maxDur in length
 #'
+#' # "power = TRUE" returns squared modulation spectrum - note that this affects
+#' the roughness measure!
 #' # A sound with ~3 syllables per second and only downsweeps in F0 contour
 #' s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 #' # playme(s)
 #' ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
-#'   xlim = c(-25, 25), power = TRUE, colorTheme = 'seewave',
-#'   logWarp = NULL)
+#'   xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
+#'   power = TRUE)
 #' # note the asymmetry b/c of downsweeps
+#' ms$roughness
+#' # compare:
+#' modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
+#'   xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
+#'   power = FALSE)$roughness  # much higher roughness
 #'
 #' # Plotting with or without log-warping the modulation spectrum:
-#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = NA, plot = T)
-#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 2, plot = T)
-#' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 4.5, plot = T)
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+#'   logWarp = NA, plot = T)
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+#'   logWarp = 2, plot = T)
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+#'   logWarp = 4.5, plot = T)
 #'
-#' # Log-transform the spectrogram prior to 2D FFT:
+#' # logWarp and kernelSize have no effect on roughness:
+#' modulationSpectrum(s, samplingRate = 16000, logWarp = 5)$roughness
+#' modulationSpectrum(s, samplingRate = 16000, logWarp = NA)$roughness
+#' modulationSpectrum(s, samplingRate = 16000, kernelSize = 17)$roughness
+#'
+#' # Log-transform the spectrogram prior to 2D FFT (affects roughness):
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = FALSE)
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
 #' }
@@ -106,6 +136,7 @@ modulationSpectrum = function(x,
                               wn = 'gaussian',
                               zp = 0,
                               power = FALSE,
+                              roughRange = c(30, 150),
                               plot = TRUE,
                               logWarp = 2,
                               quantiles = c(.5, .8, .9),
@@ -239,6 +270,10 @@ modulationSpectrum = function(x,
   rownames(out_aggreg) = X
   colnames(out_aggreg) = Y
 
+  # extract a measure of roughness
+  rough_rows = which(abs(X) > roughRange[1] & abs(X) < roughRange[2])
+  roughness = sum(out_aggreg[rough_rows, ]) / sum(out_aggreg) * 100
+
   # log-transform the axes (or, actually, warp the matrix itself)
   if (is.numeric(logWarp)) {
     zero_row = ceiling(max_rows / 2)
@@ -251,7 +286,7 @@ modulationSpectrum = function(x,
     out_transf = out_aggreg
   }
 
-  # smoothing
+  # smoothing / blurring
   out_transf = gaussianSmooth2D(out_transf,
                                 kernelSize = kernelSize,
                                 kernelSD = kernelSD)
@@ -340,5 +375,7 @@ modulationSpectrum = function(x,
     par(new = FALSE)
   }
 
-  return(list('original' = out_aggreg, 'processed' = out_transf))
+  return(list('original' = out_aggreg,
+              'processed' = out_transf,
+              'roughness' = roughness))
 }

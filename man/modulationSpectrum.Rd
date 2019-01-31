@@ -6,9 +6,10 @@
 \usage{
 modulationSpectrum(x, samplingRate = NULL, maxDur = 5,
   logSpec = FALSE, windowLength = 25, step = NULL, overlap = 75,
-  wn = "gaussian", zp = 0, power = FALSE, plot = TRUE,
-  logWarp = 2, quantiles = c(0.5, 0.8, 0.9), kernelSize = 5,
-  kernelSD = 0.5, colorTheme = c("bw", "seewave", "...")[1], ...)
+  wn = "gaussian", zp = 0, power = FALSE, roughRange = c(30, 150),
+  plot = TRUE, logWarp = 2, quantiles = c(0.5, 0.8, 0.9),
+  kernelSize = 5, kernelSD = 0.5, colorTheme = c("bw", "seewave",
+  "...")[1], ...)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
@@ -37,14 +38,16 @@ blackman, flattop}
 
 \item{power}{if TRUE, returns power modulation spectrum (^2)}
 
+\item{roughRange}{the range of temporal modulation frequencies that
+constitute the "roughness" zone, Hz}
+
 \item{plot}{if TRUE, plots the modulation spectrum}
 
 \item{logWarp}{the base of log for warping the modulation spectrum (ie log2
-if logWarp = 2); set to NULL or NA if you don't want to log-transform the
-axes}
+if logWarp = 2); set to NULL or NA if you don't want to log-warp}
 
-\item{quantiles}{labeled contour values, % (e.g., "50" marks regions that
-contain 50% of the sum total of the entire modulation spectrum)}
+\item{quantiles}{labeled contour values, \% (e.g., "50" marks regions that
+contain 50\% of the sum total of the entire modulation spectrum)}
 
 \item{kernelSize}{the size of Gaussian kernel used for smoothing}
 
@@ -60,21 +63,37 @@ or any palette from \code{\link[grDevices]{palette}} such as
 \code{\link[graphics]{contour}}}
 }
 \value{
-Returns a matrix of nonnegative values. Rownames are frequencies of
-  amplitude modulation (Hz), and colnames are frequencies of frequency
-  modulation (1/KHz).
+Returns a list with three components:
+\itemize{
+\item \code{$original} modulation spectrum prior to blurring and log-warping,
+but after squaring if \code{power = TRUE}, a matrix of nonnegative values.
+Rownames are frequencies of amplitude modulation (Hz), and colnames are
+frequencies of frequency modulation (1/KHz).
+\item \code{$processed} modulation spectrum after blurring and log-warping
+\item \code{$roughness} proportion of energy / amplitude of the modulation
+spectrum within \code{roughRange} of temporal modulation frequencies, \%
+}
 }
 \description{
-Produces a modulation spectrum of waveform(s) or audio file(s). Algorithm:
-prepares a \code{\link{spectrogram}} and takes its 2D Fourier transform (see
-also \code{\link[spectral]{spec.fft}}). For multiple inputs, the ensemble of
-modulation spectra is interpolated to the same spectral and temporal
-resolution and averaged. By default the plot is smoothed with Gaussian blur
-(see \code{\link{gaussianSmooth2D}}).
+Produces a modulation spectrum of waveform(s) or audio file(s), with temporal
+modulation along the X axis (Hz) and frequency modulation (1/KHz) along the Y
+axis. A good visual analogy is decomposing the spectrogram into a sum of
+ripples of various frequencies and directions. Algorithm: prepare a
+\code{\link{spectrogram}}, take its logarithm (if \code{logSpec = TRUE}),
+center, perform a 2D Fourier transform (see also
+\code{\link[spectral]{spec.fft}}), take the upper half of the resulting
+symmetric matrix, and square it (if \code{power = TRUE}). The result is
+returned as \code{$original}. Roughness is calculated as the proportion of
+energy / amplitude of the modulation spectrum within \code{roughRange} of
+temporal modulation frequencies. By default, the modulation matrix is then
+smoothed with Gaussian blur (see \code{\link{gaussianSmooth2D}}) and
+log-warped (if \code{logWarp} is a positive number) prior to plotting. This
+processed modulation spectrum is returned as \code{$processed}. For multiple
+inputs, the ensemble of modulation spectra is interpolated to the same
+spectral and temporal resolution and averaged.
 }
 \examples{
 ms = modulationSpectrum(soundgen(), samplingRate = 16000)
-
 \dontrun{
 # Input can also be a list of waveforms (numeric vectors)
 ss = vector('list', 10)
@@ -111,20 +130,35 @@ ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav',
 ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 17, power = TRUE)
 # NB: longer files will be split into fragments <maxDur in length
 
+# "power = TRUE" returns squared modulation spectrum - note that this affects
+the roughness measure!
 # A sound with ~3 syllables per second and only downsweeps in F0 contour
 s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 # playme(s)
 ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
-  xlim = c(-25, 25), power = TRUE, colorTheme = 'seewave',
-  logWarp = NULL)
+  xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
+  power = TRUE)
 # note the asymmetry b/c of downsweeps
+ms$roughness
+# compare:
+modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
+  xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
+  power = FALSE)$roughness  # much higher roughness
 
 # Plotting with or without log-warping the modulation spectrum:
-ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = NA, plot = T)
-ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 2, plot = T)
-ms = modulationSpectrum(soundgen(), samplingRate = 16000, logWarp = 4.5, plot = T)
+ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+  logWarp = NA, plot = T)
+ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+  logWarp = 2, plot = T)
+ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+  logWarp = 4.5, plot = T)
 
-# Log-transform the spectrogram prior to 2D FFT:
+# logWarp and kernelSize have no effect on roughness:
+modulationSpectrum(s, samplingRate = 16000, logWarp = 5)$roughness
+modulationSpectrum(s, samplingRate = 16000, logWarp = NA)$roughness
+modulationSpectrum(s, samplingRate = 16000, kernelSize = 17)$roughness
+
+# Log-transform the spectrogram prior to 2D FFT (affects roughness):
 ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = FALSE)
 ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
 }
@@ -134,5 +168,5 @@ ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
   \item Singh, N. C., & Theunissen, F. E. (2003). Modulation spectra of
   natural sounds and ethological theories of auditory processing. The Journal
   of the Acoustical Society of America, 114(6), 3394-3411.
-  }
+}
 }
