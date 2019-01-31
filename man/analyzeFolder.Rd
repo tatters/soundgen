@@ -251,7 +251,7 @@ If \code{summary} is TRUE, returns a dataframe with one row per audio
   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
 }
 \description{
-Acoustic analysis of all .wav files in a folder. See \code{\link{analyze}}
+Acoustic analysis of all wav/mp3 files in a folder. See \code{\link{analyze}}
 and vignette('acoustic_analysis', package = 'soundgen') for further details.
 }
 \examples{

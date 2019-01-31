@@ -42,6 +42,9 @@
 #' @param kernelSize the size of Gaussian kernel used for smoothing
 #' @param kernelSD the SD of Gaussian kernel used for smoothing, relative to its
 #' size
+#' @param xlab,ylab,main graphical parameters
+#' @param width,height,units,res parameters passed to
+#'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed on to
 #'   \code{\link[seewave]{filled.contour.modif2}} and
 #'   \code{\link[graphics]{contour}}
@@ -57,7 +60,9 @@
 #' }
 #' @export
 #' @examples
-#' ms = modulationSpectrum(soundgen(), samplingRate = 16000)
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+#'   xlab = 'Temporal modulation, Hz', ylab = 'Frequency modulation, 1/KHz',
+#'   colorTheme = 'seewave', main = 'Modulation spectrum', lty = 3)
 #' \dontrun{
 #' # Input can also be a list of waveforms (numeric vectors)
 #' ss = vector('list', 10)
@@ -138,11 +143,19 @@ modulationSpectrum = function(x,
                               power = FALSE,
                               roughRange = c(30, 150),
                               plot = TRUE,
+                              savePath = NA,
                               logWarp = 2,
                               quantiles = c(.5, .8, .9),
                               kernelSize = 5,
                               kernelSD = .5,
                               colorTheme = c('bw', 'seewave', '...')[1],
+                              xlab = 'Hz',
+                              ylab = '1/KHz',
+                              main = NULL,
+                              width = 900,
+                              height = 500,
+                              units = 'px',
+                              res = NA,
                               ...) {
   # determine the type of input
   if (is.character(x)) {
@@ -153,12 +166,20 @@ modulationSpectrum = function(x,
       myInput = as.list(x)
     }
     samplingRate = rep(NA, length(myInput))
+    plotname = tail(unlist(strsplit(x, '/')), n = 1)
+    plotname = ifelse(
+      !missing(main) & !is.null(main),
+      main,
+      substring(plotname, first = 1,
+                last = (nchar(plotname) - 4))
+    )
   } else if (is.numeric(x)) {
     # assume that it is an actual waveform vector
     myInput = list(x)
     if (!is.numeric(samplingRate)) {
       stop('Please specify samplingRate')
     }
+    plotname = ifelse(!missing(main) & !is.null(main), main, '')
   } else if (is.list(x)) {
     # assume that it is a list of waveforms
     myInput = x
@@ -173,6 +194,7 @@ modulationSpectrum = function(x,
         samplingRate = rep(samplingRate, length(myInput))
       }
     }
+    plotname = ifelse(!missing(main) & !is.null(main), main, '')
   } else {
     stop('Input not recognized')
   }
@@ -293,6 +315,18 @@ modulationSpectrum = function(x,
 
   # plot
   if (plot) {
+    if (is.character(savePath)) {
+      # make sure the last character of savePath is "/"
+      last_char = substr(savePath, nchar(savePath), nchar(savePath))
+      if(last_char != '/') savePath = paste0(savePath, '/')
+      plot = TRUE
+      f = ifelse(plotname == '',
+                 'sound',
+                 plotname)
+      png(filename = paste0(savePath, f, ".png"),
+          width = width, height = height, units = units, res = res)
+    }
+
     if (colorTheme == 'bw') {
       color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
     } else if (colorTheme == 'seewave') {
@@ -307,14 +341,16 @@ modulationSpectrum = function(x,
         x = X, y = Y, z = out_transf,
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
-        xlab = 'Hz', ylab = '1/KHz',
+        xlab = xlab, ylab = ylab,
         bty = 'n', axisX = FALSE, axisY = FALSE,
         ...
       )
       # add manually labeled x-axis
-      xseq = seq(1, length(X), length.out = 9)
+      xseq = seq(1, length(X), length.out = 8)
       digits = 0  # choosing the optimal rounding level
       rx = round(X1[xseq], digits = digits)
+      # make sure the same number are at left & right
+      rx[rx < 0] = rev(-rx[rx > 0])
       while (length(rx) > length(unique(rx))) {  # eg it starts 0, 0, 1, ...
         digits = digits + 1
         rx = round(X1[xseq], digits = digits)  # thus 0.2, 0.4, 1.1, ...
@@ -359,7 +395,7 @@ modulationSpectrum = function(x,
         x = X, y = Y, z = out_transf,
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
-        xlab = 'Hz', ylab = '1/KHz',
+        xlab = xlab, ylab = ylab,
         bty = 'n', ...
       )
     }
@@ -373,9 +409,99 @@ modulationSpectrum = function(x,
             xaxs = 'i', yaxs = 'i',
             axes = FALSE, frame.plot = FALSE, ...)
     par(new = FALSE)
+    if (is.character(savePath)) dev.off()
   }
 
   return(list('original' = out_aggreg,
               'processed' = out_transf,
               'roughness' = roughness))
 }
+
+
+#' Modulation spectrum per folder
+#'
+#' Extracts modulation spectra of all wav/mp3 files in a folder. See
+#' \code{\link{modulationSpectrum}} for further details.
+#' @inheritParams analyzeFolder
+#' @inheritParams modulationSpectrum
+#' @inheritParams spectrogram
+#' @return If \code{summary} is TRUE, returns a dataframe with just the
+#'   roughness measure per audio file. If \code{summary} is FALSE, returns a
+#'   list with the actual modulation spectra.
+#' @export
+#' @examples
+#' \dontrun{
+#' ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE, kernelSize = 15)
+#' }
+modulationSpectrumFolder = function(
+  myfolder,
+  summary = TRUE,
+  htmlPlots = TRUE,
+  verbose = TRUE,
+  maxDur = 5,
+  logSpec = FALSE,
+  windowLength = 25,
+  step = NULL,
+  overlap = 75,
+  wn = 'gaussian',
+  zp = 0,
+  power = FALSE,
+  roughRange = c(30, 150),
+  plot = TRUE,
+  savePlots = NA,
+  logWarp = 2,
+  quantiles = c(.5, .8, .9),
+  kernelSize = 5,
+  kernelSD = .5,
+  colorTheme = c('bw', 'seewave', '...')[1],
+  xlab = 'Hz',
+  ylab = '1/KHz',
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  ...
+) {
+  time_start = proc.time()  # timing
+  filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
+  # in order to provide more accurate estimates of time to completion,
+  # check the size of all files in the target folder
+  filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
+
+  # match par-s
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'myfolder' , 'htmlPlots', 'verbose', 'savePlots', 'summary')]
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+  # add plot pars correctly, without flattening the lists
+  if (savePlots) myPars$savePath = myfolder
+
+  result = list()
+  for (i in 1:length(filenames)) {
+    result[[i]] = do.call(modulationSpectrum, c(filenames[i], myPars, ...))
+    if (verbose) {
+      reportTime(i = i, nIter = length(filenames),
+                 time_start = time_start, jobs = filesizes)
+    }
+  }
+
+  # prepare output
+  if (summary == TRUE) {
+    output = data.frame(
+      sound = basename(filenames),
+      roughness = unlist(lapply(result, function(x) x$roughness))
+    )
+  } else {
+    output = result
+    names(output) = filenames
+  }
+
+  if (htmlPlots & savePlots) {
+    htmlPlots(myfolder, myfiles = filenames)
+  }
+
+  return (output)
+}
+

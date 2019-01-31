@@ -1,6 +1,8 @@
-          CHANGES IN SOUNDGEN VERSION 1.3.3 [...date...]
+          CHANGES IN SOUNDGEN VERSION 1.4.0 [...date...]
 NEW FUNCTIONS:
   * modulationSpectrum(): calculates and plots a modulation spectrum showing combined spectro-temporal modulation
+  * modulationSpectrumFolder(): same for all audio files in a folder
+  * gaussianSmooth2D(): performs Gaussian blur of spectrograms, modulation spectra, etc.
 
 MINOR:
   * spectrogram(), getLoudness(): better temporal alignment of the waveform, spectrogram, and loudness contour

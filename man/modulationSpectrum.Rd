@@ -7,9 +7,10 @@
 modulationSpectrum(x, samplingRate = NULL, maxDur = 5,
   logSpec = FALSE, windowLength = 25, step = NULL, overlap = 75,
   wn = "gaussian", zp = 0, power = FALSE, roughRange = c(30, 150),
-  plot = TRUE, logWarp = 2, quantiles = c(0.5, 0.8, 0.9),
-  kernelSize = 5, kernelSD = 0.5, colorTheme = c("bw", "seewave",
-  "...")[1], ...)
+  plot = TRUE, savePath = NA, logWarp = 2, quantiles = c(0.5, 0.8,
+  0.9), kernelSize = 5, kernelSD = 0.5, colorTheme = c("bw",
+  "seewave", "...")[1], xlab = "Hz", ylab = "1/KHz", main = NULL,
+  width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
@@ -58,6 +59,11 @@ size}
 or any palette from \code{\link[grDevices]{palette}} such as
 'heat.colors', 'cm.colors', etc}
 
+\item{xlab, ylab, main}{graphical parameters}
+
+\item{width, height, units, res}{parameters passed to
+\code{\link[grDevices]{png}} if the plot is saved}
+
 \item{...}{other graphical parameters passed on to
 \code{\link[seewave]{filled.contour.modif2}} and
 \code{\link[graphics]{contour}}}
@@ -93,7 +99,9 @@ inputs, the ensemble of modulation spectra is interpolated to the same
 spectral and temporal resolution and averaged.
 }
 \examples{
-ms = modulationSpectrum(soundgen(), samplingRate = 16000)
+ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+  xlab = 'Temporal modulation, Hz', ylab = 'Frequency modulation, 1/KHz',
+  colorTheme = 'seewave', main = 'Modulation spectrum', lty = 3)
 \dontrun{
 # Input can also be a list of waveforms (numeric vectors)
 ss = vector('list', 10)

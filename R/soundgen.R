@@ -1,4 +1,4 @@
-# TODO: derive roughness measure per sound in analyze(); check why quartile25 etc are NA in sounds if pitch is NA; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check/debug all graphics etc in modulationSpectrum() and modulationSpectrumFolder(); check why quartile25 etc are NA in sounds if pitch is NA; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

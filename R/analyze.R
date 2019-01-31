@@ -953,7 +953,7 @@ analyze = function(x,
 
 #' Analyze folder
 #'
-#' Acoustic analysis of all .wav files in a folder. See \code{\link{analyze}}
+#' Acoustic analysis of all wav/mp3 files in a folder. See \code{\link{analyze}}
 #' and vignette('acoustic_analysis', package = 'soundgen') for further details.
 #' @param myfolder full path to target folder
 #' @param verbose if TRUE, reports progress and estimated time left
