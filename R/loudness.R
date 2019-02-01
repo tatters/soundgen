@@ -65,7 +65,7 @@
 #' loud
 #' # white noise (sound 1) is twice as loud as pure tone at 1 KHz (sound 3),
 #' # and note that the same white noise with lower amplitude has lower loudness
-#' (provided that "scale" is specified)
+#' # (provided that "scale" is specified)
 #' # compare: lapply(sounds, range)
 #'
 #' \dontrun{

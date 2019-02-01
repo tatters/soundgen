@@ -968,8 +968,7 @@ analyze = function(x,
 #' @examples
 #' \dontrun{
 #' # download 260 sounds from Anikin & Persson (2017)
-#' # http://cogsci.se/personal/results/
-#' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
+#' # http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/260sounds_wav.zip
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
 #' s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 15-30 minutes!

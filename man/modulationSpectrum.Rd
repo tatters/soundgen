@@ -44,13 +44,17 @@ constitute the "roughness" zone, Hz}
 
 \item{plot}{if TRUE, plots the modulation spectrum}
 
+\item{savePath}{if a valid path is specified, a plot is saved in this folder
+(defaults to NA)}
+
 \item{logWarp}{the base of log for warping the modulation spectrum (ie log2
 if logWarp = 2); set to NULL or NA if you don't want to log-warp}
 
 \item{quantiles}{labeled contour values, \% (e.g., "50" marks regions that
 contain 50\% of the sum total of the entire modulation spectrum)}
 
-\item{kernelSize}{the size of Gaussian kernel used for smoothing}
+\item{kernelSize}{the size of Gaussian kernel used for smoothing (1 = no
+smoothing)}
 
 \item{kernelSD}{the SD of Gaussian kernel used for smoothing, relative to its
 size}
@@ -82,7 +86,7 @@ spectrum within \code{roughRange} of temporal modulation frequencies, \%
 }
 \description{
 Produces a modulation spectrum of waveform(s) or audio file(s), with temporal
-modulation along the X axis (Hz) and frequency modulation (1/KHz) along the Y
+modulation along the X axis (Hz) and spectral modulation (1/KHz) along the Y
 axis. A good visual analogy is decomposing the spectrogram into a sum of
 ripples of various frequencies and directions. Algorithm: prepare a
 \code{\link{spectrogram}}, take its logarithm (if \code{logSpec = TRUE}),
@@ -161,7 +165,8 @@ ms = modulationSpectrum(soundgen(), samplingRate = 16000,
 ms = modulationSpectrum(soundgen(), samplingRate = 16000,
   logWarp = 4.5, plot = T)
 
-# logWarp and kernelSize have no effect on roughness:
+# logWarp and kernelSize have no effect on roughness
+# because it is calculated before these transforms:
 modulationSpectrum(s, samplingRate = 16000, logWarp = 5)$roughness
 modulationSpectrum(s, samplingRate = 16000, logWarp = NA)$roughness
 modulationSpectrum(s, samplingRate = 16000, kernelSize = 17)$roughness

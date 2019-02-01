@@ -1,7 +1,7 @@
 #' Modulation spectrum
 #'
 #' Produces a modulation spectrum of waveform(s) or audio file(s), with temporal
-#' modulation along the X axis (Hz) and frequency modulation (1/KHz) along the Y
+#' modulation along the X axis (Hz) and spectral modulation (1/KHz) along the Y
 #' axis. A good visual analogy is decomposing the spectrogram into a sum of
 #' ripples of various frequencies and directions. Algorithm: prepare a
 #' \code{\link{spectrogram}}, take its logarithm (if \code{logSpec = TRUE}),
@@ -35,11 +35,14 @@
 #'   FFT
 #' @param power if TRUE, returns power modulation spectrum (^2)
 #' @param plot if TRUE, plots the modulation spectrum
+#' @param savePath if a valid path is specified, a plot is saved in this folder
+#'   (defaults to NA)
 #' @param logWarp the base of log for warping the modulation spectrum (ie log2
 #'   if logWarp = 2); set to NULL or NA if you don't want to log-warp
 #' @param quantiles labeled contour values, \% (e.g., "50" marks regions that
 #'   contain 50\% of the sum total of the entire modulation spectrum)
-#' @param kernelSize the size of Gaussian kernel used for smoothing
+#' @param kernelSize the size of Gaussian kernel used for smoothing (1 = no
+#'   smoothing)
 #' @param kernelSD the SD of Gaussian kernel used for smoothing, relative to its
 #' size
 #' @param xlab,ylab,main graphical parameters
@@ -122,7 +125,8 @@
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
 #'   logWarp = 4.5, plot = T)
 #'
-#' # logWarp and kernelSize have no effect on roughness:
+#' # logWarp and kernelSize have no effect on roughness
+#' # because it is calculated before these transforms:
 #' modulationSpectrum(s, samplingRate = 16000, logWarp = 5)$roughness
 #' modulationSpectrum(s, samplingRate = 16000, logWarp = NA)$roughness
 #' modulationSpectrum(s, samplingRate = 16000, kernelSize = 17)$roughness
@@ -346,11 +350,12 @@ modulationSpectrum = function(x,
         ...
       )
       # add manually labeled x-axis
-      xseq = seq(1, length(X), length.out = 8)
+      w = which(X == 0)
+      xseq = round(seq(w, length(X), length.out = min(4, floor(length(X) / 2))))
+      # make sure the same numbers are at left & right
+      xseq = c(rev(w - (xseq[2:length(xseq)] - w)), xseq)
       digits = 0  # choosing the optimal rounding level
       rx = round(X1[xseq], digits = digits)
-      # make sure the same number are at left & right
-      rx[rx < 0] = rev(-rx[rx > 0])
       while (length(rx) > length(unique(rx))) {  # eg it starts 0, 0, 1, ...
         digits = digits + 1
         rx = round(X1[xseq], digits = digits)  # thus 0.2, 0.4, 1.1, ...

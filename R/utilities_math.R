@@ -906,7 +906,7 @@ gaussianSmooth2D = function(m,
   if (kernelSize %% 2 == 0) kernelSize = kernelSize - 1  # make uneven
 
   # set up 2D Gaussian filter
-  kernel = soundgen:::getCheckerboardKernel(
+  kernel = getCheckerboardKernel(
     size = kernelSize,
     kernelSD = kernelSD,
     checker = FALSE,
@@ -977,14 +977,14 @@ pDistr = function(x, quantiles) {
 #' @keywords internal
 #' @examples
 #' m = matrix(1:90, nrow = 10)
-#' logMatrix(m, base = 2)
-#' logMatrix(m, base = 10)
+#' soundgen:::logMatrix(m, base = 2)
+#' soundgen:::logMatrix(m, base = 10)
 #'
-#' logMatrix(m = matrix(1:9, nrow = 1), base = 2)
+#' soundgen:::logMatrix(m = matrix(1:9, nrow = 1), base = 2)
 #'
 #' \dontrun{
 #' s = spectrogram(soundgen(), 16000, output = 'original')
-#' image(log(t(logMatrix(s, base = 2))))
+#' image(log(t(soundgen:::logMatrix(s, base = 2))))
 #' }
 logMatrix = function(m, base = 2) {
   # the key is to make a sequence of time locations within each row/column for

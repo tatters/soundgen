@@ -56,7 +56,8 @@ if logWarp = 2); set to NULL or NA if you don't want to log-warp}
 \item{quantiles}{labeled contour values, \% (e.g., "50" marks regions that
 contain 50\% of the sum total of the entire modulation spectrum)}
 
-\item{kernelSize}{the size of Gaussian kernel used for smoothing}
+\item{kernelSize}{the size of Gaussian kernel used for smoothing (1 = no
+smoothing)}
 
 \item{kernelSD}{the SD of Gaussian kernel used for smoothing, relative to its
 size}

@@ -20,14 +20,14 @@ Log-distorts a matrix, as if log-transforming plot axes.
 }
 \examples{
 m = matrix(1:90, nrow = 10)
-logMatrix(m, base = 2)
-logMatrix(m, base = 10)
+soundgen:::logMatrix(m, base = 2)
+soundgen:::logMatrix(m, base = 10)
 
-logMatrix(m = matrix(1:9, nrow = 1), base = 2)
+soundgen:::logMatrix(m = matrix(1:9, nrow = 1), base = 2)
 
 \dontrun{
 s = spectrogram(soundgen(), 16000, output = 'original')
-image(log(t(logMatrix(s, base = 2))))
+image(log(t(soundgen:::logMatrix(s, base = 2))))
 }
 }
 \keyword{internal}
