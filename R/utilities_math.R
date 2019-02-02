@@ -965,11 +965,11 @@ pDistr = function(x, quantiles) {
 }
 
 
-#' Log-transform matrix
+#' Log-warp matrix
 #'
 #' Internal soundgen function.
 #'
-#' Log-distorts a matrix, as if log-transforming plot axes.
+#' Log-warps a matrix, as if log-transforming plot axes.
 #'
 #' @param m a matrix of numeric values of any dimensions (not necessarily
 #'   square)

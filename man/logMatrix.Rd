@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities_math.R
 \name{logMatrix}
 \alias{logMatrix}
-\title{Log-transform matrix}
+\title{Log-warp matrix}
 \usage{
 logMatrix(m, base = 2)
 }
@@ -16,7 +16,7 @@ square)}
 Internal soundgen function.
 }
 \details{
-Log-distorts a matrix, as if log-transforming plot axes.
+Log-warps a matrix, as if log-transforming plot axes.
 }
 \examples{
 m = matrix(1:90, nrow = 10)

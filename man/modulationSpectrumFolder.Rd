@@ -6,12 +6,12 @@
 \usage{
 modulationSpectrumFolder(myfolder, summary = TRUE, htmlPlots = TRUE,
   verbose = TRUE, maxDur = 5, logSpec = FALSE, windowLength = 25,
-  step = NULL, overlap = 75, wn = "gaussian", zp = 0,
-  power = FALSE, roughRange = c(30, 150), plot = TRUE,
-  savePlots = NA, logWarp = 2, quantiles = c(0.5, 0.8, 0.9),
-  kernelSize = 5, kernelSD = 0.5, colorTheme = c("bw", "seewave",
-  "...")[1], xlab = "Hz", ylab = "1/KHz", width = 900,
-  height = 500, units = "px", res = NA, ...)
+  step = NULL, overlap = 80, wn = "gaussian", zp = 0, power = 1,
+  roughRange = c(30, 150), plot = FALSE, savePlots = FALSE,
+  logWarp = 2, quantiles = c(0.5, 0.8, 0.9), kernelSize = 5,
+  kernelSD = 0.5, colorTheme = c("bw", "seewave", "...")[1],
+  xlab = "Hz", ylab = "1/KHz", width = 900, height = 500,
+  units = "px", res = NA, ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -41,7 +41,8 @@ blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
-\item{power}{if TRUE, returns power modulation spectrum (^2)}
+\item{power}{raise modulation spectrum to this power (eg power = 2 for ^2, or
+"power spectrum")}
 
 \item{roughRange}{the range of temporal modulation frequencies that
 constitute the "roughness" zone, Hz}
@@ -90,7 +91,9 @@ If \code{summary} is TRUE, returns a dataframe with just the
   list with the actual modulation spectra.
 }
 \description{
-Extracts modulation spectra of all wav/mp3 files in a folder. See
+Extracts modulation spectra of all wav/mp3 files in a folder - separately for
+each file, without averaging. Good for saving plots of the modulation spectra
+and/or measuring the roughness of multiple files. See
 \code{\link{modulationSpectrum}} for further details.
 }
 \examples{

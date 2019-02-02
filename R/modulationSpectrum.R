@@ -7,15 +7,18 @@
 #' \code{\link{spectrogram}}, take its logarithm (if \code{logSpec = TRUE}),
 #' center, perform a 2D Fourier transform (see also
 #' \code{\link[spectral]{spec.fft}}), take the upper half of the resulting
-#' symmetric matrix, and square it (if \code{power = TRUE}). The result is
+#' symmetric matrix, and raise it to \code{power = 2}. The result is
 #' returned as \code{$original}. Roughness is calculated as the proportion of
 #' energy / amplitude of the modulation spectrum within \code{roughRange} of
 #' temporal modulation frequencies. By default, the modulation matrix is then
 #' smoothed with Gaussian blur (see \code{\link{gaussianSmooth2D}}) and
 #' log-warped (if \code{logWarp} is a positive number) prior to plotting. This
 #' processed modulation spectrum is returned as \code{$processed}. For multiple
-#' inputs, the ensemble of modulation spectra is interpolated to the same
-#' spectral and temporal resolution and averaged.
+#' inputs, such as a list of waveforms or path to a folder with audio files, the
+#' ensemble of modulation spectra is interpolated to the same spectral and
+#' temporal resolution and averaged. This is different from the behavior of
+#' \code{\link{modulationSpectrumFolder}}, which produces a separate modulation
+#' spectrum per file, without averaging.
 #' @references \itemize{
 #'   \item Singh, N. C., & Theunissen, F. E. (2003). Modulation spectra of
 #'   natural sounds and ethological theories of auditory processing. The Journal
@@ -33,7 +36,8 @@
 #'   are split)
 #' @param logSpec if TRUE, the spectrogram is log-transformed prior to taking 2D
 #'   FFT
-#' @param power if TRUE, returns power modulation spectrum (^2)
+#' @param power raise modulation spectrum to this power (eg power = 2 for ^2, or
+#'   "power spectrum")
 #' @param plot if TRUE, plots the modulation spectrum
 #' @param savePath if a valid path is specified, a plot is saved in this folder
 #'   (defaults to NA)
@@ -55,16 +59,26 @@
 #' \itemize{
 #' \item \code{$original} modulation spectrum prior to blurring and log-warping,
 #' but after squaring if \code{power = TRUE}, a matrix of nonnegative values.
-#' Rownames are frequencies of amplitude modulation (Hz), and colnames are
-#' frequencies of frequency modulation (1/KHz).
+#' Rownames are temporal modulation frequencies (Hz), and colnames are
+#' spectral modulation frequencies (cycles/KHz).
 #' \item \code{$processed} modulation spectrum after blurring and log-warping
 #' \item \code{$roughness} proportion of energy / amplitude of the modulation
 #' spectrum within \code{roughRange} of temporal modulation frequencies, \%
 #' }
 #' @export
 #' @examples
-#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
-#'   xlab = 'Temporal modulation, Hz', ylab = 'Frequency modulation, 1/KHz',
+#' # white noise
+#' ms = modulationSpectrum(runif(16000), samplingRate = 16000,
+#'   logSpec = FALSE, power = TRUE, logWarp = NULL)
+#'
+#' # harmonic sound
+#' s = soundgen()
+#' ms = modulationSpectrum(s, samplingRate = 16000,
+#'   logSpec = FALSE, power = TRUE, logWarp = NULL)
+#'
+#' # embellish
+#' ms = modulationSpectrum(s, samplingRate = 16000,
+#'   xlab = 'Temporal modulation, Hz', ylab = 'Spectral modulation, 1/KHz',
 #'   colorTheme = 'seewave', main = 'Modulation spectrum', lty = 3)
 #' \dontrun{
 #' # Input can also be a list of waveforms (numeric vectors)
@@ -80,13 +94,12 @@
 #' # As with spectrograms, there is a tradeoff in time-frequency resolution
 #' s = soundgen(pitch = 500, amFreq = 50, amDep = 100, samplingRate = 44100)
 #' # playme(s, samplingRate = 44100)
-#' spectrogram(s, samplingRate = 44100, osc = TRUE, ylim = c(0, 8))
 #' ms = modulationSpectrum(s, samplingRate = 44100,
 #'   windowLength = 50, overlap = 0)  # poor temporal resolution
 #' ms = modulationSpectrum(s, samplingRate = 44100,
 #'   windowLength = 5, overlap = 80)  # poor frequency resolution
 #' ms = modulationSpectrum(s, samplingRate = 44100,
-#'   windowLength = 30, overlap = 80)  # a reasonable compromise
+#'   windowLength = 15, overlap = 80)  # a reasonable compromise
 #'
 #' # Input can be a wav/mp3 file
 #' ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav')
@@ -96,26 +109,26 @@
 #'   quantiles = c(.25, .5, .8),  # customize contour lines
 #'   colorTheme = 'heat.colors',  # alternative palette
 #'   logWarp = NULL,              # don't log-warp the modulation spectrum
-#'   power = TRUE)  # ^2
+#'   power = 2)  # ^2
 #'
 #' # Input can be path to folder with audio files (average modulation spectrum)
-#' ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 17, power = TRUE)
+#' ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 11)
 #' # NB: longer files will be split into fragments <maxDur in length
 #'
-#' # "power = TRUE" returns squared modulation spectrum - note that this affects
+#' # "power = 2" returns squared modulation spectrum - note that this affects
 #' the roughness measure!
 #' # A sound with ~3 syllables per second and only downsweeps in F0 contour
 #' s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 #' # playme(s)
 #' ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
 #'   xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
-#'   power = TRUE)
+#'   power = 2)
 #' # note the asymmetry b/c of downsweeps
 #' ms$roughness
 #' # compare:
 #' modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
 #'   xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
-#'   power = FALSE)$roughness  # much higher roughness
+#'   power = 1)$roughness  # much higher roughness
 #'
 #' # Plotting with or without log-warping the modulation spectrum:
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
@@ -141,10 +154,10 @@ modulationSpectrum = function(x,
                               logSpec = FALSE,
                               windowLength = 25,
                               step = NULL,
-                              overlap = 75,
+                              overlap = 80,
                               wn = 'gaussian',
                               zp = 0,
-                              power = FALSE,
+                              power = 1,
                               roughRange = c(30, 150),
                               plot = TRUE,
                               savePath = NA,
@@ -168,15 +181,17 @@ modulationSpectrum = function(x,
     if (!length(myInput) > 0) {
       # assume that it is a single sound file
       myInput = as.list(x)
+      plotname = tail(unlist(strsplit(x, '/')), n = 1)
+      plotname = ifelse(
+        !missing(main) & !is.null(main),
+        main,
+        substring(plotname, first = 1,
+                  last = (nchar(plotname) - 4))
+      )
+    } else {
+      plotname = ''
     }
     samplingRate = rep(NA, length(myInput))
-    plotname = tail(unlist(strsplit(x, '/')), n = 1)
-    plotname = ifelse(
-      !missing(main) & !is.null(main),
-      main,
-      substring(plotname, first = 1,
-                last = (nchar(plotname) - 4))
-    )
   } else if (is.numeric(x)) {
     # assume that it is an actual waveform vector
     myInput = list(x)
@@ -213,7 +228,7 @@ modulationSpectrum = function(x,
       if (ext %in% c('wav', 'WAV')) {
         temp = tuneR::readWave(myInput[[i]])
       } else if (ext %in% c('mp3', 'MP3')) {
-        temp = tuneR::readMP3(myInput[[i]])@samp.rate
+        temp = tuneR::readMP3(myInput[[i]])
       } else {
         stop('Input not recognized')
       }
@@ -269,9 +284,9 @@ modulationSpectrum = function(x,
     s3 = abs(fft(s2, inverse = FALSE))
     # image(t(s3))
     # image(t(log(s3)))
-    s4 = s3[(nrow(s3) / 2) : nrow(s3), ]  # take only the upper half
+    s4 = s3[(nrow(s3) / 2 + 1) : nrow(s3), ]  # take only the upper half (always even)
     # power
-    if (power) s4 = s4 ^ 2
+    if (is.numeric(power)) s4 = s4 ^ power
     # normalize
     s5 = s4 - min(s4)
     s5 = s5 / max(s5)
@@ -283,13 +298,20 @@ modulationSpectrum = function(x,
   max_rows = max(unlist(lapply(out, nrow)))
   if (max_rows %% 2 == 0) max_rows = max_rows + 1  # make uneven to have a clear 0
   # normally same samplingRate, but in case not, upsample frequency resolution
-  max_cols = max(unlist(lapply(out, ncol)))
+  # typical ncol (depends on sound dur)
+  typicalCols = round(median(unlist(lapply(out, ncol))))
   sr = max(samplingRate)  # again, in case not the same
-  out1 = lapply(out, function(x) interpolMatrix(x, nr = max_rows, nc = max_cols))
+  out1 = lapply(out, function(x) interpolMatrix(x, nr = max_rows, nc = typicalCols))
   out_aggreg = Reduce('+', out1) / length(myInput)
 
   # get time and frequency labels
   max_am = 1000 / step / 2
+  if (max_am < roughRange[1]) {
+    warning(paste(
+      'roughRange outside the analyzed range of temporal modulation frequencies;',
+      'increase overlap / decrease step to improve temporal resolution,',
+      'or else look for roughness in a lower range'))
+  }
   X = seq(-max_am, max_am, length.out = nrow(out_aggreg))  # time modulation
   max_fm = ncol(out_aggreg) / (sr / 2 / 1000)
   Y = seq(0, max_fm, length.out = ncol(out_aggreg))  # frequency modulation
@@ -297,8 +319,7 @@ modulationSpectrum = function(x,
   colnames(out_aggreg) = Y
 
   # extract a measure of roughness
-  rough_rows = which(abs(X) > roughRange[1] & abs(X) < roughRange[2])
-  roughness = sum(out_aggreg[rough_rows, ]) / sum(out_aggreg) * 100
+  roughness = getRough(out_aggreg, roughRange)
 
   # log-transform the axes (or, actually, warp the matrix itself)
   if (is.numeric(logWarp)) {
@@ -318,19 +339,19 @@ modulationSpectrum = function(x,
                                 kernelSD = kernelSD)
 
   # plot
-  if (plot) {
-    if (is.character(savePath)) {
-      # make sure the last character of savePath is "/"
-      last_char = substr(savePath, nchar(savePath), nchar(savePath))
-      if(last_char != '/') savePath = paste0(savePath, '/')
-      plot = TRUE
-      f = ifelse(plotname == '',
-                 'sound',
-                 plotname)
-      png(filename = paste0(savePath, f, ".png"),
-          width = width, height = height, units = units, res = res)
-    }
+  if (is.character(savePath)) {
+    # make sure the last character of savePath is "/"
+    last_char = substr(savePath, nchar(savePath), nchar(savePath))
+    if(last_char != '/') savePath = paste0(savePath, '/')
+    plot = TRUE
+    f = ifelse(plotname == '',
+               'sound',
+               plotname)
+    png(filename = paste0(savePath, f, ".png"),
+        width = width, height = height, units = units, res = res)
+  }
 
+  if (plot) {
     if (colorTheme == 'bw') {
       color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
     } else if (colorTheme == 'seewave') {
@@ -347,10 +368,11 @@ modulationSpectrum = function(x,
         color.palette = color.palette,
         xlab = xlab, ylab = ylab,
         bty = 'n', axisX = FALSE, axisY = FALSE,
+        main = plotname,
         ...
       )
       # add manually labeled x-axis
-      w = which(X == 0)
+      w = which.min(abs(X))  # should be 0 or nearly 0
       xseq = round(seq(w, length(X), length.out = min(4, floor(length(X) / 2))))
       # make sure the same numbers are at left & right
       xseq = c(rev(w - (xseq[2:length(xseq)] - w)), xseq)
@@ -412,7 +434,8 @@ modulationSpectrum = function(x,
     contour(x = X, y = Y, z = out_transf,
             levels = qntls, labels = quantiles * 100,
             xaxs = 'i', yaxs = 'i',
-            axes = FALSE, frame.plot = FALSE, ...)
+            axes = FALSE, frame.plot = FALSE,
+            main = plotname, ...)
     par(new = FALSE)
     if (is.character(savePath)) dev.off()
   }
@@ -425,7 +448,9 @@ modulationSpectrum = function(x,
 
 #' Modulation spectrum per folder
 #'
-#' Extracts modulation spectra of all wav/mp3 files in a folder. See
+#' Extracts modulation spectra of all wav/mp3 files in a folder - separately for
+#' each file, without averaging. Good for saving plots of the modulation spectra
+#' and/or measuring the roughness of multiple files. See
 #' \code{\link{modulationSpectrum}} for further details.
 #' @inheritParams analyzeFolder
 #' @inheritParams modulationSpectrum
@@ -447,13 +472,13 @@ modulationSpectrumFolder = function(
   logSpec = FALSE,
   windowLength = 25,
   step = NULL,
-  overlap = 75,
+  overlap = 80,
   wn = 'gaussian',
   zp = 0,
-  power = FALSE,
+  power = 1,
   roughRange = c(30, 150),
-  plot = TRUE,
-  savePlots = NA,
+  plot = FALSE,
+  savePlots = FALSE,
   logWarp = 2,
   quantiles = c(.5, .8, .9),
   kernelSize = 5,
@@ -500,13 +525,41 @@ modulationSpectrumFolder = function(
     )
   } else {
     output = result
-    names(output) = filenames
+    names(output) = basename(filenames)
   }
 
   if (htmlPlots & savePlots) {
     htmlPlots(myfolder, myfiles = filenames)
   }
 
-  return (output)
+  return(output)
 }
 
+
+#' Get roughness
+#'
+#' Internal soundgen function
+#'
+#' Helper function for calculating roughness - the proportion of energy /
+#' amplitude in the roughness range
+#' @param m numeric matrix of non-negative values with rownames giving temporal
+#'   modulation frequency
+#' @param roughRange range of temporal modulation frequencies corresponding to
+#'   roughness
+#' @return Returns roughness in percent.
+#' @keywords internal
+#' @examples
+#' m = matrix(rnorm(100, 10, 1), nrow = 10)
+#' rownames(m) = seq(-10, 10, length.out = nrow(m))
+#' soundgen:::getRough(m, roughRange = c(6, 8))
+getRough = function(m, roughRange) {
+  rn = abs(as.numeric(rownames(m)))
+  rough_rows = which(rn > roughRange[1] &
+                       rn < roughRange[2])
+  if (length(rough_rows) > 0) {
+    roughness = sum(m[rough_rows, ]) / sum(m) * 100
+  } else {
+    roughness = 0
+  }
+  return(roughness)
+}
