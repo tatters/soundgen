@@ -150,6 +150,7 @@ ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav',
   colorTheme = 'heat.colors',  # alternative palette
   logWarp = NULL,              # don't log-warp the modulation spectrum
   power = 2)  # ^2
+# NB: xlim/ylim currently won't work properly with logWarp on
 
 # Input can be path to folder with audio files (average modulation spectrum)
 ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 11)

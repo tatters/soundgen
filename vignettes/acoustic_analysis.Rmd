@@ -23,8 +23,9 @@ Reasons to use `soundgen` for acoustic analysis might be:
   1. User-friendly approach: a single call to the `analyzeFolder` function will give you a dataframe containing dozens of commonly used acoustic descriptors for each file in an entire folder. So if you'd rather get started with model-building without delving too deeply into acoustics, you are one line of code away from your dataset.
   1. Flexible pitch tracking: soundgen uses several popular methods of pitch detection in parallel, followed by their integration and postprocessing. While the abundance of control parameters may initially seem daunting, for those who do wish to delve deeply this makes soundgen's pitch tracker very versatile and offers a lot of power for high-precision analysis.
   1. Audio segmentation with in-built optimization: the tools for syllable segmentation are again very flexible. Control parameters can even be optimized automatically, as long as you have a manually segmented training sample.
+  1. Additional specialized tools for acoustic analysis such as modulation spectra and self-similarity matrices.
   
-Many of the large variety of existing tools for acoustic analysis were designed with a particular type of sound in mind, usually human speech or bird songs. Soundgen's pitch tracker was written to analyze human non-linguistic vocalizations like screams and laughs. These sounds are much harsher and noisier than ordinary speech and stand much closer to the vocalizations of other mammals than to human speech. In addition, the original corpus (Anikin & Persson, 2017) was collected from online videos, so that both sampling rate and microphone settings varied tremendously. From the very beginning, the focus has thus been on developing a pitch tracker and a segmenting tool that would be robust to noise and recording conditions. This makes soundgen highly suitable for performing acoustic analysis of animal vocalizations.
+Many of the large variety of existing tools for acoustic analysis were designed with a particular type of sound in mind, usually human speech or bird songs. Soundgen's pitch tracker was written to analyze human non-linguistic vocalizations like screams and laughs. These sounds are much harsher and noisier than ordinary speech and stand much closer to the vocalizations of other mammals than to human speech. In addition, the original corpus (Anikin & Persson, 2017) was collected from online videos, so that both sampling rate and microphone settings varied tremendously. From the very beginning, the focus has thus been on developing a pitch tracker and a segmenting tool that would be robust to noise and recording conditions. This makes soundgen highly suitable for performing acoustic analysis of animal vocalizations. You can of course apply soundgen to speech, but note that it was not optimized for speech, unlike specialized phonetic software like Praat.
   
 To summarize, you might want to look at soundgen's tools for acoustic analysis if you are extracting a large number of acoustic predictors from a large number of audio files, for example:
   
@@ -34,15 +35,14 @@ To summarize, you might want to look at soundgen's tools for acoustic analysis i
   
 The most relevant functions are:
   
-* `analyze`: analyzes a single sound and extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per STFT frame.
-* `analyzeFolder`: same as `analyze` but applied to all .wav files in a folder
-* `segment`: finds syllables and bursts of energy in a single sound using its amplitude envelope
-* `segmentFolder`: same as `segment` but applied to all .wav files in a folder
+* `analyze`, `analyzeFolder`: extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per STFT frame.
+* `segment`, `segmentFolder`: finds syllables and bursts of energy using the amplitude envelope
 * `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
 * `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
-* `getLoudness`: estimates the subjective loudness per STFT frame, in sone
+* `getLoudness`, `getLoudnessFolder`: estimates the subjective loudness per STFT frame, in sone
+*  `modulationSpectrum`, `modulationSpectrumFolder`: calculates a joint temporal-spectral modulation spectrum and a measure of acoustic roughness
   
-*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use an interactive program like PRAAT and check everything manually. A good approach may be to start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages, software, or manual measurements. You can also customize `soundgen::analyze` to extract additional predictors.*
+*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use an interactive program like PRAAT and check everything manually. A good approach may be to start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages, software, or manual measurements.*
   
 This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics.
 
@@ -594,6 +594,43 @@ par(mfrow = c(1, 1))
 
 *TIP The output of `segment` can potentially be combined with novelty from `ssm` and perhaps also with pitch tracking to improve audio segmentation using all these sources of information. At present this integration has not been implemented*
 
+
+# Modulation spectrum
+Acoustic analysis in the context of phonetic or bioacoustic research tends to begin with a spectrogram. However, there is a complementary perspective on visualizing and analyzing sounds, which looks at the joint distribution of temporal and spectral modulation known as "modulation spectrum". The principal insight is the idea that a sound can be represented as a sum of sinusoidal spectrotemporal ripples. In case this concept is difficult to grasp, here are two intuitive explanations (for a rigourous scientific presentation, please refer to Singh & Theunissen, 2003). The first way to understand the modulation spectrum is to think of it as a two-dimensional Fourier transform of the spectrogram. For those familiar with image processing, this is the standard way of representing any two-dimensional image as a sum of sinusoidal components (ripples) that differ in their frequency and direction. When the image in question is a spectro-temporal representation of a sound, such as a spectrogram or wavelet transform, the result is the modulation spectrum. The second basic insight is to link the modulation spectrum to spectro-temporal receptive fields (STRFs) of auditory neurons. Some neurons respond to rapid upward sweeps, others to broadband noise pulses at a particular frequency, and so on. The modulation spectrum maps nicely onto STRFs, in the sense that it shows which spectro-temporal patterns are prevalent in a particular sound.
+
+The basic function for obtaining a modulation spectrum in soundgen is `modulationSpectrum`. It accepts one or more numeric vectors or one or more audio files as input, prepares a spectrogram via STFT, takes its two-dimensional FFT, and optionally performs some additional post-processing and plotting. For multiple inputs, a separate modulation spectrum is initially extracted for each one, and then they are averaged into a single output. For processing a number of audio files separately and saving their individual modulation spectra, please use the function `modulationSpectrumFolder`.
+
+The first and crucial thing to remember when working with modulation spectra is that they are extremely sensitive to the initial step of transforming a sound into a spectrogram, especially the window length and step used in STFT. In order to detect temporal modulation at 20 Hz, for example, the step of a spectrogram has to be under 50 ms (1/20 s). Likewise, spectral modulation of 10 cycles/KHz cannot be resolved unless the window length is long enough (~20 ms). Here is a simple illustration:
+
+```{r fig.show = "hold", fig.height = 5, fig.width = 5}
+s = soundgen(pitch = 70, amFreq = 25, amDep = 80, rolloff = -15)
+ms = modulationSpectrum(s, samplingRate = 16000, logWarp = NULL,
+                        windowLength = 25, step = 25)
+```
+
+In this example we missed both spectral modulation at ~14 cycles/KHz corresponding to the f0 of 70 Hz (1000/70 = 14.3) and temporal modulation at 25 Hz. To increase the resolution in both directions, we can simultaneously increase the window length (to capture spectral modulations) and decrease STFT step (to capture temporal modulations):
+
+```{r fig.show = "hold", fig.height = 5, fig.width = 5}
+ms = modulationSpectrum(s, samplingRate = 16000, logWarp = NULL,
+                        windowLength = 40, step = 10)
+```
+
+Now we can see both spectral modulations at 14 Hz (f0) and temporal modulations at 25 Hz, as expected. When working with sounds for which you don't know the ground truth, however, the point is not to take the first modulation spectrum you happen to produce at face value - play around with different settings and compare the results. This is really the same indeterminacy principle as the more familiar tradeoff between frequency and time resolution in spectrograms.
+
+Beyond these basic settings, there are several other options:
+```{r fig.show = "hold", fig.height = 5, fig.width = 5}
+ms = modulationSpectrum(
+  s, samplingRate = 16000, windowLength = 40, step = 10,
+  logSpec = FALSE,  # log-transform the spectrogram before 2D FFT?
+  power = 2,  # square amplitudes in modulation spectrum ("power" spectrum)
+  roughRange = c(15, 35),  # temporal modulations in the "roughness" range
+  logWarp = 2,  # log-transform axes for plotting
+  kernelSize = 7,  # apply Gaussian blur for smoothing
+  quantiles = c(.5, .8, .95, .99),  # customize contour lines
+  colorTheme = 'terrain.colors'  # alternative palette
+)
+ms$roughness  # percent of energy in the roughness range
+```
 
 
 # Optimization
