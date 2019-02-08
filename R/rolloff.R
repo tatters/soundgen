@@ -252,10 +252,11 @@ getRolloff = function(pitch_per_gc = c(440),
 
   # convert from dB to linear amplitude multipliers
   r = 10 ^ (r / 20)
+  r[is.nan(r)] = 0  # in case of -Inf problems
 
   # shorten by discarding harmonics that are 0 throughout the sound
   r = r[which(apply(r, 1, sum) > 0), , drop = FALSE]
   rownames(r) = 1:nrow(r) # helpful for adding vocal fry
 
-  return (r)
+  return(r)
 }

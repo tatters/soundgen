@@ -352,7 +352,7 @@ segmentFolder = function(myfolder,
   time_start = proc.time()  # timing
   # open all .wav files in folder
   filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
-  filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
+  filesizes = file.info(filenames)$size
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(

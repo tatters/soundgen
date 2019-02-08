@@ -1064,7 +1064,7 @@ analyzeFolder = function(myfolder,
   filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
-  filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
+  filesizes = file.info(filenames)$size
 
   # as.list(match.call()) also works, but we want to get default args as well,
   # since plot should default to TRUE for analyze() and FALSE for analyzeFolder(),

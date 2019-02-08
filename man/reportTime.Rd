@@ -21,19 +21,26 @@ completed}
 \item{reportEvery}{report progress every n iterations}
 }
 \description{
-Internal soundgen function.
-}
-\details{
-Based on the current iteration, total number of iterations, and time when the
-loop started running, prints estimated time left or a summary upon
-completion.
+Provides a nicely formatted "estimated time left" in loops plus a summary upon completion.
 }
 \examples{
 time_start = proc.time()
 for (i in 1:20) {
   Sys.sleep(i ^ 2 / 10000)
-  soundgen:::reportTime(i = i, nIter = 20, time_start = time_start,
+  reportTime(i = i, nIter = 20, time_start = time_start,
   jobs = (1:20) ^ 2, reportEvery = 5)
 }
+\dontrun{
+# when analyzing a bunch of audio files, their size is a good estimate
+# of how long each will take to process
+time_start = proc.time()
+filenames = list.files('~/Downloads/temp', pattern = "*.wav|.mp3",
+  full.names = TRUE)
+filesizes = file.info(filenames)$size
+for (i in 1:length(filenames)) {
+  # ...do what you have to do with each file...
+  reportTime(i = i, nIter = length(filenames),
+             time_start = time_start, jobs = filesizes)
 }
-\keyword{internal}
+}
+}

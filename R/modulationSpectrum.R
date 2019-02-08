@@ -497,7 +497,7 @@ modulationSpectrumFolder = function(
   filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
-  filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
+  filesizes = file.info(filenames)$size
 
   # match par-s
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
