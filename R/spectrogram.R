@@ -145,6 +145,7 @@ spectrogram = function(x,
     overlap = 70
   }
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
+
   # import audio
   if (class(x) == 'character') {
     extension = substr(x, nchar(x) - 2, nchar(x))
@@ -558,9 +559,8 @@ getFrameBank = function(sound,
     sound = sound - mean(sound)
     sound = sound / max(abs(max(sound)), abs(min(sound)))
   }
-  duration = length(sound) / samplingRate
   myseq = seq(1, max(1, (length(sound) - windowLength_points)),
-              step / 1000 * samplingRate)
+              round(step / 1000 * samplingRate))
   if (is.null(filter)) {
     filter = ftwindow_modif(wl = windowLength_points, wn = wn)
   }

@@ -2,6 +2,7 @@
 NEW FUNCTIONS:
   * modulationSpectrum(): calculates and plots a modulation spectrum showing combined spectro-temporal modulation
   * modulationSpectrumFolder(): same for all audio files in a folder
+  * getRMS(): calculates root mean square amplitude per frame
   * gaussianSmooth2D(): performs Gaussian blur of spectrograms, modulation spectra, etc.
   * reportTime(): provides a nicely formatted "estimated time left" in loops plus a summary upon completion
 

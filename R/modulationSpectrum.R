@@ -506,7 +506,6 @@ modulationSpectrumFolder = function(
     'myfolder' , 'htmlPlots', 'verbose', 'savePlots', 'summary')]
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
-  # add plot pars correctly, without flattening the lists
   if (savePlots) myPars$savePath = myfolder
 
   result = list()
