@@ -980,7 +980,7 @@ soundgen = function(repeatBout = 1,
     )
     if (length(unvoiced) > 0) {
       if (!is.numeric(formantsNoise) & !is.list(formantsNoise)) {
-        # OPTION 1: mix voiced + unvoiced, then apply the same format filter
+        # OPTION 1: mix voiced + unvoiced, then apply the same formant filter
         sound = addVectors(
           voiced,
           sound_unvoiced,

@@ -648,7 +648,23 @@ generateHarmonics = function(pitch,
   # seewave::meanspec(waveform, f = samplingRate)
 
   ## POST-SYNTHESIS EFFECTS
-  # apply amplitude envelope and normalize to be on the same scale as breathing
+  # add attack
+  if (is.numeric(attackLen)) {
+    if (any(attackLen > 0)) {
+      l = floor(attackLen * samplingRate / 1000)
+      if (length(l) == 1) l = c(l, l)
+      waveform = fade(waveform,
+                      fadeIn = l[1],
+                      fadeOut = l[2])
+      # plot(waveform, type = 'l')
+    }
+  }
+
+  # normalize to be on the same scale as breathing (NB: after adding attack,
+  # b/c fading the ends can change the overall range if eg peak ampl is at the beg.)
+  waveform = waveform / max(abs(waveform))
+
+  # apply amplitude envelope
   if (is.numeric(amplAnchors) | is.list(amplAnchors)) {
     if (any(amplAnchors$value != 0)) {
       amplEnvelope = getSmoothContour(
@@ -661,18 +677,6 @@ generateHarmonics = function(pitch,
       # convert from dB to linear multiplier
       amplEnvelope = 10 ^ (amplEnvelope / 20)
       waveform = waveform * amplEnvelope
-    }
-  }
-
-  # add attack
-  if (is.numeric(attackLen)) {
-    if (any(attackLen > 0)) {
-      l = floor(attackLen * samplingRate / 1000)
-      if (length(l) == 1) l = c(l, l)
-      waveform = fade(waveform,
-                      fadeIn = l[1],
-                      fadeOut = l[2])
-      # plot(waveform, type = 'l')
     }
   }
 

@@ -1,4 +1,7 @@
-          CHANGES IN SOUNDGEN VERSION 1.3.3 [...date...]
+          CHANGES IN SOUNDGEN VERSION 1.4 [...date...]
+MAJOR:
+  * soundgen(): the amplitude of voiced and unvoiced components is normalized prior to mixing, so as to make noise amplitude less dependent on rolloff. This has the effect of making the noise component relatively louder than in previous versions of soundgen, affecting the presets and demos - check your code! (NB: noise amplitude refers to its peak amplitude relative to unfiltered glottal source, ie formants can emphasize harmonics or noise, changing noise amplitude).
+
 NEW FUNCTIONS:
   * modulationSpectrum(): calculates and plots a modulation spectrum showing combined spectro-temporal modulation
   * modulationSpectrumFolder(): same for all audio files in a folder
