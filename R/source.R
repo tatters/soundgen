@@ -334,6 +334,8 @@ generateNoise = function(len,
 #'   \code{-dynamicRange}, \code{rolloff} increases by \code{rolloff_perAmpl}
 #'   dB/octave. The effect is to make loud parts brighter by increasing energy
 #'   in higher frequencies
+#' @param normalize if TRUE, normalizes to -1...+1 prior to applying attack and
+#'   amplitude envelope. W/o this, sounds with stronger harmonics are louder
 #' @keywords internal
 #' @examples
 #' rolloffExact1 = c(.2, .2, 1, .2, .2)
@@ -379,6 +381,7 @@ generateHarmonics = function(pitch,
                              subFreq = 100,
                              subDep = 0,
                              amplAnchors = NA,
+                             normalize = TRUE,
                              interpol = c('approx', 'spline', 'loess')[3],
                              overlap = 75,
                              samplingRate = 16000,
@@ -662,7 +665,7 @@ generateHarmonics = function(pitch,
 
   # normalize to be on the same scale as breathing (NB: after adding attack,
   # b/c fading the ends can change the overall range if eg peak ampl is at the beg.)
-  waveform = waveform / max(abs(waveform))
+  if (normalize) waveform = waveform / max(abs(waveform))
 
   # apply amplitude envelope
   if (is.numeric(amplAnchors) | is.list(amplAnchors)) {

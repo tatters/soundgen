@@ -1,4 +1,4 @@
-# TODO: correct rms by dividing by windowing fun per frame in analyze(); write getLoudnessFolder (without plotting, like getRMSFolder); check the new functions in amplitude.R; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check noiseAmpRef and add section to vignette; correct rms by dividing by windowing fun per frame in analyze(); write getLoudnessFolder (without plotting, like getRMSFolder); check the new functions in amplitude.R; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -143,6 +143,10 @@ NULL
 #' @param rolloffNoise linear rolloff of the excitation source for the unvoiced
 #'   component, dB/kHz (anchor format)
 #' @param noiseFlatSpec keeps noise spectrum flat to this frequency, Hz
+#' @param noiseAmpRef noise amplitude is defined relative to: "f0" = the
+#'   amplitude of the first partial (fundamental frequency), "source" = the
+#'   amplitude of the harmonic component prior to applying formants, "filtered"
+#'   =  the amplitude of the harmonic component after applying formants
 #' @param mouth,mouthAnchors mouth opening (0 to 1, 0.5 = neutral, i.e. no
 #'   modification) (anchor format)
 #' @param ampl,amplAnchors amplitude envelope (dB, 0 = max amplitude) (anchor
@@ -251,82 +255,85 @@ NULL
 #' # Examples of code for creating human and animal vocalizations are available
 #' # on project's homepage: http://cogsci.se/soundgen.html
 #' }
-soundgen = function(repeatBout = 1,
-                    nSyl = 1,
-                    sylLen = 300,
-                    pauseLen = 200,
-                    pitch = data.frame(time = c(0, .1, .9, 1),
-                                      value = c(100, 150, 135, 100)),
-                    pitchAnchors = data.frame(time = c(0, .1, .9, 1),
-                                              value = c(100, 150, 135, 100)),
-                    pitchGlobal = NA,
-                    pitchAnchorsGlobal = NA,
-                    glottis = 0,
-                    glottisAnchors = 0,
-                    temperature = 0.025,
-                    tempEffects = list(),
-                    maleFemale = 0,
-                    creakyBreathy = 0,
-                    nonlinBalance = 0,
-                    nonlinDep = 50,
-                    nonlinRandomWalk = NULL,
-                    jitterLen = 1,
-                    jitterDep = 1,
-                    vibratoFreq = 5,
-                    vibratoDep = 0,
-                    shimmerDep = 0,
-                    shimmerLen = 1,
-                    attackLen = 50,
-                    rolloff = -9,
-                    rolloffOct = 0,
-                    rolloffKHz = -3,
-                    rolloffParab = 0,
-                    rolloffParabHarm = 3,
-                    rolloffExact = NULL,
-                    lipRad = 6,
-                    noseRad = 4,
-                    mouthOpenThres = 0,
-                    formants = c(860, 1430, 2900),
-                    formantDep = 1,
-                    formantDepStoch = 20,
-                    formantWidth = 1,
-                    vocalTract = NA,
-                    subFreq = 100,
-                    subDep = 100,
-                    shortestEpoch = 300,
-                    amDep = 0,
-                    amFreq = 30,
-                    amShape = 0,
-                    noise = NULL,
-                    noiseAnchors = NULL,
-                    formantsNoise = NA,
-                    rolloffNoise = -4,
-                    noiseFlatSpec = 1200,
-                    mouth = data.frame(time = c(0, 1),
-                                       value = c(.5, .5)),
-                    mouthAnchors = data.frame(time = c(0, 1),
-                                              value = c(.5, .5)),
-                    ampl = NA,
-                    amplAnchors = NA,
-                    amplGlobal = NA,
-                    amplAnchorsGlobal = NA,
-                    interpol = c('approx', 'spline', 'loess')[3],
-                    discontThres = .05,
-                    jumpThres = .01,
-                    samplingRate = 16000,
-                    windowLength = 50,
-                    overlap = 75,
-                    addSilence = 100,
-                    pitchFloor = 1,
-                    pitchCeiling = 3500,
-                    pitchSamplingRate = 3500,
-                    dynamicRange = 80,
-                    throwaway = -80,
-                    invalidArgAction = c('adjust', 'abort', 'ignore')[1],
-                    plot = FALSE,
-                    play = FALSE,
-                    savePath = NA,
-                    ...) {
+soundgen = function(
+  repeatBout = 1,
+  nSyl = 1,
+  sylLen = 300,
+  pauseLen = 200,
+  pitch = data.frame(time = c(0, .1, .9, 1),
+                     value = c(100, 150, 135, 100)),
+  pitchAnchors = data.frame(time = c(0, .1, .9, 1),
+                            value = c(100, 150, 135, 100)),
+  pitchGlobal = NA,
+  pitchAnchorsGlobal = NA,
+  glottis = 0,
+  glottisAnchors = 0,
+  temperature = 0.025,
+  tempEffects = list(),
+  maleFemale = 0,
+  creakyBreathy = 0,
+  nonlinBalance = 0,
+  nonlinDep = 50,
+  nonlinRandomWalk = NULL,
+  jitterLen = 1,
+  jitterDep = 1,
+  vibratoFreq = 5,
+  vibratoDep = 0,
+  shimmerDep = 0,
+  shimmerLen = 1,
+  attackLen = 50,
+  rolloff = -9,
+  rolloffOct = 0,
+  rolloffKHz = -3,
+  rolloffParab = 0,
+  rolloffParabHarm = 3,
+  rolloffExact = NULL,
+  lipRad = 6,
+  noseRad = 4,
+  mouthOpenThres = 0,
+  formants = c(860, 1430, 2900),
+  formantDep = 1,
+  formantDepStoch = 20,
+  formantWidth = 1,
+  vocalTract = NA,
+  subFreq = 100,
+  subDep = 100,
+  shortestEpoch = 300,
+  amDep = 0,
+  amFreq = 30,
+  amShape = 0,
+  noise = NULL,
+  noiseAnchors = NULL,
+  formantsNoise = NA,
+  rolloffNoise = -4,
+  noiseFlatSpec = 1200,
+  noiseAmpRef = c('f0', 'source', 'filtered')[3],
+  mouth = data.frame(time = c(0, 1),
+                     value = c(.5, .5)),
+  mouthAnchors = data.frame(time = c(0, 1),
+                            value = c(.5, .5)),
+  ampl = NA,
+  amplAnchors = NA,
+  amplGlobal = NA,
+  amplAnchorsGlobal = NA,
+  interpol = c('approx', 'spline', 'loess')[3],
+  discontThres = .05,
+  jumpThres = .01,
+  samplingRate = 16000,
+  windowLength = 50,
+  overlap = 75,
+  addSilence = 100,
+  pitchFloor = 1,
+  pitchCeiling = 3500,
+  pitchSamplingRate = 3500,
+  dynamicRange = 80,
+  throwaway = -80,
+  invalidArgAction = c('adjust', 'abort', 'ignore')[1],
+  plot = FALSE,
+  play = FALSE,
+  savePath = NA,
+  ...
+) {
   # deprecated pars
   if (!missing('throwaway')) {
     dynamicRange = -throwaway
@@ -359,25 +366,25 @@ soundgen = function(repeatBout = 1,
     gp = try(get(p), silent = TRUE)
     if (class(gp) != "try-error") {
       if (is.numeric(gp)) {
-       if (any(gp < permittedValues[p, 'low']) |
-           any(gp > permittedValues[p, 'high'])) {
-         if (invalidArgAction == 'abort') {
-           # exit with a warning
-           stop(paste(p, 'must be between',
-                      permittedValues[p, 'low'],
-                      'and',
-                      permittedValues[p, 'high']))
-         } else if (invalidArgAction == 'ignore') {
-           # throw a warning and continue
-           warning(paste(p, "outside its range in 'permittedValues'"))
-         } else {
-           # reset p to default, with a warning
-           assign(noquote(p), permittedValues[p, 'default'])
-           warning(paste0("\n", p, " outside permitted range, reset to ", get(p),
-                          ". Edit 'permittedValues' or use ",
-                          "invalidArgAction = 'ignore' to force."))
-         }
-       }
+        if (any(gp < permittedValues[p, 'low']) |
+            any(gp > permittedValues[p, 'high'])) {
+          if (invalidArgAction == 'abort') {
+            # exit with a warning
+            stop(paste(p, 'must be between',
+                       permittedValues[p, 'low'],
+                       'and',
+                       permittedValues[p, 'high']))
+          } else if (invalidArgAction == 'ignore') {
+            # throw a warning and continue
+            warning(paste(p, "outside its range in 'permittedValues'"))
+          } else {
+            # reset p to default, with a warning
+            assign(noquote(p), permittedValues[p, 'default'])
+            warning(paste0("\n", p, " outside permitted range, reset to ", get(p),
+                           ". Edit 'permittedValues' or use ",
+                           "invalidArgAction = 'ignore' to force."))
+          }
+        }
       }
     }
   }
@@ -856,7 +863,8 @@ soundgen = function(repeatBout = 1,
           pars_syllable,
           list(pitch = pitchContour_syl,
                amplAnchors = amplAnchors_per_syl,
-               glottisAnchors = glottisAnchors_per_syl)
+               glottisAnchors = glottisAnchors_per_syl,
+               normalize = ifelse(noiseAmpRef == 'f0', FALSE, TRUE))
         )) * amplEnvelope[s]  # correction of amplitude per syllable
         )
       }
@@ -978,6 +986,12 @@ soundgen = function(repeatBout = 1,
       windowLength_points = windowLength_points,
       overlap = overlap
     )
+    # for noiseAmpRef == "filtered", enforce adding formants separately
+    # followed by independent normalization of voiced & unvoiced
+    if (noiseAmpRef == 'filtered' & !is.list(formantsNoise)) {
+      formantsNoise = formants
+    }
+
     if (length(unvoiced) > 0) {
       if (!is.numeric(formantsNoise) & !is.list(formantsNoise)) {
         # OPTION 1: mix voiced + unvoiced, then apply the same formant filter
@@ -1008,7 +1022,7 @@ soundgen = function(repeatBout = 1,
             list(sound = voiced,
                  formants = formants,
                  formantDepStoch = formantDepStoch,
-                 normalize = FALSE)
+                 normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
           ))
         } else {
           voicedFiltered = voiced
@@ -1024,12 +1038,15 @@ soundgen = function(repeatBout = 1,
             list(sound = sound_unvoiced,
                  formants = formantsNoise,
                  formantDepStoch = fds,
-                 normalize = FALSE)
+                 normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
           ))
         } else {
           unvoicedFiltered = sound_unvoiced
         }
         # mix filtered version of the voiced and unvoiced components
+        if(noiseAmpRef == 'filtered') {
+          unvoicedFiltered = unvoicedFiltered * 10 ^ (max(noiseAnchors$value) / 20)
+        }
         soundFiltered = addVectors(
           voicedFiltered,
           unvoicedFiltered,

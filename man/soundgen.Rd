@@ -20,16 +20,17 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   vocalTract = NA, subFreq = 100, subDep = 100,
   shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
   noise = NULL, noiseAnchors = NULL, formantsNoise = NA,
-  rolloffNoise = -4, noiseFlatSpec = 1200, mouth = data.frame(time =
-  c(0, 1), value = c(0.5, 0.5)), mouthAnchors = data.frame(time = c(0,
-  1), value = c(0.5, 0.5)), ampl = NA, amplAnchors = NA,
-  amplGlobal = NA, amplAnchorsGlobal = NA, interpol = c("approx",
-  "spline", "loess")[3], discontThres = 0.05, jumpThres = 0.01,
-  samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitchFloor = 1, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, dynamicRange = 80, throwaway = -80,
-  invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
-  play = FALSE, savePath = NA, ...)
+  rolloffNoise = -4, noiseFlatSpec = 1200, noiseAmpRef = c("f0",
+  "source", "filtered")[3], mouth = data.frame(time = c(0, 1), value =
+  c(0.5, 0.5)), mouthAnchors = data.frame(time = c(0, 1), value = c(0.5,
+  0.5)), ampl = NA, amplAnchors = NA, amplGlobal = NA,
+  amplAnchorsGlobal = NA, interpol = c("approx", "spline", "loess")[3],
+  discontThres = 0.05, jumpThres = 0.01, samplingRate = 16000,
+  windowLength = 50, overlap = 75, addSilence = 100,
+  pitchFloor = 1, pitchCeiling = 3500, pitchSamplingRate = 3500,
+  dynamicRange = 80, throwaway = -80, invalidArgAction = c("adjust",
+  "abort", "ignore")[1], plot = FALSE, play = FALSE, savePath = NA,
+  ...)
 }
 \arguments{
 \item{repeatBout}{number of times the whole bout should be repeated}
@@ -204,6 +205,11 @@ noise [h]}
 component, dB/kHz (anchor format)}
 
 \item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
+
+\item{noiseAmpRef}{noise amplitude is defined relative to: "f0" = the
+amplitude of the first partial (fundamental frequency), "source" = the
+amplitude of the harmonic component prior to applying formants, "filtered"
+=  the amplitude of the harmonic component after applying formants}
 
 \item{mouth, mouthAnchors}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
 modification) (anchor format)}
