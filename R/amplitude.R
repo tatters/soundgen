@@ -183,10 +183,25 @@ getRMSFolder = function(myfolder,
 
 #' Normalize folder
 #'
-#' Normalizes the amplitude of all wav/mp3 files in a folder based on their peak or RMS amplitude or on their subjective loudness. This is good for playback experiments, which require that all sounds should have similar intensity or loudness.
+#' Normalizes the amplitude of all wav/mp3 files in a folder based on their peak
+#' or RMS amplitude or subjective loudness. This is good for playback
+#' experiments, which require that all sounds should have similar intensity or
+#' loudness.
 #'
-#' Algorithm: first all files are rescaled to have the same peak amplitude of \code{maxAmp} dB. If \code{type = 'peak'}, the process ends here. If \code{type = 'rms'}, there are two additional steps. First the original RMS amplitude of all files is calculated per frame by \code{\link{getRMS}}. The "quietest" sound with the lowest summary RMS value is not modified, so its peak amplitude remains \code{maxAmp} dB. All the remaining sounds are rescaled linearly, so that their summary RMS values becomes the same as that of the "quietest" sound, and their peak amplitudes become smaller, \code{<maxAmp}. Finally, if \code{\link{type = 'loudness'}}, the subjective loudness of each sound is estimated by \code{\link{getLoudness}}, which assumes frequency sensitivity typical of human hearing. The following normalization procedure is similar to that for \code{type = 'rms'}.
+#' Algorithm: first all files are rescaled to have the same peak amplitude of
+#' \code{maxAmp} dB. If \code{type = 'peak'}, the process ends here. If
+#' \code{type = 'rms'}, there are two additional steps. First the original RMS
+#' amplitude of all files is calculated per frame by \code{\link{getRMS}}. The
+#' "quietest" sound with the lowest summary RMS value is not modified, so its
+#' peak amplitude remains \code{maxAmp} dB. All the remaining sounds are
+#' rescaled linearly, so that their summary RMS values becomes the same as that
+#' of the "quietest" sound, and their peak amplitudes become smaller,
+#' \code{<maxAmp}. Finally, if \code{\link{type = 'loudness'}}, the subjective
+#' loudness of each sound is estimated by \code{\link{getLoudness}}, which
+#' assumes frequency sensitivity typical of human hearing. The following
+#' normalization procedure is similar to that for \code{type = 'rms'}.
 #' @inheritParams getRMSFolder
+#' @export
 #' @examples
 #' \dontrun{
 #' getRMSFolder('~/Downloads/temp', summaryFun = 'mean')

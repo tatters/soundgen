@@ -3,10 +3,10 @@ MAJOR:
   * soundgen(): a new argument ("noiseAmpRef") controls how the relative amplitudes of voiced and unvoiced components are specified by the "noise" setting, with 3 options: "f0" (noise amplitude relative to first partial) produces the same results as in earlier versions of soundgen; both "source" (relative to ulfiltered voiced component) and "filtered" (relative to filtered voiced component) make noise amplitude less dependent on rolloff. This has the effect of making the noise component relatively louder than in previous versions of soundgen, affecting the presets and demos - check your code! See vignette, section ???
 
 NEW FUNCTIONS:
-  * modulationSpectrum(): calculates and plots a modulation spectrum showing combined spectro-temporal modulation
-  * modulationSpectrumFolder(): same for all audio files in a folder
-  * getRMS(): calculates root mean square amplitude per frame
-  * gaussianSmooth2D(): performs Gaussian blur of spectrograms, modulation spectra, etc.
+  * modulationSpectrum(), modulationSpectrumFolder(): calculates and plots a modulation spectrum showing combined spectro-temporal modulation in one sound or all mp3/wav files in a folder, respectively
+  * getRMS(), getRMSFolder(): calculates root mean square amplitude per frame in one sound or all mp3/wav files in a folder, respectively
+  * normalizeFolder(): normalizes the amplitude of all wav/mp3 files in a folder based on their peak or RMS amplitude or subjective loudness
+  * gaussianSmooth2D(): performs Gaussian blur of spectrograms, modulation spectra, or any other numeric matrices.
   * reportTime(): provides a nicely formatted "estimated time left" in loops plus a summary upon completion
 
 MINOR:

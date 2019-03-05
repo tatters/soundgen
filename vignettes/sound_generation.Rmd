@@ -760,20 +760,20 @@ s = soundgen(
 ## Unvoiced component (turbulent noise)
 In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. It's strongly recommended to include at least some noise in most vocalizations, if only because it's more natural to have noise instead of harmonics in the upper part of the source spectrum.
 
-### Spectrum
-The perceptual quality of turbulent noise depends on its spectral composition, which is controlled by two soundgen arguments: `formantsNoise` and `rolloffNoise` (in the app, use "Tract / Unvoiced type"). The timing of the unvoiced component relative to the voiced component is controlled by the argument `noise`, which is discussed in the next section. There are two basic types of turbulent noise in soundgen:
+### Noise spectrum
+The perceptual quality of turbulent noise depends on its spectral composition, which is controlled by two soundgen arguments: `formantsNoise` and `rolloffNoise` (in the app, use "Tract / Unvoiced type"). Noise is generated as white noise with spectral rolloff given by `rolloffNoise` ("Noise rolloff, dB/octave" in the app) above a certain cutoff value (`flatSpectrum`, the default is currently 1200 Hz). The timing of the unvoiced component relative to the voiced component is controlled by the argument `noise`, which is discussed in the next section. There are two basic types of turbulent noise in soundgen:
 
-1.  Breathing. This noise type is generated as white noise with spectral rolloff given by `rolloffNoise` ("Noise rolloff, dB/octave" in the app) above a certain cutoff value (`flatSpectrum`, the default is currently 1200 Hz). It is added to the voiced component *before* formant filtering. As a result, it follows exactly the same formant structure as the voiced component, and you cannot modify its spectrum beyond the basic rolloff setting. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noise`, but leave `formantsNoise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
+1.  Noise with the same formant structure as the voiced component, the spectrum of which only depends on the `rolloffNoise` setting, while `formantsNoise` is `NULL` or `NA`. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noise`, but leave `formantsNoise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
 
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 500, 
-             noise = data.frame(time = c(0, 800), value = c(-40, 0)),
+             noise = data.frame(time = c(0, 800), value = c(-40, -20)),
              formantsNoise = NA,  # breathing - same formants as for voiced
-             play = playback, plot = TRUE)
+             play = playback, plot = TRUE, osc = TRUE)
 # observe that the voiced and unvoiced components have exactly the same formants
 ```
 
-2.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component (`formantsNoise`) manually in exactly the same format as for the voiced component (`formants`). 
+2.  Noise with a different formant structure than the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component (`formantsNoise`) manually in exactly the same format as for the voiced component (`formants`). 
 
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 500, 
@@ -825,7 +825,7 @@ s4 = soundgen(vocalTract = 15.5,
               play = playback, plot = TRUE)
 ```
 
-The excitation source for the unvoiced component can be synthesized as white noise (if `rolloffNoise = 0`) or as turbulent noise with a spectrum that linearly (not exponentially!) loses power over a certain threshold, which is currently fixed at 1200 Hz. The parameter `rolloffNoise` thus controls the source spectrum of the unvoiced component:
+The excitation source for the unvoiced component can be synthesized as white noise (if `rolloffNoise = 0`) or as turbulent noise with a spectrum that linearly (not exponentially!) loses power above `noiseFlatSpec` (the default is 1200 Hz). The parameter `rolloffNoise` thus controls the source spectrum of the unvoiced component:
 ```{r fig.width = 4, fig.height = 4}
 s1 = soundgen(sylLen = 1500, vocalTract = 17.5, 
               noise = 40, rolloffNoise = c(0, -20),
@@ -833,8 +833,52 @@ s1 = soundgen(sylLen = 1500, vocalTract = 17.5,
               play = playback, plot = TRUE)
 ```
 
-### Amount and timing
-In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. In soundgen, the relevant argument is `noise`. It sets the timing and loudness of turbulent noise relative to the voiced component of a typical syllable. Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
+### Noise amplitude
+In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. In soundgen, the relevant argument is `noise = data.frame(time = ..., value = ...)`. It sets the timing and loudness of turbulent noise relative to the voiced component of a typical syllable. Starting from soundgen v1.4, you have three options in terms of how the amplitudes of the voiced and unvoiced components are compaired: 
+
+1. If `noiseAmpRef = 'f0'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the first harmonic (f0) of the voiced component. Until soundgen v1.4, this was the only available option. This setting makes the balance between harmonics and noise dependent on source spectrum (rolloff settings) and formants of both components. Example:
+```{r fig.width = 7, fig.height = 5}
+s1 = soundgen(noiseAmpRef = 'f0', rolloff = -1, 
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+s2 = soundgen(noiseAmpRef = 'f0', rolloff = -15, 
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+```
+
+1. If `noiseAmpRef = 'source'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the unfiltered voiced component ("glottal source"). In other words, you are specifying how loud the noise is relative to the source of excitation, but the actual balance between harmonics and noise can vary depending on the formant structure. Example:
+```{r fig.width = 7, fig.height = 5}
+# Harmonics-noise balance doesn't depend on rolloff...
+s3 = soundgen(noiseAmpRef = 'source', rolloff = -15, rolloffNoise = 0,
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+s4 = soundgen(noiseAmpRef = 'source', rolloff = -1, rolloffNoise = -20,
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+
+# ...but it does depend on the formant structure
+s5 = soundgen(noiseAmpRef = 'source', formants = 'a', 
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+s6 = soundgen(noiseAmpRef = 'source', formants = 'u',
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+```
+
+1. If `noiseAmpRef = 'filtered'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the filtered voiced component (after adding formants). The balance between harmonics and noise therefore doesn't depend on either rolloff or formants. This is the default option. Example:
+```{r fig.width = 7, fig.height = 5}
+s7 = soundgen(noiseAmpRef = 'filtered', formants = 'a', 
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+s8 = soundgen(noiseAmpRef = 'filtered', formants = 'u',
+              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
+              plot = T, osc = T, play = playback)
+```
+
+*TIP If you need a very precise balance of harmonics and noise based on another normalization (RMS amplitude, minimum or median instead of maximum amplitude, etc.), you can always synthesize the harmonic and noise components separately and then simply add them up at whatever amplitudes you like*
+
+### Noise timing
+Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 
              temperature = 0.001, rolloffNoise = -2, 

@@ -559,7 +559,7 @@ analyze = function(x,
   myseq = seq(1, (length(sound) - windowLength_points), length.out = ncol(s))
   ampl = apply(as.matrix(1:ncol(s)), 1, function(x) {
     # perceived intensity - root mean square of amplitude
-    sqrt(mean(sound[myseq[x]:(myseq[x] + windowLength_points)] ^ 2))
+    sqrt(mean(sound[myseq[x]:(myseq[x] + windowLength_points - 1)] ^ 2))
   })
   # dynamically adjust silence threshold
   silence = max(silence, min(ampl))
