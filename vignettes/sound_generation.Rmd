@@ -307,7 +307,7 @@ s = soundgen(nSyl = 4,
              ampl = data.frame(time = c(0, .3, 1),  # unequal time steps
                                value = c(0, -10, 0)),
              amplGlobal = c(0, -20),  # this fade-out applies to noise as well
-             noise = -20,
+             noise = -10,
              plot = TRUE, osc = TRUE, heights = c(1, 1), play = playback)
 ```
 
@@ -718,7 +718,7 @@ s = soundgen(
   rolloff = c(-20, -18, -23, -28), vibratoDep = .2,
   formants = c(800, 1400, 2500, 3700, 5000, 6800),
   noise = data.frame(time = c(0, 340, 900, 1000), 
-                     value = c(-60, -45, -60, -80) + 5),
+                     value = c(-60, -45, -60, -80) + 30),
   rolloffNoise = -8,
   mouth = c(.55, .5, .45, .6),
   play = playback, plot = TRUE, osc = TRUE, ylim = c(0, 4)
@@ -749,7 +749,7 @@ s = soundgen(
   rolloff = c(-20, -18, -23, -28), vibratoDep = .2,
   formants = c(800, 1400, 2500, 3700, 5000, 6800),
   noise = data.frame(time = c(0, 340, 900, 1000), 
-                     value = c(-60, -45, -60, -80) + 5),
+                     value = c(-60, -45, -60, -80) + 30),
   rolloffNoise = -8,
   mouth = c(.55, .5, .45, .6),
   play = playback, plot = TRUE, osc = TRUE, ylim = c(0, 4)
@@ -767,7 +767,7 @@ The perceptual quality of turbulent noise depends on its spectral composition, w
 
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 500, 
-             noise = data.frame(time = c(0, 800), value = c(-40, -20)),
+             noise = data.frame(time = c(0, 800), value = c(-20, -10)),
              formantsNoise = NA,  # breathing - same formants as for voiced
              play = playback, plot = TRUE, osc = TRUE)
 # observe that the voiced and unvoiced components have exactly the same formants
@@ -777,7 +777,7 @@ s = soundgen(sylLen = 500,
 
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 500, 
-             noise = data.frame(time = c(0, 800), value = c(-60, -30)),
+             noise = data.frame(time = c(0, 800), value = c(-20, -10)),
              # specify noise filter ≠ voiced filter to get ~[s]
              formantsNoise = list(
                f1 = data.frame(freq = 6000,
@@ -785,7 +785,7 @@ s = soundgen(sylLen = 500,
                                width = 1000)
              ), 
              rolloffNoise = 0,
-             play = playback, plot = TRUE)
+             play = playback, plot = TRUE, osc = TRUE)
 # observe that the voiced and unvoiced components have different formants
 ```
 
@@ -948,7 +948,7 @@ cow1 = soundgen(sylLen = 1400,
                 mouth = list(time = c(0, 0.82, 1), 
                              value = c(0.6, 0, 1)), 
                 noise = list(time = c(0, 1400), 
-                             value = c(-25, -25)), 
+                             value = c(-25, -25)),
                 rolloffNoise = -4, addSilence = 0)
 cow2 = soundgen(sylLen = 310, pitch = c(359, 359), 
                 temperature = 0.05, nonlinBalance = 100, 
@@ -957,7 +957,7 @@ cow2 = soundgen(sylLen = 310, pitch = c(359, 359),
                 formants = NULL, vocalTract = 36.5, 
                 noise = list(time = c(0, 26, 317, 562), 
                              value = c(-80, -23, -22, -80)), 
-                rolloffNoise = -6, 
+                rolloffNoise = -6,
                 attackLen = 0, addSilence = 0)
 s = crossFade(cow1 * 3, cow2,  # adjust the relative volume by scaling
               samplingRate = 16000, crossLen = 150)
