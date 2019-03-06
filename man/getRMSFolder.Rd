@@ -4,15 +4,12 @@
 \alias{getRMSFolder}
 \title{RMS amplitude per folder}
 \usage{
-getRMSFolder(myfolder, samplingRate = NULL, windowLength = 50,
-  step = NULL, overlap = 70, killDC = FALSE, windowDC = 200,
-  summary = TRUE, summaryFun = "mean", verbose = TRUE)
+getRMSFolder(myfolder, windowLength = 50, step = NULL, overlap = 70,
+  killDC = FALSE, windowDC = 200, summary = TRUE,
+  summaryFun = "mean", verbose = TRUE)
 }
 \arguments{
 \item{myfolder}{path to folder containing wav/mp3 files}
-
-\item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than an audio file)}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -26,8 +23,8 @@ getRMSFolder(myfolder, samplingRate = NULL, windowLength = 50,
 
 \item{summary}{if TRUE, returns only a single value of RMS per file}
 
-\item{summaryFun}{the function used to summarize RMS values per frame (if
-\code{summary = TRUE})}
+\item{summaryFun}{the function used to summarize RMS values across all frames
+(if \code{summary = TRUE})}
 
 \item{verbose}{if TRUE, reports estimated time left}
 }

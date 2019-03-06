@@ -6,6 +6,7 @@ NEW FUNCTIONS:
   * modulationSpectrum(), modulationSpectrumFolder(): calculates and plots a modulation spectrum showing combined spectro-temporal modulation in one sound or all mp3/wav files in a folder, respectively
   * getRMS(), getRMSFolder(): calculates root mean square amplitude per frame in one sound or all mp3/wav files in a folder, respectively
   * normalizeFolder(): normalizes the amplitude of all wav/mp3 files in a folder based on their peak or RMS amplitude or subjective loudness
+  * getLoudnessFolder(): a wrapper around getLoudness() for estimating the loudness of all audio files in a folder
   * gaussianSmooth2D(): performs Gaussian blur of spectrograms, modulation spectra, or any other numeric matrices.
   * reportTime(): provides a nicely formatted "estimated time left" in loops plus a summary upon completion
 

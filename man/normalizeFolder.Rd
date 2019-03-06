@@ -12,8 +12,8 @@ normalizeFolder(myfolder, type = c("peak", "rms", "loudness")[1],
 \arguments{
 \item{myfolder}{path to folder containing wav/mp3 files}
 
-\item{summaryFun}{the function used to summarize RMS values per frame (if
-\code{summary = TRUE})}
+\item{summaryFun}{the function used to summarize RMS values across all frames
+(if \code{summary = TRUE})}
 
 \item{windowLength}{length of FFT window, ms}
 

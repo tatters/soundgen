@@ -1,4 +1,4 @@
-# TODO: write getLoudnessFolder (without plotting, like getRMSFolder); check the new functions in amplitude.R and add some info to vignette on analysis (+on modulation spectra); remove pitchAnchors etc; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: write getLoudnessFolder (without plotting, like getRMSFolder); check the new functions in amplitude.R and add some info to vignette on analysis (+on modulation spectra); update ALL code (vignettes, online demos) in terms of noise$value; remove pitchAnchors etc; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

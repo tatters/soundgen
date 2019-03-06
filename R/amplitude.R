@@ -130,8 +130,8 @@ getRMS = function(x,
 #' @param myfolder path to folder containing wav/mp3 files
 #' @inheritParams getRMS
 #' @param summary if TRUE, returns only a single value of RMS per file
-#' @param summaryFun the function used to summarize RMS values per frame (if
-#'   \code{summary = TRUE})
+#' @param summaryFun the function used to summarize RMS values across all frames
+#'   (if \code{summary = TRUE})
 #' @param verbose if TRUE, reports estimated time left
 #' @export
 #' @examples
@@ -140,7 +140,6 @@ getRMS = function(x,
 #' getRMSFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
 #' }
 getRMSFolder = function(myfolder,
-                        samplingRate = NULL,
                         windowLength = 50,
                         step = NULL,
                         overlap = 70,

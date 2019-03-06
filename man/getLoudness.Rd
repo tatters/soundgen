@@ -92,15 +92,19 @@ loud
 # compare: lapply(sounds, range)
 
 \dontrun{
-  l = getLoudness(soundgen(), SPL_measured = 70,
+  s = soundgen()
+  l = getLoudness(s, SPL_measured = 70,
                   samplingRate = 16000, plot = TRUE, osc = TRUE)
   # The estimated loudness in sone depends on target SPL
-  l = getLoudness(soundgen(), SPL_measured = 40,
+  l = getLoudness(s, SPL_measured = 40,
                   samplingRate = 16000, plot = TRUE)
 
   # ...but not (much) on windowLength and samplingRate
   l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,
                   samplingRate = 16000, plot = TRUE)
+
+  # input can be an audio file
+  getLoudness('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
 }
 }
 \references{

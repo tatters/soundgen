@@ -69,15 +69,19 @@
 #' # compare: lapply(sounds, range)
 #'
 #' \dontrun{
-#'   l = getLoudness(soundgen(), SPL_measured = 70,
+#'   s = soundgen()
+#'   l = getLoudness(s, SPL_measured = 70,
 #'                   samplingRate = 16000, plot = TRUE, osc = TRUE)
 #'   # The estimated loudness in sone depends on target SPL
-#'   l = getLoudness(soundgen(), SPL_measured = 40,
+#'   l = getLoudness(s, SPL_measured = 40,
 #'                   samplingRate = 16000, plot = TRUE)
 #'
 #'   # ...but not (much) on windowLength and samplingRate
 #'   l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,
 #'                   samplingRate = 16000, plot = TRUE)
+#'
+#'   # input can be an audio file
+#'   getLoudness('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
 #' }
 getLoudness = function(x,
                        samplingRate = NULL,
@@ -274,3 +278,69 @@ getLoudness = function(x,
 # cal  # loudness should be 1, 2, 4, 8, 16 sone
 # cal$loudness / cal$loudness[1]
 # plot(cal$SPL_measured, cal$loudness / cal$loudness[1] - c(1, 2, 4, 8, 16))
+
+
+#' Loudness per folder
+#'
+#' A wrapper around \code{\link{getLoudness}} that goes through all wav/mp3 files in
+#' a folder and returns either a list with loudness values per STFT frame from each file
+#' or, if \code{summary = TRUE}, a dataframe with a single summary value of loudness
+#' per file. This summary value can be mean, max and so on, as per
+#' \code{summaryFun}.
+#' @param myfolder path to folder containing wav/mp3 files
+#' @inheritParams getLoudness
+#' @param summary if TRUE, returns only a single value of loudness per file
+#' @param summaryFun the function used to summarize loudness values across all STFT frames (if
+#'   \code{summary = TRUE})
+#' @param verbose if TRUE, reports estimated time left
+#' @export
+#' @examples
+#' \dontrun{
+#' getLoudnessFolder('~/Downloads/temp')
+#' getLoudnessFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
+#'
+#' # save loudness values per frame without summarizing
+#'  = getLoudnessFolder('~/Downloads/temp', summary = FALSE)
+#' }
+getLoudnessFolder = function(myfolder,
+                             windowLength = 30,
+                             step = NULL,
+                             overlap = 75,
+                             SPL_measured = 70,
+                             Pref = 2e-5,
+                             spreadSpectrum = TRUE,
+                             summary = TRUE,
+                             summaryFun = 'mean',
+                             verbose = TRUE) {
+  time_start = proc.time()  # timing
+  filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
+  # in order to provide more accurate estimates of time to completion,
+  # check the size of all files in the target folder
+  filesizes = file.info(filenames)$size
+
+  # match par-s
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'myfolder', 'verbose', 'summary', 'summaryFun')]
+
+  result = list()
+  for (i in 1:length(filenames)) {
+    result[[i]] = do.call(getLoudness, c(filenames[i], myPars, plot = FALSE))$loudness
+    if (verbose) {
+      reportTime(i = i, nIter = length(filenames),
+                 time_start = time_start, jobs = filesizes)
+    }
+  }
+
+  # prepare output
+  if (summary == TRUE) {
+    output = data.frame(sound = basename(filenames))
+    output$loudness = unlist(lapply(result, summaryFun))
+  } else {
+    output = result
+    names(output) = basename(filenames)
+  }
+  return(output)
+}
+
