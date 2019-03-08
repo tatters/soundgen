@@ -1,4 +1,4 @@
-# TODO: check the new functions in amplitude.R; update ALL presets and online demos in terms of noise$value; remove pitchAnchors etc; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check the new functions in amplitude.R; update ALL online demos in terms of noise$value; remove pitchAnchors etc; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -990,6 +990,12 @@ soundgen = function(
     # followed by independent normalization of voiced & unvoiced
     if (noiseAmpRef == 'filtered' & !is.list(formantsNoise)) {
       formantsNoise = formants
+      if (!is.numeric(vocalTract) & is.list(formantsNoise)) {
+        # estimate VTL, otherwise extra formants not added as we reinterpret
+        # "formants" as "formantsNoise"
+        vocalTract = estimateVTL(formants = formantsNoise,
+                    checkFormat = FALSE)  # already checked
+      }
     }
 
     if (length(unvoiced) > 0) {

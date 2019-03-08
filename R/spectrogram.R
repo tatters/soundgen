@@ -560,7 +560,7 @@ getFrameBank = function(sound,
     sound = sound / max(abs(max(sound)), abs(min(sound)))
   }
   myseq = seq(1, max(1, (length(sound) - windowLength_points)),
-              round(step / 1000 * samplingRate))
+              step / 1000 * samplingRate)
   if (is.null(filter)) {
     filter = ftwindow_modif(wl = windowLength_points, wn = wn)
   }
