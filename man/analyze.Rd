@@ -42,9 +42,8 @@ not analyzed at all. NB: this number is dynamically updated: the actual
 silence threshold may be higher depending on the quietest frame, but it
 will never be lower than this specified number.}
 
-\item{scale}{the maximum possible value of \code{x} (only needed if \code{x}
-is a numeric vector, rather than an audio file); defaults to observed
-\code{max(abs(x))} if it is greater than 1 and to 1 otherwise}
+\item{scale}{maximum possible amplitude of input used for normalization (not
+needed for audio files)}
 
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 
@@ -295,5 +294,17 @@ a = analyze(sound2, samplingRate = 16000, summary = TRUE,
 a = analyze(sound, samplingRate = 16000,
             savePath = '~/Downloads/',
             width = 20, height = 15, units = 'cm', res = 300)
+
+# Amplitude and loudness (see also getRMS and getLoudness)
+s = runif(200, min = -1, max = 1)
+a1 = analyze(s, samplingRate = 16000, windowLength = 5,
+  plot = FALSE, pitchMethods = NULL, scale = 1)
+a1$ampl  # cf. sqrt(mean(s^2))
+a1$loudness
+
+a2 = analyze(s/2, samplingRate = 16000, windowLength = 5,
+  plot = FALSE, pitchMethods = NULL, scale = 1)
+a2$ampl  # rms amplitude halved
+a2$loudness  # loudness is not a linear function of amplitude
 }
 }

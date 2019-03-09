@@ -14,6 +14,8 @@
 #'   not analyzed at all. NB: this number is dynamically updated: the actual
 #'   silence threshold may be higher depending on the quietest frame, but it
 #'   will never be lower than this specified number.
+#' @param scale maximum possible amplitude of input used for normalization (not
+#'   needed for audio files)
 #' @param cutFreq (>0 to Nyquist, Hz) repeat the calculation of spectral
 #'   descriptives after discarding all info above \code{cutFreq}.
 #'   Recommended if the original sampling rate varies across different analyzed
@@ -199,6 +201,18 @@
 #' a = analyze(sound, samplingRate = 16000,
 #'             savePath = '~/Downloads/',
 #'             width = 20, height = 15, units = 'cm', res = 300)
+#'
+#' # Amplitude and loudness (see also getRMS and getLoudness)
+#' s = runif(200, min = -1, max = 1)
+#' a1 = analyze(s, samplingRate = 16000, windowLength = 5,
+#'   plot = FALSE, pitchMethods = NULL, scale = 1)
+#' a1$ampl  # cf. sqrt(mean(s^2))
+#' a1$loudness
+#'
+#' a2 = analyze(s/2, samplingRate = 16000, windowLength = 5,
+#'   plot = FALSE, pitchMethods = NULL, scale = 1)
+#' a2$ampl  # rms amplitude halved
+#' a2$loudness  # loudness is not a linear function of amplitude
 #' }
 analyze = function(x,
                    samplingRate = NULL,
@@ -288,7 +302,7 @@ analyze = function(x,
     }
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
-    scale = 2 ^ sound_wav@bit
+    scale = 2 ^ (sound_wav@bit - 1)
     m = max(abs(sound))
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = ifelse(
@@ -307,11 +321,11 @@ analyze = function(x,
     m = max(abs(sound))
     if (is.null(scale)) {
       scale = max(m, 1)
-      warning(paste('Scale not specified. Assuming that max amplitude is', scale))
+      message(paste('Scale not specified. Assuming that max amplitude is', scale))
     } else if (is.numeric(scale)) {
       if (scale < m) {
         scale = m
-        warning(paste('Scale exceeds the observed range; resetting to', m))
+        warning(paste('Scale cannot be smaller than observed max; resetting to', m))
       }
     }
   } else {
@@ -320,7 +334,7 @@ analyze = function(x,
 
   # calculate scaling coefficient, but don't convert yet,
   # since most routines in analyze() require scale [-1, 1]
-  scaleCorrection = scaleSPL(c(-1, 1) * m / scale * 2,
+  scaleCorrection = scaleSPL(c(-1, 1) * m / scale,
     # NB: m / scale * 2 = 1 if the sound is normalized  to 0 dB (max amplitude)
                              scale = 1,
                              SPL_measured = SPL_measured,
@@ -555,11 +569,12 @@ analyze = function(x,
     ylab = ylab
   ), extraSpecPars))
 
-  # calculate amplitude of each frame
+  # calculate rms amplitude of each frame
   myseq = seq(1, (length(sound) - windowLength_points), length.out = ncol(s))
   ampl = apply(as.matrix(1:ncol(s)), 1, function(x) {
     # perceived intensity - root mean square of amplitude
-    sqrt(mean(sound[myseq[x]:(myseq[x] + windowLength_points - 1)] ^ 2))
+    # (NB: m / scale corrects the scale back to original, otherwise sound is [-1, 1])
+    sqrt(mean((sound[myseq[x]:(myseq[x] + windowLength_points - 1)] * m / scale) ^ 2))
   })
   # dynamically adjust silence threshold
   silence = max(silence, min(ampl))

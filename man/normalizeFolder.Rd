@@ -12,8 +12,15 @@ normalizeFolder(myfolder, type = c("peak", "rms", "loudness")[1],
 \arguments{
 \item{myfolder}{path to folder containing wav/mp3 files}
 
-\item{summaryFun}{the function used to summarize RMS values across all frames
-(if \code{summary = TRUE})}
+\item{type}{should the output files have the same peak amplitude ('peak'),
+root mean square amplitude ('rms'), or subjective loudness in sone
+('loudness')?}
+
+\item{maxAmp}{maximum amplitude in dB (0 = max possible, -10 = 10 dB below
+max possible, etc.)}
+
+\item{summaryFun}{should the output files have the same mean / median / max
+etc rms amplitude or loudness? (summaryFun has no effect if type = 'peak')}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -24,6 +31,9 @@ normalizeFolder(myfolder, type = c("peak", "rms", "loudness")[1],
 \item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
 
 \item{windowDC}{the window for calculating DC offset, ms}
+
+\item{savepath}{full path to where the normalized files should be saved
+(defaults to '/normalized')}
 
 \item{verbose}{if TRUE, reports estimated time left}
 }
@@ -50,11 +60,10 @@ normalization procedure is similar to that for \code{type = 'rms'}.
 \examples{
 \dontrun{
 getRMSFolder('~/Downloads/temp', summaryFun = 'mean')
-normalizeFolder('~/Downloads/temp', type = 'loudness', summaryFun = 'mean',
+normalizeFolder('~/Downloads/temp', type = 'rms', summaryFun = 'mean',
   savepath = '~/Downloads/temp/normalized')
 getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')
-mean(getLoudness('~/Downloads/temp/normalized/032_ut_anger_30-m-roar-curse.wav')$loudness)
-mean(getLoudness('~/Downloads/temp/normalized/110_ut_disgust_42-c_weird-tone-lemon.wav')$loudness)
-mean(getLoudness('~/Downloads/temp/normalized/118_ut_disgust_52-m-toilet.wav')$loudness)
+# If the saved audio files are treated as stereo with one channel missing,
+# try reconverting with ffmpeg (saving is handled by tuneR::writeWave)
 }
 }

@@ -5,7 +5,7 @@
 \title{RMS amplitude per folder}
 \usage{
 getRMSFolder(myfolder, windowLength = 50, step = NULL, overlap = 70,
-  killDC = FALSE, windowDC = 200, summary = TRUE,
+  normalize = TRUE, killDC = FALSE, windowDC = 200, summary = TRUE,
   summaryFun = "mean", verbose = TRUE)
 }
 \arguments{
@@ -16,6 +16,8 @@ getRMSFolder(myfolder, windowLength = 50, step = NULL, overlap = 70,
 \item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
 \item{overlap}{overlap between successive FFT frames, \%}
+
+\item{normalize}{if TRUE, RMS amplitude is normalized to [0, 1]}
 
 \item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
 
@@ -38,6 +40,13 @@ per file. This summary value can be mean, max and so on, as per
 \examples{
 \dontrun{
 getRMSFolder('~/Downloads/temp')
+# Compare: analyzeFolder('~/Downloads/temp')$ampl_mean
+# (per STFT frame, but should be very similar)
+
+User-defined summary functions:
 getRMSFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
+getRMSFolder('~/Downloads/temp',
+  summaryFun = function(x) paste0('mean = ', round(mean(x), 2),
+                                 '; sd = ', round(sd(x), 2)))
 }
 }

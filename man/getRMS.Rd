@@ -5,9 +5,9 @@
 \title{RMS amplitude per frame}
 \usage{
 getRMS(x, samplingRate = NULL, windowLength = 50, step = NULL,
-  overlap = 70, killDC = FALSE, windowDC = 200, plot = TRUE,
-  xlab = "Time, ms", ylab = "", type = "b", col = "blue",
-  lwd = 2, ...)
+  overlap = 70, killDC = FALSE, scale = NULL, normalize = TRUE,
+  windowDC = 200, plot = TRUE, xlab = "Time, ms", ylab = "",
+  type = "b", col = "blue", lwd = 2, ...)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
@@ -23,6 +23,11 @@ samplingRate}
 \item{overlap}{overlap between successive FFT frames, \%}
 
 \item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
+
+\item{scale}{maximum possible amplitude of input used for normalization (not
+needed for audio files)}
+
+\item{normalize}{if TRUE, RMS amplitude is normalized to [0, 1]}
 
 \item{windowDC}{the window for calculating DC offset, ms}
 
