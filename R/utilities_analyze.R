@@ -51,7 +51,7 @@ analyzeFrame = function(frame,
   peakFreq = absSpec$freq[which.max(frame)]
   medianFreq = absSpec$freq[min(which(cumsum(frame) > amplitude / 2))]
   loudness = getLoudnessPerFrame(
-    spec = absSpec$amp * scaleCorrection,
+    spec = frame * scaleCorrection,
     samplingRate = samplingRate
   )  # in sone, assuming scaling by SPL_measured in analyze()
 

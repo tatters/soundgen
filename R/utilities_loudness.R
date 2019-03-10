@@ -71,8 +71,7 @@ scaleSPL = function(x, scale = NULL, SPL_measured = 70, Pref = 2e-5) {
   # correct according to scale (eg if the original sound is quieter than the max
   # possible amplitude, adjust loudness for that)
   if (is.numeric(scale)) {
-    correction = scale / max(abs(x))
-    x_scaled = x_scaled / correction
+    x_scaled = x_scaled / (scale / max(abs(x)))
   }
   return(x_scaled)
 }

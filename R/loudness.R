@@ -58,7 +58,7 @@
 #'   l = getLoudness(
 #'     x = sounds[[i]], samplingRate = 16000, scale = 1,
 #'     windowLength = 20, step = NULL,
-#'     overlap = 50, SPL_measured = 64,
+#'     overlap = 50, SPL_measured = 40,
 #'     Pref = 2e-5, plot = FALSE)
 #'   loud[i] = mean(l$loudness)
 #' }

@@ -202,14 +202,18 @@
 #'             savePath = '~/Downloads/',
 #'             width = 20, height = 15, units = 'cm', res = 300)
 #'
-#' # Amplitude and loudness (see also getRMS and getLoudness)
+#' # Amplitude and loudness
 #' s = runif(200, min = -1, max = 1)
-#' a1 = analyze(s, samplingRate = 16000, windowLength = 5,
+#' a1 = analyze(s, samplingRate = 16000, windowLength = 5, overlap = 75,
 #'   plot = FALSE, pitchMethods = NULL, scale = 1)
-#' a1$ampl  # cf. sqrt(mean(s^2))
-#' a1$loudness
+#' a1$ampl
+#' # cf. sqrt(mean(s^2))
+#' # cf. getRMS(s, samplingRate = 16000, windowLength = 5, scale = 1)
 #'
-#' a2 = analyze(s/2, samplingRate = 16000, windowLength = 5,
+#' a1$loudness
+#' # cf. getLoudness(s, samplingRate = 16000, windowLength = 5, scale = 1)
+#'
+#' a2 = analyze(s/2, samplingRate = 16000, windowLength = 5, overlap = 75,
 #'   plot = FALSE, pitchMethods = NULL, scale = 1)
 #' a2$ampl  # rms amplitude halved
 #' a2$loudness  # loudness is not a linear function of amplitude
@@ -332,13 +336,14 @@ analyze = function(x,
     stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
 
-  # calculate scaling coefficient, but don't convert yet,
-  # since most routines in analyze() require scale [-1, 1]
-  scaleCorrection = scaleSPL(c(-1, 1) * m / scale,
-    # NB: m / scale * 2 = 1 if the sound is normalized  to 0 dB (max amplitude)
+  # calculate scaling coefficient for loudness calculation, but don't convert
+  # yet, since most routines in analyze() require scale [-1, 1]
+  scaleCorrection = max(abs(scaleSPL(sound * m / scale,
+    # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
                              scale = 1,
                              SPL_measured = SPL_measured,
-                             Pref = Pref)[2]
+                             Pref = Pref))) /  # peak ampl of rescaled
+                                            m  # peak ampl of original
 
   # normalize to range from no less than -1 to no more than +1
   if (min(sound) > 0) {
@@ -563,6 +568,7 @@ analyze = function(x,
     step = step,
     main = plotname,
     plot = plot_spec,
+    normalize = FALSE,
     output = 'original',
     ylim = ylim,
     xlab = xlab,
