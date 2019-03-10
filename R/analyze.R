@@ -869,7 +869,7 @@ analyze = function(x,
     }
     # add pitch candidates to the plot
     if (nrow(pitchCands) > 0) {
-      if (is.list(candPlot)) {
+      if (length(candPlot) > 0) {
         if (is.null(candPlot$levels)) {
           candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
         }
@@ -902,7 +902,7 @@ analyze = function(x,
         }
       }
       # add the final pitch contour to the plot
-      if (is.list(pitchPlot)) {
+      if (any(is.numeric(result$pitch))) {
         if (is.null(pitchPlot$col)) {
           pitchPlot$col = rgb(0, 0, 1, .75)
         }

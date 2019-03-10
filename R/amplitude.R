@@ -219,14 +219,14 @@ getRMSFolder = function(myfolder,
 #' peak amplitude remains \code{maxAmp} dB. All the remaining sounds are
 #' rescaled linearly, so that their summary RMS values becomes the same as that
 #' of the "quietest" sound, and their peak amplitudes become smaller,
-#' \code{<maxAmp}. Finally, if \code{\link{type = 'loudness'}}, the subjective
+#' \code{<maxAmp}. Finally, if \code{type = 'loudness'}, the subjective
 #' loudness of each sound is estimated by \code{\link{getLoudness}}, which
 #' assumes frequency sensitivity typical of human hearing. The following
 #' normalization procedure is similar to that for \code{type = 'rms'}.
 #' @inheritParams getRMSFolder
-#' @param type should the output files have the same peak amplitude ('peak'),
-#'   root mean square amplitude ('rms'), or subjective loudness in sone
-#'   ('loudness')?
+#' @param type normalize so the output files has the same peak amplitude
+#'   ('peak'), root mean square amplitude ('rms'), or subjective loudness in
+#'   sone ('loudness')
 #' @param maxAmp maximum amplitude in dB (0 = max possible, -10 = 10 dB below
 #'   max possible, etc.)
 #' @param summaryFun should the output files have the same mean / median / max
