@@ -202,21 +202,34 @@
 #'             savePath = '~/Downloads/',
 #'             width = 20, height = 15, units = 'cm', res = 300)
 #'
-#' # Amplitude and loudness
-#' s = runif(200, min = -1, max = 1)
-#' a1 = analyze(s, samplingRate = 16000, windowLength = 5, overlap = 75,
-#'   plot = FALSE, pitchMethods = NULL, scale = 1)
-#' a1$ampl
-#' # cf. sqrt(mean(s^2))
-#' # cf. getRMS(s, samplingRate = 16000, windowLength = 5, scale = 1)
+#' ## Amplitude and loudness: analyze() should give the same results as
+#' dedicated functions getRMS() / getLoudness()
+#' # Create 1 kHz tone
+#' samplingRate = 16000; dur_ms = 50
+#' sound1 = sin(2*pi*1000/samplingRate*(1:(dur_ms/1000*samplingRate)))
+#' a1 = analyze(sound1, samplingRate = samplingRate, windowLength = 25,
+#'         overlap = 50, SPL_measured = 40, scale = 1,
+#'         pitchMethods = NULL, plot = FALSE)
+#' a1$loudness  # loudness per STFT frame (1 sone by definition)
+#' getLoudness(sound1, samplingRate = samplingRate, windowLength = 25,
+#'             overlap = 50, SPL_measured = 40, scale = 1)$loudness
+#' a1$ampl  # RMS amplitude per STFT frame
+#' getRMS(sound1, samplingRate = samplingRate, windowLength = 25,
+#'        overlap = 50, scale = 1)
+#' # or even simply: sqrt(mean(sound1 ^ 2))
 #'
-#' a1$loudness
-#' # cf. getLoudness(s, samplingRate = 16000, windowLength = 5, scale = 1)
+#' a2 = analyze(sound1/2, samplingRate = samplingRate, windowLength = 25,
+#'         overlap = 50, SPL_measured = 40, scale = 1,
+#'         pitchMethods = NULL, plot = FALSE)
+#' a1$ampl / a2$ampl  # rms amplitude halved
+#' a1$loudness/ a2$loudness  # loudness is not a linear function of amplitude
 #'
-#' a2 = analyze(s/2, samplingRate = 16000, windowLength = 5, overlap = 75,
-#'   plot = FALSE, pitchMethods = NULL, scale = 1)
-#' a2$ampl  # rms amplitude halved
-#' a2$loudness  # loudness is not a linear function of amplitude
+#' # Amplitude & loudness of an existing audio file
+#' sound2 = '~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav'
+#' analyze(sound2, windowLength = 25, overlap = 50, SPL_measured = 40,
+#'         pitchMethods = NULL, plot = FALSE)[, c('loudness', 'ampl')]
+#' getLoudness(sound2, windowLength = 25, overlap = 50, SPL_measured = 40)$loudness
+#' getRMS(sound2, windowLength = 25, overlap = 50, scale = 1)
 #' }
 analyze = function(x,
                    samplingRate = NULL,
@@ -224,7 +237,7 @@ analyze = function(x,
                    silence = 0.04,
                    scale = NULL,
                    SPL_measured = 70,
-                   Pref = 20,
+                   Pref = 2e-5,
                    windowLength = 50,
                    step = NULL,
                    overlap = 50,
@@ -594,7 +607,7 @@ analyze = function(x,
     getEntropy(s[rowLow:rowHigh, x], type = 'weiner')
   })
   # if the frame is too quiet or too noisy, we will not analyze it
-  cond_silence = ampl > silence &
+  cond_silence = ampl >= silence &
     as.logical(apply(s, 2, sum) > 0)  # b/c s frames are not 100% synchronized with ampl frames
   cond_entropy = ampl > silence & entropy < entropyThres
   cond_entropy[is.na(cond_entropy)] = FALSE

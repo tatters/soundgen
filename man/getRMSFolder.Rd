@@ -40,7 +40,7 @@ per file. This summary value can be mean, max and so on, as per
 \examples{
 \dontrun{
 getRMSFolder('~/Downloads/temp')
-# Compare: analyzeFolder('~/Downloads/temp')$ampl_mean
+# Compare: analyzeFolder('~/Downloads/temp', pitchMethods = NULL)$ampl_mean
 # (per STFT frame, but should be very similar)
 
 User-defined summary functions:

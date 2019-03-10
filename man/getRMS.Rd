@@ -5,7 +5,7 @@
 \title{RMS amplitude per frame}
 \usage{
 getRMS(x, samplingRate = NULL, windowLength = 50, step = NULL,
-  overlap = 70, killDC = FALSE, scale = NULL, normalize = TRUE,
+  overlap = 75, killDC = FALSE, scale = NULL, normalize = TRUE,
   windowDC = 200, plot = TRUE, xlab = "Time, ms", ylab = "",
   type = "b", col = "blue", lwd = 2, ...)
 }

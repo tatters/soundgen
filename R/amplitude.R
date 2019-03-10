@@ -153,7 +153,7 @@ getRMS = function(x,
 #' @examples
 #' \dontrun{
 #' getRMSFolder('~/Downloads/temp')
-#' # Compare: analyzeFolder('~/Downloads/temp')$ampl_mean
+#' # Compare: analyzeFolder('~/Downloads/temp', pitchMethods = NULL)$ampl_mean
 #' # (per STFT frame, but should be very similar)
 #'
 #' User-defined summary functions:
@@ -375,5 +375,3 @@ normalizeFolder = function(myfolder,
 # summary(mod)  # a = 0, b = 12, c = 0.6
 # # so loud1/loud2 = coef1^c / coef2^c = (coef1/coef2)^c, where c = 0.6,
 # # so coef1/coef2 = (loud1/loud2)^(1/0.6) = (loud1/loud2)^(5/3)
-
-

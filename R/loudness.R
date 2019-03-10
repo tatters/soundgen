@@ -101,7 +101,7 @@ getLoudness = function(x,
     sound_wav = tuneR::readWave(x)
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
-    scale = 2 ^ sound_wav@bit  # range(sound)
+    scale = 2 ^ (sound_wav@bit - 1) # range(sound)
   } else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
@@ -297,6 +297,9 @@ getLoudness = function(x,
 #' @examples
 #' \dontrun{
 #' getLoudnessFolder('~/Downloads/temp')
+#' # Compare: analyzeFolder('~/Downloads/temp', pitchMethods = NULL)$loudness_mean
+#' # (per STFT frame, but should be very similar)
+#'
 #' getLoudnessFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
 #'
 #' # save loudness values per frame without summarizing

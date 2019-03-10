@@ -42,6 +42,9 @@ per file. This summary value can be mean, max and so on, as per
 \examples{
 \dontrun{
 getLoudnessFolder('~/Downloads/temp')
+# Compare: analyzeFolder('~/Downloads/temp', pitchMethods = NULL)$loudness_mean
+# (per STFT frame, but should be very similar)
+
 getLoudnessFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
 
 # save loudness values per frame without summarizing
