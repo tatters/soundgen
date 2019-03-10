@@ -59,10 +59,11 @@ normalization procedure is similar to that for \code{type = 'rms'}.
 }
 \examples{
 \dontrun{
-getRMSFolder('~/Downloads/temp', summaryFun = 'mean')
+# put a few short audio files in a folder, eg '~/Downloads/temp'
+getRMSFolder('~/Downloads/temp', summaryFun = 'mean')  # different
 normalizeFolder('~/Downloads/temp', type = 'rms', summaryFun = 'mean',
   savepath = '~/Downloads/temp/normalized')
-getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')
+getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')  # same
 # If the saved audio files are treated as stereo with one channel missing,
 # try reconverting with ffmpeg (saving is handled by tuneR::writeWave)
 }

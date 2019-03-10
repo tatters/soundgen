@@ -4,8 +4,8 @@
 \alias{getLoudnessFolder}
 \title{Loudness per folder}
 \usage{
-getLoudnessFolder(myfolder, windowLength = 30, step = NULL,
-  overlap = 75, SPL_measured = 70, Pref = 2e-05,
+getLoudnessFolder(myfolder, windowLength = 50, step = NULL,
+  overlap = 50, SPL_measured = 70, Pref = 2e-05,
   spreadSpectrum = TRUE, summary = TRUE, summaryFun = "mean",
   verbose = TRUE)
 }
@@ -42,12 +42,15 @@ per file. This summary value can be mean, max and so on, as per
 \examples{
 \dontrun{
 getLoudnessFolder('~/Downloads/temp')
-# Compare: analyzeFolder('~/Downloads/temp', pitchMethods = NULL)$loudness_mean
-# (per STFT frame, but should be very similar)
+# Compare:
+analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
+              plot = FALSE)$loudness_mean
+# (per STFT frame; should be very similar, but not identical, because
+# analyze() discards frames considered silent or too noisy)
 
 getLoudnessFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
 
 # save loudness values per frame without summarizing
- = getLoudnessFolder('~/Downloads/temp', summary = FALSE)
+l = getLoudnessFolder('~/Downloads/temp', summary = FALSE)
 }
 }

@@ -311,17 +311,20 @@ getRMS(sound1, samplingRate = samplingRate, windowLength = 25,
        overlap = 50, scale = 1)
 # or even simply: sqrt(mean(sound1 ^ 2))
 
-a2 = analyze(sound1/2, samplingRate = samplingRate, windowLength = 25,
+# The same sound as above, but with half the amplitude
+a_half = analyze(sound1/2, samplingRate = samplingRate, windowLength = 25,
         overlap = 50, SPL_measured = 40, scale = 1,
         pitchMethods = NULL, plot = FALSE)
-a1$ampl / a2$ampl  # rms amplitude halved
-a1$loudness/ a2$loudness  # loudness is not a linear function of amplitude
+a1$ampl / a_half$ampl  # rms amplitude halved
+a1$loudness/ a_half$loudness  # loudness is not a linear function of amplitude
 
 # Amplitude & loudness of an existing audio file
 sound2 = '~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav'
-analyze(sound2, windowLength = 25, overlap = 50, SPL_measured = 40,
-        pitchMethods = NULL, plot = FALSE)[, c('loudness', 'ampl')]
-getLoudness(sound2, windowLength = 25, overlap = 50, SPL_measured = 40)$loudness
-getRMS(sound2, windowLength = 25, overlap = 50, scale = 1)
+a2 = analyze(sound2, windowLength = 25, overlap = 50, SPL_measured = 40,
+        pitchMethods = NULL, plot = FALSE)
+apply(a2[, c('loudness', 'ampl')], 2, median, na.rm = TRUE)
+median(getLoudness(sound2, windowLength = 25, overlap = 50,
+                   SPL_measured = 40)$loudness)
+median(getRMS(sound2, windowLength = 25, overlap = 50, scale = 1))
 }
 }

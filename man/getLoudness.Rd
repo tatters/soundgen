@@ -4,8 +4,8 @@
 \alias{getLoudness}
 \title{Get loudness}
 \usage{
-getLoudness(x, samplingRate = NULL, scale = NULL, windowLength = 30,
-  step = NULL, overlap = 75, SPL_measured = 70, Pref = 2e-05,
+getLoudness(x, samplingRate = NULL, scale = NULL, windowLength = 50,
+  step = NULL, overlap = 50, SPL_measured = 70, Pref = 2e-05,
   spreadSpectrum = TRUE, plot = TRUE, mar = c(5.1, 4.1, 4.1, 4.1),
   ...)
 }

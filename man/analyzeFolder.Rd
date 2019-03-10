@@ -6,7 +6,7 @@
 \usage{
 analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   samplingRate = NULL, dynamicRange = 80, silence = 0.04,
-  SPL_measured = 70, Pref = 20, windowLength = 50, step = NULL,
+  SPL_measured = 70, Pref = 2e-05, windowLength = 50, step = NULL,
   overlap = 50, wn = "gaussian", zp = 0, cutFreq = 6000,
   nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
   entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,

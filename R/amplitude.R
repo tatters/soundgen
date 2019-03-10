@@ -153,7 +153,9 @@ getRMS = function(x,
 #' @examples
 #' \dontrun{
 #' getRMSFolder('~/Downloads/temp')
-#' # Compare: analyzeFolder('~/Downloads/temp', pitchMethods = NULL)$ampl_mean
+#' # Compare:
+#' analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
+#'               plot = FALSE)$ampl_mean
 #' # (per STFT frame, but should be very similar)
 #'
 #' User-defined summary functions:
@@ -236,10 +238,11 @@ getRMSFolder = function(myfolder,
 #' @export
 #' @examples
 #' \dontrun{
-#' getRMSFolder('~/Downloads/temp', summaryFun = 'mean')
+#' # put a few short audio files in a folder, eg '~/Downloads/temp'
+#' getRMSFolder('~/Downloads/temp', summaryFun = 'mean')  # different
 #' normalizeFolder('~/Downloads/temp', type = 'rms', summaryFun = 'mean',
 #'   savepath = '~/Downloads/temp/normalized')
-#' getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')
+#' getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')  # same
 #' # If the saved audio files are treated as stereo with one channel missing,
 #' # try reconverting with ffmpeg (saving is handled by tuneR::writeWave)
 #' }
