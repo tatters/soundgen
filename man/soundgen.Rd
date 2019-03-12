@@ -6,9 +6,7 @@
 \usage{
 soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   pitch = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
-  100)), pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value =
-  c(100, 150, 135, 100)), pitchGlobal = NA, pitchAnchorsGlobal = NA,
-  glottis = 0, glottisAnchors = 0, temperature = 0.025,
+  100)), pitchGlobal = NA, glottis = 0, temperature = 0.025,
   tempEffects = list(), maleFemale = 0, creakyBreathy = 0,
   nonlinBalance = 0, nonlinDep = 50, nonlinRandomWalk = NULL,
   jitterLen = 1, jitterDep = 1, vibratoFreq = 5, vibratoDep = 0,
@@ -19,18 +17,15 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   formantDep = 1, formantDepStoch = 20, formantWidth = 1,
   vocalTract = NA, subFreq = 100, subDep = 100,
   shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
-  noise = NULL, noiseAnchors = NULL, formantsNoise = NA,
-  rolloffNoise = -4, noiseFlatSpec = 1200, noiseAmpRef = c("f0",
-  "source", "filtered")[3], mouth = data.frame(time = c(0, 1), value =
-  c(0.5, 0.5)), mouthAnchors = data.frame(time = c(0, 1), value = c(0.5,
-  0.5)), ampl = NA, amplAnchors = NA, amplGlobal = NA,
-  amplAnchorsGlobal = NA, interpol = c("approx", "spline", "loess")[3],
+  noise = NULL, formantsNoise = NA, rolloffNoise = -4,
+  noiseFlatSpec = 1200, noiseAmpRef = c("f0", "source", "filtered")[3],
+  mouth = data.frame(time = c(0, 1), value = c(0.5, 0.5)), ampl = NA,
+  amplGlobal = NA, interpol = c("approx", "spline", "loess")[3],
   discontThres = 0.05, jumpThres = 0.01, samplingRate = 16000,
   windowLength = 50, overlap = 75, addSilence = 100,
   pitchFloor = 1, pitchCeiling = 3500, pitchSamplingRate = 3500,
-  dynamicRange = 80, throwaway = -80, invalidArgAction = c("adjust",
-  "abort", "ignore")[1], plot = FALSE, play = FALSE, savePath = NA,
-  ...)
+  dynamicRange = 80, invalidArgAction = c("adjust", "abort",
+  "ignore")[1], plot = FALSE, play = FALSE, savePath = NA, ...)
 }
 \arguments{
 \item{repeatBout}{number of times the whole bout should be repeated}
@@ -44,19 +39,17 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
 negative between bouts: force with invalidArgAction = 'ignore')
 (vectorized)}
 
-\item{pitch, pitchAnchors}{a numeric vector of f0 values in Hz or a dataframe
+\item{pitch}{a numeric vector of f0 values in Hz or a dataframe
 specifying the time (ms or 0 to 1) and value (Hz) of each anchor, hereafter
 "anchor format". These anchors are used to create a smooth contour of
-fundamental frequency f0 (pitch) within one syllable. NB: "pitchAnchors" is
-deprecated; use simply "pitch" instead (same for other arguments with
-"Anchors" below)}
+fundamental frequency f0 (pitch) within one syllable}
 
-\item{pitchGlobal, pitchAnchorsGlobal}{unlike \code{pitch}, these anchors are
+\item{pitchGlobal}{unlike \code{pitch}, these anchors are
 used to create a smooth contour of average f0 across multiple syllables.
 The values are in semitones relative to the existing pitch, i.e. 0 = no
 change (anchor format)}
 
-\item{glottis, glottisAnchors}{anchors for specifying the proportion of a
+\item{glottis}{anchors for specifying the proportion of a
 glottal cycle with closed glottis, \% (0 = no modification, 100 = closed
 phase as long as open phase); numeric vector or dataframe specifying time
 and value (anchor format)}
@@ -73,9 +66,9 @@ amount of slow random drift of f0; \code{pitchDriftFreq}: frequency of slow
 random drift of f0; \code{amplDriftDep}: drift of amplitude mirroring pitch
 drift; \code{subDriftDep}: drift of subharmonic frequency and bandwidth
 mirroring pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring
-pitch drift; \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}:
+pitch drift; \code{pitchDep, noiseDep, amplDep}:
 random fluctuations of user-specified pitch / noise / amplitude anchors;
-\code{glottisAnchorsDep}: proportion of glottal cycle with closed glottis;
+\code{glottisDep}: proportion of glottal cycle with closed glottis;
 \code{specDep}: rolloff, rolloffNoise, nonlinear effects, attack}
 
 \item{maleFemale}{hyperparameter for shifting f0 contour, formants, and
@@ -192,7 +185,7 @@ modulation with amplitude range equal to the dynamic range of the sound
 \item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0) (anchor
 format)}
 
-\item{noise, noiseAnchors}{loudness of turbulent noise (0 dB = as loud as
+\item{noise}{loudness of turbulent noise (0 dB = as loud as
 voiced component, negative values = quieter) such as aspiration, hissing,
 etc (anchor format)}
 
@@ -211,13 +204,13 @@ amplitude of the first partial (fundamental frequency), "source" = the
 amplitude of the harmonic component prior to applying formants, "filtered"
 =  the amplitude of the harmonic component after applying formants}
 
-\item{mouth, mouthAnchors}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
+\item{mouth}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
 modification) (anchor format)}
 
-\item{ampl, amplAnchors}{amplitude envelope (dB, 0 = max amplitude) (anchor
+\item{ampl}{amplitude envelope (dB, 0 = max amplitude) (anchor
 format)}
 
-\item{amplGlobal, amplAnchorsGlobal}{global amplitude envelope spanning
+\item{amplGlobal}{global amplitude envelope spanning
 multiple syllables (dB, 0 = no change) (anchor format)}
 
 \item{interpol}{the method of smoothing envelopes based on provided anchors:
@@ -249,8 +242,6 @@ speed or to \code{samplingRate} for optimal quality}
 \item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
 dynamicRange under maximum amplitude are discarded to save computational
 resources}
-
-\item{throwaway}{(deprecated) same as dynamicRange, but negative}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the
 range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'

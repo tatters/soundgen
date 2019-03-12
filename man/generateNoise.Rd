@@ -5,10 +5,9 @@
 \title{Generate noise}
 \usage{
 generateNoise(len, rolloffNoise = 0, noiseFlatSpec = 1200,
-  spectralEnvelope = NULL, filterNoise = "deprecated",
-  noiseAnchors = NULL, temperature = 0.1, attackLen = 10,
-  windowLength_points = 1024, samplingRate = 16000, overlap = 75,
-  dynamicRange = 80, play = FALSE)
+  spectralEnvelope = NULL, noise = NULL, temperature = 0.1,
+  attackLen = 10, windowLength_points = 1024, samplingRate = 16000,
+  overlap = 75, dynamicRange = 80, play = FALSE)
 }
 \arguments{
 \item{len}{length of output}
@@ -26,9 +25,7 @@ for each STFT step is also accepted. The easiest way to create this matrix
 is to call soundgen:::getSpectralEnvelope or to use the spectrum of a
 recorded sound}
 
-\item{filterNoise}{(deprecated) same as spectralEnvelope}
-
-\item{noiseAnchors}{loudness of turbulent noise (0 dB = as loud as
+\item{noise}{loudness of turbulent noise (0 dB = as loud as
 voiced component, negative values = quieter) such as aspiration, hissing,
 etc (anchor format)}
 
@@ -52,6 +49,8 @@ resources}
 
 \item{play}{if TRUE, plays the synthesized sound. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
+
+\item{filterNoise}{(deprecated) same as spectralEnvelope}
 }
 \description{
 Generates noise of length \code{len} and with spectrum defined by linear
@@ -76,9 +75,9 @@ noise1 = generateNoise(len = samplingRate * .5,
 # seewave::meanspec(noise1, f = samplingRate)
 
 # Percussion (run a few times to notice stochasticity due to temperature = .25)
-noise2 = generateNoise(len = samplingRate * .15, noiseAnchors = c(0, -80),
+noise2 = generateNoise(len = samplingRate * .15, noise = c(0, -80),
   rolloffNoise = c(4, -6), attackLen = 5, temperature = .25)
-noise3 = generateNoise(len = samplingRate * .25, noiseAnchors = c(0, -40),
+noise3 = generateNoise(len = samplingRate * .25, noise = c(0, -40),
   rolloffNoise = c(4, -20), attackLen = 5, temperature = .25)
 # playme(c(noise2, noise3), samplingRate)
 

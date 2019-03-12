@@ -5,8 +5,7 @@
 \title{Generate beat}
 \usage{
 beat(nSyl = 10, sylLen = 200, pauseLen = 50, pitch = c(200, 10),
-  pitchAnchors = "deprecated", samplingRate = 16000, fadeOut = TRUE,
-  play = FALSE)
+  samplingRate = 16000, fadeOut = TRUE, play = FALSE)
 }
 \arguments{
 \item{nSyl}{the number of syllables to generate}
@@ -17,8 +16,6 @@ beat(nSyl = 10, sylLen = 200, pauseLen = 50, pitch = c(200, 10),
 
 \item{pitch}{fundamental frequency, Hz - a vector or data.frame(time = ...,
 value = ...)}
-
-\item{pitchAnchors}{same of pitch (deprecated)}
 
 \item{samplingRate}{sampling frequency, Hz}
 

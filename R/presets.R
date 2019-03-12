@@ -37,7 +37,6 @@ permittedValues = matrix(c(
   'shimmerDep', 0, 0, 100, 1,
   'shimmerLen', 1, 1, 100, 1,
   'attackLen', 50, 0, 200, 10,
-  'glottisAnchors', 0, 0, 5000, 5,
   'glottis', 0, 0, 5000, 5,
   'rolloff', -9, -30, 0, 1,
   'rolloffOct', 0, -30, 3, 1,
@@ -58,6 +57,7 @@ permittedValues = matrix(c(
   'amShape', 0, -1, 1, .025,
   'samplingRate', 16000, 8000, 44100, 100,
   'windowLength', 40, 5, 100, 2.5, # default, low, high, step
+  'dynamicRange', 80, 10, 200, 10,
   'rolloffNoise', -4, -20, 20, 1,
 
   # other soundgen settings, which are NOT updateable sliders in soundgen_app()
@@ -67,7 +67,6 @@ permittedValues = matrix(c(
   'pitchFloor', 1, 1, 1000, 1,
   'pitchCeiling', 3500, 10, 100000, 10,
   'pitchSamplingRate', 3500, 10, 100000, 10,
-  'dynamicRange', 80, 10, 200, 10,
   'noiseFlatSpec', 1200, 0, 4000, 100,
 
   # soundgen_app() settings, which are not needed for soundgen()
@@ -76,13 +75,13 @@ permittedValues = matrix(c(
   'specBrightness', 0, -1, 1, .05,
   'mouthOpening', .5, 0, 1, .05,
   'pitch', 100, 1, 3500, 1,  # set pitch range per species
-  'pitchDeltas', 0, -24, 24, 1,  # amplPitchGlobal range
+  'pitchDeltas', 0, -24, 24, 1,  # pitchGlobal range
   'time', 0, 0, 5000, 1,
   'noiseAmpl', 0, -80, 40, 1,  # for plotting - noise ylim
   'oscHeight', -3, -5, 5, 1   # relative size of spectrogram vs oscillogram
 ), ncol=5, byrow=TRUE)
 temp = permittedValues[,1]
-permittedValues = apply (permittedValues[,2:5], 2, as.numeric)
+permittedValues = apply(permittedValues[,2:5], 2, as.numeric)
 colnames(permittedValues) = c('default', 'low', 'high', 'step')
 rownames(permittedValues) = temp
 # usethis::use_data(permittedValues, overwrite = TRUE)
@@ -133,25 +132,15 @@ defaults = list(
   pitchCeiling = 3500,
   pitchSamplingRate = 3500,
   dynamicRange = 80,
-  pitchAnchors = list(
-    time = c(0, .1, .9, 1),
-    value = c(100, 150, 135, 100)
-  ),
   pitch = list(
     time = c(0, .1, .9, 1),
     value = c(100, 150, 135, 100)
   ),
-  pitchAnchorsGlobal = list(time = c(0, 1), value = c(0, 0)),
   pitchGlobal = list(time = c(0, 1), value = c(0, 0)),
-  glottisAnchors = 0,
   glottis = 0,
-  noiseAnchors = list(time = c(0, 300), value = c(-80, -80)),
   noise = list(time = c(0, 300), value = c(-80, -80)),
-  mouthAnchors = list(time = c(0, 1), value = c(.5, .5)),
   mouth = list(time = c(0, 1), value = c(.5, .5)),
-  amplAnchors = list(time = c(0, 1), value = c(0, 0)),
   ampl = list(time = c(0, 1), value = c(0, 0)),
-  amplAnchorsGlobal = list(time = c(0, 1), value = c(0, 0)),
   amplGlobal = list(time = c(0, 1), value = c(0, 0)),
   formants = c(860, 1430, 2900),
   formantsNoise = NA,
@@ -165,10 +154,10 @@ defaults = list(
   amplDriftDep = 5,
   subDriftDep = 4,
   rolloffDriftDep = 3,
-  pitchAnchorsDep = .05,
-  noiseAnchorsDep = .1,
-  amplAnchorsDep = .1,
-  glottisAnchorsDep = .1,
+  pitchDep = .05,
+  noiseDep = .1,
+  amplDep = .1,
+  glottisDep = .1,
   specDep = .1
 )
 # usethis::use_data(defaults, overwrite = TRUE)

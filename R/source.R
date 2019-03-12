@@ -34,9 +34,9 @@
 #' # seewave::meanspec(noise1, f = samplingRate)
 #'
 #' # Percussion (run a few times to notice stochasticity due to temperature = .25)
-#' noise2 = generateNoise(len = samplingRate * .15, noiseAnchors = c(0, -80),
+#' noise2 = generateNoise(len = samplingRate * .15, noise = c(0, -80),
 #'   rolloffNoise = c(4, -6), attackLen = 5, temperature = .25)
-#' noise3 = generateNoise(len = samplingRate * .25, noiseAnchors = c(0, -40),
+#' noise3 = generateNoise(len = samplingRate * .25, noise = c(0, -40),
 #'   rolloffNoise = c(4, -20), attackLen = 5, temperature = .25)
 #' # playme(c(noise2, noise3), samplingRate)
 #'
@@ -119,8 +119,7 @@ generateNoise = function(len,
                          rolloffNoise = 0,
                          noiseFlatSpec = 1200,
                          spectralEnvelope = NULL,
-                         filterNoise = 'deprecated',
-                         noiseAnchors = NULL,
+                         noise = NULL,
                          temperature = .1,
                          attackLen = 10,
                          windowLength_points = 1024,
@@ -128,12 +127,6 @@ generateNoise = function(len,
                          overlap = 75,
                          dynamicRange = 80,
                          play = FALSE) {
-  # deprecated pars
-  if (!missing('filterNoise')) {
-    spectralEnvelope = filterNoise
-    message('filterNoise is deprecated; used spectralEnvelope instead')
-  }
-
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
     len = rnorm_bounded(n = 1,
@@ -167,8 +160,8 @@ generateNoise = function(len,
                               mean = attackLen,
                               sd = attackLen * temperature * .5,
                               low = 0, high = len / samplingRate * 1000 / 2)
-    noiseAnchors = wiggleAnchors(
-      reformatAnchors(noiseAnchors),
+    noise = wiggleAnchors(
+      reformatAnchors(noise),
       temperature = temperature,
       temp_coef = .5,
       low = c(0, -dynamicRange),
@@ -186,10 +179,10 @@ generateNoise = function(len,
   }
 
   # convert anchors to a smooth contour of breathing amplitudes
-  if (is.list(noiseAnchors)) {
+  if (is.list(noise)) {
     breathingStrength = getSmoothContour(
       len = len,
-      anchors = noiseAnchors,
+      anchors = noise,
       normalizeTime = FALSE,
       valueFloor = permittedValues['noiseAmpl', 'low'],
       valueCeiling = permittedValues['noiseAmpl', 'high'],
@@ -351,7 +344,7 @@ generateNoise = function(len,
 #' spectrogram(s2, 16000, ylim = c(0, 4))
 #' # playme(s2, 16000)
 generateHarmonics = function(pitch,
-                             glottisAnchors = 0,
+                             glottis = 0,
                              attackLen = 50,
                              nonlinBalance = 0,
                              nonlinDep = 50,
@@ -380,7 +373,7 @@ generateHarmonics = function(pitch,
                              shortestEpoch = 300,
                              subFreq = 100,
                              subDep = 0,
-                             amplAnchors = NA,
+                             ampl = NA,
                              normalize = TRUE,
                              interpol = c('approx', 'spline', 'loess')[3],
                              overlap = 75,
@@ -442,10 +435,10 @@ generateHarmonics = function(pitch,
 
   # generate a short amplitude contour to adjust rolloff per glottal cycle
   rolloffAmpl = rep(0, nGC)
-  if (is.numeric(amplAnchors) | is.list(amplAnchors)) {
-    if (any(amplAnchors$value != 0)) {
+  if (is.numeric(ampl) | is.list(ampl)) {
+    if (any(ampl$value != 0)) {
       amplContour = getSmoothContour(
-        anchors = amplAnchors,
+        anchors = ampl,
         len = nGC,
         valueFloor = -dynamicRange,
         valueCeiling = 0,
@@ -590,8 +583,8 @@ generateHarmonics = function(pitch,
 
   # synthesize one glottal cycle at a time or a whole epoch at once?
   synthesize_per_gc = FALSE
-  if (is.list(glottisAnchors)) {
-    if (any(glottisAnchors$value > 0)) {
+  if (is.list(glottis)) {
+    if (any(glottis$value > 0)) {
       synthesize_per_gc = TRUE
     }
   }
@@ -630,7 +623,7 @@ generateHarmonics = function(pitch,
       }
     }
     r = unlist(r, recursive = FALSE)  # get rid of epochs
-    glottisClosed_per_gc = getSmoothContour(anchors = glottisAnchors,
+    glottisClosed_per_gc = getSmoothContour(anchors = glottis,
                                             len = nGC,
                                             valueFloor = 0)
     waveform = generateGC(pitch_per_gc = pitch_per_gc,
@@ -668,10 +661,10 @@ generateHarmonics = function(pitch,
   if (normalize) waveform = waveform / max(abs(waveform))
 
   # apply amplitude envelope
-  if (is.numeric(amplAnchors) | is.list(amplAnchors)) {
-    if (any(amplAnchors$value != 0)) {
+  if (is.numeric(ampl) | is.list(ampl)) {
+    if (any(ampl$value != 0)) {
       amplEnvelope = getSmoothContour(
-        anchors = amplAnchors,
+        anchors = ampl,
         len = length(waveform),
         valueFloor = -dynamicRange,
         samplingRate = samplingRate
@@ -891,32 +884,15 @@ generateEpoch = function(pitch_per_gc,
 #' }
 #' }
 fart = function(glottis = c(50, 200),
-                glottisAnchors = 'deprecated',
                 pitch = 65,
-                pitchAnchors = 'deprecated',
                 temperature = 0.25,
                 sylLen = 600,
                 rolloff = -10,
                 samplingRate = 16000,
                 play = FALSE,
                 plot = FALSE) {
-  # deprecated pars
-  formerAnchors = c('pitchAnchors', 'glottisAnchors')
-  newAnchors = c('pitch', 'glottis')
-  for (i in 1:length(formerAnchors)) {
-    p = formerAnchors[i]
-    q = newAnchors[i]
-    # simply missing(noquote(p)) doesn't work, so use do.call
-    if (!do.call(missing, list(noquote(p)))) {
-      # user wrote "pitchAnchors = ..." etc
-      message(paste(p, 'is deprecated; use', q, 'instead'))
-    } else {
-      assign(p, get(q))
-    }
-  }
-
-  glottisAnchors = reformatAnchors(glottisAnchors)
-  pitchAnchors = reformatAnchors(pitchAnchors)
+  glottis = reformatAnchors(glottis)
+  pitch = reformatAnchors(pitch)
 
   # wiggle pars
   if (temperature > 0) {
@@ -929,24 +905,24 @@ fart = function(glottis = c(50, 200),
                            sd = sylLen * temperature * .5,
                            low = 0, high = 10000)
 
-    glottisAnchors = wiggleAnchors(
-      glottisAnchors, temperature, temp_coef = .5,
+    glottis = wiggleAnchors(
+      glottis, temperature, temp_coef = .5,
       low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
       )
-    pitchAnchors = wiggleAnchors(
-      pitchAnchors, temperature, temp_coef = 1,
+    pitch = wiggleAnchors(
+      pitch, temperature, temp_coef = 1,
       low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
       )
   }
 
   # prepare pitch contour
-  pitch = getSmoothContour(anchors = pitchAnchors,
+  pitch = getSmoothContour(anchors = pitch,
                            len = round(sylLen * 3500 / 1000))
 
   # synthesize the sound
   s = generateHarmonics(
     pitch = pitch,
-    glottisAnchors = glottisAnchors,
+    glottis = glottis,
     rolloff = rolloff,
     samplingRate = samplingRate,
     pitchSamplingRate = 3500
@@ -994,7 +970,6 @@ fart = function(glottis = c(50, 200),
 #' @param pauseLen average duration of pauses between syllables, ms
 #' @param pitch fundamental frequency, Hz - a vector or data.frame(time = ...,
 #'   value = ...)
-#' @param pitchAnchors same of pitch (deprecated)
 #' @param fadeOut if TRUE, a linear fade-out is applied to the entire syllable
 #' @return Returns a non-normalized waveform centered at zero.
 #' @export
@@ -1020,17 +995,11 @@ beat = function(nSyl = 10,
                 sylLen = 200,
                 pauseLen = 50,
                 pitch = c(200, 10),
-                pitchAnchors = 'deprecated',
                 samplingRate = 16000,
                 fadeOut = TRUE,
                 play = FALSE) {
-  if (!missing(pitchAnchors)) {
-    message(paste('pitchAnchors is deprecated; use pitch instead'))
-  } else {
-    pitchAnchors = pitch
-  }
   len = sylLen * samplingRate / 1000
-  pitchContour = getSmoothContour(anchors = pitchAnchors,
+  pitchContour = getSmoothContour(anchors = pitch,
                                   len = len,
                                   valueFloor = 0,
                                   thisIsPitch = TRUE)

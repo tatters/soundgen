@@ -39,9 +39,6 @@ open)}
 \item{noseRad}{the effect of radiation through the nose on source spectrum,
 dB/oct (the alternative to \code{lipRad} when the mouth is closed)}
 
-\item{mouthAnchors}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
-modification) (anchor format)}
-
 \item{interpol}{the method of smoothing envelopes based on provided mouth
 anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
 (default) = polynomial local smoothing function. NB: this does NOT affect

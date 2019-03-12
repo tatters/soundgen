@@ -4,7 +4,7 @@
 \alias{generateHarmonics}
 \title{Generate harmonics}
 \usage{
-generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
+generateHarmonics(pitch, glottis = 0, attackLen = 50,
   nonlinBalance = 0, nonlinDep = 50, nonlinRandomWalk = NULL,
   jitterDep = 0, jitterLen = 1, vibratoFreq = 5, vibratoDep = 0,
   shimmerDep = 0, shimmerLen = 1, creakyBreathy = 0, rolloff = -9,
@@ -13,10 +13,10 @@ generateHarmonics(pitch, glottisAnchors = 0, attackLen = 50,
   temperature = 0.025, pitchDriftDep = 0.5, pitchDriftFreq = 0.125,
   amplDriftDep = 5, subDriftDep = 4, rolloffDriftDep = 3,
   randomWalk_trendStrength = 0.5, shortestEpoch = 300, subFreq = 100,
-  subDep = 0, amplAnchors = NA, normalize = TRUE,
-  interpol = c("approx", "spline", "loess")[3], overlap = 75,
-  samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, dynamicRange = 80)
+  subDep = 0, ampl = NA, normalize = TRUE, interpol = c("approx",
+  "spline", "loess")[3], overlap = 75, samplingRate = 16000,
+  pitchFloor = 75, pitchCeiling = 3500, pitchSamplingRate = 3500,
+  dynamicRange = 80)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
@@ -24,7 +24,7 @@ computational efficiency, provide the pitch contour at a reduced sampling
 rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be
 upsampled before synthesis.}
 
-\item{glottisAnchors}{anchors for specifying the proportion of a
+\item{glottis}{anchors for specifying the proportion of a
 glottal cycle with closed glottis, \% (0 = no modification, 100 = closed
 phase as long as open phase); numeric vector or dataframe specifying time
 and value (anchor format)}
@@ -120,7 +120,7 @@ dynamically so f0 is always a multiple of subFreq) (anchor format)}
 strength of subharmonics fades as they move away from harmonics in f0 stack
 (anchor format)}
 
-\item{amplAnchors}{amplitude envelope (dB, 0 = max amplitude) (anchor
+\item{ampl}{amplitude envelope (dB, 0 = max amplitude) (anchor
 format)}
 
 \item{normalize}{if TRUE, normalizes to -1...+1 prior to applying attack and

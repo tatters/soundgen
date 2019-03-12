@@ -166,8 +166,8 @@ ui = fluidPage(
                                                                         shinyBS:::bsPopover(id='rolloffParab', title=NULL, content='Parabolic boost to the first ... harmonics, dB', placement="right", trigger="hover"),
                                                                         sliderInput('rolloffParabHarm', 'Harmonics boosted', value=permittedValues['rolloffParabHarm','default'], min=permittedValues['rolloffParabHarm', 'low'], max=permittedValues['rolloffParabHarm', 'high'], step=permittedValues['rolloffParabHarm','step']),
                                                                         shinyBS:::bsPopover(id='rolloffParabHarm', title=NULL, content='Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover"),
-                                                                        sliderInput('glottisAnchors', 'Closed glottis, %', value=permittedValues['glottisAnchors', 'default'], min=permittedValues['glottisAnchors', 'low'], max=permittedValues['glottisAnchors', 'high'], step=permittedValues['glottisAnchors','step']),
-                                                                        shinyBS:::bsPopover(id='glottisAnchors', title=NULL, content='Proportion of time glottis is closed relative to F0 period; adds silences between glottal cycles', placement="right", trigger="hover")
+                                                                        sliderInput('glottis', 'Closed glottis, %', value=permittedValues['glottis', 'default'], min=permittedValues['glottis', 'low'], max=permittedValues['glottis', 'high'], step=permittedValues['glottis','step']),
+                                                                        shinyBS:::bsPopover(id='glottis', title=NULL, content='Proportion of time glottis is closed relative to F0 period; adds silences between glottal cycles', placement="right", trigger="hover")
                                                ), width=6
                                              ),
                                              mainPanel(
