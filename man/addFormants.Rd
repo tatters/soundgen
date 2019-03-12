@@ -7,10 +7,10 @@
 addFormants(sound, formants, spectralEnvelope = NULL, action = c("add",
   "remove")[1], vocalTract = NA, formantDep = 1,
   formantDepStoch = 20, formantWidth = 1, lipRad = 6, noseRad = 4,
-  mouthOpenThres = 0, mouthAnchors = NA, interpol = c("approx",
-  "spline", "loess")[3], temperature = 0.025, formDrift = 0.3,
-  formDisp = 0.2, samplingRate = 16000, windowLength_points = 800,
-  overlap = 75, normalize = TRUE)
+  mouthOpenThres = 0, mouth = NA, interpol = c("approx", "spline",
+  "loess")[3], temperature = 0.025, formDrift = 0.3, formDisp = 0.2,
+  samplingRate = 16000, windowLength_points = 800, overlap = 75,
+  normalize = TRUE)
 }
 \arguments{
 \item{sound}{numeric vector with \code{samplingRate}}
@@ -55,6 +55,9 @@ dB/oct (the alternative to \code{lipRad} when the mouth is closed)}
 
 \item{mouthOpenThres}{open the lips (switch from nose radiation to lip
 radiation) when the mouth is open \code{>mouthOpenThres}, 0 to 1}
+
+\item{mouth}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
+modification) (anchor format)}
 
 \item{interpol}{the method of smoothing envelopes based on provided mouth
 anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'

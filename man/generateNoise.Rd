@@ -49,8 +49,6 @@ resources}
 
 \item{play}{if TRUE, plays the synthesized sound. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
-
-\item{filterNoise}{(deprecated) same as spectralEnvelope}
 }
 \description{
 Generates noise of length \code{len} and with spectrum defined by linear

@@ -21,7 +21,6 @@
 #'   for each STFT step is also accepted. The easiest way to create this matrix
 #'   is to call soundgen:::getSpectralEnvelope or to use the spectrum of a
 #'   recorded sound
-#' @param filterNoise (deprecated) same as spectralEnvelope
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points
 #' @export

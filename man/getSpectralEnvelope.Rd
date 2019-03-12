@@ -5,7 +5,7 @@
 \title{Spectral envelope}
 \usage{
 getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1,
-  formantWidth = 1, lipRad = 6, noseRad = 4, mouthAnchors = NA,
+  formantWidth = 1, lipRad = 6, noseRad = 4, mouth = NA,
   interpol = c("approx", "spline", "loess")[3], mouthOpenThres = 0.2,
   openMouthBoost = 0, vocalTract = NULL, temperature = 0.05,
   formDrift = 0.3, formDisp = 0.2, formantDepStoch = 20,
@@ -38,6 +38,9 @@ open)}
 
 \item{noseRad}{the effect of radiation through the nose on source spectrum,
 dB/oct (the alternative to \code{lipRad} when the mouth is closed)}
+
+\item{mouth}{mouth opening (0 to 1, 0.5 = neutral, i.e. no
+modification) (anchor format)}
 
 \item{interpol}{the method of smoothing envelopes based on provided mouth
 anchors: 'approx' = linear interpolation, 'spline' = cubic spline, 'loess'
@@ -128,7 +131,7 @@ e = getSpectralEnvelope(nr = 512, nc = 50,
 # mouth opening
 e = getSpectralEnvelope(nr = 512, nc = 50,
   vocalTract = 16, plot = TRUE, lipRad = 6, noseRad = 4,
-  mouthAnchors = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
+  mouth = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 
 # scale formant amplitude and/or bandwidth
 e = getSpectralEnvelope(nr = 512, nc = 50,

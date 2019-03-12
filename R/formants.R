@@ -70,7 +70,7 @@
 #' # mouth opening
 #' e = getSpectralEnvelope(nr = 512, nc = 50,
 #'   vocalTract = 16, plot = TRUE, lipRad = 6, noseRad = 4,
-#'   mouthAnchors = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
+#'   mouth = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 #'
 #' # scale formant amplitude and/or bandwidth
 #' e = getSpectralEnvelope(nr = 512, nc = 50,
@@ -93,7 +93,7 @@ getSpectralEnvelope = function(nr,
                                formantWidth = 1,
                                lipRad = 6,
                                noseRad = 4,
-                               mouthAnchors = NA,
+                               mouth = NA,
                                interpol = c('approx', 'spline', 'loess')[3],
                                mouthOpenThres = 0.2,
                                openMouthBoost = 0,
@@ -276,14 +276,14 @@ getSpectralEnvelope = function(nr,
     }
 
     # mouth opening
-    if (length(mouthAnchors) < 1 | any(is.na(mouthAnchors))) {
+    if (length(mouth) < 1 | any(is.na(mouth))) {
       mouthOpening_upsampled = rep(0.5, nc) # defaults to mouth half-open the
       # whole time - sort of hanging loosely agape ;))
       mouthOpen_binary = rep(1, nc)
     } else {
       mouthOpening_upsampled = getSmoothContour(
         len = nc,
-        anchors = mouthAnchors,
+        anchors = mouth,
         interpol = interpol,
         valueFloor = permittedValues['mouthOpening', 'low'],
         valueCeiling = permittedValues['mouthOpening', 'high'],
@@ -908,7 +908,7 @@ addFormants = function(sound,
                        lipRad = 6,
                        noseRad = 4,
                        mouthOpenThres = 0,
-                       mouthAnchors = NA,
+                       mouth = NA,
                        interpol = c('approx', 'spline', 'loess')[3],
                        temperature = 0.025,
                        formDrift = 0.3,
@@ -944,8 +944,8 @@ addFormants = function(sound,
       } else {
         movingFormants = FALSE
       }
-      if (is.list(mouthAnchors)) {
-        if (sum(mouthAnchors$value != .5) > 0) {
+      if (is.list(mouth)) {
+        if (sum(mouth$value != .5) > 0) {
           movingFormants = TRUE
         }
       }
@@ -962,7 +962,7 @@ addFormants = function(sound,
         lipRad = lipRad,
         noseRad = noseRad,
         mouthOpenThres = mouthOpenThres,
-        mouthAnchors = mouthAnchors,
+        mouth = mouth,
         interpol = interpol,
         temperature = temperature,
         formDrift = formDrift,
