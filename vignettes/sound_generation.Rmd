@@ -40,12 +40,12 @@ At this crucial stage, we "paint" the spectrogram of the glottal source based on
   
 <p> Note that soundgen currently implements only sine wave synthesis of voiced fragments. This is different from modeling glottal cycles themselves, as in phonetic models and some popular text-to-speech engines (e.g. Klatt, 1980). Normally multiple glottal cycles are generated simultaneously, with no pauses in between them (no closed phase) and with a continuously changing f0. It is also possible to add a closed phase, in which case each glottal cycle is generated separately, with f0 held stable within each cycle. In future versions of soundgen there may be an option to use a particular parametric model of the glottal cycle as excitation source as an alternative to generating a separate sine wave for each harmonic.</p>
   
-1.  Generation of the turbulent noise component (aspiration, hissing, etc.).
+2.  Generation of the turbulent noise component (aspiration, hissing, etc.).
 In addition to harmonic oscillations of the vocal cords, there are other sources of excitation, notably turbulent noise. For example, aspiration noise may be synthesized as white noise with rolloff -6 dB/octave (Klatt, 1990) and added to the glottal source before formant filtering. It is similarly straightforward to add other types of noise, which may originate higher up in the vocal tract and thus display a different formant structure from the glottal source (e.g., high-frequency hissing, broadband clicks for tongue smacking, etc.) 
 
 <p> Some form of noise is synthesized in most sound generators. In soundgen noise is created in the frequency domain (i.e., as a spectrogram) and then converted into a time series via inverse FFT. Noise is generated with a flat spectrum up to a certain threshold, followed by user-specified linear rolloff (Johnson, 2012).</p>
   
-1.  Spectral filtering (formants and lip radiation).
+3.  Spectral filtering (formants and lip radiation).
 The vocal tract acts as a resonator that modifies the source spectrum by amplifying certain frequencies and dampening others. In speech, time-varying resonance frequencies (formants) are responsible for the distinctions between different vowels, but formants are also ubiquitous in animal vocalizations. Just as we "painted" a spectrogram for the acoustic source in (1), we now "paint" a spectral filter with a specified number of stationary or moving formants. We then take a short-time Fourier transform (STFT) of the generated waveform to convert it back to a spectrogram, multiply the latter by our filter, and then take an inverse STFT to go back to the time domain. This filtering can be applied to harmonic and noise components separately or - for noise sources close to the glottis - the harmonic component and the noise component can be added first and then filtered together. 
 
 <p> Note that this STFT-mediated method of adding formants is different from the more traditional convolution, but with multiple formants it is both considerably faster and (arguably) more intuitive. If you are wondering why we should bother to do iSTFT and then again STFT before filtering the voiced component, rather than simply applying the filter to the rolloff matrix before the iSTFT, this is an annoying consequence of some complexities of the temporal structure of a bout, especially of applying non-stationary filters (moving formants) that span multiple syllables. With noise, however, this extra step can be avoided, and we only do iSTFT once.</p>
@@ -253,9 +253,9 @@ If you don't want stochastic behavior, set temperature to zero. But note that so
 * `amplDriftDep`: drift of amplitude mirroring pitch drift
 * `subDriftDep`: drift of subharmonic frequency and bandwidth mirroring pitch drift
 * `rolloffDriftDep`: drift of rolloff mirroring pitch drift
-* `pitchAnchorsDep`: random fluctuations of user-specified pitch anchors across syllables (if nSyl > 1)
-* `noiseAnchorsDep`: random fluctuations of user-specified noise anchors across syllables (if nSyl > 1)
-* `amplAnchorsDep`: random fluctuations of user-specified amplitude anchors across syllables (if nSyl > 1)
+* `pitchDep`: random fluctuations of user-specified pitch anchors across syllables (if nSyl > 1)
+* `noiseDep`: random fluctuations of user-specified noise anchors across syllables (if nSyl > 1)
+* `amplDep`: random fluctuations of user-specified amplitude anchors across syllables (if nSyl > 1)
 * `specDep`: random fluctuations of rolloff, nonlinear effects, attack
 
 The default value of each scaling parameter is 1. To enhance a particular component of stochastic behavior, set the corresponding coefficient to a value >1; to remove it completely, set its scaling coefficient to zero. 
@@ -634,7 +634,7 @@ s = soundgen(sylLen = 1200,
              pitch = list(
                time = c(0, 110, 111, 180, 350, 940, 941, 1100, 1200),
                value = c(700, 1150, 1550, 2000, 2240, 1940, 1180, 900, 500)),
-             temperature = 0.05, tempEffects = list(pitchAnchors = 0),
+             temperature = 0.05, tempEffects = list(pitchDep = 0),
              nonlinBalance = 100, subDep = 0, 
              jitterDep = data.frame(time = c(0, 200, 201, 900, 901, 1200),
                                     value = c(0, 0,  1.7, 1.2, 0,   0)),
@@ -846,7 +846,7 @@ s2 = soundgen(noiseAmpRef = 'f0', rolloff = -15,
               plot = T, osc = T, play = playback)
 ```
 
-1. If `noiseAmpRef = 'source'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the unfiltered voiced component ("glottal source"). In other words, you are specifying how loud the noise is relative to the source of excitation, but the actual balance between harmonics and noise can vary depending on the formant structure. Example:
+2. If `noiseAmpRef = 'source'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the unfiltered voiced component ("glottal source"). In other words, you are specifying how loud the noise is relative to the source of excitation, but the actual balance between harmonics and noise can vary depending on the formant structure. Example:
 ```{r fig.width = 7, fig.height = 5}
 # Harmonics-noise balance doesn't depend on rolloff...
 s3 = soundgen(noiseAmpRef = 'source', rolloff = -15, rolloffNoise = 0,
@@ -865,7 +865,7 @@ s6 = soundgen(noiseAmpRef = 'source', formants = 'u',
               plot = T, osc = T, play = playback)
 ```
 
-1. If `noiseAmpRef = 'filtered'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the filtered voiced component (after adding formants). The balance between harmonics and noise therefore doesn't depend on either rolloff or formants. This is the default option. Example:
+3. If `noiseAmpRef = 'filtered'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the filtered voiced component (after adding formants). The balance between harmonics and noise therefore doesn't depend on either rolloff or formants. This is the default option. Example:
 ```{r fig.width = 7, fig.height = 5}
 s7 = soundgen(noiseAmpRef = 'filtered', formants = 'a', 
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 

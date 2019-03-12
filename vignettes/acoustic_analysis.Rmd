@@ -715,4 +715,6 @@ Boersma, P. (1993). Accurate short-term analysis of the fundamental frequency an
 
 Foote, J. (2000). "Automatic Audio Segmentation using a measure of audio novelty." In Proceedings of IEEE International Conference on Multimedia and Expo, vol. I, pp. 452-455.
 
+Singh, N. C., & Theunissen, F. E. (2003). Modulation spectra of natural sounds and ethological theories of auditory processing. The Journal of the Acoustical Society of America, 114(6), 3394-3411.
+
 Sueur, J. (2018). Sound analysis and synthesis with R. Heidelberg, Germany: Springer.

@@ -355,11 +355,11 @@ analyze = function(x,
   # calculate scaling coefficient for loudness calculation, but don't convert
   # yet, since most routines in analyze() require scale [-1, 1]
   scaleCorrection = max(abs(scaleSPL(sound * m / scale,
-    # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
-                             scale = 1,
-                             SPL_measured = SPL_measured,
-                             Pref = Pref))) /  # peak ampl of rescaled
-                                            m  # peak ampl of original
+                                     # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
+                                     scale = 1,
+                                     SPL_measured = SPL_measured,
+                                     Pref = Pref))) /  # peak ampl of rescaled
+    m  # peak ampl of original
 
   # normalize to range from no less than -1 to no more than +1
   if (min(sound) > 0) {
@@ -551,7 +551,7 @@ analyze = function(x,
                'sound',
                plotname)
     png(filename = paste0(savePath, f, ".png"),
-         width = width, height = height, units = units, res = res)
+        width = width, height = height, units = units, res = res)
   }
   frameBank = getFrameBank(
     sound = sound,
@@ -872,37 +872,35 @@ analyze = function(x,
     }
     # add pitch candidates to the plot
     if (nrow(pitchCands) > 0) {
-      if (length(candPlot) > 0) {
-        if (is.null(candPlot$levels)) {
-          candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
-        }
-        if (is.null(candPlot$col)) {
-          candPlot$col[candPlot$levels == 'autocor'] = 'green'
-          candPlot$col[candPlot$levels == 'spec'] = 'red'
-          candPlot$col[candPlot$levels == 'dom'] = 'orange'
-          candPlot$col[candPlot$levels == 'cep'] = 'violet' # c('green', 'red', 'orange', 'violet')
-        }
-        if (is.null(candPlot$pch)) {
-          candPlot$pch[candPlot$levels == 'autocor'] = 16
-          candPlot$pch[candPlot$levels == 'spec'] = 2
-          candPlot$pch[candPlot$levels == 'dom'] = 3
-          candPlot$pch[candPlot$levels == 'cep'] = 7
-          # candPlot$pch = c(16, 2, 3, 7)
-        }
-        if (is.null(candPlot$cex)) {
-          candPlot$cex = 2
-        }
-        pitchSource_1234 = matrix(match(pitchSource, candPlot$levels),
-                                  ncol = ncol(pitchSource))
-        for (r in 1:nrow(pitchCands)) {
-          points(
-            x = result$time,
-            y = pitchCands[r, ] / 1000,
-            col = candPlot$col[pitchSource_1234[r, ]],
-            pch = candPlot$pch[pitchSource_1234[r, ]],
-            cex = pitchCert[r, ] * candPlot$cex
-          )
-        }
+      if (is.null(candPlot$levels)) {
+        candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
+      }
+      if (is.null(candPlot$col)) {
+        candPlot$col[candPlot$levels == 'autocor'] = 'green'
+        candPlot$col[candPlot$levels == 'spec'] = 'red'
+        candPlot$col[candPlot$levels == 'dom'] = 'orange'
+        candPlot$col[candPlot$levels == 'cep'] = 'violet' # c('green', 'red', 'orange', 'violet')
+      }
+      if (is.null(candPlot$pch)) {
+        candPlot$pch[candPlot$levels == 'autocor'] = 16
+        candPlot$pch[candPlot$levels == 'spec'] = 2
+        candPlot$pch[candPlot$levels == 'dom'] = 3
+        candPlot$pch[candPlot$levels == 'cep'] = 7
+        # candPlot$pch = c(16, 2, 3, 7)
+      }
+      if (is.null(candPlot$cex)) {
+        candPlot$cex = 2
+      }
+      pitchSource_1234 = matrix(match(pitchSource, candPlot$levels),
+                                ncol = ncol(pitchSource))
+      for (r in 1:nrow(pitchCands)) {
+        points(
+          x = result$time,
+          y = pitchCands[r, ] / 1000,
+          col = candPlot$col[pitchSource_1234[r, ]],
+          pch = candPlot$pch[pitchSource_1234[r, ]],
+          cex = pitchCert[r, ] * candPlot$cex
+        )
       }
       # add the final pitch contour to the plot
       if (any(is.numeric(result$pitch))) {
