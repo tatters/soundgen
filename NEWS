@@ -1,3 +1,5 @@
+          CHANGES IN SOUNDGEN VERSION 1.4.1 [...Date...]
+
           CHANGES IN SOUNDGEN VERSION 1.4.0 [13-March-2019]
 MAJOR (affect back-compatibility):
   * soundgen(), fart(), beat(), generateNoise(): removed all deprecated parameters, notably "pitchAnchors", "noiseAnchors", etc. (now simply "pitch", "noise", etc.)
