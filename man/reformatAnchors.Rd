@@ -18,7 +18,7 @@ Internal soundgen function.
 \details{
 Checks that the anchors are formatted in a valid way and expands them to a
 standard dataframe with two columns: time and value. NB: works for all
-anchors except noiseAnchors, which have to be scaled by sylLen and are
+anchors except "noise", whose anchors have to be scaled by sylLen and are
 therefore processed directly in soundgen()
 }
 \examples{

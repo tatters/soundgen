@@ -448,7 +448,7 @@ getDiscreteContour = function(len,
 #'
 #' Checks that the anchors are formatted in a valid way and expands them to a
 #' standard dataframe with two columns: time and value. NB: works for all
-#' anchors except noiseAnchors, which have to be scaled by sylLen and are
+#' anchors except "noise", whose anchors have to be scaled by sylLen and are
 #' therefore processed directly in soundgen()
 #' @param anchors a numeric vector of values or a list/dataframe with one column
 #'   (value) or two columns (time and value)

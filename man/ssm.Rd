@@ -80,7 +80,7 @@ Calculates the self-similarity matrix and novelty vector of a sound.
 }
 \examples{
 sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
-          formants = NA, pitchAnchors = c(500, 330)))
+          formants = NA, pitch = c(500, 330)))
 # playme(sound)
 m1 = ssm(sound, samplingRate = 16000,
          input = 'audiogram', simil = 'cor', norm = FALSE,

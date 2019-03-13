@@ -586,7 +586,7 @@ wiggleAnchors = function(df,
 #' the actual syllable duration re the average expected duration (which the user
 #' sees in the UI when choosing time anchors). Time anchors beyond sylLen are
 #' scaled to preserve post-aspiration duration.
-#' @param noiseTime vector of time points at which noiseAnchors are defined
+#' @param noiseTime vector of time points at which noise anchors are defined
 #' @param sylLen_old syllable length relative to which the timing of noise anchors is
 #' specified
 #' @param sylLen_new the new syllable length

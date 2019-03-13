@@ -1,8 +1,8 @@
 Package: soundgen
 Type: Package
 Title: Parametric Voice Synthesis
-Version: 1.3.4.0
-Date: Sys.Date()
+Version: 1.4.0
+Date: 2019-03-13
 Authors@R: person("Andrey", "Anikin", email = "rty.anik@rambler.ru", role = c("aut", "cre"))
 Maintainer: Andrey Anikin <rty.anik@rambler.ru>
 URL: http://cogsci.se/soundgen.html

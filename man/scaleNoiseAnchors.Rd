@@ -7,7 +7,7 @@
 scaleNoiseAnchors(noiseTime, sylLen_old, sylLen_new)
 }
 \arguments{
-\item{noiseTime}{vector of time points at which noiseAnchors are defined}
+\item{noiseTime}{vector of time points at which noise anchors are defined}
 
 \item{sylLen_old}{syllable length relative to which the timing of noise anchors is
 specified}

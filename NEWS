@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.4.0 [12-March-2019]
+          CHANGES IN SOUNDGEN VERSION 1.4.0 [13-March-2019]
 MAJOR (affect back-compatibility):
   * soundgen(), fart(), beat(), generateNoise(): removed all deprecated parameters, notably "pitchAnchors", "noiseAnchors", etc. (now simply "pitch", "noise", etc.)
   * soundgen(): a new argument ("noiseAmpRef") controls how the relative amplitudes of voiced and unvoiced components are specified by the "noise" setting, with 3 options: "f0" (noise amplitude relative to first partial) produces the same results as in earlier versions of soundgen; both "source" (relative to ulfiltered voiced component) and "filtered" (relative to filtered voiced component - the new default) make noise amplitude less dependent on rolloff. The new default is thus to specify the (peak) amplitude of noise directly in relation to the (peak) amplitude of the voiced component, which is different from older versions - check your code! See vignette on sound synthesis, section 2.12.2, "Noise amplitude".
