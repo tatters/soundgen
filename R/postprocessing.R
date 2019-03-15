@@ -25,14 +25,15 @@ playme = function(sound, samplingRate = 16000) {
     soundWave = tuneR::normalize(soundWave, unit = '32') # / 2
   }
 
-  os = Sys.info()[['sysname']]
-  if (os == 'Linux' | os == 'linux') {
-    p = tuneR::play(soundWave, 'play')
-  } else {  # windows | darwin
-    p = tuneR::play(soundWave)
-  }
+  # os = Sys.info()[['sysname']]
+  # if (os == 'Linux' | os == 'linux') {
+  #   p = tuneR::play(soundWave, 'play')
+  # } else {  # windows | darwin
+  #   p = tuneR::play(soundWave)
+  # }
+  p = tuneR::play(soundWave)
   if (p > 0) {  # error in sh
-    warning("Error in tuneR::play. Try setting the default audio player. See http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf")
+    warning("Error in tuneR::play. Try setting the default audio player, eg tuneR::setWavPlayer('aplay'). See http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf")
   }
   # can't get rid of printed output! sink(), capture.output, invisible don't work!!!
 }
