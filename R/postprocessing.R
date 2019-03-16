@@ -4,14 +4,25 @@
 #' functionality provided by \code{\link[tuneR]{play}}
 #' @param sound a vector of numbers on any scale or a path to a .wav file
 #' @param samplingRate sampling rate (only needed if sound is a vector)
+#' @param ... additional parameters passed to \code{\link[tuneR]{play}}
 #' @export
 #' @examples
-#' # playme('~/myfile.wav')
+#' # Play an audio file:
+#' # playme('pathToMyAudio/audio.wav')
+#'
+#' # Create and play a numeric vector:
 #' f0_Hz = 440
 #' sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
 #' # playme(sound, 16000)
-#' # in case of errors, look into tuneR::play()
-playme = function(sound, samplingRate = 16000) {
+#'
+#' # In case of errors, look into tuneR::play(). For ex., you might need to
+#' # specify which player to use:
+#' # playme(sound, 16000, player = 'aplay')
+#'
+#' # To avoid doing it all the time, set the default player:
+#' tuneR::setWavPlayer('aplay')
+#' # playme(sound, 16000)  # should work without specifying the player
+playme = function(sound, samplingRate = 16000, player = NULL) {
   # input: a vector of numbers on any scale or a path to a .wav file
   if (class(sound) == 'character') {
     soundWave = tuneR::readWave(sound)
@@ -25,15 +36,22 @@ playme = function(sound, samplingRate = 16000) {
     soundWave = tuneR::normalize(soundWave, unit = '32') # / 2
   }
 
-  # os = Sys.info()[['sysname']]
-  # if (os == 'Linux' | os == 'linux') {
-  #   p = tuneR::play(soundWave, 'play')
-  # } else {  # windows | darwin
-  #   p = tuneR::play(soundWave)
-  # }
-  p = tuneR::play(soundWave)
+  if (!is.null(player)) {
+    p = tuneR::play(soundWave, player = player)
+  } else {
+    # try to guess
+    os = Sys.info()[['sysname']]
+    if (os == 'Linux' | os == 'linux') {
+      p = tuneR::play(soundWave, 'play')
+    } else {  # windows | darwin
+      p = tuneR::play(soundWave)
+    }
+  }
   if (p > 0) {  # error in sh
-    warning("Error in tuneR::play. Try setting the default audio player, eg tuneR::setWavPlayer('aplay'). See http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf")
+    warning(paste0(
+      "Error in tuneR::play. Try setting the default audio player,",
+      "eg tuneR::setWavPlayer('aplay'). See http://music.informatics.",
+      "indiana.edu/courses/I546/tuneR_play.pdf"))
   }
   # can't get rid of printed output! sink(), capture.output, invisible don't work!!!
 }

@@ -58,11 +58,13 @@ Having briefly looked at the fundamental principles of sound generation, we proc
 To generate a sound, you can either type `soundgen_app()` to open an interactive Shiny app or call `soundgen()` from R console with manually specified parameters. An object called `presets` contains a collection of presets that demonstrate some of the possibilities. More information is available on the project's homepage at <a href="http://cogsci.se/soundgen.html">http://cogsci.se/soundgen.html</a>.
   
 ## Audio playback
-Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback, via a wrapper function called `playme()` that accepts both Wave objects and simple numeric vectors. If `soundgen(play = TRUE)` throws an error, make sure the audio can be played before you proceed with using soundgen. To do so, save some sound as a vector first: `sound = soundgen(play = FALSE)` or even simply `sound = rnorm(10000)`. Then try to find a way to play this vector `sound`. You may need to change the default player in `tuneR` or install additional software. See the <a href="https://CRAN.R-project.org/package=seewave">seewave vignette</a> on sound input/output for an in-depth discussion of audio playback in R. Some tips are also available <a href="http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf">here</a>.
+Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback, via a wrapper function called `playme()` that accepts both Wave objects and simple numeric vectors. If `soundgen(play = TRUE)` throws an error, make sure the audio can be played before you proceed with using soundgen. To do so, save some sound as a vector first: `sound = soundgen(play = FALSE)` or even simply `sound = rnorm(10000)`. Then try to find a way to play this vector `sound`. You may need to change the default player in `tuneR` or install additional software. See the <a href="https://CRAN.R-project.org/package=seewave">seewave vignette</a> on sound input/output for an in-depth discussion of audio playback in R. Some tips are also available <a href="http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf">here</a>. Sueur (2018, p. 100) recommends Window Media Player on Windows, AudioUnits for Mac OS, SoX for Linux (the player is called "play"), or VLC on any platform.
   
-Because of possible errors, audio playback is disabled by default in the rest of this vignette. To turn it on without changing any code, simply set the global variable `playback = TRUE`:
+Because of possible errors, audio playback is disabled by default in the rest of this vignette. To turn it on without changing any code, simply set the global variable `playback` to the appropriate value for your specific OS, for ex.:
 ```{r}
-playback = c(TRUE, FALSE)[2]
+playback = c(TRUE, FALSE, "play", "aplay", "vlc")[2]
+# TRUE means using "play" on Linux and the defaults of tuneR::play on Windows/Mac
+# FALSE means no sound playback
 ```
 
 ## From the console

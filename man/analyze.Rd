@@ -207,7 +207,7 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   \item{ampl}{root mean square of amplitude per frame, calculated as
   sqrt(mean(frame ^ 2))} \item{amplVoiced}{the same as ampl for voiced frames
   and NA for unvoiced frames} \item{dom}{lowest dominant frequency band (Hz)
-  (see “Pitch tracking methods / Dominant frequency” in the vignette)}
+  (see "Pitch tracking methods / Dominant frequency" in the vignette)}
   \item{entropy}{Weiner entropy of the spectrum of the current frame. Close
   to 0: pure tone or tonal sound with nearly all energy in harmonics; close
   to 1: white noise} \item{f1_freq, f1_width, ...}{the frequency and
@@ -216,8 +216,8 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   of energy in upper harmonics, namely the ratio of total spectral mass
   above 1.25 x F0 to the total spectral mass below 1.25 x F0 (dB)}
   \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
-  by soundgen:::getPitchAutocor (see “Pitch tracking methods /
-  Autocorrelation”). If HNR = 0 dB, there is as much energy in harmonics as
+  by soundgen:::getPitchAutocor (see "Pitch tracking methods /
+  Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as
   in noise} \item{loudness}{subjective loudness, in sone, corresponding to
   the chosen SPL_measured - see \code{\link{getLoudness}}}
   \item{medianFreq}{50th quantile of the frame's spectrum}

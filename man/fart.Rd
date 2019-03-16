@@ -29,7 +29,9 @@ vectorized)}
 
 \item{samplingRate}{sampling frequency, Hz}
 
-\item{play}{if TRUE, plays the synthesized sound. In case of errors, try
+\item{play}{if TRUE, plays the synthesized sound using the default player on
+your system. If character, passed to \code{\link[tuneR]{play}} as the name
+of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
 
 \item{plot}{if TRUE, plots the waveform}

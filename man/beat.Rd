@@ -21,7 +21,9 @@ value = ...)}
 
 \item{fadeOut}{if TRUE, a linear fade-out is applied to the entire syllable}
 
-\item{play}{if TRUE, plays the synthesized sound. In case of errors, try
+\item{play}{if TRUE, plays the synthesized sound using the default player on
+your system. If character, passed to \code{\link[tuneR]{play}} as the name
+of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
 }
 \value{
