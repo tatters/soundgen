@@ -40,7 +40,7 @@
 #' # playme(c(noise2, noise3), samplingRate)
 #'
 #' \dontrun{
-#' playback = c(TRUE, FALSE)[2]
+#' playback = c(TRUE, FALSE, 'aplay', 'vlc')[2]
 #' # 1.2 s of noise with rolloff changing from 0 to -12 dB above 2 kHz
 #' noise = generateNoise(len = samplingRate * 1.2,
 #'   rolloffNoise = c(0, -12), noiseFlatSpec = 2000,
@@ -294,7 +294,10 @@ generateNoise = function(len,
     }
   }
   # plot(breathing, type = 'l')
-  if (play) playme(breathing, samplingRate = samplingRate)
+  if (play == TRUE) playme(breathing, samplingRate = samplingRate)
+  if (is.character(play)) {
+    playme(breathing, samplingRate = samplingRate, player = play)
+  }
   # spectrogram(breathing, samplingRate = samplingRate)
   # seewave::meanspec(breathing, f = samplingRate, wl = windowLength_points, dB = 'max0')
   return(breathing)
@@ -947,6 +950,9 @@ fart = function(glottis = c(50, 200),
   s = s / max(abs(s))
 
   if (play) playme(s, samplingRate)
+  if (is.character(play)) {
+    playme(s, samplingRate = samplingRate, player = play)
+  }
   if (plot) {
     time = (1:length(s)) / samplingRate * 1000
     plot(time, s, type = 'l', xlab = 'Time, ms')
@@ -1013,6 +1019,9 @@ beat = function(nSyl = 10,
     pause = rep(0, round(pauseLen / 1000 * samplingRate))
     beat = rep(c(beat, pause), nSyl)
   }
-  if (play) playme(beat, samplingRate)
+  if (play == TRUE) playme(beat, samplingRate)
+  if (is.character(play)) {
+    playme(beat, samplingRate = samplingRate, player = play)
+  }
   return(beat)
 }

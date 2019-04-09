@@ -1,4 +1,4 @@
-# TODO: streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -189,9 +189,9 @@ NULL
 #' # NB: GUI for soundgen is available as a Shiny app.
 #' # Type "soundgen_app()" to open it in default browser
 #'
-#' playback = c(TRUE, FALSE)[2]  # set to TRUE for default system player or the
-#' name of preferred player (eg "aplay" or "vlc") to play back the audio from
-#' examples
+#'# Set "playback" to TRUE for default system player or the name of preferred
+#' # player (eg "aplay") to play back the audio from examples
+#' playback = c(TRUE, FALSE, 'aplay', 'vlc')[2]
 #'
 #' sound = soundgen(play = playback)
 #' # spectrogram(sound, 16000, osc = TRUE)

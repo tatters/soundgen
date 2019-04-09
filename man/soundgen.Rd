@@ -277,7 +277,9 @@ animal or human non-linguistic vocalizations. For more information, see
 # NB: GUI for soundgen is available as a Shiny app.
 # Type "soundgen_app()" to open it in default browser
 
-playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
+# Set "playback" to TRUE for default system player or the name of preferred
+# player (eg "aplay") to play back the audio from examples
+playback = c(TRUE, FALSE, 'aplay', 'vlc')[2]
 
 sound = soundgen(play = playback)
 # spectrogram(sound, 16000, osc = TRUE)

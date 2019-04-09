@@ -1,4 +1,8 @@
           CHANGES IN SOUNDGEN VERSION 1.4.1 [...Date...]
+MINOR:
+  * soundgen(), playme(), generateNoise(), fart(), beat(): the previously boolean argument "play" can now also be a string to specify the audio player, eg play = 'aplay' or play = 'vlc'
+  * morph(): proper handling of attackLen and other small debugging
+
 
           CHANGES IN SOUNDGEN VERSION 1.4.0 [13-March-2019]
 MAJOR (affect back-compatibility):

@@ -82,7 +82,7 @@ noise3 = generateNoise(len = samplingRate * .25, noise = c(0, -40),
 # playme(c(noise2, noise3), samplingRate)
 
 \dontrun{
-playback = c(TRUE, FALSE)[2]
+playback = c(TRUE, FALSE, 'aplay', 'vlc')[2]
 # 1.2 s of noise with rolloff changing from 0 to -12 dB above 2 kHz
 noise = generateNoise(len = samplingRate * 1.2,
   rolloffNoise = c(0, -12), noiseFlatSpec = 2000,

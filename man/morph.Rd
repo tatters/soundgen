@@ -20,8 +20,8 @@ are also accepted (see examples)}
 \item{savePath}{if it is the path to an existing directory, morphs will be
 saved there as individual .wav files (defaults to NA)}
 
-\item{samplingRate}{sampling rate of output, Hz. NB: must be the same as in
-\code{formula1} and \code{formula2}!}
+\item{samplingRate}{sampling rate of output, Hz. NB: overrides the values in
+\code{formula1} and \code{formula2}}
 }
 \value{
 A list of two sublists (\code{$formulas} and \code{$sounds}), each
@@ -32,7 +32,8 @@ A list of two sublists (\code{$formulas} and \code{$sounds}), each
 Takes two formulas for synthesizing two target sounds with
 \code{\link{soundgen}} and produces a number of intermediate forms (morphs),
 attempting to go from one target sound to the other in a specified number of
-equal steps.
+equal steps. Normally you will want to set \code{temperature} very low; the
+\code{tempEffects} argument is not supported.
 }
 \examples{
 # write two formulas or copy-paste them from soundgen_app() or presets:
@@ -66,6 +67,34 @@ m = morph(
     noise = data.frame(time = c(0, 300, 440), value = c(-35, -25, -65)),
     mouth = c(.4, .5), rolloffNoise = -5, attackLen = 30)',
   nMorphs = 8, playMorphs = playback
+)
+
+# from scream_010 to moan_515b
+# (see online demos at http://cogsci.se/soundgen/humans/humans.html)
+m = morph(
+  formula1 = "soundgen(
+    sylLen = 490,
+    pitch = list(time = c(0, 80, 250, 370, 490),
+    value = c(1000, 2900, 3200, 2900, 1000)),
+    rolloff = c(-5, 0, -25), rolloffKHz = 0,
+    temperature = 0.001,
+    nonlinBalance = 100, subDep = 0,
+    jitterDep = c(.5, 1, 0), shimmerDep = c(5, 15, 0),
+    formants = c(1100, 2300, 3100, 4000, 5300, 6200),
+    mouth = c(.3, .5, .6, .5, .3))",
+  formula2 = "soundgen(sylLen = 520,
+    pitch = c(300, 310, 300),
+    ampl = c(0, -30),
+    temperature = 0.001, rolloff = c(-18, -25),
+    nonlinBalance = 100, jitterDep = .05, shimmerDep = 2, subDep = 0,
+    formants = list(f1 = c(700, 900),
+      f2 = c(1600, 1400),
+      f3 = c(3600, 3500), f4 = c(4300, 4200)),
+    mouth = c(.5, .3),
+    noise = data.frame(time = c(0, 400, 660),
+    value = c(-20, -10, -60)),
+    rolloffNoise = c(-5, -15))",
+ nMorphs = 5, playMorphs = playback
 )
 }
 }

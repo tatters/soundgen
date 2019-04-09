@@ -15,7 +15,8 @@ playme(sound, samplingRate = 16000, player = NULL)
 }
 \description{
 Plays an audio file or a numeric vector. This is a simple wrapper for the
-functionality provided by \code{\link[tuneR]{play}}
+functionality provided by \code{\link[tuneR]{play}}. Recommended players on
+Linux: "play" from the "vox" library (default), "aplay".
 }
 \examples{
 # Play an audio file:

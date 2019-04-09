@@ -1,7 +1,8 @@
 #' Play audio
 #'
 #' Plays an audio file or a numeric vector. This is a simple wrapper for the
-#' functionality provided by \code{\link[tuneR]{play}}
+#' functionality provided by \code{\link[tuneR]{play}}. Recommended players on
+#' Linux: "play" from the "vox" library (default), "aplay".
 #' @param sound a vector of numbers on any scale or a path to a .wav file
 #' @param samplingRate sampling rate (only needed if sound is a vector)
 #' @param ... additional parameters passed to \code{\link[tuneR]{play}}
