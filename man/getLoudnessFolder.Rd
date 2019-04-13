@@ -6,7 +6,7 @@
 \usage{
 getLoudnessFolder(myfolder, windowLength = 50, step = NULL,
   overlap = 50, SPL_measured = 70, Pref = 2e-05,
-  spreadSpectrum = TRUE, summary = TRUE, summaryFun = "mean",
+  spreadSpectrum = TRUE, summary = TRUE, summaryStats = "mean",
   verbose = TRUE)
 }
 \arguments{
@@ -27,7 +27,7 @@ frequency masking}
 
 \item{summary}{if TRUE, returns only a single value of loudness per file}
 
-\item{summaryFun}{the function used to summarize loudness values across all STFT frames (if
+\item{summaryStats}{the function used to summarize loudness values across all STFT frames (if
 \code{summary = TRUE})}
 
 \item{verbose}{if TRUE, reports estimated time left}
@@ -37,7 +37,7 @@ A wrapper around \code{\link{getLoudness}} that goes through all wav/mp3 files i
 a folder and returns either a list with loudness values per STFT frame from each file
 or, if \code{summary = TRUE}, a dataframe with a single summary value of loudness
 per file. This summary value can be mean, max and so on, as per
-\code{summaryFun}.
+\code{summaryStats}.
 }
 \examples{
 \dontrun{
@@ -48,7 +48,9 @@ analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
 # (per STFT frame; should be very similar, but not identical, because
 # analyze() discards frames considered silent or too noisy)
 
-getLoudnessFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
+# custom summaryStats
+difRan = function(x) diff(range(x))
+getLoudnessFolder('~/Downloads/temp', summaryStats = c('mean', 'difRan'))
 
 # save loudness values per frame without summarizing
 l = getLoudnessFolder('~/Downloads/temp', summary = FALSE)

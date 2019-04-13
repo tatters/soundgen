@@ -2,6 +2,8 @@
 MINOR:
   * soundgen(), playme(), generateNoise(), fart(), beat(): the previously boolean argument "play" can now also be a string to specify the audio player, eg play = 'aplay' or play = 'vlc'
   * morph(): proper handling of attackLen and other small debugging
+  * analyze() and analyzeFolder() can summarize the output with arbitrary functions like "function(x) ..."
+  * getLoudness(): argument "summaryFun" renamed to "summaryStats" to keep the terminology consistent with analyze()
 
 
           CHANGES IN SOUNDGEN VERSION 1.4.0 [13-March-2019]

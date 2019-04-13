@@ -265,7 +265,7 @@ median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
 # the same pitch contour, but harder b/c of subharmonics and jitter
 sound2 = soundgen(sylLen = 900, pitch = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-  noise = list(time = c(0, 900), value = c(-40, 20)),
+  noise = list(time = c(0, 900), value = c(-40, 0)),
   subDep = 100, jitterDep = 0.5, nonlinBalance = 100, temperature = 0.001)
 # playme(sound2, 16000)
 a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
@@ -289,6 +289,10 @@ a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
 a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
 a = analyze(sound2, samplingRate = 16000, summary = TRUE,
             summaryStats = c('mean', 'range'))  # one row per sound
+# ...with custom summaryStats
+difRan = function(x) diff(range(x))
+a = analyze(sound2, samplingRate = 16000, summary = TRUE,
+            summaryStats = c('mean', 'difRan'))
 
 # Save the plot
 a = analyze(sound, samplingRate = 16000,
