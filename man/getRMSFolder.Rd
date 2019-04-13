@@ -46,9 +46,12 @@ analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
 # (per STFT frame, but should be very similar)
 
 User-defined summary functions:
-getRMSFolder('~/Downloads/temp', summaryFun = function(x) diff(range(x)))
-getRMSFolder('~/Downloads/temp',
-  summaryFun = function(x) paste0('mean = ', round(mean(x), 2),
-                                 '; sd = ', round(sd(x), 2)))
+difRan = function(x) diff(range(x))
+getRMSFolder('~/Downloads/temp', summaryFun = c('mean', 'difRan'))
+
+meanSD = function(x) {
+  paste0('mean = ', round(mean(x), 2), '; sd = ', round(sd(x), 2))
+}
+getRMSFolder('~/Downloads/temp', summaryFun = 'meanSD')
 }
 }

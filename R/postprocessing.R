@@ -5,6 +5,9 @@
 #' Linux: "play" from the "vox" library (default), "aplay".
 #' @param sound a vector of numbers on any scale or a path to a .wav file
 #' @param samplingRate sampling rate (only needed if sound is a vector)
+#' @param player the name of player to use, eg "aplay", "play", "vlc", etc. In
+#'   case of errors, try setting another default player for
+#'   \code{\link[tuneR]{play}}
 #' @param ... additional parameters passed to \code{\link[tuneR]{play}}
 #' @export
 #' @examples

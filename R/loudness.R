@@ -286,11 +286,11 @@ getLoudness = function(x,
 #' a folder and returns either a list with loudness values per STFT frame from each file
 #' or, if \code{summary = TRUE}, a dataframe with a single summary value of loudness
 #' per file. This summary value can be mean, max and so on, as per
-#' \code{summaryStats}.
+#' \code{summaryFun}.
 #' @param myfolder path to folder containing wav/mp3 files
 #' @inheritParams getLoudness
 #' @param summary if TRUE, returns only a single value of loudness per file
-#' @param summaryStats the function used to summarize loudness values across all STFT frames (if
+#' @param summaryFun the function used to summarize loudness values across all STFT frames (if
 #'   \code{summary = TRUE})
 #' @param verbose if TRUE, reports estimated time left
 #' @export
@@ -303,9 +303,9 @@ getLoudness = function(x,
 #' # (per STFT frame; should be very similar, but not identical, because
 #' # analyze() discards frames considered silent or too noisy)
 #'
-#' # custom summaryStats
+#' # custom summaryFun
 #' difRan = function(x) diff(range(x))
-#' getLoudnessFolder('~/Downloads/temp', summaryStats = c('mean', 'difRan'))
+#' getLoudnessFolder('~/Downloads/temp', summaryFun = c('mean', 'difRan'))
 #'
 #' # save loudness values per frame without summarizing
 #' l = getLoudnessFolder('~/Downloads/temp', summary = FALSE)
@@ -318,7 +318,7 @@ getLoudnessFolder = function(myfolder,
                              Pref = 2e-5,
                              spreadSpectrum = TRUE,
                              summary = TRUE,
-                             summaryStats = 'mean',
+                             summaryFun = 'mean',
                              verbose = TRUE) {
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
@@ -330,7 +330,7 @@ getLoudnessFolder = function(myfolder,
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
-    'myfolder', 'verbose', 'summary', 'summaryStats')]
+    'myfolder', 'verbose', 'summary', 'summaryFun')]
 
   result = list()
   for (i in 1:length(filenames)) {
@@ -344,9 +344,9 @@ getLoudnessFolder = function(myfolder,
   # prepare output
   if (summary == TRUE) {
     output = data.frame(sound = basename(filenames))
-    for (s in 1:length(summaryStats)) {
+    for (s in 1:length(summaryFun)) {
       # for each summary function...
-      f = eval(parse(text = summaryStats[s]))
+      f = eval(parse(text = summaryFun[s]))
       for (i in 1:length(result)) {
         # for each sound file...
         mySummary = do.call(f, list(na.omit(result[[i]])))
@@ -354,7 +354,7 @@ getLoudnessFolder = function(myfolder,
         if (length(mySummary) > 1) {
           mySummary = paste0(mySummary, collapse = ', ')
         }
-        output[i, summaryStats[s]] = mySummary
+        output[i, summaryFun[s]] = mySummary
       }
     }
   } else {

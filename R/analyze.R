@@ -95,7 +95,7 @@
 #' @param summary if TRUE, returns only a summary of the measured acoustic
 #'   variables (mean, median and SD). If FALSE, returns a list containing
 #'   frame-by-frame values
-#' @param summaryStats a vector of names of functions used to summarize each
+#' @param summaryFun a vector of names of functions used to summarize each
 #'   acoustic characteristic
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param showLegend if TRUE, adds a legend with pitch tracking methods
@@ -195,11 +195,11 @@
 #' # Different formatting options for output
 #' a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
 #' a = analyze(sound2, samplingRate = 16000, summary = TRUE,
-#'             summaryStats = c('mean', 'range'))  # one row per sound
-#' # ...with custom summaryStats
+#'             summaryFun = c('mean', 'range'))  # one row per sound
+#' # ...with custom summaryFun
 #' difRan = function(x) diff(range(x))
 #' a = analyze(sound2, samplingRate = 16000, summary = TRUE,
-#'             summaryStats = c('mean', 'difRan'))
+#'             summaryFun = c('mean', 'difRan'))
 #'
 #' # Save the plot
 #' a = analyze(sound, samplingRate = 16000,
@@ -287,7 +287,7 @@ analyze = function(x,
                    smooth = 1,
                    smoothVars = c('pitch', 'dom'),
                    summary = FALSE,
-                   summaryStats = c('mean', 'median', 'sd'),
+                   summaryFun = c('mean', 'median', 'sd'),
                    plot = TRUE,
                    showLegend = TRUE,
                    savePath = NA,
@@ -950,7 +950,7 @@ analyze = function(x,
 
   if (summary) {
     vars = colnames(result)[!colnames(result) %in% c('duration', 'time', 'voiced')]
-    ls = length(summaryStats)
+    ls = length(summaryFun)
     out = as.data.frame(matrix(
       ncol = 2 + ls * length(vars),  # 2 b/c dur & voiced are not summarized
       nrow = 1
@@ -960,17 +960,17 @@ analyze = function(x,
       # specify how to summarize pitch etc values for each frame within each file
       # - save mean, median, sd, ...
       for (s in 1:ls) {
-        colnames(out)[2 + ls * (c - 1) + s] = paste0(vars[c], '_', summaryStats[s])
+        colnames(out)[2 + ls * (c - 1) + s] = paste0(vars[c], '_', summaryFun[s])
       }
     }
     out$duration = result$duration[1]  # duration, ms
     out$voiced = mean(result$voiced)  # proportion of voiced frames
     # apply the specified summary function to each column of result
     for (v in 3:(ncol(result) - 1)) {  # -1 for voiced (not summarized)
-      for (s in 1:length(summaryStats)) {
+      for (s in 1:length(summaryFun)) {
         if (any(is.finite(result[, colnames(result)[v]]))) {
           d = na.omit(result[, colnames(result)[v]])
-          f = eval(parse(text = summaryStats[s]))
+          f = eval(parse(text = summaryFun[s]))
           mySummary = do.call(f, list(d))
           # for smth like range, collapse and convert to character
           if (length(mySummary) > 1) {
@@ -1074,7 +1074,7 @@ analyzeFolder = function(myfolder,
                          smooth = 1,
                          smoothVars = c('pitch', 'dom'),
                          summary = TRUE,
-                         summaryStats = c('mean', 'median', 'sd'),
+                         summaryFun = c('mean', 'median', 'sd'),
                          plot = FALSE,
                          showLegend = TRUE,
                          savePlots = FALSE,

@@ -20,7 +20,7 @@ analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   annealPars = list(maxit = 5000, temp = 1000), certWeight = 0.5,
   snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
   smoothVars = c("pitch", "dom"), summary = FALSE,
-  summaryStats = c("mean", "median", "sd"), plot = TRUE,
+  summaryFun = c("mean", "median", "sd"), plot = TRUE,
   showLegend = TRUE, savePath = NA, plotSpec = TRUE,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
   candPlot = list(), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
@@ -168,7 +168,7 @@ deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
 variables (mean, median and SD). If FALSE, returns a list containing
 frame-by-frame values}
 
-\item{summaryStats}{a vector of names of functions used to summarize each
+\item{summaryFun}{a vector of names of functions used to summarize each
 acoustic characteristic}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
@@ -288,11 +288,11 @@ a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
 # Different formatting options for output
 a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
 a = analyze(sound2, samplingRate = 16000, summary = TRUE,
-            summaryStats = c('mean', 'range'))  # one row per sound
-# ...with custom summaryStats
+            summaryFun = c('mean', 'range'))  # one row per sound
+# ...with custom summaryFun
 difRan = function(x) diff(range(x))
 a = analyze(sound2, samplingRate = 16000, summary = TRUE,
-            summaryStats = c('mean', 'difRan'))
+            summaryFun = c('mean', 'difRan'))
 
 # Save the plot
 a = analyze(sound, samplingRate = 16000,
