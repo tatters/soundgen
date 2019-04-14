@@ -357,9 +357,10 @@ normalizeFolder = function(myfolder,
     print('Saving...')
     if (!dir.exists(savepath)) dir.create(savepath)
     for (i in 1:n) {
+      file_wo_ext = sub("([^.]+)\\.[[:alnum:]]+$", "\\1", basename(filenames[i]))
       tuneR::writeWave(
         files[[i]],
-        filename = paste0(savepath, '/', basename(filenames[i]))
+        filename = paste0(savepath, '/', file_wo_ext, '.wav')
       )
     }
   }
