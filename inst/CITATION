@@ -4,11 +4,12 @@ citEntry(entry = "Article",
   title        = "Soundgen: An open-source tool for synthesizing nonverbal vocalizations",
   author       = as.person("Andrey Anikin"),
   journal      = "Behavior Research Methods",
-  year         = "2018",
-  pages        = "1--15",
-  issn="1554-3528",
+  year         = "2019",
+  pages        = "778--792",
+  volume       =  "51",
+  number       =  "2",
   doi="10.3758/s13428-018-1095-7",
   url="https://doi.org/10.3758/s13428-018-1095-7",
 
-  textVersion  = "Anikin, A. (2018). Soundgen: an open-source tool for synthesizing nonverbal vocalizations. Behavior Research Methods, 1-15. https://doi.org/10.3758/s13428-018-1095-7"
+  textVersion  = "Anikin, A. (2019). Soundgen: an open-source tool for synthesizing nonverbal vocalizations. Behavoir Research Methods, 51(2), 778-792."
 )
