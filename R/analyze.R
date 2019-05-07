@@ -372,6 +372,14 @@ analyze = function(x,
   sound = sound / max(abs(sound))
 
   # some derived pars, defaults
+  if (samplingRate < 2000) {
+    warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
+                  'and estimate loudness in sone'))
+  } else if (samplingRate > 44100) {
+    message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
+                  '(27 KHz) as inaudible to humans when estimating loudness'))
+  }
+
   if (!is.numeric(silence) | silence < 0 | silence > 1) {
     silence = 0.04
     warning('"silence" must be between 0 and 1; defaulting to 0.04')

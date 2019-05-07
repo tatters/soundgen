@@ -9,4 +9,5 @@ names(phonCurves) = phonLevels
 for (p in 1:length(phonLevels)) {
   phonCurves[[p]] = iso226(phonLevels[p], nBarks = max_Barks)$curveBark
 }
+# plot(phonCurves[[1]][, c('freq_Hz', 'hearingThres_dB')])
 # devtools::use_data(phonCurves, overwrite = TRUE, internal = TRUE)

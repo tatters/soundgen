@@ -4,6 +4,7 @@ MINOR:
   * morph(): proper handling of attackLen and other small debugging
   * analyze() and analyzeFolder() can summarize the output with arbitrary functions like "function(x) ..."
   * analyze(), analyzeFolder(): argument "summaryStats" renamed to "summaryFun" to keep the terminology consistent with getLoudnessFolder() and getRMSFolder()
+  * getLoudness(), analyze(): automatically discards frequencies above 27 barks, preventing an error at sampling rates above 44100
 
 
           CHANGES IN SOUNDGEN VERSION 1.4.0 [13-March-2019]

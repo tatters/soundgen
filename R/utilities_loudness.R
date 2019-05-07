@@ -21,6 +21,10 @@ getLoudnessPerFrame = function(spec,
   powerSpec_scaled = matrix(spec ^ 2 / length(spec), ncol = 1)
   audSpec = tuneR::audspec(powerSpec_scaled, sr = samplingRate,
                            fbtype = 'bark')$aspectrum  # plot(audSpec, type = 'l')
+  # throw away very high frequencies
+  if (samplingRate > 44100) {
+    audSpec = audSpec[1:27, ]  # max 27 barks
+  }
   if (spreadSpectrum) audSpec = spreadSpec(audSpec)
   audSpec_dB = 10 * log10(audSpec)
   n_phonCurve = which.min(abs(

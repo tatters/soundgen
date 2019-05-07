@@ -154,6 +154,13 @@ getLoudness = function(x,
   # plot(audSpec[, 1], type = 'l')
   # plot(log10(audSpec[, 1]) * 10, type = 'l')
 
+  # throw away very high frequencies
+  if (samplingRate > 44100) {
+    message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
+                  '(27 KHz) as inaudible to humans'))
+    audSpec = audSpec[1:27, ]  # max 27 barks
+  }
+
   # apply spreading function (NB: linear, not dB scale!)
   if (spreadSpectrum) {
     nonZeroCols = which(colSums(audSpec) > 0)

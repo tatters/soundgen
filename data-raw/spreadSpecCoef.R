@@ -1,6 +1,6 @@
 # Prepare the matrix of coef for the spectrum spreading function
 # (see Wonhos' dissertation from 1999)
-max_Barks = 27  # max 27 barks (~27000 Hz)
+max_Barks = 27  # max 40 barks (tuneR::bark2hz(27) ~ 27 kHz)
 spreadSpecCoef = matrix(0, nrow = max_Barks, ncol = max_Barks)
 for (i in 1:nrow(spreadSpecCoef)) {
   for (j in 1:ncol(spreadSpecCoef)) {
