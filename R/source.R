@@ -1019,6 +1019,7 @@ beat = function(nSyl = 10,
     pause = rep(0, round(pauseLen / 1000 * samplingRate))
     beat = rep(c(beat, pause), nSyl)
   }
+  beat = beat / max(abs(beat))  # normalize
   if (play == TRUE) playme(beat, samplingRate)
   if (is.character(play)) {
     playme(beat, samplingRate = samplingRate, player = play)
