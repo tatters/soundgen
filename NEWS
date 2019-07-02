@@ -1,10 +1,15 @@
           CHANGES IN SOUNDGEN VERSION 1.4.1 [...Date...]
 MINOR:
   * soundgen(), playme(), generateNoise(), fart(), beat(): the previously boolean argument "play" can now also be a string to specify the audio player, eg play = 'aplay' or play = 'vlc'
-  * morph(): proper handling of attackLen and other small debugging
+  * estimateVTL() offers three methods of estimating vocal tract length from formant frequencies
   * analyze() and analyzeFolder() can summarize the output with arbitrary functions like "function(x) ..."
   * analyze(), analyzeFolder(): argument "summaryStats" renamed to "summaryFun" to keep the terminology consistent with getLoudnessFolder() and getRMSFolder()
-  * getLoudness(), analyze(): automatically discards frequencies above 27 barks, preventing an error at sampling rates above 44100
+
+
+BUG FIXES:
+  * analyze() no longer crashes with pitchMethods = NULL
+  * getLoudness(), analyze(): automatically discard frequencies above 27 barks, preventing an error at sampling rates above 44100
+  * morph(): proper handling of attackLen and other small debugging
 
 
           CHANGES IN SOUNDGEN VERSION 1.4.0 [13-March-2019]

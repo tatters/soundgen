@@ -151,7 +151,7 @@
 #' @export
 #' @examples
 #' sound = soundgen(sylLen = 300, pitch = c(900, 400, 2300),
-#'   noise = list(time = c(0, 300), value = c(-40, 00)),
+#'   noise = list(time = c(0, 300), value = c(-40, 0)),
 #'   temperature = 0.001, addSilence = 0)
 #' # playme(sound, 16000)
 #' a = analyze(sound, samplingRate = 16000, plot = TRUE)
@@ -159,7 +159,7 @@
 #' \dontrun{
 #' sound1 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .9, 1), value = c(300, 900, 400, 2300)),
-#'   noise = list(time = c(0, 300), value = c(-40, 00)),
+#'   noise = list(time = c(0, 300), value = c(-40, 0)),
 #'   temperature = 0.001, addSilence = 0)
 #' # improve the quality of postprocessing:
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
@@ -883,7 +883,7 @@ analyze = function(x,
            ...)
     }
     # add pitch candidates to the plot
-    if (nrow(pitchCands) > 0) {
+    if (any(!is.na(pitchCands))) {
       if (is.null(candPlot$levels)) {
         candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
       }
