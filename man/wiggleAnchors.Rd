@@ -27,7 +27,7 @@ bound on "time"=0, low bound on "value"=1}
 \item{wiggleAllRows}{should the first and last time anchors be wiggled? (TRUE
 for breathing, FALSE for other anchors)}
 
-\item{sd_values}{(optional) the exact value of sd used by rnorm_bounded in
+\item{sd_values}{(optional) the exact value of sd used by rnorm_truncated in
 columns 2 and beyond}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the

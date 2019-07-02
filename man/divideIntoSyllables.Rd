@@ -35,7 +35,7 @@ Internal soundgen function.
 }
 \details{
 Stochastic generation of syllable structure of a bout. Calls
-\code{\link{rnorm_bounded}} to vary the duration of each new syllable and of
+\code{\link{rnorm_truncated}} to vary the duration of each new syllable and of
 pauses between syllables. Total bout duration will also vary, unless
 temperature is zero. However, the output will always contain exactly
 \code{nSyl} syllables.
