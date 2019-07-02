@@ -128,7 +128,7 @@ generateNoise = function(len,
                          play = FALSE) {
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
-    len = rnorm_bounded(n = 1,
+    len = rnorm_truncated(n = 1,
                         mean = len,
                         sd = len * temperature * .5,
                         low = 0, high = samplingRate * 10,  # max 10 s
@@ -143,7 +143,7 @@ generateNoise = function(len,
         wiggleAllRows = TRUE
       )
     } else {
-      rolloffNoise = rnorm_bounded(
+      rolloffNoise = rnorm_truncated(
         n = length(rolloffNoise),
         mean = rolloffNoise,
         sd = abs(rolloffNoise) * temperature * .5,
@@ -151,11 +151,11 @@ generateNoise = function(len,
         high = 20
       )
     }
-    noiseFlatSpec = rnorm_bounded(n = 1,
+    noiseFlatSpec = rnorm_truncated(n = 1,
                                   mean = noiseFlatSpec,
                                   sd = noiseFlatSpec * temperature * .5,
                                   low = 0, high = samplingRate / 2)
-    attackLen = rnorm_bounded(n = length(attackLen),
+    attackLen = rnorm_truncated(n = length(attackLen),
                               mean = attackLen,
                               sd = attackLen * temperature * .5,
                               low = 0, high = len / samplingRate * 1000 / 2)
@@ -168,7 +168,7 @@ generateNoise = function(len,
       wiggleAllRows = TRUE
     )
     if (is.vector(spectralEnvelope)) {
-      spectralEnvelope = rnorm_bounded(
+      spectralEnvelope = rnorm_truncated(
         n = length(spectralEnvelope),
         mean = spectralEnvelope + .1,  # to wiggle zeros
         sd = spectralEnvelope * temperature * .5,
@@ -898,11 +898,11 @@ fart = function(glottis = c(50, 200),
 
   # wiggle pars
   if (temperature > 0) {
-    rolloff = rnorm_bounded(n = 1,
+    rolloff = rnorm_truncated(n = 1,
                             mean = rolloff,
                             sd = rolloff * temperature * .5,
                             low = -50, high = 10)
-    sylLen = rnorm_bounded(n = 1,
+    sylLen = rnorm_truncated(n = 1,
                            mean = sylLen,
                            sd = sylLen * temperature * .5,
                            low = 0, high = 10000)

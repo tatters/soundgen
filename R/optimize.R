@@ -160,7 +160,7 @@ optimizePars = function(myfolder,
 
   for (i in 1:nIter) {
     # start with randomly wiggled default pars
-    p_init = rnorm_bounded(
+    p_init = rnorm_truncated(
       length(pars_defaults),
       mean = as.numeric(unlist(pars_defaults)),
       sd = as.numeric(unlist(pars_defaults)) * initSD,

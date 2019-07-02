@@ -170,7 +170,7 @@ getEntropy = function(x,
 
 #' Random draw from a truncated normal distribution
 #'
-#' \code{rnorm_bounded} generates random numbers from a normal distribution
+#' \code{rnorm_truncated} generates random numbers from a normal distribution
 #' using rnorm(), but forced to remain within the specified low/high bounds. All
 #' proposals outside the boundaries (exclusive) are discarded, and the sampling
 #' is repeated until there are enough values within the specified range. Fully
@@ -188,17 +188,17 @@ getEntropy = function(x,
 #' @return A vector of length n.
 #' @keywords internal
 #' @examples
-#' soundgen:::rnorm_bounded(n = 3, mean = 10, sd = 5, low = 7, high = NULL,
+#' soundgen:::rnorm_truncated(n = 3, mean = 10, sd = 5, low = 7, high = NULL,
 #'   roundToInteger = c(TRUE, FALSE, FALSE))
-#' soundgen:::rnorm_bounded(n = 9, mean = c(10, 50, 100), sd = c(5, 0, 20),
+#' soundgen:::rnorm_truncated(n = 9, mean = c(10, 50, 100), sd = c(5, 0, 20),
 #'   roundToInteger = TRUE) # vectorized
 #' # in case of conflicts between mean and bounds, either adjust the mean:
-#' soundgen:::rnorm_bounded(n = 3, mean = 10, sd = .1,
+#' soundgen:::rnorm_truncated(n = 3, mean = 10, sd = .1,
 #'   low = c(15, 0, 0), high = c(100, 100, 8), invalidArgAction = 'adjust')
 #' #... or ignore the boundaries
-#' soundgen:::rnorm_bounded(n = 3, mean = 10, sd = .1,
+#' soundgen:::rnorm_truncated(n = 3, mean = 10, sd = .1,
 #'   low = c(15, 0, 0), high = c(100, 100, 8), invalidArgAction = 'ignore')
-rnorm_bounded = function(n = 1,
+rnorm_truncated = function(n = 1,
                          mean = 0,
                          sd = 1,
                          low = NULL,
@@ -234,7 +234,7 @@ rnorm_bounded = function(n = 1,
                   'Low =', paste(head(low, 3), collapse = ', '),
                   'High = ', paste(head(high, 3), collapse = ', ')))
     if (invalidArgAction == 'abort') {
-      stop('Aborting rnorm_bounded()')
+      stop('Aborting rnorm_truncated()')
     } else if (invalidArgAction == 'adjust') {
       mean[mean < low] = low[mean < low]
       mean[mean > high] = high[mean > high]

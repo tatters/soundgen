@@ -1,4 +1,4 @@
-# TODO: pitchDriftFreq and other freq settings might be in Hz; pitchDriftFreq / ...Dep seem to affect ampl drift; getSpectralEnvelope - return with proper rownames (freq); analyze() - duration without silence at beg/end; remane rnorm_bounded to rnorm_truncated; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: pitchDriftFreq and other freq settings might be in Hz; pitchDriftFreq / ...Dep seem to affect ampl drift; getSpectralEnvelope - return with proper rownames (freq); analyze() - duration without silence at beg/end; rename rnorm_truncated to rnorm_truncated; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
@@ -729,7 +729,7 @@ soundgen = function(
           l = permittedValues[pars_to_vary[p], 'low']
           h = permittedValues[pars_to_vary[p], 'high']
           sd = (h - l) * temperature * tempEffects$specDep
-          pars_syllable[[pars_to_vary[p]]] = rnorm_bounded(
+          pars_syllable[[pars_to_vary[p]]] = rnorm_truncated(
             n = length(par_value),
             mean = par_value,
             low = l,
@@ -887,7 +887,7 @@ soundgen = function(
               invalidArgAction = invalidArgAction
             )
           } else {
-            rolloffNoise_syl = rnorm_bounded(
+            rolloffNoise_syl = rnorm_truncated(
               n = length(rolloffNoise),
               mean = rolloffNoise,
               sd = abs(rolloffNoise) * temperature * tempEffects$specDep,

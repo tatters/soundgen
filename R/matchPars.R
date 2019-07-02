@@ -451,7 +451,7 @@ wigglePars = function(parList,
       r = ifelse(parList[[p]] != 0,  # if par = 0, we wiggle based on its range
                  abs(parList[[p]]),  # otherwise based on its current value
                  h - l)
-      parList[[p]] = rnorm_bounded(
+      parList[[p]] = rnorm_truncated(
         n = 1,
         mean = parList[[p]],
         low = l,

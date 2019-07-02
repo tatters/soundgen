@@ -306,7 +306,7 @@ getGlottalCycles = function (pitch, samplingRate) {
 #' Internal soundgen function.
 #'
 #' Stochastic generation of syllable structure of a bout. Calls
-#' \code{\link{rnorm_bounded}} to vary the duration of each new syllable and of
+#' \code{\link{rnorm_truncated}} to vary the duration of each new syllable and of
 #' pauses between syllables. Total bout duration will also vary, unless
 #' temperature is zero. However, the output will always contain exactly
 #' \code{nSyl} syllables.
@@ -357,14 +357,14 @@ divideIntoSyllables = function (nSyl,
     }
 
     # generate random lengths of syllabels and pauses under constraints
-    syls = rnorm_bounded(
+    syls = rnorm_truncated(
       n = nSyl,
       mean = sylLen,
       low = sylDur_min,
       high = sylDur_max,
       sd = sylLen * temperature
     )
-    pauses = rnorm_bounded(
+    pauses = rnorm_truncated(
       n = nSyl - 1,
       mean = pauseLen,
       low = pauseDur_min,
@@ -422,7 +422,7 @@ divideIntoSyllables = function (nSyl,
 #'   bound on "time"=0, low bound on "value"=1
 #' @param wiggleAllRows should the first and last time anchors be wiggled? (TRUE
 #'   for breathing, FALSE for other anchors)
-#' @param sd_values (optional) the exact value of sd used by rnorm_bounded in
+#' @param sd_values (optional) the exact value of sd used by rnorm_truncated in
 #'   columns 2 and beyond
 #' @inheritParams soundgen
 #' @return Modified original dataframe.
@@ -485,7 +485,7 @@ wiggleAnchors = function(df,
     if (nrow(df) == 1) {
       # the first anchor is the original, the second random
       idx = 2:ncol(df)
-      newAnchor = try(rnorm_bounded(
+      newAnchor = try(rnorm_truncated(
         n = ncol(df) - 1,
         mean = as.numeric(df[1, idx]),
         sd = ifelse(is.numeric(sd_values),
@@ -546,7 +546,7 @@ wiggleAnchors = function(df,
     ranges[z] = abs(as.numeric(df[1, z]))
   }
   for (i in 1:ncol(df)) {
-    w = try(rnorm_bounded(
+    w = try(rnorm_truncated(
       n = nrow(df),
       mean = as.numeric(df[, i]),
       sd = ifelse(i > 1 & !is.null(sd_values),
