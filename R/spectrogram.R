@@ -248,8 +248,9 @@ spectrogram = function(x,
   if (length(X) < 2) {
     stop('The sound is too short for plotting a spectrogram')
   }
-  Y = seq(0,
-          (samplingRate / 2) - (samplingRate / windowLength_points),
+  bin_width = samplingRate / 2 / windowLength_points
+  Y = seq(bin_width / 2,
+          samplingRate / 2 - bin_width / 2,
           length.out = nrow(z)) / 1000  # frequency stamp
   if (length(Y) < 2) {
     stop('The sound and/or the windowLength is too short for plotting a spectrogram')

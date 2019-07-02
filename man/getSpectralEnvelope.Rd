@@ -99,7 +99,9 @@ or another color theme (e.g. 'heat.colors')}
 }
 \value{
 Returns a spectral filter (matrix nr x nc, where nr is the number of
-  frequency bins = windowLength_points/2 and nc is the number of time steps)
+  frequency bins and nc is the number of time steps). Accordingly, rownames
+  of the output give central frequency of each bin(in kHz), while colnames
+  give time values (in ms if duration is specified, otherwise 0 to 1).
 }
 \description{
 Prepares a spectral envelope for filtering a sound to add formants, lip
@@ -110,7 +112,7 @@ package = 'soundgen') for more information.
 }
 \examples{
 # [a] with F1-F3 visible
-e = getSpectralEnvelope(nr = 512, nc = 50,
+e = getSpectralEnvelope(nr = 512, nc = 50, duration = 300,
   formants = soundgen:::convertStringToFormants('a'),
   temperature = 0, plot = TRUE)
 # image(t(e))  # to plot the output on a linear scale instead of dB

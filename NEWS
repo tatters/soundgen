@@ -4,7 +4,7 @@ MINOR:
   * estimateVTL() offers three methods of estimating vocal tract length from formant frequencies
   * analyze() and analyzeFolder() can summarize the output with arbitrary functions like "function(x) ..."
   * analyze(), analyzeFolder(): argument "summaryStats" renamed to "summaryFun" to keep the terminology consistent with getLoudnessFolder() and getRMSFolder()
-
+  * getSpectralEnvelope(): the output matrix contains frequency and time stamps as row/column names
 
 BUG FIXES:
   * analyze() no longer crashes with pitchMethods = NULL

@@ -46,10 +46,12 @@
 #' @param ... other graphical parameters passed on to \code{image()}
 #' @export
 #' @return Returns a spectral filter (matrix nr x nc, where nr is the number of
-#'   frequency bins = windowLength_points/2 and nc is the number of time steps)
+#'   frequency bins and nc is the number of time steps). Accordingly, rownames
+#'   of the output give central frequency of each bin(in kHz), while colnames
+#'   give time values (in ms if duration is specified, otherwise 0 to 1).
 #' @examples
 #' # [a] with F1-F3 visible
-#' e = getSpectralEnvelope(nr = 512, nc = 50,
+#' e = getSpectralEnvelope(nr = 512, nc = 50, duration = 300,
 #'   formants = soundgen:::convertStringToFormants('a'),
 #'   temperature = 0, plot = TRUE)
 #' # image(t(e))  # to plot the output on a linear scale instead of dB
@@ -463,15 +465,20 @@ getSpectralEnvelope = function(nr,
       mouthOpen_binary[c] * openMouthBoost
   }
 
+  # save frequency and time stamps
+  rownames(spectralEnvelope) = seq(bin_width / 2,
+                                   samplingRate / 2 - bin_width / 2,
+                                   length.out = nr) / 1000
+  if (is.numeric(duration)) {
+      colnames(spectralEnvelope) = seq(0, duration, length.out = nc)
+    } else {
+      colnames(spectralEnvelope) = seq(0, 1, length.out = nc)
+    }
+
   # convert from dB to linear multiplier of power spectrum
   spectralEnvelope_lin = 10 ^ (spectralEnvelope / 20)
 
   if (plot) {
-    if (is.numeric(duration)) {
-      x = seq(0, duration, length.out = nc)
-    } else {
-      x = seq(0, 1, length.out = nc)
-    }
     if (colorTheme == 'bw') {
       col = gray(seq(from = 1, to = 0, length = nCols))
     } else if (colorTheme == 'seewave') {
@@ -480,8 +487,8 @@ getSpectralEnvelope = function(nr,
       colFun = match.fun(colorTheme)
       col = rev(colFun(nCols))
     }
-    image(x = x,
-          y = seq(0, samplingRate /2, length.out = nr) / 1000,
+    image(x = as.numeric(colnames(spectralEnvelope)),
+          y = as.numeric(rownames(spectralEnvelope)),
           z = t(spectralEnvelope),
           xlab = xlab,
           ylab = ylab,

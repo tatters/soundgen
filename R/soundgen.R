@@ -1,4 +1,4 @@
-# TODO: pitchDriftFreq and other freq settings might be in Hz; pitchDriftFreq / ...Dep seem to affect ampl drift; getSpectralEnvelope - return with proper rownames (freq); analyze() - duration without silence at beg/end; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: pitchDriftFreq and other freq settings might be in Hz; pitchDriftFreq / ...Dep seem to affect ampl drift; analyze() - duration without silence at beg/end; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8
