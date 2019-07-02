@@ -1,4 +1,4 @@
-# TODO: morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: estimateVTL() - add other options to be passed on to getFormantDispersion (see Pisanski 2014 Vocal indicators of body size in men and women); pitchDriftFreq and other freq settings might be in Hz; pitchDriftFreq / ...Dep seem to affect ampl drift; analyze() crashes with pitchMethods = NULL; getSpectralEnvelope - return with proper rownames (freq); analyze() - duration without silence at beg/end; remane rnorm_bounded to rnorm_truncated; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

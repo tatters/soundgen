@@ -179,6 +179,7 @@ getRMSFolder = function(myfolder,
                         verbose = TRUE) {
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
+  if (length(filenames) < 1) stop('No audio files to analyze')
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = file.info(filenames)$size
