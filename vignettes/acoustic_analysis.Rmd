@@ -96,6 +96,8 @@ There are several key parameters that control the behavior of STFT and affect al
 Apart from pitch tracking, `analyze` calculates and returns several acoustic characteristics from each non-silent STFT frame:
 
 * `time`: time of the middle of each frame (ms)
+* `duration`: total duration (s)
+* `duration_noSilence`: duration from the beginning of the first non-silent STFT frame to the end of the last non-silent STFT frame, s (NB: depends strongly on `windowLength` and `silence` settings)
 * `ampl`: root mean square of amplitude per frame, calculated as `sqrt(mean(frame ^ 2))`
 * `amplVoiced`: the same as `ampl` for voiced frames and `NA` for unvoiced frames
 * `dom`: lowest dominant frequency band (Hz) (see "Pitch tracking methods / Dominant frequency")

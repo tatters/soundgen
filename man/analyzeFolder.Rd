@@ -67,7 +67,7 @@ descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
 
-\item{nFormants}{the number of formants to extract per FFT frame. Calls
+\item{nFormants}{the number of formants to extract per STFT frame. Calls
 \code{\link[phonTools]{findformants}} with default settings}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
