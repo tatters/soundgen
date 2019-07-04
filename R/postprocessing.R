@@ -411,7 +411,7 @@ crossFade = function(ampl1,
 #' @inheritParams spectrogram
 #' @param freqWindow the width of smoothing window, Hz (recommended value: close
 #'   to the fundamental frequency)
-#' @keywords export
+#' @export
 #' @examples
 #' sound_aii = soundgen(formants = 'aii')
 #' # playme(sound_aii, 16000)

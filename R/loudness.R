@@ -98,7 +98,14 @@ getLoudness = function(x,
   # import sound
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
   if (class(x) == 'character') {
-    sound_wav = tuneR::readWave(x)
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
     scale = 2 ^ (sound_wav@bit - 1) # range(sound)

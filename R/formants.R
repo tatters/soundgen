@@ -471,10 +471,10 @@ getSpectralEnvelope = function(nr,
                                    samplingRate / 2 - bin_width / 2,
                                    length.out = nr) / 1000
   if (is.numeric(duration)) {
-      colnames(spectralEnvelope) = seq(0, duration, length.out = nc)
-    } else {
-      colnames(spectralEnvelope) = seq(0, 1, length.out = nc)
-    }
+    colnames(spectralEnvelope) = seq(0, duration, length.out = nc)
+  } else {
+    colnames(spectralEnvelope) = seq(0, 1, length.out = nc)
+  }
 
   # convert from dB to linear multiplier of power spectrum
   spectralEnvelope_lin = 10 ^ (spectralEnvelope / 20)
@@ -960,11 +960,11 @@ addFormants = function(sound,
 #' @param freqWindow_donor,freqWindow_recipient the width of smoothing window,
 #'   Hz (recommended value: close to the fundamental frequency). If NULL, set to
 #'   median pitch of each respective sound estimated by \code{\link{analyze}}
-#' @keywords export
+#' @export
 #' @examples
 #' \dontrun{
 #' # Objective: take formants from the bleating of a sheep and apply them to a
-#' synthetic sound with any arbitrary duration, intonation, nonlinearities etc
+#' # synthetic sound with any arbitrary duration, intonation, nonlinearities etc
 #' data(sheep, package = 'seewave')  # import a recording from seewave
 #' donor = as.numeric(scale(sheep@left))  # source of formants
 #' samplingRate = sheep@samp.rate
@@ -1094,19 +1094,19 @@ transplantFormants = function(donor,
     anal_donor = analyze(donor, samplingRate, plot = FALSE)
     freqWindow_donor = median(anal_donor$pitch, na.rm = TRUE)
   }
-  freqRange_kHz = diff(range(as.numeric(rownames(spec_donor_rightDim))))
-  freqBin_Hz = freqRange_kHz * 1000 / nrow(spec_donor_rightDim)
-  freqWindow_bins = round(freqWindow / freqBin_Hz, 0)
-  if (freqWindow_bins < 3) {
-    message(paste('freqWindow has to be at least 3 bins wide;
-                  resetting to', ceiling(freqBin_Hz * 3)))
-    freqWindow_bins = 3
+  freqRange_kHz_donor = diff(range(as.numeric(rownames(spec_donor_rightDim))))
+  freqBin_Hz_donor = freqRange_kHz_donor * 1000 / nrow(spec_donor_rightDim)
+  freqWindow_donor_bins = round(freqWindow_donor / freqBin_Hz_donor, 0)
+  if (freqWindow_donor_bins < 3) {
+    message(paste('freqWindow_donor has to be at least 3 bins wide;
+                  resetting to', ceiling(freqBin_Hz_donor * 3)))
+    freqWindow_donor_bins = 3
   }
   # plot(spec_donor_rightDim[, 10], type = 'l')
   for (i in 1:ncol(spec_donor_rightDim)) {
     spec_donor_rightDim[, i] = getEnv(
       sound = spec_donor_rightDim[, i],
-      windowLength_points = freqWindow_bins,
+      windowLength_points = freqWindow_donor_bins,
       method = 'peak'
     )
   }
@@ -1116,10 +1116,18 @@ transplantFormants = function(donor,
     anal_recipient = analyze(recipient, samplingRate, plot = FALSE)
     freqWindow_recipient = median(anal_recipient$pitch, na.rm = TRUE)
   }
+  freqRange_kHz_rec = diff(range(as.numeric(rownames(spec_recipient))))
+  freqBin_Hz_rec = freqRange_kHz_rec * 1000 / nrow(spec_recipient)
+  freqWindow_rec_bins = round(freqWindow_recipient / freqBin_Hz_rec, 0)
+  if (freqWindow_rec_bins < 3) {
+    message(paste('freqWindow_recipient has to be at least 3 bins wide;
+                  resetting to', ceiling(freqBin_Hz_rec * 3)))
+    freqWindow_rec_bins = 3
+  }
   for (i in 1:ncol(spec_recipient)) {
     abs_s = abs(spec_recipient[, i])
     cor_coef = flatEnv(abs_s, method = 'peak',
-                       windowLength_points = freqWindow_bins) / abs_s
+                       windowLength_points = freqWindow_rec_bins) / abs_s
     spec_recipient[, i] = complex(
       real = Re(spec_recipient[, i]) * cor_coef,
       imaginary = Im(spec_recipient[, i])

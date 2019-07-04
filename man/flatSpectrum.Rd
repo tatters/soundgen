@@ -80,4 +80,3 @@ playme(sheep_aii, samplingRate)
 }
 
 }
-\keyword{export}

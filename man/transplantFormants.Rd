@@ -55,7 +55,7 @@ spectrograms, and transforms back into time domain with inverse STFT.
 \examples{
 \dontrun{
 # Objective: take formants from the bleating of a sheep and apply them to a
-synthetic sound with any arbitrary duration, intonation, nonlinearities etc
+# synthetic sound with any arbitrary duration, intonation, nonlinearities etc
 data(sheep, package = 'seewave')  # import a recording from seewave
 donor = as.numeric(scale(sheep@left))  # source of formants
 samplingRate = sheep@samp.rate
@@ -88,4 +88,3 @@ spectrogram(s2, samplingRate, osc = TRUE)
 seewave::meanspec(s2, f = samplingRate, dB = 'max0')
 }
 }
-\keyword{export}

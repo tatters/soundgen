@@ -6,9 +6,11 @@
 #' @inheritParams estimateVTL
 #' @keywords internal
 #' @examples
-#' getFormantDispersion(c(500, 1400, 2900, 3500), method = 'meanDispersion')
-#' getFormantDispersion(c(500, 1400, 2900, 3500), method = 'regression')
-#' getFormantDispersion(c(500, 1400, NA, 3500))
+#' soundgen:::getFormantDispersion(c(500, 1400, 2900, 3500),
+#'   method = 'meanDispersion')
+#' soundgen:::getFormantDispersion(c(500, 1400, 2900, 3500),
+#'   method = 'regression')
+#' soundgen:::getFormantDispersion(c(500, 1400, NA, 3500))
 #' \dontrun{
 #' nIter = 100  # nIter = 10000 for better results
 #' speedSound = 35400

@@ -11,6 +11,7 @@ MINOR:
   * analyze() and analyzeFolder() also return duration without counting silent frames at the beginning/end of the sound
   * getSpectralEnvelope(): the output matrix contains frequency and time stamps as row/column names
   * spectrogram(): new output option ("complex") returns a spectrogram with imaginary parts (phase)
+  * getLoudness() and getLoudnessFolder() support mp3
 
 BUG FIXES:
   * analyze() no longer crashes with pitchMethods = NULL
