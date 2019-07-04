@@ -41,8 +41,9 @@
 #' @param method plot spectrum ('spectrum') or spectral derivative
 #'   ('spectralDerivative')
 #' @param output specifies what to return: nothing ('none'), unmodified
-#'   spectrogram ('original'), or denoised and/or smoothed spectrogram
-#'   ('processed')
+#'   spectrogram ('original'), denoised and/or smoothed spectrogram
+#'   ('processed'), or unmodified spectrogram with the imaginary part giving
+#'   phase ('complex')
 #' @param ylim frequency range to plot, kHz (defaults to 0 to Nyquist frequency)
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
 #' @param osc,osc_dB should an oscillogram be shown under the spectrogram? TRUE/
@@ -125,7 +126,7 @@ spectrogram = function(x,
                        contrast = .2,
                        brightness = 0,
                        method = c('spectrum', 'spectralDerivative')[1],
-                       output = c('none', 'original', 'processed')[1],
+                       output = c('none', 'original', 'processed', 'complex')[1],
                        ylim = NULL,
                        plot = TRUE,
                        osc = FALSE,
@@ -390,6 +391,8 @@ spectrogram = function(x,
     return(t(Z))  # before denoising
   } else if (output == 'processed') {
     return(t(Z1))  # denoised spectrum / spectralDerivative
+  } else if (output == 'complex') {
+    return(z)  # with the imaginary part
   }
 }
 

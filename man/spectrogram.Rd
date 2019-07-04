@@ -9,11 +9,11 @@ spectrogram(x, samplingRate = NULL, dynamicRange = 80,
   zp = 0, normalize = TRUE, smoothFreq = 0, smoothTime = 0,
   qTime = 0, percentNoise = 10, noiseReduction = 0, contrast = 0.2,
   brightness = 0, method = c("spectrum", "spectralDerivative")[1],
-  output = c("none", "original", "processed")[1], ylim = NULL,
-  plot = TRUE, osc = FALSE, osc_dB = FALSE, heights = c(3, 1),
-  colorTheme = c("bw", "seewave", "...")[1], xlab = "Time, ms",
-  ylab = "Frequency, KHz", mar = c(5.1, 4.1, 4.1, 2), main = "",
-  frameBank = NULL, duration = NULL, ...)
+  output = c("none", "original", "processed", "complex")[1],
+  ylim = NULL, plot = TRUE, osc = FALSE, osc_dB = FALSE,
+  heights = c(3, 1), colorTheme = c("bw", "seewave", "...")[1],
+  xlab = "Time, ms", ylab = "Frequency, KHz", mar = c(5.1, 4.1, 4.1,
+  2), main = "", frameBank = NULL, duration = NULL, ...)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
@@ -66,8 +66,9 @@ sharpness}
 ('spectralDerivative')}
 
 \item{output}{specifies what to return: nothing ('none'), unmodified
-spectrogram ('original'), or denoised and/or smoothed spectrogram
-('processed')}
+spectrogram ('original'), denoised and/or smoothed spectrogram
+('processed'), or unmodified spectrogram with the imaginary part giving
+phase ('complex')}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 

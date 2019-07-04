@@ -397,3 +397,122 @@ crossFade = function(ampl1,
   return(ampl)
 }
 
+
+#' Flat spectrum
+#'
+#' Flattens the spectrum of a sound by smoothing in the frequency domain. Can be
+#' used for removing formants without modifying pitch contour or voice quality
+#' (the balance of harmonic and noise components), followed by the addition of a
+#' new spectral envelope. Algorithm: makes a spectrogram, smoothes the real part
+#' of the spectrum of each STFT frame, and transforms back into time domain with
+#' inverse STFT (see also \code{\link{addFormants}}).
+#'
+#' @return Returns a numeric vector with the same sampling rate as the input.
+#' @inheritParams spectrogram
+#' @param freqWindow the width of smoothing window, Hz (recommended value: close
+#'   to the fundamental frequency)
+#' @keywords export
+#' @examples
+#' sound_aii = soundgen(formants = 'aii')
+#' # playme(sound_aii, 16000)
+#' seewave::meanspec(sound_aii, f = 16000, dB = 'max0')
+#'
+#' sound_flat = flatSpectrum(sound_aii, freqWindow = 150, samplingRate = 16000)
+#' # playme(sound_flat, 16000)
+#' seewave::meanspec(sound_flat, f = 16000, dB = 'max0')
+#' # harmonics are still there, but formants are gone and can be replaced
+#'
+#' \dontrun{
+#' # Now let's make a sheep say "aii"
+#' data(sheep, package = 'seewave')  # import a recording from seewave
+#' sheep_orig = as.numeric(scale(sheep@left))
+#' samplingRate = sheep@samp.rate
+#' playme(sheep_orig, samplingRate)
+#' # spectrogram(sheep_orig, samplingRate)
+#' # seewave::spec(sheep_orig, f = samplingRate, dB = 'max0')
+#'
+#' sheep_flat = flatSpectrum(sheep_orig, freqWindow = 150,  # freqWindow ~f0
+#'   samplingRate = samplingRate)
+#' # playme(sheep_flat, samplingRate)
+#' # spectrogram(sheep_flat, samplingRate)
+#' # seewave::spec(sheep_flat, f = samplingRate, dB = 'max0')
+#'
+#' # So far we have a sheep bleating with a flat spectrum;
+#' # now let's add new formants
+#' sheep_aii = addFormants(sheep_flat,
+#'   samplingRate = samplingRate,
+#'   formants = 'aii',
+#'   lipRad = -3)  # negative lipRad to counter unnatural flat source
+#' playme(sheep_aii, samplingRate)
+#' # spectrogram(sheep_aii, samplingRate)
+#' # seewave::spec(sheep_aii, f = samplingRate, dB = 'max0')
+#' }
+#'
+flatSpectrum = function(x,
+                        freqWindow,
+                        samplingRate = NULL,
+                        dynamicRange = 80,
+                        windowLength = 50,
+                        step = NULL,
+                        overlap = 90,
+                        wn = 'gaussian',
+                        zp = 0) {
+  if (is.character(x) & is.null(samplingRate)) {
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    samplingRate = sound_wav@samp.rate
+  }
+
+  # get a spectrogram of the original sound
+  spec = spectrogram(x,
+                     samplingRate = samplingRate,
+                     dynamicRange = dynamicRange,
+                     windowLength = windowLength,
+                     step = step,
+                     overlap = overlap,
+                     wn = wn,
+                     zp = zp,
+                     output = 'complex',
+                     plot = FALSE)
+
+  # calculate the width of smoothing window in bins
+  freqRange_kHz = diff(range(as.numeric(rownames(spec))))
+  freqBin_Hz = freqRange_kHz * 1000 / nrow(spec)
+  freqWindow_bins = round(freqWindow / freqBin_Hz, 0)
+  if (freqWindow_bins < 3) {
+    message(paste('freqWindow has to be at least 3 bins wide;
+                  resetting to', ceiling(freqBin_Hz * 3)))
+    freqWindow_bins = 3
+  }
+
+  # modify the spectrogram
+  for (i in 1:ncol(spec)) {
+    # plot(1:length(s), abs(spec[, i]), type = 'b')
+    abs_s = abs(spec[, i])
+    cor_coef = flatEnv(abs_s, method = 'peak',
+                       windowLength_points = freqWindow_bins) / abs_s
+    spec[, i] = complex(real = Re(spec[, i]) * cor_coef,
+                        imaginary = Im(spec[, i]))
+  }
+
+  # recreate an audio from the modified spectrogram
+  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  sound_new = as.numeric(
+    seewave::istft(
+      spec,
+      f = samplingRate,
+      ovlp = overlap,
+      wl = windowLength_points,
+      output = "matrix"
+    )
+  )
+  # playme(sound_new, samplingRate)
+  # spectrogram(sound_new, samplingRate)
+  return(sound_new)
+}

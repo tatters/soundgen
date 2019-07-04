@@ -1,4 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.4.1 [...Date...]
+NEW FUNCTIONS:
+  * flatSpectrum(): flattens the spectrum of a sound by smoothing in the frequency domain
+
 MINOR:
   * soundgen(), playme(), generateNoise(), fart(), beat(): the previously boolean argument "play" can now also be a string to specify the audio player, eg play = 'aplay' or play = 'vlc'
   * estimateVTL() offers three methods of estimating vocal tract length from formant frequencies
