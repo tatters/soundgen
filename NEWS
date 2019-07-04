@@ -4,13 +4,14 @@ MINOR:
   * estimateVTL() offers three methods of estimating vocal tract length from formant frequencies
   * analyze() and analyzeFolder() can summarize the output with arbitrary functions like "function(x) ..."
   * analyze(), analyzeFolder(): argument "summaryStats" renamed to "summaryFun" to keep the terminology consistent with getLoudnessFolder() and getRMSFolder()
-  * analyze(), analyzeFolder(): also return duration without counting silent frames at the beginning and/or end
+  * analyze() and analyzeFolder() also return duration without counting silent frames at the beginning/end of the sound
   * getSpectralEnvelope(): the output matrix contains frequency and time stamps as row/column names
 
 BUG FIXES:
   * analyze() no longer crashes with pitchMethods = NULL
-  * getLoudness(), analyze() no longer crash with sampling rates above 44100 (NB: frequencies above 27 barks are automatically discarded when calculating subjective loudness)
+  * getLoudness() and analyze() no longer crash with sampling rates above 44100 (NB: frequencies above 27 barks are automatically discarded when calculating subjective loudness)
   * morph(): proper handling of attackLen and other small debugging
+  * soundgen(): tempEffects(amplDriftDep) is no longer tied to pitchDriftDep, has a more reasonable default, and doesn't affect audio normalization
 
 
           CHANGES IN SOUNDGEN VERSION 1.4.0 [13-March-2019]

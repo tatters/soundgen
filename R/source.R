@@ -368,7 +368,7 @@ generateHarmonics = function(pitch,
                              temperature = .025,
                              pitchDriftDep = .5,
                              pitchDriftFreq = .125,
-                             amplDriftDep = 5,
+                             amplDriftDep = 1,
                              subDriftDep = 4,
                              rolloffDriftDep = 3,
                              randomWalk_trendStrength = .5,
@@ -658,6 +658,19 @@ generateHarmonics = function(pitch,
     }
   }
 
+    # pitch drift is accompanied by amplitude drift
+  if (temperature > 0 & amplDriftDep > 0) {
+    drift_ampl = zeroOne(drift) * temperature
+    drift_ampl = drift_ampl - mean(drift_ampl) + 1  # hist(drift_ampl)
+    gc_upsampled = upsample(pitch_per_gc, samplingRate = samplingRate)$gc
+    drift_upsampled = approx(drift_ampl,  # otherwise pitchDriftDep scales amplDriftDep
+                             n = length(waveform),
+                             x = gc_upsampled[-length(gc_upsampled)])$y
+    waveform = waveform * drift_upsampled ^ amplDriftDep
+    # plot(drift_upsampled, type = 'l')
+    # plot(waveform, type = 'l')
+  }
+
   # normalize to be on the same scale as breathing (NB: after adding attack,
   # b/c fading the ends can change the overall range if eg peak ampl is at the beg.)
   if (normalize) waveform = waveform / max(abs(waveform))
@@ -678,15 +691,6 @@ generateHarmonics = function(pitch,
     }
   }
 
-  # pitch drift is accompanied by amplitude drift
-  if (temperature > 0 & amplDriftDep > 0) {
-    gc_upsampled = upsample(pitch_per_gc, samplingRate = samplingRate)$gc
-    drift_upsampled = approx(drift,
-                             n = length(waveform),
-                             x = gc_upsampled[-length(gc_upsampled)])$y
-    waveform = waveform * drift_upsampled ^ amplDriftDep
-    # plot(drift_upsampled, type = 'l')
-  }
   # playme(waveform, samplingRate = samplingRate)
   # spectrogram(waveform, samplingRate = samplingRate)
   return(waveform)

@@ -442,6 +442,7 @@ getSpectralEnvelope = function(nr,
   } else {
     mouthOpen_binary = rep(1, nc)
     mouthOpening_upsampled = rep(0.5, nc)
+    bin_width = samplingRate / 2 / nr # otherwise it's not defined if formants = NULL
   }
   # plot(spectralEnvelope[, 1], type = 'l')
   # image(t(spectralEnvelope))
