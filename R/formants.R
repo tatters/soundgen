@@ -935,3 +935,209 @@ addFormants = function(sound,
   # playme(soundFiltered, samplingRate = samplingRate)
   return(soundFiltered)
 }
+
+
+#' Transplant formants
+#'
+#' Takes the general spectral envelope of one sound (\code{donor}) and
+#' "transplants" it onto another sound (\code{recipient}). For biological sounds
+#' like speech or animal vocalizations, this has the effect of replacing the
+#' formants in the recipient sound while preserving the original intonation and
+#' (to some extent) voice quality. Note that \code{freqWindow_donor} and
+#' \code{freqWindow_recipient} are crucial parameters that regulate the amount
+#' of spectral smoothing in both sounds. The default is to set them to the
+#' estimated median pitch, but this is time-consuming and error-prone, so set
+#' them to reasonable values manually if possible. See also
+#' \code{\link{flatSpectrum}} and \code{\link{addFormants}}.
+#'
+#' Algorithm: makes spectrograms of both sounds, interpolates and smoothes the
+#' donor spectrogram, flattens the recipient spectrogram, multiplies the
+#' spectrograms, and transforms back into time domain with inverse STFT.
+#'
+#' @inheritParams spectrogram
+#' @param donor the sound that provides the formants
+#' @param recipient the sound that receives the formants
+#' @param freqWindow_donor,freqWindow_recipient the width of smoothing window,
+#'   Hz (recommended value: close to the fundamental frequency). If NULL, set to
+#'   median pitch of each respective sound estimated by \code{\link{analyze}}
+#' @keywords export
+#' @examples
+#' \dontrun{
+#' # Objective: take formants from the bleating of a sheep and apply them to a
+#' synthetic sound with any arbitrary duration, intonation, nonlinearities etc
+#' data(sheep, package = 'seewave')  # import a recording from seewave
+#' donor = as.numeric(scale(sheep@left))  # source of formants
+#' samplingRate = sheep@samp.rate
+#' playme(donor, samplingRate)
+#' spectrogram(donor, samplingRate, osc = TRUE)
+#' seewave::meanspec(donor, f = samplingRate, dB = 'max0')
+#'
+#' s1 = transplantFormants(
+#'   donor = donor,
+#'   recipient = soundgen(sylLen = 1200,
+#'                        pitch = c(100, 300, 250, 200),
+#'                        vibratoFreq = 9, vibratoDep = 1,
+#'                        samplingRate = samplingRate),
+#'   samplingRate = samplingRate)
+#' playme(s1, samplingRate)
+#' spectrogram(s1, samplingRate, osc = TRUE)
+#' seewave::meanspec(s1, f = samplingRate, dB = 'max0')
+#'
+#' s2 = transplantFormants(
+#'   donor = donor,
+#'   recipient = soundgen(sylLen = 1500,
+#'                        pitch = c(150, 200, 120),
+#'                        nonlinBalance = 50,
+#'                        subFreq = 80, subDep = 50, jitterDep = 0,
+#'                        noise = -20,
+#'                        samplingRate = samplingRate),
+#'   samplingRate = samplingRate)
+#' playme(s2, samplingRate)
+#' spectrogram(s2, samplingRate, osc = TRUE)
+#' seewave::meanspec(s2, f = samplingRate, dB = 'max0')
+#' }
+transplantFormants = function(donor,
+                              freqWindow_donor = NULL,
+                              recipient,
+                              freqWindow_recipient = NULL,
+                              samplingRate = NULL,
+                              dynamicRange = 80,
+                              windowLength = 50,
+                              step = NULL,
+                              overlap = 90,
+                              wn = 'gaussian',
+                              zp = 0) {
+  # First check that both sounds have the same sampling rate
+  samplingRate_donor = samplingRate_recipient = 0
+  if (is.character(donor) & is.null(samplingRate)) {
+    extension = substr(donor, nchar(donor) - 2, nchar(donor))
+    if (extension == 'wav' | extension == 'WAV') {
+      donor_wav = tuneR::readWave(donor)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      donor_wav = tuneR::readMP3(donor)
+    } else {
+      stop('Donor not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    samplingRate_donor = donor_wav@samp.rate
+    donor = as.numeric(donor_wav@left)
+  }
+
+  if (is.character(recipient) & is.null(samplingRate)) {
+    extension = substr(recipient, nchar(recipient) - 2, nchar(recipient))
+    if (extension == 'wav' | extension == 'WAV') {
+      recipient_wav = tuneR::readWave(recipient)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      recipient_wav = tuneR::readMP3(recipient)
+    } else {
+      stop('recipient not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    samplingRate_recipient = recipient_wav@samp.rate
+    recipient = as.numeric(recipient_wav@left)
+  }
+
+  if (samplingRate_donor > 0 & samplingRate_recipient > 0) {
+    # two audio files
+    if (samplingRate_donor != samplingRate_recipient) {
+      stop('Please use two sounds with the same sampling rate')
+    } else {
+      samplingRate = samplingRate_donor  # or recipient - they are the same
+    }
+  } else if (samplingRate_donor == 0 & samplingRate_recipient == 0) {
+    # two vectors
+    if (!is.numeric(samplingRate)) {
+      stop('Please specify sampling rate')
+    }
+  } else {
+    # one audio file, one vector
+    if (!is.numeric(samplingRate)) {
+      samplingRate = max(samplingRate_donor, samplingRate_recipient)
+      message(paste('Sampling rate not specified; assuming the same',
+                    'as for the audio file, namely', samplingRate, 'Hz'))
+    }
+  }
+
+  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  spec_recipient = spectrogram(
+    recipient,
+    samplingRate = samplingRate,
+    dynamicRange = dynamicRange,
+    windowLength = windowLength,
+    step = step,
+    overlap = overlap,
+    wn = wn,
+    zp = zp,
+    output = 'complex',
+    plot = FALSE
+  )
+  spec_donor = spectrogram(
+    donor,
+    samplingRate = samplingRate,
+    dynamicRange = dynamicRange,
+    windowLength = windowLength,
+    step = step,
+    overlap = overlap,
+    wn = wn,
+    zp = zp,
+    output = 'original',
+    plot = FALSE
+  )
+
+  # Make sure the donor spec has the same dimensions as the recipient spec
+  spec_donor_rightDim = interpolMatrix(m = spec_donor,
+                                       nr = nrow(spec_recipient),
+                                       nc = ncol(spec_recipient))
+  rownames(spec_donor_rightDim) = rownames(spec_recipient)
+
+
+  # Smooth the donor spectrogram
+  if (!is.numeric(freqWindow_donor)) {
+    anal_donor = analyze(donor, samplingRate, plot = FALSE)
+    freqWindow_donor = median(anal_donor$pitch, na.rm = TRUE)
+  }
+  freqRange_kHz = diff(range(as.numeric(rownames(spec_donor_rightDim))))
+  freqBin_Hz = freqRange_kHz * 1000 / nrow(spec_donor_rightDim)
+  freqWindow_bins = round(freqWindow / freqBin_Hz, 0)
+  if (freqWindow_bins < 3) {
+    message(paste('freqWindow has to be at least 3 bins wide;
+                  resetting to', ceiling(freqBin_Hz * 3)))
+    freqWindow_bins = 3
+  }
+  # plot(spec_donor_rightDim[, 10], type = 'l')
+  for (i in 1:ncol(spec_donor_rightDim)) {
+    spec_donor_rightDim[, i] = getEnv(
+      sound = spec_donor_rightDim[, i],
+      windowLength_points = freqWindow_bins,
+      method = 'peak'
+    )
+  }
+
+  # Flatten the recipient spectrogram
+  if (!is.numeric(freqWindow_recipient)) {
+    anal_recipient = analyze(recipient, samplingRate, plot = FALSE)
+    freqWindow_recipient = median(anal_recipient$pitch, na.rm = TRUE)
+  }
+  for (i in 1:ncol(spec_recipient)) {
+    abs_s = abs(spec_recipient[, i])
+    cor_coef = flatEnv(abs_s, method = 'peak',
+                       windowLength_points = freqWindow_bins) / abs_s
+    spec_recipient[, i] = complex(
+      real = Re(spec_recipient[, i]) * cor_coef,
+      imaginary = Im(spec_recipient[, i])
+    )
+    # plot(abs(spec_recipient[, i]), type = 'l')
+  }
+
+  # Multiply the spectrograms and reconstruct the audio
+  spec_recipient_new = spec_recipient * spec_donor_rightDim
+  recipient_new = as.numeric(
+    seewave::istft(
+      spec_recipient_new,
+      f = samplingRate,
+      ovlp = overlap,
+      wl = windowLength_points,
+      output = "matrix"
+    )
+  )
+  # spectrogram(recipient_new, samplingRate)
+  return(recipient_new)
+}

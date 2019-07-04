@@ -493,12 +493,12 @@ flatSpectrum = function(x,
 
   # modify the spectrogram
   for (i in 1:ncol(spec)) {
-    # plot(1:length(s), abs(spec[, i]), type = 'b')
     abs_s = abs(spec[, i])
     cor_coef = flatEnv(abs_s, method = 'peak',
                        windowLength_points = freqWindow_bins) / abs_s
     spec[, i] = complex(real = Re(spec[, i]) * cor_coef,
                         imaginary = Im(spec[, i]))
+    # plot(abs(spec[, i]), type = 'b')
   }
 
   # recreate an audio from the modified spectrogram
@@ -516,3 +516,4 @@ flatSpectrum = function(x,
   # spectrogram(sound_new, samplingRate)
   return(sound_new)
 }
+

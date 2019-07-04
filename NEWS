@@ -1,6 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.4.1 [...Date...]
 NEW FUNCTIONS:
   * flatSpectrum(): flattens the spectrum of a sound by smoothing in the frequency domain
+  * transplantFormants(): takes the general spectral envelope of one sound ("donor") and "transplants" it onto another sound ("recipient")
 
 MINOR:
   * soundgen(), playme(), generateNoise(), fart(), beat(): the previously boolean argument "play" can now also be a string to specify the audio player, eg play = 'aplay' or play = 'vlc'
@@ -9,6 +10,7 @@ MINOR:
   * analyze(), analyzeFolder(): argument "summaryStats" renamed to "summaryFun" to keep the terminology consistent with getLoudnessFolder() and getRMSFolder()
   * analyze() and analyzeFolder() also return duration without counting silent frames at the beginning/end of the sound
   * getSpectralEnvelope(): the output matrix contains frequency and time stamps as row/column names
+  * spectrogram(): new output option ("complex") returns a spectrogram with imaginary parts (phase)
 
 BUG FIXES:
   * analyze() no longer crashes with pitchMethods = NULL
