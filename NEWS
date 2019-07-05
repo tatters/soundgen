@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.4.1 [...Date...]
+          CHANGES IN SOUNDGEN VERSION 1.4.1 [05-July-2019]
 NEW FUNCTIONS:
   * flatSpectrum(): flattens the spectrum of a sound by smoothing in the frequency domain
   * transplantFormants(): takes the general spectral envelope (formants) of one sound and "transplants" it onto another sound

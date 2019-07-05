@@ -5,18 +5,18 @@
 #' axis. A good visual analogy is decomposing the spectrogram into a sum of
 #' ripples of various frequencies and directions. Algorithm: prepare a
 #' \code{\link{spectrogram}}, take its logarithm (if \code{logSpec = TRUE}),
-#' center, perform a 2D Fourier transform (see also
-#' \code{\link[spectral]{spec.fft}}), take the upper half of the resulting
-#' symmetric matrix, and raise it to \code{power = 2}. The result is
-#' returned as \code{$original}. Roughness is calculated as the proportion of
-#' energy / amplitude of the modulation spectrum within \code{roughRange} of
-#' temporal modulation frequencies. By default, the modulation matrix is then
-#' smoothed with Gaussian blur (see \code{\link{gaussianSmooth2D}}) and
-#' log-warped (if \code{logWarp} is a positive number) prior to plotting. This
-#' processed modulation spectrum is returned as \code{$processed}. For multiple
-#' inputs, such as a list of waveforms or path to a folder with audio files, the
-#' ensemble of modulation spectra is interpolated to the same spectral and
-#' temporal resolution and averaged. This is different from the behavior of
+#' center, perform a 2D Fourier transform (see also spec.fft() in the "spectral"
+#' package), take the upper half of the resulting symmetric matrix, and raise it
+#' to \code{power = 2}. The result is returned as \code{$original}. Roughness is
+#' calculated as the proportion of energy / amplitude of the modulation spectrum
+#' within \code{roughRange} of temporal modulation frequencies. By default, the
+#' modulation matrix is then smoothed with Gaussian blur (see
+#' \code{\link{gaussianSmooth2D}}) and log-warped (if \code{logWarp} is a
+#' positive number) prior to plotting. This processed modulation spectrum is
+#' returned as \code{$processed}. For multiple inputs, such as a list of
+#' waveforms or path to a folder with audio files, the ensemble of modulation
+#' spectra is interpolated to the same spectral and temporal resolution and
+#' averaged. This is different from the behavior of
 #' \code{\link{modulationSpectrumFolder}}, which produces a separate modulation
 #' spectrum per file, without averaging.
 #' @references \itemize{
@@ -279,7 +279,7 @@ modulationSpectrum = function(x,
       s1 = log(s1)
       s1 = s1 - min(s1) + 1e-16  # positive
     }
-    # center - see spectral::spec.fft
+    # center - see spec.fft function in "spectral" package
     s2 = s1 * (-1)^(row(s1) + col(s1))
     # 2D fft
     s3 = abs(fft(s2, inverse = FALSE))

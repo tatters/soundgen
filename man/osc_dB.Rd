@@ -9,8 +9,8 @@ osc_dB(x, dynamicRange = 80, maxAmpl = NULL, samplingRate = NULL,
   bty = "n", midline = TRUE, ...)
 }
 \arguments{
-\item{x}{path to a .wav file or a CENTERED (mean ~= 0) vector of amplitudes
-with specified samplingRate}
+\item{x}{path to a .wav file or a vector of amplitudes with specified
+samplingRate}
 
 \item{dynamicRange}{dynamic range of the oscillogram, dB}
 
@@ -42,8 +42,8 @@ Plots the oscillogram (waveform) of a sound on a logarithmic scale, in dB.
 Analogous to "Waveform (dB)" view in Audacity.
 }
 \details{
-Algorithm: centers and normalizes the sound, then takes a logarithm of the
-positive part and a flipped negative part.
+Algorithm: centers and normalizes the sound, then takes a logarithm of the positive part
+and a flipped negative part.
 }
 \examples{
 sound = sin(1:2000/10) *

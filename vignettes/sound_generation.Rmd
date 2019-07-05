@@ -62,9 +62,10 @@ Audio playback may fail, depending on your platform and installed software. Soun
   
 Because of possible errors, audio playback is disabled by default in the rest of this vignette. To turn it on without changing any code, simply set the global variable `playback` to the appropriate value for your specific OS, for ex.:
 ```{r}
-playback = c(TRUE, FALSE, "play", "aplay", "vlc")[2]
+playback = FALSE  
 # TRUE means using "play" on Linux and the defaults of tuneR::play on Windows/Mac
 # FALSE means no sound playback
+# A string like "play", "aplay", "vlc" etc. calls a specific player
 ```
 
 ## From the console

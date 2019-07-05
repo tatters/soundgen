@@ -6,7 +6,7 @@
 #' is a simplified version of \code{\link[seewave]{spectro}} with fewer plotting
 #' options, but with added routines for noise reduction, smoothing in time and
 #' frequency domains, and controlling contrast and brightness. It also provides
-#' an options to plot the oscillogram on a dB scale.
+#' an option to plot the oscillogram on a dB scale.
 #' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if
@@ -590,12 +590,12 @@ getFrameBank = function(sound,
 #' Plots the oscillogram (waveform) of a sound on a logarithmic scale, in dB.
 #' Analogous to "Waveform (dB)" view in Audacity.
 #'
-#' Algorithm: centers and normalizes the sound, then takes a logarithm of the
-#' positive part and a flipped negative part.
+#' Algorithm: centers and normalizes the sound, then takes a logarithm of the positive part
+#' and a flipped negative part.
 #' @return Returns the input waveform on a dB scale: a vector with
 #'   range from `-dynamicRange` to `dynamicRange`.
-#' @param x path to a .wav file or a CENTERED (mean ~= 0) vector of amplitudes
-#'   with specified samplingRate
+#' @param x path to a .wav file or a vector of amplitudes with specified
+#'   samplingRate
 #' @param dynamicRange dynamic range of the oscillogram, dB
 #' @param maxAmpl the maximum theoretically possible value indicating on which
 #'   scale the sound is coded: 1 if the range is -1 to +1, 2^15 for 16-bit wav
@@ -658,8 +658,9 @@ osc_dB = function(x,
     mult = 1  # assume max loudness
   }
 
-  # normalize to range from -1 to +1, unless it is quieter than maxAmpl
-  s1 = sound / max(abs(sound)) * mult
+  # center and normalize to range from -1 to +1, unless it is quieter than maxAmpl
+  s1 = sound - mean(sound)
+  s1 = s1 / max(abs(s1)) * mult
 
   # indices of values above/below midline
   floor = 10^(-dynamicRange / 20)  # treat smaller values as 0 (beyond dynamic range)

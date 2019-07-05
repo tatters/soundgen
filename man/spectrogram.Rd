@@ -105,7 +105,7 @@ Produces the spectrogram of a sound using short-term Fourier transform. This
 is a simplified version of \code{\link[seewave]{spectro}} with fewer plotting
 options, but with added routines for noise reduction, smoothing in time and
 frequency domains, and controlling contrast and brightness. It also provides
-an options to plot the oscillogram on a dB scale.
+an option to plot the oscillogram on a dB scale.
 }
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise

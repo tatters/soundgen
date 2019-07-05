@@ -953,7 +953,7 @@ fart = function(glottis = c(50, 200),
 
   s = s / max(abs(s))
 
-  if (play) playme(s, samplingRate)
+  if (play == TRUE) playme(s, samplingRate)
   if (is.character(play)) {
     playme(s, samplingRate = samplingRate, player = play)
   }
