@@ -4,16 +4,16 @@
 \alias{flatSpectrum}
 \title{Flat spectrum}
 \usage{
-flatSpectrum(x, freqWindow, samplingRate = NULL, dynamicRange = 80,
-  windowLength = 50, step = NULL, overlap = 90, wn = "gaussian",
-  zp = 0)
+flatSpectrum(x, freqWindow = NULL, samplingRate = NULL,
+  dynamicRange = 80, windowLength = 50, step = NULL, overlap = 90,
+  wn = "gaussian", zp = 0)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
 samplingRate}
 
-\item{freqWindow}{the width of smoothing window, Hz (recommended value: close
-to the fundamental frequency)}
+\item{freqWindow}{the width of smoothing window, Hz. Defaults to median
+pitch estimated by \code{\link{analyze}}}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than an audio file)}
@@ -39,9 +39,10 @@ Returns a numeric vector with the same sampling rate as the input.
 Flattens the spectrum of a sound by smoothing in the frequency domain. Can be
 used for removing formants without modifying pitch contour or voice quality
 (the balance of harmonic and noise components), followed by the addition of a
-new spectral envelope. Algorithm: makes a spectrogram, smoothes the real part
-of the spectrum of each STFT frame, and transforms back into time domain with
-inverse STFT (see also \code{\link{addFormants}}).
+new spectral envelope (cf. \code{\link{transplantFormants}}). Algorithm:
+makes a spectrogram, flattens the real part of the smoothed spectrum of each
+STFT frame, and transforms back into time domain with inverse STFT (see also
+\code{\link{addFormants}}).
 }
 \examples{
 sound_aii = soundgen(formants = 'aii')
@@ -78,5 +79,4 @@ playme(sheep_aii, samplingRate)
 # spectrogram(sheep_aii, samplingRate)
 # seewave::spec(sheep_aii, f = samplingRate, dB = 'max0')
 }
-
 }

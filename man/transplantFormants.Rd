@@ -12,9 +12,9 @@ transplantFormants(donor, freqWindow_donor = NULL, recipient,
 \arguments{
 \item{donor}{the sound that provides the formants}
 
-\item{freqWindow_donor, freqWindow_recipient}{the width of smoothing window,
-Hz (recommended value: close to the fundamental frequency). If NULL, set to
-median pitch of each respective sound estimated by \code{\link{analyze}}}
+\item{freqWindow_donor, freqWindow_recipient}{the width of smoothing window.
+Defaults to median pitch of each respective sound estimated by
+\code{\link{analyze}}}
 
 \item{recipient}{the sound that receives the formants}
 

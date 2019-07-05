@@ -1,7 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.4.1 [...Date...]
 NEW FUNCTIONS:
   * flatSpectrum(): flattens the spectrum of a sound by smoothing in the frequency domain
-  * transplantFormants(): takes the general spectral envelope of one sound ("donor") and "transplants" it onto another sound ("recipient")
+  * transplantFormants(): takes the general spectral envelope (formants) of one sound and "transplants" it onto another sound
 
 MINOR:
   * soundgen(), playme(), generateNoise(), fart(), beat(): the previously boolean argument "play" can now also be a string to specify the audio player, eg play = 'aplay' or play = 'vlc'

@@ -1,4 +1,4 @@
-# TODO: flatSpectrum(sound) with smoothing (with window width ~ f0) of the original spectrum, so voice quality is preserved but formants are removed and can be replaced with those of another sound (or synthetic); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 #' @import stats graphics utils grDevices
 #' @encoding UTF-8

@@ -403,14 +403,15 @@ crossFade = function(ampl1,
 #' Flattens the spectrum of a sound by smoothing in the frequency domain. Can be
 #' used for removing formants without modifying pitch contour or voice quality
 #' (the balance of harmonic and noise components), followed by the addition of a
-#' new spectral envelope. Algorithm: makes a spectrogram, smoothes the real part
-#' of the spectrum of each STFT frame, and transforms back into time domain with
-#' inverse STFT (see also \code{\link{addFormants}}).
+#' new spectral envelope (cf. \code{\link{transplantFormants}}). Algorithm:
+#' makes a spectrogram, flattens the real part of the smoothed spectrum of each
+#' STFT frame, and transforms back into time domain with inverse STFT (see also
+#' \code{\link{addFormants}}).
 #'
 #' @return Returns a numeric vector with the same sampling rate as the input.
 #' @inheritParams spectrogram
-#' @param freqWindow the width of smoothing window, Hz (recommended value: close
-#'   to the fundamental frequency)
+#' @param freqWindow the width of smoothing window, Hz. Defaults to median
+#'   pitch estimated by \code{\link{analyze}}
 #' @export
 #' @examples
 #' sound_aii = soundgen(formants = 'aii')
@@ -447,9 +448,8 @@ crossFade = function(ampl1,
 #' # spectrogram(sheep_aii, samplingRate)
 #' # seewave::spec(sheep_aii, f = samplingRate, dB = 'max0')
 #' }
-#'
 flatSpectrum = function(x,
-                        freqWindow,
+                        freqWindow = NULL,
                         samplingRate = NULL,
                         dynamicRange = 80,
                         windowLength = 50,
@@ -457,7 +457,7 @@ flatSpectrum = function(x,
                         overlap = 90,
                         wn = 'gaussian',
                         zp = 0) {
-  if (is.character(x) & is.null(samplingRate)) {
+  if (is.character(x)) {
     extension = substr(x, nchar(x) - 2, nchar(x))
     if (extension == 'wav' | extension == 'WAV') {
       sound_wav = tuneR::readWave(x)
@@ -467,10 +467,19 @@ flatSpectrum = function(x,
       stop('Input not recognized: must be a numeric vector or wav/mp3 file')
     }
     samplingRate = sound_wav@samp.rate
+    sound = as.numeric(sound_wav@left)
+  } else {
+    sound = x
+  }
+
+  # default freqWindow = f0
+  if (!is.numeric(freqWindow)) {
+    a = analyze(sound, samplingRate, plot = FALSE)
+    freqWindow = median(a$pitch, na.rm = TRUE)
   }
 
   # get a spectrogram of the original sound
-  spec = spectrogram(x,
+  spec = spectrogram(sound,
                      samplingRate = samplingRate,
                      dynamicRange = dynamicRange,
                      windowLength = windowLength,

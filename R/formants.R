@@ -957,9 +957,9 @@ addFormants = function(sound,
 #' @inheritParams spectrogram
 #' @param donor the sound that provides the formants
 #' @param recipient the sound that receives the formants
-#' @param freqWindow_donor,freqWindow_recipient the width of smoothing window,
-#'   Hz (recommended value: close to the fundamental frequency). If NULL, set to
-#'   median pitch of each respective sound estimated by \code{\link{analyze}}
+#' @param freqWindow_donor,freqWindow_recipient the width of smoothing window.
+#'   Defaults to median pitch of each respective sound estimated by
+#'   \code{\link{analyze}}
 #' @export
 #' @examples
 #' \dontrun{
@@ -1009,7 +1009,7 @@ transplantFormants = function(donor,
                               zp = 0) {
   # First check that both sounds have the same sampling rate
   samplingRate_donor = samplingRate_recipient = 0
-  if (is.character(donor) & is.null(samplingRate)) {
+  if (is.character(donor)) {
     extension = substr(donor, nchar(donor) - 2, nchar(donor))
     if (extension == 'wav' | extension == 'WAV') {
       donor_wav = tuneR::readWave(donor)
@@ -1022,7 +1022,7 @@ transplantFormants = function(donor,
     donor = as.numeric(donor_wav@left)
   }
 
-  if (is.character(recipient) & is.null(samplingRate)) {
+  if (is.character(recipient)) {
     extension = substr(recipient, nchar(recipient) - 2, nchar(recipient))
     if (extension == 'wav' | extension == 'WAV') {
       recipient_wav = tuneR::readWave(recipient)
@@ -1053,6 +1053,8 @@ transplantFormants = function(donor,
       samplingRate = max(samplingRate_donor, samplingRate_recipient)
       message(paste('Sampling rate not specified; assuming the same',
                     'as for the audio file, namely', samplingRate, 'Hz'))
+    } else if (samplingRate != max(samplingRate_donor, samplingRate_recipient)) {
+      stop('Please use two sounds with the same sampling rate')
     }
   }
 
