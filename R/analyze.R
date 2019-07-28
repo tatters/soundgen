@@ -29,10 +29,10 @@
 #'   entropy above \code{entropyThres}, but other spectral descriptives are
 #'   still calculated
 #' @param pitchFloor,pitchCeiling absolute bounds for pitch candidates (Hz)
-#' @param priorMean,priorSD specifies the mean and sd of gamma distribution
-#'   describing our prior knowledge about the most likely pitch values for this
-#'   file. Specified in semitones: \code{priorMean = HzToSemitones(300),
-#'   priorSD = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
+#' @param priorMean,priorSD specifies the mean (Hz) and standard deviation
+#'   (semitones) of gamma distribution describing our prior knowledge about the
+#'   most likely pitch values for this file. For ex., \code{priorMean = 300,
+#'   priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 #'   an octave)
 #' @param priorPlot if TRUE, produces a separate plot of the prior
 #' @param nCands maximum number of pitch candidates per method (except for
@@ -260,7 +260,7 @@ analyze = function(x,
                    entropyThres = 0.6,
                    pitchFloor = 75,
                    pitchCeiling = 3500,
-                   priorMean = HzToSemitones(300),
+                   priorMean = 300,
                    priorSD = 6,
                    priorPlot = FALSE,
                    nCands = 1,
@@ -375,22 +375,35 @@ analyze = function(x,
   }
   sound = sound / max(abs(sound))
 
-  # some derived pars, defaults
+  # Check simple numeric default pars
+  simplePars = c('silence', 'entropyThres', 'domThres',
+                 'autocorThres',  'cepThres', 'specThres', 'specPeak',
+                 'specSinglePeakCert', 'certWeight')
+  for (p in simplePars) {
+    gp = try(get(p), silent = TRUE)
+    if (class(gp) != "try-error") {
+      if (is.numeric(gp)) {
+        if (any(gp < defaults_analyze[p, 'low']) |
+            any(gp > defaults_analyze[p, 'high'])) {
+          # reset p to default, with a warning
+          assign(noquote(p), defaults_analyze[p, 'default'])
+          warning(paste0(
+            "\n", p, " should be between ", defaults_analyze[p, 'low'],
+            " and ", defaults_analyze[p, 'high'],
+            "; resetting to ", defaults_analyze[p, 'default']
+          ))
+        }
+      }
+    }
+  }
+
+  # Check defaults that depend on other pars or require customized warnings
   if (samplingRate < 2000) {
     warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
                   'and estimate loudness in sone'))
   } else if (samplingRate > 44100) {
     message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
                   '(27 KHz) as inaudible to humans when estimating loudness'))
-  }
-
-  if (!is.numeric(silence) | silence < 0 | silence > 1) {
-    silence = 0.04
-    warning('"silence" must be between 0 and 1; defaulting to 0.04')
-  }
-  if (!is.numeric(entropyThres) | entropyThres < 0 | entropyThres > 1) {
-    entropyThres = 0.6
-    warning('"entropyThres" must be between 0 and 1; defaulting to 0.6')
   }
   duration = length(sound) / samplingRate
   if (!is.numeric(windowLength) | windowLength <= 0 |
@@ -402,6 +415,7 @@ analyze = function(x,
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:
   # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0)
+
   if (!is.numeric(step)) {
     if (!is.numeric(overlap) | overlap < 0 | overlap > 99) {
       overlap = 50
@@ -424,14 +438,7 @@ analyze = function(x,
     warning(paste('"step" should normally not be larger than "windowLength" ms:',
                   'you are skipping parts of the sound!'))
   }
-  supported_wn = c('bartlett', 'blackman', 'flattop', 'gaussian',
-                   'hamming', 'hanning', 'rectangle')
-  if (!wn %in% supported_wn) {
-    wn = 'gaussian'
-    warning(paste('Implemented "wn":',
-                  paste(supported_wn, collapse = ', '),
-                  '. Defaulting to "gaussian"'))
-  }
+
   if (!is.numeric(zp)) {
     zp = 0
   } else if (zp < 0) {
@@ -448,7 +455,7 @@ analyze = function(x,
     pitchFloor = 1
     warning(paste('"pitchFloor" must be between 0 and pitchCeiling;',
                   'defaulting to 1 Hz'))
-  } # 1 Hz ~ 4 octraves below C0
+  } # 1 Hz ~ 4 octaves below C0
   if (!is.numeric(pitchCeiling) | pitchCeiling > samplingRate / 2) {
     pitchCeiling = samplingRate / 2  # Nyquist
     warning(paste('"pitchCeiling" must be between 0 and Nyquist;',
@@ -461,11 +468,10 @@ analyze = function(x,
                   'defaulting to 1 Hz and samplingRate / 2, respectively'))
   }
   if (is.numeric(priorMean)) {
-    if (semitonesToHz(priorMean) > samplingRate / 2 |
-        semitonesToHz(priorMean) <= 0) {
-      priorMean = HzToSemitones(300)
+    if (priorMean > samplingRate / 2 | priorMean <= 0) {
+      priorMean = 300
       warning(paste('"priorMean" must be between 0 and Nyquist;',
-                    'defaulting to HzToSemitones(300); set to NULL to disable prior'))
+                    'defaulting to 300; set to NULL to disable prior'))
     }
   }
   if (is.numeric(priorSD)) {
@@ -480,37 +486,10 @@ analyze = function(x,
   } else if (!is.integer(nCands)) {
     nCands = round(nCands)
   }
-
-  if (!is.numeric(domThres) | domThres < 0 | domThres > 1) {
-    domThres = 0.1
-    warning('"domThres" must be between 0 and 1; defaulting to 0.1')
-  }
-  if (!is.numeric(autocorThres) | autocorThres < 0 | autocorThres > 1) {
-    autocorThres = 0.7
-    warning('"autocorThres" must be between 0 and 1; defaulting to 0.7')
-  }
-  if (!is.numeric(cepThres) | cepThres < 0 | cepThres > 1) {
-    cepThres = 0.3
-    warning('"cepThres" must be between 0 and 1; defaulting to 0.3')
-  }
-  if (!is.numeric(specThres) | specThres < 0 | specThres > 1) {
-    specThres = 0.3
-    warning('"specThres" must be between 0 and 1; defaulting to 0.3')
-  }
-  if (!is.numeric(specPeak) | specPeak < 0 | specPeak > 1) {
-    specPeak = 0.35
-    warning('"specPeak" must be between 0 and 1; defaulting to 0.35')
-  }
-  if (!is.numeric(specSinglePeakCert) | specSinglePeakCert < 0 |
-      specSinglePeakCert > 1) {
-    specSinglePeakCert = 0.4
-    warning('"specSinglePeakCert" must be between 0 and 1; defaulting to 0.4')
-  }
   if (!is.numeric(specMerge) | specMerge < 0) {
     specMerge = 1
     warning('"specMerge" must be non-negative; defaulting to 1 semitone')
   }
-
   if (!is.numeric(shortestSyl) | shortestSyl < 0) {
     shortestSyl = 0
     warning('shortestSyl must be non-negative; defaulting to 0')
@@ -539,14 +518,20 @@ analyze = function(x,
       warning('"interpolTol" must be between 0 and 1; defaulting to 0.3')
     }
   }
+
+  # Check non-numeric defaults
+  supported_wn = c('bartlett', 'blackman', 'flattop', 'gaussian',
+                   'hamming', 'hanning', 'rectangle')
+  if (!wn %in% supported_wn) {
+    wn = 'gaussian'
+    warning(paste('Implemented "wn":',
+                  paste(supported_wn, collapse = ', '),
+                  '. Defaulting to "gaussian"'))
+  }
   if (!pathfinding %in% c('none', 'fast', 'slow')) {
     pathfinding = 'fast'
     warning(paste('Implemented "pathfinding": "none", "fast", "slow";',
                   'defaulting to "fast"'))
-  }
-  if (!is.numeric(certWeight) | certWeight < 0 | certWeight > 1) {
-    certWeight = 0.5
-    warning('"certWeight" must be between 0 and 1; defaulting to 0.5')
   }
 
   # Set up filter for calculating pitchAutocor
@@ -761,8 +746,9 @@ analyze = function(x,
   # frequency as unlikely but still remotely possible in everyday vocalizing
   # contexts (think a soft pitch ceiling)
   if (is.numeric(priorMean) & is.numeric(priorSD)) {
-    shape = priorMean ^ 2 / priorSD ^ 2
-    rate = priorMean / priorSD ^ 2
+    priorMean_semitones = HzToSemitones(priorMean)
+    shape = priorMean_semitones ^ 2 / priorSD ^ 2
+    rate = priorMean_semitones / priorSD ^ 2
     prior_normalizer = max(dgamma(
       seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100),
       shape = shape,

@@ -5,12 +5,13 @@
 # usethis::use_data(permittedValues, defaults, presets, overwrite = TRUE)
 
 
-#' Defaults and ranges
+#' Defaults and ranges for soundgen()
 #'
-#' A dataset containing defaults and ranges of key variables in the Shiny app.
+#' A dataset containing defaults and ranges of key variables for soundgen() and
+#' soundgen_app().
 #' Adjust as needed.
 #'
-#' @format A matrix with 58 rows and 4 variables:
+#' @format A matrix with 58 rows and 4 columns:
 #' \describe{
 #'   \item{default}{default value}
 #'   \item{low}{lowest permitted value}
@@ -161,6 +162,61 @@ defaults = list(
   specDep = .1
 )
 # usethis::use_data(defaults, overwrite = TRUE)
+
+
+#' Defaults and ranges for analyze()
+#'
+#' A dataset containing defaults and ranges of key variables for analyze() and
+#' pitch_app(). Adjust as needed.
+#'
+#' @format A matrix with 58 rows and 4 columns:
+#' \describe{
+#'   \item{default}{default value}
+#'   \item{low}{lowest permitted value}
+#'   \item{high}{highest permitted value}
+#'   \item{step}{increment for adjustment}
+#'   ...
+#' }
+"defaults_analyze"
+defaults_analyze = matrix(c(
+  'silence', 0.04, 0, 1, .01,  # default, low, high, step
+  'entropyThres', 0.6, 0, 1, 0.01,
+  'windowLength', 50, 1, 500, 1,
+  'step', 25, 1, 500, 1,
+  'overlap', 50, 0, 99, 1,
+  'zp', 0, 0, 8192, 500,
+  'cutFreq', 6000, 1, 10000, 500,
+  'pitchFloor', 1, 1, 10000, 1,
+  'pitchCeiling', 2000, 10, 10000, 10,
+  'priorMean', 300, 1, 10000, 1,
+  'priorSD', 6, 0.1, 24, 1,
+  'nCands', 1, 1, 10, 1,
+  'domThres', 0.1, 0, 1, 0.01,
+  'autocorThres', 0.7, 0, 1, 0.01,
+  'cepThres', 0.3, 0, 1, 0.01,
+  'specThres', 0.3, 0, 1, 0.01,
+  'specPeak', 0.35, 0, 1, 0.01,
+  'specSinglePeakCert', 0.4, 0, 1, 0.01,
+  'specMerge', 1, 0.01, 10, 0.1,
+  'shortestSyl', 0, 0, 500, 1,
+  'shortestPause', 0, 0, 500, 1,
+  'interpolTol', 0.3, 0.01, 10, 0.1,
+  'interpolCert', 0.3, 0, 1, 0.01,
+  'certWeight', 0.5, 0, 1, 0.01,
+
+  # pitch_app() settings, which are not needed for analyze()
+  'specWindowLength', 40, 5, 100, 2.5,
+  'specContrast', .2, -1, 1, .05,
+  'specBrightness', 0, -1, 1, .05,
+  'oscHeight', -3, -5, 5, 1   # relative size of spectrogram vs oscillogram
+), ncol=5, byrow=TRUE)
+temp = defaults_analyze[,1]
+defaults_analyze = apply(defaults_analyze[,2:5], 2, as.numeric)
+colnames(defaults_analyze) = c('default', 'low', 'high', 'step')
+rownames(defaults_analyze) = temp
+# usethis::use_data(defaults_analyze, overwrite = TRUE)
+
+
 
 # -------------------------------------------------------------
 # A library of presets for easy generation of a few nice sounds
