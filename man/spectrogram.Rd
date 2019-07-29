@@ -101,11 +101,11 @@ Returns nothing (if output = 'none'), absolute - not power! -
   'spectralDerivative') as a matrix of real numbers.
 }
 \description{
-Produces the spectrogram of a sound using short-term Fourier transform. This
-is a simplified version of \code{\link[seewave]{spectro}} with fewer plotting
-options, but with added routines for noise reduction, smoothing in time and
-frequency domains, and controlling contrast and brightness. It also provides
-an option to plot the oscillogram on a dB scale.
+Produces the spectrogram of a sound using short-term Fourier transform.
+Compared to \code{\link[seewave]{spectro}}, this function has fewer plotting
+options, but offers added routines for noise reduction, smoothing in time and
+frequency domains, manual control of contrast and brightness, plotting the
+oscillogram on a dB scale, etc.
 }
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise

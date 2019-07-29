@@ -672,3 +672,119 @@ findVoicedSegments = function(pitchCands,
   }
   return (data.frame(segmentStart = segmentStart, segmentEnd = segmentEnd))
 }
+
+
+#' Plot pitch candidates
+#'
+#' Internal soundgen function.
+#'
+#' Plots pitch candidates or adds them to a spectrogram.
+#' @param pitchCands,pitchCert,pitchSource matrices of pitch candidates, their
+#'   certainty, and pitch tracking method used as generated internally by
+#'   analyze(); columns = STFT frames, rows = candidates
+#' @param pitch best guess at pitch contour; length = ncol(pitchCands)
+#' @param candPlot,pitchPlot lists of graphical settings for plotting candidates
+#'   and pitch contour, respectively
+#' @param addToExistingPlot if TRUE, assumes that a spectrogram is already
+#'   plotted; if FALSE, sets up a new plot
+#' @param showLegent if TRUE, shows a legend
+#' @param ... other graphical parameters used for creating a new plot if
+#'   addToExistingPlot = FALSE
+#' @examples
+#' \dontrun{
+#' s = soundgen()
+#' a = analyze(s, 16000, windowLength = 25, step = 25,
+#'             summary = 'extended', plot = FALSE)
+#' spectrogram(s, 16000, windowLength = 25, step = 5)
+#' addPitchCands(pitchCands = a$pitchCands,
+#'               pitchCert = a$pitchCert,
+#'               pitchSource = a$pitchSource,
+#'               pitch = a$result$pitch)
+#' }
+addPitchCands = function(pitchCands,
+                         pitchCert,
+                         pitchSource,
+                         pitch,
+                         candPlot = list(),
+                         pitchPlot = list(
+                           col = rgb(0, 0, 1, .75),
+                           lwd = 3
+                         ),
+                         addToExistingPlot = TRUE,
+                         showLegend = TRUE,
+                         ...) {
+  # if plot_spec is FALSE, we first have to set up an empty plot
+  if (addToExistingPlot == FALSE) {
+    if (is.null(ylim)) {
+      m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
+      if (is.na(m)) m = samplingRate / 2 / 1000
+      ylim = c(0, m)
+    }
+    plot(x = as.numeric(colnames(pitchCands)),
+         y = rep(0, ncol(pitchCands)),
+         type = 'n',
+         ...)
+  }
+  # add pitch candidates to the plot
+  pitchMethods = unique(na.omit(as.character(pitchSource)))
+  if (any(!is.na(pitchCands))) {
+    if (is.null(candPlot$levels)) {
+      candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
+    }
+    if (is.null(candPlot$col)) {
+      candPlot$col[candPlot$levels == 'autocor'] = 'green'
+      candPlot$col[candPlot$levels == 'spec'] = 'red'
+      candPlot$col[candPlot$levels == 'dom'] = 'orange'
+      candPlot$col[candPlot$levels == 'cep'] = 'violet' # c('green', 'red', 'orange', 'violet')
+    }
+    if (is.null(candPlot$pch)) {
+      candPlot$pch[candPlot$levels == 'autocor'] = 16
+      candPlot$pch[candPlot$levels == 'spec'] = 2
+      candPlot$pch[candPlot$levels == 'dom'] = 3
+      candPlot$pch[candPlot$levels == 'cep'] = 7
+      # candPlot$pch = c(16, 2, 3, 7)
+    }
+    if (is.null(candPlot$cex)) {
+      candPlot$cex = 2
+    }
+    pitchSource_1234 = matrix(match(pitchSource, candPlot$levels),
+                              ncol = ncol(pitchSource))
+    for (r in 1:nrow(pitchCands)) {
+      points(
+        x = as.numeric(colnames(pitchCands)),
+        y = pitchCands[r, ] / 1000,
+        col = candPlot$col[pitchSource_1234[r, ]],
+        pch = candPlot$pch[pitchSource_1234[r, ]],
+        cex = pitchCert[r, ] * candPlot$cex
+      )
+    }
+    # add the final pitch contour to the plot
+    if (any(is.numeric(pitch))) {
+      if (is.null(pitchPlot$col)) {
+        pitchPlot$col = rgb(0, 0, 1, .75)
+      }
+      if (is.null(pitchPlot$lwd)) {
+        pitchPlot$lwd = 3
+      }
+      do.call('lines', c(list(
+        x = as.numeric(colnames(pitchCands)),
+        y = pitch / 1000
+      ),
+      pitchPlot)
+      )
+    }
+    # add a legend
+    if (showLegend) {
+      candPlot = as.data.frame(candPlot)
+      candPlot = candPlot[candPlot$levels %in% c(pitchMethods, 'combined'), ]
+      legend("topright",
+             legend = c(as.character(candPlot$levels), 'combined'),
+             pch = c(candPlot$pch, NA),
+             lty = c(rep(NA, length(pitchMethods)),
+                     ifelse(!is.null(pitchPlot$lty), pitchPlot$lty, 1)),
+             lwd = c(rep(NA, length(pitchMethods)), pitchPlot$lwd),
+             col = c(as.character(candPlot$col), pitchPlot$col),
+             bg = "white")
+    }
+  }
+}

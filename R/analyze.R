@@ -726,8 +726,10 @@ analyze = function(x,
   pitch_list = lapply(frameInfo, function(y) y[['pitch_array']])
   pitchCands = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchCand']])))
   pitchCands = t(plyr::rbind.fill(pitchCands)) # a matrix of pitch candidates per frame
+  colnames(pitchCands) = result$time
   pitchCert = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchAmpl']])))
   pitchCert = t(plyr::rbind.fill(pitchCert)) # a matrix of our certainty in pitch candidates
+  colnames(pitchCert) = result$time
   pitchSource = lapply(pitch_list, function(y) {
     # NB: without StringsAsFactors=FALSE, the first row becomes "1"
     # because of wrong NA recognition
@@ -782,7 +784,7 @@ analyze = function(x,
     }
     if (messageMVC) {
       message(paste0('minVoicedCands must be between 1 and length(pitchMethods);',
-                   ' resetting to ', minVoicedCands))
+                     ' resetting to ', minVoicedCands))
     }
   }
   voicedSegments = findVoicedSegments(
@@ -871,83 +873,19 @@ analyze = function(x,
 
   ## Add pitch contours to the spectrogram
   if (plot) {
-    # if plot_spec is FALSE, we first have to set up an empty plot
-    if (plot_spec == FALSE) {
-      if (is.null(ylim)) {
-        m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
-        if (is.na(m)) m = samplingRate / 2 / 1000
-        ylim = c(0, m)
-      }
-      plot(x = result$time,
-           y = rep(0, nrow(result)),
-           type = 'n',
-           ylim = ylim,
-           xlab = xlab,
-           ylab = ylab,
-           main = plotname,
-           ...)
-    }
-    # add pitch candidates to the plot
-    if (any(!is.na(pitchCands))) {
-      if (is.null(candPlot$levels)) {
-        candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
-      }
-      if (is.null(candPlot$col)) {
-        candPlot$col[candPlot$levels == 'autocor'] = 'green'
-        candPlot$col[candPlot$levels == 'spec'] = 'red'
-        candPlot$col[candPlot$levels == 'dom'] = 'orange'
-        candPlot$col[candPlot$levels == 'cep'] = 'violet' # c('green', 'red', 'orange', 'violet')
-      }
-      if (is.null(candPlot$pch)) {
-        candPlot$pch[candPlot$levels == 'autocor'] = 16
-        candPlot$pch[candPlot$levels == 'spec'] = 2
-        candPlot$pch[candPlot$levels == 'dom'] = 3
-        candPlot$pch[candPlot$levels == 'cep'] = 7
-        # candPlot$pch = c(16, 2, 3, 7)
-      }
-      if (is.null(candPlot$cex)) {
-        candPlot$cex = 2
-      }
-      pitchSource_1234 = matrix(match(pitchSource, candPlot$levels),
-                                ncol = ncol(pitchSource))
-      for (r in 1:nrow(pitchCands)) {
-        points(
-          x = result$time,
-          y = pitchCands[r, ] / 1000,
-          col = candPlot$col[pitchSource_1234[r, ]],
-          pch = candPlot$pch[pitchSource_1234[r, ]],
-          cex = pitchCert[r, ] * candPlot$cex
-        )
-      }
-      # add the final pitch contour to the plot
-      if (any(is.numeric(result$pitch))) {
-        if (is.null(pitchPlot$col)) {
-          pitchPlot$col = rgb(0, 0, 1, .75)
-        }
-        if (is.null(pitchPlot$lwd)) {
-          pitchPlot$lwd = 3
-        }
-        do.call('lines', c(list(
-          x = result$time,
-          y = result$pitch / 1000
-        ),
-        pitchPlot)
-        )
-      }
-      # add a legend
-      if (showLegend) {
-        candPlot = as.data.frame(candPlot)
-        candPlot = candPlot[candPlot$levels %in% c(pitchMethods, 'combined'), ]
-        legend("topright",
-               legend = c(as.character(candPlot$levels), 'combined'),
-               pch = c(candPlot$pch, NA),
-               lty = c(rep(NA, length(pitchMethods)),
-                       ifelse(!is.null(pitchPlot$lty), pitchPlot$lty, 1)),
-               lwd = c(rep(NA, length(pitchMethods)), pitchPlot$lwd),
-               col = c(as.character(candPlot$col), pitchPlot$col),
-               bg = "white")
-      }
-    }
+    addPitchCands(pitchCands = pitchCands,
+                  pitchCert = pitchCert,
+                  pitchSource = pitchSource,
+                  pitch = result$pitch,
+                  candPlot = candPlot,
+                  pitchPlot = pitchPlot,
+                  addToExistingPlot = plot_spec,
+                  showLegend = showLegend,
+                  ylim = ylim,
+                  xlab = xlab,
+                  ylab = ylab,
+                  main = plotname,
+                  ...)
   }
   if (is.character(savePath)) {
     dev.off()
@@ -961,7 +899,7 @@ analyze = function(x,
          ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values')
   }
 
-  if (summary) {
+  if (summary == TRUE) {
     var_noSummary = c('duration', 'duration_noSilence', 'voiced')
     vars = colnames(result)[!colnames(result) %in% c(var_noSummary, 'time')]
     nVars_noSummary = 3
@@ -998,8 +936,13 @@ analyze = function(x,
         }
       }
     }
-  } else {
+  } else if (summary == FALSE) {
     out = result
+  } else if (summary == 'extended') {
+    out = list(result = result,
+               pitchCands = pitchCands,
+               pitchCert = pitchCert,
+               pitchSource = pitchSource)
   }
   return(out)
 }

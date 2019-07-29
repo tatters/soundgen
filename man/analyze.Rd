@@ -9,19 +9,18 @@ analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   step = NULL, overlap = 50, wn = "gaussian", zp = 0,
   cutFreq = 6000, nFormants = 3, pitchMethods = c("autocor", "spec",
   "dom"), entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
-  priorMean = HzToSemitones(300), priorSD = 6, priorPlot = FALSE,
-  nCands = 1, minVoicedCands = "autom", domThres = 0.1,
-  domSmooth = 220, autocorThres = 0.7, autocorSmooth = NULL,
-  cepThres = 0.3, cepSmooth = NULL, cepZp = 0, specThres = 0.3,
-  specPeak = 0.35, specSinglePeakCert = 0.4, specHNRslope = 0.8,
-  specSmooth = 150, specMerge = 1, shortestSyl = 20,
-  shortestPause = 60, interpolWin = 3, interpolTol = 0.3,
-  interpolCert = 0.3, pathfinding = c("none", "fast", "slow")[2],
-  annealPars = list(maxit = 5000, temp = 1000), certWeight = 0.5,
-  snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
-  smoothVars = c("pitch", "dom"), summary = FALSE,
-  summaryFun = c("mean", "median", "sd"), plot = TRUE,
-  showLegend = TRUE, savePath = NA, plotSpec = TRUE,
+  priorMean = 300, priorSD = 6, priorPlot = FALSE, nCands = 1,
+  minVoicedCands = NULL, domThres = 0.1, domSmooth = 220,
+  autocorThres = 0.7, autocorSmooth = NULL, cepThres = 0.3,
+  cepSmooth = NULL, cepZp = 0, specThres = 0.3, specPeak = 0.35,
+  specSinglePeakCert = 0.4, specHNRslope = 0.8, specSmooth = 150,
+  specMerge = 1, shortestSyl = 20, shortestPause = 60,
+  interpolWin = 3, interpolTol = 0.3, interpolCert = 0.3,
+  pathfinding = c("none", "fast", "slow")[2], annealPars = list(maxit =
+  5000, temp = 1000), certWeight = 0.5, snakeStep = 0.05,
+  snakePlot = FALSE, smooth = 1, smoothVars = c("pitch", "dom"),
+  summary = FALSE, summaryFun = c("mean", "median", "sd"),
+  plot = TRUE, showLegend = TRUE, savePath = NA, plotSpec = TRUE,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
   candPlot = list(), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
   main = NULL, width = 900, height = 500, units = "px", res = NA,
@@ -78,10 +77,10 @@ still calculated}
 
 \item{pitchFloor, pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
-\item{priorMean, priorSD}{specifies the mean and sd of gamma distribution
-describing our prior knowledge about the most likely pitch values for this
-file. Specified in semitones: \code{priorMean = HzToSemitones(300),
-priorSD = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
+\item{priorMean, priorSD}{specifies the mean (Hz) and standard deviation
+(semitones) of gamma distribution describing our prior knowledge about the
+most likely pitch values for this file. For ex., \code{priorMean = 300,
+priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
 
 \item{priorPlot}{if TRUE, produces a separate plot of the prior}
@@ -89,9 +88,9 @@ an octave)}
 \item{nCands}{maximum number of pitch candidates per method (except for
 \code{dom}, which returns at most one candidate per frame), normally 1...4}
 
-\item{minVoicedCands}{minimum number of pitch candidates that
-have to be defined to consider a frame voiced (defaults to 2 if \code{dom}
-is among other candidates and 1 otherwise)}
+\item{minVoicedCands}{minimum number of pitch candidates that have to be
+defined to consider a frame voiced (if NULL, defaults to 2 if \code{dom} is
+among other candidates and 1 otherwise)}
 
 \item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
@@ -138,8 +137,8 @@ means they shouldn't be merged into one voiced syllable}
 
 \item{interpolWin, interpolTol, interpolCert}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWin} to NULL. See
-\code{soundgen:::pathfinder} for details.}
+interpolation, set \code{interpolWin = 0}. See \code{soundgen:::pathfinder}
+for details.}
 
 \item{pathfinding}{method of finding the optimal path through pitch
 candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
@@ -155,14 +154,14 @@ tension of the resulting pitch curve}
 
 \item{snakeStep}{optimized path through pitch candidates is further
 processed to minimize the elastic force acting on pitch contour. To
-disable, set \code{snakeStep} to NULL}
+disable, set \code{snakeStep = 0}}
 
 \item{snakePlot}{if TRUE, plots the snake}
 
 \item{smooth, smoothVars}{if \code{smooth} is a positive number, outliers of
 the variables in \code{smoothVars} are adjusted with median smoothing.
 \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
-deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
+deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 
 \item{summary}{if TRUE, returns only a summary of the measured acoustic
 variables (mean, median and SD). If FALSE, returns a list containing

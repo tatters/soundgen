@@ -12,6 +12,8 @@ ui = fluidPage(
                                            shinyBS:::bsPopover(id='step', title=NULL, content='Step between successive frames, ms', placement="right", trigger="hover"),
                                            sliderInput('overlap', 'Overlap, %', value=defaults_analyze['overlap','default'], min=defaults_analyze['overlap', 'low'], max=defaults_analyze['overlap', 'high'], step=defaults_analyze['overlap','step']),
                                            shinyBS:::bsPopover(id='overlap', title=NULL, content='Alternative to step: overlap between successive frames, %', placement="right", trigger="hover"),
+                                           sliderInput('dynamicRange', 'Dynamic range, dB', value=defaults_analyze['dynamicRange','default'], min=defaults_analyze['dynamicRange', 'low'], max=defaults_analyze['dynamicRange', 'high'], step=defaults_analyze['dynamicRange','step']),
+                                           shinyBS:::bsPopover(id='dynamicRange', title=NULL, content='Dynamic range of spectrogram, dB', placement="right", trigger="hover"),
                                            sliderInput('zp', 'Zero padding, points', value=defaults_analyze['zp','default'], min=defaults_analyze['zp', 'low'], max=defaults_analyze['zp', 'high'], step=defaults_analyze['zp','step']),
                                            shinyBS:::bsPopover(id='zp', title=NULL, content='Zero padding of STFT window (improves frequency resolution)', placement="right", trigger="hover"),
                                            selectInput('wn', 'Window type', choices = c('bartlett', 'blackman', 'flattop', 'gaussian', 'hamming', 'hanning', 'rectangle'), selected = 'gaussian', multiple = FALSE),
@@ -42,32 +44,28 @@ ui = fluidPage(
                                            shinyBS:::bsPopover(id='priorSD', title=NULL, content='Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover")
                                   ),
 
-                                  tabPanel("Autocorrelation",
-                                           checkboxInput(inputId = 'pitchAutocor', label = 'Use autocorrelation method?', value = TRUE),
-                                           sliderInput('autocorThres', 'Autocorrelation threshold', value=defaults_analyze['autocorThres', 'default'], min=defaults_analyze['autocorThres', 'low'], max=defaults_analyze['autocorThres', 'high'], step=defaults_analyze['autocorThres', 'step']),
-                                           shinyBS:::bsPopover(id='autocorThres', title=NULL, content='Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover"),
-                                           sliderInput('autocorSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['autocorSmooth', 'default'], min=defaults_analyze['autocorSmooth', 'low'], max=defaults_analyze['autocorSmooth', 'high'], step=defaults_analyze['autocorSmooth', 'step']),
-                                           shinyBS:::bsPopover(id='autocorSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover")
-                                  ),
-
                                   tabPanel("Lowest dominant frequency",
-                                           checkboxInput(inputId = 'pitchDom', label = 'Use lowest dominant frequency as a pitch candidate?', value = TRUE),
                                            sliderInput('domThres', 'Dominant frequency threshold', value=defaults_analyze['domThres', 'default'], min=defaults_analyze['domThres', 'low'], max=defaults_analyze['domThres', 'high'], step=defaults_analyze['domThres', 'step']),
                                            shinyBS:::bsPopover(id='domThres', title=NULL, content='Minimum amplitude of dominant frequency', placement="right", trigger="hover"),
                                            sliderInput('domSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['domSmooth', 'default'], min=defaults_analyze['domSmooth', 'low'], max=defaults_analyze['domSmooth', 'high'], step=defaults_analyze['domSmooth', 'step']),
                                            shinyBS:::bsPopover(id='domSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding the lowest dominant frequency band', placement="right", trigger="hover")
                                   ),
 
+                                  tabPanel("Autocorrelation",
+                                           sliderInput('autocorThres', 'Autocorrelation threshold', value=defaults_analyze['autocorThres', 'default'], min=defaults_analyze['autocorThres', 'low'], max=defaults_analyze['autocorThres', 'high'], step=defaults_analyze['autocorThres', 'step']),
+                                           shinyBS:::bsPopover(id='autocorThres', title=NULL, content='Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover"),
+                                           sliderInput('autocorSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['autocorSmooth', 'default'], min=defaults_analyze['autocorSmooth', 'low'], max=defaults_analyze['autocorSmooth', 'high'], step=defaults_analyze['autocorSmooth', 'step']),
+                                           shinyBS:::bsPopover(id='autocorSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover")
+                                  ),
+
                                   tabPanel("Cepstrum",
-                                           checkboxInput(inputId = 'pitchCep', label = 'Use cepstrum method?', value = TRUE),
                                            sliderInput('cepThres', 'Cepstrum threshold', value=defaults_analyze['cepThres', 'default'], min=defaults_analyze['cepThres', 'low'], max=defaults_analyze['cepThres', 'high'], step=defaults_analyze['cepThres', 'step']),
                                            shinyBS:::bsPopover(id='cepThres', title=NULL, content='Voicing threshold for cepstral algorithm', placement="right", trigger="hover"),
                                            sliderInput('cepSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['cepSmooth', 'default'], min=defaults_analyze['cepSmooth', 'low'], max=defaults_analyze['cepSmooth', 'high'], step=defaults_analyze['cepSmooth', 'step']),
                                            shinyBS:::bsPopover(id='cepSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding peaks in the cepstrum', placement="right", trigger="hover")
                                   ),
 
-                                  tabPanel("Ba-Na",
-                                           checkboxInput(inputId = 'pitchSpec', label = 'Use Ba-Na method?', value = TRUE),
+                                  tabPanel("Ratio of harmonics",
                                            sliderInput('specThres', 'Spectral threshold', value=defaults_analyze['specThres', 'default'], min=defaults_analyze['specThres', 'low'], max=defaults_analyze['specThres', 'high'], step=defaults_analyze['specThres', 'step']),
                                            shinyBS:::bsPopover(id='specThres', title=NULL, content='Voicing threshold for Ba-Na algorithm', placement="right", trigger="hover"),
                                            sliderInput('specPeak', 'Spectral peak height', value=defaults_analyze['specPeak', 'default'], min=defaults_analyze['specPeak', 'low'], max=defaults_analyze['specPeak', 'high'], step=defaults_analyze['specPeak', 'step']),
@@ -121,6 +119,7 @@ ui = fluidPage(
              )
            ),
            fluidRow(
+             checkboxGroupInput('pitchMethods', label = 'Pitch methods', choiceValues = c('dom', 'autocor', 'cep', 'spec'), choiceNames = c('Lowest dominant frequency', 'Autocorrelation', 'Cepstrum', 'Ratio of harmonics'), selected = c('dom', 'autocor'), inline = TRUE),
              plotOutput('spectrogram')
            ),
            fluidRow(

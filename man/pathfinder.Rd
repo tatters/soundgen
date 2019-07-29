@@ -43,7 +43,7 @@ candidates are assigned a certainty equal to \code{interpolCert}}
 
 \item{snakeStep}{optimized path through pitch candidates is further
 processed to minimize the elastic force acting on pitch contour. To
-disable, set \code{snakeStep} to NULL}
+disable, set \code{snakeStep = 0}}
 
 \item{snakePlot}{if TRUE, plots the snake}
 }

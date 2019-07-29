@@ -182,6 +182,7 @@ defaults_analyze = matrix(c(
   'windowLength', 50, 1, 500, 1,  # default, low, high, step
   'step', 25, 1, 500, 1,
   'overlap', 50, 0, 99, 1,
+  'dynamicRange', 80, 10, 200, 10,
   'zp', 0, 0, 8192, 500,
 
   'silence', 0.04, 0, 1, .01,

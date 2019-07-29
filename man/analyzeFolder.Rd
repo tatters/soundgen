@@ -82,16 +82,16 @@ still calculated}
 
 \item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
-\item{priorMean}{specifies the mean and sd of gamma distribution
-describing our prior knowledge about the most likely pitch values for this
-file. Specified in semitones: \code{priorMean = HzToSemitones(300),
-priorSD = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
+\item{priorMean}{specifies the mean (Hz) and standard deviation
+(semitones) of gamma distribution describing our prior knowledge about the
+most likely pitch values for this file. For ex., \code{priorMean = 300,
+priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
 
-\item{priorSD}{specifies the mean and sd of gamma distribution
-describing our prior knowledge about the most likely pitch values for this
-file. Specified in semitones: \code{priorMean = HzToSemitones(300),
-priorSD = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
+\item{priorSD}{specifies the mean (Hz) and standard deviation
+(semitones) of gamma distribution describing our prior knowledge about the
+most likely pitch values for this file. For ex., \code{priorMean = 300,
+priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
 
 \item{priorPlot}{if TRUE, produces a separate plot of the prior}
@@ -99,9 +99,9 @@ an octave)}
 \item{nCands}{maximum number of pitch candidates per method (except for
 \code{dom}, which returns at most one candidate per frame), normally 1...4}
 
-\item{minVoicedCands}{minimum number of pitch candidates that
-have to be defined to consider a frame voiced (defaults to 2 if \code{dom}
-is among other candidates and 1 otherwise)}
+\item{minVoicedCands}{minimum number of pitch candidates that have to be
+defined to consider a frame voiced (if NULL, defaults to 2 if \code{dom} is
+among other candidates and 1 otherwise)}
 
 \item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
@@ -162,18 +162,18 @@ means they shouldn't be merged into one voiced syllable}
 
 \item{interpolWin}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWin} to NULL. See
-\code{soundgen:::pathfinder} for details.}
+interpolation, set \code{interpolWin = 0}. See \code{soundgen:::pathfinder}
+for details.}
 
 \item{interpolTol}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWin} to NULL. See
-\code{soundgen:::pathfinder} for details.}
+interpolation, set \code{interpolWin = 0}. See \code{soundgen:::pathfinder}
+for details.}
 
 \item{interpolCert}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWin} to NULL. See
-\code{soundgen:::pathfinder} for details.}
+interpolation, set \code{interpolWin = 0}. See \code{soundgen:::pathfinder}
+for details.}
 
 \item{pathfinding}{method of finding the optimal path through pitch
 candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
@@ -189,19 +189,19 @@ tension of the resulting pitch curve}
 
 \item{snakeStep}{optimized path through pitch candidates is further
 processed to minimize the elastic force acting on pitch contour. To
-disable, set \code{snakeStep} to NULL}
+disable, set \code{snakeStep = 0}}
 
 \item{snakePlot}{if TRUE, plots the snake}
 
 \item{smooth}{if \code{smooth} is a positive number, outliers of
 the variables in \code{smoothVars} are adjusted with median smoothing.
 \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
-deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
+deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 
 \item{smoothVars}{if \code{smooth} is a positive number, outliers of
 the variables in \code{smoothVars} are adjusted with median smoothing.
 \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
-deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
+deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 
 \item{summary}{if TRUE, returns only a summary of the measured acoustic
 variables (mean, median and SD). If FALSE, returns a list containing
