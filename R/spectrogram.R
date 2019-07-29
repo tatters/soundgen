@@ -2,11 +2,11 @@
 
 #' Spectrogram
 #'
-#' Produces the spectrogram of a sound using short-term Fourier transform. This
-#' is a simplified version of \code{\link[seewave]{spectro}} with fewer plotting
-#' options, but with added routines for noise reduction, smoothing in time and
-#' frequency domains, and controlling contrast and brightness. It also provides
-#' an option to plot the oscillogram on a dB scale.
+#' Produces the spectrogram of a sound using short-term Fourier transform.
+#' Compared to \code{\link[seewave]{spectro}}, this function has fewer plotting
+#' options, but offers added routines for noise reduction, smoothing in time and
+#' frequency domains, manual control of contrast and brightness, plotting the
+#' oscillogram on a dB scale, etc.
 #' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if

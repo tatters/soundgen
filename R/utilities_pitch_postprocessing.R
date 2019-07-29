@@ -52,18 +52,16 @@ pathfinder = function(pitchCands,
   # if a frame has no pitch candidate at all (NA) or no candidate
   # between the most likely candidates for the adjacent frames, add such a
   # candidate with ~low certainty
-  if (is.numeric(interpolWin)) {
-    if (interpolWin > 0) {
-      intplt = interpolate(pitchCands = pitchCands,
-                           pitchCert = pitchCert,
-                           pitchCenterGravity = pitchCenterGravity,
-                           interpolWin = interpolWin,
-                           interpolTol = interpolTol,
-                           interpolCert = interpolCert)
-      pitchCands = intplt$pitchCands
-      pitchCert = intplt$pitchCert
-      pitchCenterGravity = intplt$pitchCenterGravity
-    }
+  if (interpolWin > 0) {
+    intplt = interpolate(pitchCands = pitchCands,
+                         pitchCert = pitchCert,
+                         pitchCenterGravity = pitchCenterGravity,
+                         interpolWin = interpolWin,
+                         interpolTol = interpolTol,
+                         interpolCert = interpolCert)
+    pitchCands = intplt$pitchCands
+    pitchCert = intplt$pitchCert
+    pitchCenterGravity = intplt$pitchCenterGravity
   }
 
   # order pitch candidates and certainties in each frame from lowest to highest
@@ -118,18 +116,16 @@ pathfinder = function(pitchCands,
   ## SNAKE
   # apply the snake algorithm to minimize the elastic forces acting on this
   # pitch contour without deviating too far from high-certainty anchors
-  if (is.numeric(snakeStep)) {
-    if (snakeStep > 0) {
-      bestPath = snake(
-        pitch = bestPath,
-        pitchCands = pitchCands,
-        pitchCert = pitchCert,
-        certWeight = certWeight,
-        pitchCenterGravity = pitchCenterGravity,
-        snakeStep = snakeStep,
-        snakePlot = snakePlot
-      )
-    }
+  if (snakeStep > 0) {
+    bestPath = snake(
+      pitch = bestPath,
+      pitchCands = pitchCands,
+      pitchCert = pitchCert,
+      certWeight = certWeight,
+      pitchCenterGravity = pitchCenterGravity,
+      snakeStep = snakeStep,
+      snakePlot = snakePlot
+    )
   }
 
   return(2 ^ bestPath)
@@ -233,6 +229,8 @@ pathfinding_fast = function(pitchCands = pitchCands,
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       path = c(path, pitchCands[which.min(costs), i])
       costPathForward = costPathForward + min(costs)
+    } else {
+      path = c(path, NA)
     }
   }
 
@@ -259,6 +257,8 @@ pathfinding_fast = function(pitchCands = pitchCands,
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
       costPathBackward = costPathBackward + min(costs)
+    } else {
+      path_rev = c(path_rev, NA)
     }
   }
 

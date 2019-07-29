@@ -37,9 +37,9 @@
 #' @param priorPlot if TRUE, produces a separate plot of the prior
 #' @param nCands maximum number of pitch candidates per method (except for
 #'   \code{dom}, which returns at most one candidate per frame), normally 1...4
-#' @param minVoicedCands minimum number of pitch candidates that
-#'   have to be defined to consider a frame voiced (defaults to 2 if \code{dom}
-#'   is among other candidates and 1 otherwise)
+#' @param minVoicedCands minimum number of pitch candidates that have to be
+#'   defined to consider a frame voiced (if NULL, defaults to 2 if \code{dom} is
+#'   among other candidates and 1 otherwise)
 #' @param domThres (0 to 1) to find the lowest dominant frequency band, we
 #'   do short-term FFT and take the lowest frequency with amplitude at least
 #'   domThres
@@ -73,8 +73,8 @@
 #'   means they shouldn't be merged into one voiced syllable
 #' @param interpolWin,interpolTol,interpolCert control the behavior of
 #'   interpolation algorithm when postprocessing pitch candidates. To turn off
-#'   interpolation, set \code{interpolWin} to NULL. See
-#'   \code{soundgen:::pathfinder} for details.
+#'   interpolation, set \code{interpolWin = 0}. See \code{soundgen:::pathfinder}
+#'   for details.
 #' @param pathfinding method of finding the optimal path through pitch
 #'   candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
 #'   'slow' = annealing. See \code{soundgen:::pathfinder}
@@ -86,12 +86,12 @@
 #'   tension of the resulting pitch curve
 #' @param snakeStep optimized path through pitch candidates is further
 #'   processed to minimize the elastic force acting on pitch contour. To
-#'   disable, set \code{snakeStep} to NULL
+#'   disable, set \code{snakeStep = 0}
 #' @param snakePlot if TRUE, plots the snake
 #' @param smooth,smoothVars if \code{smooth} is a positive number, outliers of
 #'   the variables in \code{smoothVars} are adjusted with median smoothing.
 #'   \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
-#'   deviation of ~4 semitones. To disable, set \code{smooth} to NULL
+#'   deviation of ~4 semitones. To disable, set \code{smooth = 0}
 #' @param summary if TRUE, returns only a summary of the measured acoustic
 #'   variables (mean, median and SD). If FALSE, returns a list containing
 #'   frame-by-frame values
@@ -264,7 +264,7 @@ analyze = function(x,
                    priorSD = 6,
                    priorPlot = FALSE,
                    nCands = 1,
-                   minVoicedCands = 'autom',
+                   minVoicedCands = NULL,
                    domThres = 0.1,
                    domSmooth = 220,
                    autocorThres = 0.7,
@@ -378,7 +378,7 @@ analyze = function(x,
   # Check simple numeric default pars
   simplePars = c('silence', 'entropyThres', 'domThres',
                  'autocorThres',  'cepThres', 'specThres', 'specPeak',
-                 'specSinglePeakCert', 'certWeight')
+                 'specSinglePeakCert', 'certWeight', 'interpolCert')
   for (p in simplePars) {
     gp = try(get(p), silent = TRUE)
     if (class(gp) != "try-error") {
@@ -501,22 +501,20 @@ analyze = function(x,
     shortestPause = 0
     warning('shortestPause must be a non-negative number; defaulting to 0')
   }
-  if (shortestPause > 0 & is.numeric(interpolWin)) {
+  if (interpolWin < 0) {
+    interpolWin = 3
+    warning('"interpolWin" must be positive; defaulting to 3')
+  }
+  if (shortestPause > 0 & interpolWin > 0) {
     if (interpolWin * step < shortestPause / 2) {
       interpolWin = ceiling(shortestPause / 2 / step)
       warning(paste('"interpolWin" reset to', interpolWin,
                     ': interpolation must be able to bridge merged voiced fragments'))
     }
   }
-  if (is.numeric(interpolWin)) {
-    if (!is.numeric(interpolTol) | interpolTol <= 0) {
-      interpolTol = 0.3
-      warning('"interpolTol" must be positive; defaulting to 0.3')
-    }
-    if (!is.numeric(interpolCert) | interpolCert < 0 | interpolCert > 1) {
-      interpolCert = 0.3
-      warning('"interpolTol" must be between 0 and 1; defaulting to 0.3')
-    }
+  if (interpolTol <= 0) {
+    interpolTol = 0.3
+    warning('"interpolTol" must be positive; defaulting to 0.3')
   }
 
   # Check non-numeric defaults
@@ -763,14 +761,28 @@ analyze = function(x,
   }
 
   # divide the file into continuous voiced syllables
-  if (!is.numeric(minVoicedCands) | minVoicedCands < 1 |
-      minVoicedCands > length(pitchMethods)) {
+  resetMVC = FALSE
+  messageMVC = FALSE
+  if (is.null(minVoicedCands)) {
+    resetMVC = TRUE
+  }
+  if (is.numeric(minVoicedCands)) {
+    if (minVoicedCands < 1 | minVoicedCands > length(pitchMethods)) {
+      resetMVC = TRUE
+      messageMVC = TRUE
+    }
+  }
+  if (resetMVC) {
     if ('dom' %in% pitchMethods & length(pitchMethods) > 1) {
       # since dom is usually defined, we want at least one more pitch candidate
       # (unless dom is the ONLY method that the user wants for pitch tracking)
       minVoicedCands = 2
     } else {
       minVoicedCands = 1
+    }
+    if (messageMVC) {
+      message(paste0('minVoicedCands must be between 1 and length(pitchMethods);',
+                   ' resetting to ', minVoicedCands))
     }
   }
   voicedSegments = findVoicedSegments(
@@ -818,19 +830,17 @@ analyze = function(x,
   }))
 
   ## Median smoothing of specified contours (by default pitch & dom)
-  if (is.numeric(smooth)) {
-    if (smooth > 0) {
-      points_per_sec = nrow(result) / duration
-      # smooth of 1 means that smoothing window is ~100 ms
-      smoothing_ww = round(smooth * points_per_sec / 10, 0)
-      # the larger smooth, the heavier the smoothing (lower tolerance
-      # threshold before values are replaced by median over smoothing window).
-      # smooth of 1 gives smoothingThres of 4 semitones
-      smoothingThres = 4 / smooth
-      result[smoothVars] = medianSmoother(result[smoothVars],
-                                          smoothing_ww = smoothing_ww,
-                                          smoothingThres = smoothingThres)
-    }
+  if (smooth > 0) {
+    points_per_sec = nrow(result) / duration
+    # smooth of 1 means that smoothing window is ~100 ms
+    smoothing_ww = round(smooth * points_per_sec / 10, 0)
+    # the larger smooth, the heavier the smoothing (lower tolerance
+    # threshold before values are replaced by median over smoothing window).
+    # smooth of 1 gives smoothingThres of 4 semitones
+    smoothingThres = 4 / smooth
+    result[smoothVars] = medianSmoother(result[smoothVars],
+                                        smoothing_ww = smoothing_ww,
+                                        smoothingThres = smoothingThres)
   }
 
   ## Having decided upon the pitch for each frame, we save certain measurements

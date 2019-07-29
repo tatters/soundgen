@@ -1,6 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.4.2 [...date...]
 MINOR:
   * analyze(): priorMean is now specified in Hz instead of semitones (but priorSD is still in semitones)
+  * analyze(): snakeStep, interpolWin, and smooth are set to 0 instead of NULL to turn off these types of pitch postprocessing
 
           CHANGES IN SOUNDGEN VERSION 1.4.1 [05-July-2019]
 NEW FUNCTIONS:

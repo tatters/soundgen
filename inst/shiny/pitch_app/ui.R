@@ -2,306 +2,119 @@ ui = fluidPage(
   # headerPanel('...'),
 
   fluidRow(
-    column(6,
+    column(4,
            tabsetPanel(id='parGroup',
-                       navbarMenu("Main",
-                                  tabPanel("Syllables",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               sliderInput('sylLen', 'Syllable length, ms', value=permittedValues['sylLen','default'], min=permittedValues['sylLen', 'low'], max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
-                                               shinyBS:::bsPopover(id='sylLen', title=NULL, content='Average duration of a continuous VOICED syllable (unvoiced noise is added separately and may fill in the pauses)', placement="right", trigger="hover"),
-                                               sliderInput('nSyl', 'Number of syllables', value=permittedValues['nSyl','default'], min=permittedValues['nSyl', 'low'], max=permittedValues['nSyl', 'high'], step=permittedValues['nSyl','step']),
-                                               shinyBS:::bsPopover(id='nSyl', title=NULL, content='Each sound consists of one or several syllables separated by pauses', placement="right", trigger="hover"),
-                                               sliderInput('pauseLen', 'Pause, ms', value=permittedValues['pauseLen','default'], min=permittedValues['pauseLen', 'low'], max=permittedValues['pauseLen', 'high'], step=permittedValues['pauseLen','step']),
-                                               shinyBS:::bsPopover(id='pauseLen', title=NULL, content='Average pause between syllables', placement="right", trigger="hover"),
-                                               sliderInput('repeatBout', 'Repeat bout # times', value=permittedValues['repeatBout','default'], min=permittedValues['repeatBout', 'low'], max=permittedValues['repeatBout', 'high'], step=permittedValues['repeatBout','step']),
-                                               shinyBS:::bsPopover(id='repeatBout', title=NULL, content='Play the whole bout several times with a specified pause', placement="right", trigger="hover"),width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotSyllables'), width=6
-                                             )
-                                           )
-                                  ),
-
-                                  tabPanel("Hypers",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               sliderInput('temperature', 'Temperature', value=permittedValues['temperature','default'], min=permittedValues['temperature', 'low'], max=permittedValues['temperature', 'high'], step=permittedValues['temperature','step']),
-                                               shinyBS:::bsPopover(id='temperature', title=NULL, content='Stochasticity within each syllable', placement="right", trigger="hover"),
-                                               sliderInput('maleFemale', 'Male-female *hyper*', value=permittedValues['maleFemale','default'], min=permittedValues['maleFemale', 'low'], max=permittedValues['maleFemale', 'high'], step=permittedValues['maleFemale','step']),
-                                               shinyBS:::bsPopover(id='maleFemale', title=NULL, content='Adjusts vocal tract length, pitch contour, and formants to imitate larger/smaller body size', placement="right", trigger="hover"),
-                                               sliderInput('creakyBreathy', 'Creaky-breathy *hyper*', value=permittedValues['creakyBreathy','default'], min=permittedValues['creakyBreathy', 'low'], max=permittedValues['creakyBreathy', 'high'], step=permittedValues['creakyBreathy','step']),
-                                               shinyBS:::bsPopover(id='creakyBreathy', title=NULL, content='Changes a bunch of parameters to make the VOICED component either constricted (creaky) or breathy', placement="right", trigger="hover"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotHypers'), width=6
-                                             )
-                                           )
-                                  ),
-
-                                  tabPanel("Settings",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               numericInput('samplingRate', 'Sampling rate, Hz', value=permittedValues['samplingRate','default'], min=permittedValues['samplingRate', 'low'], max=permittedValues['samplingRate', 'high'], step=permittedValues['samplingRate','step']),
-                                               shinyBS:::bsPopover(id='samplingRate', title=NULL, content='The number of points per second of audio. Higher = better quality; lower = faster. Can be any integer, not necessarily a power of two.', placement="right", trigger="hover"),
-                                               numericInput('windowLength', 'FFT window length, ms', value=permittedValues['windowLength','default'], min=permittedValues['windowLength', 'low'], max=permittedValues['windowLength', 'high'], step=permittedValues['windowLength','step']),
-                                               shinyBS:::bsPopover(id='windowLength', title=NULL, content='The length of window for performing FFT - inverse FFT when filtering the source.', placement="right", trigger="hover"),
-                                               numericInput('pitchSamplingRate', 'Pitch sampling rate, Hz', value=3500, min=100, max=44000, step=100),
-                                               shinyBS:::bsPopover(id='pitchSamplingRate', title=NULL, content='The number of considered F0 values per second of audio. Should be >= pitchCeiling for best quality', placement="right", trigger="hover"),
-                                               numericInput('dynamicRange', 'Dynamic range, dB', value=permittedValues['dynamicRange', 'default'], min=permittedValues['dynamicRange', 'low'], max=permittedValues['dynamicRange', 'high'], step=permittedValues['dynamicRange', 'step']),
-                                               shinyBS:::bsPopover(id='dynamicRange', title=NULL, content='Discard everything more than dynamicRange dB under maximum amplitude', placement="right", trigger="hover"),
-                                               sliderInput('pitchFloorCeiling', 'Synthesized pitch range, Hz', value=c(permittedValues['pitch', 'low'], permittedValues['pitch', 'high']), min=1, max=8000, step=10),
-                                               shinyBS:::bsPopover(id='pitchFloorCeiling', title=NULL, content='Sets the bounds of fundamental frequency for synthesis', placement="right", trigger="hover"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotSettings'), width=6
-                                             )
-                                           )
+                       navbarMenu("Input",
+                                  tabPanel("STFT",
+                                           sliderInput('windowLength', 'Window length, ms', value=defaults_analyze['windowLength','default'], min=defaults_analyze['windowLength', 'low'], max=defaults_analyze['windowLength', 'high'], step=defaults_analyze['windowLength','step']),
+                                           shinyBS:::bsPopover(id='windowLength', title=NULL, content='Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover"),
+                                           sliderInput('step', 'Step, ms', value=defaults_analyze['step','default'], min=defaults_analyze['step', 'low'], max=defaults_analyze['step', 'high'], step=defaults_analyze['step','step']),
+                                           shinyBS:::bsPopover(id='step', title=NULL, content='Step between successive frames, ms', placement="right", trigger="hover"),
+                                           sliderInput('overlap', 'Overlap, %', value=defaults_analyze['overlap','default'], min=defaults_analyze['overlap', 'low'], max=defaults_analyze['overlap', 'high'], step=defaults_analyze['overlap','step']),
+                                           shinyBS:::bsPopover(id='overlap', title=NULL, content='Alternative to step: overlap between successive frames, %', placement="right", trigger="hover"),
+                                           sliderInput('zp', 'Zero padding, points', value=defaults_analyze['zp','default'], min=defaults_analyze['zp', 'low'], max=defaults_analyze['zp', 'high'], step=defaults_analyze['zp','step']),
+                                           shinyBS:::bsPopover(id='zp', title=NULL, content='Zero padding of STFT window (improves frequency resolution)', placement="right", trigger="hover"),
+                                           selectInput('wn', 'Window type', choices = c('bartlett', 'blackman', 'flattop', 'gaussian', 'hamming', 'hanning', 'rectangle'), selected = 'gaussian', multiple = FALSE),
+                                           shinyBS:::bsPopover(id='wn', title=NULL, content='Type of STFT window', placement="right", trigger="hover")
                                   )
                        ),
 
-                       navbarMenu("Intonation",
-                                  tabPanel("Intonation syllable",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               checkboxInput(inputId = 'generateVoiced', label = 'Generate voiced component?', value = TRUE),
-                                               actionButton(inputId = "pitch_flatten", label = "Flatten pitch contour"),
-                                               shinyBS:::bsPopover(id='pitch_flatten', title=NULL, content='Revert to a flat intonation contour with pitch equal to the first (left) anchor', placement="right", trigger="hover"),
-                                               tableOutput("pitch_anchors"),
-                                               width=6),
-                                             mainPanel(
-                                               plotOutput('plotIntonation', click = "plotIntonation_click", dblclick = dblclickOpts(id = "plotIntonation_dblclick")),
-                                               sliderInput('pitchRange', 'Plotted pitch range, Hz', value=c(75,150), min=permittedValues['pitch', 'low'], max=permittedValues['pitch', 'high'], step=permittedValues['pitch', 'step']),
-                                               shinyBS:::bsPopover(id='pitchRange', title=NULL, content='Set upper / lower limit separately or drag in between the markers to shift both limits simultaneously', placement="right", trigger="hover"),
-                                               width=6)
-                                           )
+                       navbarMenu("Candidates",
+                                  tabPanel("General",
+                                           sliderInput('silence', 'Silence threshold', value=defaults_analyze['silence', 'default'], min=defaults_analyze['silence', 'low'], max=defaults_analyze['silence', 'high'], step=defaults_analyze['silence', 'step']),
+                                           shinyBS:::bsPopover(id='silence', title=NULL, content='Frames with RMS below silence threshold are not analyzed', placement="right", trigger="hover"),
+                                           sliderInput('entropyThres', 'Entropy threshold', value=defaults_analyze['entropyThres', 'default'], min=defaults_analyze['entropyThres', 'low'], max=defaults_analyze['entropyThres', 'high'], step=defaults_analyze['entropyThres', 'step']),
+                                           shinyBS:::bsPopover(id='entropyThres', title=NULL, content='Frames with Weiner entropy above entropy threshold are ignored when searching for pitch candidates', placement="right", trigger="hover"),
+                                           sliderInput('nCands', 'Candidates per method', value=defaults_analyze['nCands', 'default'], min=defaults_analyze['nCands', 'low'], max=defaults_analyze['nCands', 'high'], step=defaults_analyze['nCands', 'step']),
+                                           shinyBS:::bsPopover(id='nCands', title=NULL, content='Maximum number of pitch candidates to use per method', placement="right", trigger="hover"),
+                                           sliderInput('minVoicedCands', 'Min candidates for voiced', value=defaults_analyze['minVoicedCands', 'default'], min=defaults_analyze['minVoicedCands', 'low'], max=defaults_analyze['minVoicedCands', 'high'], step=defaults_analyze['minVoicedCands', 'step']),
+                                           shinyBS:::bsPopover(id='minVoicedCands', title=NULL, content='Minimum number of pitch candidates that have to be defined to consider a frame voiced', placement="right", trigger="hover")
                                   ),
 
-                                  tabPanel("Intonation global",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               actionButton(inputId = "pitch_flattenGlobal", label = "Flatten pitch contour"),
-                                               shinyBS:::bsPopover(id='pitch_flattenGlobal', title=NULL, content='No global pitch modulation from syllable to syllable', placement="right", trigger="hover"),
-                                               tableOutput("pitch_anchorsGlobal"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotIntonationGlobal', click = "plotIntonation_clickGlobal", dblclick = dblclickOpts(id = "plotIntonation_dblclickGlobal")), width=6
-                                             )
-                                           )
+                                  tabPanel("Priors",
+                                           sliderInput('pitchFloor', 'Pitch floor, Hz', value=defaults_analyze['pitchFloor', 'default'], min=defaults_analyze['pitchFloor', 'low'], max=defaults_analyze['pitchFloor', 'high'], step=defaults_analyze['pitchFloor', 'step']),
+                                           shinyBS:::bsPopover(id='pitchFloor', title=NULL, content='No candidates below this absolute threshold', placement="right", trigger="hover"),
+                                           sliderInput('pitchCeiling', 'Pitch ceiling, Hz', value=defaults_analyze['pitchCeiling', 'default'], min=defaults_analyze['pitchCeiling', 'low'], max=defaults_analyze['pitchCeiling', 'high'], step=defaults_analyze['pitchCeiling', 'step']),
+                                           shinyBS:::bsPopover(id='pitchCeiling', title=NULL, content='No candidates above this absolute threshold', placement="right", trigger="hover"),
+                                           sliderInput('priorMean', 'Expected pitch (priorMean), Hz', value=defaults_analyze['priorMean', 'default'], min=defaults_analyze['priorMean', 'low'], max=defaults_analyze['priorMean', 'high'], step=defaults_analyze['priorMean', 'step']),
+                                           shinyBS:::bsPopover(id='priorMean', title=NULL, content='Candidates close to this value are prioritized (how close is determined by priorSD)', placement="right", trigger="hover"),
+                                           sliderInput('priorSD', 'Expected range (priorSD), semitones', value=defaults_analyze['priorSD', 'default'], min=defaults_analyze['priorSD', 'low'], max=defaults_analyze['priorSD', 'high'], step=defaults_analyze['priorSD', 'step']),
+                                           shinyBS:::bsPopover(id='priorSD', title=NULL, content='Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover")
                                   ),
 
-                                  tabPanel("Vibrato",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               sliderInput('vibratoFreq', 'Vibrato rate, Hz', value=permittedValues['vibratoFreq','default'], min=permittedValues['vibratoFreq', 'low'], max=permittedValues['vibratoFreq', 'high'], step=permittedValues['vibratoFreq','step']),
-                                               shinyBS:::bsPopover(id='vibratoFreq', title=NULL, content='Frequency of regular FM', placement="right", trigger="hover"),
-                                               sliderInput('vibratoDep', 'Vibrato depth, semitones', value=permittedValues['vibratoDep','default'], min=permittedValues['vibratoDep', 'low'], max=permittedValues['vibratoDep', 'high'], step=permittedValues['vibratoDep','step']),
-                                               shinyBS:::bsPopover(id='vibratoDep', title=NULL, content='Depth of regular FM', placement="right", trigger="hover"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotVibrato'), width=6
-                                             )
-                                           )
+                                  tabPanel("Autocorrelation",
+                                           checkboxInput(inputId = 'pitchAutocor', label = 'Use autocorrelation method?', value = TRUE),
+                                           sliderInput('autocorThres', 'Autocorrelation threshold', value=defaults_analyze['autocorThres', 'default'], min=defaults_analyze['autocorThres', 'low'], max=defaults_analyze['autocorThres', 'high'], step=defaults_analyze['autocorThres', 'step']),
+                                           shinyBS:::bsPopover(id='autocorThres', title=NULL, content='Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover"),
+                                           sliderInput('autocorSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['autocorSmooth', 'default'], min=defaults_analyze['autocorSmooth', 'low'], max=defaults_analyze['autocorSmooth', 'high'], step=defaults_analyze['autocorSmooth', 'step']),
+                                           shinyBS:::bsPopover(id='autocorSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover")
+                                  ),
+
+                                  tabPanel("Lowest dominant frequency",
+                                           checkboxInput(inputId = 'pitchDom', label = 'Use lowest dominant frequency as a pitch candidate?', value = TRUE),
+                                           sliderInput('domThres', 'Dominant frequency threshold', value=defaults_analyze['domThres', 'default'], min=defaults_analyze['domThres', 'low'], max=defaults_analyze['domThres', 'high'], step=defaults_analyze['domThres', 'step']),
+                                           shinyBS:::bsPopover(id='domThres', title=NULL, content='Minimum amplitude of dominant frequency', placement="right", trigger="hover"),
+                                           sliderInput('domSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['domSmooth', 'default'], min=defaults_analyze['domSmooth', 'low'], max=defaults_analyze['domSmooth', 'high'], step=defaults_analyze['domSmooth', 'step']),
+                                           shinyBS:::bsPopover(id='domSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding the lowest dominant frequency band', placement="right", trigger="hover")
+                                  ),
+
+                                  tabPanel("Cepstrum",
+                                           checkboxInput(inputId = 'pitchCep', label = 'Use cepstrum method?', value = TRUE),
+                                           sliderInput('cepThres', 'Cepstrum threshold', value=defaults_analyze['cepThres', 'default'], min=defaults_analyze['cepThres', 'low'], max=defaults_analyze['cepThres', 'high'], step=defaults_analyze['cepThres', 'step']),
+                                           shinyBS:::bsPopover(id='cepThres', title=NULL, content='Voicing threshold for cepstral algorithm', placement="right", trigger="hover"),
+                                           sliderInput('cepSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['cepSmooth', 'default'], min=defaults_analyze['cepSmooth', 'low'], max=defaults_analyze['cepSmooth', 'high'], step=defaults_analyze['cepSmooth', 'step']),
+                                           shinyBS:::bsPopover(id='cepSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding peaks in the cepstrum', placement="right", trigger="hover")
+                                  ),
+
+                                  tabPanel("Ba-Na",
+                                           checkboxInput(inputId = 'pitchSpec', label = 'Use Ba-Na method?', value = TRUE),
+                                           sliderInput('specThres', 'Spectral threshold', value=defaults_analyze['specThres', 'default'], min=defaults_analyze['specThres', 'low'], max=defaults_analyze['specThres', 'high'], step=defaults_analyze['specThres', 'step']),
+                                           shinyBS:::bsPopover(id='specThres', title=NULL, content='Voicing threshold for Ba-Na algorithm', placement="right", trigger="hover"),
+                                           sliderInput('specPeak', 'Spectral peak height', value=defaults_analyze['specPeak', 'default'], min=defaults_analyze['specPeak', 'low'], max=defaults_analyze['specPeak', 'high'], step=defaults_analyze['specPeak', 'step']),
+                                           shinyBS:::bsPopover(id='specPeak', title=NULL, content='Minimum amplitude of harmonics considered pitch candidates', placement="right", trigger="hover"),
+                                           sliderInput('specHNRslope', 'Slope of HNR discount', value=defaults_analyze['specHNRslope', 'default'], min=defaults_analyze['specHNRslope', 'low'], max=defaults_analyze['specHNRslope', 'high'], step=defaults_analyze['specHNRslope', 'step']),
+                                           shinyBS:::bsPopover(id='specHNRslope', title=NULL, content='0 = same threshold regardless of HNR; positive = lower threshold in noisy sounds', placement="right", trigger="hover"),
+                                           sliderInput('specSmooth', 'Width of window for finding harmonics, Hz', value=defaults_analyze['specSmooth', 'default'], min=defaults_analyze['specSmooth', 'low'], max=defaults_analyze['specSmooth', 'high'], step=defaults_analyze['specSmooth', 'step']),
+                                           shinyBS:::bsPopover(id='specSmooth', title=NULL, content='Width of window for detecting harmonics in the spectrum, Hz', placement="right", trigger="hover"),
+                                           sliderInput('specMerge', 'Margin for merging candidates, Hz', value=defaults_analyze['specMerge', 'default'], min=defaults_analyze['specMerge', 'low'], max=defaults_analyze['specMerge', 'high'], step=defaults_analyze['specMerge', 'step']),
+                                           shinyBS:::bsPopover(id='specMerge', title=NULL, content='Pitch candidates within specMerge semitones are merged with boosted certainty', placement="right", trigger="hover"),
+                                           sliderInput('specSinglePeakCert', 'Certainty of single-ratio candidates', value=defaults_analyze['specSinglePeakCert', 'default'], min=defaults_analyze['specSinglePeakCert', 'low'], max=defaults_analyze['specSinglePeakCert', 'high'], step=defaults_analyze['specSinglePeakCert', 'step']),
+                                           shinyBS:::bsPopover(id='specSinglePeakCert', title=NULL, content='If pitch is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its certainty is taken to be specSinglePeakCert', placement="right", trigger="hover")
                                   )
                        ),
 
-                       navbarMenu("Amplitude",
-                                  tabPanel("Amplitude syllable",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               actionButton(inputId = "ampl_syl_flatten", label = "Flatten amplitude envelope"),
-                                               shinyBS:::bsPopover(id='ampl_syl_flatten', title=NULL, content='Same amplitude over the entire syllable', placement="right", trigger="hover"),
-                                               tableOutput("ampl_syl_anchors"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotAmplSyl', click = "plotAmplSyl_click", dblclick = dblclickOpts(id = "plotAmplSyl_dblclick")), width=6
-                                             )
-                                           )
+                       navbarMenu("Postprocessing",
+                                  tabPanel("Path",
+                                           selectInput('pathfinding', 'Pathfinding method', choices = c('none', 'fast', 'slow'), selected = 'fast', multiple = FALSE),
+                                           shinyBS:::bsPopover(id='pathfinding', title=NULL, content="Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing", placement="right", trigger="hover"),
+                                           sliderInput('certWeight', 'Certainty weight', value=defaults_analyze['certWeight', 'default'], min=defaults_analyze['certWeight', 'low'], max=defaults_analyze['certWeight', 'high'], step=defaults_analyze['certWeight', 'step']),
+                                           shinyBS:::bsPopover(id='certWeight', title=NULL, content='Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover"),
+                                           sliderInput('shortestSyl', 'Shortest syllable, ms', value=defaults_analyze['shortestSyl', 'default'], min=defaults_analyze['shortestSyl', 'low'], max=defaults_analyze['shortestSyl', 'high'], step=defaults_analyze['shortestSyl', 'step']),
+                                           shinyBS:::bsPopover(id='shortestSyl', title=NULL, content='Shorter voiced segments (ms) will be treated as voiceless or merged with longer segments', placement="right", trigger="hover"),
+                                           sliderInput('shortestPause', 'Shortest pause, ms', value=defaults_analyze['shortestPause', 'default'], min=defaults_analyze['shortestPause', 'low'], max=defaults_analyze['shortestPause', 'high'], step=defaults_analyze['shortestPause', 'step']),
+                                           shinyBS:::bsPopover(id='shortestPause', title=NULL, content="The smallest gap between voiced syllables (ms) that means they shouldn't be merged", placement="right", trigger="hover")
                                   ),
 
-                                  tabPanel("Amplitude global",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               actionButton(inputId = "amplGlobal_flatten", label = "Flatten amplitude envelope"),
-                                               shinyBS:::bsPopover(id='amplGlobal_flatten', title=NULL, content='Same amplitude over the entire bout', placement="right", trigger="hover"),
-                                               tableOutput("amplGlobal_anchors"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotAmplGlobal', click = "plotAmplGlobal_click", dblclick = dblclickOpts(id = "plotAmplGlobal_dblclick")), width=6
-                                             )
-                                           )
-                                  ),
-
-                                  tabPanel("Amplitude modulation",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               sliderInput ('attackLen', 'Attack length, ms', value=permittedValues['attackLen','default'], min=permittedValues['attackLen', 'low'], max=permittedValues['attackLen', 'high'], step=permittedValues['attackLen','step']),
-                                               shinyBS:::bsPopover(id='attackLen', title=NULL, content='Does the voice start/end abruptly or with a "fade-in/out"?', placement="right", trigger="hover"),
-                                               sliderInput('amDep', 'AM depth', value=permittedValues['amDep','default'], min=permittedValues['amDep', 'low'], max=permittedValues['amDep', 'high'], step=permittedValues['amDep','step']),
-                                               shinyBS:::bsPopover(id='amDep', title=NULL, content='Depth of amplitude modulation', placement="right", trigger="hover"),
-                                               sliderInput('amFreq', 'AM frequency, Hz', value=permittedValues['amFreq','default'], min=permittedValues['amFreq', 'low'], max=permittedValues['amFreq', 'high'], step=permittedValues['amFreq','step']),
-                                               shinyBS:::bsPopover(id='amFreq', title=NULL, content='Frequency of amplitude modulation', placement="right", trigger="hover"),
-                                               sliderInput('amShape', 'AM shape', value=permittedValues['amShape','default'], min=permittedValues['amShape', 'low'], max=permittedValues['amShape', 'high'], step=permittedValues['amShape','step']),
-                                               shinyBS:::bsPopover(id='amShape', title=NULL, content='Shape of amplitude modulation: 0 = ~sine, -1 = notches, +1 = clicks', placement="right", trigger="hover"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotAM'), width=6
-                                             )
-                                           )
-                                  )
-                       ),
-
-                       navbarMenu("Source",
-                                  tabPanel("Glottal",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               sliderInput('rolloff', 'Source rolloff, dB/octave', value=permittedValues['rolloff','default'], min=permittedValues['rolloff', 'low'], max=permittedValues['rolloff', 'high'], step=permittedValues['rolloff','step']),
-                                               shinyBS:::bsPopover(id='rolloff', title=NULL, content='Loss of energy in harmonics relative to fundamental frequency (F0); low values emphasize F0', placement="right", trigger="hover"),
-                                               shinyBS::bsCollapsePanel("Advanced",
-                                                                        sliderInput('rolloffOct', 'Change of rolloff with frequency, dB/octave', value=permittedValues['rolloffOct','default'], min=permittedValues['rolloffOct', 'low'], max=permittedValues['rolloffOct', 'high'], step=permittedValues['rolloffOct','step']),
-                                                                        shinyBS:::bsPopover(id='rolloffOct', title=NULL, content='Negative: rolloff is progressively steeper for higher frequencies', placement="right", trigger="hover"),
-                                                                        sliderInput('rolloffKHz', 'Adjust rolloff per f0,  dB/kHz', value=permittedValues['rolloffKHz','default'], min=permittedValues['rolloffKHz', 'low'], max=permittedValues['rolloffKHz', 'high'], step=permittedValues['rolloffKHz','step']),
-                                                                        shinyBS:::bsPopover(id='rolloffKHz', title=NULL, content='Steeper/gentler basic rolloff as f0 varies', placement="right", trigger="hover"),
-                                                                        sliderInput('rolloffParab', 'Parabolic rolloff adjustment, dB/octave', value=permittedValues['rolloffParab','default'], min=permittedValues['rolloffParab', 'low'], max=permittedValues['rolloffParab', 'high'], step=permittedValues['rolloffParab','step']),
-                                                                        shinyBS:::bsPopover(id='rolloffParab', title=NULL, content='Parabolic boost to the first ... harmonics, dB', placement="right", trigger="hover"),
-                                                                        sliderInput('rolloffParabHarm', 'Harmonics boosted', value=permittedValues['rolloffParabHarm','default'], min=permittedValues['rolloffParabHarm', 'low'], max=permittedValues['rolloffParabHarm', 'high'], step=permittedValues['rolloffParabHarm','step']),
-                                                                        shinyBS:::bsPopover(id='rolloffParabHarm', title=NULL, content='Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover"),
-                                                                        sliderInput('glottis', 'Closed glottis, %', value=permittedValues['glottis', 'default'], min=permittedValues['glottis', 'low'], max=permittedValues['glottis', 'high'], step=permittedValues['glottis','step']),
-                                                                        shinyBS:::bsPopover(id='glottis', title=NULL, content='Proportion of time glottis is closed relative to F0 period; adds silences between glottal cycles', placement="right", trigger="hover")
-                                               ), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotRolloff'), width=6
-                                             )
-                                           )
-                                  ),
-
-                                  tabPanel("Nonlinear effects",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               sliderInput('nonlinBalance', 'Balance between nonlinear regimes, %', value=permittedValues['nonlinBalance','default'], min=permittedValues['nonlinBalance', 'low'], max=permittedValues['nonlinBalance', 'high'], step=permittedValues['nonlinBalance','step']),
-                                               shinyBS:::bsPopover(id='nonlinBalance', title=NULL, content='3 regimes of nonlinear effects: none / subharmonics / subharmonics + jitter', placement="right", trigger="hover"),
-                                               sliderInput('nonlinDep', 'Depth of nonlinear effects, % *hyper*', value=permittedValues['nonlinDep','default'], min=permittedValues['nonlinDep', 'low'], max=permittedValues['nonlinDep', 'high'], step=permittedValues['nonlinDep','step']),
-                                               shinyBS:::bsPopover(id='nonlinDep', title=NULL, content='Modulates the strength of nonlinear effects specified in "Advanced" below, when these effects are added', placement="right", trigger="hover"),
-                                               sliderInput('shortestEpoch', 'Shortest epoch length', value=permittedValues['shortestEpoch','default'], min=permittedValues['shortestEpoch', 'low'], max=permittedValues['shortestEpoch', 'high'], step=permittedValues['shortestEpoch','step']),
-                                               shinyBS:::bsPopover(id='shortestEpoch', title=NULL, content='Change nonlinear regime no sooner than after ... ms', placement="right", trigger="hover"),
-                                               shinyBS::bsCollapsePanel("Advanced",
-                                                                        sliderInput('subFreq', 'Target subharmonic frequency, Hz', value=permittedValues['subFreq','default'], min=permittedValues['subFreq', 'low'], max=permittedValues['subFreq', 'high'], step=permittedValues['subFreq','step']),
-                                                                        shinyBS:::bsPopover(id='subFreq', title=NULL, content='The approximate target frequency of subharmonics; the actual frequency is forced to be a fraction of f0 at every time point', placement="right", trigger="hover"),
-                                                                        sliderInput('subDep', 'Width of sidebands, Hz', value=permittedValues['subDep','default'], min=permittedValues['subDep', 'low'], max=permittedValues['subDep', 'high'], step=permittedValues['subDep','step']),
-                                                                        shinyBS:::bsPopover(id='subDep', title=NULL, content='Width of subharmonic sidebands, ie the strength of subharmonics depending on their distance from F-harmonics', placement="right", trigger="hover"),
-                                                                        sliderInput('jitterDep', 'Jitter depth, semitones', value=permittedValues['jitterDep','default'], min=permittedValues['jitterDep', 'low'], max=permittedValues['jitterDep', 'high'], step=permittedValues['jitterDep','step']),
-                                                                        shinyBS:::bsPopover(id='jitterDep', title=NULL, content='Random variation in F0 per glottal cycle', placement="right", trigger="hover"),
-                                                                        sliderInput('jitterLen', 'Jitter period, ms', value=permittedValues['jitterLen','default'], min=permittedValues['jitterLen', 'low'], max=permittedValues['jitterLen', 'high'], step=permittedValues['jitterLen','step']),
-                                                                        shinyBS:::bsPopover(id='jitterLen', title=NULL, content='The pitch jumps every ... ms. Low ~ harsh noise, high ~ shaky voice', placement="right", trigger="hover"),
-                                                                        sliderInput('shimmerDep', 'Shimmer depth, %', value=permittedValues['shimmerDep','default'], min=permittedValues['shimmerDep', 'low'], max=permittedValues['shimmerDep', 'high'], step=permittedValues['shimmerDep','step']),
-                                                                        shinyBS:::bsPopover(id='shimmerDep', title=NULL, content='Random variation in amplitude per glottal cycle', placement="right", trigger="hover"),
-                                                                        sliderInput('shimmerLen', 'Shimmer period, ms', value=permittedValues['shimmerLen','default'], min=permittedValues['shimmerLen', 'low'], max=permittedValues['shimmerLen', 'high'], step=permittedValues['shimmerLen','step']),
-                                                                        shinyBS:::bsPopover(id='shimmerLen', title=NULL, content='The amplitude jumps every ... ms. Low ~ harsh noise, high ~ shaky voice', placement="right", trigger="hover")
-                                               ), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotNonlin'), width=6
-                                             )
-                                           )
-                                  ),
-
-                                  tabPanel("Unvoiced timing",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               actionButton(inputId = "noise_flatten", label = "Flatten contour"),
-                                               shinyBS:::bsPopover(id='noise_flatten', title=NULL, content='Revert to a flat contour with amplitude equal to the first (left) anchor', placement="right", trigger="hover"),
-                                               tableOutput("noise_anchors"), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotUnvoiced', click = "plotUnvoiced_click", dblclick = dblclickOpts(id = "plotUnvoiced_dblclick")),
-                                               sliderInput('noiseTime', 'Breathing start / end, ms', value=c(0, 300), min=-permittedValues['sylLen', 'high'] / 2, max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
-                                               shinyBS:::bsPopover(id='noiseTime', title=NULL, content='Timing of respiration noise relative to the voiced component', placement="right", trigger="hover"), width=6
-                                             )
-                                           )
-                                  )
-                       ),
-
-                       navbarMenu("Tract",
-                                  tabPanel("Formants",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               sliderInput('formantDep', 'Formant prominence *hyper*', value=permittedValues['formantDep','default'], min=permittedValues['formantDep', 'low'], max=permittedValues['formantDep', 'high'], step=permittedValues['formantDep','step']),
-                                               shinyBS:::bsPopover(id='formantDep', title=NULL, content='Multiply formant amplitudes by ... (>1 = emphasize vowel quality)', placement="right", trigger="hover"),
-                                               sliderInput('formantWidth', 'Formant width *hyper*', value=permittedValues['formantWidth','default'], min=permittedValues['formantWidth', 'low'], max=permittedValues['formantWidth', 'high'], step=permittedValues['formantWidth','step']),
-                                               shinyBS:::bsPopover(id='formantWidth', title=NULL, content='Multiply formant bandwidths by ... (>1 = nasalized or muffled)', placement="right", trigger="hover"),
-                                               textInput('vowelString', label='String of vowel presets *hyper*', value = "a", width = NULL, placeholder ='uaaao'),
-                                               shinyBS:::bsPopover(id='vowelString', title=NULL, content="Implemented presets: a, o, i, e, u, 0 (schwa)", placement="right", trigger="hover"),
-                                               shinyBS::bsCollapsePanel("Show & modify formants manually",
-                                                                        tags$style(type="text/css", "textarea {width:100%}"), # NB: this little hack ties the width of the following textarea to the width of the panel in which it is embedded; see http://stackoverflow.com/questions/32640875/r-shiny-tie-textarea-width-to-wellpanel-width
-                                                                        tags$textarea(id="formants", label='Exact formants', rows=10, cols=20, value=NA, placeholder ="list()")
-                                               ),
-                                               shinyBS::bsCollapsePanel("Advanced",
-                                                                        checkboxInput(inputId = 'estimateVTL', label = 'Estimate vocal tract length from formants?', value = FALSE),
-                                                                        shinyBS:::bsPopover(id='estimateVTL', title=NULL, content='If TRUE, user-specified formants trump user-specified vocal tract length', placement="right", trigger="hover"),
-                                                                        sliderInput('vocalTract', 'The length of vocal tract, cm', value=permittedValues['vocalTract', 'default'], min=permittedValues['vocalTract', 'low'], max=permittedValues['vocalTract', 'high'], step=permittedValues['vocalTract', 'step']),
-                                                                        shinyBS:::bsPopover(id='vocalTract', title=NULL, content='Affects default formant dispersion at temperature>0', placement="right", trigger="hover"),
-                                                                        sliderInput('formantDepStoch', 'Added formants, dB', value=permittedValues['formantDepStoch','default'], min=permittedValues['formantDepStoch', 'low'], max=permittedValues['formantDepStoch', 'high'], step=permittedValues['formantDepStoch','step']),
-                                                                        shinyBS:::bsPopover(id='formantDepStoch', title=NULL, content='Amplitude of extra formants added on top of user-specified ones based on the length of vocal tract', placement="right", trigger="hover"),
-                                                                        sliderInput('lipRad', 'Lip radiation, dB/oct', value=permittedValues['lipRad','default'], min=permittedValues['lipRad', 'low'], max=permittedValues['lipRad', 'high'], step=permittedValues['lipRad','step']),
-                                                                        shinyBS:::bsPopover(id='lipRad', title=NULL, content='Rolloff due to lip radiation', placement="right", trigger="hover"),
-                                                                        sliderInput('noseRad', 'Nose radiation, dB/oct', value=permittedValues['noseRad','default'], min=permittedValues['noseRad', 'low'], max=permittedValues['noseRad', 'high'], step=permittedValues['noseRad','step']),
-                                                                        shinyBS:::bsPopover(id='noseRad', title=NULL, content='Rolloff due to nose radiation: added instead of lip radiation when the mouth is closed', placement="right", trigger="hover")
-                                               ), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotFormants', click = "plotFormants_click", dblclick = dblclickOpts(id = "plotFormants_dblclick")),
-                                               fluidRow(
-                                                 radioButtons(inputId='formants_spectrogram_or_spectrum', label="Filter preview (voiced)", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum", "Formant picker"="formantPicker"), selected='spectrum', inline=TRUE, width=NULL)
-                                               ), width=6
-                                             )
-                                           )
-                                  ),
-
-                                  tabPanel("Mouth opening",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               actionButton(inputId = "mouth_flatten", label = "Flatten mouth opening contour"),
-                                               shinyBS:::bsPopover(id='mouth_flatten', title=NULL, content='Revert to a flat mouth opening contour with opening degree equal at the first (left) anchor', placement="right", trigger="hover"),
-                                               tableOutput("mouth_anchors"),
-                                               sliderInput('mouthOpenThres', 'Open lips at', value=permittedValues['mouthOpenThres','default'], min=permittedValues['mouthOpenThres', 'low'], max=permittedValues['mouthOpenThres', 'high'], step=permittedValues['mouthOpenThres','step']),
-                                               shinyBS:::bsPopover(id='mouthOpenThres', title=NULL, content='The degree of mouth opening at which lips separate and start to radiate', placement="right", trigger="hover"),
-                                               width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotMouth', click = "plotMouth_click", dblclick = dblclickOpts(id = "plotMouth_dblclick")), width=6
-                                             )
-                                           )
-                                  ),
-
-                                  tabPanel("Unvoiced type",
-                                           sidebarLayout(
-                                             sidebarPanel(
-                                               selectInput(inputId='noiseType', label="Presets", choices=c('Breathing'='b', 'Snuffling'='n', 'h'='h', 'sh'='x','f'='f', 's'='s'), selected='b'),
-                                               shinyBS:::bsPopover(id='noiseType', title=NULL, content="Breathing = glottal noise (same formants as for voiced part); snuffling = breathing through the nose; h / s / sh / f = sibilants", placement="right", trigger="hover"),
-                                               sliderInput('rolloffNoise', 'Noise rolloff, dB/oct', value=permittedValues['rolloffNoise','default'], min=permittedValues['rolloffNoise', 'low'], max=permittedValues['rolloffNoise', 'high'], step=permittedValues['rolloffNoise','step']),
-                                               shinyBS:::bsPopover(id='rolloffNoise', title=NULL, content='Rolloff of the noise component (affects both breathing and supra-glottal noise)', placement="right", trigger="hover"),
-                                               shinyBS::bsCollapsePanel("Show & modify formants manually",
-                                                                        tags$style(type="text/css", "textarea {width:100%}"), # NB: this little hack ties the width of the following textarea to the width of the panel in which it is embedded; see http://stackoverflow.com/questions/32640875/r-shiny-tie-textarea-width-to-wellpanel-width
-                                                                        tags$textarea(id="formantsNoise", label='Exact formants for unvoiced part', rows=10, cols=20, value="", placeholder ="list()")
-                                               ), width=6
-                                             ),
-                                             mainPanel(
-                                               plotOutput('plotConsonant'),
-                                               fluidRow(
-                                                 radioButtons(inputId='formantsNoise_spectrogram_or_spectrum', label="Filter preview (unvoiced)", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrum', inline=TRUE, width=NULL)
-                                               ), width=6
-                                             )
-                                           )
+                                  tabPanel("Smoothing",
+                                           sliderInput ('smooth', 'Median smoothing (0 = none)', value=defaults_analyze['smooth','default'], min=defaults_analyze['smooth', 'low'], max=defaults_analyze['smooth', 'high'], step=defaults_analyze['smooth','step']),
+                                           shinyBS:::bsPopover(id='smooth', title=NULL, content='Amount of median smoothing', placement="right", trigger="hover"),
+                                           sliderInput('snakeStep', 'Snake step (0 = none)', value=defaults_analyze['snakeStep','default'], min=defaults_analyze['snakeStep', 'low'], max=defaults_analyze['snakeStep', 'high'], step=defaults_analyze['snakeStep','step']),
+                                           shinyBS:::bsPopover(id='snakeStep', title=NULL, content='Use the snake algorithm to minimize the elastic force acting on pitch contour', placement="right", trigger="hover"),
+                                           sliderInput('interpolWin', 'Interpolation window (0 = none)', value=defaults_analyze['interpolWin', 'default'], min=defaults_analyze['interpolWin', 'low'], max=defaults_analyze['interpolWin', 'high'], step=defaults_analyze['interpolWin', 'step']),
+                                           shinyBS:::bsPopover(id='interpolWin', title=NULL, content="", placement="right", trigger="hover"),
+                                           sliderInput('interpolTol', 'Interpolation tolerance', value=defaults_analyze['interpolTol', 'default'], min=defaults_analyze['interpolTol', 'low'], max=defaults_analyze['interpolTol', 'high'], step=defaults_analyze['interpolTol', 'step']),
+                                           shinyBS:::bsPopover(id='interpolTol', title=NULL, content="", placement="right", trigger="hover"),
+                                           sliderInput('interpolCert', 'Interpolation certainty', value=defaults_analyze['interpolCert', 'default'], min=defaults_analyze['interpolCert', 'low'], max=defaults_analyze['interpolCert', 'high'], step=defaults_analyze['interpolCert', 'step']),
+                                           shinyBS:::bsPopover(id='interpolCert', title=NULL, content="", placement="right", trigger="hover")
                                   )
                        )
            )
     ),
 
-    column(4,
+    column(8,
            fluidRow(
              column(3,
-                    actionButton(inputId = "generateAudio", label = "Generate", style="color: blue; background-color: orange;")
+                    fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = '...myfile...')
              ),
              column(5,
                     uiOutput("myAudio")
@@ -311,49 +124,17 @@ ui = fluidPage(
              plotOutput('spectrogram')
            ),
            fluidRow(
-             radioButtons(inputId='spectrogram_or_spectrum', label="Generated sound", choices=c("Spectrogram"="spectrogram", "Spectrum"="spectrum"), selected='spectrogram', inline=TRUE, width=NULL)
-           ),
-           fluidRow(
              shinyBS::bsCollapse(id="spec_controls",
                                  shinyBS::bsCollapsePanel("Show spectrogram controls",
-                                                          sliderInput('specWindowLength', 'Window length, ms', value=permittedValues['specWindowLength','default'], min=permittedValues['specWindowLength', 'low'], max=permittedValues['specWindowLength', 'high'], step=permittedValues['specWindowLength','step']),
-                                                          shinyBS:::bsPopover(id='specWindowLength', title=NULL, content='Window length for FFT transform (Gaussian)', placement="below", trigger="hover"),
-                                                          sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0,5), min=0, max=22, step=1),
+                                                          sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
                                                           radioButtons(inputId='spec_colorTheme', label="Color scheme", choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
-                                                          radioButtons(inputId='spec_method', label="Method", choices=c("Spectrum"="spectrum", "Spectral derivative"="spectralDerivative"), selected='spectrum', inline=TRUE, width=NULL),
-                                                          radioButtons(inputId='osc', label="Oscillogram type", choices=c("Linear"="linear", "dB"="dB", "None"="none"), selected='linear', inline=TRUE, width=NULL),
-                                                          shinyBS:::bsPopover(id='osc', title=NULL, content='Plot oscillogram on a linear or dB scale?', placement="below", trigger="hover"),
-                                                          sliderInput('osc_heights', 'Relative size of oscillogram', value=permittedValues['oscHeight','default'], min=permittedValues['oscHeight', 'low'], max=permittedValues['oscHeight', 'high'], step=permittedValues['oscHeight','step']),
-                                                          shinyBS:::bsPopover(id='osc_heights', title=NULL, content='Relative size of spectrogram vs oscillogram', placement="below", trigger="hover"),
-                                                          sliderInput('specContrast', 'Contrast', value=permittedValues['specContrast','default'], min=permittedValues['specContrast', 'low'], max=permittedValues['specContrast', 'high'], step=permittedValues['specContrast','step']),
+                                                          sliderInput('specContrast', 'Contrast', value=defaults_analyze['specContrast','default'], min=defaults_analyze['specContrast', 'low'], max=defaults_analyze['specContrast', 'high'], step=defaults_analyze['specContrast','step']),
                                                           shinyBS:::bsPopover(id='specContrast', title=NULL, content='Regulates the contrast of the spectrogram', placement="below", trigger="hover"),
-                                                          sliderInput('specBrightness', 'Brightness', value=permittedValues['specBrightness','default'], min=permittedValues['specBrightness', 'low'], max=permittedValues['specBrightness', 'high'], step=permittedValues['specBrightness','step']),
+                                                          sliderInput('specBrightness', 'Brightness', value=defaults_analyze['specBrightness','default'], min=defaults_analyze['specBrightness', 'low'], max=defaults_analyze['specBrightness', 'high'], step=defaults_analyze['specBrightness','step']),
                                                           shinyBS:::bsPopover(id='specBrightness', title=NULL, content='Regulates the brightness of the spectrogram', placement="below", trigger="hover")
-                                                          # sliderInput('spec_median_smoothing', 'Median smoothing, bins', value=3, min=1, max=9, step=2),
-                                                          # sliderInput('spec_zpad', 'Zero padding, final windowLength_points', value=0, min=0, max=6144, step=512)
                                  )
              )
            )
-    ),
-
-    column(2,
-           tags$h2('Presets'),
-           selectInput(inputId='speaker', label="Speaker", choices=names(presets), selected=names(presets)[1]),
-           selectInput(inputId='callType', label="Call", choices=names(presets[[1]]), selected=names(presets[[1]])[1]),
-           shinyBS::bsCollapsePanel("Load new preset",
-                                    tags$style(type="text/css", "textarea {width:100%; font-size:50%}"),
-                                    tags$textarea(id="user_preset", label='Type in a new preset here', rows=10, cols=20, value="", placeholder ="soundgen(...)"),
-                                    actionButton(inputId = "import_preset", label = "Update sliders")
-           ),
-
-           tags$h2('Export'),
-           downloadButton(outputId = "saveAudio", label = "Save audio"),
-           tags$br(), tags$br(),
-           shinyBS::bsCollapsePanel("Export R code",
-                                    tags$style(type="text/css", "textarea {width:100%; font-size:50%}"), # NB: this little hack ties the width of the following textarea to the width of the panel in which it is embedded; see http://stackoverflow.com/questions/32640875/r-shiny-tie-textarea-width-to-wellpanel-width
-                                    tags$textarea(id="mycall", label='Copy-paste function call', rows=10, cols=20, value="", placeholder ="soundgen()")
-           ),
-           actionButton("about", "About")
     )
   )
 )
