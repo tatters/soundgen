@@ -1,3 +1,7 @@
+# TODO: add a routine for manually adding/removing pitch candidates; enter them as a new pitchMethod ("manual"), with very high certainty (eg 5, 10, 1000 - test). Rerun pathfinder each time something is modified; the resulting contour may still not pass through the manual candidates despite their high certainty, so after pathfinder replace pitch values at the updated contour with the manually specified values
+
+# Also: check why it crashes with pitch cepstral
+
 server = function(input, output, session) {
   myPars = reactiveValues()
 
@@ -17,7 +21,17 @@ server = function(input, output, session) {
       colorTheme = input$spec_colorTheme,
       ylim = c(input$spec_ylim[1], input$spec_ylim[2])
     )
-    points(myPars$X, myPars$df$result$pitch / 1000, type = 'l', col = 'blue')
+    addPitchCands(
+      pitchCands = myPars$df$pitchCands,
+      pitchCert = myPars$df$pitchCert,
+      pitchSource = myPars$df$pitchSource,
+      pitch = myPars$df$result$pitch,
+      # candPlot = candPlot,
+      # pitchPlot = pitchPlot,
+      addToExistingPlot = TRUE,
+      showLegend = TRUE,
+      ylim = c(input$spec_ylim[1], input$spec_ylim[2])
+    )
   })
 
   observeEvent(input$loadAudio, {
@@ -85,8 +99,8 @@ server = function(input, output, session) {
       windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
       myPars$X = seq(1, max(1, (length(myPars$myAudio) - windowLength_points)),
                      length.out = nrow(myPars$df$result)) / myPars$samplingRate * 1000 + input$windowLength / 2
-      print(myPars$df$result$pitch)
-      print(str(input$loadAudio))
+
+      # add: update defaults that depend on samplingRate, eg cepSmooth
     }
   })
 
