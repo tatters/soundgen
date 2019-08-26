@@ -183,7 +183,7 @@ defaults_analyze = matrix(c(
   'step', 25, 1, 500, 1,
   'overlap', 50, 0, 99, 1,
   'dynamicRange', 80, 10, 200, 10,
-  'zp', 0, 0, 8192, 500,
+  'zp', 0, 0, 13, 1,
 
   'silence', 0.04, 0, 1, .01,
   'entropyThres', 0.6, 0, 1, 0.01,
@@ -201,6 +201,7 @@ defaults_analyze = matrix(c(
   'domSmooth', 220, 1, 600, 10,
   'cepThres', 0.3, 0, 1, 0.01,
   'cepSmooth', 31, 1, 91, 2,
+  'cepZp', 0, 0, 13, 1,
   'specThres', 0.3, 0, 1, 0.01,
   'specPeak', 0.35, 0, 1, 0.01,
   'specHNRslope', 0.8, 0, 5, 0.05,

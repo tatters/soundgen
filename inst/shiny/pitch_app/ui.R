@@ -14,8 +14,8 @@ ui = fluidPage(
                                            shinyBS:::bsPopover(id='overlap', title=NULL, content='Alternative to step: overlap between successive frames, %', placement="right", trigger="hover"),
                                            sliderInput('dynamicRange', 'Dynamic range, dB', value=defaults_analyze['dynamicRange','default'], min=defaults_analyze['dynamicRange', 'low'], max=defaults_analyze['dynamicRange', 'high'], step=defaults_analyze['dynamicRange','step']),
                                            shinyBS:::bsPopover(id='dynamicRange', title=NULL, content='Dynamic range of spectrogram, dB', placement="right", trigger="hover"),
-                                           sliderInput('zp', 'Zero padding, points', value=defaults_analyze['zp','default'], min=defaults_analyze['zp', 'low'], max=defaults_analyze['zp', 'high'], step=defaults_analyze['zp','step']),
-                                           shinyBS:::bsPopover(id='zp', title=NULL, content='Zero padding of STFT window (improves frequency resolution)', placement="right", trigger="hover"),
+                                           sliderInput('zp', 'Zero padding, points 2 ^ n', value=defaults_analyze['zp','default'], min=defaults_analyze['zp','low'], max=defaults_analyze['zp','high'], step=defaults_analyze['zp','step']),
+                                           shinyBS:::bsPopover(id='zp', title=NULL, content='Zero padding of STFT window (improves frequency resolution): 8 means 2^8 = 256, etc.', placement="right", trigger="hover"),
                                            selectInput('wn', 'Window type', choices = c('bartlett', 'blackman', 'flattop', 'gaussian', 'hamming', 'hanning', 'rectangle'), selected = 'gaussian', multiple = FALSE),
                                            shinyBS:::bsPopover(id='wn', title=NULL, content='Type of STFT window', placement="right", trigger="hover")
                                   )
@@ -62,7 +62,9 @@ ui = fluidPage(
                                            sliderInput('cepThres', 'Cepstrum threshold', value=defaults_analyze['cepThres', 'default'], min=defaults_analyze['cepThres', 'low'], max=defaults_analyze['cepThres', 'high'], step=defaults_analyze['cepThres', 'step']),
                                            shinyBS:::bsPopover(id='cepThres', title=NULL, content='Voicing threshold for cepstral algorithm', placement="right", trigger="hover"),
                                            sliderInput('cepSmooth', 'Width of smoothing interval, bins', value=defaults_analyze['cepSmooth', 'default'], min=defaults_analyze['cepSmooth', 'low'], max=defaults_analyze['cepSmooth', 'high'], step=defaults_analyze['cepSmooth', 'step']),
-                                           shinyBS:::bsPopover(id='cepSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding peaks in the cepstrum', placement="right", trigger="hover")
+                                           shinyBS:::bsPopover(id='cepSmooth', title=NULL, content='Width of smoothing interval (in bins) for finding peaks in the cepstrum', placement="right", trigger="hover"),
+                                           sliderInput('cepZp', 'Cepstral zero padding, 2 ^ n', value=defaults_analyze['cepZp', 'default'], min=defaults_analyze['cepZp', 'low'], max=defaults_analyze['cepZp', 'high'], step=defaults_analyze['cepZp', 'step']),
+                                           shinyBS:::bsPopover(id='cepZp', title=NULL, content='Length of cepstral window after zero padding: 8 means 2^8 = 256, etc.', placement="right", trigger="hover")
                                   ),
 
                                   tabPanel("Ratio of harmonics",
