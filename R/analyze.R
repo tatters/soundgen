@@ -895,8 +895,15 @@ analyze = function(x,
   if (priorPlot) {
     freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
     prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
-    plot(semitonesToHz(freqs), prior, type = 'l', xlab = 'Frequency, Hz',
-         ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values')
+    plot(
+      x = semitonesToHz(freqs),
+      y = prior,
+      type = 'l',
+      log = 'x',
+      xlim = c(pitchFloor, pitchCeiling),
+      xlab = 'Frequency, Hz',
+      ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values'
+    )
   }
 
   if (summary == TRUE) {
