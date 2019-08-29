@@ -50,10 +50,14 @@ analyzeFrame = function(frame,
   specCentroid = sum(absSpec$freq * absSpec$w)
   peakFreq = absSpec$freq[which.max(frame)]
   medianFreq = absSpec$freq[min(which(cumsum(frame) > amplitude / 2))]
-  loudness = getLoudnessPerFrame(
-    spec = frame * scaleCorrection,
-    samplingRate = samplingRate
-  )  # in sone, assuming scaling by SPL_measured in analyze()
+  if (is.numeric(scaleCorrection)) {
+    loudness = getLoudnessPerFrame(
+      spec = frame * scaleCorrection,
+      samplingRate = samplingRate
+    )  # in sone, assuming scaling by SPL_measured in analyze()
+  } else {
+    loudness = NA
+  }
 
   # Cut spectral band from pitchFloor to cutFreq Hz
   absSpec_cut = absSpec[absSpec$freq > pitchFloor &

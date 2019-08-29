@@ -713,7 +713,7 @@ findVoicedSegments = function(pitchCands,
 #'   and pitch contour, respectively
 #' @param addToExistingPlot if TRUE, assumes that a spectrogram is already
 #'   plotted; if FALSE, sets up a new plot
-#' @param showLegent if TRUE, shows a legend
+#' @param showLegend if TRUE, shows a legend
 #' @param ... other graphical parameters used for creating a new plot if
 #'   addToExistingPlot = FALSE
 #' @examples
@@ -741,15 +741,15 @@ addPitchCands = function(pitchCands,
                          ...) {
   # if plot_spec is FALSE, we first have to set up an empty plot
   if (addToExistingPlot == FALSE) {
-    if (is.null(ylim)) {
-      m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
-      if (is.na(m)) m = samplingRate / 2 / 1000
-      ylim = c(0, m)
-    }
-    plot(x = as.numeric(colnames(pitchCands)),
-         y = rep(0, ncol(pitchCands)),
-         type = 'n',
-         ...)
+    arguments = list(...)  # save ... arguments as a list
+    m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
+    if (is.na(m)) m = 5  # samplingRate / 2 / 1000
+    arguments$ylim = c(0, m)
+    do.call(plot,   # need do.call, otherwise can't pass the modified ylim
+            args = c(list(x = as.numeric(colnames(pitchCands)),
+                          y = rep(0, ncol(pitchCands)),
+                          type = 'n'),
+                     arguments))
   }
   # add pitch candidates to the plot
   pitchMethods = unique(na.omit(as.character(pitchSource)))

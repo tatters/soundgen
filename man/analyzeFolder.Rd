@@ -47,7 +47,8 @@ not analyzed at all. NB: this number is dynamically updated: the actual
 silence threshold may be higher depending on the quietest frame, but it
 will never be lower than this specified number.}
 
-\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB
+(set to 0 to skip analyzing subjective loudness)}
 
 \item{Pref}{reference pressure, Pa}
 
@@ -67,12 +68,14 @@ descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
 
-\item{nFormants}{the number of formants to extract per STFT frame. Calls
-\code{\link[phonTools]{findformants}} with default settings}
+\item{nFormants}{the number of formants to extract per STFT frame (0 = no
+formant analysis). Calls \code{\link[phonTools]{findformants}} with default
+settings}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
-'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
+'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
+NULL = no pitch analysis)}
 
 \item{entropyThres}{pitch tracking is not performed for frames with Weiner
 entropy above \code{entropyThres}, but other spectral descriptives are

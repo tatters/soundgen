@@ -21,10 +21,10 @@ and pitch contour, respectively}
 \item{addToExistingPlot}{if TRUE, assumes that a spectrogram is already
 plotted; if FALSE, sets up a new plot}
 
+\item{showLegend}{if TRUE, shows a legend}
+
 \item{...}{other graphical parameters used for creating a new plot if
 addToExistingPlot = FALSE}
-
-\item{showLegent}{if TRUE, shows a legend}
 }
 \description{
 Internal soundgen function.

@@ -14,17 +14,21 @@
 #'   not analyzed at all. NB: this number is dynamically updated: the actual
 #'   silence threshold may be higher depending on the quietest frame, but it
 #'   will never be lower than this specified number.
-#' @param scale maximum possible amplitude of input used for normalization (not
-#'   needed for audio files)
+#' @param scale maximum possible amplitude of input used for normalization of
+#'   input vector (not needed if input is an audio file)
+#' @param SPL_measured sound pressure level at which the sound is presented, dB
+#'   (set to 0 to skip analyzing subjective loudness)
 #' @param cutFreq (>0 to Nyquist, Hz) repeat the calculation of spectral
 #'   descriptives after discarding all info above \code{cutFreq}.
 #'   Recommended if the original sampling rate varies across different analyzed
 #'   audio files
-#' @param nFormants the number of formants to extract per STFT frame. Calls
-#'   \code{\link[phonTools]{findformants}} with default settings
+#' @param nFormants the number of formants to extract per STFT frame (0 = no
+#'   formant analysis). Calls \code{\link[phonTools]{findformants}} with default
+#'   settings
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
-#'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band
+#'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
+#'   NULL = no pitch analysis)
 #' @param entropyThres pitch tracking is not performed for frames with Weiner
 #'   entropy above \code{entropyThres}, but other spectral descriptives are
 #'   still calculated
@@ -161,6 +165,14 @@
 #' a = analyze(sound, samplingRate = 16000, plot = TRUE)
 #'
 #' \dontrun{
+#' # For maximum processing speed (just basic spectral descriptives):
+#' a = analyze(sound, samplingRate = 16000,
+#'   plot = FALSE,         # no plotting
+#'   pitchMethods = NULL,  # no pitch tracking
+#'   SPL_measured = NULL,  # no loudness analysis
+#'   nFormants = 0         # no formant analysis
+#' )
+#'
 #' sound1 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .9, 1), value = c(300, 900, 400, 2300)),
 #'   noise = list(time = c(0, 300), value = c(-40, 0)),
@@ -362,12 +374,15 @@ analyze = function(x,
 
   # calculate scaling coefficient for loudness calculation, but don't convert
   # yet, since most routines in analyze() require scale [-1, 1]
-  scaleCorrection = max(abs(scaleSPL(sound * m / scale,
+  scaleCorrection = NA
+  if (is.numeric(SPL_measured)) {
+    scaleCorrection = max(abs(scaleSPL(sound * m / scale,
                                      # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
                                      scale = 1,
                                      SPL_measured = SPL_measured,
                                      Pref = Pref))) /  # peak ampl of rescaled
     m  # peak ampl of original
+  }
 
   # normalize to range from no less than -1 to no more than +1
   if (min(sound) > 0) {
@@ -629,23 +644,29 @@ analyze = function(x,
   # plot(autocorBank[, 13], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
-  ## FORMANTS
   framesToAnalyze = which(cond_silence)
-  formants = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
-  colnames(formants) = paste0('f', rep(1:nFormants, each = 2),
-                              rep(c('_freq', '_width'), nFormants))
-  for (i in framesToAnalyze) {
-    ff = try(phonTools::findformants(frameBank[, i],
-                                     fs = samplingRate,
-                                     verify = FALSE),
-             silent = TRUE)
-    if (class(ff) != 'try-error' & is.list(ff)) {
-      temp = matrix(NA, nrow = nFormants, ncol = 2)
-      availableRows = 1:min(nFormants, nrow(ff))
-      temp[availableRows, ] = as.matrix(ff[availableRows, ])
-      formants[i, ] = matrix(t(temp), nrow = 1)
+
+  ## FORMANTS
+  formants = NULL
+  if (nFormants > 0) {
+    formants = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
+    colnames(formants) = paste0('f', rep(1:nFormants, each = 2),
+                                rep(c('_freq', '_width'), nFormants))
+    for (i in framesToAnalyze) {
+      ff = try(phonTools::findformants(frameBank[, i],
+                                       fs = samplingRate,
+                                       verify = FALSE),
+               silent = TRUE)
+      if (class(ff) != 'try-error' & is.list(ff)) {
+        temp = matrix(NA, nrow = nFormants, ncol = 2)
+        availableRows = 1:min(nFormants, nrow(ff))
+        temp[availableRows, ] = as.matrix(ff[availableRows, ])
+        formants[i, ] = matrix(t(temp), nrow = 1)
+      }
     }
   }
+
+
 
   ## PITCH and other spectral analysis of each frame from fft
   # set up an empty nested list to save values in - this enables us to analyze
@@ -710,7 +731,7 @@ analyze = function(x,
   result = lapply(frameInfo, function(y) y[['summaries']])
   result = data.frame(matrix(unlist(result), nrow=length(frameInfo), byrow=TRUE))
   colnames(result) = names(frameInfo[[1]]$summaries)
-  result = cbind(result, formants)
+  if (!is.null(formants)) result = cbind(result, formants)
   result$entropy = entropy
   result$ampl = ampl
   result$time = round(seq(0,

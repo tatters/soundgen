@@ -27,7 +27,8 @@ is above some threshold - specified in \code{\link{analyze}})}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
-'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
+'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
+NULL = no pitch analysis)}
 
 \item{cutFreq}{(>0 to Nyquist, Hz) repeat the calculation of spectral
 descriptives after discarding all info above \code{cutFreq}.
