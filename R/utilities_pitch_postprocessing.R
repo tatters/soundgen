@@ -610,7 +610,7 @@ medianSmoother = function (df, smoothing_ww, smoothingThres) {
 #'
 #' Internal helper function for postprocessing of pitch contours. Merges voiced
 #' segments at least \code{shortestSyl} ms long and separated by less than
-#' \code{shortestPause} ms.
+#' \code{shortestPause} ms. Called by \code{\link{analyze}}
 #' @param pitchCands matrix of possible pitch values per column. One column is
 #'   one fft frame, one row is one pitch candidate
 #' @inheritParams analyze
@@ -620,6 +620,7 @@ medianSmoother = function (df, smoothing_ww, smoothingThres) {
 #'   many pitch candidates are not NA. Defaults to 2: since dom is usually
 #'   defined, in practice this means that we also want at least one other pitch
 #'   candidate (autocor, cep or BaNa)
+#' @param pitchMethods methods of pitch tracking in analyze()
 #' @return Returns a dataframe specifying where each voiced segment starts and
 #'   ends (in fft frames, not ms!)
 #' @keywords internal
@@ -628,7 +629,32 @@ findVoicedSegments = function(pitchCands,
                               shortestPause,
                               step,
                               samplingRate,
-                              minVoicedCands) {
+                              minVoicedCands,
+                              pitchMethods) {
+  resetMVC = FALSE
+  messageMVC = FALSE
+  if (is.null(minVoicedCands)) {
+    resetMVC = TRUE
+  }
+  if (is.numeric(minVoicedCands)) {
+    if (minVoicedCands < 1 | minVoicedCands > length(pitchMethods)) {
+      resetMVC = TRUE
+      messageMVC = TRUE
+    }
+  }
+  if (resetMVC) {
+    if ('dom' %in% pitchMethods & length(pitchMethods) > 1) {
+      # since dom is usually defined, we want at least one more pitch candidate
+      # (unless dom is the ONLY method that the user wants for pitch tracking)
+      minVoicedCands = 2
+    } else {
+      minVoicedCands = 1
+    }
+    if (messageMVC) {
+      message(paste0('minVoicedCands must be between 1 and length(pitchMethods);',
+                     ' resetting to ', minVoicedCands))
+    }
+  }
   putativelyVoiced = apply(pitchCands, 2, function(x) {
     ifelse(sum(!is.na(x)) >= minVoicedCands, 1, NA)
   })
@@ -736,12 +762,14 @@ addPitchCands = function(pitchCands,
       candPlot$col[candPlot$levels == 'spec'] = 'red'
       candPlot$col[candPlot$levels == 'dom'] = 'orange'
       candPlot$col[candPlot$levels == 'cep'] = 'violet' # c('green', 'red', 'orange', 'violet')
+      candPlot$col[candPlot$levels == 'manual'] = 'blue'
     }
     if (is.null(candPlot$pch)) {
       candPlot$pch[candPlot$levels == 'autocor'] = 16
       candPlot$pch[candPlot$levels == 'spec'] = 2
       candPlot$pch[candPlot$levels == 'dom'] = 3
       candPlot$pch[candPlot$levels == 'cep'] = 7
+      candPlot$pch[candPlot$levels == 'manual'] = 18
       # candPlot$pch = c(16, 2, 3, 7)
     }
     if (is.null(candPlot$cex)) {
@@ -750,6 +778,8 @@ addPitchCands = function(pitchCands,
     pitchSource_1234 = matrix(match(pitchSource, candPlot$levels),
                               ncol = ncol(pitchSource))
     for (r in 1:nrow(pitchCands)) {
+      cex = pitchCert[r, ] * candPlot$cex
+      cex[!is.numeric(cex)] = 2  # for manual, certainty could be Inf
       points(
         x = as.numeric(colnames(pitchCands)),
         y = pitchCands[r, ] / 1000,

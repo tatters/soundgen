@@ -12,8 +12,9 @@ spectrogram(x, samplingRate = NULL, dynamicRange = 80,
   output = c("none", "original", "processed", "complex")[1],
   ylim = NULL, plot = TRUE, osc = FALSE, osc_dB = FALSE,
   heights = c(3, 1), colorTheme = c("bw", "seewave", "...")[1],
-  xlab = "Time, ms", ylab = "Frequency, KHz", mar = c(5.1, 4.1, 4.1,
-  2), main = "", frameBank = NULL, duration = NULL, ...)
+  xlab = "Time, ms", ylab = "Frequency, kHz", mar = c(5.1, 4.1, 4.1,
+  2), main = "", grid = NULL, frameBank = NULL, duration = NULL,
+  ...)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
@@ -87,12 +88,13 @@ or any palette from \code{\link[grDevices]{palette}} such as
 
 \item{xlab, ylab, main, mar}{graphical parameters}
 
+\item{grid}{if numeric, adds n = \code{grid} dotted lines per kHz}
+
 \item{frameBank}{ignore (only needed for pitch tracking)}
 
 \item{duration}{ignore (only needed for pitch tracking)}
 
-\item{...}{other graphical parameters passed to
-\code{seewave:::filled.contour.modif2}}
+\item{...}{other graphical parameters}
 }
 \value{
 Returns nothing (if output = 'none'), absolute - not power! -
@@ -102,10 +104,10 @@ Returns nothing (if output = 'none'), absolute - not power! -
 }
 \description{
 Produces the spectrogram of a sound using short-term Fourier transform.
-Compared to \code{\link[seewave]{spectro}}, this function has fewer plotting
-options, but offers added routines for noise reduction, smoothing in time and
-frequency domains, manual control of contrast and brightness, plotting the
-oscillogram on a dB scale, etc.
+Inspired by \code{\link[seewave]{spectro}}, this function offers added
+routines for noise reduction, smoothing in time and frequency domains, manual
+control of contrast and brightness, plotting the oscillogram on a dB scale,
+grid, etc.
 }
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise
@@ -116,6 +118,16 @@ sound = soundgen(sylLen = 1000, temperature = 0.001, noise = list(
 
 # basic spectrogram
 spectrogram(sound, samplingRate = 16000)
+
+# add bells and whistles
+spectrogram(sound, samplingRate = 16000,
+  osc = TRUE, noiseReduction = 1.1,
+  brightness = -1, colorTheme = 'heat.colors',
+  ylim = c(0, 5), cex.lab = .75,
+  main = 'My spectrogram',
+  yaxp = c(0, 8, 16),  # tip: for base graphics, see ?par
+  grid = 5  # tip: to customize, add manually with graphics::grid()
+)
 
 \dontrun{
 # change dynamic range
@@ -146,10 +158,5 @@ spectrogram(sound, samplingRate = 16000, smoothFreq = 5,
 
 # increase contrast, reduce brightness
 spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
-
-# add bells and whistles
-spectrogram(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
-  brightness = -1, colorTheme = 'heat.colors',
-  ylim = c(0,5), cex.lab = .75, main = 'My spectrogram')
 }
 }

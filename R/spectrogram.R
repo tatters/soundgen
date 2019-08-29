@@ -3,10 +3,10 @@
 #' Spectrogram
 #'
 #' Produces the spectrogram of a sound using short-term Fourier transform.
-#' Compared to \code{\link[seewave]{spectro}}, this function has fewer plotting
-#' options, but offers added routines for noise reduction, smoothing in time and
-#' frequency domains, manual control of contrast and brightness, plotting the
-#' oscillogram on a dB scale, etc.
+#' Inspired by \code{\link[seewave]{spectro}}, this function offers added
+#' routines for noise reduction, smoothing in time and frequency domains, manual
+#' control of contrast and brightness, plotting the oscillogram on a dB scale,
+#' grid, etc.
 #' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if
@@ -55,8 +55,8 @@
 #'   or any palette from \code{\link[grDevices]{palette}} such as
 #'   'heat.colors', 'cm.colors', etc
 #' @param xlab,ylab,main,mar graphical parameters
-#' @param ... other graphical parameters passed to
-#'   \code{seewave:::filled.contour.modif2}
+#' @param grid if numeric, adds n = \code{grid} dotted lines per kHz
+#' @param ... other graphical parameters
 #' @param frameBank ignore (only needed for pitch tracking)
 #' @param duration ignore (only needed for pitch tracking)
 #' @export
@@ -73,6 +73,16 @@
 #'
 #' # basic spectrogram
 #' spectrogram(sound, samplingRate = 16000)
+#'
+#' # add bells and whistles
+#' spectrogram(sound, samplingRate = 16000,
+#'   osc = TRUE, noiseReduction = 1.1,
+#'   brightness = -1, colorTheme = 'heat.colors',
+#'   ylim = c(0, 5), cex.lab = .75,
+#'   main = 'My spectrogram',
+#'   yaxp = c(0, 8, 16),  # tip: for base graphics, see ?par
+#'   grid = 5  # tip: to customize, add manually with graphics::grid()
+#' )
 #'
 #' \dontrun{
 #' # change dynamic range
@@ -103,11 +113,6 @@
 #'
 #' # increase contrast, reduce brightness
 #' spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
-#'
-#' # add bells and whistles
-#' spectrogram(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
-#'   brightness = -1, colorTheme = 'heat.colors',
-#'   ylim = c(0,5), cex.lab = .75, main = 'My spectrogram')
 #' }
 spectrogram = function(x,
                        samplingRate = NULL,
@@ -134,9 +139,10 @@ spectrogram = function(x,
                        heights = c(3, 1),
                        colorTheme = c('bw', 'seewave', '...')[1],
                        xlab = 'Time, ms',
-                       ylab = 'Frequency, KHz',
+                       ylab = 'Frequency, kHz',
                        mar = c(5.1, 4.1, 4.1, 2),
                        main = '',
+                       grid = NULL,
                        frameBank = NULL,
                        duration = NULL,
                        ...) {
@@ -374,7 +380,7 @@ spectrogram = function(x,
       par(mar = mar)
     }
 
-    seewave::filled.contour.modif2(
+    filled.contour.mod(
       x = X, y = Y, z = Z1,
       levels = seq(0, 1, length = 30),
       color.palette = color.palette,
@@ -383,6 +389,11 @@ spectrogram = function(x,
       xlim = c(0, duration * 1000),
       ...
     )
+    if (is.numeric(grid)) {
+      n_grid_per_kHz = diff(range(ylim)) * grid
+      grid(nx = n_grid_per_kHz, ny = n_grid_per_kHz,
+           col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3)
+    }
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
   }
@@ -582,6 +593,50 @@ getFrameBank = function(sound,
     })
   }
   return(frameBank)
+}
+
+
+#' Modified filled.contour
+#'
+#' Internal soundgen function
+#'
+#' A bare-bones version of \code{\link[graphics]{filled.contour}} that does not
+#' plot a legend and accepts some additional graphical parameters like tick
+#' marks.
+#' @param x,y locations of grid lines
+#' @param z numeric matrix of values to plot
+#' @param xlim,ylim,zlim limits for the plot
+#' @param levels levels for partitioning z
+#' @param nlevels numbers of levels for partitioning z
+#' @param color.palette color palette function
+#' @param col list of colors instead of color.palette
+#' @param asp,xaxs,yaxs,... graphical parameters passed to plot.window() and axis()
+#' @keywords internal
+filled.contour.mod = function(x = seq(0, 1, len = nrow(z)),
+                              y = seq(0, 1, len = ncol(z)),
+                              z,
+                              xlim = range(x, finite = TRUE),
+                              ylim = range(y, finite = TRUE),
+                              zlim = range(z, finite = TRUE),
+                              levels = pretty(zlim, nlevels),
+                              nlevels = 30,
+                              color.palette = function(n) hcl.colors(n, "YlOrRd", rev = TRUE),
+                              col = color.palette(length(levels) - 1),
+                              asp = NA,
+                              xaxs = "i",
+                              yaxs = "i",
+                              ...) {
+  plot.new()
+  plot.window(xlim, ylim, "", xaxs = xaxs, yaxs = yaxs, asp = asp, ...)
+  if (!is.matrix(z) || nrow(z) <= 1 || ncol(z) <= 1)
+    stop("no proper 'z' matrix specified")
+  if (!is.double(z))  storage.mode(z) <- "double"
+  .filled.contour(as.double(x), as.double(y), z, as.double(levels),
+                  col = col)
+  title(...)
+  axis(1, ...)
+  axis(2, ...)
+  invisible()
 }
 
 

@@ -102,6 +102,39 @@ server = function(input, output, session) {
 
       # add: update defaults that depend on samplingRate, eg cepSmooth
     }
+    obs_pitch = observe({
+      myPars$voicedSegments = findVoicedSegments(
+        myPars$df$pitchCands,
+        shortestSyl = input$shortestSyl,
+        shortestPause = input$shortestPause,
+        minVoicedCands = input$minVoicedCands,
+        pitchMethods = input$pitchMethods,
+        step = input$step,
+        samplingRate = input$samplingRate
+      )
+
+      # for each syllable, impute NA's and find a nice path through pitch candidates
+      myPars$pitch = rep(NA, ncol(myPars$df$pitchCands))
+      if (nrow(myPars$voicedSegments) > 0) {
+        # if we have found at least one putatively voiced syllable
+        for (syl in 1:nrow(myPars$voicedSegments)) {
+          myseq = myPars$voicedSegments$segmentStart[syl]:myPars$voicedSegments$segmentEnd[syl]
+          # compute the optimal path through pitch candidates
+          myPars$pitch[myseq] = pathfinder(
+            pitchCands = myPars$df$pitchCands[, myseq, drop = FALSE],
+            pitchCert = myPars$df$pitchCert[, myseq, drop = FALSE],
+            certWeight = input$certWeight,
+            pathfinding = input$pathfinding,
+            interpolWin = input$interpolWin,
+            interpolTol = input$interpolTol,
+            interpolCert = input$interpolCert,
+            snakeStep = input$snakeStep,
+            snakePlot = FALSE
+          )
+        }
+      }
+    })
+
   })
 
   # observeEvent(input$about, {

@@ -763,35 +763,12 @@ analyze = function(x,
   }
 
   # divide the file into continuous voiced syllables
-  resetMVC = FALSE
-  messageMVC = FALSE
-  if (is.null(minVoicedCands)) {
-    resetMVC = TRUE
-  }
-  if (is.numeric(minVoicedCands)) {
-    if (minVoicedCands < 1 | minVoicedCands > length(pitchMethods)) {
-      resetMVC = TRUE
-      messageMVC = TRUE
-    }
-  }
-  if (resetMVC) {
-    if ('dom' %in% pitchMethods & length(pitchMethods) > 1) {
-      # since dom is usually defined, we want at least one more pitch candidate
-      # (unless dom is the ONLY method that the user wants for pitch tracking)
-      minVoicedCands = 2
-    } else {
-      minVoicedCands = 1
-    }
-    if (messageMVC) {
-      message(paste0('minVoicedCands must be between 1 and length(pitchMethods);',
-                     ' resetting to ', minVoicedCands))
-    }
-  }
   voicedSegments = findVoicedSegments(
     pitchCands,
     shortestSyl = shortestSyl,
     shortestPause = shortestPause,
     minVoicedCands = minVoicedCands,
+    pitchMethods = pitchMethods,
     step = step,
     samplingRate = samplingRate
   )
