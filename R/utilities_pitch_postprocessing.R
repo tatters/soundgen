@@ -27,6 +27,7 @@
 #' @keywords internal
 pathfinder = function(pitchCands,
                       pitchCert,
+                      pitchSource,
                       certWeight = 0.5,
                       pathfinding = c('none', 'fast', 'slow')[2],
                       annealPars = list(maxit = 5000, temp = 1000),
@@ -40,13 +41,12 @@ pathfinder = function(pitchCands,
 
   # get the "center of gravity" of pitch candidates in each frame (mean of all
   # pitch candidates weighted by their respective certainties)
-  pitchCenterGravity = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
-    mean(
-      pitchCands[, x],
-      weights = pitchCert[, x] / sum(pitchCert[, x]),
-      na.rm = T
-    )
-  })
+  pitchCenterGravity = rep(NA, ncol(pitchCands))
+  for (i in 1:ncol(pitchCands)) {
+    pitchCenterGravity[i] = mean(pitchCands[, i],
+                                 weights = pitchCert[, i] / sum(pitchCert[, i]),
+                                 na.rm = T)
+  }
 
   ## INTERPOLATION
   # if a frame has no pitch candidate at all (NA) or no candidate
@@ -76,19 +76,39 @@ pathfinder = function(pitchCands,
     pitchCert = apply(matrix(1:ncol(pitchCert)), 1, function(x) {
       pitchCert[o[, x], x]
     })
+    pitchSource = apply(matrix(1:ncol(pitchSource)), 1, function(x) {
+      pitchSource[o[, x], x]
+    })
   }
 
   # remove rows with all NA's
-  idx_keep = which(rowSums(!is.na(pitchCands)) != 0)
-  if (length(idx_keep) > 0) {
-    pitchCands = pitchCands[idx_keep, , drop = FALSE]
-    pitchCert = pitchCert[idx_keep, , drop = FALSE]
+  keep_rows = which(rowSums(!is.na(pitchCands)) > 0)
+  if (length(keep_rows) > 0) {
+    pitchCands = pitchCands[keep_rows, , drop = FALSE]
+    pitchCert = pitchCert[keep_rows, , drop = FALSE]
+    pitchSource = pitchSource[keep_rows, , drop = FALSE]
   }
 
   # special case: only a single pitch candidate for all frames in a syllable
   # (no paths to chose among)
   if (nrow(pitchCands) == 1) {
     return(2 ^ pitchCands)
+  }
+
+  ## Make a dataframe with positions and values of "inviolable" manual pitch values
+  inviolable = NULL
+  for (i in 1:ncol(pitchSource)) {
+    w = which(pitchSource[, i] == 'manual')[1]  # max 1 manual candidate
+    if (!is.na(w) & length(w) > 0) {
+      temp = data.frame(frame = i,
+                        manualCand = w,
+                        manualFreq = pitchCands[w, i])
+      if (is.null(inviolable)) {
+        inviolable = temp
+      } else {
+        inviolable = rbind(inviolable, temp)
+      }
+    }
   }
 
   ## PATH-FINDING
@@ -98,6 +118,7 @@ pathfinder = function(pitchCands,
     bestPath = pathfinding_fast(
       pitchCands = pitchCands,
       pitchCert = pitchCert,
+      inviolable = inviolable,
       pitchCenterGravity = pitchCenterGravity,
       certWeight = certWeight
     )
@@ -208,15 +229,16 @@ interpolate = function(pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
+#' @param inviolable dataframe giving manual pitch candidates, which the path
+#'   MUST go through
 #' @keywords internal
 pathfinding_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
+                            inviolable = inviolable,
                             pitchCenterGravity = pitchCenterGravity,
                             certWeight = certWeight) {
-  # print(pitchCands)
-  # print(pitchCert)
-  # start at the beginning of the snake: find the most plausible starting pitch
-  # by taking median over the first few frames, weighted by certainty
+  # find the most plausible starting pitch by taking median over the first few
+  # frames, weighted by certainty
   p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
              na.rm = TRUE)
   c = pitchCert[, 1] / abs(pitchCands[, 1] - p) # b/c there may be NA's,
@@ -238,8 +260,13 @@ pathfinding_fast = function(pitchCands = pitchCands,
       # get a weighted average of transition costs associated with the certainty
       # of each estimate vs. the magnitude of pitch jumps
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-      path = c(path, pitchCands[which.min(costs), i])
-      costPathForward = costPathForward + min(costs)
+      if (i %in% inviolable$frame) {
+        idx = inviolable$manualCand[inviolable$frame == i]
+      } else {
+        idx = which.min(costs)
+      }
+      path = c(path, pitchCands[idx, i])
+      costPathForward = costPathForward + costs[idx]
     } else {
       path = c(path, NA)
     }
@@ -266,8 +293,13 @@ pathfinding_fast = function(pitchCands = pitchCands,
       })
       if (length(cost_pitchJump) == 0) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-      path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
-      costPathBackward = costPathBackward + min(costs)
+      if (i %in% inviolable$frame) {
+        idx = inviolable$manualCand[inviolable$frame == i]
+      } else {
+        idx = which.min(costs)
+      }
+      path_rev = c(path_rev, pitchCands[idx, i])
+      costPathBackward = costPathBackward +costs[idx]
     } else {
       path_rev = c(path_rev, NA)
     }

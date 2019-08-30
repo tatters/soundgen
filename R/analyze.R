@@ -377,11 +377,11 @@ analyze = function(x,
   scaleCorrection = NA
   if (is.numeric(SPL_measured)) {
     scaleCorrection = max(abs(scaleSPL(sound * m / scale,
-                                     # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
-                                     scale = 1,
-                                     SPL_measured = SPL_measured,
-                                     Pref = Pref))) /  # peak ampl of rescaled
-    m  # peak ampl of original
+                                       # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
+                                       scale = 1,
+                                       SPL_measured = SPL_measured,
+                                       Pref = Pref))) /  # peak ampl of rescaled
+      m  # peak ampl of original
   }
 
   # normalize to range from no less than -1 to no more than +1
@@ -673,10 +673,10 @@ analyze = function(x,
   # only the non-silent and not-too-noisy frames but still have a consistently
   # formatted output
   frameInfo = rep(list(list(
-    'pitch_array' = data.frame(
+    'pitchCands_frame' = data.frame(
       'pitchCand' = NA,
-      'pitchAmpl' = NA,
-      'source' = NA,
+      'pitchCert' = NA,
+      'pitchSource' = NA,
       stringsAsFactors = FALSE,
       row.names = NULL
     ),
@@ -744,22 +744,38 @@ analyze = function(x,
 
   ## postprocessing
   # extract and prepare pitch candidates for the pathfinder algorithm
-  pitch_list = lapply(frameInfo, function(y) y[['pitch_array']])
-  pitchCands = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchCand']])))
-  pitchCands = t(plyr::rbind.fill(pitchCands)) # a matrix of pitch candidates per frame
-  colnames(pitchCands) = result$time
-  pitchCert = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchAmpl']])))
-  pitchCert = t(plyr::rbind.fill(pitchCert)) # a matrix of our certainty in pitch candidates
-  colnames(pitchCert) = result$time
-  pitchSource = lapply(pitch_list, function(y) {
-    # NB: without StringsAsFactors=FALSE, the first row becomes "1"
-    # because of wrong NA recognition
-    as.data.frame(t(y[['source']]), stringsAsFactors = FALSE)
-  })
-  pitchSource = t(plyr::rbind.fill(pitchSource)) # a matrix of the sources of pitch candidates
-  pitch_na = which(is.na(pitchCands))
-  pitchCert[pitch_na] = NA
-  pitchSource[pitch_na] = NA
+  max_cands = max(unlist(lapply(frameInfo, function(y) length(y[['pitchCands_frame']]))))
+  pitchCands_list = rep(list(matrix(
+    NA,
+    nrow = max_cands,
+    ncol = length(frameInfo),
+    dimnames = list(1:max_cands, result$time)
+  )), 3)
+  names(pitchCands_list) = c('freq', 'cert', 'source')
+  for (i in 1:length(frameInfo)) {
+    temp = frameInfo[[i]]$pitchCands_frame
+    n = nrow(temp)
+    pitchCands_list[[1]][1:n, i] = temp[, 1]
+    pitchCands_list[[2]][1:n, i] = temp[, 2]
+    pitchCands_list[[3]][1:n, i] = temp[, 3]
+  }
+
+  # pitch_list = lapply(frameInfo, function(y) y[['pitchCands_frame']])
+  # pitchCands = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchCand']])))
+  # pitchCands = t(plyr::rbind.fill(pitchCands)) # a matrix of pitch candidates per frame
+  # colnames(pitchCands) = result$time
+  # pitchCert = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchAmpl']])))
+  # pitchCert = t(plyr::rbind.fill(pitchCert)) # a matrix of our certainty in pitch candidates
+  # colnames(pitchCert) = result$time
+  # pitchSource = lapply(pitch_list, function(y) {
+  #   # NB: without StringsAsFactors=FALSE, the first row becomes "1"
+  #   # because of wrong NA recognition
+  #   as.data.frame(t(y[['source']]), stringsAsFactors = FALSE)
+  # })
+  # pitchSource = t(plyr::rbind.fill(pitchSource)) # a matrix of the sources of pitch candidates
+  # pitch_na = which(is.na(pitchCands))
+  # pitchCert[pitch_na] = NA
+  # pitchSource[pitch_na] = NA
 
   # PRIOR for adjusting the estimated pitch certainties. For ex., if primarily
   # working with speech, we could prioritize pitch candidates in the expected
@@ -776,16 +792,16 @@ analyze = function(x,
       rate = rate
     ))
     pitchCert_multiplier = dgamma(
-      HzToSemitones(pitchCands),
+      HzToSemitones(pitchCands_list$freq),
       shape = shape,
       rate = rate
     ) / prior_normalizer
-    pitchCert = pitchCert * pitchCert_multiplier
+    pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
   }
 
   # divide the file into continuous voiced syllables
   voicedSegments = findVoicedSegments(
-    pitchCands,
+    pitchCands_list$freq,
     shortestSyl = shortestSyl,
     shortestPause = shortestPause,
     minVoicedCands = minVoicedCands,
@@ -795,15 +811,16 @@ analyze = function(x,
   )
 
   # for each syllable, impute NA's and find a nice path through pitch candidates
-  pitchFinal = rep(NA, ncol(pitchCands))
+  pitchFinal = rep(NA, ncol(pitchCands_list$freq))
   if (nrow(voicedSegments) > 0) {
     # if we have found at least one putatively voiced syllable
     for (syl in 1:nrow(voicedSegments)) {
       myseq = voicedSegments$segmentStart[syl]:voicedSegments$segmentEnd[syl]
       # compute the optimal path through pitch candidates
       pitchFinal[myseq] = pathfinder(
-        pitchCands = pitchCands[, myseq, drop = FALSE],
-        pitchCert = pitchCert[, myseq, drop = FALSE],
+        pitchCands = pitchCands_list$freq[, myseq, drop = FALSE],
+        pitchCert = pitchCands_list$cert[, myseq, drop = FALSE],
+        pitchSource = pitchCands_list$source[, myseq, drop = FALSE],
         certWeight = certWeight,
         pathfinding = pathfinding,
         annealPars = annealPars,
@@ -819,14 +836,14 @@ analyze = function(x,
   # save optimal pitch track and the best candidates separately for
   # autocor, cepstrum and spectral
   result$pitch = pitchFinal # optimal pitch track
-  result$pitchAutocor = as.numeric(lapply(pitch_list, function(x) {
-    x$pitchCand[x$source == 'autocor'] [which.max(x$pitchAmpl[x$source == 'autocor'])]
+  result$pitchAutocor = as.numeric(lapply(frameInfo, function(x) {
+    x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'autocor'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
   }))
-  result$pitchCep = as.numeric(lapply(pitch_list, function(x) {
-    x$pitchCand[x$source == 'cep'] [which.max(x$pitchAmpl[x$source == 'cep'])]
+  result$pitchCep = as.numeric(lapply(frameInfo, function(x) {
+    x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'cep'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
   }))
-  result$pitchSpec = as.numeric(lapply(pitch_list, function(x) {
-    x$pitchCand[x$source == 'spec'] [which.max(x$pitchAmpl[x$source == 'spec'])]
+  result$pitchSpec = as.numeric(lapply(frameInfo, function(x) {
+    x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'spec'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
   }))
 
   ## Median smoothing of specified contours (by default pitch & dom)
@@ -871,9 +888,9 @@ analyze = function(x,
 
   ## Add pitch contours to the spectrogram
   if (plot) {
-    addPitchCands(pitchCands = pitchCands,
-                  pitchCert = pitchCert,
-                  pitchSource = pitchSource,
+    addPitchCands(pitchCands = pitchCands_list$freq,
+                  pitchCert = pitchCands_list$cert,
+                  pitchSource = pitchCands_list$source,
                   pitch = result$pitch,
                   candPlot = candPlot,
                   pitchPlot = pitchPlot,

@@ -15,7 +15,7 @@
 #' @param trackPitch if TRUE, attempt to find F0 in this frame (FALSE if entropy
 #'   is above some threshold - specified in \code{\link{analyze}})
 #' @inheritParams analyze
-#' @return Returns a list with two components: $pitch_array contains pitch
+#' @return Returns a list with two components: $pitchCands_frame contains pitch
 #'   candidates for the frame, and $summaries contains other acoustic predictors
 #'   like HNR, specSlope, etc.
 #' @keywords internal
@@ -97,13 +97,13 @@ analyzeFrame = function(frame,
                pitchFloor = pitchFloor,
                pitchCeiling = pitchCeiling
     )
-    pitch_array = d$dom_array
+    pitchCands_frame = d$dom_array
     dom = d$dom
   } else {
-    pitch_array = data.frame(
+    pitchCands_frame = data.frame(
       'pitchCand' = numeric(),
-      'pitchAmpl' = numeric(),
-      'source' = character(),
+      'pitchCert' = numeric(),
+      'pitchSource' = character(),
       stringsAsFactors = FALSE,
       row.names = NULL
     )    # initialize an empty dataframe
@@ -120,7 +120,7 @@ analyzeFrame = function(frame,
                          samplingRate = samplingRate,
                          nCands = nCands)
     if(!is.null(pa$pitchAutocor_array)) {
-      pitch_array = rbind(pitch_array, pa$pitchAutocor_array)
+      pitchCands_frame = rbind(pitchCands_frame, pa$pitchAutocor_array)
     }
     HNR = pa$HNR
   } else {
@@ -137,7 +137,7 @@ analyzeFrame = function(frame,
                                  cepThres = cepThres,
                                  cepSmooth = cepSmooth,
                                  nCands = nCands)
-    if(!is.null(pitchCep_array)) pitch_array = rbind(pitch_array, pitchCep_array)
+    if(!is.null(pitchCep_array)) pitchCands_frame = rbind(pitchCands_frame, pitchCep_array)
   }
 
   # spectral: ratios of harmonics (BaNa)
@@ -155,16 +155,16 @@ analyzeFrame = function(frame,
                                    specMerge = specMerge,
                                    nCands = nCands
     )
-    if(!is.null(pitchSpec_array)) pitch_array = rbind(pitch_array, pitchSpec_array)
+    if(!is.null(pitchSpec_array)) pitchCands_frame = rbind(pitchCands_frame, pitchSpec_array)
   }
 
   # some adjustments of pitch candidates
-  if (nrow(pitch_array) > 0) {
-    pitch_array[, 1:2] = apply(pitch_array[, 1:2], 2, function(x) as.numeric(x))
+  if (nrow(pitchCands_frame) > 0) {
+    pitchCands_frame[, 1:2] = apply(pitchCands_frame[, 1:2], 2, function(x) as.numeric(x))
     # otherwise they become characters after rbind
   }
-  if (nrow(pitch_array[pitch_array$source == 'dom', ]) > 0 & !is.na(HNR)) {
-    pitch_array$pitchAmpl[pitch_array$source == 'dom'] =
+  if (nrow(pitchCands_frame[pitchCands_frame$pitchSource == 'dom', ]) > 0 & !is.na(HNR)) {
+    pitchCands_frame$pitchCert[pitchCands_frame$pitchSource == 'dom'] =
       1 / (1 + exp(3 * HNR - 1)) # dom is worth more for noisy sounds,
     # but its weight approaches ~0.2 as HNR approaches 1
     # (NB: this is before HNR is converted to dB). Visualization:
@@ -174,7 +174,7 @@ analyzeFrame = function(frame,
   }
 
   return(list(
-    'pitch_array' = pitch_array,
+    'pitchCands_frame' = pitchCands_frame,
     'summaries' = data.frame(
       loudness = loudness,
       HNR = HNR,
@@ -215,8 +215,8 @@ getDom = function(frame,
 ) {
   dom_array = data.frame(
     'pitchCand' = numeric(),
-    'pitchAmpl' = numeric(),
-    'source' = character(),
+    'pitchCert' = numeric(),
+    'pitchSource' = character(),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -243,8 +243,8 @@ getDom = function(frame,
     dom = as.numeric(names(frame)[idx[1]]) * 1000
     dom_array = data.frame(
       'pitchCand' = dom,
-      'pitchAmpl' = frame[idx[1]],
-      'source' = 'dom',
+      'pitchCert' = frame[idx[1]],
+      'pitchSource' = 'dom',
       stringsAsFactors = FALSE,
       row.names = NULL
     )
@@ -325,9 +325,9 @@ getPitchAutocor = function(autoCorrelation,
         pitchAutocor_array = data.frame (
           'pitchCand' = autocorPeaks [1:min(nrow(autocorPeaks), nCands), 1],
           # save n candidates of pitchAutocor, convert to Hz
-          'pitchAmpl' = autocorPeaks[1:min(nrow(autocorPeaks), nCands), 2],
+          'pitchCert' = autocorPeaks[1:min(nrow(autocorPeaks), nCands), 2],
           # save amplitudes corresponding to each pitchAutocor candidate
-          'source' = 'autocor',
+          'pitchSource' = 'autocor',
           stringsAsFactors = FALSE,
           row.names = NULL
         )
@@ -409,15 +409,15 @@ getPitchCep = function(frame,
     # if some peaks are found...
     pitchCep_array = data.frame(
       'pitchCand' = b$freq[acceptedCepPeaks],
-      'pitchAmpl' = b$cep[acceptedCepPeaks],
-      'source' = 'cep',
+      'pitchCert' = b$cep[acceptedCepPeaks],
+      'pitchSource' = 'cep',
       stringsAsFactors = FALSE,
       row.names = NULL
     )
     # because cepstrum really stinks for frequencies above ~1 kHz, mostly
     # picking up formants or just plain noise, we discount confidence in
     # high-pitch cepstral estimates
-    pitchCep_array$pitchAmpl = pitchCep_array$pitchAmpl /
+    pitchCep_array$pitchCert = pitchCep_array$pitchCert /
       (1 + 5 / (1 + exp(2 - .25 * HzToSemitones(pitchCep_array$pitchCand / pitchFloor))))
     # visualization: a = seq(pitchFloor, pitchCeiling, length.out = 100)
     # b = 1 + 5 / (1 + exp(2 - .25 * HzToSemitones(a / pitchFloor)))
@@ -481,11 +481,11 @@ getPitchSpec = function(frame,
   if (nrow(specPeaks) == 1) {
     if (specPeaks[1, 1] < pitchCeiling & specPeaks[1, 1] > pitchFloor) {
       pitchSpec = specPeaks[1, 1]
-      pitchAmpl = specSinglePeakCert
+      pitchCert = specSinglePeakCert
       pitchSpec_array = data.frame(
         'pitchCand' = pitchSpec,
-        'pitchAmpl' = specSinglePeakCert,
-        'source' = 'spec',
+        'pitchCert' = specSinglePeakCert,
+        'pitchSource' = 'spec',
         stringsAsFactors = FALSE,
         row.names = NULL
       )
@@ -534,7 +534,7 @@ getPitchSpec = function(frame,
       pitchSpec_array = data.frame(
         'pitchCand' = pitchCand,
         'specAmplIdx' = 1,
-        'source' = 'spec',
+        'pitchSource' = 'spec',
         stringsAsFactors = FALSE,
         row.names = NULL
       )
@@ -554,7 +554,7 @@ getPitchSpec = function(frame,
           c = c + 1
         }
       }
-      pitchSpec_array$pitchAmpl = specSinglePeakCert +
+      pitchSpec_array$pitchCert = specSinglePeakCert +
         (1 / (1 + exp(-(pitchSpec_array$specAmplIdx - 1))) - 0.5) * 2 *
         (1 - specSinglePeakCert) # normalization. Visualization:
       # a = 1:15
@@ -562,14 +562,14 @@ getPitchSpec = function(frame,
       # (1 - specSinglePeakCert)
       # plot(a, b, type = 'l')
       pitchSpec_array = pitchSpec_array[
-        order(pitchSpec_array$pitchAmpl, decreasing = TRUE),
-        c('pitchCand', 'pitchAmpl', 'source')
+        order(pitchSpec_array$pitchCert, decreasing = TRUE),
+        c('pitchCand', 'pitchCert', 'pitchSource')
         ]
     }
   }
   if (!is.null(pitchSpec_array)) {
     if (sum(!is.na(pitchSpec_array)) > 0) {
-      pitchSpec_array = pitchSpec_array[pitchSpec_array$pitchAmpl > specThres,
+      pitchSpec_array = pitchSpec_array[pitchSpec_array$pitchCert > specThres,
                                         , drop = FALSE]
       # how many pitchSpec candidates to use (max)
       pitchSpec_array = pitchSpec_array[1:min(nrow(pitchSpec_array), nCands), ]
