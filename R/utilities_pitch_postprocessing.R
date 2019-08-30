@@ -79,8 +79,11 @@ pathfinder = function(pitchCands,
   }
 
   # remove rows with all NA's
-  pitchCands = pitchCands[rowSums(!is.na(pitchCands)) != 0, , drop = FALSE]
-  pitchCert = pitchCert[rowSums(!is.na(pitchCert)) != 0, , drop = FALSE]
+  idx_keep = which(rowSums(!is.na(pitchCands)) != 0)
+  if (length(idx_keep) > 0) {
+    pitchCands = pitchCands[idx_keep, , drop = FALSE]
+    pitchCert = pitchCert[idx_keep, , drop = FALSE]
+  }
 
   # special case: only a single pitch candidate for all frames in a syllable
   # (no paths to chose among)
@@ -106,11 +109,17 @@ pathfinder = function(pitchCands,
       pitchCenterGravity = pitchCenterGravity,
       annealPars = annealPars
     )
-  } else {
+  } else {  # if (pathfinding == 'none')
     bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
       idx = which.min(abs(pitchCands[, x] - pitchCenterGravity[x]))
       pitchCands[idx, x]
     }) # or bestPath = pitchCenterGravity
+    # idx_manual = which(pitchCert == Inf)
+    # idx_col_manual = which(colSums(pitchCert) == Inf)
+    # if (length(idx_manual) > 0) {
+    #   bestPath[idx_col_manual] = pitchCands[id_manual]
+    # }
+    # bestPath[which(!is.na(x))]
   }
 
   ## SNAKE
@@ -204,6 +213,8 @@ pathfinding_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             pitchCenterGravity = pitchCenterGravity,
                             certWeight = certWeight) {
+  # print(pitchCands)
+  # print(pitchCert)
   # start at the beginning of the snake: find the most plausible starting pitch
   # by taking median over the first few frames, weighted by certainty
   p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
@@ -739,6 +750,7 @@ addPitchCands = function(pitchCands,
                          addToExistingPlot = TRUE,
                          showLegend = TRUE,
                          ...) {
+  if (length(pitchCands) < 1) stop()
   # if plot_spec is FALSE, we first have to set up an empty plot
   if (addToExistingPlot == FALSE) {
     arguments = list(...)  # save ... arguments as a list
