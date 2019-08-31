@@ -24,10 +24,10 @@ server = function(input, output, session) {
       ylim = c(input$spec_ylim[1], input$spec_ylim[2])
     )
     addPitchCands(
-      pitchCands = myPars$df$pitchCands,
-      pitchCert = myPars$df$pitchCert,
-      pitchSource = myPars$df$pitchSource,
-      pitch = myPars$df$result$pitch,
+      pitchCands = myPars$df$freq,
+      pitchCert = myPars$df$cert,
+      pitchSource = myPars$df$source,
+      pitch = myPars$pitch,
       # candPlot = candPlot,
       # pitchPlot = pitchPlot,
       addToExistingPlot = TRUE,
@@ -103,26 +103,26 @@ server = function(input, output, session) {
       )
 
       # add a new category for manual pitch values
-      temp_anal$pitchCands = rbind(temp_anal$pitchCands,
-                                   rep(NA, ncol(temp_anal$pitchCands)))
-      temp_anal$pitchSource = rbind(temp_anal$pitchSource,
-                                    rep('manual', ncol(temp_anal$pitchSource)))
-      temp_anal$pitchCert = rbind(temp_anal$pitchCert,
-                                  rep(NA, ncol(temp_anal$pitchCert)))
+      temp_anal$pitchCands$freq = rbind(temp_anal$pitchCands$freq,
+                                        rep(NA, ncol(temp_anal$pitchCands$freq)))
+      temp_anal$pitchCands$cert = rbind(temp_anal$pitchCands$cert,
+                                        rep(NA, ncol(temp_anal$pitchCands$cert)))
+      temp_anal$pitchCands$source = rbind(temp_anal$pitchCands$source,
+                                          rep('manual', ncol(temp_anal$pitchCands$source)))
 
-      myPars$df = temp_anal
+      myPars$df = temp_anal$pitchCands
       windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
       myPars$X = seq(1, max(1, (length(myPars$myAudio) - windowLength_points)),
-                     length.out = nrow(myPars$df$result)) / myPars$samplingRate * 1000 + input$windowLength / 2
+                     length.out = nrow(temp_anal$result)) / myPars$samplingRate * 1000 + input$windowLength / 2
       # add: update defaults that depend on samplingRate, eg cepSmooth
     }
   })
 
-  obs_pitch = observeEvent(myPars$df$pitchCands, {
-    if (length(myPars$df$pitchCands) > 0) {
+  obs_pitch = observeEvent(myPars$df$freq, {
+    if (length(myPars$df$freq) > 0) {
       print('running voiced segments')
       myPars$voicedSegments = findVoicedSegments(
-        myPars$df$pitchCands,
+        myPars$df$freq,
         shortestSyl = input$shortestSyl,
         shortestPause = input$shortestPause,
         minVoicedCands = input$minVoicedCands,
@@ -132,17 +132,18 @@ server = function(input, output, session) {
       )
 
       # for each syllable, impute NA's and find a nice path through pitch candidates
-      myPars$pitch = rep(NA, ncol(myPars$df$pitchCands))
+      myPars$pitch = rep(NA, ncol(myPars$df$freq))
       if (nrow(myPars$voicedSegments) > 0) {
         # if we have found at least one putatively voiced syllable
         for (syl in 1:nrow(myPars$voicedSegments)) {
           myseq = myPars$voicedSegments$segmentStart[syl]:myPars$voicedSegments$segmentEnd[syl]
           # print(myseq)
-          # print(myPars$df$pitchCands[, myseq, drop = FALSE])
+          # print(myPars$df$freq[, myseq, drop = FALSE])
           # compute the optimal path through pitch candidates
           myPars$pitch[myseq] = pathfinder(
-            pitchCands = myPars$df$pitchCands[, myseq, drop = FALSE],
-            pitchCert = myPars$df$pitchCert[, myseq, drop = FALSE],
+            pitchCands = myPars$df$freq[, myseq, drop = FALSE],
+            pitchCert = myPars$df$cert[, myseq, drop = FALSE],
+            pitchSource = myPars$df$source[, myseq, drop = FALSE],
             certWeight = input$certWeight,
             pathfinding = input$pathfinding,
             interpolWin = input$interpolWin,
@@ -161,28 +162,28 @@ server = function(input, output, session) {
   observeEvent(input$spectrogram_click, {
     myPars$startedManual = TRUE
     print('running spectrogram_click')
-    if (length(myPars$df$pitchCands) > 0) {
+    if (length(myPars$df$freq) > 0) {
       # click_x = input$spectrogram_click$x / myPars$dur  # ranges 0 to 1
       # click_y = round(input$spectrogram_click$y, 3)
-      closest_frame = which.min(abs(as.numeric(colnames(myPars$df$pitchCands)) - input$spectrogram_click$x))
+      closest_frame = which.min(abs(as.numeric(colnames(myPars$df$freq)) - input$spectrogram_click$x))
       # print(c(closest_frame, click_x, click_y))
       # create a manual pitch estimate for the closest frame with the clicked value
-      myPars$df$pitchCands[nrow(myPars$df$pitchCands), closest_frame] = round(input$spectrogram_click$y * 1000, 3)
-      myPars$df$pitchCert[nrow(myPars$df$pitchCert), closest_frame] = 5
+      myPars$df$freq[nrow(myPars$df$freq), closest_frame] = round(input$spectrogram_click$y * 1000, 3)
+      myPars$df$cert[nrow(myPars$df$cert), closest_frame] = 5
     }
-    print(myPars$df$pitchCands[, 1:10])
+    print(myPars$df$freq[, 1:10])
   })
 
   # observeEvent(input$spectrogram_dblclick, {
-  #   ref = data.frame(value = myPars$df$pitchCands[nrow(myPars$df$pitchCands), ])
-  #   ref$time = as.numeric(colnames(myPars$df$pitchCands))
+  #   ref = data.frame(value = myPars$df$freq[nrow(myPars$df$freq), ])
+  #   ref$time = as.numeric(colnames(myPars$df$freq))
   #   closestPoint = nearPoints(ref, input$spectrogram_dblclick,  xvar = 'time',
   #                             yvar = 'value', threshold = 100000, maxpoints = 1)
   #   idx = as.numeric(rownames(closestPoint))
   #   # we can remove any anchor except the first and the last (because ampl
   #   # opening at start and end of sound has to be defined)
   #   if (length(idx) > 0) {
-  #     myPars$df$pitchCands[nrow(myPars$df$pitchCands), idx] = NA
+  #     myPars$df$freq[nrow(myPars$df$freq), idx] = NA
   #   }
   # })
 

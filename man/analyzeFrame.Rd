@@ -93,7 +93,7 @@ merged with boosted certainty}
 \code{dom}, which returns at most one candidate per frame), normally 1...4}
 }
 \value{
-Returns a list with two components: $pitch_array contains pitch
+Returns a list with two components: $pitchCands_frame contains pitch
   candidates for the frame, and $summaries contains other acoustic predictors
   like HNR, specSlope, etc.
 }

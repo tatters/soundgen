@@ -962,9 +962,7 @@ analyze = function(x,
     out = result
   } else if (summary == 'extended') {
     out = list(result = result,
-               pitchCands = pitchCands,
-               pitchCert = pitchCert,
-               pitchSource = pitchSource)
+               pitchCands = pitchCands_list)
   }
   return(out)
 }

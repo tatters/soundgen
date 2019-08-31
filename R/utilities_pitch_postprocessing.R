@@ -239,15 +239,21 @@ pathfinding_fast = function(pitchCands = pitchCands,
                             certWeight = certWeight) {
   # find the most plausible starting pitch by taking median over the first few
   # frames, weighted by certainty
-  p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
-             na.rm = TRUE)
-  c = pitchCert[, 1] / abs(pitchCands[, 1] - p) # b/c there may be NA's,
-  # and they can't be excluded directly in which.max in the next line
-  point_current = pitchCands[which.max(c), 1]
+  if (1 %in% inviolable$frame) {
+    point_current = inviolable$manualFreq[inviolable$frame == 1]
+  } else {
+    p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
+               na.rm = TRUE)
+    c = pitchCert[, 1] / abs(pitchCands[, 1] - p) # b/c there may be NA's,
+    # and they can't be excluded directly in which.max in the next line
+    point_current = pitchCands[which.max(c), 1]
+  }
   path = point_current
   costPathForward = 0
 
-  for (i in 2:ncol(pitchCands)) {
+  # run forwards
+  nc = ncol(pitchCands)
+  for (i in 2:nc) {
     cands = na.omit(pitchCands[, i])
     if (length(cands) > 0) { # in case of an NA in the contour
       cost_cert = abs(cands - pitchCenterGravity[i])
@@ -273,18 +279,22 @@ pathfinding_fast = function(pitchCands = pitchCands,
   }
 
   # run backwards
-  pitchCands_rev = pitchCands[, rev(1:ncol(pitchCands)), drop = FALSE]
-  pitchCert_rev = pitchCert[, rev(1:ncol(pitchCert)), drop = FALSE]
+  pitchCands_rev = pitchCands[, rev(1:nc), drop = FALSE]
+  pitchCert_rev = pitchCert[, rev(1:nc), drop = FALSE]
   pitchCenterGravity_rev = rev(pitchCenterGravity)
 
-  p = median (pitchCenterGravity_rev[1:min(5, length(pitchCenterGravity_rev))])
-  c = na.omit (pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)) # b/c there may be NA's,
-  # and they can't be excluded directly in which.max in the next line
-  point_current = pitchCands_rev[which.max(c), 1]
+  if (nc %in% inviolable$frame) {
+    point_current = inviolable$manualFreq[inviolable$frame == nc]
+  } else {
+    p = median(pitchCenterGravity_rev[1:min(5, nc)])
+    c = na.omit(pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)) # b/c there may be NA's,
+    # and they can't be excluded directly in which.max in the next line
+    point_current = pitchCands_rev[which.max(c), 1]
+  }
   path_rev = point_current
   costPathBackward = 0
 
-  for (i in 2:ncol(pitchCands_rev)) {
+  for (i in 2:nc) {
     cands = na.omit(pitchCands_rev[, i])
     if (length(cands) > 0) { # in case of an NA in the contour
       cost_cert = abs(cands - pitchCenterGravity_rev[i])
@@ -293,13 +303,13 @@ pathfinding_fast = function(pitchCands = pitchCands,
       })
       if (length(cost_pitchJump) == 0) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-      if (i %in% inviolable$frame) {
-        idx = inviolable$manualCand[inviolable$frame == i]
+      if ((nc + 1 - i) %in% inviolable$frame) {
+        idx = inviolable$manualCand[inviolable$frame == (nc + 1 - i)]
       } else {
         idx = which.min(costs)
       }
-      path_rev = c(path_rev, pitchCands[idx, i])
-      costPathBackward = costPathBackward +costs[idx]
+      path_rev = c(path_rev, pitchCands_rev[idx, i])
+      costPathBackward = costPathBackward + costs[idx]
     } else {
       path_rev = c(path_rev, NA)
     }
@@ -579,7 +589,7 @@ forcePerPath = function (pitch,
 #' @return Returns a vector of the same length as input path giving its 4th derivative.
 #' @keywords internal
 findGrad = function(path, interpol = 3) {
-  # interpolate 2 values before the first one and two after the last one based
+  # extrapolate 2 values before the first one and two after the last one based
   # on /interpol/ number of points in case the path is shorter than the
   # specified interpol:
   interpol = ifelse(interpol > length(path), length(path), interpol)
@@ -597,7 +607,7 @@ findGrad = function(path, interpol = 3) {
     path = c (minus12[2], minus12[1], path, plus12[1], plus12[2])
   }
 
-  # take the 4th derivative of the path with interpolated values
+  # take the 4th derivative of the path with extrapolated values
   # (so that we get d4f over the entire length of the original path)
   grad = rep(0, length(path))
   for (i in 3:(length(path) - 2)) {  # approximation
