@@ -4,7 +4,7 @@
 \alias{medianSmoother}
 \title{Median smoothing}
 \usage{
-medianSmoother(df, smoothing_ww, smoothingThres)
+medianSmoother(df, smoothing_ww, smoothingThres, inviolable = NULL)
 }
 \arguments{
 \item{df}{dataframe (each column is processed separately, so multiple
@@ -13,6 +13,9 @@ contours can be fed into this function at once to speed things up)}
 \item{smoothing_ww}{width of smoothing window (points)}
 
 \item{smoothingThres}{tolerated deviance from moving median (semitones)}
+
+\item{inviolable}{a vector of TRUE/FALSE values indicating which rows of df
+should not be modified (meant for manual pitch values)}
 }
 \value{
 Returns a dataframe of the same dimensions as df.
@@ -26,9 +29,11 @@ outliers are modified, so it's not like smoothing with a kernel. NB: the
 expected input is pitch, so deviance is calculated on a log-scale.
 }
 \examples{
-df = data.frame(a = rnorm(100, mean = 100, sd = 20),
-                b = rnorm(100, mean = 100, sd = 10))
-df1 = soundgen:::medianSmoother(df, smoothing_ww = 5, smoothingThres = 1)
+df = data.frame(a = rnorm(20, mean = 100, sd = 20),
+                b = rnorm(20, mean = 100, sd = 10))
+df1 = soundgen:::medianSmoother(df, smoothing_ww = 5,
+      smoothingThres = 1,
+      inviolable = c(rep(TRUE, 10), rep(FALSE, 10)))
 plot(df[, 2], type='b')
 lines(df1[, 2], type='b', col='blue', pch=3)
 }

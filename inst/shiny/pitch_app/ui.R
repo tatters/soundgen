@@ -98,7 +98,7 @@ ui = fluidPage(
                                   tabPanel("Smoothing",
                                            sliderInput ('smooth', 'Median smoothing (0 = none)', value=defaults_analyze['smooth','default'], min=defaults_analyze['smooth', 'low'], max=defaults_analyze['smooth', 'high'], step=defaults_analyze['smooth','step']),
                                            shinyBS:::bsPopover(id='smooth', title=NULL, content='Amount of median smoothing', placement="right", trigger="hover"),
-                                           sliderInput('snakeStep', 'Snake step (0 = none)', value=defaults_analyze['snakeStep','default'], min=defaults_analyze['snakeStep', 'low'], max=defaults_analyze['snakeStep', 'high'], step=defaults_analyze['snakeStep','step']),
+                                           sliderInput('snakeStep', 'Snake step (0 = none)', value=0, min=defaults_analyze['snakeStep', 'low'], max=defaults_analyze['snakeStep', 'high'], step=defaults_analyze['snakeStep', 'step']),
                                            shinyBS:::bsPopover(id='snakeStep', title=NULL, content='Use the snake algorithm to minimize the elastic force acting on pitch contour', placement="right", trigger="hover"),
                                            sliderInput('interpolWin', 'Interpolation window (0 = none)', value=defaults_analyze['interpolWin', 'default'], min=defaults_analyze['interpolWin', 'low'], max=defaults_analyze['interpolWin', 'high'], step=defaults_analyze['interpolWin', 'step']),
                                            shinyBS:::bsPopover(id='interpolWin', title=NULL, content="", placement="right", trigger="hover"),

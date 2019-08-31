@@ -630,19 +630,27 @@ findGrad = function(path, interpol = 3) {
 #'   contours can be fed into this function at once to speed things up)
 #' @param smoothing_ww width of smoothing window (points)
 #' @param smoothingThres tolerated deviance from moving median (semitones)
+#' @param inviolable a vector of TRUE/FALSE values indicating which rows of df
+#'   should not be modified (meant for manual pitch values)
 #' @return Returns a dataframe of the same dimensions as df.
 #' @keywords internal
 #' @examples
-#' df = data.frame(a = rnorm(100, mean = 100, sd = 20),
-#'                 b = rnorm(100, mean = 100, sd = 10))
-#' df1 = soundgen:::medianSmoother(df, smoothing_ww = 5, smoothingThres = 1)
+#' df = data.frame(a = rnorm(20, mean = 100, sd = 20),
+#'                 b = rnorm(20, mean = 100, sd = 10))
+#' df1 = soundgen:::medianSmoother(df, smoothing_ww = 5,
+#'       smoothingThres = 1,
+#'       inviolable = c(rep(TRUE, 10), rep(FALSE, 10)))
 #' plot(df[, 2], type='b')
 #' lines(df1[, 2], type='b', col='blue', pch=3)
-medianSmoother = function (df, smoothing_ww, smoothingThres) {
+medianSmoother = function(df,
+                          smoothing_ww,
+                          smoothingThres,
+                          inviolable = NULL) {
+  if (is.null(inviolable)) inviolable = rep(TRUE, nrow(df))
   temp = df # to calculate median_over_window for original values
   hw = floor(smoothing_ww / 2) # smooth over plus-minus half the smoothing_ww
   for (i in 1:nrow(df)) {
-    window = c (max(i - hw, 1), min(i + hw, nrow(df))) # smoothing window
+    window = c(max(i - hw, 1), min(i + hw, nrow(df))) # smoothing window
     median_over_window = apply(as.matrix(temp[(window[1]:window[2]), ]), 2, function(x) {
       median(unlist(x), na.rm = TRUE)  # w/o unlist returns NULL for NA vectors (weird...)
       # NB: use either temp or df, for original or smoothed values to be used
@@ -650,8 +658,10 @@ medianSmoother = function (df, smoothing_ww, smoothingThres) {
     })
     # difference from median pitch etc over window, in semitones
     deviance = 12 * log2(as.numeric(df[i, ]) / median_over_window)
-    cond = which(abs(deviance - 1) > smoothingThres)
-    df[i, cond] = median_over_window[cond]
+    if (!inviolable[i]) {
+      cond = which(abs(deviance - 1) > smoothingThres)
+      df[i, cond] = median_over_window[cond]
+    }
   }
   return (df)
 }
