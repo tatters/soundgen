@@ -1,4 +1,4 @@
-# TODO: manually added pitch values should affect syllable structure; voicing bar; preserve manual values when some pars change and analyze() executes (except if windowLength or step change so a dif num of frames); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input
+# TODO: manually added pitch values should affect syllable structure; preserve manual values when some pars change and analyze() executes (except if windowLength or step change so a dif num of frames); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; action buttons for doing smth with selection (octave up/down, devoice, ...)
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -9,6 +9,8 @@ server = function(input, output, session) {
   }
 
   myPars = reactiveValues()
+  myPars$myAudio_path = NULL
+  myPars$clicksAfterBrushing = 2
 
   observeEvent(input$loadAudio, {
     print('running load audio')
@@ -60,59 +62,64 @@ server = function(input, output, session) {
 
   output$spectrogram = renderPlot({
     print('running spectrogram')
-    if (input$spec_colorTheme == 'bw') {
-      color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
-    } else if (input$spec_colorTheme == 'seewave') {
-      color.palette = seewave::spectro.colors
+    if (is.null(myPars$myAudio_path)) {
+      plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
+      text(x = 5, y = 5, labels = 'Upload an audio file to begin...')
     } else {
-      colFun = match.fun(input$spec_colorTheme)
-      color.palette = function(x) rev(colFun(x))
-    }
-    filled.contour.mod(
-      x = as.numeric(colnames(myPars$spec)),
-      y = as.numeric(rownames(myPars$spec)),
-      z = t(myPars$spec),
-      levels = seq(0, 1, length = 30),
-      color.palette = color.palette,
-      xlim = c(0, tail(as.numeric(colnames(myPars$spec)), 1)),
-      xlab = 'Time, ms', ylab = 'Frequency, kHz',
-      main = '',
-      ylim = c(input$spec_ylim[1], input$spec_ylim[2])
-    )
+      if (input$spec_colorTheme == 'bw') {
+        color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
+      } else if (input$spec_colorTheme == 'seewave') {
+        color.palette = seewave::spectro.colors
+      } else {
+        colFun = match.fun(input$spec_colorTheme)
+        color.palette = function(x) rev(colFun(x))
+      }
+      filled.contour.mod(
+        x = as.numeric(colnames(myPars$spec)),
+        y = as.numeric(rownames(myPars$spec)),
+        z = t(myPars$spec),
+        levels = seq(0, 1, length = 30),
+        color.palette = color.palette,
+        xlim = c(0, tail(as.numeric(colnames(myPars$spec)), 1)),
+        xlab = 'Time, ms', ylab = 'Frequency, kHz',
+        main = '',
+        ylim = c(input$spec_ylim[1], input$spec_ylim[2])
+      )
 
-    addPitchCands(
-      pitchCands = myPars$pitchCands$freq,
-      pitchCert = myPars$pitchCands$cert,
-      pitchSource = myPars$pitchCands$source,
-      pitch = myPars$pitch,
-      # candPlot = candPlot,
-      # pitchPlot = pitchPlot,
-      addToExistingPlot = TRUE,
-      showLegend = TRUE,
-      ylim = c(input$spec_ylim[1], input$spec_ylim[2])
-    )
+      addPitchCands(
+        pitchCands = myPars$pitchCands$freq,
+        pitchCert = myPars$pitchCands$cert,
+        pitchSource = myPars$pitchCands$source,
+        pitch = myPars$pitch,
+        # candPlot = candPlot,
+        # pitchPlot = pitchPlot,
+        addToExistingPlot = TRUE,
+        showLegend = TRUE,
+        ylim = c(input$spec_ylim[1], input$spec_ylim[2])
+      )
 
-    # isolate({
-    # hover_temp = input$spectrogram_hover
-    # if (!is.null(hover_temp)) {
-    #   abline(v = hover_temp$x, lty = 2)
-    #   abline(h = hover_temp$y, lty = 2)
-    #   text(x = hover_temp$x,
-    #        y = hover_temp$y,
-    #        labels = paste(round(hover_temp$y * 1000), 'Hz'),
-    #        adj = c(1, 1))
+      # isolate({
+      # hover_temp = input$spectrogram_hover
+      # if (!is.null(hover_temp)) {
+      #   abline(v = hover_temp$x, lty = 2)
+      #   abline(h = hover_temp$y, lty = 2)
+      #   text(x = hover_temp$x,
+      #        y = hover_temp$y,
+      #        labels = paste(round(hover_temp$y * 1000), 'Hz'),
+      #        adj = c(1, 1))
       # text(x = 0,
       #      y = hover_temp$y,
       #      labels = paste(round(hover_temp$x), 'ms'),
       #      adj = c(0.5, 0))
       # print(c(hover_temp$x, hover_temp$y))
-    # }
-    # })
+      # }
+      # })
+    }
   })
 
   hover_label = reactive({
     hover_temp = input$spectrogram_hover
-    if (!is.null(hover_temp)) {
+    if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
       label = paste('<h4>Pitch at cursor: ', round(hover_temp$y * 1000), 'Hz</h4>')
     } else {
       label = '<h4>Pitch at cursor: </h4>'
@@ -120,6 +127,21 @@ server = function(input, output, session) {
     return(label)
   })
   output$spectro_hover = renderUI(HTML(hover_label()))
+
+  brush = observeEvent(input$spectrogram_brush, {
+    print('running brush')
+    myPars$clicksAfterBrushing = 0
+    myPars$pitch_df = data.frame(
+      time = as.numeric(colnames(myPars$pitchCands$freq)),
+      freq = myPars$pitch / 1000
+    )
+    bp = brushedPoints(myPars$pitch_df,
+                       brush = input$spectrogram_brush,
+                       xvar = 'time', yvar = 'freq',
+                       allRows = TRUE)
+    # for ex., to unvoice selection: myPars$pitch[bp[, 'selected_'] == TRUE] = NA
+    # print(bp)
+  })
 
   obs_anal = observe({
     if (!is.null(input$loadAudio$datapath)) {
@@ -250,7 +272,9 @@ server = function(input, output, session) {
   }
 
   observeEvent(input$spectrogram_click, {
-    if (length(myPars$pitchCands$freq) > 0) {
+    myPars$clicksAfterBrushing = myPars$clicksAfterBrushing + 1
+    if (length(myPars$pitchCands$freq) > 0 & myPars$clicksAfterBrushing > 2) {
+      session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
       closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
       # create a manual pitch estimate for the closest frame with the clicked value
       myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), closest_frame] = round(input$spectrogram_click$y * 1000, 3)
