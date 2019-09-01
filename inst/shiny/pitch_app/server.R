@@ -1,4 +1,4 @@
-# TODO: manually added pitch values should affect syllable structure; voicing bar; add comments to clarify that the last row of pitchCands is always "manual" (removed re-ordering of pitch candidates by frequency - check that works for all pathfinding methods); preserve manual values when some pars change and re-run analyze(); display last added manual value OR current mouse position as "main" above spectrogram; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; pathfinding "slow" should either respect manual or be disabled; fix audio playback
+# TODO: manually added pitch values should affect syllable structure; voicing bar; add comments to clarify that the last row of pitchCands is always "manual" (removed re-ordering of pitch candidates by frequency - check that works for all pathfinding methods); preserve manual values when some pars change and re-run analyze(); display last added manual value OR current mouse position as "main" above spectrogram; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; pathfinding "slow" should either respect manual or be disabled
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -9,19 +9,15 @@ server = function(input, output, session) {
     # myPars$pitchCands = null
     myPars$myAudio_path = input$loadAudio$datapath
     myPars$myAudio_type = input$loadAudio$type
-    temp_audio = tuneR::readWave(input$loadAudio$datapath)
-    myPars$myAudio = as.numeric(temp_audio@left)
-    myPars$samplingRate = temp_audio@samp.rate
-    myPars$dur = length(temp_audio@left) / temp_audio@samp.rate * 1000
-
-    # playme(myPars$myAudio_path)
-    output$myAudio = renderUI(
-      tags$audio(src = myPars$myAudio_path, type = myPars$myAudio_type, autoplay = NA, controls = NA)  # refuses to work - try with shinyFiles library
-    )
+    myPars$temp_audio = tuneR::readWave(input$loadAudio$datapath)
+    myPars$myAudio = as.numeric(myPars$temp_audio@left)
+    myPars$samplingRate = myPars$temp_audio@samp.rate
+    myPars$dur = length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000
 
     # instead of re-loading the file every time, save the spectrogram matrix and re-draw manually with filled.contour.mod
     myPars$spec = spectrogram(
-      input$loadAudio$datapath,
+      myPars$myAudio,
+      samplingRate = myPars$samplingRate,
       windowLength = input$windowLength,
       step = input$step,
       overlap = input$overlap,
@@ -30,6 +26,28 @@ server = function(input, output, session) {
       contrast = input$specContrast,
       brightness = input$specBrightness,
       output = 'processed'
+    )
+  })
+
+  saveAudio = observeEvent(myPars$temp_audio, {
+    print('running saveAudio')
+    # Method: saves a temporary audio file in 'www/'. This is a workaround since
+    # html tag for some reason cannot play myPars$myAudio_path (although feeding
+    # it to spectrogram works - so probably only works within R). Alternatives:
+    # soundgen::play() or shinyFiles library
+
+    # first remove the previous sound file to avoid cluttering up the www/ folder
+    if (!is.null(myPars$myfile)){
+      file.remove(paste0('www/', myPars$myfile))
+    }
+    randomID = paste(sample(c(letters, 0:9), 8, replace = TRUE), collapse = '')
+    myPars$myfile = paste0(randomID, '.wav')
+    # this is the new sound file. NB: has to be saved in www/ !!!
+    seewave::savewav(myPars$temp_audio,
+                     f = myPars$samplingRate,
+                     filename = paste0('www/', myPars$myfile))
+    output$myAudio = renderUI(
+      tags$audio(src = myPars$myfile, type = myPars$myAudio_type, autoplay = NA, controls = NA)
     )
   })
 
