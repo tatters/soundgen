@@ -86,7 +86,7 @@ ui = fluidPage(
                        navbarMenu("Postprocessing",
                                   tabPanel("Path",
                                            selectInput('pathfinding', 'Pathfinding method', choices = c('none', 'fast', 'slow'), selected = 'fast', multiple = FALSE),
-                                           shinyBS:::bsPopover(id='pathfinding', title=NULL, content="Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing", placement="right", trigger="hover"),
+                                           shinyBS:::bsPopover(id='pathfinding', title=NULL, content="Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing (initial analysis only)", placement="right", trigger="hover"),
                                            sliderInput('certWeight', 'Certainty weight', value=defaults_analyze['certWeight', 'default'], min=defaults_analyze['certWeight', 'low'], max=defaults_analyze['certWeight', 'high'], step=defaults_analyze['certWeight', 'step']),
                                            shinyBS:::bsPopover(id='certWeight', title=NULL, content='Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover"),
                                            sliderInput('shortestSyl', 'Shortest syllable, ms', value=defaults_analyze['shortestSyl', 'default'], min=defaults_analyze['shortestSyl', 'low'], max=defaults_analyze['shortestSyl', 'high'], step=defaults_analyze['shortestSyl', 'step']),

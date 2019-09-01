@@ -4,7 +4,8 @@
 \alias{costPerPath}
 \title{Cost per path}
 \usage{
-costPerPath(path, pitchCands, pitchCert, certWeight, pitchCenterGravity)
+costPerPath(path, pitchCands, pitchCert, certWeight, pitchCenterGravity,
+  inviolable = NULL)
 }
 \arguments{
 \item{path}{evaluated path through pitch candidates (as integers specifying
@@ -24,6 +25,8 @@ tension of the resulting pitch curve}
 \item{pitchCenterGravity}{numeric vector giving the mean of all pitch
 candidates per fft frame weighted by our certainty in each of these
 candidates}
+
+\item{inviolable}{a dataframe of manual pitch candidates from pathfinder()}
 }
 \description{
 Internal soundgen function.

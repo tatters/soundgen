@@ -109,6 +109,7 @@ pathfinder = function(pitchCands,
       pitchCert = pitchCert,
       certWeight = certWeight,
       pitchCenterGravity = pitchCenterGravity,
+      inviolable = inviolable,
       annealPars = annealPars
     )
   } else {  # if (pathfinding == 'none')
@@ -333,11 +334,13 @@ costJumps = function(cand1, cand2) {
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
+#' @param inviolable a dataframe of manual pitch candidates from pathfinder()
 #' @keywords internal
 pathfinding_slow = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             certWeight = certWeight,
                             pitchCenterGravity = pitchCenterGravity,
+                            inviolable = NULL,
                             annealPars = list(maxit = 5000, temp = 1000)) {
   # start with the pitch contour most faithful to center of gravity of pitch
   # candidates for each frame
@@ -354,6 +357,7 @@ pathfinding_slow = function(pitchCands = pitchCands,
     pitchCert = pitchCert,
     certWeight = certWeight,
     pitchCenterGravity = pitchCenterGravity,
+    inviolable = inviolable,
     method = 'SANN',
     control = annealPars
   )
@@ -379,15 +383,28 @@ pathfinding_slow = function(pitchCands = pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
+#' @param inviolable a dataframe of manual pitch candidates from pathfinder()
 #' @keywords internal
 costPerPath = function(path,
                        pitchCands,
                        pitchCert,
                        certWeight,
-                       pitchCenterGravity) {
+                       pitchCenterGravity,
+                       inviolable = NULL) {
   # if there is nothing to wiggle, generatePath() returns NA and we want
   # annealing to terminate quickly, so we return very high cost
   if (is.na(path[1])) return(1e10)
+
+  # if the path fails to pass through any of the manual pitch values,
+  # also return immediately with very high cost
+  if (!is.null(inviolable)) {
+    # the last cand in every column is the manual one, so the path
+    # should always go through the last cand in the manual frames
+    if (any(path[inviolable$frame] != nrow(pitchCands))) {
+      return(1e10)
+    }
+  }
+
   # get the cost of transition from the current point to each of the pitch
   # candidates in the next frame
   cost_pitchJump = apply(as.matrix(1:(length(path) - 1), nrow = 1), 1, function(x) {

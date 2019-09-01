@@ -1,6 +1,13 @@
-# TODO: manually added pitch values should affect syllable structure; voicing bar; add comments to clarify that the last row of pitchCands is always "manual" (removed re-ordering of pitch candidates by frequency - check that works for all pathfinding methods); preserve manual values when some pars change and re-run analyze(); display last added manual value OR current mouse position as "main" above spectrogram; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; pathfinding "slow" should either respect manual or be disabled
+# TODO: manually added pitch values should affect syllable structure; voicing bar; add comments to clarify that the last row of pitchCands is always "manual" (removed re-ordering of pitch candidates by frequency - check that works for all pathfinding methods); preserve manual values when some pars change and re-run analyze(); display last added manual value OR current mouse position as "main" above spectrogram; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input
 
 server = function(input, output, session) {
+  # clean-up of www/ folder: remove all files except temp.wav
+  files = list.files('www/')
+  files = files[files != 'temp.wav']
+  for (f in files){
+    file.remove(paste0('www/', f))
+  }
+
   myPars = reactiveValues()
 
   observeEvent(input$loadAudio, {
@@ -183,7 +190,9 @@ server = function(input, output, session) {
             pitchCert = myPars$pitchCands$cert[, myseq, drop = FALSE],
             pitchSource = myPars$pitchCands$source[, myseq, drop = FALSE],
             certWeight = input$certWeight,
-            pathfinding = input$pathfinding,
+            pathfinding = ifelse(input$pathfinding == 'slow',
+                                 'fast',  # slow doesn't work well with manual cand-s
+                                 input$pathfinding),
             interpolWin = input$interpolWin,
             interpolTol = input$interpolTol,
             interpolCert = input$interpolCert,
