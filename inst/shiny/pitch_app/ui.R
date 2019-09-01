@@ -122,8 +122,10 @@ ui = fluidPage(
            ),
            fluidRow(
              checkboxGroupInput('pitchMethods', label = 'Pitch methods', choiceValues = c('dom', 'autocor', 'cep', 'spec'), choiceNames = c('Lowest dominant frequency', 'Autocorrelation', 'Cepstrum', 'Ratio of harmonics'), selected = c('dom', 'autocor'), inline = TRUE),
-             plotOutput('spectrogram', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"))
+             htmlOutput('spectro_hover', inline = TRUE),
+             plotOutput('spectrogram', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"))
            ),
+
            fluidRow(
              shinyBS::bsCollapse(id="spec_controls",
                                  shinyBS::bsCollapsePanel("Show spectrogram controls",

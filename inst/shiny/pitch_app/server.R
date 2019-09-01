@@ -1,4 +1,4 @@
-# TODO: manually added pitch values should affect syllable structure; voicing bar; add comments to clarify that the last row of pitchCands is always "manual" (removed re-ordering of pitch candidates by frequency - check that works for all pathfinding methods); preserve manual values when some pars change and re-run analyze(); display last added manual value OR current mouse position as "main" above spectrogram; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input
+# TODO: manually added pitch values should affect syllable structure; voicing bar; preserve manual values when some pars change and analyze() executes (except if windowLength or step change so a dif num of frames); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -91,7 +91,35 @@ server = function(input, output, session) {
       showLegend = TRUE,
       ylim = c(input$spec_ylim[1], input$spec_ylim[2])
     )
+
+    # isolate({
+    # hover_temp = input$spectrogram_hover
+    # if (!is.null(hover_temp)) {
+    #   abline(v = hover_temp$x, lty = 2)
+    #   abline(h = hover_temp$y, lty = 2)
+    #   text(x = hover_temp$x,
+    #        y = hover_temp$y,
+    #        labels = paste(round(hover_temp$y * 1000), 'Hz'),
+    #        adj = c(1, 1))
+      # text(x = 0,
+      #      y = hover_temp$y,
+      #      labels = paste(round(hover_temp$x), 'ms'),
+      #      adj = c(0.5, 0))
+      # print(c(hover_temp$x, hover_temp$y))
+    # }
+    # })
   })
+
+  hover_label = reactive({
+    hover_temp = input$spectrogram_hover
+    if (!is.null(hover_temp)) {
+      label = paste('<h4>Pitch at cursor: ', round(hover_temp$y * 1000), 'Hz</h4>')
+    } else {
+      label = '<h4>Pitch at cursor: </h4>'
+    }
+    return(label)
+  })
+  output$spectro_hover = renderUI(HTML(hover_label()))
 
   obs_anal = observe({
     if (!is.null(input$loadAudio$datapath)) {
