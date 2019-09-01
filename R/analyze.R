@@ -760,23 +760,6 @@ analyze = function(x,
     pitchCands_list[[3]][1:n, i] = temp[, 3]
   }
 
-  # pitch_list = lapply(frameInfo, function(y) y[['pitchCands_frame']])
-  # pitchCands = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchCand']])))
-  # pitchCands = t(plyr::rbind.fill(pitchCands)) # a matrix of pitch candidates per frame
-  # colnames(pitchCands) = result$time
-  # pitchCert = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchAmpl']])))
-  # pitchCert = t(plyr::rbind.fill(pitchCert)) # a matrix of our certainty in pitch candidates
-  # colnames(pitchCert) = result$time
-  # pitchSource = lapply(pitch_list, function(y) {
-  #   # NB: without StringsAsFactors=FALSE, the first row becomes "1"
-  #   # because of wrong NA recognition
-  #   as.data.frame(t(y[['source']]), stringsAsFactors = FALSE)
-  # })
-  # pitchSource = t(plyr::rbind.fill(pitchSource)) # a matrix of the sources of pitch candidates
-  # pitch_na = which(is.na(pitchCands))
-  # pitchCert[pitch_na] = NA
-  # pitchSource[pitch_na] = NA
-
   # PRIOR for adjusting the estimated pitch certainties. For ex., if primarily
   # working with speech, we could prioritize pitch candidates in the expected
   # pitch range (100-1000 Hz) and dampen candidates with very high or very low

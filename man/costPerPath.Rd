@@ -11,7 +11,8 @@ costPerPath(path, pitchCands, pitchCert, certWeight, pitchCenterGravity)
 the rows in pitchCands, not the actual values of pitch)}
 
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
-column is one fft frame, each row is one candidate.}
+column is one fft frame, each row is one candidate (the last row is always
+"manual")}
 
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}

@@ -1,4 +1,4 @@
-# TODO: manually added pitch values should affect syllable structure; voicing bar
+# TODO: manually added pitch values should affect syllable structure; voicing bar; add comments to clarify that the last row of pitchCands is always "manual" (removed re-ordering of pitch candidates by frequency - check that works for all pathfinding methods); preserve manual values when some pars change and re-run analyze(); display last added manual value OR current mouse position as "main" above spectrogram; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; pathfinding "slow" should either respect manual or be disabled; fix audio playback
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -68,9 +68,9 @@ server = function(input, output, session) {
     )
   })
 
-  obs_anal = observeEvent(input$loadAudio$datapath, {
-    print('running anal')
+  obs_anal = observe({
     if (!is.null(input$loadAudio$datapath)) {
+      print('running anal')
       temp_anal = analyze(
         input$loadAudio$datapath,
         windowLength = input$windowLength,
@@ -81,7 +81,8 @@ server = function(input, output, session) {
         dynamicRange = input$dynamicRange,
         silence = input$silence,
         entropyThres = input$entropyThres,
-        nFormants = 1,
+        nFormants = 0,     # disable formant tracking
+        SPL_measured = 0,  # disable loudness analysis
         pitchMethods = input$pitchMethods,
         pitchFloor = input$pitchFloor,
         pitchCeiling = input$pitchCeiling,
@@ -127,17 +128,19 @@ server = function(input, output, session) {
       temp_anal$pitchCands$source = rbind(temp_anal$pitchCands$source,
                                           rep('manual', ncol(temp_anal$pitchCands$source)))
 
+      # isolate(myPars$pitchCands <- temp_anal$pitchCands)  # to avoid re-running analyze when myPars$pitchCands changes as manual pitch values are added?
       myPars$pitchCands = temp_anal$pitchCands
       windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
       myPars$X = seq(1, max(1, (length(myPars$myAudio) - windowLength_points)),
                      length.out = nrow(temp_anal$result)) / myPars$samplingRate * 1000 + input$windowLength / 2
       # add: update defaults that depend on samplingRate, eg cepSmooth
+      isolate(obs_pitch())
     }
   })
 
-  obs_pitch = observeEvent(myPars$pitchCands$freq, {
+  obs_pitch = function() {
+    print('running obs_pitch')
     if (length(myPars$pitchCands$freq) > 0) {
-      print('running voiced segments')
       myPars$voicedSegments = findVoicedSegments(
         myPars$pitchCands$freq,
         shortestSyl = input$shortestSyl,
@@ -189,7 +192,7 @@ server = function(input, output, session) {
                                       inviolable = manual_frames)[, 1]
       }
     }
-  })
+  }
 
   observeEvent(input$spectrogram_click, {
     if (length(myPars$pitchCands$freq) > 0) {
@@ -197,15 +200,16 @@ server = function(input, output, session) {
       # create a manual pitch estimate for the closest frame with the clicked value
       myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), closest_frame] = round(input$spectrogram_click$y * 1000, 3)
       myPars$pitchCands$cert[nrow(myPars$pitchCands$cert), closest_frame] = 1
+      obs_pitch()
     }
   })
 
   observeEvent(input$spectrogram_dblclick, {
     if (any(myPars$pitchCands$source == 'manual')) {
       closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_dblclick$x))
-      print(closest_frame)
       if (length(closest_frame) > 0) {
         myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), closest_frame] = NA
+        obs_pitch()
       }
     }
   })

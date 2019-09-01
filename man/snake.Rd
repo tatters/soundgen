@@ -12,7 +12,8 @@ snake(pitch, pitchCands, pitchCert, certWeight, pitchCenterGravity,
 which we are now attempting to improve by minimizing its elastic tension}
 
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
-column is one fft frame, each row is one candidate.}
+column is one fft frame, each row is one candidate (the last row is always
+"manual")}
 
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}

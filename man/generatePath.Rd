@@ -10,7 +10,8 @@ generatePath(path, pitchCands, ...)
 \item{path}{currently evaluated path}
 
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
-column is one fft frame, each row is one candidate.}
+column is one fft frame, each row is one candidate (the last row is always
+"manual")}
 
 \item{...}{nothing really, but otherwise optim() complains}
 }

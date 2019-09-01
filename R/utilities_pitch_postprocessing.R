@@ -8,7 +8,8 @@
 #' reasonable guess and computes the more-or-less optimal pitch contour (not
 #' quite the very optimal - too computationally expensive).
 #' @param pitchCands a matrix of multiple pitch candidates per fft frame. Each
-#'   column is one fft frame, each row is one candidate.
+#'   column is one fft frame, each row is one candidate (the last row is always
+#'   "manual")
 #' @param pitchCert a matrix of the same dimensionality as pitchCands specifying
 #'   our certainty in pitch candidates
 #' @inheritParams analyze
@@ -64,23 +65,6 @@ pathfinder = function(pitchCands,
     pitchCenterGravity = intplt$pitchCenterGravity
   }
 
-  # order pitch candidates and certainties in each frame from lowest to highest
-  # pitch (helpful for further processing)
-  if (nrow(pitchCands) > 1) {
-    o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
-      order(pitchCands[, x])
-    })
-    pitchCands = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
-      pitchCands[o[, x], x]
-    })
-    pitchCert = apply(matrix(1:ncol(pitchCert)), 1, function(x) {
-      pitchCert[o[, x], x]
-    })
-    pitchSource = apply(matrix(1:ncol(pitchSource)), 1, function(x) {
-      pitchSource[o[, x], x]
-    })
-  }
-
   # remove rows with all NA's
   keep_rows = which(rowSums(!is.na(pitchCands)) > 0)
   if (length(keep_rows) > 0) {
@@ -96,19 +80,16 @@ pathfinder = function(pitchCands,
   }
 
   ## Make a dataframe with positions and values of "inviolable" manual pitch values
-  inviolable = NULL
-  for (i in 1:ncol(pitchSource)) {
-    w = which(pitchSource[, i] == 'manual')[1]  # max 1 manual candidate
-    if (!is.na(w) & length(w) > 0) {
-      temp = data.frame(frame = i,
-                        manualCand = w,
-                        manualFreq = pitchCands[w, i])
-      if (is.null(inviolable)) {
-        inviolable = temp
-      } else {
-        inviolable = rbind(inviolable, temp)
-      }
-    }
+  if ('manual' %in% unique(pitchSource)) {
+    # the last row of pitchCands is reserved for manual pitch values
+    last_row = pitchCands[nrow(pitchCands), ]
+    idx_manual = which(!is.na(last_row))
+    inviolable = data.frame(
+      frame = idx_manual,
+      manualFreq = last_row[idx_manual]
+    )
+  } else {
+    inviolable = NULL
   }
 
   ## PATH-FINDING
@@ -134,13 +115,10 @@ pathfinder = function(pitchCands,
     bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
       idx = which.min(abs(pitchCands[, x] - pitchCenterGravity[x]))
       pitchCands[idx, x]
-    }) # or bestPath = pitchCenterGravity
-    # idx_manual = which(pitchCert == Inf)
-    # idx_col_manual = which(colSums(pitchCert) == Inf)
-    # if (length(idx_manual) > 0) {
-    #   bestPath[idx_col_manual] = pitchCands[id_manual]
-    # }
-    # bestPath[which(!is.na(x))]
+    })
+    if (!is.null(inviolable)) {
+      bestPath[inviolable$frame] = inviolable$manualFreq
+    }
   }
 
   ## SNAKE
@@ -253,6 +231,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
 
   # run forwards
   nc = ncol(pitchCands)
+  nr = nrow(pitchCands)
   for (i in 2:nc) {
     cands = na.omit(pitchCands[, i])
     if (length(cands) > 0) { # in case of an NA in the contour
@@ -267,7 +246,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
       # of each estimate vs. the magnitude of pitch jumps
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       if (i %in% inviolable$frame) {
-        idx = inviolable$manualCand[inviolable$frame == i]
+        idx = nr
       } else {
         idx = which.min(costs)
       }
@@ -304,7 +283,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
       if (length(cost_pitchJump) == 0) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       if ((nc + 1 - i) %in% inviolable$frame) {
-        idx = inviolable$manualCand[inviolable$frame == (nc + 1 - i)]
+        idx = nr
       } else {
         idx = which.min(costs)
       }
