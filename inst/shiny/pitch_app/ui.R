@@ -10,8 +10,6 @@ ui = fluidPage(
                                            shinyBS:::bsPopover(id='windowLength', title=NULL, content='Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover"),
                                            sliderInput('step', 'Step, ms', value=defaults_analyze['step','default'], min=defaults_analyze['step', 'low'], max=defaults_analyze['step', 'high'], step=defaults_analyze['step','step']),
                                            shinyBS:::bsPopover(id='step', title=NULL, content='Step between successive frames, ms', placement="right", trigger="hover"),
-                                           sliderInput('overlap', 'Overlap, %', value=defaults_analyze['overlap','default'], min=defaults_analyze['overlap', 'low'], max=defaults_analyze['overlap', 'high'], step=defaults_analyze['overlap','step']),
-                                           shinyBS:::bsPopover(id='overlap', title=NULL, content='Alternative to step: overlap between successive frames, %', placement="right", trigger="hover"),
                                            sliderInput('dynamicRange', 'Dynamic range, dB', value=defaults_analyze['dynamicRange','default'], min=defaults_analyze['dynamicRange', 'low'], max=defaults_analyze['dynamicRange', 'high'], step=defaults_analyze['dynamicRange','step']),
                                            shinyBS:::bsPopover(id='dynamicRange', title=NULL, content='Dynamic range of spectrogram, dB', placement="right", trigger="hover"),
                                            sliderInput('zp', 'Zero padding, points 2 ^ n', value=defaults_analyze['zp','default'], min=defaults_analyze['zp','low'], max=defaults_analyze['zp','high'], step=defaults_analyze['zp','step']),
@@ -123,7 +121,7 @@ ui = fluidPage(
            fluidRow(
              checkboxGroupInput('pitchMethods', label = 'Pitch methods', choiceValues = c('dom', 'autocor', 'cep', 'spec'), choiceNames = c('Lowest dominant frequency', 'Autocorrelation', 'Cepstrum', 'Ratio of harmonics'), selected = c('dom', 'autocor'), inline = TRUE),
              htmlOutput('spectro_hover', inline = TRUE),
-             plotOutput('spectrogram', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE))
+             plotOutput('spectrogram', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE))  # , style = "max-width: 66vw; overflow-x: auto;"
            ),
 
            fluidRow(

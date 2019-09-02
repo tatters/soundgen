@@ -1,4 +1,4 @@
-# TODO: manually added pitch values should affect syllable structure; preserve manual values when some pars change and analyze() executes (except if windowLength or step change so a dif num of frames); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; action buttons for doing smth with selection (octave up/down, devoice, ...)
+# TODO: manually added pitch values should affect syllable structure; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...)
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -10,12 +10,13 @@ server = function(input, output, session) {
 
   myPars = reactiveValues()
   myPars$myAudio_path = NULL
+  myPars$pitch = NULL
   myPars$clicksAfterBrushing = 2
 
   observeEvent(input$loadAudio, {
     print('running load audio')
-    # myPars$pitch = NULL
-    # myPars$pitchCands = null
+    myPars$pitch = NULL
+    myPars$pitchCands = NULL
     myPars$myAudio_path = input$loadAudio$datapath
     myPars$myAudio_type = input$loadAudio$type
     myPars$temp_audio = tuneR::readWave(input$loadAudio$datapath)
@@ -24,18 +25,23 @@ server = function(input, output, session) {
     myPars$dur = length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000
 
     # instead of re-loading the file every time, save the spectrogram matrix and re-draw manually with filled.contour.mod
-    myPars$spec = spectrogram(
-      myPars$myAudio,
-      samplingRate = myPars$samplingRate,
-      windowLength = input$windowLength,
-      step = input$step,
-      overlap = input$overlap,
-      wn = input$wn,
-      zp = input$zp,
-      contrast = input$specContrast,
-      brightness = input$specBrightness,
-      output = 'processed'
-    )
+    extractSpectrogram()
+  })
+
+  extractSpectrogram = reactive({
+    if (!is.null(myPars$myAudio)) {
+      myPars$spec = spectrogram(
+        myPars$myAudio,
+        samplingRate = myPars$samplingRate,
+        windowLength = input$windowLength,
+        step = input$step,
+        wn = input$wn,
+        zp = input$zp,
+        contrast = input$specContrast,
+        brightness = input$specBrightness,
+        output = 'processed'
+      )
+    }
   })
 
   saveAudio = observeEvent(myPars$temp_audio, {
@@ -61,8 +67,8 @@ server = function(input, output, session) {
   })
 
   output$spectrogram = renderPlot({
-    print('running spectrogram')
-    if (is.null(myPars$myAudio_path)) {
+    print('drawing spectrogram')
+    if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
       plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
       text(x = 5, y = 5, labels = 'Upload an audio file to begin...')
     } else {
@@ -150,7 +156,6 @@ server = function(input, output, session) {
         input$loadAudio$datapath,
         windowLength = input$windowLength,
         step = input$step,
-        overlap = input$overlap,
         wn = input$wn,
         zp = input$zp,
         dynamicRange = input$dynamicRange,
@@ -209,7 +214,24 @@ server = function(input, output, session) {
       myPars$X = seq(1, max(1, (length(myPars$myAudio) - windowLength_points)),
                      length.out = nrow(temp_anal$result)) / myPars$samplingRate * 1000 + input$windowLength / 2
       # add: update defaults that depend on samplingRate, eg cepSmooth
-      isolate(obs_pitch())
+
+      # if running analyze() for the same audio, preserve the old manual values
+      # and paste them back in
+      isolate({
+        if (!is.null(myPars$pitch)) {
+          # if the number of frames has changed (new windowLengh or step),
+          # up/downsample the manual pitch contour accordingly
+          len_old = length(myPars$pitch)
+          len_new = ncol(myPars$pitchCands$freq)
+          pitch_newLen = rep(NA, len = len_new)
+          idx_old = which(!is.na(myPars$pitch))
+          idx_new = round(idx_old * len_new / len_old)
+          pitch_newLen[idx_new] = myPars$pitch[idx_old]
+          myPars$pitch = pitch_newLen
+          myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), ] = myPars$pitch
+        }
+        obs_pitch()  # run pathfinder
+      })
     }
   })
 
