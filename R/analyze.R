@@ -744,90 +744,97 @@ analyze = function(x,
 
   ## postprocessing
   # extract and prepare pitch candidates for the pathfinder algorithm
-  max_cands = max(unlist(lapply(frameInfo, function(y) length(y[['pitchCands_frame']]))))
-  pitchCands_list = rep(list(matrix(
-    NA,
-    nrow = max_cands,
-    ncol = length(frameInfo),
-    dimnames = list(1:max_cands, result$time)
-  )), 3)
-  names(pitchCands_list) = c('freq', 'cert', 'source')
-  for (i in 1:length(frameInfo)) {
-    temp = frameInfo[[i]]$pitchCands_frame
-    n = nrow(temp)
-    pitchCands_list[[1]][1:n, i] = temp[, 1]
-    pitchCands_list[[2]][1:n, i] = temp[, 2]
-    pitchCands_list[[3]][1:n, i] = temp[, 3]
-  }
-
-  # PRIOR for adjusting the estimated pitch certainties. For ex., if primarily
-  # working with speech, we could prioritize pitch candidates in the expected
-  # pitch range (100-1000 Hz) and dampen candidates with very high or very low
-  # frequency as unlikely but still remotely possible in everyday vocalizing
-  # contexts (think a soft pitch ceiling)
-  if (is.numeric(priorMean) & is.numeric(priorSD)) {
-    priorMean_semitones = HzToSemitones(priorMean)
-    shape = priorMean_semitones ^ 2 / priorSD ^ 2
-    rate = priorMean_semitones / priorSD ^ 2
-    prior_normalizer = max(dgamma(
-      seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100),
-      shape = shape,
-      rate = rate
-    ))
-    pitchCert_multiplier = dgamma(
-      HzToSemitones(pitchCands_list$freq),
-      shape = shape,
-      rate = rate
-    ) / prior_normalizer
-    pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
-  }
-
-  # divide the file into continuous voiced syllables
-  voicedSegments = findVoicedSegments(
-    pitchCands_list$freq,
-    shortestSyl = shortestSyl,
-    shortestPause = shortestPause,
-    minVoicedCands = minVoicedCands,
-    pitchMethods = pitchMethods,
-    step = step,
-    samplingRate = samplingRate
-  )
-
-  # for each syllable, impute NA's and find a nice path through pitch candidates
-  pitchFinal = rep(NA, ncol(pitchCands_list$freq))
-  if (nrow(voicedSegments) > 0) {
-    # if we have found at least one putatively voiced syllable
-    for (syl in 1:nrow(voicedSegments)) {
-      myseq = voicedSegments$segmentStart[syl]:voicedSegments$segmentEnd[syl]
-      # compute the optimal path through pitch candidates
-      pitchFinal[myseq] = pathfinder(
-        pitchCands = pitchCands_list$freq[, myseq, drop = FALSE],
-        pitchCert = pitchCands_list$cert[, myseq, drop = FALSE],
-        pitchSource = pitchCands_list$source[, myseq, drop = FALSE],
-        certWeight = certWeight,
-        pathfinding = pathfinding,
-        annealPars = annealPars,
-        interpolWin = interpolWin,
-        interpolTol = interpolTol,
-        interpolCert = interpolCert,
-        snakeStep = snakeStep,
-        snakePlot = snakePlot
-      )
+  max_cands = max(unlist(lapply(frameInfo, function(y)
+    nrow(y[['pitchCands_frame']]))))
+  if (max_cands == 0) {  # no pitch candidates at all, purely unvoiced
+    result[, c('pitch', 'pitchAutocor', 'pitchCep', 'pitchSpec')] = NA
+  } else {
+    pitchCands_list = rep(list(matrix(
+      NA,
+      nrow = max_cands,
+      ncol = length(frameInfo),
+      dimnames = list(1:max_cands, result$time)
+    )), 3)
+    names(pitchCands_list) = c('freq', 'cert', 'source')
+    for (i in 1:length(frameInfo)) {
+      temp = frameInfo[[i]]$pitchCands_frame
+      n = nrow(temp)
+      if (n > 0) {
+        pitchCands_list[[1]][1:n, i] = temp[, 1]
+        pitchCands_list[[2]][1:n, i] = temp[, 2]
+        pitchCands_list[[3]][1:n, i] = temp[, 3]
+      }
     }
-  }
 
-  # save optimal pitch track and the best candidates separately for
-  # autocor, cepstrum and spectral
-  result$pitch = pitchFinal # optimal pitch track
-  result$pitchAutocor = as.numeric(lapply(frameInfo, function(x) {
-    x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'autocor'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
-  }))
-  result$pitchCep = as.numeric(lapply(frameInfo, function(x) {
-    x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'cep'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
-  }))
-  result$pitchSpec = as.numeric(lapply(frameInfo, function(x) {
-    x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'spec'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
-  }))
+    # PRIOR for adjusting the estimated pitch certainties. For ex., if primarily
+    # working with speech, we could prioritize pitch candidates in the expected
+    # pitch range (100-1000 Hz) and dampen candidates with very high or very low
+    # frequency as unlikely but still remotely possible in everyday vocalizing
+    # contexts (think a soft pitch ceiling)
+    if (is.numeric(priorMean) & is.numeric(priorSD)) {
+      priorMean_semitones = HzToSemitones(priorMean)
+      shape = priorMean_semitones ^ 2 / priorSD ^ 2
+      rate = priorMean_semitones / priorSD ^ 2
+      prior_normalizer = max(dgamma(
+        seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100),
+        shape = shape,
+        rate = rate
+      ))
+      pitchCert_multiplier = dgamma(
+        HzToSemitones(pitchCands_list$freq),
+        shape = shape,
+        rate = rate
+      ) / prior_normalizer
+      pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
+    }
+
+    # divide the file into continuous voiced syllables
+    voicedSegments = findVoicedSegments(
+      pitchCands_list$freq,
+      shortestSyl = shortestSyl,
+      shortestPause = shortestPause,
+      minVoicedCands = minVoicedCands,
+      pitchMethods = pitchMethods,
+      step = step,
+      samplingRate = samplingRate
+    )
+
+    # for each syllable, impute NA's and find a nice path through pitch candidates
+    pitchFinal = rep(NA, ncol(pitchCands_list$freq))
+    if (nrow(voicedSegments) > 0) {
+      # if we have found at least one putatively voiced syllable
+      for (syl in 1:nrow(voicedSegments)) {
+        myseq = voicedSegments$segmentStart[syl]:voicedSegments$segmentEnd[syl]
+        # compute the optimal path through pitch candidates
+        pitchFinal[myseq] = pathfinder(
+          pitchCands = pitchCands_list$freq[, myseq, drop = FALSE],
+          pitchCert = pitchCands_list$cert[, myseq, drop = FALSE],
+          pitchSource = pitchCands_list$source[, myseq, drop = FALSE],
+          certWeight = certWeight,
+          pathfinding = pathfinding,
+          annealPars = annealPars,
+          interpolWin = interpolWin,
+          interpolTol = interpolTol,
+          interpolCert = interpolCert,
+          snakeStep = snakeStep,
+          snakePlot = snakePlot
+        )
+      }
+    }
+
+    # save optimal pitch track and the best candidates separately for
+    # autocor, cepstrum and spectral
+    result$pitch = pitchFinal # optimal pitch track
+    result$pitchAutocor = as.numeric(lapply(frameInfo, function(x) {
+      x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'autocor'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
+    }))
+    result$pitchCep = as.numeric(lapply(frameInfo, function(x) {
+      x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'cep'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
+    }))
+    result$pitchSpec = as.numeric(lapply(frameInfo, function(x) {
+      x$pitchCands_frame$pitchCand[x$pitchCands_frame$pitchSource == 'spec'] [which.max(x$pitchCands_frame$pitchCert[x$pitchCands_frame$pitchSource == 'autocor'])]
+    }))
+  }
 
   ## Median smoothing of specified contours (by default pitch & dom)
   if (smooth > 0) {

@@ -125,6 +125,19 @@ ui = fluidPage(
            ),
 
            fluidRow(
+             HTML('<h4>Operations with selection: '),
+             actionButton(inputId = "selection_unvoice", label = "Unvoice", inline = TRUE),
+             shinyBS:::bsPopover(id='selection_unvoice', title=NULL, content='Treat selection as unvoiced', placement="right", trigger="hover"),
+             actionButton(inputId = "selection_octaveUp", label = "Octave UP", inline = TRUE),
+             shinyBS:::bsPopover(id='selection_octaveUp', title=NULL, content='Raise pitch for selection by an octave', placement="right", trigger="hover"),
+             actionButton(inputId = "selection_octaveDown", label = "Octave DOWN", inline = TRUE),
+             shinyBS:::bsPopover(id='selection_octaveDown', title=NULL, content='Lower pitch for selection by an octave', placement="right", trigger="hover"),
+             actionButton(inputId = "selection_setPrior", label = "Set prior", inline = TRUE),
+             shinyBS:::bsPopover(id='selection_setPrior', title=NULL, content='Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover"),
+             HTML('</h4>')
+           ),
+
+           fluidRow(
              shinyBS::bsCollapse(id="spec_controls",
                                  shinyBS::bsCollapsePanel("Show spectrogram controls",
                                                           sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),

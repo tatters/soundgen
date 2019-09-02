@@ -1,4 +1,4 @@
-# TODO: manually added pitch values should affect syllable structure; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...)
+# TODO: manually added pitch values should affect syllable structure; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); make the side pane with par-s collapsible; distinguish between unspecified manual values and manually unvoiced values (currently both are NA) - a sort of "inviolable"
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -11,6 +11,7 @@ server = function(input, output, session) {
   myPars = reactiveValues()
   myPars$myAudio_path = NULL
   myPars$pitch = NULL
+  myPars$bp = NULL
   myPars$clicksAfterBrushing = 2
 
   observeEvent(input$loadAudio, {
@@ -68,6 +69,7 @@ server = function(input, output, session) {
 
   output$spectrogram = renderPlot({
     print('drawing spectrogram')
+    par(mar = c(2, 2, 0.5, 2))  # no need to save use's graphical par-s - they revert to orig on exit
     if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
       plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
       text(x = 5, y = 5, labels = 'Upload an audio file to begin...')
@@ -141,11 +143,11 @@ server = function(input, output, session) {
       time = as.numeric(colnames(myPars$pitchCands$freq)),
       freq = myPars$pitch / 1000
     )
-    bp = brushedPoints(myPars$pitch_df,
-                       brush = input$spectrogram_brush,
-                       xvar = 'time', yvar = 'freq',
-                       allRows = TRUE)
-    # for ex., to unvoice selection: myPars$pitch[bp[, 'selected_'] == TRUE] = NA
+    myPars$bp = brushedPoints(myPars$pitch_df,
+                              brush = input$spectrogram_brush,
+                              xvar = 'time', yvar = 'freq',
+                              allRows = TRUE)
+    # for ex., to unvoice selection: myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
     # print(bp)
   })
 
@@ -314,6 +316,28 @@ server = function(input, output, session) {
       }
     }
   })
+
+  observeEvent(input$selection_unvoice, {
+    print('Unvoicing selection')
+    print(myPars$pitch)
+    if (!is.null(myPars$bp)) {
+      myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
+      print(myPars$pitch)
+    }
+  })
+
+  observeEvent('selection_octaveUP', {
+
+  })
+
+  observeEvent('selection_octaveDOWN', {
+
+  })
+
+  observeEvent('selection_setPrior', {
+
+  })
+
 
   # observeEvent(input$about, {
   #   id <<- showNotification(

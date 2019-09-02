@@ -37,6 +37,19 @@ pathfinder = function(pitchCands,
                       interpolCert = 0.3,
                       snakeStep = 0.05,
                       snakePlot = FALSE) {
+  ## Make a dataframe with positions and values of "inviolable" manual pitch values
+  if ('manual' %in% unique(pitchSource)) {
+    # the last row of pitchCands is reserved for manual pitch values
+    last_row = pitchCands[nrow(pitchCands), ]
+    idx_manual = which(!is.na(last_row))
+    inviolable = data.frame(
+      frame = idx_manual,
+      manualFreq = last_row[idx_manual]
+    )
+  } else {
+    inviolable = NULL
+  }
+
   # take log to approximate human perception of pitch differences
   pitchCands[!is.na(pitchCands)] = log2(pitchCands[!is.na(pitchCands)])
 
@@ -54,6 +67,20 @@ pathfinder = function(pitchCands,
   # between the most likely candidates for the adjacent frames, add such a
   # candidate with ~low certainty
   if (interpolWin > 0) {
+    # order pitch candidates and certainties in each frame pushing NAs down so
+    # as to simplify the matrix (the position of manual candidates is no longer
+    # important since they are saved in 'inviolable')
+    if (nrow(pitchCands) > 1) {
+      o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+        order(pitchCands[, x])
+      })
+      pitchCands = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
+        pitchCands[o[, x], x]
+      })
+      pitchCert = apply(matrix(1:ncol(pitchCert)), 1, function(x) {
+        pitchCert[o[, x], x]
+      })
+    }
     intplt = interpolate(pitchCands = pitchCands,
                          pitchCert = pitchCert,
                          pitchCenterGravity = pitchCenterGravity,
@@ -70,26 +97,12 @@ pathfinder = function(pitchCands,
   if (length(keep_rows) > 0) {
     pitchCands = pitchCands[keep_rows, , drop = FALSE]
     pitchCert = pitchCert[keep_rows, , drop = FALSE]
-    pitchSource = pitchSource[keep_rows, , drop = FALSE]
   }
 
   # special case: only a single pitch candidate for all frames in a syllable
   # (no paths to chose among)
   if (nrow(pitchCands) == 1) {
     return(2 ^ pitchCands)
-  }
-
-  ## Make a dataframe with positions and values of "inviolable" manual pitch values
-  if ('manual' %in% unique(pitchSource)) {
-    # the last row of pitchCands is reserved for manual pitch values
-    last_row = pitchCands[nrow(pitchCands), ]
-    idx_manual = which(!is.na(last_row))
-    inviolable = data.frame(
-      frame = idx_manual,
-      manualFreq = last_row[idx_manual]
-    )
-  } else {
-    inviolable = NULL
   }
 
   ## PATH-FINDING

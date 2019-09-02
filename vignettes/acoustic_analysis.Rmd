@@ -379,10 +379,12 @@ par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
              snakeStep = 0, smooth = 0,
-             interpolWin = 0, pathfinding = 'none',  # disable interpolation
+             interpolWin = 0,   # disable interpolation
+             pathfinding = 'none',  
              main = 'No interpolation', showLegend = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .35, step = 25,
+             pathfinding = 'none',
              snakeStep = 0, smooth = 0, 
              main = 'Interpolation', showLegend = FALSE)  
 
