@@ -23,31 +23,33 @@
 #'   interpolation window.
 #' @param interpolCert when interpolating pitch candidates, all generated pitch
 #'   candidates are assigned a certainty equal to \code{interpolCert}
+#' @param manualCert the certainty in manually added pitch candidates
 #' @return Returns a numeric vector of pitch values representing the best found
 #'   path through pitch candidates.
 #' @keywords internal
 pathfinder = function(pitchCands,
                       pitchCert,
-                      pitchSource,
+                      manual = NULL,
                       certWeight = 0.5,
                       pathfinding = c('none', 'fast', 'slow')[2],
                       annealPars = list(maxit = 5000, temp = 1000),
                       interpolWin = 3,
                       interpolTol = 0.05,
                       interpolCert = 0.3,
+                      manualCert = 1,
                       snakeStep = 0.05,
                       snakePlot = FALSE) {
-  ## Make a dataframe with positions and values of "inviolable" manual pitch values
-  if ('manual' %in% unique(pitchSource)) {
-    # the last row of pitchCands is reserved for manual pitch values
-    last_row = pitchCands[nrow(pitchCands), ]
-    idx_manual = which(!is.na(last_row))
-    inviolable = data.frame(
-      frame = idx_manual,
-      manualFreq = last_row[idx_manual]
-    )
-  } else {
-    inviolable = NULL
+  nr = nrow(pitchCands)
+  nc = ncol(pitchCands)
+
+  # Add "inviolable" manual pitch values
+  if (length(manual$frame) > 0) {
+    freqMan = certMan = rep(NA, nc)
+    freqMan[manual$frame] = manual$freq
+    certMan[manual$frame] = manualCert
+    pitchCands = rbind(pitchCands, freqMan)
+    pitchCert = rbind(pitchCert, certMan)
+    nr = nr + 1
   }
 
   # take log to approximate human perception of pitch differences
@@ -69,7 +71,7 @@ pathfinder = function(pitchCands,
   if (interpolWin > 0) {
     # order pitch candidates and certainties in each frame pushing NAs down so
     # as to simplify the matrix (the position of manual candidates is no longer
-    # important since they are saved in 'inviolable')
+    # important since they are saved in 'manual')
     if (nrow(pitchCands) > 1) {
       o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
         order(pitchCands[, x])
@@ -101,18 +103,18 @@ pathfinder = function(pitchCands,
 
   # special case: only a single pitch candidate for all frames in a syllable
   # (no paths to chose among)
-  if (nrow(pitchCands) == 1) {
+  if (nr == 1) {
     return(2 ^ pitchCands)
   }
 
   ## PATH-FINDING
   # find the best path through frame-by-frame pitch candidates
-  if (ncol(pitchCands) < 2) pathfinding = 'none'
+  if (nc < 2) pathfinding = 'none'
   if (pathfinding == 'fast') {
     bestPath = pathfinding_fast(
       pitchCands = pitchCands,
       pitchCert = pitchCert,
-      inviolable = inviolable,
+      manual = manual,
       pitchCenterGravity = pitchCenterGravity,
       certWeight = certWeight
     )
@@ -122,7 +124,7 @@ pathfinder = function(pitchCands,
       pitchCert = pitchCert,
       certWeight = certWeight,
       pitchCenterGravity = pitchCenterGravity,
-      inviolable = inviolable,
+      manual = manual,
       annealPars = annealPars
     )
   } else {  # if (pathfinding == 'none')
@@ -130,8 +132,8 @@ pathfinder = function(pitchCands,
       idx = which.min(abs(pitchCands[, x] - pitchCenterGravity[x]))
       pitchCands[idx, x]
     })
-    if (!is.null(inviolable)) {
-      bestPath[inviolable$frame] = inviolable$manualFreq
+    if (length(manual$frame) > 0) {
+      bestPath[manual$frame] = manual$freq
     }
   }
 
@@ -166,6 +168,8 @@ pathfinder = function(pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
+#' @param manualUnvoiced a vector with indices of frames that are manually
+#'   specified as unvoiced and should not be interpolated
 #' @return Returns a modified pitchCands matrix.
 #' @keywords internal
 interpolate = function(pitchCands,
@@ -174,6 +178,9 @@ interpolate = function(pitchCands,
                        interpolWin = 3,
                        interpolTol = 0.3,
                        interpolCert = 0.3) {
+  # ... add an empty row for new, interpolated pitch candidates
+  pitchCands = rbind(rep(NA, ncol(pitchCands)), pitchCands)
+  pitchCert = rbind(rep(NA, ncol(pitchCert)), pitchCert)
   for (f in 1:ncol(pitchCands)) {
     left = max(1, f - interpolWin)
     right = min(ncol(pitchCands), f + interpolWin)
@@ -187,13 +194,10 @@ interpolate = function(pitchCands,
     if (sum_pitchCands == 0 & !is.na(med)) {
       # if there are no pitch candidates in the frequency range
       # expected based on pitch candidates in the adjacent frames...
-      # ... add an empty row for a new, interpolated pitch candidate
-      pitchCands = rbind(pitchCands, rep(NA, ncol(pitchCands)))
-      pitchCert = rbind(pitchCert, rep(NA, ncol(pitchCert)))
       # use median of adjacent frames for the new pitch cand
-      pitchCands[nrow(pitchCands), f] = med
+      pitchCands[1, f] = med
       # certainty assigned to interpolated frames
-      pitchCert[nrow(pitchCert), f] = interpolCert
+      pitchCert[1, f] = interpolCert
       # update pitchCenterGravity for the interpolated frame
       pitchCenterGravity[f] = mean(pitchCands[, f],
                                    weights = pitchCert[, f] / sum(pitchCert[, f]),
@@ -221,18 +225,18 @@ interpolate = function(pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
-#' @param inviolable dataframe giving manual pitch candidates, which the path
+#' @param manual dataframe giving manual pitch candidates, which the path
 #'   MUST go through
 #' @keywords internal
 pathfinding_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
-                            inviolable = inviolable,
+                            manual = manual,
                             pitchCenterGravity = pitchCenterGravity,
                             certWeight = certWeight) {
   # find the most plausible starting pitch by taking median over the first few
   # frames, weighted by certainty
-  if (1 %in% inviolable$frame) {
-    point_current = inviolable$manualFreq[inviolable$frame == 1]
+  if (1 %in% manual$frame) {
+    point_current = manual$freq[mf]
   } else {
     p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
                na.rm = TRUE)
@@ -259,8 +263,8 @@ pathfinding_fast = function(pitchCands = pitchCands,
       # get a weighted average of transition costs associated with the certainty
       # of each estimate vs. the magnitude of pitch jumps
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-      if (i %in% inviolable$frame) {
-        idx = nr
+      if (i %in% manual$frame) {
+        idx = nr  # the last row is for manual candidates
       } else {
         idx = which.min(costs)
       }
@@ -276,8 +280,8 @@ pathfinding_fast = function(pitchCands = pitchCands,
   pitchCert_rev = pitchCert[, rev(1:nc), drop = FALSE]
   pitchCenterGravity_rev = rev(pitchCenterGravity)
 
-  if (nc %in% inviolable$frame) {
-    point_current = inviolable$manualFreq[inviolable$frame == nc]
+  if (nc %in% manual$frame) {
+    point_current = manual$freq[manual$frame == nc]
   } else {
     p = median(pitchCenterGravity_rev[1:min(5, nc)])
     c = na.omit(pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)) # b/c there may be NA's,
@@ -296,7 +300,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
       })
       if (length(cost_pitchJump) == 0) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-      if ((nc + 1 - i) %in% inviolable$frame) {
+      if ((nc + 1 - i) %in% manual$frame) {
         idx = nr
       } else {
         idx = which.min(costs)
@@ -331,7 +335,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
 #' b = 1 / (1 + 10 * exp(3 - 7 * abs(a)))
 #' plot(a, b, type = 'l')
 costJumps = function(cand1, cand2) {
-  return (1 / (1 + 10 * exp(3 - 7 * abs(cand1 - cand2))))
+  return(1 / (1 + 10 * exp(3 - 7 * abs(cand1 - cand2))))
 }
 
 
@@ -347,13 +351,13 @@ costJumps = function(cand1, cand2) {
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
-#' @param inviolable a dataframe of manual pitch candidates from pathfinder()
+#' @param manual a dataframe of manual pitch candidates from pathfinder()
 #' @keywords internal
 pathfinding_slow = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             certWeight = certWeight,
                             pitchCenterGravity = pitchCenterGravity,
-                            inviolable = NULL,
+                            manual = NULL,
                             annealPars = list(maxit = 5000, temp = 1000)) {
   # start with the pitch contour most faithful to center of gravity of pitch
   # candidates for each frame
@@ -370,7 +374,7 @@ pathfinding_slow = function(pitchCands = pitchCands,
     pitchCert = pitchCert,
     certWeight = certWeight,
     pitchCenterGravity = pitchCenterGravity,
-    inviolable = inviolable,
+    manual = manual,
     method = 'SANN',
     control = annealPars
   )
@@ -396,24 +400,24 @@ pathfinding_slow = function(pitchCands = pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
-#' @param inviolable a dataframe of manual pitch candidates from pathfinder()
+#' @param manual a dataframe of manual pitch candidates from pathfinder()
 #' @keywords internal
 costPerPath = function(path,
                        pitchCands,
                        pitchCert,
                        certWeight,
                        pitchCenterGravity,
-                       inviolable = NULL) {
+                       manual = NULL) {
   # if there is nothing to wiggle, generatePath() returns NA and we want
   # annealing to terminate quickly, so we return very high cost
   if (is.na(path[1])) return(1e10)
 
   # if the path fails to pass through any of the manual pitch values,
   # also return immediately with very high cost
-  if (!is.null(inviolable)) {
+  if (!is.null(manual)) {
     # the last cand in every column is the manual one, so the path
     # should always go through the last cand in the manual frames
-    if (any(path[inviolable$frame] != nrow(pitchCands))) {
+    if (any(path[manual$frame] != nrow(pitchCands))) {
       return(1e10)
     }
   }
@@ -702,7 +706,9 @@ findVoicedSegments = function(pitchCands,
                               step,
                               samplingRate,
                               minVoicedCands,
-                              pitchMethods) {
+                              pitchMethods,
+                              manualV = NULL,
+                              manualUnv = NULL) {
   resetMVC = FALSE
   messageMVC = FALSE
   if (is.null(minVoicedCands)) {
@@ -727,15 +733,16 @@ findVoicedSegments = function(pitchCands,
                      ' resetting to ', minVoicedCands))
     }
   }
-  putativelyVoiced = apply(pitchCands, 2, function(x) {
-    ifelse(sum(!is.na(x)) >= minVoicedCands, 1, NA)
-  })
+  putativelyVoiced = apply(pitchCands, 2, function(x) sum(!is.na(x)) >= minVoicedCands)
+  if (length(manualV) > 0)   putativelyVoiced[manualV]   = TRUE
+  if (length(manualUnv) > 0) putativelyVoiced[manualUnv] = FALSE
+
   # the smallest number of consecutive non-NA pitch values that constitute a
   # voiced segment; but at least 1
   noRequired = max(1, ceiling(shortestSyl / step))
   # the greatest number of NA values that we tolerate before we say a new voiced
   # syllable begins
-  nToleratedNA = floor(shortestPause / step)
+  toleratedGap = floor(shortestPause / step)
 
   # find and save separately all voiced segments
   segmentStart = numeric()
@@ -744,7 +751,7 @@ findVoicedSegments = function(pitchCands,
   while (i < (length(putativelyVoiced) - noRequired + 1)) {
     # find beginning
     while (i < (length(putativelyVoiced) - noRequired + 1)) {
-      if (sum(!is.na(putativelyVoiced[i:(i + noRequired - 1)])) == noRequired) {
+      if (sum(putativelyVoiced[i:(i + noRequired - 1)]) == noRequired) {
         segmentStart = c(segmentStart, i)
         break
       }
@@ -752,8 +759,8 @@ findVoicedSegments = function(pitchCands,
     }
     # find end
     if (length(segmentEnd) < length(segmentStart)) {
-      while (i < (length(putativelyVoiced) - nToleratedNA + 1)) {
-        if (sum(putativelyVoiced[i:(i + nToleratedNA)], na.rm = TRUE) == 0) {
+      while (i < (length(putativelyVoiced) - toleratedGap + 1)) {
+        if (sum(putativelyVoiced[i:(i + toleratedGap)]) == 0) {
           segmentEnd = c(segmentEnd, i - 1)
           i = i - 1
           break
@@ -768,7 +775,7 @@ findVoicedSegments = function(pitchCands,
     }
     i = i + 1
   }
-  return (data.frame(segmentStart = segmentStart, segmentEnd = segmentEnd))
+  return(data.frame(segmentStart = segmentStart, segmentEnd = segmentEnd))
 }
 
 

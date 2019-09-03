@@ -128,6 +128,8 @@ ui = fluidPage(
              HTML('<h4>Operations with selection: '),
              actionButton(inputId = "selection_unvoice", label = "Unvoice", inline = TRUE),
              shinyBS:::bsPopover(id='selection_unvoice', title=NULL, content='Treat selection as unvoiced', placement="right", trigger="hover"),
+             actionButton(inputId = "selection_voice", label = "Undo unvoice", inline = TRUE),
+             shinyBS:::bsPopover(id='selection_voice', title=NULL, content='Undo treating selection as unvoiced', placement="right", trigger="hover"),
              actionButton(inputId = "selection_octaveUp", label = "Octave UP", inline = TRUE),
              shinyBS:::bsPopover(id='selection_octaveUp', title=NULL, content='Raise pitch for selection by an octave', placement="right", trigger="hover"),
              actionButton(inputId = "selection_octaveDown", label = "Octave DOWN", inline = TRUE),

@@ -4,10 +4,11 @@
 \alias{pathfinder}
 \title{Pathfinder}
 \usage{
-pathfinder(pitchCands, pitchCert, pitchSource, certWeight = 0.5,
+pathfinder(pitchCands, pitchCert, manual = NULL, certWeight = 0.5,
   pathfinding = c("none", "fast", "slow")[2], annealPars = list(maxit =
   5000, temp = 1000), interpolWin = 3, interpolTol = 0.05,
-  interpolCert = 0.3, snakeStep = 0.05, snakePlot = FALSE)
+  interpolCert = 0.3, manualCert = 1, snakeStep = 0.05,
+  snakePlot = FALSE)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
@@ -41,6 +42,8 @@ interpolation window.}
 
 \item{interpolCert}{when interpolating pitch candidates, all generated pitch
 candidates are assigned a certainty equal to \code{interpolCert}}
+
+\item{manualCert}{the certainty in manually added pitch candidates}
 
 \item{snakeStep}{optimized path through pitch candidates is further
 processed to minimize the elastic force acting on pitch contour. To

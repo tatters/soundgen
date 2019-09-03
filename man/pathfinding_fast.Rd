@@ -5,7 +5,7 @@
 \title{Path through pitch candidates: fast}
 \usage{
 pathfinding_fast(pitchCands = pitchCands, pitchCert = pitchCert,
-  inviolable = inviolable, pitchCenterGravity = pitchCenterGravity,
+  manual = manual, pitchCenterGravity = pitchCenterGravity,
   certWeight = certWeight)
 }
 \arguments{
@@ -16,7 +16,7 @@ column is one fft frame, each row is one candidate (the last row is always
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}
 
-\item{inviolable}{dataframe giving manual pitch candidates, which the path
+\item{manual}{dataframe giving manual pitch candidates, which the path
 MUST go through}
 
 \item{pitchCenterGravity}{numeric vector giving the mean of all pitch

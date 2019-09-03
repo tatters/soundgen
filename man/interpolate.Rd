@@ -31,6 +31,9 @@ interpolation window.}
 
 \item{interpolCert}{when interpolating pitch candidates, all generated pitch
 candidates are assigned a certainty equal to \code{interpolCert}}
+
+\item{manualUnvoiced}{a vector with indices of frames that are manually
+specified as unvoiced and should not be interpolated}
 }
 \value{
 Returns a modified pitchCands matrix.

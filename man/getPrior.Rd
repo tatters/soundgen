@@ -26,14 +26,21 @@ an octave)}
 
 \item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 }
+\value{
+Returns a numeric matrix of the same dimensions as pitchCands for
+  multiplying the matrix of certainty of in pitch values.
+}
 \description{
 Internal soundgen function.
 }
 \details{
-Returns a numeric matrix of the same dimensions as pitchCands for multiplying
-the matrix of certainty of in pitch values. Algorithm: the multiplier for
-each pitch candidate is the density of gamma distribution with mean =
-priorMean (Hz) and sd = priorSD (semitones) normalized so max = 1 over
-[pitchFloor, pitchCeiling]. Called by analyze().
+Prior for adjusting the estimated pitch certainties. For ex., if primarily
+working with speech, we could prioritize pitch candidates in the expected
+pitch range (100-1000 Hz) and dampen candidates with very high or very low
+frequency as unlikely but still remotely possible in everyday vocalizing
+contexts (think a soft pitch ceiling). Algorithm: the multiplier for each
+pitch candidate is the density of gamma distribution with mean = priorMean
+(Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
+pitchCeiling]. Called by analyze().
 }
 \keyword{internal}

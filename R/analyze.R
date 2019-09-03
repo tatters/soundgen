@@ -797,7 +797,6 @@ analyze = function(x,
         pitchFinal[myseq] = pathfinder(
           pitchCands = pitchCands_list$freq[, myseq, drop = FALSE],
           pitchCert = pitchCands_list$cert[, myseq, drop = FALSE],
-          pitchSource = pitchCands_list$source[, myseq, drop = FALSE],
           certWeight = certWeight,
           pathfinding = pathfinding,
           annealPars = annealPars,

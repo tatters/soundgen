@@ -1,4 +1,4 @@
-# TODO: store manually added pitch values separately in two lists (voiced / unvoiced) instead of integrating with myPars$pitch - otherwise problems updating pars that re-trigger analyze; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); manually added pitch values should affect syllable structure (extend pitch contour into previously unvoiced regions); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; distinguish between unspecified manual values and manually unvoiced values (currently both are NA) - a sort of "inviolable"
+# TODO: plot manual pitch values; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); manually added pitch values should affect syllable structure (extend pitch contour into previously unvoiced regions); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; distinguish between unspecified manual values and manually unvoiced values (currently both are NA) - a sort of "inviolable"
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -13,6 +13,8 @@ server = function(input, output, session) {
   myPars$pitch = NULL       # pitch contour
   myPars$bp = NULL          # selected points
   myPars$anyManual = FALSE  # keep track of whether any manual pitch values have been added
+  myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
+  myPars$manualUnv = numeric()
   myPars$clicksAfterBrushing = 2
 
   observeEvent(input$loadAudio, {
@@ -106,23 +108,6 @@ server = function(input, output, session) {
         showLegend = TRUE,
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
       )
-
-      # isolate({
-      # hover_temp = input$spectrogram_hover
-      # if (!is.null(hover_temp)) {
-      #   abline(v = hover_temp$x, lty = 2)
-      #   abline(h = hover_temp$y, lty = 2)
-      #   text(x = hover_temp$x,
-      #        y = hover_temp$y,
-      #        labels = paste(round(hover_temp$y * 1000), 'Hz'),
-      #        adj = c(1, 1))
-      # text(x = 0,
-      #      y = hover_temp$y,
-      #      labels = paste(round(hover_temp$x), 'ms'),
-      #      adj = c(0.5, 0))
-      # print(c(hover_temp$x, hover_temp$y))
-      # }
-      # })
     }
   })
 
@@ -203,19 +188,13 @@ server = function(input, output, session) {
         plot = FALSE
       )
 
-      # add a new category for manual pitch values
-      temp_anal$pitchCands$freq = rbind(temp_anal$pitchCands$freq,
-                                        rep(NA, ncol(temp_anal$pitchCands$freq)))
-      temp_anal$pitchCands$cert = rbind(temp_anal$pitchCands$cert,
-                                        rep(NA, ncol(temp_anal$pitchCands$cert)))
-      temp_anal$pitchCands$source = rbind(temp_anal$pitchCands$source,
-                                          rep('manual', ncol(temp_anal$pitchCands$source)))
-
-      # isolate(myPars$pitchCands <- temp_anal$pitchCands)  # to avoid re-running analyze when myPars$pitchCands changes as manual pitch values are added?
       myPars$pitchCands = temp_anal$pitchCands
       windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
-      myPars$X = seq(1, max(1, (length(myPars$myAudio) - windowLength_points)),
-                     length.out = nrow(temp_anal$result)) / myPars$samplingRate * 1000 + input$windowLength / 2
+      myPars$X = seq(
+        1,
+        max(1, (length(myPars$myAudio) - windowLength_points)),
+        length.out = nrow(temp_anal$result)
+      ) / myPars$samplingRate * 1000 + input$windowLength / 2
       # add: update defaults that depend on samplingRate, eg cepSmooth
 
       # if running analyze() for the same audio, preserve the old manual values
@@ -225,7 +204,7 @@ server = function(input, output, session) {
             myPars$anyManual) {
           # if the number of frames has changed (new windowLengh or step),
           # up/downsample the manual pitch contour accordingly
-          len_old = length(myPars$pitch)
+          len_old = length(myPars$pitch)  # !!! switch to myPars$manual
           len_new = ncol(myPars$pitchCands$freq)
           pitch_newLen = rep(NA, len = len_new)
           idx_old = which(!is.na(myPars$pitch))
@@ -244,6 +223,8 @@ server = function(input, output, session) {
     if (length(myPars$pitchCands$freq) > 0) {
       myPars$voicedSegments = findVoicedSegments(
         myPars$pitchCands$freq,
+        manualV = myPars$manual$frame,
+        manualUnv = myPars$manualUnv,
         shortestSyl = input$shortestSyl,
         shortestPause = input$shortestPause,
         minVoicedCands = input$minVoicedCands,
@@ -258,13 +239,13 @@ server = function(input, output, session) {
         # if we have found at least one putatively voiced syllable
         for (syl in 1:nrow(myPars$voicedSegments)) {
           myseq = myPars$voicedSegments$segmentStart[syl]:myPars$voicedSegments$segmentEnd[syl]
-          # print(myseq)
-          # print(myPars$pitchCands$freq[, myseq, drop = FALSE])
+          manual_syl = myPars$manual[myPars$manual$frame %in% myseq, ]
+          manual_syl$frame = manual_syl$frame - myseq[1] + 1  # adjust manual idx to syllable
           # compute the optimal path through pitch candidates
           myPars$pitch[myseq] = pathfinder(
             pitchCands = myPars$pitchCands$freq[, myseq, drop = FALSE],
             pitchCert = myPars$pitchCands$cert[, myseq, drop = FALSE],
-            pitchSource = myPars$pitchCands$source[, myseq, drop = FALSE],
+            manual = manual_syl,
             certWeight = input$certWeight,
             pathfinding = ifelse(input$pathfinding == 'slow',
                                  'fast',  # slow doesn't work well with manual cand-s
@@ -303,22 +284,23 @@ server = function(input, output, session) {
       session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
       closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
       # create a manual pitch estimate for the closest frame with the clicked value
-      myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), closest_frame] = round(input$spectrogram_click$y * 1000, 3)
-      myPars$pitchCands$cert[nrow(myPars$pitchCands$cert), closest_frame] = 1
+      myPars$manual = rbind(myPars$manual, data.frame(
+        frame = closest_frame,
+        freq = round(input$spectrogram_click$y * 1000, 3)
+      ))
       obs_pitch()
     }
   })
 
-  observeEvent(myPars$pitchCands, {
-    myPars$anyManual = sum(myPars$pitchCands$source == 'manual' &
-                             !is.na(myPars$pitchCands$freq), na.rm = TRUE) > 0
-  })
-
   observeEvent(input$spectrogram_dblclick, {
-    if (myPars$anyManual) {
-      closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_dblclick$x))
+    if (nrow(myPars$manual) > 0) {
+      closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) -
+                                      input$spectrogram_dblclick$x))
       if (length(closest_frame) > 0) {
-        myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), closest_frame] = NA
+        idx_rem = which(myPars$manual$frame == closest_frame)
+        if (length(idx_rem) > 0) {
+          myPars$manual = myPars$manual[-idx_rem, ]
+        }
         obs_pitch()
       }
     }
@@ -327,7 +309,19 @@ server = function(input, output, session) {
   observeEvent(input$selection_unvoice, {
     print('Unvoicing selection')
     if (!is.null(myPars$bp)) {
-      myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
+      # myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
+      myPars$manualUnv = c(myPars$manualUnv, which(myPars$bp[, 'selected_']))
+      obs_pitch()
+    }
+  })
+
+  observeEvent(input$selection_voice, {
+    print('Voicing selection')
+    if (!is.null(myPars$bp) & length(myPars$manualUnv) > 0) {
+      # myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
+      idx_rem = which(myPars$manualUnv %in% myPars$bp[, 'selected_'])
+      myPars$manualUnv = myPars$manualUnv[-idx_rem]
+      obs_pitch()
     }
   })
 
@@ -338,7 +332,7 @@ server = function(input, output, session) {
     }
   })
 
-  observeEvent(input$selection_octaveDOWN, {
+  observeEvent(input$selection_octaveDown, {
     print('Selection octave down')
     if (!is.null(myPars$bp)) {
       myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = myPars$pitch[myPars$bp[, 'selected_'] == TRUE] / 2
@@ -353,7 +347,6 @@ server = function(input, output, session) {
       pr[pr > input$pitchCeiling] = input$pitchCeiling
       meanPr = mean(pr)
       sdPr = round((HzToSemitones(pr[2]) - HzToSemitones(mean(pr))) / 2, 1)
-      print(sdPr)
       updateSliderInput(session, 'priorMean', value = meanPr)
       updateSliderInput(session, 'priorSD', value = sdPr)
     }
