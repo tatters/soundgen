@@ -766,25 +766,13 @@ analyze = function(x,
       }
     }
 
-    # PRIOR for adjusting the estimated pitch certainties. For ex., if primarily
-    # working with speech, we could prioritize pitch candidates in the expected
-    # pitch range (100-1000 Hz) and dampen candidates with very high or very low
-    # frequency as unlikely but still remotely possible in everyday vocalizing
-    # contexts (think a soft pitch ceiling)
+    # add prior
     if (is.numeric(priorMean) & is.numeric(priorSD)) {
-      priorMean_semitones = HzToSemitones(priorMean)
-      shape = priorMean_semitones ^ 2 / priorSD ^ 2
-      rate = priorMean_semitones / priorSD ^ 2
-      prior_normalizer = max(dgamma(
-        seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100),
-        shape = shape,
-        rate = rate
-      ))
-      pitchCert_multiplier = dgamma(
-        HzToSemitones(pitchCands_list$freq),
-        shape = shape,
-        rate = rate
-      ) / prior_normalizer
+      pitchCert_multiplier = getPrior(priorMean = priorMean,
+                                      priorSD = priorSD,
+                                      pitchCands = pitchCands_list$freq,
+                                      pitchFloor = pitchFloor,
+                                      pitchCeiling = pitchCeiling)
       pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
     }
 

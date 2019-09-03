@@ -1,4 +1,4 @@
-# TODO: manually added pitch values should affect syllable structure; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); make the side pane with par-s collapsible; distinguish between unspecified manual values and manually unvoiced values (currently both are NA) - a sort of "inviolable"
+# TODO: store manually added pitch values separately in two lists (voiced / unvoiced) instead of integrating with myPars$pitch - otherwise problems updating pars that re-trigger analyze; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); manually added pitch values should affect syllable structure (extend pitch contour into previously unvoiced regions); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; distinguish between unspecified manual values and manually unvoiced values (currently both are NA) - a sort of "inviolable"
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -10,8 +10,9 @@ server = function(input, output, session) {
 
   myPars = reactiveValues()
   myPars$myAudio_path = NULL
-  myPars$pitch = NULL
-  myPars$bp = NULL
+  myPars$pitch = NULL       # pitch contour
+  myPars$bp = NULL          # selected points
+  myPars$anyManual = FALSE  # keep track of whether any manual pitch values have been added
   myPars$clicksAfterBrushing = 2
 
   observeEvent(input$loadAudio, {
@@ -218,9 +219,10 @@ server = function(input, output, session) {
       # add: update defaults that depend on samplingRate, eg cepSmooth
 
       # if running analyze() for the same audio, preserve the old manual values
-      # and paste them back in
+      # (if any) and paste them back in
       isolate({
-        if (!is.null(myPars$pitch)) {
+        if (!is.null(myPars$pitch) &
+            myPars$anyManual) {
           # if the number of frames has changed (new windowLengh or step),
           # up/downsample the manual pitch contour accordingly
           len_old = length(myPars$pitch)
@@ -307,8 +309,13 @@ server = function(input, output, session) {
     }
   })
 
+  observeEvent(myPars$pitchCands, {
+    myPars$anyManual = sum(myPars$pitchCands$source == 'manual' &
+                             !is.na(myPars$pitchCands$freq), na.rm = TRUE) > 0
+  })
+
   observeEvent(input$spectrogram_dblclick, {
-    if (any(myPars$pitchCands$source == 'manual')) {
+    if (myPars$anyManual) {
       closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_dblclick$x))
       if (length(closest_frame) > 0) {
         myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), closest_frame] = NA
@@ -319,23 +326,37 @@ server = function(input, output, session) {
 
   observeEvent(input$selection_unvoice, {
     print('Unvoicing selection')
-    print(myPars$pitch)
     if (!is.null(myPars$bp)) {
       myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
-      print(myPars$pitch)
     }
   })
 
-  observeEvent('selection_octaveUP', {
-
+  observeEvent(input$selection_octaveUp, {
+    print('Selection octave up')
+    if (!is.null(myPars$bp)) {
+      myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = myPars$pitch[myPars$bp[, 'selected_'] == TRUE] * 2
+    }
   })
 
-  observeEvent('selection_octaveDOWN', {
-
+  observeEvent(input$selection_octaveDOWN, {
+    print('Selection octave down')
+    if (!is.null(myPars$bp)) {
+      myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = myPars$pitch[myPars$bp[, 'selected_'] == TRUE] / 2
+    }
   })
 
-  observeEvent('selection_setPrior', {
-
+  observeEvent(input$selection_setPrior, {
+    print('Setting prior')
+    if (!is.null(input$spectrogram_brush)) {
+      pr = c(input$spectrogram_brush$ymin, input$spectrogram_brush$ymax) * 1000
+      pr[pr < input$pitchFloor] = input$pitchFloor
+      pr[pr > input$pitchCeiling] = input$pitchCeiling
+      meanPr = mean(pr)
+      sdPr = round((HzToSemitones(pr[2]) - HzToSemitones(mean(pr))) / 2, 1)
+      print(sdPr)
+      updateSliderInput(session, 'priorMean', value = meanPr)
+      updateSliderInput(session, 'priorSD', value = sdPr)
+    }
   })
 
 

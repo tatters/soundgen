@@ -578,3 +578,42 @@ getPitchSpec = function(frame,
 
   return(pitchSpec_array)
 }
+
+
+#' Get prior for pitch candidates
+#'
+#' Internal soundgen function.
+#'
+#' Prior for adjusting the estimated pitch certainties. For ex., if primarily
+#' working with speech, we could prioritize pitch candidates in the expected
+#' pitch range (100-1000 Hz) and dampen candidates with very high or very low
+#' frequency as unlikely but still remotely possible in everyday vocalizing
+#' contexts (think a soft pitch ceiling). Algorithm: the multiplier for each
+#' pitch candidate is the density of gamma distribution with mean = priorMean
+#' (Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
+#' pitchCeiling]. Called by analyze().
+#' @return Returns a numeric matrix of the same dimensions as pitchCands for
+#'   multiplying the matrix of certainty of in pitch values.
+#' @inheritParams analyze
+#' @param pitchCands a matrix of pitch candidate frequencies
+#' @keywords internal
+getPrior = function(priorMean,
+                    priorSD,
+                    pitchCands,
+                    pitchFloor = 1,
+                    pitchCeiling = 3000) {
+  priorMean_semitones = HzToSemitones(priorMean)
+  shape = priorMean_semitones ^ 2 / priorSD ^ 2
+  rate = priorMean_semitones / priorSD ^ 2
+  prior_normalizer = max(dgamma(
+    seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100),
+    shape = shape,
+    rate = rate
+  ))
+  pitchCert_multiplier = dgamma(
+    HzToSemitones(pitchCands),
+    shape = shape,
+    rate = rate
+  ) / prior_normalizer
+  return(pitchCert_multiplier)
+}
