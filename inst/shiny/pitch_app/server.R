@@ -1,4 +1,4 @@
-# TODO: octave up/down should create manual pitch cands; radio buttons to choose left-click action (new cands / selection); plot manual pitch values; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible
+# TODO: adding an achor should undo unvoicing; octave up/down should create manual pitch cands; radio buttons to choose left-click action (new cands / selection); plot manual pitch values; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -14,7 +14,6 @@ server = function(input, output, session) {
   myPars$bp = NULL          # selected points
   myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
   myPars$manualUnv = numeric()
-  myPars$clicksAfterBrushing = 2
 
   observeEvent(input$loadAudio, {
     print('running load audio')
@@ -133,7 +132,6 @@ server = function(input, output, session) {
 
   brush = observeEvent(input$spectrogram_brush, {
     print('running brush')
-    myPars$clicksAfterBrushing = 0
     myPars$pitch_df = data.frame(
       time = as.numeric(colnames(myPars$pitchCands$freq)),
       freq = myPars$pitch / 1000
@@ -288,8 +286,7 @@ server = function(input, output, session) {
   }
 
   observeEvent(input$spectrogram_click, {
-    myPars$clicksAfterBrushing = myPars$clicksAfterBrushing + 1
-    if (length(myPars$pitchCands$freq) > 0 & myPars$clicksAfterBrushing > 2) {
+    if (length(myPars$pitchCands$freq) > 0 & input$spectro_clickAct == 'addCand') {
       session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
       closest_frame = which.min(abs(
         as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
