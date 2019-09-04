@@ -54,6 +54,7 @@ pathfinder = function(pitchCands,
 
   # take log to approximate human perception of pitch differences
   pitchCands[!is.na(pitchCands)] = log2(pitchCands[!is.na(pitchCands)])
+  if (!is.null(manual)) manual$freq = log2(manual$freq)
 
   # get the "center of gravity" of pitch candidates in each frame (mean of all
   # pitch candidates weighted by their respective certainties)
@@ -236,7 +237,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
   # find the most plausible starting pitch by taking median over the first few
   # frames, weighted by certainty
   if (1 %in% manual$frame) {
-    point_current = manual$freq[mf]
+    point_current = manual$freq[manual$frame == 1]
   } else {
     p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
                na.rm = TRUE)
@@ -264,12 +265,14 @@ pathfinding_fast = function(pitchCands = pitchCands,
       # of each estimate vs. the magnitude of pitch jumps
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       if (i %in% manual$frame) {
-        idx = nr  # the last row is for manual candidates
+        idx = which(cands == manual$freq[manual$frame == i])
       } else {
         idx = which.min(costs)
       }
-      path = c(path, pitchCands[idx, i])
+      point_current = pitchCands[idx, i]
+      path = c(path, point_current)
       costPathForward = costPathForward + costs[idx]
+      if (length(costPathForward) < 1) print(i)
     } else {
       path = c(path, NA)
     }
@@ -279,9 +282,11 @@ pathfinding_fast = function(pitchCands = pitchCands,
   pitchCands_rev = pitchCands[, rev(1:nc), drop = FALSE]
   pitchCert_rev = pitchCert[, rev(1:nc), drop = FALSE]
   pitchCenterGravity_rev = rev(pitchCenterGravity)
+  manual_rev = manual
+  manual_rev$frame = nc - manual$frame + 1
 
-  if (nc %in% manual$frame) {
-    point_current = manual$freq[manual$frame == nc]
+  if (1 %in% manual_rev$frame) {
+    point_current = manual_rev$freq[manual_rev$frame == 1]
   } else {
     p = median(pitchCenterGravity_rev[1:min(5, nc)])
     c = na.omit(pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)) # b/c there may be NA's,
@@ -300,17 +305,21 @@ pathfinding_fast = function(pitchCands = pitchCands,
       })
       if (length(cost_pitchJump) == 0) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-      if ((nc + 1 - i) %in% manual$frame) {
-        idx = nr
+      if (i %in% manual_rev$frame) {
+        idx = which(cands == manual_rev$freq[manual_rev$frame == i])
       } else {
         idx = which.min(costs)
       }
-      path_rev = c(path_rev, pitchCands_rev[idx, i])
+      point_current = pitchCands_rev[idx, i]
+      path_rev = c(path_rev, point_current)
       costPathBackward = costPathBackward + costs[idx]
     } else {
       path_rev = c(path_rev, NA)
     }
   }
+#
+#   er = try(costPathForward < costPathBackward, silent = TRUE)
+#   if (class(er) == 'try-error' | is.na(er)) browser()
 
   if (costPathForward < costPathBackward) {
     bestPath = path
@@ -643,8 +652,8 @@ findGrad = function(path, interpol = 3) {
 #'   contours can be fed into this function at once to speed things up)
 #' @param smoothing_ww width of smoothing window (points)
 #' @param smoothingThres tolerated deviance from moving median (semitones)
-#' @param inviolable a vector of TRUE/FALSE values indicating which rows of df
-#'   should not be modified (meant for manual pitch values)
+#' @param inviolable a vector of indices of the rows rows of df that should not
+#'   be modified (meant for manual pitch values)
 #' @return Returns a dataframe of the same dimensions as df.
 #' @keywords internal
 #' @examples
@@ -659,7 +668,6 @@ medianSmoother = function(df,
                           smoothing_ww,
                           smoothingThres,
                           inviolable = NULL) {
-  if (is.null(inviolable)) inviolable = rep(TRUE, nrow(df))
   temp = df # to calculate median_over_window for original values
   hw = floor(smoothing_ww / 2) # smooth over plus-minus half the smoothing_ww
   for (i in 1:nrow(df)) {
@@ -671,7 +679,7 @@ medianSmoother = function(df,
     })
     # difference from median pitch etc over window, in semitones
     deviance = 12 * log2(as.numeric(df[i, ]) / median_over_window)
-    if (!inviolable[i]) {
+    if (!i %in% inviolable) {
       cond = which(abs(deviance - 1) > smoothingThres)
       df[i, cond] = median_over_window[cond]
     }

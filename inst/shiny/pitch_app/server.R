@@ -1,4 +1,4 @@
-# TODO: plot manual pitch values; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); manually added pitch values should affect syllable structure (extend pitch contour into previously unvoiced regions); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; distinguish between unspecified manual values and manually unvoiced values (currently both are NA) - a sort of "inviolable"
+# TODO: octave up/down should create manual pitch cands; radio buttons to choose left-click action (new cands / selection); plot manual pitch values; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -12,7 +12,6 @@ server = function(input, output, session) {
   myPars$myAudio_path = NULL
   myPars$pitch = NULL       # pitch contour
   myPars$bp = NULL          # selected points
-  myPars$anyManual = FALSE  # keep track of whether any manual pitch values have been added
   myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
   myPars$manualUnv = numeric()
   myPars$clicksAfterBrushing = 2
@@ -96,14 +95,24 @@ server = function(input, output, session) {
         main = '',
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
       )
-
+      # add manual values to the list of pitch candidates for seamless plotting
+      n = ncol(myPars$pitchCands$freq)
+      if (n > 0 & nrow(myPars$manual) > 0) {
+        temp_freq = rep(NA, n)
+        temp_freq[myPars$manual$frame] = myPars$manual$freq
+        temp_freq = rbind(myPars$pitchCands$freq, temp_freq)
+        temp_cert = rbind(myPars$pitchCands$cert, rep(1, n))  # change 1 to input$manualCert
+        temp_source = rbind(myPars$pitchCands$source, rep('manual', n))
+      } else {
+        temp_freq = myPars$pitchCands$freq
+        temp_cert = myPars$pitchCands$cert
+        temp_source = myPars$pitchCands$source
+      }
       addPitchCands(
-        pitchCands = myPars$pitchCands$freq,
-        pitchCert = myPars$pitchCands$cert,
-        pitchSource = myPars$pitchCands$source,
+        pitchCands = temp_freq,
+        pitchCert = temp_cert,
+        pitchSource = temp_source,
         pitch = myPars$pitch,
-        # candPlot = candPlot,
-        # pitchPlot = pitchPlot,
         addToExistingPlot = TRUE,
         showLegend = TRUE,
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
@@ -201,17 +210,18 @@ server = function(input, output, session) {
       # (if any) and paste them back in
       isolate({
         if (!is.null(myPars$pitch) &
-            myPars$anyManual) {
+            nrow(myPars$manual) > 0) {
           # if the number of frames has changed (new windowLengh or step),
-          # up/downsample the manual pitch contour accordingly
+          # up/downsample manual pitch candidates accordingly
           len_old = length(myPars$pitch)  # !!! switch to myPars$manual
           len_new = ncol(myPars$pitchCands$freq)
-          pitch_newLen = rep(NA, len = len_new)
-          idx_old = which(!is.na(myPars$pitch))
-          idx_new = round(idx_old * len_new / len_old)
-          pitch_newLen[idx_new] = myPars$pitch[idx_old]
-          myPars$pitch = pitch_newLen
-          myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), ] = myPars$pitch
+          myPars$manual$frame = ceiling(myPars$manual$frame * len_new / len_old)
+          # pitch_newLen = rep(NA, len = len_new)
+          # idx_old = which(!is.na(myPars$pitch))
+          # idx_new = round(idx_old * len_new / len_old)
+          # pitch_newLen[idx_new] = myPars$pitch[idx_old]
+          # myPars$pitch = pitch_newLen
+          # myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), ] = myPars$pitch
         }
         obs_pitch()  # run pathfinder
       })
@@ -269,11 +279,10 @@ server = function(input, output, session) {
         # smooth of 1 gives smoothingThres of 4 semitones
         smoothingThres = 4 / input$smooth
         #print(myPars$pitchCands$source)
-        manual_frames = as.vector(apply(myPars$pitchCands$freq, 2, function(x) !is.na(tail(x, 1))))
         myPars$pitch = medianSmoother(as.data.frame(myPars$pitch),
                                       smoothing_ww = smoothing_ww,
                                       smoothingThres = smoothingThres,
-                                      inviolable = manual_frames)[, 1]
+                                      inviolable = myPars$manual$frame)[, 1]
       }
     }
   }
@@ -282,12 +291,17 @@ server = function(input, output, session) {
     myPars$clicksAfterBrushing = myPars$clicksAfterBrushing + 1
     if (length(myPars$pitchCands$freq) > 0 & myPars$clicksAfterBrushing > 2) {
       session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
-      closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
+      closest_frame = which.min(abs(
+        as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
       # create a manual pitch estimate for the closest frame with the clicked value
-      myPars$manual = rbind(myPars$manual, data.frame(
-        frame = closest_frame,
-        freq = round(input$spectrogram_click$y * 1000, 3)
-      ))
+      new_freq = round(input$spectrogram_click$y * 1000, 3)
+      if (closest_frame %in% myPars$manual$frame) {
+        myPars$manual$freq[myPars$manual$frame == closest_frame] = new_freq
+      } else {
+        myPars$manual = rbind(myPars$manual,
+                              data.frame(frame = closest_frame, freq = new_freq))
+      }
+      myPars$manual = myPars$manual[order(myPars$manual$frame), ]  # just to keep things tidy
       obs_pitch()
     }
   })
