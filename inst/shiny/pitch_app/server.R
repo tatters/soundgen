@@ -1,4 +1,4 @@
-# TODO: adding an achor should undo unvoicing; octave up/down should create manual pitch cands; radio buttons to choose left-click action (new cands / selection); plot manual pitch values; action buttons for doing smth with selection (octave up/down, devoice, set prior based on selection, etc. ...); add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible
+# TODO: adding an achor should undo unvoicing; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; check pathfinding_slow with manual
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -253,6 +253,7 @@ server = function(input, output, session) {
           myPars$pitch[myseq] = pathfinder(
             pitchCands = myPars$pitchCands$freq[, myseq, drop = FALSE],
             pitchCert = myPars$pitchCands$cert[, myseq, drop = FALSE],
+            pitchSource = myPars$pitchCands$source[, myseq, drop = FALSE],
             manual = manual_syl,
             certWeight = input$certWeight,
             pathfinding = ifelse(input$pathfinding == 'slow',
@@ -339,14 +340,36 @@ server = function(input, output, session) {
   observeEvent(input$selection_octaveUp, {
     print('Selection octave up')
     if (!is.null(myPars$bp)) {
-      myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = myPars$pitch[myPars$bp[, 'selected_'] == TRUE] * 2
+      bp_idx = which(myPars$bp[, 'selected_'] == TRUE)
+      # remove previous manual cands in selection
+      myPars$manual = myPars$manual[-which(myPars$manual$frame %in% bp_idx)]
+      # add the new ones
+      myPars$manual = rbind(myPars$manual, data.frame(
+        frame = bp_idx,
+        freq = myPars$pitch[bp_idx] * 2
+      ))
+      # make sure we stay within pitchFloor/pitchCeiling
+      myPars$manual[myPars$manual < input$pitchFloor] = input$pitchFloor
+      myPars$manual[myPars$manual > input$pitchCeiling] = input$pitchCeiling
+      obs_pitch()
     }
   })
 
   observeEvent(input$selection_octaveDown, {
     print('Selection octave down')
     if (!is.null(myPars$bp)) {
-      myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = myPars$pitch[myPars$bp[, 'selected_'] == TRUE] / 2
+      bp_idx = which(myPars$bp[, 'selected_'] == TRUE)
+      # remove previous manual cands in selection
+      myPars$manual = myPars$manual[-which(myPars$manual$frame %in% bp_idx)]
+      # add the new ones
+      myPars$manual = rbind(myPars$manual, data.frame(
+        frame = bp_idx,
+        freq = myPars$pitch[bp_idx] / 2
+      ))
+      # make sure we stay within pitchFloor/pitchCeiling
+      myPars$manual[myPars$manual < input$pitchFloor] = input$pitchFloor
+      myPars$manual[myPars$manual > input$pitchCeiling] = input$pitchCeiling
+      obs_pitch()
     }
   })
 

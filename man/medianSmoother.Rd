@@ -14,8 +14,8 @@ contours can be fed into this function at once to speed things up)}
 
 \item{smoothingThres}{tolerated deviance from moving median (semitones)}
 
-\item{inviolable}{a vector of TRUE/FALSE values indicating which rows of df
-should not be modified (meant for manual pitch values)}
+\item{inviolable}{a vector of indices of the rows rows of df that should not
+be modified (meant for manual pitch values)}
 }
 \value{
 Returns a dataframe of the same dimensions as df.

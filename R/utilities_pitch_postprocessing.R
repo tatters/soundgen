@@ -29,6 +29,7 @@
 #' @keywords internal
 pathfinder = function(pitchCands,
                       pitchCert,
+                      pitchSource,
                       manual = NULL,
                       certWeight = 0.5,
                       pathfinding = c('none', 'fast', 'slow')[2],
@@ -49,6 +50,7 @@ pathfinder = function(pitchCands,
     certMan[manual$frame] = manualCert
     pitchCands = rbind(pitchCands, freqMan)
     pitchCert = rbind(pitchCert, certMan)
+    pitchSource = rbind(pitchSource, rep('manual', nc))
     nr = nr + 1
   }
 
@@ -83,15 +85,20 @@ pathfinder = function(pitchCands,
       pitchCert = apply(matrix(1:ncol(pitchCert)), 1, function(x) {
         pitchCert[o[, x], x]
       })
+      pitchSource = apply(matrix(1:ncol(pitchSource)), 1, function(x) {
+        pitchSource[o[, x], x]
+      })
     }
     intplt = interpolate(pitchCands = pitchCands,
                          pitchCert = pitchCert,
+                         pitchSource = pitchSource,
                          pitchCenterGravity = pitchCenterGravity,
                          interpolWin = interpolWin,
                          interpolTol = interpolTol,
                          interpolCert = interpolCert)
     pitchCands = intplt$pitchCands
     pitchCert = intplt$pitchCert
+    pitchSource = intplt$pitchSource
     pitchCenterGravity = intplt$pitchCenterGravity
   }
 
@@ -100,6 +107,7 @@ pathfinder = function(pitchCands,
   if (length(keep_rows) > 0) {
     pitchCands = pitchCands[keep_rows, , drop = FALSE]
     pitchCert = pitchCert[keep_rows, , drop = FALSE]
+    pitchSource = pitchSource[keep_rows, , drop = FALSE]
   }
 
   # special case: only a single pitch candidate for all frames in a syllable
@@ -115,6 +123,7 @@ pathfinder = function(pitchCands,
     bestPath = pathfinding_fast(
       pitchCands = pitchCands,
       pitchCert = pitchCert,
+      pitchSource = pitchSource,
       manual = manual,
       pitchCenterGravity = pitchCenterGravity,
       certWeight = certWeight
@@ -175,14 +184,17 @@ pathfinder = function(pitchCands,
 #' @keywords internal
 interpolate = function(pitchCands,
                        pitchCert,
+                       pitchSource,
                        pitchCenterGravity,
                        interpolWin = 3,
                        interpolTol = 0.3,
                        interpolCert = 0.3) {
   # ... add an empty row for new, interpolated pitch candidates
-  pitchCands = rbind(rep(NA, ncol(pitchCands)), pitchCands)
-  pitchCert = rbind(rep(NA, ncol(pitchCert)), pitchCert)
-  for (f in 1:ncol(pitchCands)) {
+  nc = ncol(pitchCands)
+  pitchCands = rbind(rep(NA, nc), pitchCands)
+  pitchCert = rbind(rep(NA, nc), pitchCert)
+  pitchSource = rbind(rep('intpl', nc), pitchSource)
+  for (f in 1:nc) {
     left = max(1, f - interpolWin)
     right = min(ncol(pitchCands), f + interpolWin)
     # median over interpolation window (by default plus-minus 2 points)
@@ -207,6 +219,7 @@ interpolate = function(pitchCands,
   }
   return(list(pitchCands = pitchCands,
               pitchCert = pitchCert,
+              pitchSource = pitchSource,
               pitchCenterGravity = pitchCenterGravity))
 }
 
@@ -229,11 +242,12 @@ interpolate = function(pitchCands,
 #' @param manual dataframe giving manual pitch candidates, which the path
 #'   MUST go through
 #' @keywords internal
-pathfinding_fast = function(pitchCands = pitchCands,
-                            pitchCert = pitchCert,
-                            manual = manual,
-                            pitchCenterGravity = pitchCenterGravity,
-                            certWeight = certWeight) {
+pathfinding_fast = function(pitchCands,
+                            pitchCert,
+                            pitchSource,
+                            manual,
+                            pitchCenterGravity,
+                            certWeight) {
   # find the most plausible starting pitch by taking median over the first few
   # frames, weighted by certainty
   if (1 %in% manual$frame) {
@@ -265,14 +279,13 @@ pathfinding_fast = function(pitchCands = pitchCands,
       # of each estimate vs. the magnitude of pitch jumps
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       if (i %in% manual$frame) {
-        idx = which(cands == manual$freq[manual$frame == i])
+        idx = which(pitchSource[, i] == 'manual')
       } else {
         idx = which.min(costs)
       }
       point_current = pitchCands[idx, i]
       path = c(path, point_current)
       costPathForward = costPathForward + costs[idx]
-      if (length(costPathForward) < 1) print(i)
     } else {
       path = c(path, NA)
     }
@@ -306,7 +319,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
       if (length(cost_pitchJump) == 0) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       if (i %in% manual_rev$frame) {
-        idx = which(cands == manual_rev$freq[manual_rev$frame == i])
+        idx = which(pitchSource[, i] == 'manual')
       } else {
         idx = which.min(costs)
       }
@@ -320,7 +333,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
 #
 #   er = try(costPathForward < costPathBackward, silent = TRUE)
 #   if (class(er) == 'try-error' | is.na(er)) browser()
-
+  if (length(costPathForward) != 1 | length(costPathBackward) != 1) browser()
   if (costPathForward < costPathBackward) {
     bestPath = path
   } else {
