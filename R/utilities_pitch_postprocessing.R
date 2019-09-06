@@ -248,26 +248,25 @@ pathfinding_fast = function(pitchCands,
                             manual,
                             pitchCenterGravity,
                             certWeight) {
+  nc = ncol(pitchCands)
+  nr = nrow(pitchCands)
+
   # find the most plausible starting pitch by taking median over the first few
   # frames, weighted by certainty
   if (1 %in% manual$frame) {
     point_current = manual$freq[manual$frame == 1]
   } else {
-    p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
-               na.rm = TRUE)
-    c = pitchCert[, 1] / abs(pitchCands[, 1] - p) # b/c there may be NA's,
-    # and they can't be excluded directly in which.max in the next line
+    p = median(pitchCenterGravity[1:min(5, nc)], na.rm = TRUE)
+    c = pitchCert[, 1] / abs(pitchCands[, 1] - p)
     point_current = pitchCands[which.max(c), 1]
   }
   path = point_current
   costPathForward = 0
 
   # run forwards
-  nc = ncol(pitchCands)
-  nr = nrow(pitchCands)
   for (i in 2:nc) {
-    cands = na.omit(pitchCands[, i])
-    if (length(cands) > 0) { # in case of an NA in the contour
+    cands = pitchCands[, i]
+    if (any(!is.na(cands))) {
       cost_cert = abs(cands - pitchCenterGravity[i])
       # get the cost of transition from the current point to each of the pitch
       # candidates in the next frame
@@ -294,6 +293,7 @@ pathfinding_fast = function(pitchCands,
   # run backwards
   pitchCands_rev = pitchCands[, rev(1:nc), drop = FALSE]
   pitchCert_rev = pitchCert[, rev(1:nc), drop = FALSE]
+  pitchSource_rev = pitchSource[, rev(1:nc), drop = FALSE]
   pitchCenterGravity_rev = rev(pitchCenterGravity)
   manual_rev = manual
   manual_rev$frame = nc - manual$frame + 1
@@ -301,17 +301,16 @@ pathfinding_fast = function(pitchCands,
   if (1 %in% manual_rev$frame) {
     point_current = manual_rev$freq[manual_rev$frame == 1]
   } else {
-    p = median(pitchCenterGravity_rev[1:min(5, nc)])
-    c = na.omit(pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)) # b/c there may be NA's,
-    # and they can't be excluded directly in which.max in the next line
+    p = median(pitchCenterGravity_rev[1:min(5, nc)], na.rm = TRUE)
+    c = pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)
     point_current = pitchCands_rev[which.max(c), 1]
   }
   path_rev = point_current
   costPathBackward = 0
 
   for (i in 2:nc) {
-    cands = na.omit(pitchCands_rev[, i])
-    if (length(cands) > 0) { # in case of an NA in the contour
+    cands = pitchCands_rev[, i]
+    if (any(!is.na(cands))) {
       cost_cert = abs(cands - pitchCenterGravity_rev[i])
       cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
         costJumps(point_current, cands[x])
@@ -319,7 +318,7 @@ pathfinding_fast = function(pitchCands,
       if (length(cost_pitchJump) == 0) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       if (i %in% manual_rev$frame) {
-        idx = which(pitchSource[, i] == 'manual')
+        idx = which(pitchSource_rev[, i] == 'manual')
       } else {
         idx = which.min(costs)
       }
@@ -330,9 +329,9 @@ pathfinding_fast = function(pitchCands,
       path_rev = c(path_rev, NA)
     }
   }
-#
-#   er = try(costPathForward < costPathBackward, silent = TRUE)
-#   if (class(er) == 'try-error' | is.na(er)) browser()
+  #
+  #   er = try(costPathForward < costPathBackward, silent = TRUE)
+  #   if (class(er) == 'try-error' | is.na(er)) browser()
   if (length(costPathForward) != 1 | length(costPathBackward) != 1) browser()
   if (costPathForward < costPathBackward) {
     bestPath = path

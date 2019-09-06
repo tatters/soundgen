@@ -4,8 +4,8 @@
 \alias{getPrior}
 \title{Get prior for pitch candidates}
 \usage{
-getPrior(priorMean, priorSD, pitchCands, pitchFloor = 1,
-  pitchCeiling = 3000)
+getPrior(priorMean, priorSD, pitchCands = NULL, pitchFloor = 75,
+  pitchCeiling = 3000, plot = FALSE)
 }
 \arguments{
 \item{priorMean}{specifies the mean (Hz) and standard deviation
@@ -25,6 +25,8 @@ an octave)}
 \item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
 \item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
+
+\item{plot}{if TRUE, produces a separate plot of the prior}
 }
 \value{
 Returns a numeric matrix of the same dimensions as pitchCands for
@@ -42,5 +44,8 @@ contexts (think a soft pitch ceiling). Algorithm: the multiplier for each
 pitch candidate is the density of gamma distribution with mean = priorMean
 (Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
 pitchCeiling]. Called by analyze().
+}
+\examples{
+soundgen:::getPrior(150, 2, pitchCands = NULL, plot = TRUE)
 }
 \keyword{internal}

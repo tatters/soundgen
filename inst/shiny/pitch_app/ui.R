@@ -111,10 +111,10 @@ ui = fluidPage(
 
     column(8,
            fluidRow(
-             column(3,
+             column(4,
                     fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = '...myfile...')
              ),
-             column(5,
+             column(4,
                     uiOutput("myAudio")
              )
            ),
@@ -122,11 +122,14 @@ ui = fluidPage(
              checkboxGroupInput('pitchMethods', label = 'Pitch methods', choiceValues = c('dom', 'autocor', 'cep', 'spec'), choiceNames = c('Lowest dominant frequency', 'Autocorrelation', 'Cepstrum', 'Ratio of harmonics'), selected = c('dom', 'autocor'), inline = TRUE)
            ),
            fluidRow(
-             column(4,
+             column(3,
                     radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Add anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
              ),
              column(4,
                     htmlOutput('spectro_hover', inline = TRUE)
+             ),
+             column(1,
+                    actionButton(inputId = "done", label = "Done", style="color: blue; background-color: orange;")
              )
            ),
 

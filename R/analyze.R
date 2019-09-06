@@ -772,7 +772,8 @@ analyze = function(x,
                                       priorSD = priorSD,
                                       pitchCands = pitchCands_list$freq,
                                       pitchFloor = pitchFloor,
-                                      pitchCeiling = pitchCeiling)
+                                      pitchCeiling = pitchCeiling,
+                                      plot = priorPlot)
       pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
     }
 
@@ -886,17 +887,22 @@ analyze = function(x,
 
   # a separate plot of the prior
   if (priorPlot) {
-    freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
-    prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
-    plot(
-      x = semitonesToHz(freqs),
-      y = prior,
-      type = 'l',
-      log = 'x',
-      xlim = c(pitchFloor, pitchCeiling),
-      xlab = 'Frequency, Hz',
-      ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values'
-    )
+    # getPrior = function(priorMean,
+    #                 priorSD,
+    #                 pitchCands,
+    #                 pitchFloor = 1,
+    #                 pitchCeiling = 3000)
+    # freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
+    # prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
+    # plot(
+    #   x = semitonesToHz(freqs),
+    #   y = pitchCert_multiplier[, 2],
+    #   type = 'l',
+    #   log = 'x',
+    #   xlim = c(pitchFloor, pitchCeiling),
+    #   xlab = 'Frequency, Hz',
+    #   ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values'
+    # )
   }
 
   if (summary == TRUE) {
@@ -1000,7 +1006,7 @@ analyzeFolder = function(myfolder,
                          entropyThres = 0.6,
                          pitchFloor = 75,
                          pitchCeiling = 3500,
-                         priorMean = HzToSemitones(300),
+                         priorMean = 300,
                          priorSD = 6,
                          priorPlot = FALSE,
                          nCands = 1,

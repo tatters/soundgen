@@ -596,24 +596,42 @@ getPitchSpec = function(frame,
 #'   multiplying the matrix of certainty of in pitch values.
 #' @inheritParams analyze
 #' @param pitchCands a matrix of pitch candidate frequencies
+#' @param plot if TRUE, produces a separate plot of the prior
 #' @keywords internal
+#' @examples
+#' soundgen:::getPrior(150, 2, pitchCands = NULL, plot = TRUE)
 getPrior = function(priorMean,
                     priorSD,
-                    pitchCands,
-                    pitchFloor = 1,
-                    pitchCeiling = 3000) {
+                    pitchCands = NULL,
+                    pitchFloor = 75,
+                    pitchCeiling = 3000,
+                    plot = FALSE) {
   priorMean_semitones = HzToSemitones(priorMean)
   shape = priorMean_semitones ^ 2 / priorSD ^ 2
   rate = priorMean_semitones / priorSD ^ 2
-  prior_normalizer = max(dgamma(
-    seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100),
+  freqs = seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100)
+  prior_normalizer = dgamma(
+    freqs,
     shape = shape,
     rate = rate
-  ))
-  pitchCert_multiplier = dgamma(
-    HzToSemitones(pitchCands),
-    shape = shape,
-    rate = rate
-  ) / prior_normalizer
-  return(pitchCert_multiplier)
+  )
+  prior_norm_max = max(prior_normalizer)
+  if (plot) {
+    plot(
+      x = semitonesToHz(freqs),
+      y = prior_normalizer / prior_norm_max,
+      type = 'l',
+      log = 'x',
+      xlab = 'Frequency, Hz',
+      ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values'
+    )
+  }
+  if (!is.null(pitchCands)) {
+    pitchCert_multiplier = dgamma(
+      HzToSemitones(pitchCands),
+      shape = shape,
+      rate = rate
+    ) / prior_norm_max
+    return(pitchCert_multiplier)
+  }
 }

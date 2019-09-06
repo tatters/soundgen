@@ -1,4 +1,4 @@
-# TODO: adding an achor should undo unvoicing; add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; check pathfinding_slow with manual
+# TODO: add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; check pathfinding_slow with manual
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -117,31 +117,6 @@ server = function(input, output, session) {
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
       )
     }
-  })
-
-  hover_label = reactive({
-    hover_temp = input$spectrogram_hover
-    if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
-      label = paste('<h4>Pitch at cursor: ', round(hover_temp$y * 1000), 'Hz</h4>')
-    } else {
-      label = '<h4>Pitch at cursor: </h4>'
-    }
-    return(label)
-  })
-  output$spectro_hover = renderUI(HTML(hover_label()))
-
-  brush = observeEvent(input$spectrogram_brush, {
-    print('running brush')
-    myPars$pitch_df = data.frame(
-      time = as.numeric(colnames(myPars$pitchCands$freq)),
-      freq = myPars$pitch / 1000
-    )
-    myPars$bp = brushedPoints(myPars$pitch_df,
-                              brush = input$spectrogram_brush,
-                              xvar = 'time', yvar = 'freq',
-                              allRows = TRUE)
-    # for ex., to unvoice selection: myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
-    # print(bp)
   })
 
   obs_anal = observe({
@@ -300,6 +275,9 @@ server = function(input, output, session) {
                               data.frame(frame = closest_frame, freq = new_freq))
       }
       myPars$manual = myPars$manual[order(myPars$manual$frame), ]  # just to keep things tidy
+      # if this frame was manually flagged as unvoiced, remove this flag
+      idx_rem = which(myPars$manualUnv == closest_frame)
+      if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
       obs_pitch()
     }
   })
@@ -310,9 +288,7 @@ server = function(input, output, session) {
                                       input$spectrogram_dblclick$x))
       if (length(closest_frame) > 0) {
         idx_rem = which(myPars$manual$frame == closest_frame)
-        if (length(idx_rem) > 0) {
-          myPars$manual = myPars$manual[-idx_rem, ]
-        }
+        if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
         obs_pitch()
       }
     }
@@ -320,33 +296,36 @@ server = function(input, output, session) {
 
   observeEvent(input$selection_unvoice, {
     print('Unvoicing selection')
-    if (!is.null(myPars$bp)) {
-      # myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
-      myPars$manualUnv = c(myPars$manualUnv, which(myPars$bp[, 'selected_']))
+    if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
+      myPars$manualUnv = c(myPars$manualUnv, myPars$brush_sel_xy)
+      # remove manual anchors within selection, if any
+      idx_rem = which(myPars$manual$frame %in% myPars$manualUnv)
+      if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
       obs_pitch()
     }
   })
 
   observeEvent(input$selection_voice, {
     print('Voicing selection')
-    if (!is.null(myPars$bp) & length(myPars$manualUnv) > 0) {
-      # myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
-      idx_rem = which(myPars$manualUnv %in% myPars$bp[, 'selected_'])
-      myPars$manualUnv = myPars$manualUnv[-idx_rem]
+    if (!is.null(myPars$bp) &
+        length(myPars$brush_sel_x) > 0 &
+        length(myPars$manualUnv) > 0) {
+      idx_rem = which(myPars$manualUnv %in% myPars$brush_sel_x)
+      if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
       obs_pitch()
     }
   })
 
   observeEvent(input$selection_octaveUp, {
     print('Selection octave up')
-    if (!is.null(myPars$bp)) {
-      bp_idx = which(myPars$bp[, 'selected_'] == TRUE)
+    if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
       # remove previous manual cands in selection
-      myPars$manual = myPars$manual[-which(myPars$manual$frame %in% bp_idx)]
+      idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
+      if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
       # add the new ones
       myPars$manual = rbind(myPars$manual, data.frame(
-        frame = bp_idx,
-        freq = myPars$pitch[bp_idx] * 2
+        frame = myPars$brush_sel_xy,
+        freq = myPars$pitch[myPars$brush_sel_xy] * 2
       ))
       # make sure we stay within pitchFloor/pitchCeiling
       myPars$manual[myPars$manual < input$pitchFloor] = input$pitchFloor
@@ -357,14 +336,14 @@ server = function(input, output, session) {
 
   observeEvent(input$selection_octaveDown, {
     print('Selection octave down')
-    if (!is.null(myPars$bp)) {
-      bp_idx = which(myPars$bp[, 'selected_'] == TRUE)
+    if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
       # remove previous manual cands in selection
-      myPars$manual = myPars$manual[-which(myPars$manual$frame %in% bp_idx)]
+      idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
+      if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
       # add the new ones
       myPars$manual = rbind(myPars$manual, data.frame(
-        frame = bp_idx,
-        freq = myPars$pitch[bp_idx] / 2
+        frame = myPars$brush_sel_xy,
+        freq = myPars$pitch[myPars$brush_sel_xy] / 2
       ))
       # make sure we stay within pitchFloor/pitchCeiling
       myPars$manual[myPars$manual < input$pitchFloor] = input$pitchFloor
@@ -386,6 +365,34 @@ server = function(input, output, session) {
     }
   })
 
+
+  hover_label = reactive({
+    hover_temp = input$spectrogram_hover
+    if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
+      label = paste('<h4>Pitch at cursor: ', round(hover_temp$y * 1000), 'Hz</h4>')
+    } else {
+      label = '<h4>Pitch at cursor: </h4>'
+    }
+    return(label)
+  })
+  output$spectro_hover = renderUI(HTML(hover_label()))
+
+  brush = observeEvent(input$spectrogram_brush, {
+    print('running brush')
+    myPars$pitch_df = data.frame(
+      time = as.numeric(colnames(myPars$pitchCands$freq)),
+      freq = myPars$pitch / 1000
+    )
+    myPars$bp = brushedPoints(myPars$pitch_df,
+                              brush = input$spectrogram_brush,
+                              xvar = 'time', yvar = 'freq',
+                              allRows = TRUE)
+    myPars$brush_sel_xy = which(myPars$bp[, 'selected_'] == TRUE)  # selected pitch points
+    myPars$brush_sel_x = which(myPars$pitch_df$time > input$spectrogram_brush$xmin &
+      myPars$pitch_df$time < input$spectrogram_brush$xmax)  # selected frames (along x axis)
+    # for ex., to unvoice selection: myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
+    # print(bp)
+  })
 
   # observeEvent(input$about, {
   #   id <<- showNotification(
