@@ -130,6 +130,12 @@ ui = fluidPage(
              ),
              column(1,
                     actionButton(inputId = "done", label = "Done", style="color: blue; background-color: orange;")
+             ),
+             column(4,
+                    actionButton(inputId = 'scrollLeft', label = '<'),
+                    actionButton(inputId = 'zoomIn', label = '+'),
+                    actionButton(inputId = 'zoomOut', label = '-'),
+                    actionButton(inputId = 'scrollRight', label = '>')
              )
            ),
 
@@ -149,18 +155,25 @@ ui = fluidPage(
              shinyBS:::bsPopover(id='selection_octaveDown', title=NULL, content='Lower pitch for selection by an octave', placement="right", trigger="hover"),
              actionButton(inputId = "selection_setPrior", label = "Set prior", inline = TRUE),
              shinyBS:::bsPopover(id='selection_setPrior', title=NULL, content='Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover"),
+             actionButton(inputId = "selection_zoomToSel", label = "Zoom to sel", inline = TRUE),
+             shinyBS:::bsPopover(id='selection_zoomToSel', title=NULL, content='Zoom to selection (time axis only)', placement="right", trigger="hover"),
              HTML('</h4>')
            ),
 
            fluidRow(
              shinyBS::bsCollapse(id="spec_controls",
                                  shinyBS::bsCollapsePanel("Show spectrogram controls",
-                                                          sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
-                                                          radioButtons(inputId='spec_colorTheme', label="Color scheme", choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
-                                                          sliderInput('specContrast', 'Contrast', value=defaults_analyze['specContrast','default'], min=defaults_analyze['specContrast', 'low'], max=defaults_analyze['specContrast', 'high'], step=defaults_analyze['specContrast','step']),
-                                                          shinyBS:::bsPopover(id='specContrast', title=NULL, content='Regulates the contrast of the spectrogram', placement="below", trigger="hover"),
-                                                          sliderInput('specBrightness', 'Brightness', value=defaults_analyze['specBrightness','default'], min=defaults_analyze['specBrightness', 'low'], max=defaults_analyze['specBrightness', 'high'], step=defaults_analyze['specBrightness','step']),
-                                                          shinyBS:::bsPopover(id='specBrightness', title=NULL, content='Regulates the brightness of the spectrogram', placement="below", trigger="hover")
+                                                          column(6,
+                                                                 sliderInput('spec_xlim', 'Time range, ms', value=c(0, 1000), min=0, max=1000, step=100),
+                                                                 sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step'])
+                                                          ),
+                                                          column(6,
+                                                                 radioButtons(inputId='spec_colorTheme', label="Color scheme", choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
+                                                                 sliderInput('specContrast', 'Contrast', value=defaults_analyze['specContrast','default'], min=defaults_analyze['specContrast', 'low'], max=defaults_analyze['specContrast', 'high'], step=defaults_analyze['specContrast','step']),
+                                                                 shinyBS:::bsPopover(id='specContrast', title=NULL, content='Regulates the contrast of the spectrogram', placement="below", trigger="hover"),
+                                                                 sliderInput('specBrightness', 'Brightness', value=defaults_analyze['specBrightness','default'], min=defaults_analyze['specBrightness', 'low'], max=defaults_analyze['specBrightness', 'high'], step=defaults_analyze['specBrightness','step']),
+                                                                 shinyBS:::bsPopover(id='specBrightness', title=NULL, content='Regulates the brightness of the spectrogram', placement="below", trigger="hover")
+                                                          )
                                  )
              )
            )

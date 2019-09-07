@@ -14,6 +14,7 @@ server = function(input, output, session) {
   myPars$bp = NULL          # selected points
   myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
   myPars$manualUnv = numeric()
+  myPars$zoomFactor = 2
 
   observeEvent(input$loadAudio, {
     print('running load audio')
@@ -24,7 +25,8 @@ server = function(input, output, session) {
     myPars$temp_audio = tuneR::readWave(input$loadAudio$datapath)
     myPars$myAudio = as.numeric(myPars$temp_audio@left)
     myPars$samplingRate = myPars$temp_audio@samp.rate
-    myPars$dur = length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000
+    myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
+    updateSliderInput(session, inputId = 'spec_xlim', value = c(0, myPars$dur), max = myPars$dur)
 
     # instead of re-loading the file every time, save the spectrogram matrix and re-draw manually with filled.contour.mod
     extractSpectrogram()
@@ -89,7 +91,7 @@ server = function(input, output, session) {
         z = t(myPars$spec),
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
-        xlim = c(0, tail(as.numeric(colnames(myPars$spec)), 1)),
+        xlim = input$spec_xlim, # c(0, tail(as.numeric(colnames(myPars$spec)), 1)),
         xlab = 'Time, ms', ylab = 'Frequency, kHz',
         main = '',
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
@@ -389,10 +391,42 @@ server = function(input, output, session) {
                               allRows = TRUE)
     myPars$brush_sel_xy = which(myPars$bp[, 'selected_'] == TRUE)  # selected pitch points
     myPars$brush_sel_x = which(myPars$pitch_df$time > input$spectrogram_brush$xmin &
-      myPars$pitch_df$time < input$spectrogram_brush$xmax)  # selected frames (along x axis)
+                                 myPars$pitch_df$time < input$spectrogram_brush$xmax)  # selected frames (along x axis)
     # for ex., to unvoice selection: myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
     # print(bp)
   })
+
+  changeZoom = function(coef) {
+    midpoint = mean(input$spec_xlim)
+    halfRan = diff(input$spec_xlim) / 2 / coef
+    newLeft = max(0, midpoint - halfRan)
+    newRight = min(myPars$dur, midpoint + halfRan)
+    updateSliderInput(session, inputId = 'spec_xlim', value = c(newLeft, newRight))
+  }
+  observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
+  observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
+  observeEvent(input$selection_zoomToSel, {
+    if (!is.null(myPars$bp)) {
+      updateSliderInput(session, inputId = 'spec_xlim',
+                        value = round(c(input$spectrogram_brush$xmin,
+                                        input$spectrogram_brush$xmax)))
+    }
+  })
+
+  shiftFrame = function(direction) {
+    ran = diff(input$spec_xlim)
+    if (direction == 'left') {
+      newLeft = max(0, input$spec_xlim[1] - ran)
+      newRight = newLeft + ran
+    } else if (direction == 'right') {
+      newRight = min(myPars$dur, input$spec_xlim[2] + ran)
+      newLeft = newRight - ran
+    }
+    updateSliderInput(session, 'spec_xlim', value = c(newLeft, newRight))
+  }
+  observeEvent(input$scrollLeft, shiftFrame('left'))
+  observeEvent(input$scrollRight, shiftFrame('right'))
+
 
   # observeEvent(input$about, {
   #   id <<- showNotification(
