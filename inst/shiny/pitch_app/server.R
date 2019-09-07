@@ -1,4 +1,4 @@
-# TODO: add spectrogram controls to control pitch candidates (pch, cex, etc.); add zoom; export pitch contour; handle folders as input; make the side pane with par-s collapsible; check pathfinding_slow with manual
+# TODO: add spectrogram controls to control pitch candidates (pch, cex, etc.); handle folders as input; make the side pane with par-s collapsible; check pathfinding_slow with manual
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
@@ -12,6 +12,7 @@ server = function(input, output, session) {
   myPars$myAudio_path = NULL
   myPars$pitch = NULL       # pitch contour
   myPars$bp = NULL          # selected points
+  myPars$out = NULL         # for storing the output
   myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
   myPars$manualUnv = numeric()
   myPars$zoomFactor = 2
@@ -20,6 +21,7 @@ server = function(input, output, session) {
     print('running load audio')
     myPars$pitch = NULL
     myPars$pitchCands = NULL
+    myPars$myAudio_filename = input$loadAudio$name
     myPars$myAudio_path = input$loadAudio$datapath
     myPars$myAudio_type = input$loadAudio$type
     myPars$temp_audio = tuneR::readWave(input$loadAudio$datapath)
@@ -427,7 +429,24 @@ server = function(input, output, session) {
   observeEvent(input$scrollLeft, shiftFrame('left'))
   observeEvent(input$scrollRight, shiftFrame('right'))
 
+  observeEvent(input$done, {
+    new = data.frame(
+      file = basename(myPars$myAudio_filename),
+      pitch = paste0('{', paste(round(myPars$pitch), collapse = ', '), '}')
+    )
+    if (is.null(myPars$out)) {
+      myPars$out = new
+    } else {
+      myPars$out = rbind(myPars$out, new)
+    }
+  })
 
+  output$saveRes = downloadHandler(
+    filename = function() 'output.csv',
+    content = function(filename) {
+      write.csv(myPars$out, filename, row.names = FALSE)
+    }
+  )
   # observeEvent(input$about, {
   #   id <<- showNotification(
   #     ui = paste0("SoundGen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),

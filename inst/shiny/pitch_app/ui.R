@@ -111,11 +111,14 @@ ui = fluidPage(
 
     column(8,
            fluidRow(
-             column(4,
+             column(5,
                     fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = '...myfile...')
              ),
-             column(4,
+             column(5,
                     uiOutput("myAudio")
+             ),
+             column(2,
+                    downloadButton(outputId = "saveRes", label = "Save results")
              )
            ),
            fluidRow(
