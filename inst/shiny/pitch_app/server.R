@@ -1,6 +1,10 @@
 # TODO: add spectrogram controls to control pitch candidates (pch, cex, etc.); handle folders as input; make the side pane with par-s collapsible; check pathfinding_slow with manual
 
 server = function(input, output, session) {
+  myPars = reactiveValues()
+  myPars$zoomFactor = 2
+  myPars$out = NULL         # for storing the output
+
   # clean-up of www/ folder: remove all files except temp.wav
   files = list.files('www/')
   files = files[files != 'temp.wav']
@@ -8,31 +12,36 @@ server = function(input, output, session) {
     file.remove(paste0('www/', f))
   }
 
-  myPars = reactiveValues()
-  myPars$myAudio_path = NULL
-  myPars$pitch = NULL       # pitch contour
-  myPars$bp = NULL          # selected points
-  myPars$out = NULL         # for storing the output
-  myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
-  myPars$manualUnv = numeric()
-  myPars$zoomFactor = 2
+  reset = function() {
+    myPars$pitch = NULL       # pitch contour
+    myPars$pitchCands = NULL
+    myPars$bp = NULL          # selected points
+    myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
+    myPars$manualUnv = numeric()
+  }
 
   observeEvent(input$loadAudio, {
     print('running load audio')
-    myPars$pitch = NULL
-    myPars$pitchCands = NULL
-    myPars$myAudio_filename = input$loadAudio$name
-    myPars$myAudio_path = input$loadAudio$datapath
-    myPars$myAudio_type = input$loadAudio$type
-    myPars$temp_audio = tuneR::readWave(input$loadAudio$datapath)
+    myPars$n = 1
+    myPars$nFiles = nrow(input$loadAudio)
+    reset()
+    readAudio(1)
+    # instead of re-loading the file every time, save the spectrogram matrix
+    # and re-draw manually with filled.contour.mod
+    extractSpectrogram()
+  })
+
+  readAudio = function(i) {
+    temp = input$loadAudio[i, ]
+    myPars$myAudio_filename = temp$name
+    myPars$myAudio_path = temp$datapath
+    myPars$myAudio_type = temp$type
+    myPars$temp_audio = tuneR::readWave(temp$datapath)
     myPars$myAudio = as.numeric(myPars$temp_audio@left)
     myPars$samplingRate = myPars$temp_audio@samp.rate
     myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
     updateSliderInput(session, inputId = 'spec_xlim', value = c(0, myPars$dur), max = myPars$dur)
-
-    # instead of re-loading the file every time, save the spectrogram matrix and re-draw manually with filled.contour.mod
-    extractSpectrogram()
-  })
+  }
 
   extractSpectrogram = reactive({
     if (!is.null(myPars$myAudio)) {
@@ -127,7 +136,7 @@ server = function(input, output, session) {
     if (!is.null(input$loadAudio$datapath)) {
       print('running anal')
       temp_anal = analyze(
-        input$loadAudio$datapath,
+        myPars$myAudio_path,
         windowLength = input$windowLength,
         step = input$step,
         wn = input$wn,
@@ -429,7 +438,7 @@ server = function(input, output, session) {
   observeEvent(input$scrollLeft, shiftFrame('left'))
   observeEvent(input$scrollRight, shiftFrame('right'))
 
-  observeEvent(input$done, {
+  done = function() {
     new = data.frame(
       file = basename(myPars$myAudio_filename),
       pitch = paste0('{', paste(round(myPars$pitch), collapse = ', '), '}')
@@ -437,13 +446,46 @@ server = function(input, output, session) {
     if (is.null(myPars$out)) {
       myPars$out = new
     } else {
-      myPars$out = rbind(myPars$out, new)
+      idx = which(myPars$out$file == new$file)
+      if (length(idx) == 1) {
+        myPars$out$pitch[idx] = new$pitch
+      } else {
+        myPars$out = rbind(myPars$out, new)
+      }
     }
-  })
+  }
+
+  nextFile = function() {
+    done()
+    if (myPars$n < myPars$nFiles) {
+      myPars$n = myPars$n + 1
+      reset()
+      readAudio(myPars$n)
+      extractSpectrogram()
+    }
+  }
+  observeEvent(input$nextFile, nextFile())
+
+  lastFile = function() {
+    done()
+    if (myPars$n > 1) {
+      myPars$n = myPars$n - 1
+      reset()
+      readAudio(myPars$n)
+      extractSpectrogram()
+      # re-load the manual pitch contour for the previous file - maybe remember myPars$manual instead
+      # pitch_temp = as.character(myPars$out$pitch[myPars$n])
+      # pitch_temp = substr(pitch_temp, 2, (nchar(pitch_temp) - 1))
+      # pitch_temp = eval(parse(text = noquote(paste0('c(', pitch_temp, ')'))))
+      # myPars$pitch = pitch_temp
+    }
+  }
+  observeEvent(input$lastFile, lastFile())
 
   output$saveRes = downloadHandler(
     filename = function() 'output.csv',
     content = function(filename) {
+      done()  # finalize the last file
       write.csv(myPars$out, filename, row.names = FALSE)
     }
   )

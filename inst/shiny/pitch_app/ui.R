@@ -112,13 +112,13 @@ ui = fluidPage(
     column(8,
            fluidRow(
              column(5,
-                    fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = '...myfile...')
+                    fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = 'No file selected')
              ),
              column(5,
                     uiOutput("myAudio")
              ),
              column(2,
-                    downloadButton(outputId = "saveRes", label = "Save results")
+                    downloadButton(outputId = "saveRes", label = "Save results", style="color: blue; background-color: orange;")
              )
            ),
            fluidRow(
@@ -128,11 +128,12 @@ ui = fluidPage(
              column(3,
                     radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Add anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
              ),
-             column(4,
+             column(3,
                     htmlOutput('spectro_hover', inline = TRUE)
              ),
-             column(1,
-                    actionButton(inputId = "done", label = "Done", style="color: blue; background-color: orange;")
+             column(2,
+                    actionButton(inputId = "lastFile", label = "Last", style="background-color: lightgray;"),
+                    actionButton(inputId = "nextFile", label = "Next", style="background-color: lightgray;")
              ),
              column(4,
                     actionButton(inputId = 'scrollLeft', label = '<'),
