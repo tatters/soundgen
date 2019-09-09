@@ -114,12 +114,15 @@ ui = fluidPage(
              column(5,
                     fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = 'No file selected')
              ),
-             column(5,
+             column(4,
                     uiOutput("myAudio")
              ),
              column(2,
                     downloadButton(outputId = "saveRes", label = "Save results", style="color: blue; background-color: orange;")
-             )
+             ),
+             column(1,
+                    actionButton('about', label = '?')
+                    )
            ),
            fluidRow(
              checkboxGroupInput('pitchMethods', label = 'Pitch methods', choiceValues = c('dom', 'autocor', 'cep', 'spec'), choiceNames = c('Lowest dominant frequency', 'Autocorrelation', 'Cepstrum', 'Ratio of harmonics'), selected = c('dom', 'autocor'), inline = TRUE)

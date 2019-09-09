@@ -1,4 +1,4 @@
-# TODO: play selection; add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: update defaults that depend on samplingRate, eg cepSmooth (#209); check whether works for completely voiceless sounds (no pitch cands found automatically); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -133,18 +133,22 @@ server = function(input, output, session) {
         showLegend = TRUE,
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
       )
+      # Add text label of file name / number
       file_lab = myPars$myAudio_filename
       if (myPars$nFiles > 1) {
         file_lab = paste0(file_lab, '\nFile ', myPars$n, ' of ', myPars$nFiles)
       }
-      text(x = input$spec_xlim[1],
-           y = input$spec_ylim[2],
+      ran_x = input$spec_xlim[2] - input$spec_xlim[1]
+      ran_y = input$spec_ylim[2] - input$spec_ylim[1]
+      text(x = input$spec_xlim[1] + ran_x * .01,
+           y = input$spec_ylim[2] - ran_y * .01,
            labels = file_lab,
            adj = c(0, 1))  # left, top
     }
   })
 
   obs_anal = observe({
+    # analyze the file (executes every time a slider with arg value is changed)
     if (!is.null(input$loadAudio$datapath)) {
       if (myPars$print) print('Calling analyze()')
       temp_anal = analyze(
@@ -214,12 +218,6 @@ server = function(input, output, session) {
           len_old = length(myPars$pitch)  # !!! switch to myPars$manual
           len_new = ncol(myPars$pitchCands$freq)
           myPars$manual$frame = ceiling(myPars$manual$frame * len_new / len_old)
-          # pitch_newLen = rep(NA, len = len_new)
-          # idx_old = which(!is.na(myPars$pitch))
-          # idx_new = round(idx_old * len_new / len_old)
-          # pitch_newLen[idx_new] = myPars$pitch[idx_old]
-          # myPars$pitch = pitch_newLen
-          # myPars$pitchCands$freq[nrow(myPars$pitchCands$freq), ] = myPars$pitch
         }
         obs_pitch()  # run pathfinder
       })
@@ -425,11 +423,11 @@ server = function(input, output, session) {
                               brush = input$spectrogram_brush,
                               xvar = 'time', yvar = 'freq',
                               allRows = TRUE)
-    myPars$brush_sel_xy = which(myPars$bp[, 'selected_'] == TRUE)  # selected pitch points
+    # selected pitch points
+    myPars$brush_sel_xy = which(myPars$bp[, 'selected_'] == TRUE)
+    # selected frames (along x axis)
     myPars$brush_sel_x = which(myPars$pitch_df$time > input$spectrogram_brush$xmin &
-                                 myPars$pitch_df$time < input$spectrogram_brush$xmax)  # selected frames (along x axis)
-    # for ex., to unvoice selection: myPars$pitch[myPars$bp[, 'selected_'] == TRUE] = NA
-    # print(bp)
+                                 myPars$pitch_df$time < input$spectrogram_brush$xmax)
   })
 
   changeZoom = function(coef) {
@@ -514,12 +512,12 @@ server = function(input, output, session) {
     }
   )
 
-  # observeEvent(input$about, {
-  #   id <<- showNotification(
-  #     ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
-  #     duration = 10,
-  #     closeButton = TRUE,
-  #     type = 'default'
-  #   )
-  # })
+  observeEvent(input$about, {
+    id <<- showNotification(
+      ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page with extra tips: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
+      duration = 10,
+      closeButton = TRUE,
+      type = 'default'
+    )
+  })
 }
