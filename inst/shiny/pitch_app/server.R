@@ -1,4 +1,4 @@
-# TODO: remove snake; manuaUnv should prevent syllables from being merged; maybe prior from sel should affect only current file (?); update defaults that depend on samplingRate, eg cepSmooth (#209); check whether works for completely voiceless sounds (no pitch cands found automatically); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: maybe prior from sel should affect only current file (?); update autocorSmooth (#209); check whether works for completely voiceless sounds (no pitch cands found automatically); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -151,10 +151,11 @@ server = function(input, output, session) {
     # analyze the file (executes every time a slider with arg value is changed)
     if (!is.null(input$loadAudio$datapath)) {
       if (myPars$print) print('Calling analyze()')
+      myPars$step = input$windowLength * (1 - input$overlap / 100)
       temp_anal = analyze(
         myPars$myAudio_path,
         windowLength = input$windowLength,
-        overlap = input$overlap,
+        step = myPars$step,
         wn = input$wn,
         zp = input$zp,
         dynamicRange = input$dynamicRange,
@@ -191,7 +192,7 @@ server = function(input, output, session) {
         pathfinding = input$pathfinding,
         # annealPars = list(maxit = 5000, temp = 1000),
         certWeight = input$certWeight,
-        snakeStep = input$snakeStep,
+        snakeStep = 0,  # doesn't work with manual
         snakePlot = FALSE,
         smooth = input$smooth,
         smoothVars = c('pitch'),
@@ -207,6 +208,7 @@ server = function(input, output, session) {
         length.out = nrow(temp_anal$result)
       ) / myPars$samplingRate * 1000 + input$windowLength / 2
       # add: update defaults that depend on samplingRate, eg cepSmooth
+
 
       # if running analyze() for the same audio, preserve the old manual values
       # (if any) and paste them back in
@@ -235,7 +237,7 @@ server = function(input, output, session) {
         shortestPause = input$shortestPause,
         minVoicedCands = input$minVoicedCands,
         pitchMethods = input$pitchMethods,
-        step = input$windowLength * (1 - input$overlap / 100),
+        step = myPars$step,
         samplingRate = input$samplingRate
       )
 
@@ -257,10 +259,10 @@ server = function(input, output, session) {
             pathfinding = ifelse(input$pathfinding == 'slow',
                                  'fast',  # slow doesn't work well with manual cand-s
                                  input$pathfinding),
-            interpolWin = input$interpolWin,
+            interpolWin_bin = ceiling(input$interpolWin / myPars$step),
             interpolTol = input$interpolTol,
             interpolCert = input$interpolCert,
-            snakeStep = input$snakeStep,
+            snakeStep = 0,
             snakePlot = FALSE
           )
         }

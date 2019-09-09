@@ -56,9 +56,8 @@ voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{cepSmooth}{the width of smoothing interval (in bins) for finding
-peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
-odd numbers for lower values of sampling rate}
+\item{cepSmooth}{the width of smoothing interval (Hz) for finding peaks in
+the cepstrum}
 
 \item{cepZp}{zero-padding of the spectrum used for cepstral pitch detection
 (final length of spectrum after zero-padding in points, e.g. 2 ^ 13)}

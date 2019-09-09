@@ -5,7 +5,7 @@
 \title{Interpolate}
 \usage{
 interpolate(pitchCands, pitchCert, pitchSource, pitchCenterGravity,
-  interpolWin = 3, interpolTol = 0.3, interpolCert = 0.3)
+  interpolWin_bin = 3, interpolTol = 0.3, interpolCert = 0.3)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
@@ -19,8 +19,8 @@ our certainty in pitch candidates}
 candidates per fft frame weighted by our certainty in each of these
 candidates}
 
-\item{interpolWin}{when interpolating pitch candidates, the median is
-calculated over \code{plus-minus interpolWin}}
+\item{interpolWin_bin}{when interpolating pitch candidates, the median is
+calculated over \code{plus-minus interpolWin_bin}}
 
 \item{interpolTol}{when interpolating pitch candidates, the criterion
 for needing to interpolate is the absence of pitch candidates with values

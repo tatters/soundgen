@@ -16,7 +16,7 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   cepSmooth = NULL, cepZp = 0, specThres = 0.3, specPeak = 0.35,
   specSinglePeakCert = 0.4, specHNRslope = 0.8, specSmooth = 150,
   specMerge = 1, shortestSyl = 20, shortestPause = 60,
-  interpolWin = 3, interpolTol = 0.3, interpolCert = 0.3,
+  interpolWin = 75, interpolTol = 0.3, interpolCert = 0.3,
   pathfinding = c("none", "fast", "slow")[2], annealPars = list(maxit =
   5000, temp = 1000), certWeight = 0.5, snakeStep = 0.05,
   snakePlot = FALSE, smooth = 1, smoothVars = c("pitch", "dom"),
@@ -126,9 +126,8 @@ voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{cepSmooth}{the width of smoothing interval (in bins) for finding
-peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
-odd numbers for lower values of sampling rate}
+\item{cepSmooth}{the width of smoothing interval (Hz) for finding peaks in
+the cepstrum}
 
 \item{cepZp}{zero-padding of the spectrum used for cepstral pitch detection
 (final length of spectrum after zero-padding in points, e.g. 2 ^ 13)}

@@ -5,7 +5,7 @@
 \title{Cepstral pitch tracker}
 \usage{
 getPitchCep(frame, cepZp, samplingRate, pitchFloor, pitchCeiling, cepThres,
-  cepSmooth = NULL, nCands)
+  cepSmooth, nCands)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -25,9 +25,8 @@ voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{cepSmooth}{the width of smoothing interval (in bins) for finding
-peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
-odd numbers for lower values of sampling rate}
+\item{cepSmooth}{the width of smoothing interval (Hz) for finding peaks in
+the cepstrum}
 
 \item{nCands}{maximum number of pitch candidates per method (except for
 \code{dom}, which returns at most one candidate per frame), normally 1...4}

@@ -4,8 +4,8 @@
 \alias{getPitchAutocor}
 \title{Autocorrelation pitch tracker}
 \usage{
-getPitchAutocor(autoCorrelation, autocorSmooth = NULL, autocorThres,
-  pitchFloor, pitchCeiling, samplingRate, nCands)
+getPitchAutocor(autoCorrelation, autocorSmooth, autocorThres, pitchFloor,
+  pitchCeiling, samplingRate, nCands)
 }
 \arguments{
 \item{autoCorrelation}{pre-calculated autocorrelation of the input frame

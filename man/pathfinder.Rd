@@ -6,7 +6,7 @@
 \usage{
 pathfinder(pitchCands, pitchCert, pitchSource, manual = NULL,
   certWeight = 0.5, pathfinding = c("none", "fast", "slow")[2],
-  annealPars = list(maxit = 5000, temp = 1000), interpolWin = 3,
+  annealPars = list(maxit = 5000, temp = 1000), interpolWin_bin = 3,
   interpolTol = 0.05, interpolCert = 0.3, manualCert = 1,
   snakeStep = 0.05, snakePlot = FALSE)
 }
@@ -30,8 +30,8 @@ candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
 only relevant if \code{pathfinding = 'slow'}}
 
-\item{interpolWin}{when interpolating pitch candidates, the median is
-calculated over \code{plus-minus interpolWin}}
+\item{interpolWin_bin}{when interpolating pitch candidates, the median is
+calculated over \code{plus-minus interpolWin_bin}}
 
 \item{interpolTol}{when interpolating pitch candidates, the criterion
 for needing to interpolate is the absence of pitch candidates with values

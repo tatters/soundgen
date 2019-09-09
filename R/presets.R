@@ -200,7 +200,7 @@ defaults_analyze = matrix(c(
   'domThres', 0.1, 0, 1, 0.01,
   'domSmooth', 220, 1, 600, 10,
   'cepThres', 0.3, 0, 1, 0.01,
-  'cepSmooth', 31, 1, 91, 2,
+  'cepSmooth', 400, 10, 1000, 10,
   'cepZp', 0, 0, 13, 1,
   'specThres', 0.3, 0, 1, 0.01,
   'specPeak', 0.35, 0, 1, 0.01,
@@ -214,7 +214,7 @@ defaults_analyze = matrix(c(
   'shortestPause', 60, 0, 500, 1,
   'smooth', 1, 0, 10, 0.1,
   'snakeStep', 0.05, 0, 2, 0.01,
-  'interpolWin', 3, 0, 15, 1,
+  'interpolWin', 75, 1, 1000, 5,
   'interpolTol', 0.03, 0.01, 1, 0.01,
   'interpolCert', 0.3, 0, 1, 0.01,
 

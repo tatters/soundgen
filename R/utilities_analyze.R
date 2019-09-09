@@ -268,7 +268,7 @@ getDom = function(frame,
 #'   (either NULL or a dataframe of pitch candidates).
 #' @keywords internal
 getPitchAutocor = function(autoCorrelation,
-                           autocorSmooth = NULL,
+                           autocorSmooth,
                            autocorThres,
                            pitchFloor,
                            pitchCeiling,
@@ -276,22 +276,14 @@ getPitchAutocor = function(autoCorrelation,
                            nCands) {
   # autoCorrelation = autocorBank[, 13]
   pitchAutocor_array = NULL
-  a = data.frame ('freq' = as.numeric(names(autoCorrelation)),
-                  'amp' = autoCorrelation)
+  a = data.frame('freq' = as.numeric(names(autoCorrelation)),
+                 'amp' = autoCorrelation)
   rownames(a) = NULL
   a = a[a$freq > pitchFloor &
           a$freq < pitchCeiling, , drop = FALSE] # plot(a[,2], type='l')
   HNR = max(a$amp) # HNR is here defined as the maximum autocorrelation
   # within the specified pitch range. It is also measured for the frames which
   # are later classified as unvoiced (i.e. HNR can be <voicedThres)
-  if (!is.numeric(autocorSmooth)) {
-    autocorSmooth = 2 * ceiling(7 * samplingRate / 44100 / 2) - 1
-    # width of smoothing interval, chosen to be proportionate to samplingRate (7
-    # for samplingRate 44100), but always an odd number.
-    # for(i in seq(16000, 60000, length.out = 10)) {
-    #   print(paste(round(i), ':', 2 * ceiling(7 * i / 44100 / 2) - 1))
-    # }
-  }
 
   # find peaks in the corrected autocorrelation function
   a_zoo = zoo::as.zoo(a$amp)
@@ -360,12 +352,9 @@ getPitchCep = function(frame,
                        pitchFloor,
                        pitchCeiling,
                        cepThres,
-                       cepSmooth = NULL,
+                       cepSmooth,
                        nCands) {
   pitchCep_array = NULL
-  if (!is.numeric(cepSmooth)) {
-    cepSmooth = 2 * ceiling(31 * samplingRate / 44100 / 2) - 1
-  }
 
   if (cepZp < length(frame)) {
     frameZP = frame
@@ -384,13 +373,15 @@ getPitchCep = function(frame,
     freq = samplingRate / (1:l) / 2 * (length(frameZP) / length(frame)),
     cep = cepstrum[1:l]
   )
+  bin_width_Hz = samplingRate / 2 / l
+  cepSmooth_bins = max(1, 2 * ceiling(cepSmooth / bin_width_Hz / 2) - 1)
   b = b[b$freq > pitchFloor & b$freq < pitchCeiling, ]
   # plot(b, type = 'l')
 
   # find peaks
   a_zoo = zoo::as.zoo(b$cep)
   temp = zoo::rollapply(a_zoo,
-                        width = cepSmooth,
+                        width = cepSmooth_bins,
                         align = 'center',
                         function(x)
                           isCentral.localMax(x, threshold = cepThres))

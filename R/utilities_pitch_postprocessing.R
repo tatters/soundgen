@@ -13,8 +13,8 @@
 #' @param pitchCert a matrix of the same dimensionality as pitchCands specifying
 #'   our certainty in pitch candidates
 #' @inheritParams analyze
-#' @param interpolWin when interpolating pitch candidates, the median is
-#'   calculated over \code{plus-minus interpolWin}
+#' @param interpolWin_bin when interpolating pitch candidates, the median is
+#'   calculated over \code{plus-minus interpolWin_bin}
 #' @param interpolTol when interpolating pitch candidates, the criterion
 #'   for needing to interpolate is the absence of pitch candidates with values
 #'   within \code{1 plus-minus interpolTol} of the median of pitch center of
@@ -34,7 +34,7 @@ pathfinder = function(pitchCands,
                       certWeight = 0.5,
                       pathfinding = c('none', 'fast', 'slow')[2],
                       annealPars = list(maxit = 5000, temp = 1000),
-                      interpolWin = 3,
+                      interpolWin_bin = 3,
                       interpolTol = 0.05,
                       interpolCert = 0.3,
                       manualCert = 1,
@@ -77,7 +77,7 @@ pathfinder = function(pitchCands,
   # if a frame has no pitch candidate at all (NA) or no candidate
   # between the most likely candidates for the adjacent frames, add such a
   # candidate with ~low certainty
-  if (interpolWin > 0) {
+  if (interpolWin_bin > 0) {
     # order pitch candidates and certainties in each frame pushing NAs down so
     # as to simplify the matrix (the position of manual candidates is not
     # important since they are saved in 'manual')
@@ -99,7 +99,7 @@ pathfinder = function(pitchCands,
                          pitchCert = pitchCert,
                          pitchSource = pitchSource,
                          pitchCenterGravity = pitchCenterGravity,
-                         interpolWin = interpolWin,
+                         interpolWin_bin = interpolWin_bin,
                          interpolTol = interpolTol,
                          interpolCert = interpolCert)
     pitchCands = intplt$pitchCands
@@ -118,7 +118,7 @@ pathfinder = function(pitchCands,
 
   # special case: only a single pitch candidate for all frames in a syllable
   # (no paths to chose among)
-  if (nr == 1) {
+  if (nrow(pitchCands) == 1) {
     return(2 ^ pitchCands)
   }
 
@@ -192,7 +192,7 @@ interpolate = function(pitchCands,
                        pitchCert,
                        pitchSource,
                        pitchCenterGravity,
-                       interpolWin = 3,
+                       interpolWin_bin = 3,
                        interpolTol = 0.3,
                        interpolCert = 0.3) {
   # ... add an empty row for new, interpolated pitch candidates
@@ -201,13 +201,13 @@ interpolate = function(pitchCands,
   pitchCert = rbind(rep(NA, nc), pitchCert)
   pitchSource = rbind(rep('intpl', nc), pitchSource)
   for (f in 1:nc) {
-    left = max(1, f - interpolWin)
-    right = min(ncol(pitchCands), f + interpolWin)
+    left = max(1, f - interpolWin_bin)
+    right = min(ncol(pitchCands), f + interpolWin_bin)
     # median over interpolation window (by default plus-minus 2 points)
     idx_man = which(pitchSource[, left:right] == 'manual' &
                       !is.na(pitchCert[, left:right]))
     if (length(idx_man) > 0) {
-      # special case: if any manual cand-s over interpolWindow, only consider them
+      # special case: if any manual cand-s over interpolWin_bin, only consider them
       med = median(pitchCands[, left:right] [idx_man], na.rm = TRUE)
     } else {
       med = median(pitchCenterGravity[left:right], na.rm = TRUE)
@@ -776,7 +776,7 @@ findVoicedSegments = function(pitchCands,
 
   # the smallest number of consecutive non-NA pitch values that constitute a
   # voiced segment; but at least 1
-  noRequired = max(1, ceiling(shortestSyl / step))
+  nRequired = max(1, ceiling(shortestSyl / step))
   # the greatest number of NA values that we tolerate before we say a new voiced
   # syllable begins
   toleratedGap = floor(shortestPause / step)
@@ -785,10 +785,10 @@ findVoicedSegments = function(pitchCands,
   segmentStart = numeric()
   segmentEnd = numeric()
   i = 1
-  while (i < (length(putativelyVoiced) - noRequired + 1)) {
+  while (i < (length(putativelyVoiced) - nRequired + 1)) {
     # find beginning
-    while (i < (length(putativelyVoiced) - noRequired + 1)) {
-      if (sum(putativelyVoiced[i:(i + noRequired - 1)]) == noRequired) {
+    while (i < (length(putativelyVoiced) - nRequired + 1)) {
+      if (sum(putativelyVoiced[i:(i + nRequired - 1)]) == nRequired) {
         segmentStart = c(segmentStart, i)
         break
       }
@@ -797,7 +797,8 @@ findVoicedSegments = function(pitchCands,
     # find end
     if (length(segmentEnd) < length(segmentStart)) {
       while (i < (length(putativelyVoiced) - toleratedGap + 1)) {
-        if (sum(putativelyVoiced[i:(i + toleratedGap)]) == 0) {
+        if (sum(putativelyVoiced[i:(i + toleratedGap)]) == 0 |
+            i %in% manualUnv ) {  # interrupt the syllable if we hit a manuaUnv frame
           segmentEnd = c(segmentEnd, i - 1)
           i = i - 1
           break

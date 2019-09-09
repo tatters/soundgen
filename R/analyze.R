@@ -56,9 +56,8 @@
 #' @param autocorSmooth the width of smoothing interval (in bins) for
 #'   finding peaks in the autocorrelation function. Defaults to 7 for sampling
 #'   rate 44100 and smaller odd numbers for lower values of sampling rate
-#' @param cepSmooth the width of smoothing interval (in bins) for finding
-#'   peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
-#'   odd numbers for lower values of sampling rate
+#' @param cepSmooth the width of smoothing interval (Hz) for finding peaks in
+#'   the cepstrum
 #' @param cepZp zero-padding of the spectrum used for cepstral pitch detection
 #'   (final length of spectrum after zero-padding in points, e.g. 2 ^ 13)
 #' @param specPeak,specHNRslope when looking for putative harmonics in
@@ -282,7 +281,7 @@ analyze = function(x,
                    autocorThres = 0.7,
                    autocorSmooth = NULL,
                    cepThres = 0.3,
-                   cepSmooth = NULL,
+                   cepSmooth = 400,
                    cepZp = 0,
                    specThres = 0.3,
                    specPeak = 0.35,
@@ -292,7 +291,7 @@ analyze = function(x,
                    specMerge = 1,
                    shortestSyl = 20,
                    shortestPause = 60,
-                   interpolWin = 3,
+                   interpolWin = 75,
                    interpolTol = 0.3,
                    interpolCert = 0.3,
                    pathfinding = c('none', 'fast', 'slow')[2],
@@ -375,7 +374,7 @@ analyze = function(x,
   # calculate scaling coefficient for loudness calculation, but don't convert
   # yet, since most routines in analyze() require scale [-1, 1]
   scaleCorrection = NA
-  if (is.numeric(SPL_measured)) {
+  if (is.numeric(SPL_measured) && SPL_measured > 0) {
     scaleCorrection = max(abs(scaleSPL(sound * m / scale,
                                        # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
                                        scale = 1,
@@ -392,8 +391,11 @@ analyze = function(x,
 
   # Check simple numeric default pars
   simplePars = c('silence', 'entropyThres', 'domThres',
-                 'autocorThres',  'cepThres', 'specThres', 'specPeak',
-                 'specSinglePeakCert', 'certWeight', 'interpolCert')
+                 'autocorThres', 'autocorSmooth',
+                 'cepThres', 'cepSmooth',
+                 'specThres', 'specPeak',
+                 'specSinglePeakCert', 'certWeight',
+                 'interpolWin', 'interpolCert')
   for (p in simplePars) {
     gp = try(get(p), silent = TRUE)
     if (class(gp) != "try-error") {
@@ -413,12 +415,14 @@ analyze = function(x,
   }
 
   # Check defaults that depend on other pars or require customized warnings
-  if (samplingRate < 2000) {
-    warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
-                  'and estimate loudness in sone'))
-  } else if (samplingRate > 44100) {
-    message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
-                  '(27 KHz) as inaudible to humans when estimating loudness'))
+  if (SPL_measured != 0) {  # if analyzing loudness
+    if (samplingRate < 2000) {
+      warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
+                    'and estimate loudness in sone'))
+    } else if (samplingRate > 44100) {
+      message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
+                    '(27 KHz) as inaudible to humans when estimating loudness'))
+    }
   }
   duration = length(sound) / samplingRate
   if (!is.numeric(windowLength) | windowLength <= 0 |
@@ -507,18 +511,11 @@ analyze = function(x,
   }
   if (!is.numeric(shortestSyl) | shortestSyl < 0) {
     shortestSyl = 0
-    warning('shortestSyl must be non-negative; defaulting to 0')
-  }
-  if (shortestSyl > duration * 1000) {
-    warning('"shortestSyl" is longer than the sound')
+    warning('shortestSyl must be non-negative; defaulting to 0 ms')
   }
   if (!is.numeric(shortestPause) | shortestPause < 0) {
     shortestPause = 0
-    warning('shortestPause must be a non-negative number; defaulting to 0')
-  }
-  if (interpolWin < 0) {
-    interpolWin = 3
-    warning('"interpolWin" must be positive; defaulting to 3')
+    warning('shortestPause must be a non-negative number; defaulting to 0 ms')
   }
   if (shortestPause > 0 & interpolWin > 0) {
     if (interpolWin * step < shortestPause / 2) {
@@ -530,6 +527,14 @@ analyze = function(x,
   if (interpolTol <= 0) {
     interpolTol = 0.3
     warning('"interpolTol" must be positive; defaulting to 0.3')
+  }
+  if (!is.numeric(autocorSmooth)) {
+    autocorSmooth = 2 * ceiling(7 * samplingRate / 44100 / 2) - 1
+    # width of smoothing interval, chosen to be proportionate to samplingRate (7
+    # for samplingRate 44100), but always an odd number.
+    # for(i in seq(16000, 60000, length.out = 10)) {
+    #   print(paste(round(i), ':', 2 * ceiling(7 * i / 44100 / 2) - 1))
+    # }
   }
 
   # Check non-numeric defaults
@@ -632,6 +637,7 @@ analyze = function(x,
   time_start = step * (min(non_silent_frames) - 1)  # the beginning of the first non-silent frame
   time_end = step * (max(non_silent_frames))        # the end of the last non-silent frame
   duration_noSilence = (time_end - time_start) / 1000
+  framesToAnalyze = which(cond_silence)
 
   # autocorrelation for each frame
   autocorBank = matrix(NA, nrow = length(autoCorrelation_filter),
@@ -643,8 +649,6 @@ analyze = function(x,
   }
   # plot(autocorBank[, 13], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
-
-  framesToAnalyze = which(cond_silence)
 
   ## FORMANTS
   formants = NULL
@@ -802,7 +806,7 @@ analyze = function(x,
           certWeight = certWeight,
           pathfinding = pathfinding,
           annealPars = annealPars,
-          interpolWin = interpolWin,
+          interpolWin_bin = ceiling(interpolWin / step),
           interpolTol = interpolTol,
           interpolCert = interpolCert,
           snakeStep = snakeStep,
@@ -1026,7 +1030,7 @@ analyzeFolder = function(myfolder,
                          specMerge = 1,
                          shortestSyl = 20,
                          shortestPause = 60,
-                         interpolWin = 3,
+                         interpolWin = 75,
                          interpolTol = 0.3,
                          interpolCert = 0.3,
                          pathfinding = c('none', 'fast', 'slow')[2],
