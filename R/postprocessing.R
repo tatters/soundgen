@@ -8,6 +8,7 @@
 #' @param player the name of player to use, eg "aplay", "play", "vlc", etc. In
 #'   case of errors, try setting another default player for
 #'   \code{\link[tuneR]{play}}
+#' @param from,to play a selected time range (s)
 #' @param ... additional parameters passed to \code{\link[tuneR]{play}}
 #' @export
 #' @examples
@@ -18,6 +19,7 @@
 #' f0_Hz = 440
 #' sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
 #' # playme(sound, 16000)
+#' # playme(sound, 16000, from = .1, to = .5)  # play from 100 to 500 ms
 #'
 #' # In case of errors, look into tuneR::play(). For ex., you might need to
 #' # specify which player to use:
@@ -26,7 +28,11 @@
 #' # To avoid doing it all the time, set the default player:
 #' tuneR::setWavPlayer('aplay')
 #' # playme(sound, 16000)  # should work without specifying the player
-playme = function(sound, samplingRate = 16000, player = NULL) {
+playme = function(sound,
+                  samplingRate = 16000,
+                  player = NULL,
+                  from = NULL,
+                  to = NULL) {
   # input: a vector of numbers on any scale or a path to a .wav file
   if (class(sound) == 'character') {
     soundWave = tuneR::readWave(sound)
@@ -38,6 +44,17 @@ playme = function(sound, samplingRate = 16000, player = NULL) {
       pcm = TRUE
     )
     soundWave = tuneR::normalize(soundWave, unit = '32') # / 2
+  }
+
+  # to play a selected time range
+  if (!is.null(from) | !is.null(to)) {
+    if (is.null(from)) from = 0
+    if (is.null(to)) to = length(soundWave@left) / soundWave@samp.rate
+    soundWave = tuneR::extractWave(object = soundWave,
+                                   from = from,
+                                   to = to,
+                                   interact = FALSE,
+                                   xunit = 'time')
   }
 
   if (!is.null(player)) {

@@ -1,8 +1,9 @@
-# TODO: add spectrogram controls to control pitch candidates (pch, cex, etc.); handle folders as input; make the side pane with par-s collapsible; check pathfinding_slow with manual
+# TODO: play selection; add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 server = function(input, output, session) {
   myPars = reactiveValues()
-  myPars$zoomFactor = 2
+  myPars$zoomFactor = 2     # zoom buttons change zoom by this factor
+  myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
   myPars$out = NULL         # for storing the output
 
   # clean-up of www/ folder: remove all files except temp.wav
@@ -14,24 +15,25 @@ server = function(input, output, session) {
 
   reset = function() {
     myPars$pitch = NULL       # pitch contour
-    myPars$pitchCands = NULL
-    myPars$bp = NULL          # selected points
-    myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]
-    myPars$manualUnv = numeric()
+    myPars$pitchCands = NULL  # matrix of pitch candidates
+    myPars$bp = NULL          # selected points (under brush)
+    myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]  # manually added pitch anchors
+    myPars$manualUnv = numeric()                             # manually unvoiced frames
   }
 
   observeEvent(input$loadAudio, {
-    print('running load audio')
-    myPars$n = 1
-    myPars$nFiles = nrow(input$loadAudio)
+    if (myPars$print) print('Loading audio...')
+    myPars$n = 1   # file number in queue
+    myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
     reset()
-    readAudio(1)
+    readAudio(1)  # read the first sound in queue
     # instead of re-loading the file every time, save the spectrogram matrix
     # and re-draw manually with filled.contour.mod
     extractSpectrogram()
   })
 
   readAudio = function(i) {
+    # reads an audio file with tuneR::readWave
     temp = input$loadAudio[i, ]
     myPars$myAudio_filename = temp$name
     myPars$myAudio_path = temp$datapath
@@ -44,6 +46,7 @@ server = function(input, output, session) {
   }
 
   extractSpectrogram = reactive({
+    # save a spectrogram matrix of current file
     if (!is.null(myPars$myAudio)) {
       myPars$spec = spectrogram(
         myPars$myAudio,
@@ -54,13 +57,14 @@ server = function(input, output, session) {
         zp = input$zp,
         contrast = input$specContrast,
         brightness = input$specBrightness,
-        output = 'processed'
+        output = 'processed',
+        plot = FALSE
       )
     }
   })
 
-  saveAudio = observeEvent(myPars$temp_audio, {
-    print('running saveAudio')
+  writeAudioFile = observeEvent(myPars$temp_audio, {
+    if (myPars$print) print('Writing audio file...')
     # Method: saves a temporary audio file in 'www/'. This is a workaround since
     # html tag for some reason cannot play myPars$myAudio_path (although feeding
     # it to spectrogram works - so probably only works within R). Alternatives:
@@ -82,11 +86,11 @@ server = function(input, output, session) {
   })
 
   output$spectrogram = renderPlot({
-    print('drawing spectrogram')
-    par(mar = c(2, 2, 0.5, 2))  # no need to save use's graphical par-s - they revert to orig on exit
+    if (myPars$print) print('Drawing spectrogram...')
+    par(mar = c(2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
     if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
       plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
-      text(x = 5, y = 5, labels = 'Upload an audio file to begin...')
+      text(x = 5, y = 5, labels = 'Upload an audio file to begin...\nSuggested max duration 10-20 s')
     } else {
       if (input$spec_colorTheme == 'bw') {
         color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
@@ -129,12 +133,20 @@ server = function(input, output, session) {
         showLegend = TRUE,
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
       )
+      file_lab = myPars$myAudio_filename
+      if (myPars$nFiles > 1) {
+        file_lab = paste0(file_lab, '\nFile ', myPars$n, ' of ', myPars$nFiles)
+      }
+      text(x = input$spec_xlim[1],
+           y = input$spec_ylim[2],
+           labels = file_lab,
+           adj = c(0, 1))  # left, top
     }
   })
 
   obs_anal = observe({
     if (!is.null(input$loadAudio$datapath)) {
-      print('running anal')
+      if (myPars$print) print('Calling analyze()')
       temp_anal = analyze(
         myPars$myAudio_path,
         windowLength = input$windowLength,
@@ -215,7 +227,7 @@ server = function(input, output, session) {
   })
 
   obs_pitch = function() {
-    print('running obs_pitch')
+    if (myPars$print) print('Looking for pitch contour with obs_pitch()')
     if (length(myPars$pitchCands$freq) > 0) {
       myPars$voicedSegments = findVoicedSegments(
         myPars$pitchCands$freq,
@@ -307,9 +319,23 @@ server = function(input, output, session) {
     }
   })
 
+  ## Buttons for operations with selection
+  observeEvent(input$selection_play, {
+    if (!is.null(input$spectrogram_brush) & length(myPars$brush_sel_x) > 0) {
+      from = myPars$brush_sel_x[1] / length(myPars$pitch) * myPars$dur / 1000
+      to = tail(myPars$brush_sel_x, 1) / length(myPars$pitch) * myPars$dur / 1000
+    } else {
+      from = input$spec_xlim[1] / 1000
+      to = input$spec_xlim[2] / 1000
+    }
+    playme(myPars$myAudio_path, from = from, to = to)
+  })
+
   observeEvent(input$selection_unvoice, {
-    print('Unvoicing selection')
+    if (myPars$print) print('Unvoicing selection...')
     if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
+      # NB: play forgets the previous selection, but other buttons do not,
+      # hence myPars$bp instead of input$spectrogram_brush
       myPars$manualUnv = c(myPars$manualUnv, myPars$brush_sel_xy)
       # remove manual anchors within selection, if any
       idx_rem = which(myPars$manual$frame %in% myPars$manualUnv)
@@ -319,7 +345,7 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$selection_voice, {
-    print('Voicing selection')
+    if (myPars$print) print('Voicing selection...')
     if (!is.null(myPars$bp) &
         length(myPars$brush_sel_x) > 0 &
         length(myPars$manualUnv) > 0) {
@@ -330,7 +356,7 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$selection_octaveUp, {
-    print('Selection octave up')
+    if (myPars$print) print('Selection octave up...')
     if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
       # remove previous manual cands in selection
       idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
@@ -348,7 +374,7 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$selection_octaveDown, {
-    print('Selection octave down')
+    if (myPars$print) print('Selection octave down...')
     if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
       # remove previous manual cands in selection
       idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
@@ -366,7 +392,7 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$selection_setPrior, {
-    print('Setting prior')
+    if (myPars$print) print('Setting prior...')
     if (!is.null(input$spectrogram_brush)) {
       pr = c(input$spectrogram_brush$ymin, input$spectrogram_brush$ymax) * 1000
       pr[pr < input$pitchFloor] = input$pitchFloor
@@ -377,7 +403,6 @@ server = function(input, output, session) {
       updateSliderInput(session, 'priorSD', value = sdPr)
     }
   })
-
 
   hover_label = reactive({
     hover_temp = input$spectrogram_hover
@@ -391,7 +416,7 @@ server = function(input, output, session) {
   output$spectro_hover = renderUI(HTML(hover_label()))
 
   brush = observeEvent(input$spectrogram_brush, {
-    print('running brush')
+    if (myPars$print) print('Running brush()...')
     myPars$pitch_df = data.frame(
       time = as.numeric(colnames(myPars$pitchCands$freq)),
       freq = myPars$pitch / 1000
@@ -439,9 +464,11 @@ server = function(input, output, session) {
   observeEvent(input$scrollRight, shiftFrame('right'))
 
   done = function() {
+    # meaning we have finished editing pitch contour for a sound - prepares the output
     new = data.frame(
       file = basename(myPars$myAudio_filename),
-      pitch = paste0('{', paste(round(myPars$pitch), collapse = ', '), '}')
+      pitch = paste0('{', paste(round(myPars$pitch), collapse = ', '), '}'),
+      stringsAsFactors = FALSE
     )
     if (is.null(myPars$out)) {
       myPars$out = new
@@ -473,11 +500,8 @@ server = function(input, output, session) {
       reset()
       readAudio(myPars$n)
       extractSpectrogram()
-      # re-load the manual pitch contour for the previous file - maybe remember myPars$manual instead
-      # pitch_temp = as.character(myPars$out$pitch[myPars$n])
-      # pitch_temp = substr(pitch_temp, 2, (nchar(pitch_temp) - 1))
-      # pitch_temp = eval(parse(text = noquote(paste0('c(', pitch_temp, ')'))))
-      # myPars$pitch = pitch_temp
+      # todo: re-load the manual pitch contour for the previous file -
+      # remember myPars$manual and myPars$manualUnv
     }
   }
   observeEvent(input$lastFile, lastFile())
@@ -489,9 +513,10 @@ server = function(input, output, session) {
       write.csv(myPars$out, filename, row.names = FALSE)
     }
   )
+
   # observeEvent(input$about, {
   #   id <<- showNotification(
-  #     ui = paste0("SoundGen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
+  #     ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
   #     duration = 10,
   #     closeButton = TRUE,
   #     type = 'default'

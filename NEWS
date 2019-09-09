@@ -4,6 +4,7 @@ MINOR:
   * analyze(): priorMean is now specified in Hz instead of semitones (but priorSD is still in semitones), priorPlot looks nicer
   * analyze(): snakeStep, interpolWin, and smooth are set to 0 instead of NULL to turn off these types of pitch postprocessing
   * analyze(): set nFormants = 0 to skip formant analysis, SPL_measured = NULL to skip loudness analysis
+  * playme(): supports playing a selected time region (from/to)
 
           CHANGES IN SOUNDGEN VERSION 1.4.1 [05-July-2019]
 NEW FUNCTIONS:
