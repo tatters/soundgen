@@ -1,4 +1,4 @@
-# TODO: maybe prior from sel should affect only current file (?); update autocorSmooth (#209); check whether works for completely voiceless sounds (no pitch cands found automatically); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: draw spec before write audio (so draws spec twice, slowing down the process); maybe prior from sel should affect only current file (?); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -27,9 +27,6 @@ server = function(input, output, session) {
     myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
     reset()
     readAudio(1)  # read the first sound in queue
-    # instead of re-loading the file every time, save the spectrogram matrix
-    # and re-draw manually with filled.contour.mod
-    extractSpectrogram()
   })
 
   readAudio = function(i) {
@@ -42,11 +39,18 @@ server = function(input, output, session) {
     myPars$myAudio = as.numeric(myPars$temp_audio@left)
     myPars$samplingRate = myPars$temp_audio@samp.rate
     myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
-    updateSliderInput(session, inputId = 'spec_xlim', value = c(0, myPars$dur), max = myPars$dur)
+    updateSliderInput(session, inputId = 'spec_xlim',
+                      value = c(0, myPars$dur), max = myPars$dur)
+    # for the first audio only, update autocorSmooth
+    # to a default that depends on samplingRate
+    updateSliderInput(session, inputId = 'autocorSmooth',
+                      value = 2 * ceiling(7 * myPars$samplingRate / 44100 / 2) - 1)
   }
 
-  extractSpectrogram = reactive({
-    # save a spectrogram matrix of current file
+  extractSpectrogram = observe({
+    if (myPars$print) print('Extracting spectrogram...')
+    # Instead of re-loading the file every time, save the spectrogram matrix
+    # and re-draw manually with filled.contour.mod
     if (!is.null(myPars$myAudio)) {
       myPars$spec = spectrogram(
         myPars$myAudio,
@@ -106,7 +110,7 @@ server = function(input, output, session) {
         z = t(myPars$spec),
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
-        xlim = input$spec_xlim, # c(0, tail(as.numeric(colnames(myPars$spec)), 1)),
+        xlim = input$spec_xlim,
         xlab = 'Time, ms', ylab = 'Frequency, kHz',
         main = '',
         ylim = c(input$spec_ylim[1], input$spec_ylim[2])
@@ -150,7 +154,7 @@ server = function(input, output, session) {
   obs_anal = observe({
     # analyze the file (executes every time a slider with arg value is changed)
     if (!is.null(input$loadAudio$datapath)) {
-      if (myPars$print) print('Calling analyze()')
+      if (myPars$print) print('Calling analyze()...')
       myPars$step = input$windowLength * (1 - input$overlap / 100)
       temp_anal = analyze(
         myPars$myAudio_path,
@@ -493,7 +497,6 @@ server = function(input, output, session) {
       myPars$n = myPars$n + 1
       reset()
       readAudio(myPars$n)
-      extractSpectrogram()
     }
   }
   observeEvent(input$nextFile, nextFile())
@@ -504,7 +507,6 @@ server = function(input, output, session) {
       myPars$n = myPars$n - 1
       reset()
       readAudio(myPars$n)
-      extractSpectrogram()
       # todo: re-load the manual pitch contour for the previous file -
       # remember myPars$manual and myPars$manualUnv
     }

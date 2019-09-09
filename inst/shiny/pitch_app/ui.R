@@ -2,7 +2,7 @@ ui = fluidPage(
   # headerPanel('...'),
 
   fluidRow(
-    column(4,
+    column(3,
            tabsetPanel(id='parGroup',
                        navbarMenu("Input",
                                   tabPanel("STFT",
@@ -107,7 +107,7 @@ ui = fluidPage(
            )
     ),
 
-    column(8,
+    column(9,
            fluidRow(
              column(5,
                     fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = 'No file selected')

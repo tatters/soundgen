@@ -11,6 +11,7 @@ pitch tracking, audio segmentation, self-similarity matrices, morphing, etc.
 * Sound synthesis from R console: `soundgen()`
 * Shiny app for sound synthesis (opens in a browser): `soungen_app()`
 * Acoustic analysis of a wav/mp3 file: `analyze()`
+* Shiny app for editing intonation contours (opens in a browser): `pitch_app()`
 * Measuring syllables, pauses, and bursts in a wav/mp3 file: `segment()`
 
 For more information, please see the vignettes on sound synthesis and acoustic analysis:
