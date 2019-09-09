@@ -187,12 +187,12 @@ defaults_analyze = matrix(c(
 
   'silence', 0.04, 0, 1, .01,
   'entropyThres', 0.6, 0, 1, 0.01,
-  'nCands', 1, 1, 10, 1,
+  'nCands', 3, 1, 10, 1,
   'minVoicedCands', 2, 1, 4, 1,
 
-  'pitchFloor', 1, 1, 10000, 1,
+  'pitchFloor', 75, 1, 1000, 10,
   'pitchCeiling', 2000, 10, 10000, 10,
-  'priorMean', 300, 1, 10000, 1,
+  'priorMean', 300, 10, 10000, 10,
   'priorSD', 6, 0.1, 24, 1,
 
   'autocorThres', 0.7, 0, 1, 0.01,
@@ -210,12 +210,12 @@ defaults_analyze = matrix(c(
   'specSinglePeakCert', 0.4, 0, 1, 0.01,
 
   'certWeight', 0.5, 0, 1, 0.01,
-  'shortestSyl', 0, 0, 500, 1,
-  'shortestPause', 0, 0, 500, 1,
+  'shortestSyl', 20, 0, 500, 1,
+  'shortestPause', 60, 0, 500, 1,
   'smooth', 1, 0, 10, 0.1,
   'snakeStep', 0.05, 0, 2, 0.01,
   'interpolWin', 3, 0, 15, 1,
-  'interpolTol', 0.3, 0.01, 10, 0.1,
+  'interpolTol', 0.03, 0.01, 1, 0.01,
   'interpolCert', 0.3, 0, 1, 0.01,
 
   # pitch_app() settings, which are not needed for analyze()

@@ -62,9 +62,15 @@ pathfinder = function(pitchCands,
   # pitch candidates weighted by their respective certainties)
   pitchCenterGravity = rep(NA, ncol(pitchCands))
   for (i in 1:ncol(pitchCands)) {
-    pitchCenterGravity[i] = mean(pitchCands[, i],
-                                 weights = pitchCert[, i] / sum(pitchCert[, i]),
-                                 na.rm = T)
+    idxDeadCert = which(pitchSource[, i] == 'manual' & pitchCert[, i] == manualCert)
+    if (length(idxDeadCert) == 1) {
+      # special case: pitchCenterGravity has to pass through manual candidates
+      pitchCenterGravity[i] = pitchCands[idxDeadCert, i]
+    } else {
+      pitchCenterGravity[i] = mean(pitchCands[, i],
+                                   weights = pitchCert[, i] / sum(pitchCert[, i]),
+                                   na.rm = T)
+    }
   }
 
   ## INTERPOLATION
@@ -73,7 +79,7 @@ pathfinder = function(pitchCands,
   # candidate with ~low certainty
   if (interpolWin > 0) {
     # order pitch candidates and certainties in each frame pushing NAs down so
-    # as to simplify the matrix (the position of manual candidates is no longer
+    # as to simplify the matrix (the position of manual candidates is not
     # important since they are saved in 'manual')
     if (nrow(pitchCands) > 1) {
       o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
@@ -198,7 +204,14 @@ interpolate = function(pitchCands,
     left = max(1, f - interpolWin)
     right = min(ncol(pitchCands), f + interpolWin)
     # median over interpolation window (by default plus-minus 2 points)
-    med = median(pitchCenterGravity[left:right], na.rm = TRUE)
+    idx_man = which(pitchSource[, left:right] == 'manual' &
+                      !is.na(pitchCert[, left:right]))
+    if (length(idx_man) > 0) {
+      # special case: if any manual cand-s over interpolWindow, only consider them
+      med = median(pitchCands[, left:right] [idx_man], na.rm = TRUE)
+    } else {
+      med = median(pitchCenterGravity[left:right], na.rm = TRUE)
+    }
     sum_pitchCands = sum(
       pitchCands[, f] > (1 - interpolTol) * med &
         pitchCands[, f] < (1 + interpolTol) * med,
@@ -212,9 +225,13 @@ interpolate = function(pitchCands,
       # certainty assigned to interpolated frames
       pitchCert[1, f] = interpolCert
       # update pitchCenterGravity for the interpolated frame
-      pitchCenterGravity[f] = mean(pitchCands[, f],
-                                   weights = pitchCert[, f] / sum(pitchCert[, f]),
-                                   na.rm = TRUE)
+      if (length(idx_man) > 0) {
+        pitchCenterGravity[f] = med
+      } else {
+        pitchCenterGravity[f] = mean(pitchCands[, f],
+                                     weights = pitchCert[, f] / sum(pitchCert[, f]),
+                                     na.rm = TRUE)
+      }
     }
   }
   return(list(pitchCands = pitchCands,

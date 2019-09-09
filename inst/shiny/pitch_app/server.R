@@ -1,4 +1,4 @@
-# TODO: update defaults that depend on samplingRate, eg cepSmooth (#209); check whether works for completely voiceless sounds (no pitch cands found automatically); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: remove snake; manuaUnv should prevent syllables from being merged; maybe prior from sel should affect only current file (?); update defaults that depend on samplingRate, eg cepSmooth (#209); check whether works for completely voiceless sounds (no pitch cands found automatically); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; check pathfinding_slow with manual; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -154,7 +154,7 @@ server = function(input, output, session) {
       temp_anal = analyze(
         myPars$myAudio_path,
         windowLength = input$windowLength,
-        step = input$step,
+        overlap = input$overlap,
         wn = input$wn,
         zp = input$zp,
         dynamicRange = input$dynamicRange,
@@ -235,7 +235,7 @@ server = function(input, output, session) {
         shortestPause = input$shortestPause,
         minVoicedCands = input$minVoicedCands,
         pitchMethods = input$pitchMethods,
-        step = input$step,
+        step = input$windowLength * (1 - input$overlap / 100),
         samplingRate = input$samplingRate
       )
 
@@ -284,6 +284,8 @@ server = function(input, output, session) {
     }
   }
 
+
+  ## Clicking events
   observeEvent(input$spectrogram_click, {
     if (length(myPars$pitchCands$freq) > 0 & input$spectro_clickAct == 'addCand') {
       session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
@@ -306,14 +308,17 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$spectrogram_dblclick, {
-    if (nrow(myPars$manual) > 0) {
-      closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) -
-                                      input$spectrogram_dblclick$x))
-      if (length(closest_frame) > 0) {
-        idx_rem = which(myPars$manual$frame == closest_frame)
-        if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
-        obs_pitch()
-      }
+    closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) -
+                                    input$spectrogram_dblclick$x))
+    if (length(closest_frame) > 0) {
+      # remove manual anchor for this frame, if any
+      idx_rem = which(myPars$manual$frame == closest_frame)
+      if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
+      # mark the frame as unvoiced if it's not already marked as unvoiced
+      if (!closest_frame %in% myPars$manualUnv)
+        myPars$manualUnv = c(myPars$manualUnv, closest_frame)
+      # re-run pitch contour
+      obs_pitch()
     }
   })
 
