@@ -215,7 +215,7 @@ defaults_analyze = matrix(c(
   'smooth', 1, 0, 10, 0.1,
   'snakeStep', 0.05, 0, 2, 0.01,
   'interpolWin', 75, 1, 1000, 5,
-  'interpolTol', 0.03, 0.01, 1, 0.01,
+  'interpolTol', 0.05, 0.01, 1, 0.01,
   'interpolCert', 0.3, 0, 1, 0.01,
 
   # pitch_app() settings, which are not needed for analyze()

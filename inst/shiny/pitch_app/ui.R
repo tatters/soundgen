@@ -171,7 +171,6 @@ ui = fluidPage(
              shinyBS::bsCollapse(id="spec_controls",
                                  shinyBS::bsCollapsePanel("Show spectrogram controls",
                                                           column(6,
-                                                                 sliderInput('spec_xlim', 'Time range, ms', value=c(0, 1000), min=0, max=1000, step=100),
                                                                  sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
                                                                  sliderInput('spec_cex', 'Point size', value = 2, min = .25, max = 4, step = .25)
                                                           ),

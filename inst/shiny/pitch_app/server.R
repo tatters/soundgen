@@ -1,4 +1,4 @@
-# TODO: draw spec called twice in a row (why?); maybe prior from sel should affect only current file (?); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -52,12 +52,13 @@ server = function(input, output, session) {
     myPars$myAudio = as.numeric(myPars$temp_audio@left)
     myPars$samplingRate = myPars$temp_audio@samp.rate
     myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
-    updateSliderInput(session, inputId = 'spec_xlim',
-                      value = c(0, myPars$dur), max = myPars$dur)
+    myPars$spec_xlim = c(0, myPars$dur)
     # for the first audio only, update autocorSmooth
     # to a default that depends on samplingRate
-    updateSliderInput(session, inputId = 'autocorSmooth',
+    if (i == 1) {
+      updateSliderInput(session, inputId = 'autocorSmooth',
                       value = 2 * ceiling(7 * myPars$samplingRate / 44100 / 2) - 1)
+    }
   }
 
   extractSpectrogram = observe({
@@ -109,7 +110,7 @@ server = function(input, output, session) {
       par(mar = c(2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
       if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
         plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
-        text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration 10-20 s')
+        text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~10 s')
       } else {
         if (input$spec_colorTheme == 'bw') {
           color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
@@ -125,7 +126,7 @@ server = function(input, output, session) {
           z = t(myPars$spec),
           levels = seq(0, 1, length = 30),
           color.palette = color.palette,
-          xlim = input$spec_xlim,
+          xlim = myPars$spec_xlim,
           xlab = 'Time, ms', ylab = 'Frequency, kHz',
           main = '',
           ylim = c(input$spec_ylim[1], input$spec_ylim[2])
@@ -160,9 +161,9 @@ server = function(input, output, session) {
         if (myPars$nFiles > 1) {
           file_lab = paste0(file_lab, '\nFile ', myPars$n, ' of ', myPars$nFiles)
         }
-        ran_x = input$spec_xlim[2] - input$spec_xlim[1]
+        ran_x = myPars$spec_xlim[2] - myPars$spec_xlim[1]
         ran_y = input$spec_ylim[2] - input$spec_ylim[1]
-        text(x = input$spec_xlim[1] + ran_x * .01,
+        text(x = myPars$spec_xlim[1] + ran_x * .01,
              y = input$spec_ylim[2] - ran_y * .01,
              labels = file_lab,
              adj = c(0, 1))  # left, top
@@ -353,8 +354,8 @@ server = function(input, output, session) {
       from = myPars$brush_sel_x[1] / length(myPars$pitch) * myPars$dur / 1000
       to = tail(myPars$brush_sel_x, 1) / length(myPars$pitch) * myPars$dur / 1000
     } else {
-      from = input$spec_xlim[1] / 1000
-      to = input$spec_xlim[2] / 1000
+      from = myPars$spec_xlim[1] / 1000
+      to = myPars$spec_xlim[2] / 1000
     }
     playme(myPars$myAudio_path, from = from, to = to)
   })
@@ -461,32 +462,30 @@ server = function(input, output, session) {
   })
 
   changeZoom = function(coef) {
-    midpoint = mean(input$spec_xlim)
-    halfRan = diff(input$spec_xlim) / 2 / coef
+    midpoint = mean(myPars$spec_xlim)
+    halfRan = diff(myPars$spec_xlim) / 2 / coef
     newLeft = max(0, midpoint - halfRan)
     newRight = min(myPars$dur, midpoint + halfRan)
-    updateSliderInput(session, inputId = 'spec_xlim', value = c(newLeft, newRight))
+    myPars$spec_xlim = c(newLeft, newRight)
   }
   observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
   observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
   observeEvent(input$selection_zoomToSel, {
     if (!is.null(myPars$bp)) {
-      updateSliderInput(session, inputId = 'spec_xlim',
-                        value = round(c(input$spectrogram_brush$xmin,
-                                        input$spectrogram_brush$xmax)))
+      myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
     }
   })
 
   shiftFrame = function(direction) {
-    ran = diff(input$spec_xlim)
+    ran = diff(myPars$spec_xlim)
     if (direction == 'left') {
-      newLeft = max(0, input$spec_xlim[1] - ran)
+      newLeft = max(0, myPars$spec_xlim[1] - ran)
       newRight = newLeft + ran
     } else if (direction == 'right') {
-      newRight = min(myPars$dur, input$spec_xlim[2] + ran)
+      newRight = min(myPars$dur, myPars$spec_xlim[2] + ran)
       newLeft = newRight - ran
     }
-    updateSliderInput(session, 'spec_xlim', value = c(newLeft, newRight))
+    myPars$spec_xlim = c(newLeft, newRight)
   }
   observeEvent(input$scrollLeft, shiftFrame('left'))
   observeEvent(input$scrollRight, shiftFrame('right'))
@@ -544,7 +543,7 @@ server = function(input, output, session) {
 
   observeEvent(input$about, {
     id <<- showNotification(
-      ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page with extra tips: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
+      ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Left-click to add/correct a pitch anchor, double-click to remove/unvoice the frame. Load/detach library(shinyBS) to show/hide tips. Project home page with extra tips: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
       duration = 10,
       closeButton = TRUE,
       type = 'default'
