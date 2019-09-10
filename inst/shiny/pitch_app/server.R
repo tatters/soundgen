@@ -2,7 +2,7 @@
 
 server = function(input, output, session) {
   myPars = reactiveValues()
-  myPars$zoomFactor = 2     # zoom buttons change zoom by this factor
+  myPars$zoomFactor = 2     # zoom buttons ch+ange zoom by this factor
   myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
   myPars$out = NULL         # for storing the output
 
@@ -135,7 +135,8 @@ server = function(input, output, session) {
         pitch = myPars$pitch,
         addToExistingPlot = TRUE,
         showLegend = TRUE,
-        ylim = c(input$spec_ylim[1], input$spec_ylim[2])
+        ylim = c(input$spec_ylim[1], input$spec_ylim[2]),
+        candPlot = list(cex = input$spec_cex)
       )
       # Add text label of file name / number
       file_lab = myPars$myAudio_filename
@@ -376,8 +377,8 @@ server = function(input, output, session) {
         freq = myPars$pitch[myPars$brush_sel_xy] * 2
       ))
       # make sure we stay within pitchFloor/pitchCeiling
-      myPars$manual[myPars$manual < input$pitchFloor] = input$pitchFloor
-      myPars$manual[myPars$manual > input$pitchCeiling] = input$pitchCeiling
+      myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
+      myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
       obs_pitch()
     }
   })
@@ -394,8 +395,8 @@ server = function(input, output, session) {
         freq = myPars$pitch[myPars$brush_sel_xy] / 2
       ))
       # make sure we stay within pitchFloor/pitchCeiling
-      myPars$manual[myPars$manual < input$pitchFloor] = input$pitchFloor
-      myPars$manual[myPars$manual > input$pitchCeiling] = input$pitchCeiling
+      myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
+      myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
       obs_pitch()
     }
   })
