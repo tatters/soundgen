@@ -1,10 +1,11 @@
-# TODO: draw spec before write audio (so draws spec twice, slowing down the process); maybe prior from sel should affect only current file (?); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: draw spec called twice in a row (why?); maybe prior from sel should affect only current file (?); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 server = function(input, output, session) {
   myPars = reactiveValues()
   myPars$zoomFactor = 2     # zoom buttons ch+ange zoom by this factor
   myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
   myPars$out = NULL         # for storing the output
+  myPars$drawSpec = TRUE
 
   # clean-up of www/ folder: remove all files except temp.wav
   files = list.files('www/')
@@ -19,6 +20,8 @@ server = function(input, output, session) {
     myPars$bp = NULL          # selected points (under brush)
     myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]  # manually added pitch anchors
     myPars$manualUnv = numeric()                             # manually unvoiced frames
+    myPars$drawSpec = FALSE   # prevent the spectrogram from being redrawn needlessly
+    # (only draw it after extracting it)
   }
 
   observeEvent(input$loadAudio, {
@@ -35,7 +38,17 @@ server = function(input, output, session) {
     myPars$myAudio_filename = temp$name
     myPars$myAudio_path = temp$datapath
     myPars$myAudio_type = temp$type
-    myPars$temp_audio = tuneR::readWave(temp$datapath)
+
+    extension = substr(myPars$myAudio_filename,
+                       nchar(myPars$myAudio_filename) - 2, nchar(myPars$myAudio_filename))
+    if (extension == 'wav' | extension == 'WAV') {
+      myPars$temp_audio = tuneR::readWave(temp$datapath)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      myPars$temp_audio = tuneR::readMP3(temp$datapath)
+    } else {
+      warning('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+
     myPars$myAudio = as.numeric(myPars$temp_audio@left)
     myPars$samplingRate = myPars$temp_audio@samp.rate
     myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
@@ -64,6 +77,7 @@ server = function(input, output, session) {
         output = 'processed',
         plot = FALSE
       )
+      myPars$drawSpec = TRUE
     }
   })
 
@@ -90,65 +104,69 @@ server = function(input, output, session) {
   })
 
   output$spectrogram = renderPlot({
-    if (myPars$print) print('Drawing spectrogram...')
-    par(mar = c(2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
-    if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
-      plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
-      text(x = 5, y = 5, labels = 'Upload an audio file to begin...\nSuggested max duration 10-20 s')
-    } else {
-      if (input$spec_colorTheme == 'bw') {
-        color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
-      } else if (input$spec_colorTheme == 'seewave') {
-        color.palette = seewave::spectro.colors
+    if (myPars$drawSpec == TRUE) {
+      if (myPars$print) print('Drawing spectrogram...')
+      par(mar = c(2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
+      if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
+        plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
+        text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration 10-20 s')
       } else {
-        colFun = match.fun(input$spec_colorTheme)
-        color.palette = function(x) rev(colFun(x))
+        if (input$spec_colorTheme == 'bw') {
+          color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
+        } else if (input$spec_colorTheme == 'seewave') {
+          color.palette = seewave::spectro.colors
+        } else {
+          colFun = match.fun(input$spec_colorTheme)
+          color.palette = function(x) rev(colFun(x))
+        }
+        filled.contour.mod(
+          x = as.numeric(colnames(myPars$spec)),
+          y = as.numeric(rownames(myPars$spec)),
+          z = t(myPars$spec),
+          levels = seq(0, 1, length = 30),
+          color.palette = color.palette,
+          xlim = input$spec_xlim,
+          xlab = 'Time, ms', ylab = 'Frequency, kHz',
+          main = '',
+          ylim = c(input$spec_ylim[1], input$spec_ylim[2])
+        )
+        # add manual values to the list of pitch candidates for seamless plotting
+        n = ncol(myPars$pitchCands$freq)
+        # if (length(n>0) == 0 | length(nrow(myPars$manual)>0) == 0) browser()
+        if (!is.null(myPars$pitchCands) &&
+            (n > 0 & nrow(myPars$manual) > 0)) {
+          temp_freq = rep(NA, n)
+          temp_freq[myPars$manual$frame] = myPars$manual$freq
+          temp_freq = rbind(myPars$pitchCands$freq, temp_freq)
+          temp_cert = rbind(myPars$pitchCands$cert, rep(1, n))  # change 1 to input$manualCert
+          temp_source = rbind(myPars$pitchCands$source, rep('manual', n))
+        } else {
+          temp_freq = myPars$pitchCands$freq
+          temp_cert = myPars$pitchCands$cert
+          temp_source = myPars$pitchCands$source
+        }
+        addPitchCands(
+          pitchCands = temp_freq,
+          pitchCert = temp_cert,
+          pitchSource = temp_source,
+          pitch = myPars$pitch,
+          addToExistingPlot = TRUE,
+          showLegend = TRUE,
+          ylim = c(input$spec_ylim[1], input$spec_ylim[2]),
+          candPlot = list(cex = input$spec_cex)
+        )
+        # Add text label of file name / number
+        file_lab = myPars$myAudio_filename
+        if (myPars$nFiles > 1) {
+          file_lab = paste0(file_lab, '\nFile ', myPars$n, ' of ', myPars$nFiles)
+        }
+        ran_x = input$spec_xlim[2] - input$spec_xlim[1]
+        ran_y = input$spec_ylim[2] - input$spec_ylim[1]
+        text(x = input$spec_xlim[1] + ran_x * .01,
+             y = input$spec_ylim[2] - ran_y * .01,
+             labels = file_lab,
+             adj = c(0, 1))  # left, top
       }
-      filled.contour.mod(
-        x = as.numeric(colnames(myPars$spec)),
-        y = as.numeric(rownames(myPars$spec)),
-        z = t(myPars$spec),
-        levels = seq(0, 1, length = 30),
-        color.palette = color.palette,
-        xlim = input$spec_xlim,
-        xlab = 'Time, ms', ylab = 'Frequency, kHz',
-        main = '',
-        ylim = c(input$spec_ylim[1], input$spec_ylim[2])
-      )
-      # add manual values to the list of pitch candidates for seamless plotting
-      n = ncol(myPars$pitchCands$freq)
-      if (n > 0 & nrow(myPars$manual) > 0) {
-        temp_freq = rep(NA, n)
-        temp_freq[myPars$manual$frame] = myPars$manual$freq
-        temp_freq = rbind(myPars$pitchCands$freq, temp_freq)
-        temp_cert = rbind(myPars$pitchCands$cert, rep(1, n))  # change 1 to input$manualCert
-        temp_source = rbind(myPars$pitchCands$source, rep('manual', n))
-      } else {
-        temp_freq = myPars$pitchCands$freq
-        temp_cert = myPars$pitchCands$cert
-        temp_source = myPars$pitchCands$source
-      }
-      addPitchCands(
-        pitchCands = temp_freq,
-        pitchCert = temp_cert,
-        pitchSource = temp_source,
-        pitch = myPars$pitch,
-        addToExistingPlot = TRUE,
-        showLegend = TRUE,
-        ylim = c(input$spec_ylim[1], input$spec_ylim[2]),
-        candPlot = list(cex = input$spec_cex)
-      )
-      # Add text label of file name / number
-      file_lab = myPars$myAudio_filename
-      if (myPars$nFiles > 1) {
-        file_lab = paste0(file_lab, '\nFile ', myPars$n, ' of ', myPars$nFiles)
-      }
-      ran_x = input$spec_xlim[2] - input$spec_xlim[1]
-      ran_y = input$spec_ylim[2] - input$spec_ylim[1]
-      text(x = input$spec_xlim[1] + ran_x * .01,
-           y = input$spec_ylim[2] - ran_y * .01,
-           labels = file_lab,
-           adj = c(0, 1))  # left, top
     }
   })
 
@@ -477,6 +495,8 @@ server = function(input, output, session) {
     # meaning we have finished editing pitch contour for a sound - prepares the output
     new = data.frame(
       file = basename(myPars$myAudio_filename),
+      dur = myPars$dur,
+      time = paste0('{', paste(round(myPars$X), collapse = ', '), '}'),
       pitch = paste0('{', paste(round(myPars$pitch), collapse = ', '), '}'),
       stringsAsFactors = FALSE
     )

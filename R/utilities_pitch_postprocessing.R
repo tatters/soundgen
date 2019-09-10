@@ -67,9 +67,9 @@ pathfinder = function(pitchCands,
       # special case: pitchCenterGravity has to pass through manual candidates
       pitchCenterGravity[i] = pitchCands[idxDeadCert, i]
     } else {
-      pitchCenterGravity[i] = mean(pitchCands[, i],
-                                   weights = pitchCert[, i] / sum(pitchCert[, i]),
-                                   na.rm = T)
+      pitchCenterGravity[i] = weighted.mean(x = pitchCands[, i],
+                                            w = pitchCert[, i],
+                                            na.rm = TRUE)
     }
   }
 
@@ -228,9 +228,9 @@ interpolate = function(pitchCands,
       if (length(idx_man) > 0) {
         pitchCenterGravity[f] = med
       } else {
-        pitchCenterGravity[f] = mean(pitchCands[, f],
-                                     weights = pitchCert[, f] / sum(pitchCert[, f]),
-                                     na.rm = TRUE)
+        pitchCenterGravity[f] = weighted.mean(x = pitchCands[, f],
+                                              w = pitchCert[, f],
+                                              na.rm = TRUE)
       }
     }
   }
@@ -806,8 +806,8 @@ findVoicedSegments = function(pitchCands,
         i = i + 1
       }
       if (length(segmentEnd) < length(segmentStart)) {
-        # if the end is not found, take the last non-NA value
-        segmentEnd = c(segmentEnd, tail(which(!is.na(putativelyVoiced)), 1))
+        # if the end is not found, take the last voiced value
+        segmentEnd = c(segmentEnd, tail(which(putativelyVoiced), 1))
         break
       }
     }

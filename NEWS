@@ -7,7 +7,7 @@ MINOR:
   * analyze(): interpolWin and cepSmooth are now in Hz instead of bins
   * analyze(): snakeStep, interpolWin, and smooth are set to 0 instead of NULL to turn off these types of pitch postprocessing
   * analyze(): set nFormants = 0 to skip formant analysis, SPL_measured = NULL to skip loudness analysis
-  * playme(): supports playing a selected time region (from/to)
+  * playme(): supports playing a selected time region (from/to) and mp3 format
   * spectrogram(): accepts additional base graphical parameters, such as "yaxp" to control the number of tick marks; a new argument "grid" can be added to add grid lines
 
           CHANGES IN SOUNDGEN VERSION 1.4.1 [05-July-2019]

@@ -1,9 +1,10 @@
 #' Play audio
 #'
-#' Plays an audio file or a numeric vector. This is a simple wrapper for the
-#' functionality provided by \code{\link[tuneR]{play}}. Recommended players on
-#' Linux: "play" from the "vox" library (default), "aplay".
-#' @param sound a vector of numbers on any scale or a path to a .wav file
+#' Plays an audio file (wav or mp3) or a numeric vector. This is a simple
+#' wrapper for the functionality provided by \code{\link[tuneR]{play}}.
+#' Recommended players on Linux: "play" from the "vox" library (default),
+#' "aplay".
+#' @param sound numeric vector or path to wav/mp3 file
 #' @param samplingRate sampling rate (only needed if sound is a vector)
 #' @param player the name of player to use, eg "aplay", "play", "vlc", etc. In
 #'   case of errors, try setting another default player for
@@ -35,7 +36,14 @@ playme = function(sound,
                   to = NULL) {
   # input: a vector of numbers on any scale or a path to a .wav file
   if (class(sound) == 'character') {
-    soundWave = tuneR::readWave(sound)
+    extension = substr(sound, nchar(sound) - 2, nchar(sound))
+    if (extension == 'wav' | extension == 'WAV') {
+      soundWave = tuneR::readWave(sound)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      soundWave = tuneR::readMP3(sound)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
   } else if (class(sound) == 'numeric' | class(sound) == 'integer') {
     soundWave = tuneR::Wave(
       left = sound,
