@@ -13,6 +13,7 @@ server = function(input, output, session) {
     myPars$drawSpec = TRUE
 
     # clean-up of www/ folder: remove all files except temp.wav
+    if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
     files = list.files('www/')
     files = files[files != 'temp.wav']
     for (f in files){
