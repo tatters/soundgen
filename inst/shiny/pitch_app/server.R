@@ -1,4 +1,9 @@
-# TODO: maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); add spectrogram controls to control pitch candidates (pch, cex, etc.); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+
+# # tip: to read the output, do smth like:
+# a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
+# as.numeric(unlist(strsplit(a$time, ',')))
+# as.numeric(unlist(strsplit(a$pitch, ',')))
 
 server = function(input, output, session) {
   myPars = reactiveValues()
@@ -57,7 +62,7 @@ server = function(input, output, session) {
     # to a default that depends on samplingRate
     if (i == 1) {
       updateSliderInput(session, inputId = 'autocorSmooth',
-                      value = 2 * ceiling(7 * myPars$samplingRate / 44100 / 2) - 1)
+                        value = 2 * ceiling(7 * myPars$samplingRate / 44100 / 2) - 1)
     }
   }
 
@@ -69,10 +74,11 @@ server = function(input, output, session) {
       myPars$spec = spectrogram(
         myPars$myAudio,
         samplingRate = myPars$samplingRate,
+        dynamicRange = input$dynamicRange,
         windowLength = input$windowLength,
         step = input$step,
         wn = input$wn,
-        zp = input$zp,
+        zp = 2 ^ input$zp,
         contrast = input$specContrast,
         brightness = input$specBrightness,
         output = 'processed',
@@ -208,18 +214,13 @@ server = function(input, output, session) {
         specHNRslope = input$specHNRslope,
         specSmooth = input$specSmooth,
         specMerge = input$specMerge,
-        shortestSyl = input$shortestSyl,
-        shortestPause = input$shortestPause,
-        interpolWin = input$interpolWin,
-        interpolTol = input$interpolTol,
-        interpolCert = input$interpolCert,
-        pathfinding = input$pathfinding,
-        # annealPars = list(maxit = 5000, temp = 1000),
-        certWeight = input$certWeight,
-        snakeStep = 0,  # doesn't work with manual
+        # we don't want analyze to waste time on pathfinding
+        # b/c we do it separately in obs_pitch()
+        interpolWin = 0,
+        pathfinding = 'none',
+        snakeStep = 0,
         snakePlot = FALSE,
-        smooth = input$smooth,
-        smoothVars = c('pitch'),
+        smooth = 0,
         summary = 'extended',
         plot = FALSE
       )
@@ -309,6 +310,14 @@ server = function(input, output, session) {
       }
     }
   }
+  observeEvent(
+    # par-s that we don't need to use in analyze(), only in obs_pitch()
+    # (b/c they do not affect the pitch candidates)
+    c(input$shortestSyl, input$shortestPause,
+      input$interpolWin, input$interpolTol, input$interpolCert,
+      input$pathfinding, input$certWeight, input$smooth),
+    obs_pitch()
+  )
 
 
   ## Clicking events
@@ -495,8 +504,8 @@ server = function(input, output, session) {
     new = data.frame(
       file = basename(myPars$myAudio_filename),
       dur = myPars$dur,
-      time = paste0('{', paste(round(myPars$X), collapse = ', '), '}'),
-      pitch = paste0('{', paste(round(myPars$pitch), collapse = ', '), '}'),
+      time = paste(round(myPars$X), collapse = ', '),
+      pitch = paste(round(myPars$pitch), collapse = ', '),
       stringsAsFactors = FALSE
     )
     if (is.null(myPars$out)) {

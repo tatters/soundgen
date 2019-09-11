@@ -214,7 +214,7 @@ defaults_analyze = matrix(c(
   'shortestPause', 60, 0, 500, 1,
   'smooth', 1, 0, 10, 0.1,
   'snakeStep', 0.05, 0, 2, 0.01,
-  'interpolWin', 75, 1, 1000, 5,
+  'interpolWin', 75, 0, 1000, 5,
   'interpolTol', 0.05, 0.01, 1, 0.01,
   'interpolCert', 0.3, 0, 1, 0.01,
 

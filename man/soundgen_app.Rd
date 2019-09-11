@@ -2,11 +2,13 @@
 % Please edit documentation in R/soundgenShiny.R
 \name{soundgen_app}
 \alias{soundgen_app}
-\title{Soundgen shiny app}
+\title{Interactive sound synthesizer}
 \usage{
 soundgen_app()
 }
 \description{
 Starts a shiny app, which provides an interactive wrapper to
-\code{\link{soundgen}}
+\code{\link{soundgen}}. Supported browsers: Firefox / Chrome. Note that the
+browser has to be able to playback WAV audio files, otherwise there will be
+no sound.
 }
