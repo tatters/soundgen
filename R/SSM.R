@@ -180,7 +180,7 @@ ssm = function(x,
         xaxt = 's',
         yaxt = 's')
     # spectrogram
-    do.call(seewave::filled.contour.modif2, c(list(
+    do.call(filled.contour.mod, c(list(
       x = seq(0, duration, length.out = nrow(spec)),
       y = seq(
         0,

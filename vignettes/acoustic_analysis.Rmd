@@ -22,6 +22,7 @@ Reasons to use `soundgen` for acoustic analysis might be:
   
   1. User-friendly approach: a single call to the `analyzeFolder` function will give you a dataframe containing dozens of commonly used acoustic descriptors for each file in an entire folder. So if you'd rather get started with model-building without delving too deeply into acoustics, you are one line of code away from your dataset.
   1. Flexible pitch tracking: soundgen uses several popular methods of pitch detection in parallel, followed by their integration and postprocessing. While the abundance of control parameters may initially seem daunting, for those who do wish to delve deeply this makes soundgen's pitch tracker very versatile and offers a lot of power for high-precision analysis.
+  1. An interactive app for manual correction of pitch contours - `pitch_app()`.
   1. Audio segmentation with in-built optimization: the tools for syllable segmentation are again very flexible. Control parameters can even be optimized automatically, as long as you have a manually segmented training sample.
   1. Additional specialized tools for acoustic analysis such as modulation spectra and self-similarity matrices.
   
@@ -36,6 +37,7 @@ To summarize, you might want to look at soundgen's tools for acoustic analysis i
 The most relevant functions are:
   
 * `analyze`, `analyzeFolder`: extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per STFT frame.
+* `pitch_app`: opens a shiny app in a web browser for manually correcting and exporting the pitch contours extracted by `analyze`.
 * `segment`, `segmentFolder`: finds syllables and bursts of energy using the amplitude envelope
 * `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
 * `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
@@ -281,7 +283,7 @@ Cepstrum is the FFT of log-spectrum. It may be a bit challenging to wrap one's h
 The settings that control `pitchCep` are:
 
 * `cepThres`: voicing threshold (defaults to 0.3).
-* `cepSmooth`: the width of smoothing interval (in bins) for finding peaks in the cepstrum. If left NULL, it defaults to 31 for sampling rate 44100 and smaller odd numbers for lower values of sampling rate.
+* `cepSmooth`: the width of smoothing interval (in Hz) for finding peaks in the cepstrum. If left NULL, it defaults to 31 for sampling rate 44100 and smaller odd numbers for lower values of sampling rate.
 * `cepZp` (defaults to 0): zero-padding of the spectrum used for cepstral pitch detection (points). Zero-padding may improve the precision of cepstral pitch detection, but it also slows down the algorithm.
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
@@ -371,19 +373,19 @@ It often makes sense to make assumptions about the possible temporal structure o
 The next few blocks of postprocessing are performed by an internal function, `soundgen:::pathfinder()`. Its input is a matrix of pitch candidates for each frame of a single voiced syllable, usually with multiple candidates per frame. Each candidate is also associated with a different certainty. We want to find a good path through these candidates - that is, a pitch contour that both passes close to the strongest candidates and minimizes pitch jumps, producing a relatively smooth contour. The simplest first approximation is to take a mean of all pitch candidates per frame weighted by their certainty - the "center of gravity" of pitch candidates - and for each frame to select the candidate that lies closest to this center of gravity. This initial guess at a reasonable path may or may not be processed further, depending on the settings described below.
 
 ### Interpolation
-To make sure we have at least one pitch candidate for every frame in the supposedly continuous voiced fragment, we interpolate to fill in any missing values. The same algorithm also adds new pitch candidates with certainty `interpolCert` if a frame has no pitch candidates within `interpolTol` of the median of the "center of gravity" estimate over plus-minus `interpolWin` frames. The frequency of new candidates is equal to this median. `interpolTol` defaults to 0.05, which means that new candidates are calculated if there are none within 0.95 to 1.05 times the median over the interpolation window. You can also enable interpolation to fill in unvoiced frames, but without adding new pitch candidates in voiced frames. To do so, set `interpolTol = Inf`.
+To make sure we have at least one pitch candidate for every frame in the supposedly continuous voiced fragment, we interpolate to fill in any missing values. The same algorithm also adds new pitch candidates with certainty `interpolCert` if a frame has no pitch candidates within `interpolTol` of the median of the "center of gravity" estimate over plus-minus `interpolWin` frames. The frequency of new candidates is equal to this median. For example, if `interpolTol = 0.05`, new candidates are calculated if there are none within 0.95 to 1.05 times the median over the interpolation window. You can also enable interpolation to fill in unvoiced frames, but without adding new pitch candidates in voiced frames. To do so, set `interpolTol = Inf`.
 
 As an illustration, compare the output of the following two commands:
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
 par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .35, step = 25,
+             pitchMethods = 'cep', cepThres = .4, step = 25,
              snakeStep = 0, smooth = 0,
              interpolWin = 0,   # disable interpolation
              pathfinding = 'none',  
              main = 'No interpolation', showLegend = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
-             pitchMethods = 'cep', cepThres = .35, step = 25,
+             pitchMethods = 'cep', cepThres = .4, step = 25,
              pathfinding = 'none',
              snakeStep = 0, smooth = 0, 
              main = 'Interpolation', showLegend = FALSE)  
@@ -391,7 +393,6 @@ a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
 par(mfrow = c(1, 1))
 ```
 
-*TIP: if you turn off interpolation by setting `interpolWin = NULL`, pathfinder may crash if there are unvoiced gaps in the syllable. In practice, you should either disable interpolation and pathfinding together or set `shortestPause = 0` to ensure that each continuous voiced fragment, no matter how short, is treated as a separate syllable*
 
 ### Pathfinding
 The next step after interpolation is pathfinding proper - searching for the optimal path through pitch candidates. If `pathfinding = "none"`, this step is skipped, so we just continue working with the path that lies as close as possible to the (possibly interpolated) center of gravity of pitch candidates. If `pathfinding = "fast"` (the default option), a simple heuristic is employed, in which we walk down the path twice, first left to right and then right to left, trying to minimize the cost measured as a weighted mean of the distance from the center of gravity and the deviation from a smooth contour. The key setting is `certWeight`, which specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps / the internal tension of the resulting pitch curve. Low `certWeight` (close to 0): we are mostly concerned with avoiding rapid pitch fluctuations in our contour. High `certWeight` (close to 1): we mostly pay attention to our certainty in particular pitch candidates. The example below is intended as an illustration of how pathfinding works, so all other types of smoothing are disabled, forcing the final pitch contour to pass strictly through existing candidates.
@@ -407,7 +408,7 @@ a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = 0, smooth = 0, interpolTol = Inf,
              certWeight = 1,  # minimize deviation from high-certainty candidates
-             main = 'Pass through candidates', showLegend = FALSE)  
+             main = 'Pass through top cand-s', showLegend = FALSE)  
 par(mfrow = c(1, 1))
 ```
 
@@ -426,13 +427,13 @@ a1 = analyze(s1, samplingRate = 16000, plot = FALSE, priorMean = NA,
              snakeStep = 0.05, snakePlot = TRUE)
 ```
 
-*TIP Should you use pathfinding, the snake, or both? Pathfinding makes more sense if you want the final contour to pass strictly through existing candidates, say if there are relatively few candidates, most of which are right on target and some completely off. In these conditions the snake will not do much (but not much harm, either). The snake becomes attractive if you have a lot of candidates from different pitch tracking methods, many of which are slightly off and should be averaged. In addition, the more garbage you expect among your pitch candidates, the more you might want to extrapolate and apply median smoothing*
+*TIP Should you use pathfinding, the snake, or both? Pathfinding makes more sense if you want the final contour to pass strictly through existing candidates, say if there are relatively few candidates, most of which are right on target and some completely off. In these conditions the snake will not do much (but not much harm, either). The snake becomes attractive if you have a lot of candidates from different pitch tracking methods, many of which are slightly off and should be averaged. In addition, the more garbage you expect among your pitch candidates, the more you might want to interpolate and apply median smoothing*
 
 ### Median smoothing
 The final postprocessing stage is median smoothing. It is conceptually similar to interpolation, except that by now there is only a single f0 value left per frame, so we can forget about the multiple candidates and their certainties. It wouldn't make much sense to apply kernel smoothing to this curve: the snake can usually do this in a smarter way, since it does know about the multiple candidates and their certainties. What we want from the smoothing algorithm is to detect and correct only outliers: the values that stick out from the surrounding frames. The parameters that control this module are `smooth` and `smoothVars`.
 
 If `smooth` is a positive number, contours of the variables in `smoothVars` are smoothed using a customized version of median smoothing. This modifies only the values that deviate considerably from the moving median and preserves all other values (so this is a bit different from applying a moving median or kernel smoothing). `smooth` controls both the tolerated deviance and the size of the window for calculating a moving median. `smooth = 1` (the default) corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones. 
-This smoothing can be applied to any measured value, not only the final pitch contour. The default is `smoothVars = c('pitch', 'dom')`. To turn off the median smoothing, set `smooth = NULL` or `smoothVars = NULL`.
+This smoothing can be applied to any measured value, not only the final pitch contour. The default is `smoothVars = c('pitch', 'dom')`. To turn off the median smoothing, set `smooth = 0` or `smoothVars = NULL`.
 
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
 par(mfrow = c(1, 2))
@@ -459,7 +460,7 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
             brightness = -0.5,
             colorTheme = 'seewave',
             ylim = c(0, 4),
-            # + other pars passed to seewave::filled.contour.modif2()
+            # + other pars passed to soundgen:::filled.contour.mod()
             
             # options for plotting the final pitch contour (line)
             pitchPlot = list(       

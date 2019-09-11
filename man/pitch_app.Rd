@@ -10,8 +10,9 @@ pitch_app()
 The app produces a .csv file with four columns: file name,
 duration (ms), time stamps (the midpoint of each STFT frame, ms), and
 manually corrected pitch values for each frame (Hz). To process pitch
-contours further in R, do something like:\cr
-\code{
+contours further in R, do something like:
+
+\preformatted{
 a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
 pitch = as.numeric(unlist(strsplit(a$pitch, ',')))
 mean(pitch, na.rm = TRUE); sd(pitch, na.rm = TRUE)

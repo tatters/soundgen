@@ -1,14 +1,15 @@
-          CHANGES IN SOUNDGEN VERSION 1.5.0 [...date...]
+          CHANGES IN SOUNDGEN VERSION 1.5.0 [11-September-2019]
 NEW FUNCTIONS:
   * pitch_app(): an interactive Shiny app for manually editing intonation (pitch) contours in a web browser
 
-MAJOR (affect back-compatibility)
+Affect back-compatibility:
   * analyze(): priorMean is now in Hz instead of semitones (but priorSD is still in semitones), priorPlot looks nicer
   * analyze(): interpolWin and cepSmooth are now in Hz instead of bins
+  * analyze(): snakeStep, interpolWin, and smooth are set to 0 instead of NULL to turn off these types of pitch postprocessing
 
 MINOR:
-  * analyze(): snakeStep, interpolWin, and smooth are set to 0 instead of NULL to turn off these types of pitch postprocessing
   * analyze(): set nFormants = 0 to skip formant analysis, SPL_measured = NULL to skip loudness analysis
+  * analyze(): minor changes / debugging in pathfinding algorithms
   * playme(): supports playing a selected time region (from/to) and mp3 format
   * spectrogram(): accepts additional base graphical parameters, such as "yaxp" to control the number of tick marks; a new argument "grid" can be added to add grid lines
 
