@@ -25,10 +25,10 @@ Imports: stats,
     mvtnorm,
     plyr,
     dtw,
-    phonTools
+    phonTools,
+    shinyBS
 Depends: R (>= 3.4)
 RoxygenNote: 6.1.1
 Suggests: knitr,
-    rmarkdown,
-    shinyBS
+    rmarkdown
 VignetteBuilder: knitr
