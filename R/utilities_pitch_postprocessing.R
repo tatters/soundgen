@@ -144,10 +144,11 @@ pathfinder = function(pitchCands,
       annealPars = annealPars
     )
   } else {  # if (pathfinding == 'none')
-    bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
-      idx = which.min(abs(pitchCands[, x] - pitchCenterGravity[x]))
-      pitchCands[idx, x]
-    })
+    bestPath = rep(NA, nc)
+    for (i in 1:nc) {
+      idx = which.min(abs(pitchCands[, i] - pitchCenterGravity[i]))
+      if (length(idx) > 0 && !is.na(idx)) bestPath[i] = pitchCands[idx, i]
+    }
     if (length(manual$frame) > 0) {
       bestPath[manual$frame] = manual$freq
     }
@@ -167,7 +168,8 @@ pathfinder = function(pitchCands,
       snakePlot = snakePlot
     )
   }
-
+  if (!is.numeric(bestPath) |
+      length(bestPath) != nc) browser()
   return(2 ^ bestPath)
 }
 

@@ -631,13 +631,18 @@ analyze = function(x,
   # if the frame is too quiet or too noisy, we will not analyze it
   cond_silence = ampl >= silence &
     as.logical(apply(s, 2, sum) > 0)  # b/c s frames are not 100% synchronized with ampl frames
+  framesToAnalyze = which(cond_silence)
   cond_entropy = ampl > silence & entropy < entropyThres
   cond_entropy[is.na(cond_entropy)] = FALSE
-  non_silent_frames = which(cond_silence == TRUE)
-  time_start = step * (min(non_silent_frames) - 1)  # the beginning of the first non-silent frame
-  time_end = step * (max(non_silent_frames))        # the end of the last non-silent frame
-  duration_noSilence = (time_end - time_start) / 1000
-  framesToAnalyze = which(cond_silence)
+
+  # save duration of non-silent part of audio
+  if (length(framesToAnalyze) > 0) {
+    time_start = step * (min(framesToAnalyze) - 1)  # the beginning of the first non-silent frame
+    time_end = step * (max(framesToAnalyze))        # the end of the last non-silent frame
+    duration_noSilence = (time_end - time_start) / 1000
+  } else {
+    duration_noSilence = 0
+  }
 
   # autocorrelation for each frame
   autocorBank = matrix(NA, nrow = length(autoCorrelation_filter),
