@@ -1,11 +1,13 @@
-# TODO: update pitch ceiling when setting a high prior (but not pitch floor); icons for buttons; maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: move tooltips to server and check how to start shinyBS correctly; status bar; press space = same as press "play" button; maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
 # as.numeric(unlist(strsplit(a$time, ',')))
 # as.numeric(unlist(strsplit(a$pitch, ',')))
 
+
 server = function(input, output, session) {
+    library(shinyBS)
     myPars = reactiveValues()
     myPars$zoomFactor = 2     # zoom buttons ch+ange zoom by this factor
     myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
@@ -13,8 +15,8 @@ server = function(input, output, session) {
     myPars$drawSpec = TRUE
 
     # clean-up of www/ folder: remove all files except temp.wav
-    if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
-    files = list.files('www/')
+    # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
+    files = list.files('www/', pattern = '.wav')
     files = files[files != 'temp.wav']
     for (f in files){
         file.remove(paste0('www/', f))
@@ -65,6 +67,11 @@ server = function(input, output, session) {
             updateSliderInput(session, inputId = 'autocorSmooth',
                               value = 2 * ceiling(7 * myPars$samplingRate / 44100 / 2) - 1)
         }
+
+        # update info - file number ... out of ...
+        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles, ': ',
+                          myPars$myAudio_filename)
+        output$fileN = renderUI(tags$html(file_lab))
     }
 
     extractSpectrogram = observe({
@@ -107,7 +114,9 @@ server = function(input, output, session) {
                          f = myPars$samplingRate,
                          filename = paste0('www/', myPars$myfile))
         output$myAudio = renderUI(
-            tags$audio(src = myPars$myfile, type = myPars$myAudio_type, autoplay = NA, controls = NA)
+            tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
+                       autoplay = NA, controls = NA,
+                       style="transform: scale(0.75); transform-origin: 0 0;")
         )
     })
 
@@ -163,16 +172,12 @@ server = function(input, output, session) {
                     ylim = c(input$spec_ylim[1], input$spec_ylim[2]),
                     candPlot = list(cex = input$spec_cex)
                 )
-                # Add text label of file name / number
-                file_lab = myPars$myAudio_filename
-                if (myPars$nFiles > 1) {
-                    file_lab = paste0(file_lab, '\nFile ', myPars$n, ' of ', myPars$nFiles)
-                }
+                # Add text label of file name
                 ran_x = myPars$spec_xlim[2] - myPars$spec_xlim[1]
                 ran_y = input$spec_ylim[2] - input$spec_ylim[1]
                 text(x = myPars$spec_xlim[1] + ran_x * .01,
                      y = input$spec_ylim[2] - ran_y * .01,
-                     labels = file_lab,
+                     labels = myPars$myAudio_filename,
                      adj = c(0, 1))  # left, top
             }
         }
@@ -436,8 +441,12 @@ server = function(input, output, session) {
         if (myPars$print) print('Setting prior...')
         if (!is.null(input$spectrogram_brush)) {
             pr = c(input$spectrogram_brush$ymin, input$spectrogram_brush$ymax) * 1000
+            # don't push down below pitchFloor
             pr[pr < input$pitchFloor] = input$pitchFloor
-            pr[pr > input$pitchCeiling] = input$pitchCeiling
+            # but update pitchCeiling if prior is higher
+            if (any(pr > input$pitchCeiling)) {
+                updateSliderInput(session, 'pitchCeiling', value = max(pr))
+            }
             meanPr = mean(pr)
             sdPr = round((HzToSemitones(pr[2]) - HzToSemitones(mean(pr))) / 2, 1)
             updateSliderInput(session, 'priorMean', value = meanPr)
@@ -454,7 +463,7 @@ server = function(input, output, session) {
         }
         return(label)
     })
-    output$spectro_hover = renderUI(HTML(hover_label()))
+    output$pitchAtCursor = renderUI(HTML(hover_label()))
 
     brush = observeEvent(input$spectrogram_brush, {
         if (myPars$print) print('Running brush()...')
@@ -561,4 +570,8 @@ server = function(input, output, session) {
             type = 'default'
         )
     })
+
+    # tooltips - have to be here instead of UI b/c otherwise problems with regulating delay
+    # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
+    shinyBS:::addTooltip(session, id='selection_play', title='Play selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 }

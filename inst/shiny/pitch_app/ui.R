@@ -119,16 +119,19 @@ ui = fluidPage(
 
     column(9,
            fluidRow(
-             column(5,
-                    fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = 'No file selected')
+             column(3,
+                    fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = '...', width = "200px")
              ),
              column(4,
+                    uiOutput("fileN"),
+                    actionButton(inputId = "lastFile", label = "Last", style="background-color: lightgray;"),
+                    actionButton(inputId = "nextFile", label = "Next", style="background-color: lightgray;")
+             ),
+             column(3,
                     uiOutput("myAudio")
              ),
              column(2,
-                    downloadButton(outputId = "saveRes", label = "Save results", style="color: blue; background-color: orange;")
-             ),
-             column(1,
+                    downloadButton(outputId = "saveRes", label = "", style="color: blue; background-color: orange;"),
                     actionButton('about', label = '?')
              )
            ),
@@ -140,17 +143,28 @@ ui = fluidPage(
                     radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Add anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
              ),
              column(3,
-                    htmlOutput('spectro_hover', inline = TRUE)
+                    htmlOutput('pitchAtCursor', inline = TRUE)
              ),
              column(3,
-                    actionButton(inputId = "lastFile", label = "Last", style="background-color: lightgray;"),
-                    actionButton(inputId = "nextFile", label = "Next", style="background-color: lightgray;")
+                    actionButton(inputId = "selection_play", label = HTML("<img src='icons/play.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "selection_unvoice", label = HTML("<img src='icons/unvoice.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    shinyBS:::bsPopover(id='selection_unvoice', title=NULL, content='Treat selection as unvoiced', placement="right", trigger="hover"),
+                    actionButton(inputId = "selection_voice", label = HTML("<img src='icons/voice.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    shinyBS:::bsPopover(id='selection_voice', title=NULL, content='Undo treating selection as unvoiced', placement="right", trigger="hover"),
+                    actionButton(inputId = "selection_octaveUp", label = HTML("<img src='icons/octaveUp.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    shinyBS:::bsPopover(id='selection_octaveUp', title=NULL, content='Raise pitch for selection by an octave', placement="right", trigger="hover"),
+                    actionButton(inputId = "selection_octaveDown", label = HTML("<img src='icons/octaveDown.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    shinyBS:::bsPopover(id='selection_octaveDown', title=NULL, content='Lower pitch for selection by an octave', placement="right", trigger="hover"),
+                    actionButton(inputId = "selection_setPrior", label = "Prior", style = "padding: 2px 2px;"),
+                    shinyBS:::bsPopover(id='selection_setPrior', title=NULL, content='Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover")
              ),
              column(3,
-                    actionButton(inputId = 'scrollLeft', label = '<'),
-                    actionButton(inputId = 'zoomIn', label = '+'),
-                    actionButton(inputId = 'zoomOut', label = '-'),
-                    actionButton(inputId = 'scrollRight', label = '>')
+                    actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = 'zoomOut', label = HTML("<img src='icons/zoomOut.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "selection_zoomToSel", label = HTML("<img src='icons/zoomSel.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    shinyBS:::bsPopover(id='selection_zoomToSel', title=NULL, content='Zoom to selection (time axis only)', placement="right", trigger="hover"),
+                    actionButton(inputId = 'zoomIn', label = HTML("<img src='icons/zoomIn.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = 'scrollRight', label = HTML("<img src='icons/forward.png' width = '20px'>"), style = "padding: 2px 2px;")
              )
            ),
 
@@ -159,22 +173,7 @@ ui = fluidPage(
            ),
 
            fluidRow(
-             HTML('<h4>Operations with selection: '),
-             actionButton(inputId = "selection_play", label = "Play", inline = TRUE),
-             shinyBS:::bsPopover(id='selection_play', title=NULL, content='Play selection', placement="right", trigger="hover"),
-             actionButton(inputId = "selection_unvoice", label = "Unvoice", inline = TRUE),
-             shinyBS:::bsPopover(id='selection_unvoice', title=NULL, content='Treat selection as unvoiced', placement="right", trigger="hover"),
-             actionButton(inputId = "selection_voice", label = "Undo\nunvoice", inline = TRUE),
-             shinyBS:::bsPopover(id='selection_voice', title=NULL, content='Undo treating selection as unvoiced', placement="right", trigger="hover"),
-             actionButton(inputId = "selection_octaveUp", label = "Octave\nUP", inline = TRUE),
-             shinyBS:::bsPopover(id='selection_octaveUp', title=NULL, content='Raise pitch for selection by an octave', placement="right", trigger="hover"),
-             actionButton(inputId = "selection_octaveDown", label = "Octave\nDOWN", inline = TRUE),
-             shinyBS:::bsPopover(id='selection_octaveDown', title=NULL, content='Lower pitch for selection by an octave', placement="right", trigger="hover"),
-             actionButton(inputId = "selection_setPrior", label = "Set prior", inline = TRUE),
-             shinyBS:::bsPopover(id='selection_setPrior', title=NULL, content='Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover"),
-             actionButton(inputId = "selection_zoomToSel", label = "Zoom\nto sel", inline = TRUE),
-             shinyBS:::bsPopover(id='selection_zoomToSel', title=NULL, content='Zoom to selection (time axis only)', placement="right", trigger="hover"),
-             HTML('</h4>')
+             # status bar here
            )
     )
   )
