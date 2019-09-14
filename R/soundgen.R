@@ -1,6 +1,6 @@
-# TODO: redo tips with shinyBS; morphing produces duplicate time anchors (check ex in vignette); add @seealso tags in most function descriptions; soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: morphing produces duplicate time anchors (check ex in vignette); add @seealso tags in most function descriptions; soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
-#' @import stats graphics utils grDevices
+#' @import stats graphics utils grDevices shinyBS
 #' @encoding UTF-8
 NULL
 

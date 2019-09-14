@@ -342,8 +342,8 @@ server = function(input, output, session) {
           updateSliderInput(session, inputId = 'vocalTract', value = v)
         }
       }
-    myPars$updateVTL = TRUE
-  })
+      myPars$updateVTL = TRUE
+    })
 
   # observeEvent(input$estimateVTL, {
   #   vocalTract_est()
@@ -459,8 +459,8 @@ server = function(input, output, session) {
   observeEvent(input$pitch_flatten, {
     # flat pitch equal to the first pitch anchor
     if (is.list(myPars$pitch)) {
-    myPars[['pitch']] = data.frame('time' = c(0,1),
-                                          'value' = rep(myPars$pitch$value[1], 2))
+      myPars[['pitch']] = data.frame('time' = c(0,1),
+                                     'value' = rep(myPars$pitch$value[1], 2))
     }
   })
 
@@ -562,7 +562,7 @@ server = function(input, output, session) {
     # flat pitch modulation across syllables
     if (is.list(myPars$pitchGlobal)) {
       myPars[['pitchGlobal']] = data.frame('time' = c(0,1),
-                                                  'value' = c(0,0))
+                                           'value' = c(0,0))
     }
   })
 
@@ -731,13 +731,13 @@ server = function(input, output, session) {
     # opening at start and end of sound has to be defined)
     if (length(idx) > 0 & idx != 1 & idx != length(myPars$mouth$time)) {
       myPars[['mouth']] = data.frame('time' = myPars$mouth$time[-idx],
-                                            'value' = myPars$mouth$value[-idx])
+                                     'value' = myPars$mouth$value[-idx])
     }
   })
 
   observeEvent(input$mouth_flatten, {
     myPars[['mouth']] = data.frame('time' = c(0,1),
-                                          'value' = c(.5,.5))  # default mouth opening
+                                   'value' = c(.5,.5))  # default mouth opening
   })
 
   output$mouth_anchors = renderTable(expr = data.frame(
@@ -806,14 +806,14 @@ server = function(input, output, session) {
     # opening at start and end of sound has to be defined)
     if (length(idx) > 0 & idx != 1 & idx != length(myPars$ampl$time)) {
       myPars[['ampl']] = data.frame('time' = myPars$ampl$time[-idx],
-                                           'value' = myPars$ampl$value[-idx])
+                                    'value' = myPars$ampl$value[-idx])
     }
   })
 
   observeEvent(input$ampl_syl_flatten, {
     # flat ampl equal to the first ampl anchor
     myPars[['ampl']] = data.frame('time' = c(0, 1),
-                                         'value' = rep(myPars$ampl$value[1], 2))
+                                  'value' = rep(myPars$ampl$value[1], 2))
   })
 
   output$ampl_syl_anchors = renderTable(expr = data.frame(
@@ -901,7 +901,7 @@ server = function(input, output, session) {
   observeEvent(input$amplGlobal_flatten, {
     # flat ampl equal to the first ampl anchor
     myPars[['amplGlobal']] = data.frame('time' = c(0, 1),
-                                               'value' = c(0, 0))
+                                        'value' = c(0, 0))
   })
 
   output$amplGlobal_anchors = renderTable(expr = {
@@ -966,15 +966,15 @@ server = function(input, output, session) {
     #   wl = floor(input$specWindowLength*input$samplingRate/1000/2)*2,
     #   flim = c(0,10), main = 'Spectrum')
     getRolloff(pitch_per_gc = range(myPars$pitch$value),
-      rolloff = input$rolloff,
-      rolloffOct = input$rolloffOct,
-      rolloffParab = input$rolloffParab,
-      rolloffParabHarm = input$rolloffParabHarm,
-      rolloffKHz = input$rolloffKHz,
-      baseline = 200,
-      dynamicRange = input$dynamicRange,
-      samplingRate = input$samplingRate,
-      plot = TRUE
+               rolloff = input$rolloff,
+               rolloffOct = input$rolloffOct,
+               rolloffParab = input$rolloffParab,
+               rolloffParabHarm = input$rolloffParabHarm,
+               rolloffKHz = input$rolloffKHz,
+               baseline = 200,
+               dynamicRange = input$dynamicRange,
+               samplingRate = input$samplingRate,
+               plot = TRUE
     )
   })
 
@@ -1041,7 +1041,7 @@ server = function(input, output, session) {
       myPars$formants = myPars$formantsPicked
       updateTextInput(session, inputId = 'formants',
                       value = paste0('list(f1 = ', myPars$formantsPicked[1],
-                                    ', f2 = ', myPars$formantsPicked[2], ')'))
+                                     ', f2 = ', myPars$formantsPicked[2], ')'))
       updateTextInput(session, inputId = 'vowelString',
                       value = '')
 
@@ -1300,10 +1300,90 @@ server = function(input, output, session) {
 
   observeEvent(input$about, {
     id <<- showNotification(
-      ui = paste0("SoundGen ", packageVersion('soundgen'), ". Load/detach library(shinyBS) to show/hide tips. Project home page: http://cogsci.se/soundgen.html. Contact me at andrey.anikin / at / rambler.ru. Thank you!"),
+      ui = paste0("Interactive voice synthesizer: soundgen ", packageVersion('soundgen'), ". More info: http://cogsci.se/soundgen.html"),
       duration = 10,
       closeButton = TRUE,
       type = 'default'
     )
   })
+
+  ## TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay
+  # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
+  # Main / syllables
+  shinyBS::addTooltip(session, id='sylLen', title = 'Average duration of a continuous VOICED syllable (unvoiced noise is added separately and may fill in the pauses)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='nSyl', title = 'Each sound consists of one or several syllables separated by pauses', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='pauseLen', title = 'Average pause between syllables', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='repeatBout', title = 'Play the whole bout several times with a specified pause', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Main / hypers
+  shinyBS::addTooltip(session, id='temperature', title = 'Stochasticity within each syllable', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='maleFemale', title = 'Adjusts vocal tract length, pitch contour, and formants to imitate larger/smaller body size', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='creakyBreathy', title = 'Changes a bunch of parameters to make the VOICED component either constricted (creaky) or breathy', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Main / settings
+  shinyBS::addTooltip(session, id='samplingRate', title = 'The number of points per second of audio. Higher = better quality; lower = faster. Can be any integer, not necessarily a power of two.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='windowLength', title = 'The length of window for performing FFT - inverse FFT when filtering the source.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='pitchSamplingRate', title = 'The number of considered F0 values per second of audio. Should be >= pitchCeiling for best quality', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='dynamicRange', title = 'Discard everything more than dynamicRange dB under maximum amplitude', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='pitchFloorCeiling', title = 'Sets the bounds of fundamental frequency for synthesis', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Intonation
+  shinyBS::addTooltip(session, id='pitch_flatten', title = 'Revert to a flat intonation contour with pitch equal to the first (left) anchor', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='pitchRange', title = 'Set upper / lower limit separately or drag in between the markers to shift both limits simultaneously', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='pitch_flattenGlobal', title = 'No global pitch modulation from syllable to syllable', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='vibratoFreq', title = 'Frequency of regular FM', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='vibratoDep', title = 'Depth of regular FM', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Amplitude
+  shinyBS::addTooltip(session, id='ampl_syl_flatten', title = 'Same amplitude over the entire syllable', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='amplGlobal_flatten', title = 'Same amplitude over the entire bout', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='attackLen', title = 'Does the voice start/end abruptly or with a "fade-in/out"?', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='amDep', title = 'Depth of amplitude modulation', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='amFreq', title = 'Frequency of amplitude modulation', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='amShape', title = 'Shape of amplitude modulation: 0 = ~sine, -1 = notches, +1 = clicks', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Source / glottal
+  shinyBS::addTooltip(session, id='rolloff', title = 'Loss of energy in harmonics relative to fundamental frequency (F0); low values emphasize F0', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='rolloffOct', title = 'Negative: rolloff is progressively steeper for higher frequencies', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='rolloffKHz', title = 'Steeper/gentler basic rolloff as f0 varies', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='rolloffParab', title = 'Parabolic boost to the first ... harmonics, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='rolloffParabHarm', title = 'Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='glottis', title = 'Proportion of time glottis is closed relative to F0 period; adds silences between glottal cycles', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Source / nonlinear
+  shinyBS::addTooltip(session, id='nonlinBalance', title = '3 regimes of nonlinear effects: none / subharmonics / subharmonics + jitter', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='nonlinDep', title = 'Modulates the strength of nonlinear effects specified in "Advanced" below, when these effects are added', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='shortestEpoch', title = 'Change nonlinear regime no sooner than after ... ms', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='subFreq', title = 'The approximate target frequency of subharmonics; the actual frequency is forced to be a fraction of f0 at every time point', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='subDep', title = 'Width of subharmonic sidebands, ie the strength of subharmonics depending on their distance from F-harmonics', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='jitterDep', title = 'Random variation in F0 per glottal cycle', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='jitterLen', title = 'The pitch jumps every ... ms. Low ~ harsh noise, high ~ shaky voice', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='shimmerDep', title = 'Random variation in amplitude per glottal cycle', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='shimmerLen', title = 'The amplitude jumps every ... ms. Low ~ harsh noise, high ~ shaky voice', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='noise_flatten', title = 'Revert to a flat contour with amplitude equal to the first (left) anchor', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='noiseTime', title = 'Timing of respiration noise relative to the voiced component', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Tract / formants
+  shinyBS::addTooltip(session, id='formantDep', title = 'Multiply formant amplitudes by ... (>1 = emphasize vowel quality)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='formantWidth', title = 'Multiply formant bandwidths by ... (>1 = nasalized or muffled)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='vowelString', title = "Implemented presets: a, o, i, e, u, 0 (schwa)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='estimateVTL', title = 'If TRUE, user-specified formants trump user-specified vocal tract length', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='vocalTract', title = 'Affects default formant dispersion at temperature>0', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='formantDepStoch', title = 'Amplitude of extra formants added on top of user-specified ones based on the length of vocal tract', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='lipRad', title = 'Rolloff due to lip radiation', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='noseRad', title = 'Rolloff due to nose radiation: added instead of lip radiation when the mouth is closed', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # Tract / mouth opening & unvoiced type
+  shinyBS::addTooltip(session, id='mouth_flatten', title = 'Revert to a flat mouth opening contour with opening degree equal at the first (left) anchor', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='mouthOpenThres', title = 'The degree of mouth opening at which lips separate and start to radiate', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='noiseType', title = "Breathing = glottal noise (same formants as for voiced part); snuffling = breathing through the nose; h / s / sh / f = sibilants", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='rolloffNoise', title = 'Rolloff of the noise component (affects both breathing and supra-glottal noise)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+  # spectrogram controls
+  shinyBS::addTooltip(session, id='specWindowLength', title = 'Window length for FFT transform (Gaussian)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='osc', title = 'Plot oscillogram on a linear or dB scale?', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='osc_heights', title = 'Relative size of spectrogram vs oscillogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
 }
