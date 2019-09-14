@@ -112,23 +112,23 @@ ui = fluidPage(
              column(3,
                     radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Add anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
              ),
-             column(3,
+             column(2,
                     htmlOutput('pitchAtCursor', inline = TRUE)
              ),
-             column(3,
-                    actionButton(inputId = "selection_play", label = HTML("<img src='icons/play.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_unvoice", label = HTML("<img src='icons/unvoice.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_voice", label = HTML("<img src='icons/voice.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_octaveUp", label = HTML("<img src='icons/octaveUp.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_octaveDown", label = HTML("<img src='icons/octaveDown.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_setPrior", label = HTML("<img src='icons/prior.png' width = '20px'>"), style = "padding: 2px 2px;")
+             column(4,
+                    actionButton(inputId = "selection_play", label = HTML("<img src='icons/play.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "selection_unvoice", label = HTML("<img src='icons/unvoice.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "selection_voice", label = HTML("<img src='icons/voice.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "selection_octaveUp", label = HTML("<img src='icons/octaveUp.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "selection_octaveDown", label = HTML("<img src='icons/octaveDown.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "selection_setPrior", label = HTML("<img src='icons/prior.png' width = '25px'>"), style = "padding: 2px 2px;")
              ),
              column(3,
-                    actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = 'zoomOut', label = HTML("<img src='icons/zoomOut.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "zoomToSel", label = HTML("<img src='icons/zoomSel.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = 'zoomIn', label = HTML("<img src='icons/zoomIn.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = 'scrollRight', label = HTML("<img src='icons/forward.png' width = '20px'>"), style = "padding: 2px 2px;")
+                    actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = 'zoomOut', label = HTML("<img src='icons/zoomOut.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "zoomToSel", label = HTML("<img src='icons/zoomSel.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = 'zoomIn', label = HTML("<img src='icons/zoomIn.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = 'scrollRight', label = HTML("<img src='icons/forward.png' width = '25px'>"), style = "padding: 2px 2px;")
              )
            ),
 
@@ -137,7 +137,7 @@ ui = fluidPage(
            ),
 
            fluidRow(
-             # status bar here
+             # htmlOutput('statusBar')  # status bar here
            )
     )
   )

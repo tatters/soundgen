@@ -1,8 +1,7 @@
-# TODO: status bar; maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
-# as.numeric(unlist(strsplit(a$time, ',')))
 # as.numeric(unlist(strsplit(a$pitch, ',')))
 
 # shinyBS needs to be included as a dependency (instead of just "import"):
@@ -75,7 +74,7 @@ server = function(input, output, session) {
         # update info - file number ... out of ...
         file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles, ': ',
                           myPars$myAudio_filename)
-        output$fileN = renderUI(tags$html(file_lab))
+        output$fileN = renderUI(HTML(file_lab))
     }
 
     extractSpectrogram = observe({
@@ -191,471 +190,471 @@ server = function(input, output, session) {
         # analyze the file (executes every time a slider with arg value is changed)
         if (!is.null(input$loadAudio$datapath)) {
             if (myPars$print) print('Calling analyze()...')
-            myPars$step = input$windowLength * (1 - input$overlap / 100)
-            temp_anal = analyze(
-                myPars$myAudio_path,
-                windowLength = input$windowLength,
-                step = myPars$step,
-                wn = input$wn,
-                zp = input$zp,
-                dynamicRange = input$dynamicRange,
-                silence = input$silence,
-                entropyThres = input$entropyThres,
-                nFormants = 0,     # disable formant tracking
-                SPL_measured = 0,  # disable loudness analysis
-                pitchMethods = input$pitchMethods,
-                pitchFloor = input$pitchFloor,
-                pitchCeiling = input$pitchCeiling,
-                priorMean = input$priorMean,
-                priorSD = input$priorSD,
-                priorPlot = FALSE,
-                nCands = input$nCands,
-                minVoicedCands = input$minVoicedCands,
-                domThres = input$domThres,
-                domSmooth = input$domSmooth,
-                autocorThres = input$autocorThres,
-                autocorSmooth = input$autocorSmooth,
-                cepThres = input$cepThres,
-                cepSmooth = input$cepSmooth,
-                cepZp = input$cepZp,
-                specThres = input$specThres,
-                specPeak = input$specPeak,
-                specSinglePeakCert = input$specSinglePeakCert,
-                specHNRslope = input$specHNRslope,
-                specSmooth = input$specSmooth,
-                specMerge = input$specMerge,
-                # we don't want analyze to waste time on pathfinding
-                # b/c we do it separately in obs_pitch()
-                interpolWin = 0,
-                pathfinding = 'none',
-                snakeStep = 0,
-                snakePlot = FALSE,
-                smooth = 0,
-                summary = 'extended',
-                plot = FALSE
-            )
+            withProgress(message = 'Analyzing the sound...', value = 0.5, {
+                myPars$step = input$windowLength * (1 - input$overlap / 100)
+                temp_anal = analyze(
+                    myPars$myAudio_path,
+                    windowLength = input$windowLength,
+                    step = myPars$step,
+                    wn = input$wn,
+                    zp = input$zp,
+                    dynamicRange = input$dynamicRange,
+                    silence = input$silence,
+                    entropyThres = input$entropyThres,
+                    nFormants = 0,     # disable formant tracking
+                    SPL_measured = 0,  # disable loudness analysis
+                    pitchMethods = input$pitchMethods,
+                    pitchFloor = input$pitchFloor,
+                    pitchCeiling = input$pitchCeiling,
+                    priorMean = input$priorMean,
+                    priorSD = input$priorSD,
+                    priorPlot = FALSE,
+                    nCands = input$nCands,
+                    minVoicedCands = input$minVoicedCands,
+                    domThres = input$domThres,
+                    domSmooth = input$domSmooth,
+                    autocorThres = input$autocorThres,
+                    autocorSmooth = input$autocorSmooth,
+                    cepThres = input$cepThres,
+                    cepSmooth = input$cepSmooth,
+                    cepZp = input$cepZp,
+                    specThres = input$specThres,
+                    specPeak = input$specPeak,
+                    specSinglePeakCert = input$specSinglePeakCert,
+                    specHNRslope = input$specHNRslope,
+                    specSmooth = input$specSmooth,
+                    specMerge = input$specMerge,
+                    # we don't want analyze to waste time on pathfinding
+                    # b/c we do it separately in obs_pitch()
+                    interpolWin = 0,
+                    pathfinding = 'none',
+                    snakeStep = 0,
+                    snakePlot = FALSE,
+                    smooth = 0,
+                    summary = 'extended',
+                    plot = FALSE
+                )
 
-            myPars$pitchCands = temp_anal$pitchCands
-            windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
-            myPars$X = seq(
-                1,
-                max(1, (length(myPars$myAudio) - windowLength_points)),
-                length.out = nrow(temp_anal$result)
-            ) / myPars$samplingRate * 1000 + input$windowLength / 2
-            # add: update defaults that depend on samplingRate, eg cepSmooth
+                myPars$pitchCands = temp_anal$pitchCands
+                windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
+                myPars$X = seq(
+                    1,
+                    max(1, (length(myPars$myAudio) - windowLength_points)),
+                    length.out = nrow(temp_anal$result)
+                ) / myPars$samplingRate * 1000 + input$windowLength / 2
+                # add: update defaults that depend on samplingRate, eg cepSmooth
 
 
-            # if running analyze() for the same audio, preserve the old manual values
-            # (if any) and paste them back in
-            isolate({
-                if (!is.null(myPars$pitch) &
-                    nrow(myPars$manual) > 0) {
-                    # if the number of frames has changed (new windowLengh or step),
-                    # up/downsample manual pitch candidates accordingly
-                    len_old = length(myPars$pitch)  # !!! switch to myPars$manual
-                    len_new = ncol(myPars$pitchCands$freq)
-                    myPars$manual$frame = ceiling(myPars$manual$frame * len_new / len_old)
-                }
-                obs_pitch()  # run pathfinder
+                # if running analyze() for the same audio, preserve the old manual values
+                # (if any) and paste them back in
+                isolate({
+                    if (!is.null(myPars$pitch) &
+                        nrow(myPars$manual) > 0) {
+                        # if the number of frames has changed (new windowLengh or step),
+                        # up/downsample manual pitch candidates accordingly
+                        len_old = length(myPars$pitch)  # !!! switch to myPars$manual
+                        len_new = ncol(myPars$pitchCands$freq)
+                        myPars$manual$frame = ceiling(myPars$manual$frame * len_new / len_old)
+                    }
+                    obs_pitch()  # run pathfinder
+                })
             })
         }
     })
 
-    obs_pitch = function() {
-        if (myPars$print) print('Looking for pitch contour with obs_pitch()')
-        if (length(myPars$pitchCands$freq) > 0) {
-            myPars$voicedSegments = soundgen:::findVoicedSegments(
-                myPars$pitchCands$freq,
-                manualV = myPars$manual$frame,
-                manualUnv = myPars$manualUnv,
-                shortestSyl = input$shortestSyl,
-                shortestPause = input$shortestPause,
-                minVoicedCands = input$minVoicedCands,
-                pitchMethods = input$pitchMethods,
-                step = myPars$step,
-                samplingRate = input$samplingRate
+            obs_pitch = function() {
+                if (myPars$print) print('Looking for pitch contour with obs_pitch()')
+                if (length(myPars$pitchCands$freq) > 0) {
+                    myPars$voicedSegments = soundgen:::findVoicedSegments(
+                        myPars$pitchCands$freq,
+                        manualV = myPars$manual$frame,
+                        manualUnv = myPars$manualUnv,
+                        shortestSyl = input$shortestSyl,
+                        shortestPause = input$shortestPause,
+                        minVoicedCands = input$minVoicedCands,
+                        pitchMethods = input$pitchMethods,
+                        step = myPars$step,
+                        samplingRate = input$samplingRate
+                    )
+
+                    # for each syllable, impute NA's and find a nice path through pitch candidates
+                    myPars$pitch = rep(NA, ncol(myPars$pitchCands$freq))
+                    if (nrow(myPars$voicedSegments) > 0) {
+                        # if we have found at least one putatively voiced syllable
+                        for (syl in 1:nrow(myPars$voicedSegments)) {
+                            myseq = myPars$voicedSegments$segmentStart[syl]:myPars$voicedSegments$segmentEnd[syl]
+                            manual_syl = myPars$manual[myPars$manual$frame %in% myseq, ]
+                            manual_syl$frame = manual_syl$frame - myseq[1] + 1  # adjust manual idx to syllable
+                            # compute the optimal path through pitch candidates
+                            myPars$pitch[myseq] = soundgen:::pathfinder(
+                                pitchCands = myPars$pitchCands$freq[, myseq, drop = FALSE],
+                                pitchCert = myPars$pitchCands$cert[, myseq, drop = FALSE],
+                                pitchSource = myPars$pitchCands$source[, myseq, drop = FALSE],
+                                manual = manual_syl,
+                                certWeight = input$certWeight,
+                                pathfinding = ifelse(input$pathfinding == 'slow',
+                                                     'fast',  # slow doesn't work well with manual cand-s
+                                                     input$pathfinding),
+                                interpolWin_bin = ceiling(input$interpolWin / myPars$step),
+                                interpolTol = input$interpolTol,
+                                interpolCert = input$interpolCert,
+                                snakeStep = 0,
+                                snakePlot = FALSE
+                            )
+                        }
+                    }
+
+                    ## Median smoothing of pitch contour
+                    if (input$smooth > 0) {
+                        points_per_sec = length(myPars$pitch) / myPars$dur * 1000
+                        # smooth of 1 means that smoothing window is ~100 ms
+                        smoothing_ww = round(input$smooth * points_per_sec / 10, 0)
+                        # the larger smooth, the heavier the smoothing (lower tolerance
+                        # threshold before values are replaced by median over smoothing window).
+                        # smooth of 1 gives smoothingThres of 4 semitones
+                        smoothingThres = 4 / input$smooth
+                        #print(myPars$pitchCands$source)
+                        myPars$pitch = soundgen:::medianSmoother(
+                            as.data.frame(myPars$pitch),
+                            smoothing_ww = smoothing_ww,
+                            smoothingThres = smoothingThres,
+                            inviolable = myPars$manual$frame
+                        )[, 1]
+                    }
+                }
+            }
+            observeEvent(
+                # par-s that we don't need to use in analyze(), only in obs_pitch()
+                # (b/c they do not affect the pitch candidates)
+                c(input$shortestSyl, input$shortestPause,
+                  input$interpolWin, input$interpolTol, input$interpolCert,
+                  input$pathfinding, input$certWeight, input$smooth),
+                obs_pitch()
             )
 
-            # for each syllable, impute NA's and find a nice path through pitch candidates
-            myPars$pitch = rep(NA, ncol(myPars$pitchCands$freq))
-            if (nrow(myPars$voicedSegments) > 0) {
-                # if we have found at least one putatively voiced syllable
-                for (syl in 1:nrow(myPars$voicedSegments)) {
-                    myseq = myPars$voicedSegments$segmentStart[syl]:myPars$voicedSegments$segmentEnd[syl]
-                    manual_syl = myPars$manual[myPars$manual$frame %in% myseq, ]
-                    manual_syl$frame = manual_syl$frame - myseq[1] + 1  # adjust manual idx to syllable
-                    # compute the optimal path through pitch candidates
-                    myPars$pitch[myseq] = soundgen:::pathfinder(
-                        pitchCands = myPars$pitchCands$freq[, myseq, drop = FALSE],
-                        pitchCert = myPars$pitchCands$cert[, myseq, drop = FALSE],
-                        pitchSource = myPars$pitchCands$source[, myseq, drop = FALSE],
-                        manual = manual_syl,
-                        certWeight = input$certWeight,
-                        pathfinding = ifelse(input$pathfinding == 'slow',
-                                             'fast',  # slow doesn't work well with manual cand-s
-                                             input$pathfinding),
-                        interpolWin_bin = ceiling(input$interpolWin / myPars$step),
-                        interpolTol = input$interpolTol,
-                        interpolCert = input$interpolCert,
-                        snakeStep = 0,
-                        snakePlot = FALSE
-                    )
+            ## Clicking events
+            observeEvent(input$spectrogram_click, {
+                if (length(myPars$pitchCands$freq) > 0 & input$spectro_clickAct == 'addCand') {
+                    session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
+                    closest_frame = which.min(abs(
+                        as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
+                    # create a manual pitch estimate for the closest frame with the clicked value
+                    new_freq = round(input$spectrogram_click$y * 1000, 3)
+                    if (closest_frame %in% myPars$manual$frame) {
+                        myPars$manual$freq[myPars$manual$frame == closest_frame] = new_freq
+                    } else {
+                        myPars$manual = rbind(myPars$manual,
+                                              data.frame(frame = closest_frame, freq = new_freq))
+                    }
+                    myPars$manual = myPars$manual[order(myPars$manual$frame), ]  # just to keep things tidy
+                    # if this frame was manually flagged as unvoiced, remove this flag
+                    idx_rem = which(myPars$manualUnv == closest_frame)
+                    if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
+                    obs_pitch()
+                }
+            })
+
+            observeEvent(input$spectrogram_dblclick, {
+                closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) -
+                                                  input$spectrogram_dblclick$x))
+                if (length(closest_frame) > 0) {
+                    # remove manual anchor for this frame, if any
+                    idx_rem = which(myPars$manual$frame == closest_frame)
+                    if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
+                    # mark the frame as unvoiced if it's not already marked as unvoiced
+                    if (!closest_frame %in% myPars$manualUnv)
+                        myPars$manualUnv = c(myPars$manualUnv, closest_frame)
+                    # re-run pitch contour
+                    obs_pitch()
+                }
+            })
+
+            ## Buttons for operations with selection
+            playSel = function() {
+                if (!is.null(myPars$myAudio_path)) {
+                    if (!is.null(input$spectrogram_brush) & length(myPars$brush_sel_x) > 0) {
+                        from = myPars$brush_sel_x[1] / length(myPars$pitch) * myPars$dur / 1000
+                        to = tail(myPars$brush_sel_x, 1) / length(myPars$pitch) * myPars$dur / 1000
+                    } else {
+                        from = myPars$spec_xlim[1] / 1000
+                        to = myPars$spec_xlim[2] / 1000
+                    }
+                    playme(myPars$myAudio_path, from = from, to = to)
+                }
+            }
+            observeEvent(input$selection_play, playSel())
+            observeEvent(input$userPressedSmth, {
+                if (floor(input$userPressedSmth) == 32) {  # spacebar
+                    playSel()
+                }
+            })
+
+            observeEvent(input$selection_unvoice, {
+                if (myPars$print) print('Unvoicing selection...')
+                if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
+                    # NB: play forgets the previous selection, but other buttons do not,
+                    # hence myPars$bp instead of input$spectrogram_brush
+                    myPars$manualUnv = c(myPars$manualUnv, myPars$brush_sel_xy)
+                    # remove manual anchors within selection, if any
+                    idx_rem = which(myPars$manual$frame %in% myPars$manualUnv)
+                    if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
+                    obs_pitch()
+                }
+            })
+
+            observeEvent(input$selection_voice, {
+                if (myPars$print) print('Voicing selection...')
+                if (!is.null(myPars$bp) &
+                    length(myPars$brush_sel_x) > 0 &
+                    length(myPars$manualUnv) > 0) {
+                    idx_rem = which(myPars$manualUnv %in% myPars$brush_sel_x)
+                    if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
+                    obs_pitch()
+                }
+            })
+
+            observeEvent(input$selection_octaveUp, {
+                if (myPars$print) print('Selection octave up...')
+                if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
+                    # remove previous manual cands in selection
+                    idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
+                    if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
+                    # add the new ones
+                    myPars$manual = rbind(myPars$manual, data.frame(
+                        frame = myPars$brush_sel_xy,
+                        freq = myPars$pitch[myPars$brush_sel_xy] * 2
+                    ))
+                    # make sure we stay within pitchFloor/pitchCeiling
+                    myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
+                    myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
+                    obs_pitch()
+                }
+            })
+
+            observeEvent(input$selection_octaveDown, {
+                if (myPars$print) print('Selection octave down...')
+                if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
+                    # remove previous manual cands in selection
+                    idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
+                    if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
+                    # add the new ones
+                    myPars$manual = rbind(myPars$manual, data.frame(
+                        frame = myPars$brush_sel_xy,
+                        freq = myPars$pitch[myPars$brush_sel_xy] / 2
+                    ))
+                    # make sure we stay within pitchFloor/pitchCeiling
+                    myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
+                    myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
+                    obs_pitch()
+                }
+            })
+
+            observeEvent(input$selection_setPrior, {
+                if (myPars$print) print('Setting prior...')
+                if (!is.null(input$spectrogram_brush)) {
+                    pr = c(input$spectrogram_brush$ymin, input$spectrogram_brush$ymax) * 1000
+                    # don't push down below pitchFloor
+                    pr[pr < input$pitchFloor] = input$pitchFloor
+                    # but update pitchCeiling if prior is higher
+                    if (any(pr > input$pitchCeiling)) {
+                        updateSliderInput(session, 'pitchCeiling', value = max(pr))
+                    }
+                    meanPr = mean(pr)
+                    sdPr = round((HzToSemitones(pr[2]) - HzToSemitones(mean(pr))) / 2, 1)
+                    updateSliderInput(session, 'priorMean', value = meanPr)
+                    updateSliderInput(session, 'priorSD', value = sdPr)
+                }
+            })
+
+            hover_label = reactive({
+                hover_temp = input$spectrogram_hover
+                if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
+                    label = paste('Cursor: ', round(hover_temp$y * 1000), 'Hz')
+                } else {
+                    label = ''
+                }
+                return(label)
+            })
+            output$pitchAtCursor = renderUI(HTML(hover_label()))
+
+            brush = observeEvent(input$spectrogram_brush, {
+                if (myPars$print) print('Running brush()...')
+                myPars$pitch_df = data.frame(
+                    time = as.numeric(colnames(myPars$pitchCands$freq)),
+                    freq = myPars$pitch / 1000
+                )
+                myPars$bp = brushedPoints(myPars$pitch_df,
+                                          brush = input$spectrogram_brush,
+                                          xvar = 'time', yvar = 'freq',
+                                          allRows = TRUE)
+                # selected pitch points
+                myPars$brush_sel_xy = which(myPars$bp[, 'selected_'] == TRUE)
+                # selected frames (along x axis)
+                myPars$brush_sel_x = which(myPars$pitch_df$time > input$spectrogram_brush$xmin &
+                                               myPars$pitch_df$time < input$spectrogram_brush$xmax)
+            })
+
+            changeZoom = function(coef) {
+                midpoint = mean(myPars$spec_xlim)
+                halfRan = diff(myPars$spec_xlim) / 2 / coef
+                newLeft = max(0, midpoint - halfRan)
+                newRight = min(myPars$dur, midpoint + halfRan)
+                myPars$spec_xlim = c(newLeft, newRight)
+            }
+            observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
+            observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
+            observeEvent(input$zoomToSel, {
+                if (!is.null(myPars$bp)) {
+                    myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
+                }
+            })
+
+            shiftFrame = function(direction) {
+                ran = diff(myPars$spec_xlim)
+                if (direction == 'left') {
+                    newLeft = max(0, myPars$spec_xlim[1] - ran)
+                    newRight = newLeft + ran
+                } else if (direction == 'right') {
+                    newRight = min(myPars$dur, myPars$spec_xlim[2] + ran)
+                    newLeft = newRight - ran
+                }
+                myPars$spec_xlim = c(newLeft, newRight)
+            }
+            observeEvent(input$scrollLeft, shiftFrame('left'))
+            observeEvent(input$scrollRight, shiftFrame('right'))
+
+            done = function() {
+                # meaning we have finished editing pitch contour for a sound - prepares the output
+                new = data.frame(
+                    file = basename(myPars$myAudio_filename),
+                    dur = myPars$dur,
+                    time = paste(round(myPars$X), collapse = ', '),
+                    pitch = paste(round(myPars$pitch), collapse = ', '),
+                    stringsAsFactors = FALSE
+                )
+                if (is.null(myPars$out)) {
+                    myPars$out = new
+                } else {
+                    idx = which(myPars$out$file == new$file)
+                    if (length(idx) == 1) {
+                        myPars$out$pitch[idx] = new$pitch
+                    } else {
+                        myPars$out = rbind(myPars$out, new)
+                    }
                 }
             }
 
-            ## Median smoothing of pitch contour
-            if (input$smooth > 0) {
-                points_per_sec = length(myPars$pitch) / myPars$dur * 1000
-                # smooth of 1 means that smoothing window is ~100 ms
-                smoothing_ww = round(input$smooth * points_per_sec / 10, 0)
-                # the larger smooth, the heavier the smoothing (lower tolerance
-                # threshold before values are replaced by median over smoothing window).
-                # smooth of 1 gives smoothingThres of 4 semitones
-                smoothingThres = 4 / input$smooth
-                #print(myPars$pitchCands$source)
-                myPars$pitch = soundgen:::medianSmoother(
-                    as.data.frame(myPars$pitch),
-                    smoothing_ww = smoothing_ww,
-                    smoothingThres = smoothingThres,
-                    inviolable = myPars$manual$frame
-                )[, 1]
+            nextFile = function() {
+                if (!is.null(myPars$myAudio_path)) {
+                    done()
+                    if (myPars$n < myPars$nFiles) {
+                        myPars$n = myPars$n + 1
+                        reset()
+                        readAudio(myPars$n)
+                    }
+                }
+
             }
-        }
-    }
-    observeEvent(
-        # par-s that we don't need to use in analyze(), only in obs_pitch()
-        # (b/c they do not affect the pitch candidates)
-        c(input$shortestSyl, input$shortestPause,
-          input$interpolWin, input$interpolTol, input$interpolCert,
-          input$pathfinding, input$certWeight, input$smooth),
-        obs_pitch()
-    )
+            observeEvent(input$nextFile, nextFile())
 
-
-    ## Clicking events
-    observeEvent(input$spectrogram_click, {
-        if (length(myPars$pitchCands$freq) > 0 & input$spectro_clickAct == 'addCand') {
-            session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
-            closest_frame = which.min(abs(
-                as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
-            # create a manual pitch estimate for the closest frame with the clicked value
-            new_freq = round(input$spectrogram_click$y * 1000, 3)
-            if (closest_frame %in% myPars$manual$frame) {
-                myPars$manual$freq[myPars$manual$frame == closest_frame] = new_freq
-            } else {
-                myPars$manual = rbind(myPars$manual,
-                                      data.frame(frame = closest_frame, freq = new_freq))
+            lastFile = function() {
+                if (!is.null(myPars$myAudio_path)) {
+                    done()
+                    if (myPars$n > 1) {
+                        myPars$n = myPars$n - 1
+                        reset()
+                        readAudio(myPars$n)
+                        # todo: re-load the manual pitch contour for the previous file -
+                        # remember myPars$manual and myPars$manualUnv
+                    }
+                }
             }
-            myPars$manual = myPars$manual[order(myPars$manual$frame), ]  # just to keep things tidy
-            # if this frame was manually flagged as unvoiced, remove this flag
-            idx_rem = which(myPars$manualUnv == closest_frame)
-            if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
-            obs_pitch()
-        }
-    })
+            observeEvent(input$lastFile, lastFile())
 
-    observeEvent(input$spectrogram_dblclick, {
-        closest_frame = which.min(abs(as.numeric(colnames(myPars$pitchCands$freq)) -
-                                          input$spectrogram_dblclick$x))
-        if (length(closest_frame) > 0) {
-            # remove manual anchor for this frame, if any
-            idx_rem = which(myPars$manual$frame == closest_frame)
-            if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
-            # mark the frame as unvoiced if it's not already marked as unvoiced
-            if (!closest_frame %in% myPars$manualUnv)
-                myPars$manualUnv = c(myPars$manualUnv, closest_frame)
-            # re-run pitch contour
-            obs_pitch()
-        }
-    })
+            output$saveRes = downloadHandler(
+                filename = function() 'output.csv',
+                content = function(filename) {
+                    done()  # finalize the last file
+                    write.csv(myPars$out, filename, row.names = FALSE)
+                }
+            )
 
-    ## Buttons for operations with selection
-    playSel = function() {
-        if (!is.null(myPars$myAudio_path)) {
-            if (!is.null(input$spectrogram_brush) & length(myPars$brush_sel_x) > 0) {
-                from = myPars$brush_sel_x[1] / length(myPars$pitch) * myPars$dur / 1000
-                to = tail(myPars$brush_sel_x, 1) / length(myPars$pitch) * myPars$dur / 1000
-            } else {
-                from = myPars$spec_xlim[1] / 1000
-                to = myPars$spec_xlim[2] / 1000
-            }
-            playme(myPars$myAudio_path, from = from, to = to)
-        }
-    }
-    observeEvent(input$selection_play, playSel())
-    observeEvent(input$userPressedSmth, {
-        print(input$userPressedSmth)
-        if (floor(input$userPressedSmth) == 32) {  # spacebar
-           playSel()
-        }
-    })
+            observeEvent(input$about, {
+                id <<- showNotification(
+                    ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Left-click to add/correct a pitch anchor, double-click to remove/unvoice the frame. More info: ?pitch_app and http://cogsci.se/soundgen.html"),
+                    duration = 10,
+                    closeButton = TRUE,
+                    type = 'default'
+                )
+            })
 
-    observeEvent(input$selection_unvoice, {
-        if (myPars$print) print('Unvoicing selection...')
-        if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
-            # NB: play forgets the previous selection, but other buttons do not,
-            # hence myPars$bp instead of input$spectrogram_brush
-            myPars$manualUnv = c(myPars$manualUnv, myPars$brush_sel_xy)
-            # remove manual anchors within selection, if any
-            idx_rem = which(myPars$manual$frame %in% myPars$manualUnv)
-            if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
-            obs_pitch()
-        }
-    })
+            ## TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay
+            # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
+            # STFT
+            shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range of spectrogram, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='zp', title = 'Zero padding of STFT window (improves frequency resolution): 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='wn', title = 'Type of STFT window', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    observeEvent(input$selection_voice, {
-        if (myPars$print) print('Voicing selection...')
-        if (!is.null(myPars$bp) &
-            length(myPars$brush_sel_x) > 0 &
-            length(myPars$manualUnv) > 0) {
-            idx_rem = which(myPars$manualUnv %in% myPars$brush_sel_x)
-            if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
-            obs_pitch()
-        }
-    })
+            # voicing
+            shinyBS::addTooltip(session, id='silence', title = 'Frames with RMS below silence threshold are not analyzed', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='entropyThres', title = 'Frames with Weiner entropy above entropy threshold are ignored when searching for pitch candidates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='nCands', title = 'Maximum number of pitch candidates to use per method', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='minVoicedCands', title = 'Minimum number of pitch candidates that have to be defined to consider a frame voiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    observeEvent(input$selection_octaveUp, {
-        if (myPars$print) print('Selection octave up...')
-        if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
-            # remove previous manual cands in selection
-            idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
-            if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
-            # add the new ones
-            myPars$manual = rbind(myPars$manual, data.frame(
-                frame = myPars$brush_sel_xy,
-                freq = myPars$pitch[myPars$brush_sel_xy] * 2
-            ))
-            # make sure we stay within pitchFloor/pitchCeiling
-            myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
-            myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
-            obs_pitch()
-        }
-    })
+            # priors
+            shinyBS::addTooltip(session, id='pitchFloor', title = 'No candidates below this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='pitchCeiling', title = 'No candidates above this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='priorMean', title = 'Candidates close to this value are prioritized (how close is determined by priorSD)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='priorSD', title = 'Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    observeEvent(input$selection_octaveDown, {
-        if (myPars$print) print('Selection octave down...')
-        if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
-            # remove previous manual cands in selection
-            idx_rem = which(myPars$manual$frame %in% myPars$brush_sel_xy)
-            if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
-            # add the new ones
-            myPars$manual = rbind(myPars$manual, data.frame(
-                frame = myPars$brush_sel_xy,
-                freq = myPars$pitch[myPars$brush_sel_xy] / 2
-            ))
-            # make sure we stay within pitchFloor/pitchCeiling
-            myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
-            myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
-            obs_pitch()
-        }
-    })
+            # trackers
+            shinyBS::addTooltip(session, id='domThres', title = 'Minimum amplitude of dominant frequency', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='domSmooth', title = 'Width of smoothing interval for finding the lowest dominant frequency band', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='autocorThres', title = 'Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='autocorSmooth', title = 'Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='cepThres', title = 'Voicing threshold for cepstral algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='cepSmooth', title = 'Width of smoothing interval for finding peaks in the cepstrum', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='cepZp', title = 'Length of cepstral window after zero padding: 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specThres', title = 'Voicing threshold for Ba-Na algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specPeak', title = 'Minimum amplitude of harmonics considered pitch candidates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specHNRslope', title = '0 = same threshold regardless of HNR; positive = lower threshold in noisy sounds', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specSmooth', title = 'Width of window for detecting harmonics in the spectrum, Hz', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specMerge', title = 'Pitch candidates within specMerge semitones are merged with boosted certainty', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specSinglePeakCert', title = 'If pitch is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its certainty is taken to be specSinglePeakCert', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    observeEvent(input$selection_setPrior, {
-        if (myPars$print) print('Setting prior...')
-        if (!is.null(input$spectrogram_brush)) {
-            pr = c(input$spectrogram_brush$ymin, input$spectrogram_brush$ymax) * 1000
-            # don't push down below pitchFloor
-            pr[pr < input$pitchFloor] = input$pitchFloor
-            # but update pitchCeiling if prior is higher
-            if (any(pr > input$pitchCeiling)) {
-                updateSliderInput(session, 'pitchCeiling', value = max(pr))
-            }
-            meanPr = mean(pr)
-            sdPr = round((HzToSemitones(pr[2]) - HzToSemitones(mean(pr))) / 2, 1)
-            updateSliderInput(session, 'priorMean', value = meanPr)
-            updateSliderInput(session, 'priorSD', value = sdPr)
-        }
-    })
+            # pathfinder
+            shinyBS::addTooltip(session, id='pathfinding', title = "Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing (initial analysis only)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='certWeight', title = 'Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='shortestSyl', title = 'Shorter voiced segments (ms) will be treated as voiceless or merged with longer segments', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='shortestPause', title = "The smallest gap between voiced syllables (ms) that means they shouldn't be merged", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='smooth', title = 'Amount of median smoothing', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    hover_label = reactive({
-        hover_temp = input$spectrogram_hover
-        if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
-            label = paste('<h4>Pitch at cursor: ', round(hover_temp$y * 1000), 'Hz</h4>')
-        } else {
-            label = '<h4>Pitch at cursor: </h4>'
-        }
-        return(label)
-    })
-    output$pitchAtCursor = renderUI(HTML(hover_label()))
+            # smoothing
+            shinyBS::addTooltip(session, id='interpolWin', title = "If no pitch candidates are found within ±interpolTol of the median 'best guess' over ±interpolWin, this median is added as an interpolated candidate", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='interpolTol', title = "Tolerated deviance from 'best guess' before adding an interpolated candidate: proportion of best guess frequency", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='interpolCert', title = "Certainty assigned to interpolated pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    brush = observeEvent(input$spectrogram_brush, {
-        if (myPars$print) print('Running brush()...')
-        myPars$pitch_df = data.frame(
-            time = as.numeric(colnames(myPars$pitchCands$freq)),
-            freq = myPars$pitch / 1000
-        )
-        myPars$bp = brushedPoints(myPars$pitch_df,
-                                  brush = input$spectrogram_brush,
-                                  xvar = 'time', yvar = 'freq',
-                                  allRows = TRUE)
-        # selected pitch points
-        myPars$brush_sel_xy = which(myPars$bp[, 'selected_'] == TRUE)
-        # selected frames (along x axis)
-        myPars$brush_sel_x = which(myPars$pitch_df$time > input$spectrogram_brush$xmin &
-                                       myPars$pitch_df$time < input$spectrogram_brush$xmax)
-    })
+            # plot
+            shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    changeZoom = function(coef) {
-        midpoint = mean(myPars$spec_xlim)
-        halfRan = diff(myPars$spec_xlim) / 2 / coef
-        newLeft = max(0, midpoint - halfRan)
-        newRight = min(myPars$dur, midpoint + halfRan)
-        myPars$spec_xlim = c(newLeft, newRight)
-    }
-    observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
-    observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
-    observeEvent(input$zoomToSel, {
-        if (!is.null(myPars$bp)) {
-            myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
-        }
-    })
-
-    shiftFrame = function(direction) {
-        ran = diff(myPars$spec_xlim)
-        if (direction == 'left') {
-            newLeft = max(0, myPars$spec_xlim[1] - ran)
-            newRight = newLeft + ran
-        } else if (direction == 'right') {
-            newRight = min(myPars$dur, myPars$spec_xlim[2] + ran)
-            newLeft = newRight - ran
-        }
-        myPars$spec_xlim = c(newLeft, newRight)
-    }
-    observeEvent(input$scrollLeft, shiftFrame('left'))
-    observeEvent(input$scrollRight, shiftFrame('right'))
-
-    done = function() {
-        # meaning we have finished editing pitch contour for a sound - prepares the output
-        new = data.frame(
-            file = basename(myPars$myAudio_filename),
-            dur = myPars$dur,
-            time = paste(round(myPars$X), collapse = ', '),
-            pitch = paste(round(myPars$pitch), collapse = ', '),
-            stringsAsFactors = FALSE
-        )
-        if (is.null(myPars$out)) {
-            myPars$out = new
-        } else {
-            idx = which(myPars$out$file == new$file)
-            if (length(idx) == 1) {
-                myPars$out$pitch[idx] = new$pitch
-            } else {
-                myPars$out = rbind(myPars$out, new)
-            }
-        }
-    }
-
-    nextFile = function() {
-        if (!is.null(myPars$myAudio_path)) {
-            done()
-            if (myPars$n < myPars$nFiles) {
-                myPars$n = myPars$n + 1
-                reset()
-                readAudio(myPars$n)
-            }
-        }
-
-    }
-    observeEvent(input$nextFile, nextFile())
-
-    lastFile = function() {
-        if (!is.null(myPars$myAudio_path)) {
-            done()
-            if (myPars$n > 1) {
-                myPars$n = myPars$n - 1
-                reset()
-                readAudio(myPars$n)
-                # todo: re-load the manual pitch contour for the previous file -
-                # remember myPars$manual and myPars$manualUnv
-            }
-        }
-    }
-    observeEvent(input$lastFile, lastFile())
-
-    output$saveRes = downloadHandler(
-        filename = function() 'output.csv',
-        content = function(filename) {
-            done()  # finalize the last file
-            write.csv(myPars$out, filename, row.names = FALSE)
-        }
-    )
-
-    observeEvent(input$about, {
-        id <<- showNotification(
-            ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Left-click to add/correct a pitch anchor, double-click to remove/unvoice the frame. More info: ?pitch_app and http://cogsci.se/soundgen.html"),
-            duration = 10,
-            closeButton = TRUE,
-            type = 'default'
-        )
-    })
-
-    ## TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay
-    # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
-    # STFT
-    shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range of spectrogram, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zp', title = 'Zero padding of STFT window (improves frequency resolution): 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='wn', title = 'Type of STFT window', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # voicing
-    shinyBS::addTooltip(session, id='silence', title = 'Frames with RMS below silence threshold are not analyzed', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='entropyThres', title = 'Frames with Weiner entropy above entropy threshold are ignored when searching for pitch candidates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='nCands', title = 'Maximum number of pitch candidates to use per method', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='minVoicedCands', title = 'Minimum number of pitch candidates that have to be defined to consider a frame voiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # priors
-    shinyBS::addTooltip(session, id='pitchFloor', title = 'No candidates below this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='pitchCeiling', title = 'No candidates above this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='priorMean', title = 'Candidates close to this value are prioritized (how close is determined by priorSD)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='priorSD', title = 'Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # trackers
-    shinyBS::addTooltip(session, id='domThres', title = 'Minimum amplitude of dominant frequency', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='domSmooth', title = 'Width of smoothing interval for finding the lowest dominant frequency band', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='autocorThres', title = 'Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='autocorSmooth', title = 'Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='cepThres', title = 'Voicing threshold for cepstral algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='cepSmooth', title = 'Width of smoothing interval for finding peaks in the cepstrum', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='cepZp', title = 'Length of cepstral window after zero padding: 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specThres', title = 'Voicing threshold for Ba-Na algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specPeak', title = 'Minimum amplitude of harmonics considered pitch candidates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specHNRslope', title = '0 = same threshold regardless of HNR; positive = lower threshold in noisy sounds', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specSmooth', title = 'Width of window for detecting harmonics in the spectrum, Hz', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specMerge', title = 'Pitch candidates within specMerge semitones are merged with boosted certainty', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specSinglePeakCert', title = 'If pitch is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its certainty is taken to be specSinglePeakCert', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # pathfinder
-    shinyBS::addTooltip(session, id='pathfinding', title = "Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing (initial analysis only)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='certWeight', title = 'Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='shortestSyl', title = 'Shorter voiced segments (ms) will be treated as voiceless or merged with longer segments', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='shortestPause', title = "The smallest gap between voiced syllables (ms) that means they shouldn't be merged", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='smooth', title = 'Amount of median smoothing', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # smoothing
-    shinyBS::addTooltip(session, id='interpolWin', title = "If no pitch candidates are found within ±interpolTol of the median 'best guess' over ±interpolWin, this median is added as an interpolated candidate", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='interpolTol', title = "Tolerated deviance from 'best guess' before adding an interpolated candidate: proportion of best guess frequency", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='interpolCert', title = "Certainty assigned to interpolated pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # plot
-    shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # action buttons
-    shinyBS:::addTooltip(session, id='lastFile', title='Back to the previous file (discards manual corrections in it)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS:::addTooltip(session, id='selection_play', title='Play selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_voice', title = 'Undo treating selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    # navigation / zoom
-    shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection (time axis only)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_scrollRight', title = 'Scroll right', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            # action buttons
+            shinyBS:::addTooltip(session, id='lastFile', title='Back to the previous file (discards manual corrections in it)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS:::addTooltip(session, id='selection_play', title='Play selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='selection_voice', title = 'Undo treating selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            # navigation / zoom
+            shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection (time axis only)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS::addTooltip(session, id='selection_scrollRight', title = 'Scroll right', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 }
