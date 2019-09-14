@@ -1,5 +1,11 @@
 ui = fluidPage(
   # headerPanel('...'),
+  tags$script('
+    $(document).on("keydown", function (e) {
+       Shiny.onInputChange("userPressedSmth", e.which + Math.random() / 3);
+    });
+  '),
+  # w/o Math.random() only the first of a series of identical keydown events is sent to server()
 
   fluidRow(
     column(3,
