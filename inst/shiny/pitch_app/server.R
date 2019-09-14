@@ -1,4 +1,4 @@
-# TODO: maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -39,6 +39,14 @@ server = function(input, output, session) {
         if (myPars$print) print('Loading audio...')
         myPars$n = 1   # file number in queue
         myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
+
+        # set up a list for storing manual anchors for each of uploaded files
+        myPars$history = vector('list', length = myPars$nFiles)
+        names(myPars$history) = input$loadAudio$name
+        for (i in 1:length(myPars$history)) {
+            myPars$history[[i]] = list(manual = NULL, manualUnv = NULL)
+        }
+
         reset()
         readAudio(1)  # read the first sound in queue
     })
@@ -57,7 +65,7 @@ server = function(input, output, session) {
         } else if (extension == 'mp3' | extension == 'MP3') {
             myPars$temp_audio = tuneR::readMP3(temp$datapath)
         } else {
-            warning('Input not recognized: must be a numeric vector or wav/mp3 file')
+            warning('Input not recognized: must be a wav or mp3 file')
         }
 
         myPars$myAudio = as.numeric(myPars$temp_audio@left)
@@ -75,6 +83,12 @@ server = function(input, output, session) {
         file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles, ': ',
                           myPars$myAudio_filename)
         output$fileN = renderUI(HTML(file_lab))
+
+        # if we've already worked with this file in current session,
+        # re-load the manual anchors
+        hist = myPars$history[[myPars$myAudio_filename]]
+        if (!is.null(hist$manual)) myPars$manual = hist$manual
+        if (!is.null(hist$manualUnv)) myPars$manualUnv = hist$manualUnv
     }
 
     extractSpectrogram = observe({
@@ -542,6 +556,10 @@ server = function(input, output, session) {
                         myPars$out = rbind(myPars$out, new)
                     }
                 }
+
+                # add manual corrections to the history list
+                myPars$history[[myPars$myAudio_filename]]$manual = myPars$manual
+                myPars$history[[myPars$myAudio_filename]]$manualUnv = myPars$manualUnv
             }
 
             nextFile = function() {
