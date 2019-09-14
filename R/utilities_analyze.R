@@ -588,6 +588,7 @@ getPitchSpec = function(frame,
 #' @inheritParams analyze
 #' @param pitchCands a matrix of pitch candidate frequencies
 #' @param plot if TRUE, produces a separate plot of the prior
+#' @param ... additional graphical parameters passed on to plot()
 #' @keywords internal
 #' @examples
 #' soundgen:::getPrior(150, 2, pitchCands = NULL, plot = TRUE)
@@ -596,7 +597,8 @@ getPrior = function(priorMean,
                     pitchCands = NULL,
                     pitchFloor = 75,
                     pitchCeiling = 3000,
-                    plot = FALSE) {
+                    plot = FALSE,
+                    ...) {
   priorMean_semitones = HzToSemitones(priorMean)
   shape = priorMean_semitones ^ 2 / priorSD ^ 2
   rate = priorMean_semitones / priorSD ^ 2
@@ -614,7 +616,8 @@ getPrior = function(priorMean,
       type = 'l',
       log = 'x',
       xlab = 'Frequency, Hz',
-      ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values'
+      ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values',
+      ...
     )
   }
   if (!is.null(pitchCands)) {

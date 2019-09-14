@@ -115,12 +115,12 @@ ui = fluidPage(
                     actionButton(inputId = "selection_voice", label = HTML("<img src='icons/voice.png' width = '20px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = "selection_octaveUp", label = HTML("<img src='icons/octaveUp.png' width = '20px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = "selection_octaveDown", label = HTML("<img src='icons/octaveDown.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_setPrior", label = "Prior", style = "padding: 2px 2px;")
+                    actionButton(inputId = "selection_setPrior", label = HTML("<img src='icons/prior.png' width = '20px'>"), style = "padding: 2px 2px;")
              ),
              column(3,
                     actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '20px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = 'zoomOut', label = HTML("<img src='icons/zoomOut.png' width = '20px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_zoomToSel", label = HTML("<img src='icons/zoomSel.png' width = '20px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "zoomToSel", label = HTML("<img src='icons/zoomSel.png' width = '20px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = 'zoomIn', label = HTML("<img src='icons/zoomIn.png' width = '20px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = 'scrollRight', label = HTML("<img src='icons/forward.png' width = '20px'>"), style = "padding: 2px 2px;")
              )

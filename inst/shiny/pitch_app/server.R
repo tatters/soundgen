@@ -1,4 +1,4 @@
-# TODO: nice icon for prior; add tips for last, next, addRes, and navigation buttons; check whether shinyBS should be explicitly called in server() or not; prevent from crashing if buttons pressed before an audio uploaded; status bar; press space = same as press "play" button; maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# TODO: add tips for last, next, addRes, and navigation buttons; check whether shinyBS should be explicitly called in server() or not; prevent from crashing if buttons pressed before an audio uploaded; status bar; press space = same as press "play" button; maybe add a status bar somewhere that prints what function is executing; maybe prior from sel should affect only current file (?); make the side pane with par-s collapsible; maybe remember manual anchors when moving back and forth between multiple files; maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -493,7 +493,7 @@ server = function(input, output, session) {
     }
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
-    observeEvent(input$selection_zoomToSel, {
+    observeEvent(input$zoomToSel, {
         if (!is.null(myPars$bp)) {
             myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
         }
@@ -575,20 +575,26 @@ server = function(input, output, session) {
 
     ## TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay
     # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
-    shinyBS:::addTooltip(session, id='selection_play', title='Play selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    # STFT
     shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range of spectrogram, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='zp', title = 'Zero padding of STFT window (improves frequency resolution): 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='wn', title = 'Type of STFT window', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+    # voicing
     shinyBS::addTooltip(session, id='silence', title = 'Frames with RMS below silence threshold are not analyzed', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='entropyThres', title = 'Frames with Weiner entropy above entropy threshold are ignored when searching for pitch candidates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='nCands', title = 'Maximum number of pitch candidates to use per method', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='minVoicedCands', title = 'Minimum number of pitch candidates that have to be defined to consider a frame voiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+    # priors
     shinyBS::addTooltip(session, id='pitchFloor', title = 'No candidates below this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='pitchCeiling', title = 'No candidates above this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='priorMean', title = 'Candidates close to this value are prioritized (how close is determined by priorSD)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='priorSD', title = 'Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+    # trackers
     shinyBS::addTooltip(session, id='domThres', title = 'Minimum amplitude of dominant frequency', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='domSmooth', title = 'Width of smoothing interval for finding the lowest dominant frequency band', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='autocorThres', title = 'Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -602,22 +608,38 @@ server = function(input, output, session) {
      shinyBS::addTooltip(session, id='specSmooth', title = 'Width of window for detecting harmonics in the spectrum, Hz', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='specMerge', title = 'Pitch candidates within specMerge semitones are merged with boosted certainty', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='specSinglePeakCert', title = 'If pitch is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its certainty is taken to be specSinglePeakCert', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+     # pathfinder
      shinyBS::addTooltip(session, id='pathfinding', title = "Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing (initial analysis only)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='certWeight', title = 'Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='shortestSyl', title = 'Shorter voiced segments (ms) will be treated as voiceless or merged with longer segments', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='shortestPause', title = "The smallest gap between voiced syllables (ms) that means they shouldn't be merged", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='smooth', title = 'Amount of median smoothing', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+     # smoothing
      shinyBS::addTooltip(session, id='interpolWin', title = "If no pitch candidates are found within ±interpolTol of the median 'best guess' over ±interpolWin, this median is added as an interpolated candidate", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='interpolTol', title = "Tolerated deviance from 'best guess' before adding an interpolated candidate: proportion of best guess frequency", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='interpolCert', title = "Certainty assigned to interpolated pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+     # plot
      shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+     # action buttons
+     shinyBS:::addTooltip(session, id='lastFile', title='Back to the previous file (discards manual corrections in it)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+     shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+     shinyBS:::addTooltip(session, id='selection_play', title='Play selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='selection_voice', title = 'Undo treating selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
      shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-     shinyBS::addTooltip(session, id='selection_zoomToSel', title = 'Zoom to selection (time axis only)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+     # navigation / zoom
+     shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+     shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+     shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection (time axis only)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+     shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+     shinyBS::addTooltip(session, id='selection_scrollRight', title = 'Scroll right', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 }
