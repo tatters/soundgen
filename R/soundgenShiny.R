@@ -36,7 +36,6 @@ soundgen_app = function() {
 #' pitch = as.numeric(unlist(strsplit(a$pitch, ',')))
 #' mean(pitch, na.rm = TRUE); sd(pitch, na.rm = TRUE)
 #' }
-
 #'
 #' \bold{Suggested workflow}
 #'
@@ -45,8 +44,8 @@ soundgen_app = function() {
 #' manageable chunks (ideally <10 s). Adjust the settings as needed, edit the
 #' pitch contour in the first file to your satisfaction, then click "Next" to
 #' proceed to the next file, etc. When done, click "Save results". If working
-#' with many files, you might want to save the results regularly in case the app
-#' crashes (once it has crashed, you cannot recover anything).
+#' with many files, you might want to save the results occasionally in case the app
+#' crashes (although you should still be able to recover your data - see below).
 #'
 #' \bold{How to edit pitch contours}
 #'
@@ -66,6 +65,17 @@ soundgen_app = function() {
 #' playback, which may or may not work - see \code{\link{playme}} for
 #' troubleshooting. As a fallback option, the html audio tag at the top plays
 #' the entire file.
+#'
+#' \bold{Recovering lost data}
+#'
+#' Every time you click "next" or "last" to move in between files in the queue,
+#' the output you've got so far is saved in a backup file called "temp.csv". If
+#' the app crashes or is closed without saving the results, this backup file
+#' preserves your data. To recover it, access this file manually on disk or
+#' simply restart pitch_app() - a dialog box will pop up and ask whether you
+#' wank to append the old data to the new one. Path to backup file:
+#' "[R_installation_folder]/soundgen/shiny/pitch_app/www/temp.csv", for example,
+#' "/home/allgoodguys/R/x86_64-pc-linux-gnu-library/3.6/soundgen/shiny/pitch_app/www/temp.csv"
 #' @export
 pitch_app = function() {
     appDir = system.file("shiny", "pitch_app", package = "soundgen")

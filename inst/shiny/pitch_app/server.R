@@ -17,6 +17,22 @@ server = function(input, output, session) {
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
+    if (file.exists('www/temp.csv')) {
+        showModal(modalDialog(
+            title = "Unsaved data",
+            "Found unsaved data from a prevous session. Append to the new output?",
+            easyClose = TRUE,
+            footer = tagList(
+                modalButton("Cancel"),
+                actionButton("ok", "OK")
+            )
+        ))
+    }
+    observeEvent(input$ok, {
+        myPars$out = read.csv('www/temp.csv')
+        removeModal()
+    })
+
     files = list.files('www/', pattern = '.wav')
     files = files[files != 'temp.wav']
     for (f in files){
@@ -499,8 +515,8 @@ server = function(input, output, session) {
             cursor_hz = hover_temp$y * 1000
             cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
             label = paste0('Cursor: ',
-                          round(hover_temp$y * 1000), 'Hz (',
-                          cursor_notes, ')')
+                           round(hover_temp$y * 1000), 'Hz (',
+                           cursor_notes, ')')
         } else {
             label = ''
         }
@@ -535,7 +551,7 @@ server = function(input, output, session) {
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
     observeEvent(input$zoomToSel, {
-        if (!is.null(myPars$spectrogram_brush)) {
+        if (!is.null(input$spectrogram_brush)) {
             myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
         }
     })
@@ -573,6 +589,7 @@ server = function(input, output, session) {
                 myPars$out = rbind(myPars$out, new)
             }
         }
+        write.csv(myPars$out, 'www/temp.csv', row.names = FALSE)
 
         # add manual corrections to the history list
         myPars$history[[myPars$myAudio_filename]]$manual = myPars$manual
@@ -611,6 +628,7 @@ server = function(input, output, session) {
         content = function(filename) {
             done()  # finalize the last file
             write.csv(myPars$out, filename, row.names = FALSE)
+            if (file.exists('www/temp.csv')) file.remove('www/temp.csv')
         }
     )
 
@@ -686,6 +704,8 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
     # navigation / zoom
     shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
