@@ -1,5 +1,3 @@
-# TODO: maybe prior from sel should affect only current file (?); maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
-
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
 # as.numeric(unlist(strsplit(a$pitch, ',')))
@@ -54,14 +52,14 @@ server = function(input, output, session) {
 
     observeEvent(input$showpanel, {
         if(input$showpanel == TRUE) {
-            removeCssClass("Main", "col-sm-12")
-            addCssClass("Main", "col-sm-9")
+            shinyjs::removeCssClass("Main", "col-sm-12")
+            shinyjs::addCssClass("Main", "col-sm-9")
             shinyjs::show(id = "Sidebar")
             shinyjs::enable(id = "Sidebar")
         }
         else {
-            removeCssClass("Main", "col-sm-9")
-            addCssClass("Main", "col-sm-12")
+            shinyjs::removeCssClass("Main", "col-sm-9")
+            shinyjs::addCssClass("Main", "col-sm-12")
             shinyjs::hide(id = "Sidebar")
         }
     })
@@ -498,7 +496,11 @@ server = function(input, output, session) {
     hover_label = reactive({
         hover_temp = input$spectrogram_hover
         if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
-            label = paste('Cursor: ', round(hover_temp$y * 1000), 'Hz')
+            cursor_hz = hover_temp$y * 1000
+            cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
+            label = paste0('Cursor: ',
+                          round(hover_temp$y * 1000), 'Hz (',
+                          cursor_notes, ')')
         } else {
             label = ''
         }
@@ -533,7 +535,7 @@ server = function(input, output, session) {
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
     observeEvent(input$zoomToSel, {
-        if (!is.null(myPars$bp)) {
+        if (!is.null(myPars$spectrogram_brush)) {
             myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
         }
     })

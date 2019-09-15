@@ -7,7 +7,7 @@ ui = fluidPage(
   '),
   # w/o Math.random() only the first of a series of identical keydown events is sent to server()
 
-  useShinyjs(),  # needed to make the side panel collapsible
+  shinyjs::useShinyjs(),  # needed to make the side panel collapsible
   # see https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
   # alternative: https://rstudio.github.io/shinydashboard
 

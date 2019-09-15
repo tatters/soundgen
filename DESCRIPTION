@@ -26,8 +26,9 @@ Imports: stats,
     plyr,
     dtw,
     phonTools,
+    shiny,
     shinyjs
-Depends: R (>= 3.4), shiny, shinyBS
+Depends: R (>= 3.4), shinyBS
 RoxygenNote: 6.1.1
 Suggests: knitr,
     rmarkdown

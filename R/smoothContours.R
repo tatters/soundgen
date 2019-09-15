@@ -223,7 +223,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
       }
       lbls_semitones = unique(seq(ylim[1], ylim[2], length.out = 5))
       # unique to remove duplicates, max 5 labels
-      lbls_notes = soundgen::notesDict$note[lbls_semitones + 1]
+      lbls_notes = soundgen::notesDict$note[round(lbls_semitones) + 1]
       lbls_Hz = round(semitonesToHz(lbls_semitones))
 
       par(mar = c(5, 4, 4, 3)) # c(bottom, left, top, right)
