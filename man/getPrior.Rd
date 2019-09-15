@@ -5,7 +5,7 @@
 \title{Get prior for pitch candidates}
 \usage{
 getPrior(priorMean, priorSD, pitchCands = NULL, pitchFloor = 75,
-  pitchCeiling = 3000, plot = FALSE)
+  pitchCeiling = 3000, plot = FALSE, ...)
 }
 \arguments{
 \item{priorMean}{specifies the mean (Hz) and standard deviation
@@ -27,6 +27,8 @@ an octave)}
 \item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
 \item{plot}{if TRUE, produces a separate plot of the prior}
+
+\item{...}{additional graphical parameters passed on to plot()}
 }
 \value{
 Returns a numeric matrix of the same dimensions as pitchCands for

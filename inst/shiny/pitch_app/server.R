@@ -130,7 +130,7 @@ server = function(input, output, session) {
         seewave::savewav(myPars$temp_audio,
                          f = myPars$samplingRate,
                          filename = paste0('www/', myPars$myfile))
-        output$myAudio = renderUI(
+        output$htmlAudio = renderUI(
             tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
                        autoplay = NA, controls = NA,
                        style="transform: scale(0.75); transform-origin: 0 0;")
@@ -661,7 +661,7 @@ server = function(input, output, session) {
             shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
             # action buttons
-            shinyBS:::addTooltip(session, id='lastFile', title='Back to the previous file (discards manual corrections in it)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+            shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
             shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
             shinyBS:::addTooltip(session, id='selection_play', title='Play selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
             shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

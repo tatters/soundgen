@@ -1249,8 +1249,10 @@ server = function(input, output, session) {
                                })
   )
 
-  output$myAudio = renderUI(
-    tags$audio(src = "temp.wav", type = "audio/wav", autoplay = NA, controls = NA)
+  output$htmlAudio = renderUI(
+    tags$audio(src = "temp.wav", type = "audio/wav",
+               autoplay = NA, controls = NA,
+               style="transform: scale(0.75); transform-origin: 0 0;")
   )
 
   observeEvent(input$generateAudio, {
@@ -1258,19 +1260,21 @@ server = function(input, output, session) {
   })
 
   generate = reactive({
-    # first remove the previous sound file to avoid cluttering up the www/ folder
-    if (!is.null(myPars$myfile)){
-      file.remove(paste0('www/', myPars$myfile))
-    }
-    myPars$sound = do.call('soundgen', mycall()) # eval(parse(text = mycall()))  # generate audio
-    randomID = paste(sample(c(letters, 0:9), 8, replace = TRUE), collapse = '')
-    myPars$myfile = paste0(randomID, '.wav')
-    # this is the new sound file. NB: has to be saved in www/ !!!
-    seewave::savewav(myPars$sound, f = input$samplingRate,
-                     filename = paste0('www/', myPars$myfile))
-    output$myAudio = renderUI(
-      tags$audio(src = myPars$myfile, type = "audio/wav", autoplay = NA, controls = NA)
-    )
+    withProgress(message = 'Synthesizing the sound...', value = 0.5, {
+      # first remove the previous sound file to avoid cluttering up the www/ folder
+      if (!is.null(myPars$myfile)){
+        file.remove(paste0('www/', myPars$myfile))
+      }
+      myPars$sound = do.call('soundgen', mycall()) # eval(parse(text = mycall()))  # generate audio
+      randomID = paste(sample(c(letters, 0:9), 8, replace = TRUE), collapse = '')
+      myPars$myfile = paste0(randomID, '.wav')
+      # this is the new sound file. NB: has to be saved in www/ !!!
+      seewave::savewav(myPars$sound, f = input$samplingRate,
+                       filename = paste0('www/', myPars$myfile))
+      output$myAudio = renderUI(
+        tags$audio(src = myPars$myfile, type = "audio/wav", autoplay = NA, controls = NA)
+      )
+    })
   })
 
   output$saveAudio = downloadHandler(
@@ -1323,7 +1327,7 @@ server = function(input, output, session) {
   # Main / settings
   shinyBS::addTooltip(session, id='samplingRate', title = 'The number of points per second of audio. Higher = better quality; lower = faster. Can be any integer, not necessarily a power of two.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='windowLength', title = 'The length of window for performing FFT - inverse FFT when filtering the source.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='pitchSamplingRate', title = 'The number of considered F0 values per second of audio. Should be >= pitchCeiling for best quality', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='pitchSamplingRate', title = 'The number of considered F0 values per s of audio. Set up to samplingRate for max precision, but at least >= pitchCeiling', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='dynamicRange', title = 'Discard everything more than dynamicRange dB under maximum amplitude', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='pitchFloorCeiling', title = 'Sets the bounds of fundamental frequency for synthesis', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
@@ -1335,9 +1339,9 @@ server = function(input, output, session) {
   shinyBS::addTooltip(session, id='vibratoDep', title = 'Depth of regular FM', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
   # Amplitude
+  shinyBS::addTooltip(session, id='attackLen', title = 'Does the voice start/end abruptly or with a "fade-in/out"?', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='ampl_syl_flatten', title = 'Same amplitude over the entire syllable', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='amplGlobal_flatten', title = 'Same amplitude over the entire bout', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='attackLen', title = 'Does the voice start/end abruptly or with a "fade-in/out"?', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='amDep', title = 'Depth of amplitude modulation', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='amFreq', title = 'Frequency of amplitude modulation', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='amShape', title = 'Shape of amplitude modulation: 0 = ~sine, -1 = notches, +1 = clicks', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -1347,8 +1351,8 @@ server = function(input, output, session) {
   shinyBS::addTooltip(session, id='rolloffOct', title = 'Negative: rolloff is progressively steeper for higher frequencies', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='rolloffKHz', title = 'Steeper/gentler basic rolloff as f0 varies', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='rolloffParab', title = 'Parabolic boost to the first ... harmonics, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='rolloffParabHarm', title = 'Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='glottis', title = 'Proportion of time glottis is closed relative to F0 period; adds silences between glottal cycles', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='rolloffParabHarm', title = 'Apply a parabolic boost to ... harmonics. See vignette and ?getRolloff', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='glottis', title = 'Proportion of time glottis is closed relative to F0 period; adds silences between glottal pulses', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
   # Source / nonlinear
   shinyBS::addTooltip(session, id='nonlinBalance', title = '3 regimes of nonlinear effects: none / subharmonics / subharmonics + jitter', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -1368,13 +1372,13 @@ server = function(input, output, session) {
   shinyBS::addTooltip(session, id='formantWidth', title = 'Multiply formant bandwidths by ... (>1 = nasalized or muffled)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='vowelString', title = "Implemented presets: a, o, i, e, u, 0 (schwa)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='estimateVTL', title = 'If TRUE, user-specified formants trump user-specified vocal tract length', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='vocalTract', title = 'Affects default formant dispersion at temperature>0', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='vocalTract', title = 'Affects default formant spacing at temperature>0', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='formantDepStoch', title = 'Amplitude of extra formants added on top of user-specified ones based on the length of vocal tract', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='lipRad', title = 'Rolloff due to lip radiation', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='noseRad', title = 'Rolloff due to nose radiation: added instead of lip radiation when the mouth is closed', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
   # Tract / mouth opening & unvoiced type
-  shinyBS::addTooltip(session, id='mouth_flatten', title = 'Revert to a flat mouth opening contour with opening degree equal at the first (left) anchor', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='mouth_flatten', title = 'Revert to a flat mouth opening contour with opening degree equal to the first (left) anchor', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='mouthOpenThres', title = 'The degree of mouth opening at which lips separate and start to radiate', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='noiseType', title = "Breathing = glottal noise (same formants as for voiced part); snuffling = breathing through the nose; h / s / sh / f = sibilants", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='rolloffNoise', title = 'Rolloff of the noise component (affects both breathing and supra-glottal noise)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

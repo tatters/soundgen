@@ -100,6 +100,7 @@ ui = fluidPage(
                                   tabPanel("Amplitude syllable",
                                            sidebarLayout(
                                              sidebarPanel(
+                                               sliderInput ('attackLen', 'Attack length, ms', value=permittedValues['attackLen','default'], min=permittedValues['attackLen', 'low'], max=permittedValues['attackLen', 'high'], step=permittedValues['attackLen','step']),
                                                actionButton(inputId = "ampl_syl_flatten", label = "Flatten amplitude envelope"),
                                                tableOutput("ampl_syl_anchors"), width=6
                                              ),
@@ -124,7 +125,6 @@ ui = fluidPage(
                                   tabPanel("Amplitude modulation",
                                            sidebarLayout(
                                              sidebarPanel(
-                                               sliderInput ('attackLen', 'Attack length, ms', value=permittedValues['attackLen','default'], min=permittedValues['attackLen', 'low'], max=permittedValues['attackLen', 'high'], step=permittedValues['attackLen','step']),
                                                sliderInput('amDep', 'AM depth', value=permittedValues['amDep','default'], min=permittedValues['amDep', 'low'], max=permittedValues['amDep', 'high'], step=permittedValues['amDep','step']),
                                                sliderInput('amFreq', 'AM frequency, Hz', value=permittedValues['amFreq','default'], min=permittedValues['amFreq', 'low'], max=permittedValues['amFreq', 'high'], step=permittedValues['amFreq','step']),
                                                sliderInput('amShape', 'AM shape', value=permittedValues['amShape','default'], min=permittedValues['amShape', 'low'], max=permittedValues['amShape', 'high'], step=permittedValues['amShape','step']),
@@ -267,7 +267,7 @@ ui = fluidPage(
                     actionButton(inputId = "generateAudio", label = "Generate", style="color: blue; background-color: orange;")
              ),
              column(5,
-                    uiOutput("myAudio")
+                    uiOutput("htmlAudio")
              )
            ),
            fluidRow(
@@ -279,14 +279,13 @@ ui = fluidPage(
            fluidRow(
              shinyBS::bsCollapse(id="spec_controls",
                                  shinyBS::bsCollapsePanel("Show spectrogram controls",
-                                                          sliderInput('specWindowLength', 'Window length, ms', value=permittedValues['specWindowLength','default'], min=permittedValues['specWindowLength', 'low'], max=permittedValues['specWindowLength', 'high'], step=permittedValues['specWindowLength','step']),
                                                           sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0,5), min=0, max=22, step=1),
+                                                          sliderInput('specWindowLength', 'Window length, ms', value=permittedValues['specWindowLength','default'], min=permittedValues['specWindowLength', 'low'], max=permittedValues['specWindowLength', 'high'], step=permittedValues['specWindowLength','step']),                                               sliderInput('specContrast', 'Contrast', value=permittedValues['specContrast','default'], min=permittedValues['specContrast', 'low'], max=permittedValues['specContrast', 'high'], step=permittedValues['specContrast','step']),
+                                                          sliderInput('specBrightness', 'Brightness', value=permittedValues['specBrightness','default'], min=permittedValues['specBrightness', 'low'], max=permittedValues['specBrightness', 'high'], step=permittedValues['specBrightness','step']),
                                                           radioButtons(inputId='spec_colorTheme', label="Color scheme", choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
                                                           radioButtons(inputId='spec_method', label="Method", choices=c("Spectrum"="spectrum", "Spectral derivative"="spectralDerivative"), selected='spectrum', inline=TRUE, width=NULL),
                                                           radioButtons(inputId='osc', label="Oscillogram type", choices=c("Linear"="linear", "dB"="dB", "None"="none"), selected='linear', inline=TRUE, width=NULL),
-                                                          sliderInput('osc_heights', 'Relative size of oscillogram', value=permittedValues['oscHeight','default'], min=permittedValues['oscHeight', 'low'], max=permittedValues['oscHeight', 'high'], step=permittedValues['oscHeight','step']),
-                                                          sliderInput('specContrast', 'Contrast', value=permittedValues['specContrast','default'], min=permittedValues['specContrast', 'low'], max=permittedValues['specContrast', 'high'], step=permittedValues['specContrast','step']),
-                                                          sliderInput('specBrightness', 'Brightness', value=permittedValues['specBrightness','default'], min=permittedValues['specBrightness', 'low'], max=permittedValues['specBrightness', 'high'], step=permittedValues['specBrightness','step'])
+                                                          sliderInput('osc_heights', 'Relative size of oscillogram', value=permittedValues['oscHeight','default'], min=permittedValues['oscHeight', 'low'], max=permittedValues['oscHeight', 'high'], step=permittedValues['oscHeight','step'])
                                                           # sliderInput('spec_median_smoothing', 'Median smoothing, bins', value=3, min=1, max=9, step=2),
                                                           # sliderInput('spec_zpad', 'Zero padding, final windowLength_points', value=0, min=0, max=6144, step=512)
                                  )

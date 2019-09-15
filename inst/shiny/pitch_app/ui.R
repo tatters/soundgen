@@ -97,7 +97,7 @@ ui = fluidPage(
                     actionButton(inputId = "nextFile", label = "Next", style="background-color: lightgray;")
              ),
              column(3,
-                    uiOutput("myAudio")
+                    uiOutput("htmlAudio")
              ),
              column(2,
                     downloadButton(outputId = "saveRes", label = "", style="color: blue; background-color: orange;"),
