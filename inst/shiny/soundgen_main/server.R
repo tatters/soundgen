@@ -6,7 +6,7 @@ formantsPerVowel = data.frame(  # Ladefoged 2012 "Vowels & consonants, 3rd ed.",
 
 server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
-  files = list.files('www/')
+  files = list.files('www/', pattern = '.wav')
   files = files[files != 'temp.wav']
   for (f in files){
     file.remove(paste0('www/', f))

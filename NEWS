@@ -1,6 +1,10 @@
           CHANGES IN SOUNDGEN VERSION 1.5.1 [...date...]
 BUGS FIXED:
-  * pitch_app() calls internal functions properly, so runs locally
+  * pitch_app() runs locally, new layout, etc.
+
+MINOR:
+  * soundgen_app() improved tips
+
 
           CHANGES IN SOUNDGEN VERSION 1.5.0 [11-September-2019]
 NEW FUNCTIONS:
