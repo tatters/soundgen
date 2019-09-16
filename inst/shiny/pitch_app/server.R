@@ -426,9 +426,19 @@ server = function(input, output, session) {
         }
     }
     observeEvent(input$selection_play, playSel())
+
     observeEvent(input$userPressedSmth, {
-        if (floor(input$userPressedSmth) == 32) {  # spacebar
+        button_code = floor(input$userPressedSmth)
+        if (button_code == 32) {  # spacebar
             playSel()
+        } else if (button_code == 37) {  # arrow left
+            shiftFrame('left')
+        } else if (button_code == 39) {  # arrow right
+            shiftFrame('right')
+        } else if (button_code == 38) {  # arrow up
+            changeZoom(myPars$zoomFactor)
+        } else if (button_code == 40) {  # arrow down
+            changeZoom(1 / myPars$zoomFactor)
         }
     })
 
@@ -572,21 +582,23 @@ server = function(input, output, session) {
 
     done = function() {
         # meaning we have finished editing pitch contour for a sound - prepares the output
-        new = data.frame(
-            file = basename(myPars$myAudio_filename),
-            dur = myPars$dur,
-            time = paste(round(myPars$X), collapse = ', '),
-            pitch = paste(round(myPars$pitch), collapse = ', '),
-            stringsAsFactors = FALSE
-        )
-        if (is.null(myPars$out)) {
-            myPars$out = new
-        } else {
-            idx = which(myPars$out$file == new$file)
-            if (length(idx) == 1) {
-                myPars$out$pitch[idx] = new$pitch
+        if (!is.null(myPars$myAudio_path)) {
+            new = data.frame(
+                file = basename(myPars$myAudio_filename),
+                dur = myPars$dur,
+                time = paste(round(myPars$X), collapse = ', '),
+                pitch = paste(round(myPars$pitch), collapse = ', '),
+                stringsAsFactors = FALSE
+            )
+            if (is.null(myPars$out)) {
+                myPars$out = new
             } else {
-                myPars$out = rbind(myPars$out, new)
+                idx = which(myPars$out$file == new$file)
+                if (length(idx) == 1) {
+                    myPars$out$pitch[idx] = new$pitch
+                } else {
+                    myPars$out = rbind(myPars$out, new)
+                }
             }
         }
         write.csv(myPars$out, 'www/temp.csv', row.names = FALSE)
@@ -698,7 +710,7 @@ server = function(input, output, session) {
     # action buttons
     shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS:::addTooltip(session, id='selection_play', title='Play selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS:::addTooltip(session, id='selection_play', title='Play selection (spacebar)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_voice', title = 'Undo treating selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -707,9 +719,9 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # navigation / zoom
-    shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection (time axis only)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom out', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_scrollRight', title = 'Scroll right', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left (arrow LEFT)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out (arrow DOWN)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom out (arrow UP)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='selection_scrollRight', title = 'Scroll right (arrow RIGHT)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 }

@@ -2,6 +2,7 @@ ui = fluidPage(
   # headerPanel('...'),
   tags$script('
     $(document).on("keydown", function (e) {
+       e.preventDefault();  // otherwise spacebar presses the currently selected button
        Shiny.onInputChange("userPressedSmth", e.which + Math.random() / 3);
     });
   '),
