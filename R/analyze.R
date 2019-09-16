@@ -652,7 +652,8 @@ analyze = function(x,
                            windowLength_points,
                            plot = FALSE)$acf / autoCorrelation_filter
   }
-  # plot(autocorBank[, 13], type = 'l')
+  autocorBank = autocorBank[-1, ]  # b/c it starts with zero lag (identity)
+  # plot(autocorBank[, 100], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   ## FORMANTS
@@ -1019,7 +1020,7 @@ analyzeFolder = function(myfolder,
                          priorSD = 6,
                          priorPlot = FALSE,
                          nCands = 1,
-                         minVoicedCands = 'autom',
+                         minVoicedCands = NULL,
                          domThres = 0.1,
                          domSmooth = 220,
                          autocorThres = 0.7,

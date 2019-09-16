@@ -343,7 +343,7 @@ drawContour = function(len,
         # weird cases of -120 (float) < -120 (integer)
         span = span / 1.1
         l = suppressWarnings(loess(anchors_long ~ time, span = span))
-        smoothContour = try (predict(l, time), silent = TRUE)
+        smoothContour = try(predict(l, time), silent = TRUE)
       }
     }
     smoothContour[smoothContour < valueFloor] = valueFloor

@@ -276,11 +276,11 @@ getPitchAutocor = function(autoCorrelation,
                            nCands) {
   # autoCorrelation = autocorBank[, 13]
   pitchAutocor_array = NULL
-  a = data.frame('freq' = as.numeric(names(autoCorrelation)),
-                 'amp' = autoCorrelation)
-  rownames(a) = NULL
-  a = a[a$freq > pitchFloor &
-          a$freq < pitchCeiling, , drop = FALSE] # plot(a[,2], type='l')
+  orig = data.frame('freq' = as.numeric(names(autoCorrelation)),
+                    'amp' = autoCorrelation)
+  rownames(orig) = 1:nrow(orig)
+  a = orig[orig$freq > pitchFloor &
+          orig$freq < pitchCeiling, , drop = FALSE] # plot(a[,2], type='l')
   HNR = max(a$amp) # HNR is here defined as the maximum autocorrelation
   # within the specified pitch range. It is also measured for the frames which
   # are later classified as unvoiced (i.e. HNR can be <voicedThres)
@@ -295,7 +295,7 @@ getPitchAutocor = function(autoCorrelation,
                           # width = 7 chosen by optimization, but it doesn't make that much difference anyhow
                         })
   idx = zoo::index(temp)[zoo::coredata(temp)]
-  autocorPeaks = a[idx, ]
+  autocorPeaks = a[idx, ]  # plot(a, type = 'b')
 
   if (nrow(autocorPeaks) > 0) {
     # if some peaks are found...

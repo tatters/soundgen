@@ -586,6 +586,7 @@ server = function(input, output, session) {
 
     done = function() {
         # meaning we have finished editing pitch contour for a sound - prepares the output
+        session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
         if (!is.null(myPars$myAudio_path)) {
             new = data.frame(
                 file = basename(myPars$myAudio_filename),
