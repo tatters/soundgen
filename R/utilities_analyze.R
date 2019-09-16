@@ -264,6 +264,8 @@ getDom = function(frame,
 #' of phonetic sciences (Vol. 17, No. 1193, pp. 97-110).
 #' @inheritParams analyzeFrame
 #' @inheritParams analyze
+#' @param upsample_to_res upsamples acf to this resolution (Hz) to improve
+#'   accuracy in high frequencies
 #' @return Returns a list of $HNR (NA or numeric) and $pitchAutocor_array
 #'   (either NULL or a dataframe of pitch candidates).
 #' @keywords internal
@@ -273,14 +275,31 @@ getPitchAutocor = function(autoCorrelation,
                            pitchFloor,
                            pitchCeiling,
                            samplingRate,
-                           nCands) {
+                           nCands,
+                           upsample_to_res = 25) {
   # autoCorrelation = autocorBank[, 13]
   pitchAutocor_array = NULL
   orig = data.frame('freq' = as.numeric(names(autoCorrelation)),
                     'amp' = autoCorrelation)
-  rownames(orig) = 1:nrow(orig)
+  rownames(orig) = NULL
   a = orig[orig$freq > pitchFloor &
-          orig$freq < pitchCeiling, , drop = FALSE] # plot(a[,2], type='l')
+             orig$freq < pitchCeiling, , drop = FALSE]
+  # plot(a$freq, a$amp, type='p')
+
+  # upsample to improve resolution in higher frequencies
+  if (upsample_to_res > 0) {
+    upsample_to_bin = which(diff(a$freq) > -upsample_to_res)[1]
+    upsample_len = round((a$freq[1] - a$freq[upsample_to_bin]) / upsample_to_res)
+    if (pitchCeiling > a$freq[upsample_to_bin]) {
+      temp = spline(a$amp[1:upsample_to_bin],
+                    n = upsample_len,
+                    x = a$freq[1:upsample_to_bin])
+      # points(temp$x, temp$y, type = 'p', cex = .25, col = 'red')
+      a = rbind(data.frame(freq = rev(temp$x), amp = rev(temp$y)),
+                a[(upsample_to_bin + 1):nrow(a), ])
+    }
+  }
+
   HNR = max(a$amp) # HNR is here defined as the maximum autocorrelation
   # within the specified pitch range. It is also measured for the frames which
   # are later classified as unvoiced (i.e. HNR can be <voicedThres)
@@ -295,7 +314,7 @@ getPitchAutocor = function(autoCorrelation,
                           # width = 7 chosen by optimization, but it doesn't make that much difference anyhow
                         })
   idx = zoo::index(temp)[zoo::coredata(temp)]
-  autocorPeaks = a[idx, ]  # plot(a, type = 'b')
+  autocorPeaks = a[idx, ]
 
   if (nrow(autocorPeaks) > 0) {
     # if some peaks are found...
