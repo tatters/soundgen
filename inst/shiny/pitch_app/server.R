@@ -23,12 +23,16 @@ server = function(input, output, session) {
             "Found unsaved data from a prevous session. Append to the new output?",
             easyClose = TRUE,
             footer = tagList(
-                modalButton("Cancel"),
-                actionButton("ok", "OK")
+                actionButton("discard", "Discard"),
+                actionButton("append", "Append")
             )
         ))
     }
-    observeEvent(input$ok, {
+    observeEvent(input$discard, {
+        file.remove('www/temp.csv')
+        removeModal()
+    })
+    observeEvent(input$append, {
         myPars$out = read.csv('www/temp.csv')
         removeModal()
     })
@@ -510,9 +514,9 @@ server = function(input, output, session) {
             pr[pr < input$pitchFloor] = input$pitchFloor
             # but update pitchCeiling if prior is higher
             if (any(pr > input$pitchCeiling)) {
-                updateSliderInput(session, 'pitchCeiling', value = max(pr))
+                updateSliderInput(session, 'pitchCeiling', value = round(max(pr)))
             }
-            meanPr = mean(pr)
+            meanPr = round(mean(pr))
             sdPr = round((HzToSemitones(pr[2]) - HzToSemitones(mean(pr))) / 2, 1)
             updateSliderInput(session, 'priorMean', value = meanPr)
             updateSliderInput(session, 'priorSD', value = sdPr)

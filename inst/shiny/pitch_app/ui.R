@@ -2,11 +2,19 @@ ui = fluidPage(
   # headerPanel('...'),
   tags$script('
     $(document).on("keydown", function (e) {
-       e.preventDefault();  // otherwise spacebar presses the currently selected button
        Shiny.onInputChange("userPressedSmth", e.which + Math.random() / 3);
+       // w/o Math.random() only the first of a series of identical
+       // keydown events is sent to server()
+    });
+
+    // prevent spacebar from activating the last pressed button
+    // see https://stackoverflow.com/questions/22280139/prevent-space-button-from-triggering-any-other-button-click-in-jquery
+    $(document).keyup(function(event) {
+      if(event.which === 32) {
+  	    event.preventDefault();
+      }
     });
   '),
-  # w/o Math.random() only the first of a series of identical keydown events is sent to server()
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
   # see https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
