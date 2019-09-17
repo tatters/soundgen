@@ -938,3 +938,107 @@ addPitchCands = function(pitchCands,
     }
   }
 }
+
+#' Interpolate pitch contour
+#'
+#' Internal soundgen function
+#'
+#' Takes in a pitch contour and fills up the unvoiced gaps (NAs) by linear
+#' interpolation in the middle and constant interpolation at the ends. Called by
+#' pitchSmoothPraat().
+#' @inheritParams pitchSmoothPraat
+#' @param idx_unv which(is.na(pitch))
+#' @return Returns the same numeric vector with NAs filled in by interpolation.
+#' @examples
+#' soundgen:::intplPitch(c(NA, 405, 441, 460, NA, NA, NA, 480, 490, NA, NA))
+intplPitch = function(pitch, idx_unv = NULL) {
+  len = length(pitch)
+  idx_v = which(!is.na(pitch))
+  if (is.null(idx_unv)) idx_unv = which(is.na(pitch))
+
+  # fill in NAs at the ends by constant interpolation
+  if (idx_v[1] > 1) {
+    pitch[1:(idx_v[1] - 1)] = pitch[idx_v[1]]
+  }
+  last_nonNA = idx_v[length(idx_v)]
+  if (last_nonNA < len) {
+    pitch[(last_nonNA + 1):len] = pitch[last_nonNA]
+  }
+
+  # fill in NAs in the middle by linear interpolation
+  while(any(is.na(pitch))) {
+    first_na = which(is.na(pitch))[1]
+    last_na = first_na + which(!is.na(pitch[first_na:len]))[1] - 2
+    l = last_na - first_na + 3
+    interp = seq(pitch[first_na - 1], pitch[last_na + 1], length.out = l)
+    pitch[first_na:last_na] = interp[2:(l - 1)]
+  }
+  return(pitch)
+}
+
+
+#' Pitch smoothing as in Praat
+#'
+#' Smoothes an intonation (pitch) contour with a low-pass filter, as in Praat
+#' (http://www.fon.hum.uva.nl/praat/). Algorithm: interpolates missing values
+#' (unvoiced frames), performs FFT to obtain the spectrum, multiplies by a
+#' Gaussian filter, performs an inverse FFT, and fills the missing values back
+#' in.
+#' @param pitch numeric vector of pitch values (NA = unvoiced)
+#' @keywords export
+#' @examples
+#' pitch = c(NA, NA, 405, 441, 459, 459, 460, 462, 462, 458, 458, 445, 458, 451,
+#' 444, 444, 430, 416, 409, 403, 403, 389, 375, NA, NA, NA, NA, NA, NA, NA, NA,
+#' NA, 183, 677, 677, 846, 883, 886, 924, 938, 883, 946, 846, 911, 826, 826,
+#' 788, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 307,
+#' 307, 368, 377, 383, 383, 383, 380, 377, 377, 377, 374, 374, 375, 375, 375,
+#' 375, 368, 371, 374, 375, 361, 375, 389, 375, 375, 375, 375, 375, 314, 169,
+#' NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 238, 285, 361, 374, 375, 375,
+#' 375, 375, 375, 389, 403, 389, 389, 375, 375, 389, 375, 348, 361, 375, 348,
+#' 348, 361, 348, 342, 361, 361, 361, 365, 365, 361, 966, 966, 966, 959, 959,
+#' 946, 1021, 1021, 1026, 1086, 1131, 1131, 1146, 1130, 1172, 1240, 1172, 1117,
+#' 1103, 1026, 1026, 966, 919, 946, 882, 832, NA, NA, NA, NA, NA, NA, NA, NA,
+#' NA, NA)
+#' samplingRate = 39.57244
+#' pitch_sm = pitchSmoothPraat(pitch, bandwidth = 2,
+#'                                samplingRate = samplingRate, plot = TRUE)
+pitchSmoothPraat = function(pitch,
+                            bandwidth,
+                            samplingRate,
+                            plot = FALSE) {
+  idx_unv = which(is.na(pitch))
+  len = length(pitch)
+  bin_width = samplingRate / 2 / len
+  half_len = len %/% 2
+  even = len %% 2 == 0
+
+  # interpolate NAs
+  pitch1 = intplPitch(pitch, idx_unv = idx_unv)
+
+  # get spectrum
+  sp = stats::fft(pitch1)
+  freq = seq(bin_width / 2,
+             samplingRate / 2 - bin_width / 2,
+             length.out = half_len)
+  # plot(freq, abs(sp[1:half_len]), type = 'l')
+
+  # gaussian filter
+  filter = exp(-(freq/bandwidth)^2)  # NB: a bit different from dnorm()
+  if (even) {
+    filter = c(filter, rev(filter))
+  } else {
+    filter = c(filter, filter[half_len], rev(filter))
+  }
+
+  # inverse fft
+  pitch2 = abs(fft(sp * filter, inverse = TRUE)) / len
+  pitch2[idx_unv] = NA
+
+  if (plot) {
+    plot(pitch)
+    points(pitch2, type = 'l', col = 'red')
+  }
+  return(pitch2)
+}
+
+

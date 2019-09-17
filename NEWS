@@ -3,6 +3,9 @@ BUGS FIXED:
   * pitch_app() runs locally, new layout, etc.
   * analyze() and pitch_app(): improved accuracy of pitch-autocorrelation at high frequencies
 
+NEW FUNCTIONS:
+  * pitchSmoothPraat(): smoothes pitch contours with the same algorithm and "bandwidth" parameter as in Praat for enhanced compatibility
+
 MINOR:
   * soundgen_app() improved tips
 

@@ -5,7 +5,7 @@
 \title{Autocorrelation pitch tracker}
 \usage{
 getPitchAutocor(autoCorrelation, autocorSmooth, autocorThres, pitchFloor,
-  pitchCeiling, samplingRate, nCands)
+  pitchCeiling, samplingRate, nCands, upsample_to_res = 25)
 }
 \arguments{
 \item{autoCorrelation}{pre-calculated autocorrelation of the input frame
@@ -28,6 +28,9 @@ that HNR is calculated even for unvoiced frames.}
 
 \item{nCands}{maximum number of pitch candidates per method (except for
 \code{dom}, which returns at most one candidate per frame), normally 1...4}
+
+\item{upsample_to_res}{upsamples acf to this resolution (Hz) to improve
+accuracy in high frequencies}
 }
 \value{
 Returns a list of $HNR (NA or numeric) and $pitchAutocor_array
