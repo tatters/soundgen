@@ -985,7 +985,11 @@ intplPitch = function(pitch, idx_unv = NULL) {
 #' Gaussian filter, performs an inverse FFT, and fills the missing values back
 #' in.
 #' @param pitch numeric vector of pitch values (NA = unvoiced)
-#' @keywords export
+#' @param bandwidth the bandwidth of low-pass filter, Hz (high = less smoothing,
+#'   close to zero = more smoothing)
+#' @param samplingRate the number of pitch values per second
+#' @param plot if TRUE, plots the original and smoothed pitch contours
+#' @export
 #' @examples
 #' pitch = c(NA, NA, 405, 441, 459, 459, 460, 462, 462, 458, 458, 445, 458, 451,
 #' 444, 444, 430, 416, 409, 403, 403, 389, 375, NA, NA, NA, NA, NA, NA, NA, NA,
@@ -999,9 +1003,8 @@ intplPitch = function(pitch, idx_unv = NULL) {
 #' 946, 1021, 1021, 1026, 1086, 1131, 1131, 1146, 1130, 1172, 1240, 1172, 1117,
 #' 1103, 1026, 1026, 966, 919, 946, 882, 832, NA, NA, NA, NA, NA, NA, NA, NA,
 #' NA, NA)
-#' samplingRate = 39.57244
 #' pitch_sm = pitchSmoothPraat(pitch, bandwidth = 2,
-#'                                samplingRate = samplingRate, plot = TRUE)
+#'                             samplingRate = 39.57244, plot = TRUE)
 pitchSmoothPraat = function(pitch,
                             bandwidth,
                             samplingRate,
@@ -1040,5 +1043,3 @@ pitchSmoothPraat = function(pitch,
   }
   return(pitch2)
 }
-
-

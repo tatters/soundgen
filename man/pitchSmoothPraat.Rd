@@ -8,6 +8,13 @@ pitchSmoothPraat(pitch, bandwidth, samplingRate, plot = FALSE)
 }
 \arguments{
 \item{pitch}{numeric vector of pitch values (NA = unvoiced)}
+
+\item{bandwidth}{the bandwidth of low-pass filter, Hz (high = less smoothing,
+close to zero = more smoothing)}
+
+\item{samplingRate}{the number of pitch values per second}
+
+\item{plot}{if TRUE, plots the original and smoothed pitch contours}
 }
 \description{
 Smoothes an intonation (pitch) contour with a low-pass filter, as in Praat
@@ -33,4 +40,3 @@ samplingRate = 39.57244
 pitch_sm = pitchSmoothPraat(pitch, bandwidth = 2,
                                samplingRate = samplingRate, plot = TRUE)
 }
-\keyword{export}
