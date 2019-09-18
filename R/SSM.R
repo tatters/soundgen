@@ -39,10 +39,10 @@
 #' @param returnSSM if TRUE, returns the SSM
 #' @param plot if TRUE, plots the SSM
 #' @param heights relative sizes of the SSM and spectrogram/novelty plot
-#' @param specPars graphical parameters passed to
-#'   \code{seewave::filled.contour.modif2} and affecting the spectrogram
-#' @param ssmPars graphical parameters passed to
-#'   \code{seewave::filled.contour.modif2} and affecting the plot of SSM
+#' @param specPars graphical parameters passed to \code{filled.contour.mod} and
+#'   affecting the spectrogram
+#' @param ssmPars graphical parameters passed to \code{filled.contour.mod} and
+#'   affecting the plot of SSM
 #' @param noveltyPars graphical parameters passed to
 #'   \code{\link[graphics]{lines}} and affecting the novelty contour
 #' @return If \code{returnSSM} is TRUE, returns a list of two components: $ssm
@@ -205,7 +205,7 @@ ssm = function(x,
 
     # SSM
     timestamps_ssm = seq(0, duration, length.out = nrow(s))
-    do.call(seewave::filled.contour.modif2, c(list(
+    do.call(filled.contour.mod, c(list(
       x = timestamps_ssm,
       y = timestamps_ssm,
       z = s

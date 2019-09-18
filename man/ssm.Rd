@@ -61,11 +61,11 @@ before and after the recording as unknown, 0 = treat it as silence}
 
 \item{heights}{relative sizes of the SSM and spectrogram/novelty plot}
 
-\item{specPars}{graphical parameters passed to
-\code{seewave::filled.contour.modif2} and affecting the spectrogram}
+\item{specPars}{graphical parameters passed to \code{filled.contour.mod} and
+affecting the spectrogram}
 
-\item{ssmPars}{graphical parameters passed to
-\code{seewave::filled.contour.modif2} and affecting the plot of SSM}
+\item{ssmPars}{graphical parameters passed to \code{filled.contour.mod} and
+affecting the plot of SSM}
 
 \item{noveltyPars}{graphical parameters passed to
 \code{\link[graphics]{lines}} and affecting the novelty contour}

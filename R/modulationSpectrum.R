@@ -52,9 +52,8 @@
 #' @param xlab,ylab,main graphical parameters
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
-#' @param ... other graphical parameters passed on to
-#'   \code{\link[seewave]{filled.contour.modif2}} and
-#'   \code{\link[graphics]{contour}}
+#' @param ... other graphical parameters passed on to \code{filled.contour.mod}
+#'   and \code{\link[graphics]{contour}}
 #' @return Returns a list with three components:
 #' \itemize{
 #' \item \code{$original} modulation spectrum prior to blurring and log-warping,
@@ -363,7 +362,7 @@ modulationSpectrum = function(x,
     }
 
     if (is.numeric(logWarp)) {
-      seewave::filled.contour.modif2(
+      filled.contour.mod(
         x = X, y = Y, z = out_transf,
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
@@ -419,7 +418,7 @@ modulationSpectrum = function(x,
       #      at  = yl1,
       #      labels = yl)
     } else {
-      seewave::filled.contour.modif2(
+      filled.contour.mod(
         x = X, y = Y, z = out_transf,
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,

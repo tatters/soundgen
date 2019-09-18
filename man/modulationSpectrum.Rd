@@ -69,9 +69,8 @@ or any palette from \code{\link[grDevices]{palette}} such as
 \item{width, height, units, res}{parameters passed to
 \code{\link[grDevices]{png}} if the plot is saved}
 
-\item{...}{other graphical parameters passed on to
-\code{\link[seewave]{filled.contour.modif2}} and
-\code{\link[graphics]{contour}}}
+\item{...}{other graphical parameters passed on to \code{filled.contour.mod}
+and \code{\link[graphics]{contour}}}
 }
 \value{
 Returns a list with three components:

@@ -36,7 +36,6 @@ NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 238, 285, 361, 374, 375, 375,
 946, 1021, 1021, 1026, 1086, 1131, 1131, 1146, 1130, 1172, 1240, 1172, 1117,
 1103, 1026, 1026, 966, 919, 946, 882, 832, NA, NA, NA, NA, NA, NA, NA, NA,
 NA, NA)
-samplingRate = 39.57244
 pitch_sm = pitchSmoothPraat(pitch, bandwidth = 2,
-                               samplingRate = samplingRate, plot = TRUE)
+                            samplingRate = 39.57244, plot = TRUE)
 }

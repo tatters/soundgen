@@ -554,7 +554,7 @@ getMelSpec = function(s,
 
   if (plot) {
     # show the spectrum of the target
-    seewave::filled.contour.modif2(
+    filled.contour.mod(
       x = seq(1, ncol(spec) * step,
               length.out = ncol(spec)),
       y = 1:nrow(spec),
