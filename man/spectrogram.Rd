@@ -10,11 +10,11 @@ spectrogram(x, samplingRate = NULL, dynamicRange = 80,
   qTime = 0, percentNoise = 10, noiseReduction = 0, contrast = 0.2,
   brightness = 0, method = c("spectrum", "spectralDerivative")[1],
   output = c("none", "original", "processed", "complex")[1],
-  ylim = NULL, plot = TRUE, osc = FALSE, osc_dB = FALSE,
-  heights = c(3, 1), colorTheme = c("bw", "seewave", "...")[1],
-  xlab = "Time, ms", ylab = "Frequency, kHz", mar = c(5.1, 4.1, 4.1,
-  2), main = "", grid = NULL, frameBank = NULL, duration = NULL,
-  ...)
+  ylim = NULL, yScale = c("linear", "log")[1], plot = TRUE,
+  osc = FALSE, osc_dB = FALSE, heights = c(3, 1),
+  colorTheme = c("bw", "seewave", "...")[1], xlab = "Time, ms",
+  ylab = "Frequency, kHz", mar = c(5.1, 4.1, 4.1, 2), main = "",
+  grid = NULL, frameBank = NULL, duration = NULL, ...)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
@@ -73,6 +73,9 @@ phase ('complex')}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 
+\item{yScale}{scale of the frequency axis: 'linear' = linear, 'log' =
+logarithmic}
+
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
 \item{osc, osc_dB}{should an oscillogram be shown under the spectrogram? TRUE/
@@ -90,9 +93,7 @@ or any palette from \code{\link[grDevices]{palette}} such as
 
 \item{grid}{if numeric, adds n = \code{grid} dotted lines per kHz}
 
-\item{frameBank}{ignore (only needed for pitch tracking)}
-
-\item{duration}{ignore (only needed for pitch tracking)}
+\item{frameBank, duration}{ignore (only needed for pitch tracking)}
 
 \item{...}{other graphical parameters}
 }
@@ -125,7 +126,7 @@ spectrogram(sound, samplingRate = 16000,
   brightness = -1, colorTheme = 'heat.colors',
   ylim = c(0, 5), cex.lab = .75,
   main = 'My spectrogram',
-  yaxp = c(0, 8, 16),  # tip: for base graphics, see ?par
+  yaxp = c(0, 5, 10),  # tip: for base graphics, see ?par
   grid = 5  # tip: to customize, add manually with graphics::grid()
 )
 
@@ -140,6 +141,10 @@ spectrogram(sound, samplingRate = 16000, osc = TRUE)
 # oscillogram on a dB scale, same height as spectrogram
 spectrogram(sound, samplingRate = 16000,
             osc_dB = TRUE, heights = c(1, 1))
+
+# frequencies on a logarithmic scale
+spectrogram(sound, samplingRate = 16000,
+            yScale = 'log', ylim = c(.05, 8))
 
 # broad-band instead of narrow-band
 spectrogram(sound, samplingRate = 16000, windowLength = 5)

@@ -9,7 +9,7 @@ filled.contour.mod(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len =
   TRUE), zlim = range(z, finite = TRUE), levels = pretty(zlim,
   nlevels), nlevels = 30, color.palette = function(n) hcl.colors(n,
   "YlOrRd", rev = TRUE), col = color.palette(length(levels) - 1),
-  asp = NA, xaxs = "i", yaxs = "i", ...)
+  asp = NA, xaxs = "i", yaxs = "i", log = "", ...)
 }
 \arguments{
 \item{x, y}{locations of grid lines}
@@ -27,6 +27,8 @@ filled.contour.mod(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len =
 \item{col}{list of colors instead of color.palette}
 
 \item{asp, xaxs, yaxs, ...}{graphical parameters passed to plot.window() and axis()}
+
+\item{log}{log = 'y' log-transforms the y axis}
 }
 \description{
 Internal soundgen function

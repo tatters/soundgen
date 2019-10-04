@@ -1,13 +1,14 @@
           CHANGES IN SOUNDGEN VERSION 1.5.1 [...date...]
 BUGS FIXED:
-  * pitch_app() runs locally, new layout, etc.
-  * analyze() and pitch_app(): improved accuracy of pitch-autocorrelation at high frequencies
+  * pitch_app() runs locally, new layout, multiple new features
+  * analyze() and pitch_app(): improved accuracy of autocorrelation-based pitch tracking at high frequencies
 
 NEW FUNCTIONS:
-  * pitchSmoothPraat(): smoothes pitch contours with the same algorithm and "bandwidth" parameter as in Praat for enhanced compatibility
+  * pitchSmoothPraat(): smoothes pitch contours with the same algorithm and "bandwidth" parameter as in Praat for improved compatibility
 
 MINOR:
   * soundgen_app() improved tips
+  * spectrogram(): option to plot frequencies on a logarithmic scale (yScale = 'log')
 
 
           CHANGES IN SOUNDGEN VERSION 1.5.0 [11-September-2019]

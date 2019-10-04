@@ -45,6 +45,8 @@
 #'   ('processed'), or unmodified spectrogram with the imaginary part giving
 #'   phase ('complex')
 #' @param ylim frequency range to plot, kHz (defaults to 0 to Nyquist frequency)
+#' @param yScale scale of the frequency axis: 'linear' = linear, 'log' =
+#'   logarithmic
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
 #' @param osc,osc_dB should an oscillogram be shown under the spectrogram? TRUE/
 #'   FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
@@ -57,8 +59,7 @@
 #' @param xlab,ylab,main,mar graphical parameters
 #' @param grid if numeric, adds n = \code{grid} dotted lines per kHz
 #' @param ... other graphical parameters
-#' @param frameBank ignore (only needed for pitch tracking)
-#' @param duration ignore (only needed for pitch tracking)
+#' @param frameBank,duration ignore (only needed for pitch tracking)
 #' @export
 #' @return Returns nothing (if output = 'none'), absolute - not power! -
 #'   spectrum (if output = 'original'), denoised and/or smoothed spectrum (if
@@ -80,7 +81,7 @@
 #'   brightness = -1, colorTheme = 'heat.colors',
 #'   ylim = c(0, 5), cex.lab = .75,
 #'   main = 'My spectrogram',
-#'   yaxp = c(0, 8, 16),  # tip: for base graphics, see ?par
+#'   yaxp = c(0, 5, 10),  # tip: for base graphics, see ?par
 #'   grid = 5  # tip: to customize, add manually with graphics::grid()
 #' )
 #'
@@ -95,6 +96,10 @@
 #' # oscillogram on a dB scale, same height as spectrogram
 #' spectrogram(sound, samplingRate = 16000,
 #'             osc_dB = TRUE, heights = c(1, 1))
+#'
+#' # frequencies on a logarithmic scale
+#' spectrogram(sound, samplingRate = 16000,
+#'             yScale = 'log', ylim = c(.05, 8))
 #'
 #' # broad-band instead of narrow-band
 #' spectrogram(sound, samplingRate = 16000, windowLength = 5)
@@ -133,6 +138,7 @@ spectrogram = function(x,
                        method = c('spectrum', 'spectralDerivative')[1],
                        output = c('none', 'original', 'processed', 'complex')[1],
                        ylim = NULL,
+                       yScale = c('linear', 'log')[1],
                        plot = TRUE,
                        osc = FALSE,
                        osc_dB = FALSE,
@@ -380,6 +386,7 @@ spectrogram = function(x,
       par(mar = mar)
     }
 
+    if (yScale == 'log' & ylim[1] < .01)  ylim[1] = .01
     filled.contour.mod(
       x = X, y = Y, z = Z1,
       levels = seq(0, 1, length = 30),
@@ -387,6 +394,7 @@ spectrogram = function(x,
       ylim = ylim, main = main,
       xlab = xlab, ylab = ylab,
       xlim = c(0, duration * 1000),
+      log = ifelse(yScale == 'log', 'y', ''),
       ...
     )
     if (is.numeric(grid)) {
@@ -462,8 +470,8 @@ spectrogramFolder = function(myfolder,
     # remove file extension
     f = substr(as.character(filenames[i]), 1, nchar(as.character(filenames[i])) - 4)
     png(filename = paste0(f, ".png"),
-         width = width, height = height,
-         units = units, res = res)
+        width = width, height = height,
+        units = units, res = res)
     do.call(spectrogram, list(
       x = filenames[i],
       windowLength = windowLength,
@@ -611,28 +619,32 @@ getFrameBank = function(sound,
 #' @param color.palette color palette function
 #' @param col list of colors instead of color.palette
 #' @param asp,xaxs,yaxs,... graphical parameters passed to plot.window() and axis()
+#' @param log log = 'y' log-transforms the y axis
 #' @keywords internal
-filled.contour.mod = function(x = seq(0, 1, len = nrow(z)),
-                              y = seq(0, 1, len = ncol(z)),
-                              z,
-                              xlim = range(x, finite = TRUE),
-                              ylim = range(y, finite = TRUE),
-                              zlim = range(z, finite = TRUE),
-                              levels = pretty(zlim, nlevels),
-                              nlevels = 30,
-                              color.palette = function(n) hcl.colors(n, "YlOrRd", rev = TRUE),
-                              col = color.palette(length(levels) - 1),
-                              asp = NA,
-                              xaxs = "i",
-                              yaxs = "i",
-                              ...) {
+filled.contour.mod = function(
+  x = seq(0, 1, len = nrow(z)),
+  y = seq(0, 1, len = ncol(z)),
+  z,
+  xlim = range(x, finite = TRUE),
+  ylim = range(y, finite = TRUE),
+  zlim = range(z, finite = TRUE),
+  levels = pretty(zlim, nlevels),
+  nlevels = 30,
+  color.palette = function(n) hcl.colors(n, "YlOrRd", rev = TRUE),
+  col = color.palette(length(levels) - 1),
+  asp = NA,
+  xaxs = "i",
+  yaxs = "i",
+  log = '',
+  ...
+) {
   plot.new()
-  plot.window(xlim, ylim, "", xaxs = xaxs, yaxs = yaxs, asp = asp, ...)
+  plot.window(xlim, ylim, "", xaxs = xaxs, yaxs = yaxs,
+              asp = asp, log = log, ...)
   if (!is.matrix(z) || nrow(z) <= 1 || ncol(z) <= 1)
     stop("no proper 'z' matrix specified")
-  if (!is.double(z))  storage.mode(z) <- "double"
-  .filled.contour(as.double(x), as.double(y), z, as.double(levels),
-                  col = col)
+  if (!is.double(z))  storage.mode(z) = "double"
+  .filled.contour(as.double(x), as.double(y), z, as.double(levels), col = col)
   title(...)
   axis(1, ...)
   axis(2, ...)

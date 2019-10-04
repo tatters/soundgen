@@ -120,7 +120,7 @@ ssm = function(x,
   duration = length(sound) / samplingRate
   frame_points = samplingRate * windowLength / 1000
   kernelSize = round(kernelLen * samplingRate / 1000 / frame_points /
-                        2) * 2  # kernel size in frames, guaranteed to be even
+                       2) * 2  # kernel size in frames, guaranteed to be even
   if (is.null(nBands)) {
     nBands = 100 * windowLength / 20
   }
@@ -138,7 +138,7 @@ ssm = function(x,
     hoptime = step / 1000,
     maxfreq = maxFreq,
     nbands = nBands,
-    spec_out = T,
+    spec_out = TRUE,
     numcep = max(MFCC)
   )
   if (input == 'mfcc') {
@@ -195,7 +195,7 @@ ssm = function(x,
     do.call(lines, c(list(
       x = seq(0, duration, length.out = length(novelty)),
       y = novelty / max(novelty, na.rm = TRUE) * maxFreq / 1000
-      ), noveltyPars
+    ), noveltyPars
     ))
     axis(side = 1, labels = TRUE)
     par(mar = c(0, 4.1, 2.1, 2.1),
@@ -268,8 +268,7 @@ selfsim = function(m,
         } else if (simil == 'cor') {
           out[i, j] = cor(mi, mj)
         }
-      }
-      else {
+      } else {
         # if at least one is a vector of zeros, set result to 0 (otherwise NA)
         out[i, j] = 0
       }
