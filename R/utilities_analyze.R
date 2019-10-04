@@ -266,6 +266,8 @@ getDom = function(frame,
 #' @inheritParams analyze
 #' @param upsample_to_res upsamples acf to this resolution (Hz) to improve
 #'   accuracy in high frequencies
+#' @param autocorBestPeak amplitude of the lowest best candidate relative to the
+#'   absolute max of the acf
 #' @return Returns a list of $HNR (NA or numeric) and $pitchAutocor_array
 #'   (either NULL or a dataframe of pitch candidates).
 #' @keywords internal
@@ -276,26 +278,36 @@ getPitchAutocor = function(autoCorrelation,
                            pitchCeiling,
                            samplingRate,
                            nCands,
-                           upsample_to_res = 25) {
+                           upsample_to_res = 25,
+                           autocorBestPeak = .975) {
   # autoCorrelation = autocorBank[, 13]
   pitchAutocor_array = NULL
+
+  # don't consider candidates above nyquist / 2 b/c there's not enough
+  # resolution in acf that high up
+  pitchCeiling = min(pitchCeiling, samplingRate / 4)
+
   orig = data.frame('freq' = as.numeric(names(autoCorrelation)),
                     'amp' = autoCorrelation)
   rownames(orig) = NULL
   a = orig[orig$freq > pitchFloor &
              orig$freq < pitchCeiling, , drop = FALSE]
-  # plot(a$freq, a$amp, type='p')
+  # plot(a$freq, a$amp, type='b')
 
   # upsample to improve resolution in higher frequencies
   if (upsample_to_res > 0) {
+    upsample_from_bin = 1  # in Hz, it's samplingRate / (upsample_from_bin + 1)
+    # same as which(a$freq < samplingRate / 4)[1], etc.
     upsample_to_bin = which(diff(a$freq) > -upsample_to_res)[1]
-    upsample_len = round((a$freq[1] - a$freq[upsample_to_bin]) / upsample_to_res)
+    upsample_len = round((a$freq[upsample_from_bin] - a$freq[upsample_to_bin]) /
+                           upsample_to_res)
     if (pitchCeiling > a$freq[upsample_to_bin]) {
-      temp = spline(a$amp[1:upsample_to_bin],
+      temp = spline(a$amp[upsample_from_bin:upsample_to_bin],
                     n = upsample_len,
-                    x = a$freq[1:upsample_to_bin])
+                    x = a$freq[upsample_from_bin:upsample_to_bin])
       # points(temp$x, temp$y, type = 'p', cex = .25, col = 'red')
-      a = rbind(data.frame(freq = rev(temp$x), amp = rev(temp$y)),
+      a = rbind(a[1:upsample_from_bin, ],
+                data.frame(freq = rev(temp$x), amp = rev(temp$y)),
                 a[(upsample_to_bin + 1):nrow(a), ])
     }
   }
@@ -321,7 +333,7 @@ getPitchAutocor = function(autoCorrelation,
     # we are only interested in frequencies above half of the best candidate
     # (b/c otherwise we get false subharmonics)
     bestFreq = autocorPeaks$freq[which(autocorPeaks$amp >
-                                         0.975 * max(autocorPeaks$amp))[1]]
+                                         autocorBestPeak * max(autocorPeaks$amp))[1]]
     # bestFreq = autocorPeaks$freq[which.max(autocorPeaks$amp)]
     if (!is.na(bestFreq)) {
       autocorPeaks = try(autocorPeaks[autocorPeaks$freq > bestFreq / 1.8,

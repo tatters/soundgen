@@ -62,10 +62,11 @@ blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
-\item{cutFreq}{(>0 to Nyquist, Hz) repeat the calculation of spectral
-descriptives after discarding all info above \code{cutFreq}.
+\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
+spectral descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
-audio files}
+audio files. Note that "entropyThres" applies only to this frequency range,
+which also affects which frames will not be analyzed with pitchAutocor.}
 
 \item{nFormants}{the number of formants to extract per STFT frame (0 = no
 formant analysis). Calls \code{\link[phonTools]{findformants}} with default

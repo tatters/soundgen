@@ -7,8 +7,9 @@
 analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   scale = NULL, SPL_measured = 70, Pref = 2e-05, windowLength = 50,
   step = NULL, overlap = 50, wn = "gaussian", zp = 0,
-  cutFreq = 6000, nFormants = 3, pitchMethods = c("autocor", "spec",
-  "dom"), entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
+  cutFreq = min(samplingRate/2, max(7000, pitchCeiling * 2)),
+  nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
+  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
   priorMean = 300, priorSD = 6, priorPlot = FALSE, nCands = 1,
   minVoicedCands = NULL, domThres = 0.1, domSmooth = 220,
   autocorThres = 0.7, autocorSmooth = NULL, cepThres = 0.3,
@@ -60,10 +61,11 @@ blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
-\item{cutFreq}{(>0 to Nyquist, Hz) repeat the calculation of spectral
-descriptives after discarding all info above \code{cutFreq}.
+\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
+spectral descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
-audio files}
+audio files. Note that "entropyThres" applies only to this frequency range,
+which also affects which frames will not be analyzed with pitchAutocor.}
 
 \item{nFormants}{the number of formants to extract per STFT frame (0 = no
 formant analysis). Calls \code{\link[phonTools]{findformants}} with default

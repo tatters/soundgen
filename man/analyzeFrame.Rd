@@ -30,10 +30,11 @@ pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 NULL = no pitch analysis)}
 
-\item{cutFreq}{(>0 to Nyquist, Hz) repeat the calculation of spectral
-descriptives after discarding all info above \code{cutFreq}.
+\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
+spectral descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
-audio files}
+audio files. Note that "entropyThres" applies only to this frequency range,
+which also affects which frames will not be analyzed with pitchAutocor.}
 
 \item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
