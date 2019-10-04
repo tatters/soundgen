@@ -43,7 +43,6 @@ morphDF = function(a,
                    plot = F,
                    ...) {
   # example of expected input a & b: data.frame(time=c(0,1), value=c(-30,15))  NB: min 2 rows!!!
-
   if (identical(a, b)) {
     return(rep(list(a), nMorphs))
   }
@@ -168,10 +167,13 @@ morphDF = function(a,
     for (d in 1:length(idx)) {
       hybrid = a
       for (i in 1:nrow(hybrid)) {
-        hybrid[i, 1] = hybrid[i, 1] +
-                       idx[d] * (b[hybrid$match[i], 1] - hybrid[i, 1])
-        hybrid[i, 2] = hybrid[i, 2] +
-                       idx[d] * (b[hybrid$match[i], 2] - hybrid[i, 2])
+        # NB: w/o rounding unique() below fails to find duplicates. For more on
+        # weird arithmetic, see
+        # https://stackoverflow.com/questions/588004/is-floating-point-math-broken
+        hybrid[i, 1] = round(hybrid[i, 1] +
+                       idx[d] * (b[hybrid$match[i], 1] - hybrid[i, 1]), 4)
+        hybrid[i, 2] = round(hybrid[i, 2] +
+                       idx[d] * (b[hybrid$match[i], 2] - hybrid[i, 2]), 4)
       }
       # remove duplicate rows
       hybrid = unique(hybrid[, 1:2]) # hybrid[!duplicated(hybrid[, 1:2]), ]

@@ -7,7 +7,7 @@ NEW FUNCTIONS:
   * pitchSmoothPraat(): smoothes pitch contours with the same algorithm and "bandwidth" parameter as in Praat for improved compatibility
 
 MINOR:
-  * soundgen_app() improved tips
+  * soundgen_app(): improved tips
   * spectrogram(): option to plot frequencies on a logarithmic scale (yScale = 'log')
   * ssm(), spectrogram(), modulationSpectrum(), analyze(): standardized specification of "colorTheme"
 
