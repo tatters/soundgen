@@ -497,7 +497,7 @@ getSpectralEnvelope = function(nr,
           ...)
   }
 
-  return(spectralEnvelope_lin)
+  invisible(spectralEnvelope_lin)
 }
 
 

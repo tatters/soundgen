@@ -1135,5 +1135,5 @@ soundgen = function(
                 windowLength = windowLength, overlap = overlap,
                 dynamicRange = dynamicRange, ...)
   }
-  return(bout)
+  invisible(bout)
 }

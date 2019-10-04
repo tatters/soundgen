@@ -65,6 +65,7 @@
 #'   spectrum (if output = 'original'), denoised and/or smoothed spectrum (if
 #'   output = 'processed'), or spectral derivatives (if method =
 #'   'spectralDerivative') as a matrix of real numbers.
+#' @seealso \code{\link{modulationSpectrum}} \code{\link{ssm}}
 #' @examples
 #' # synthesize a sound 1 s long, with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 1000, temperature = 0.001, noise = list(
@@ -119,39 +120,41 @@
 #' # increase contrast, reduce brightness
 #' spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 #' }
-spectrogram = function(x,
-                       samplingRate = NULL,
-                       dynamicRange = 80,
-                       windowLength = 50,
-                       step = NULL,
-                       overlap = 70,
-                       wn = 'gaussian',
-                       zp = 0,
-                       normalize = TRUE,
-                       smoothFreq = 0,
-                       smoothTime = 0,
-                       qTime = 0,
-                       percentNoise = 10,
-                       noiseReduction = 0,
-                       contrast = .2,
-                       brightness = 0,
-                       method = c('spectrum', 'spectralDerivative')[1],
-                       output = c('none', 'original', 'processed', 'complex')[1],
-                       ylim = NULL,
-                       yScale = c('linear', 'log')[1],
-                       plot = TRUE,
-                       osc = FALSE,
-                       osc_dB = FALSE,
-                       heights = c(3, 1),
-                       colorTheme = c('bw', 'seewave', '...')[1],
-                       xlab = 'Time, ms',
-                       ylab = 'Frequency, kHz',
-                       mar = c(5.1, 4.1, 4.1, 2),
-                       main = '',
-                       grid = NULL,
-                       frameBank = NULL,
-                       duration = NULL,
-                       ...) {
+spectrogram = function(
+  x,
+  samplingRate = NULL,
+  dynamicRange = 80,
+  windowLength = 50,
+  step = NULL,
+  overlap = 70,
+  wn = 'gaussian',
+  zp = 0,
+  normalize = TRUE,
+  smoothFreq = 0,
+  smoothTime = 0,
+  qTime = 0,
+  percentNoise = 10,
+  noiseReduction = 0,
+  contrast = .2,
+  brightness = 0,
+  method = c('spectrum', 'spectralDerivative')[1],
+  output = c('original', 'processed', 'complex')[1],
+  ylim = NULL,
+  yScale = c('linear', 'log')[1],
+  plot = TRUE,
+  osc = FALSE,
+  osc_dB = FALSE,
+  heights = c(3, 1),
+  colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
+  xlab = 'Time, ms',
+  ylab = 'Frequency, kHz',
+  mar = c(5.1, 4.1, 4.1, 2),
+  main = '',
+  grid = NULL,
+  frameBank = NULL,
+  duration = NULL,
+  ...
+) {
   sound = NULL
   if (overlap < 0 | overlap > 100) {
     warning('overlap must be >0 and <= 100%; resetting to 70')
@@ -343,15 +346,7 @@ spectrogram = function(x,
 
   if (plot) {
     # spectrogram of the modified fft
-    if (colorTheme == 'bw') {
-      color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
-    } else if (colorTheme == 'seewave') {
-      color.palette = seewave::spectro.colors
-    } else {
-      colFun = match.fun(colorTheme)
-      color.palette = function(x) rev(colFun(x))
-    }
-
+    color.palette = switchColorTheme(colorTheme)
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     if (osc | osc_dB) {
       if (osc_dB) {
@@ -407,12 +402,15 @@ spectrogram = function(x,
   }
 
   if (output == 'original') {
-    return(t(Z))  # before denoising
+    out = t(Z)  # before denoising
   } else if (output == 'processed') {
-    return(t(Z1))  # denoised spectrum / spectralDerivative
+    out = t(Z1)  # denoised spectrum / spectralDerivative
   } else if (output == 'complex') {
-    return(z)  # with the imaginary part
+    out = z  # with the imaginary part
+  } else {
+    out = NULL
   }
+  invisible(out)
 }
 
 
@@ -618,7 +616,9 @@ getFrameBank = function(sound,
 #' @param nlevels numbers of levels for partitioning z
 #' @param color.palette color palette function
 #' @param col list of colors instead of color.palette
-#' @param asp,xaxs,yaxs,... graphical parameters passed to plot.window() and axis()
+#' @param asp,xaxs,yaxs,... graphical parameters passed to plot.window() and
+#'   axis()
+#' @param axisX,axisY plot the axis or not (logical)
 #' @param log log = 'y' log-transforms the y axis
 #' @keywords internal
 filled.contour.mod = function(
@@ -636,18 +636,22 @@ filled.contour.mod = function(
   xaxs = "i",
   yaxs = "i",
   log = '',
+  axisX = TRUE,
+  axisY = TRUE,
   ...
 ) {
-  plot.new()
-  plot.window(xlim, ylim, "", xaxs = xaxs, yaxs = yaxs,
-              asp = asp, log = log, ...)
-  if (!is.matrix(z) || nrow(z) <= 1 || ncol(z) <= 1)
-    stop("no proper 'z' matrix specified")
-  if (!is.double(z))  storage.mode(z) = "double"
-  .filled.contour(as.double(x), as.double(y), z, as.double(levels), col = col)
-  title(...)
-  axis(1, ...)
-  axis(2, ...)
+  suppressWarnings({
+    plot.new()
+    plot.window(xlim, ylim, "", xaxs = xaxs, yaxs = yaxs,
+                asp = asp, log = log, ...)
+    if (!is.matrix(z) || nrow(z) <= 1 || ncol(z) <= 1)
+      stop("no proper 'z' matrix specified")
+    if (!is.double(z))  storage.mode(z) = "double"
+    .filled.contour(as.double(x), as.double(y), z, as.double(levels), col = col)
+    title(...)
+    if (axisX) axis(1, ...)
+    if (axisY) axis(2, ...)
+  })
   invisible()
 }
 

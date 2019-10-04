@@ -9,6 +9,7 @@ NEW FUNCTIONS:
 MINOR:
   * soundgen_app() improved tips
   * spectrogram(): option to plot frequencies on a logarithmic scale (yScale = 'log')
+  * ssm(), spectrogram(), modulationSpectrum(), analyze(): standardized specification of "colorTheme"
 
 
           CHANGES IN SOUNDGEN VERSION 1.5.0 [11-September-2019]

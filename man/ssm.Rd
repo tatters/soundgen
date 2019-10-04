@@ -7,14 +7,15 @@
 ssm(x, samplingRate = NULL, windowLength = 40, overlap = 75,
   step = NULL, ssmWin = 40, maxFreq = NULL, nBands = NULL,
   MFCC = 2:13, input = c("mfcc", "audiogram", "spectrum")[1],
-  norm = FALSE, simil = c("cosine", "cor")[1], returnSSM = TRUE,
-  kernelLen = 200, kernelSD = 0.2, padWith = 0, plot = TRUE,
-  heights = c(2, 1), specPars = list(levels = seq(0, 1, length = 30),
-  color.palette = seewave::spectro.colors, xlab = "Time, s", ylab = "kHz",
-  ylim = c(0, maxFreq/1000)), ssmPars = list(levels = seq(0, 1, length =
-  30), color.palette = seewave::spectro.colors, xlab = "Time, s", ylab =
-  "Time, s", main = "Self-similarity matrix"), noveltyPars = list(type =
-  "b", pch = 16, col = "black", lwd = 3))
+  norm = FALSE, simil = c("cosine", "cor")[1],
+  returnSSM = "deprecated", kernelLen = 200, kernelSD = 0.2,
+  padWith = 0, plot = TRUE, heights = c(2, 1),
+  specPars = list(levels = seq(0, 1, length = 30), colorTheme = c("bw",
+  "seewave", "heat.colors", "...")[2], xlab = "Time, s", ylab = "kHz", ylim
+  = c(0, maxFreq/1000)), ssmPars = list(levels = seq(0, 1, length = 30),
+  colorTheme = c("bw", "seewave", "heat.colors", "...")[2], xlab =
+  "Time, s", ylab = "Time, s", main = "Self-similarity matrix"),
+  noveltyPars = list(type = "b", pch = 16, col = "black", lwd = 3))
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -62,7 +63,7 @@ before and after the recording as unknown, 0 = treat it as silence}
 \item{heights}{relative sizes of the SSM and spectrogram/novelty plot}
 
 \item{specPars}{graphical parameters passed to \code{filled.contour.mod} and
-affecting the spectrogram}
+affecting the \code{\link{spectrogram}}}
 
 \item{ssmPars}{graphical parameters passed to \code{filled.contour.mod} and
 affecting the plot of SSM}
@@ -73,7 +74,7 @@ affecting the plot of SSM}
 \value{
 If \code{returnSSM} is TRUE, returns a list of two components: $ssm
   contains the self-similarity matrix, and $novelty contains the novelty
-  vector. If \code{returnSSM} is FALSE, only produces a plot.
+  vector.
 }
 \description{
 Calculates the self-similarity matrix and novelty vector of a sound.
@@ -82,14 +83,17 @@ Calculates the self-similarity matrix and novelty vector of a sound.
 sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
           formants = NA, pitch = c(500, 330)))
 # playme(sound)
-m1 = ssm(sound, samplingRate = 16000,
+ssm(sound, samplingRate = 16000,
          input = 'audiogram', simil = 'cor', norm = FALSE,
          ssmWin = 10, kernelLen = 150)  # detailed, local features
 \dontrun{
-m2 = ssm(sound, samplingRate = 16000,
+m = ssm(sound, samplingRate = 16000,
          input = 'mfcc', simil = 'cosine', norm = TRUE,
-         ssmWin = 50, kernelLen = 600)  # more global
-# plot(m2$novelty, type='b')  # use for peak detection, etc
+         ssmWin = 50, kernelLen = 600,  # global features
+         specPars = list(colorTheme = 'heat.colors'),
+         ssmPars = list(colorTheme = 'bw'),
+         noveltyPars = list(type = 'l', lty = 3, lwd = 2))
+# plot(m$novelty, type='b')  # use for peak detection, etc
 }
 }
 \references{
@@ -105,4 +109,7 @@ m2 = ssm(sound, samplingRate = 16000,
   novelty. In Multimedia and Expo, 2000. ICME 2000. 2000 IEEE International
   Conference on (Vol. 1, pp. 452-455). IEEE.
   }
+}
+\seealso{
+\code{\link{spectrogram}} \code{\link{modulationSpectrum}}
 }

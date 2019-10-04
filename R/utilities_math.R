@@ -199,12 +199,12 @@ getEntropy = function(x,
 #' soundgen:::rnorm_truncated(n = 3, mean = 10, sd = .1,
 #'   low = c(15, 0, 0), high = c(100, 100, 8), invalidArgAction = 'ignore')
 rnorm_truncated = function(n = 1,
-                         mean = 0,
-                         sd = 1,
-                         low = NULL,
-                         high = NULL,
-                         roundToInteger = FALSE,
-                         invalidArgAction = c('adjust', 'abort', 'ignore')[1]) {
+                           mean = 0,
+                           sd = 1,
+                           low = NULL,
+                           high = NULL,
+                           roundToInteger = FALSE,
+                           invalidArgAction = c('adjust', 'abort', 'ignore')[1]) {
   if (length(mean) < n) mean = spline(mean, n = n)$y
   if (length(sd) < n) sd = spline(sd, n = n)$y
   if (any(!is.finite(sd))) sd = mean / 10
@@ -1021,4 +1021,22 @@ logMatrix = function(m, base = 2) {
   }
 
   return(m2)
+}
+
+#' Switch color theme
+#'
+#' Internal soundgen function
+#' @param colorTheme string like 'bw', 'seewave', or function name
+#' @keywords internal
+switchColorTheme = function(colorTheme) {
+  if (is.null(colorTheme)) return(NULL)
+  if (colorTheme == 'bw') {
+    color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
+  } else if (colorTheme == 'seewave') {
+    color.palette = seewave::spectro.colors
+  } else {
+    colFun = match.fun(colorTheme)
+    color.palette = function(x) rev(colFun(x))
+  }
+  return(color.palette)
 }
