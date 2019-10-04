@@ -281,18 +281,20 @@ server = function(input, output, session) {
                     summary = 'extended',
                     plot = FALSE
                 )
-
+                myPars$summary = temp_anal$summary
+                myPars$result = temp_anal$result
                 myPars$pitchCands = temp_anal$pitchCands
+                myPars$spectrogram = temp_anal$spectrogram
                 windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
                 myPars$X = seq(
                     1,
                     max(1, (length(myPars$myAudio) - windowLength_points)),
-                    length.out = nrow(temp_anal$result)
+                    length.out = nrow(myPars$result)
                 ) / myPars$samplingRate * 1000 + input$windowLength / 2
                 # add: update defaults that depend on samplingRate, eg cepSmooth
 
 
-                # if running analyze() for the same audio, preserve the old manual values
+                # if rerunning analyze() for the same audio, preserve the old manual values
                 # (if any) and paste them back in
                 isolate({
                     if (!is.null(myPars$pitch) &
@@ -595,12 +597,21 @@ server = function(input, output, session) {
                 pitch = paste(round(myPars$pitch), collapse = ', '),
                 stringsAsFactors = FALSE
             )
+            result_new = updateAnalyze(
+                result = myPars$result,
+                pitch_true = myPars$pitch,
+                spectrogram = myPars$spectrogram
+            )
+            summary_new = soundgen:::summarizeAnalyze(
+                result_new,
+                summaryFun = c('mean', 'sd'))
+            new = cbind(new, summary_new[, 2:ncol(summary_new)])
             if (is.null(myPars$out)) {
                 myPars$out = new
             } else {
                 idx = which(myPars$out$file == new$file)
                 if (length(idx) == 1) {
-                    myPars$out$pitch[idx] = new$pitch
+                    myPars$out[idx, ] = new
                 } else {
                     myPars$out = rbind(myPars$out, new)
                 }

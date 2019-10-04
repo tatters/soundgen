@@ -1,6 +1,6 @@
           CHANGES IN SOUNDGEN VERSION 1.5.1 [...date...]
 BUGS FIXED:
-  * pitch_app() runs locally, new layout, multiple new features
+  * pitch_app() runs locally, new layout, multiple new features, integrated with analyze()
   * analyze() and pitch_app(): improved accuracy of autocorrelation-based pitch tracking at high frequencies
 
 NEW FUNCTIONS:

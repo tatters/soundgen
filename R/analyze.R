@@ -918,50 +918,19 @@ analyze = function(
     # )
   }
 
-  if (summary == TRUE) {
-    var_noSummary = c('duration', 'duration_noSilence', 'voiced')
-    vars = colnames(result)[!colnames(result) %in% c(var_noSummary, 'time')]
-    nVars_noSummary = 3
-    ls = length(summaryFun)
-    out = as.data.frame(matrix(
-      ncol = nVars_noSummary + ls * length(vars),
-      nrow = 1
-    ))
-    colnames(out)[c(1:nVars_noSummary)] = var_noSummary
-    for (c in 1:length(vars)) {
-      # specify how to summarize pitch etc values for each frame within each file
-      # - save mean, median, sd, ...
-      for (s in 1:ls) {
-        colnames(out)[nVars_noSummary + ls * (c - 1) + s] = paste0(vars[c], '_', summaryFun[s])
-      }
-    }
-    out$duration = result$duration[1]  # duration, s
-    out$duration_noSilence = result$duration_noSilence[1]
-    out$voiced = mean(result$voiced)  # proportion of voiced frames
-    # apply the specified summary function to each column of result
-    for (v in 4:(ncol(result) - 1)) {  # -1 for voiced (not summarized)
-      for (s in 1:length(summaryFun)) {
-        if (any(is.finite(result[, colnames(result)[v]]))) {
-          d = na.omit(result[, colnames(result)[v]])
-          f = eval(parse(text = summaryFun[s]))
-          mySummary = do.call(f, list(d))
-          # for smth like range, collapse and convert to character
-          if (length(mySummary) > 1) {
-            mySummary = paste0(mySummary, collapse = ', ')
-          }
-          out[1, ls * (v - nVars_noSummary - 1) + s + nVars_noSummary] = mySummary
-        } else {  # not finite, eg NA or -Inf - don't bother to calculate
-          out[1, ls * (v - nVars_noSummary - 1) + s + nVars_noSummary] = NA
-        }
-      }
-    }
-  } else if (summary == FALSE) {
+  if (summary == TRUE | summary == 'extended') {
+    out = summarizeAnalyze(result, summaryFun)
+  } else {
     out = result
-  } else if (summary == 'extended') {
-    out = list(result = result,
-               pitchCands = pitchCands_list)
   }
-  return(out)
+  if (summary == 'extended') {
+    return(list(summary = out,
+                result = result,
+                pitchCands = pitchCands_list,
+                spectrogram = s))
+  } else {
+    return(out)
+  }
 }
 
 

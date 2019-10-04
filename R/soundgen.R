@@ -1,6 +1,6 @@
-# TODO: add @seealso tags in most function descriptions; test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: analyze() - remove option for prior plot; add @seealso tags in most function descriptions; test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
-# pitch_app: load audio + results to double-check old work; check what happens with temp.csv on shinyapps.io; maybe prior from sel should affect only current file (?); maybe integrate with analyze() so manual pitch contour is taken into account when calculating %voiced and energy above f0 (new arg to analyze, re-run analyze at done() in pitch_app())
+# pitch_app: check harmonics (weird) and HNR (NAs); load audio + results to double-check old work; check what happens with temp.csv on shinyapps.io; maybe prior from sel should affect only current file (?)
 
 #' @import stats graphics utils grDevices shinyBS
 #' @encoding UTF-8

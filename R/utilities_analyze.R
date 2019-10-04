@@ -660,3 +660,84 @@ getPrior = function(priorMean,
     return(pitchCert_multiplier)
   }
 }
+
+#' Summarize the output of analyze()
+#'
+#' Internal soundgen function
+#' @param result dataframe returned by analyze(summary = FALSE)
+#' @param summaryFun summary functions
+#' @param var_noSummary variables that should not be summarized
+#' @keywords internal
+summarizeAnalyze = function(
+  result,
+  summaryFun = c('mean', 'sd'),
+  var_noSummary = c('duration', 'duration_noSilence', 'voiced')
+) {
+  vars = colnames(result)[!colnames(result) %in% c(var_noSummary, 'time')]
+  nVars_noSummary = length(var_noSummary)
+  ls = length(summaryFun)
+  out = as.data.frame(matrix(
+    ncol = nVars_noSummary + ls * length(vars),
+    nrow = 1
+  ))
+  colnames(out)[c(1:nVars_noSummary)] = var_noSummary
+  for (c in 1:length(vars)) {
+    # specify how to summarize pitch etc values for each frame within each file
+    # - save mean, median, sd, ...
+    for (s in 1:ls) {
+      colnames(out)[nVars_noSummary + ls * (c - 1) + s] = paste0(vars[c], '_', summaryFun[s])
+    }
+  }
+  out$duration = result$duration[1]  # duration, s
+  out$duration_noSilence = result$duration_noSilence[1]
+  out$voiced = mean(!is.na(result$pitch))  # proportion of voiced frames
+  # apply the specified summary function to each column of result
+  for (v in 4:ncol(result)) {
+    for (s in 1:length(summaryFun)) {
+      if (any(is.finite(result[, colnames(result)[v]]))) {
+        d = na.omit(result[, colnames(result)[v]])
+        f = eval(parse(text = summaryFun[s]))
+        mySummary = do.call(f, c(list(d), na.rm = TRUE))
+        # for smth like range, collapse and convert to character
+        if (length(mySummary) > 1) {
+          mySummary = paste0(mySummary, collapse = ', ')
+        }
+        out[1, ls * (v - nVars_noSummary - 1) + s + nVars_noSummary] = mySummary
+      } else {  # not finite, eg NA or -Inf - don't bother to calculate
+        out[1, ls * (v - nVars_noSummary - 1) + s + nVars_noSummary] = NA
+      }
+    }
+  }
+  return(out)
+}
+
+#' Update analyze
+#'
+#'  Internal soundgen function
+#'
+#'  Updates the output of analyze using manual pitch. Called by pitch_app().
+#'  @param result the matrix of results returned by analyze()
+#'  @param pitch_true manual pitch contour of length nrow(result), with NAs
+#'  @param spectrogram spectrogram with ncol = nrow(result)
+#'  @keywords internal
+updateAnalyze = function(result,
+                         pitch_true,
+                         spectrogram = NULL) {
+  result = result[-which(grepl('pitch', colnames(result)))]
+  result$duration = NULL
+  result$pitch = pitch_true
+  result$voiced = !is.na(pitch_true)
+  result$amplVoiced = ifelse(result$voiced, result$ampl, NA)
+  result$harmonics = NA
+  if (!is.null(spectrogram)) {
+    # Re-calculate the % of energy in harmonics based on the manual pitch estimates
+    threshold = 1.25 * result$pitch / 1000
+    result$harmonics = apply(matrix(1:ncol(spectrogram)), 1, function(x) {
+      ifelse(is.na(threshold[x]),
+             NA,
+             sum(spectrogram[as.numeric(rownames(spectrogram)) > threshold[x], x]) /
+               sum(spectrogram[, x]))
+    })
+  }
+  return(result)
+}

@@ -858,7 +858,7 @@ addPitchCands = function(pitchCands,
                          addToExistingPlot = TRUE,
                          showLegend = TRUE,
                          ...) {
-  if (length(pitchCands) < 1) stop()
+  if (length(pitchCands) < 1) invisible()
   # if plot_spec is FALSE, we first have to set up an empty plot
   if (addToExistingPlot == FALSE) {
     arguments = list(...)  # save ... arguments as a list
