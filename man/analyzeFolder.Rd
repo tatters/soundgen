@@ -97,7 +97,8 @@ most likely pitch values for this file. For ex., \code{priorMean = 300,
 priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
 
-\item{priorPlot}{if TRUE, produces a separate plot of the prior}
+\item{priorPlot}{deprecated; use \code{\link{getPrior}} to visualize the
+prior}
 
 \item{nCands}{maximum number of pitch candidates per method (except for
 \code{dom}, which returns at most one candidate per frame), normally 1...4}

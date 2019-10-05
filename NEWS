@@ -5,12 +5,14 @@ BUGS FIXED:
 
 NEW FUNCTIONS:
   * pitchSmoothPraat(): smoothes pitch contours with the same algorithm and "bandwidth" parameter as in Praat for improved compatibility
+  * getPrior(): extract and/or plot the prior used for adjusting the certainty in pitch estimates in analyze()
 
 MINOR:
   * soundgen_app(): improved tips
   * spectrogram(): option to plot frequencies on a logarithmic scale (yScale = 'log')
   * ssm(), spectrogram(), modulationSpectrum(), analyze(): standardized specification of "colorTheme"
   * analyze(): more flexible "cutFreq" defaults
+  * analyze(): priorPlot deprecated
 
 
           CHANGES IN SOUNDGEN VERSION 1.5.0 [11-September-2019]

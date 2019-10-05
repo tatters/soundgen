@@ -604,50 +604,61 @@ getPitchSpec = function(frame,
 
 #' Get prior for pitch candidates
 #'
-#' Internal soundgen function.
-#'
-#' Prior for adjusting the estimated pitch certainties. For ex., if primarily
-#' working with speech, we could prioritize pitch candidates in the expected
-#' pitch range (100-1000 Hz) and dampen candidates with very high or very low
-#' frequency as unlikely but still remotely possible in everyday vocalizing
-#' contexts (think a soft pitch ceiling). Algorithm: the multiplier for each
-#' pitch candidate is the density of gamma distribution with mean = priorMean
-#' (Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
-#' pitchCeiling]. Called by analyze().
-#' @return Returns a numeric matrix of the same dimensions as pitchCands for
-#'   multiplying the matrix of certainty of in pitch values.
+#' Prior for adjusting the estimated pitch certainties in \code{\link{analyze}}.
+#' For ex., if primarily working with speech, we could prioritize pitch
+#' candidates in the expected pitch range (100-1000 Hz) and dampen candidates
+#' with very high or very low frequency as unlikely but still remotely possible
+#' in everyday vocalizing contexts (think a soft pitch ceiling). Algorithm: the
+#' multiplier for each pitch candidate is the density of gamma distribution with
+#' mean = priorMean (Hz) and sd = priorSD (semitones) normalized so max = 1 over
+#' [pitchFloor, pitchCeiling]. Useful for previewing the prior given to
+#' \code{\link{analyze}}.
+#' @return Returns a numeric vector of certainties of length \code{len} if
+#'   pitchCands is NULL and a numeric matrix of the same dimensions as
+#'   pitchCands otherwise.
 #' @inheritParams analyze
-#' @param pitchCands a matrix of pitch candidate frequencies
-#' @param plot if TRUE, produces a separate plot of the prior
+#' @param len the required length of output vector (resolution)
+#' @param plot if TRUE, plots the prior
 #' @param ... additional graphical parameters passed on to plot()
-#' @keywords internal
+#' @param pitchCands a matrix of pitch candidate frequencies (for internal
+#'   soundgen use)
+#' @export
 #' @examples
-#' soundgen:::getPrior(150, 2, pitchCands = NULL, plot = TRUE)
+#' soundgen:::getPrior(priorMean = 150,  # Hz
+#'                     priorSD = 2)      # semitones
+#' soundgen:::getPrior(150, 6)
+#' s = soundgen:::getPrior(450, 24, pitchCeiling = 6000)
+#' plot(s)
 getPrior = function(priorMean,
                     priorSD,
-                    pitchCands = NULL,
                     pitchFloor = 75,
                     pitchCeiling = 3000,
-                    plot = FALSE,
+                    len = 100,
+                    plot = TRUE,
+                    pitchCands = NULL,
                     ...) {
   priorMean_semitones = HzToSemitones(priorMean)
   shape = priorMean_semitones ^ 2 / priorSD ^ 2
   rate = priorMean_semitones / priorSD ^ 2
-  freqs = seq(HzToSemitones(pitchFloor), HzToSemitones(pitchCeiling), length.out = 100)
+  freqs = seq(HzToSemitones(pitchFloor),
+              HzToSemitones(pitchCeiling),
+              length.out = len)
   prior_normalizer = dgamma(
     freqs,
     shape = shape,
     rate = rate
   )
   prior_norm_max = max(prior_normalizer)
+  prior = prior_normalizer / prior_norm_max
   if (plot) {
     plot(
       x = semitonesToHz(freqs),
-      y = prior_normalizer / prior_norm_max,
+      y = prior,
       type = 'l',
       log = 'x',
       xlab = 'Frequency, Hz',
-      ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values',
+      ylab = 'Multiplier of certainty',
+      main = 'Prior belief in pitch values',
       ...
     )
   }
@@ -658,6 +669,8 @@ getPrior = function(priorMean,
       rate = rate
     ) / prior_norm_max
     return(pitchCert_multiplier)
+  } else {
+    invisible(prior)
   }
 }
 

@@ -39,7 +39,8 @@
 #'   most likely pitch values for this file. For ex., \code{priorMean = 300,
 #'   priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 #'   an octave)
-#' @param priorPlot if TRUE, produces a separate plot of the prior
+#' @param priorPlot deprecated; use \code{\link{getPrior}} to visualize the
+#'   prior
 #' @param nCands maximum number of pitch candidates per method (except for
 #'   \code{dom}, which returns at most one candidate per frame), normally 1...4
 #' @param minVoicedCands minimum number of pitch candidates that have to be
@@ -275,7 +276,7 @@ analyze = function(
   pitchCeiling = 3500,
   priorMean = 300,
   priorSD = 6,
-  priorPlot = FALSE,
+  priorPlot = 'deprecated',
   nCands = 1,
   minVoicedCands = NULL,
   domThres = 0.1,
@@ -325,6 +326,9 @@ analyze = function(
   ...
 ) {
   ## preliminaries
+  if (!missing(priorPlot)) {
+    message('priorPlot is deprecated. Use getPrior(..., plot = TRUE) to preview the pitch prior')
+  }
   if ('osc' %in% names(match.call()) |
       'osc_dB' %in% names(match.call())) {
     # we are working with frameBank, not raw waveform
@@ -783,10 +787,10 @@ analyze = function(
     if (is.numeric(priorMean) & is.numeric(priorSD)) {
       pitchCert_multiplier = getPrior(priorMean = priorMean,
                                       priorSD = priorSD,
-                                      pitchCands = pitchCands_list$freq,
                                       pitchFloor = pitchFloor,
                                       pitchCeiling = pitchCeiling,
-                                      plot = priorPlot)
+                                      pitchCands = pitchCands_list$freq,
+                                      plot = FALSE)
       pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
     }
 
@@ -898,26 +902,7 @@ analyze = function(
     dev.off()
   }
 
-  # a separate plot of the prior
-  if (priorPlot) {
-    # getPrior = function(priorMean,
-    #                 priorSD,
-    #                 pitchCands,
-    #                 pitchFloor = 1,
-    #                 pitchCeiling = 3000)
-    # freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
-    # prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
-    # plot(
-    #   x = semitonesToHz(freqs),
-    #   y = pitchCert_multiplier[, 2],
-    #   type = 'l',
-    #   log = 'x',
-    #   xlim = c(pitchFloor, pitchCeiling),
-    #   xlab = 'Frequency, Hz',
-    #   ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values'
-    # )
-  }
-
+  # prepare the output
   if (summary == TRUE | summary == 'extended') {
     out = summarizeAnalyze(result, summaryFun)
   } else {

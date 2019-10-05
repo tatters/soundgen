@@ -4,8 +4,8 @@
 \alias{getPrior}
 \title{Get prior for pitch candidates}
 \usage{
-getPrior(priorMean, priorSD, pitchCands = NULL, pitchFloor = 75,
-  pitchCeiling = 3000, plot = FALSE, ...)
+getPrior(priorMean, priorSD, pitchFloor = 75, pitchCeiling = 3000,
+  len = 100, plot = TRUE, pitchCands = NULL, ...)
 }
 \arguments{
 \item{priorMean}{specifies the mean (Hz) and standard deviation
@@ -20,34 +20,39 @@ most likely pitch values for this file. For ex., \code{priorMean = 300,
 priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
 
-\item{pitchCands}{a matrix of pitch candidate frequencies}
-
 \item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
 \item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
-\item{plot}{if TRUE, produces a separate plot of the prior}
+\item{len}{the required length of output vector (resolution)}
+
+\item{plot}{if TRUE, plots the prior}
+
+\item{pitchCands}{a matrix of pitch candidate frequencies (for internal
+soundgen use)}
 
 \item{...}{additional graphical parameters passed on to plot()}
 }
 \value{
-Returns a numeric matrix of the same dimensions as pitchCands for
-  multiplying the matrix of certainty of in pitch values.
+Returns a numeric vector of certainties of length \code{len} if
+  pitchCands is NULL and a numeric matrix of the same dimensions as
+  pitchCands otherwise.
 }
 \description{
-Internal soundgen function.
-}
-\details{
-Prior for adjusting the estimated pitch certainties. For ex., if primarily
-working with speech, we could prioritize pitch candidates in the expected
-pitch range (100-1000 Hz) and dampen candidates with very high or very low
-frequency as unlikely but still remotely possible in everyday vocalizing
-contexts (think a soft pitch ceiling). Algorithm: the multiplier for each
-pitch candidate is the density of gamma distribution with mean = priorMean
-(Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
-pitchCeiling]. Called by analyze().
+Prior for adjusting the estimated pitch certainties in \code{\link{analyze}}.
+For ex., if primarily working with speech, we could prioritize pitch
+candidates in the expected pitch range (100-1000 Hz) and dampen candidates
+with very high or very low frequency as unlikely but still remotely possible
+in everyday vocalizing contexts (think a soft pitch ceiling). Algorithm: the
+multiplier for each pitch candidate is the density of gamma distribution with
+mean = priorMean (Hz) and sd = priorSD (semitones) normalized so max = 1 over
+[pitchFloor, pitchCeiling]. Useful for previewing the prior given to
+\code{\link{analyze}}.
 }
 \examples{
-soundgen:::getPrior(150, 2, pitchCands = NULL, plot = TRUE)
+soundgen:::getPrior(priorMean = 150,  # Hz
+                    priorSD = 2)      # semitones
+soundgen:::getPrior(150, 6)
+s = soundgen:::getPrior(450, 24, pitchCeiling = 6000)
+plot(s)
 }
-\keyword{internal}

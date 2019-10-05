@@ -217,20 +217,18 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4),
 
 * `entropyThres`: all non-silent frames are analyzed to produce basic spectral descriptives. However, pitch tracking is both computationally costly and can be misleading if applied to obviously voiceless frames. To define what an "obviously voiceless" frame is, we set some cutoff value of Weiner entropy, above which we don't want to even try pitch tracking. To disable this feature and track pitch in all non-silent frames, set `entropyThres` to 1.
 * `pitchFloor`, `pitchCeiling`: absolute thresholds for pitch candidates. No values outside these bounds will be considered.
-* `priorMean` and `priorSD` specify the mean and sd of gamma distribution describing our prior knowledge about the most likely pitch values. The prior works by scaling the certainties associated with particular pitch candidates: candidates more than a couple of `priorSD`'s from `priorMean` have their weight reduced to nearly zero. If you are working with a single sound and know the correct pitch, specifying a strong prior can greatly improve the quality of the resulting pitch contour. When batch-processing a large number of sounds with `analyzeFolder()`, the recommended approach is to set a vague, but still mildly informative prior. `priorMean` is specified in Hz, but the expected deviation from this typical value is calculated on a musical scale, so `priorSD` is in semitones. For example, if we expect f0 values of about 300 Hz plus-minus half an octave (6 semitones), a prior can be defined as `priorMean = 300, priorSD = 6`. For convenience, the prior can be plotted directly from `analyze`:
+* `priorMean` and `priorSD` specify the mean and sd of gamma distribution describing our prior knowledge about the most likely pitch values. The prior works by scaling the certainties associated with particular pitch candidates. If you are working with a single type of sound, such as speech by a male speaker or cricket sounds, specifying a strong prior can greatly improve the quality of the resulting pitch contour. When batch-processing a large number of sounds with `analyzeFolder()`, the recommended approach is to set a vague, but still mildly informative prior. `priorMean` is specified in Hz, but the expected deviation from this typical value is calculated on a musical scale, so `priorSD` is in semitones. For example, if we expect f0 values of about 300 Hz plus-minus half an octave (6 semitones), a prior can be defined as `priorMean = 300, priorSD = 6`. For convenience, the prior can be plotted with `getPrior`:
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 par(mfrow = c(1, 2))
 # default prior in soundgen
-a1 = analyze(s1, samplingRate = 16000, plot = FALSE, priorPlot = TRUE,
-             priorMean = 300, priorSD = 6)  
+getPrior(priorMean = 300, priorSD = 6)
 # narrow peak at 2 kHz
-a2 = analyze(s1, samplingRate = 16000, plot = FALSE, priorPlot = TRUE,
-             priorMean = 2000, priorSD = 1)
+getPrior(priorMean = 2000, priorSD = 1)
 par(mfrow = c(1, 1))
 ``` 
 
-*TIP The final pitch contour can still pass through low-certainty candidates, especially if no better candidates are available. You can therefore think of the prior as a soft alternative (or addition) to the inflexible bounds of `pitchFloor` and `pitchCeiling`*
+*TIP The final pitch contour can still pass through low-certainty candidates. You can think of the prior as a soft alternative (or addition) to the inflexible bounds of `pitchFloor` and `pitchCeiling`*
 
 * `nCands`: maximum number of pitch candidates to use per method. This only affects `pitchAutocor`, `pitchCep`, and `pitchSpec`. `dom` never returns more than one candidate per frame, since it doesn't make sense to consider several lowest dominant frequency bands - this simply drags the final pitch contour upwards without improving the accuracy.
 * `minVoicedCands`: minimum number of pitch candidates that have to be defined to consider a frame voiced. It defaults to 'autom', which means 2 if `dom` is among the candidates and 1 otherwise. The reason is that `dom` is usually defined, even if the frame is clearly voiceless, so we want another pitch candidate in addition to `dom` before we classify the frame as voiced.
