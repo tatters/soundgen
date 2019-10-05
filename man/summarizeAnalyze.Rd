@@ -5,7 +5,7 @@
 \title{Summarize the output of analyze()}
 \usage{
 summarizeAnalyze(result, summaryFun = c("mean", "sd"),
-  var_noSummary = c("duration", "duration_noSilence", "voiced"))
+  var_noSummary = c("duration", "duration_noSilence", "voiced", "time"))
 }
 \arguments{
 \item{result}{dataframe returned by analyze(summary = FALSE)}

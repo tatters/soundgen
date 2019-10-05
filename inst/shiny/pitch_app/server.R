@@ -588,16 +588,16 @@ server = function(input, output, session) {
 
     done = function() {
         # meaning we have finished editing pitch contour for a sound - prepares the output
+        if (myPars$print) print('Running done()...')
         session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
         if (!is.null(myPars$myAudio_path)) {
             new = data.frame(
                 file = basename(myPars$myAudio_filename),
-                dur = myPars$dur,
                 time = paste(round(myPars$X), collapse = ', '),
                 pitch = paste(round(myPars$pitch), collapse = ', '),
                 stringsAsFactors = FALSE
             )
-            result_new = updateAnalyze(
+            result_new = soundgen:::updateAnalyze(
                 result = myPars$result,
                 pitch_true = myPars$pitch,
                 spectrogram = myPars$spectrogram
@@ -605,7 +605,11 @@ server = function(input, output, session) {
             summary_new = soundgen:::summarizeAnalyze(
                 result_new,
                 summaryFun = c('mean', 'sd'))
-            new = cbind(new, summary_new[, 2:ncol(summary_new)])
+            new = cbind(new$file,
+                        summary_new,
+                        new[, c('time', 'pitch')])
+            colnames(new)[1] = 'file'  # otherwise misnamed
+            new$file = as.character(new$file)  # otherwise becomes a factor
             if (is.null(myPars$out)) {
                 myPars$out = new
             } else {

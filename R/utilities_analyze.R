@@ -671,40 +671,45 @@ getPrior = function(priorMean,
 summarizeAnalyze = function(
   result,
   summaryFun = c('mean', 'sd'),
-  var_noSummary = c('duration', 'duration_noSilence', 'voiced')
+  var_noSummary = c('duration', 'duration_noSilence', 'voiced', 'time')
 ) {
-  vars = colnames(result)[!colnames(result) %in% c(var_noSummary, 'time')]
-  nVars_noSummary = length(var_noSummary)
   ls = length(summaryFun)
-  out = as.data.frame(matrix(
-    ncol = nVars_noSummary + ls * length(vars),
-    nrow = 1
-  ))
-  colnames(out)[c(1:nVars_noSummary)] = var_noSummary
-  for (c in 1:length(vars)) {
-    # specify how to summarize pitch etc values for each frame within each file
-    # - save mean, median, sd, ...
-    for (s in 1:ls) {
-      colnames(out)[nVars_noSummary + ls * (c - 1) + s] = paste0(vars[c], '_', summaryFun[s])
-    }
+  vars = colnames(result)[!colnames(result) %in% var_noSummary]
+  vars_f = paste0(rep(vars, each = ls), '_', rep(summaryFun, ls))
+
+  # specify how to summarize pitch etc values for each frame within each file
+  # - for ex., save mean, median, sd, ...
+  out = result[1, c('duration', 'duration_noSilence')]
+  out$voiced = mean(!is.na(result$pitch))
+  out_sum = as.data.frame(matrix(ncol = length(vars_f)))
+  colnames(out_sum) = vars_f
+  out = cbind(out, out_sum)
+
+  # remove non-summarizable vars from result
+  for (v in var_noSummary) {
+    result[, v] = NULL
   }
-  out$duration = result$duration[1]  # duration, s
-  out$duration_noSilence = result$duration_noSilence[1]
-  out$voiced = mean(!is.na(result$pitch))  # proportion of voiced frames
+
+  # pre-parse summary function names to speed things up
+  functions = vector('list', length(summaryFun))
+  for (f in 1:length(summaryFun)) {
+    functions[[f]] = eval(parse(text = summaryFun[f]))
+  }
+
   # apply the specified summary function to each column of result
-  for (v in 4:ncol(result)) {
+  for (v in vars) {
     for (s in 1:length(summaryFun)) {
-      if (any(is.finite(result[, colnames(result)[v]]))) {
-        d = na.omit(result[, colnames(result)[v]])
-        f = eval(parse(text = summaryFun[s]))
-        mySummary = do.call(f, c(list(d), na.rm = TRUE))
+      var_values = na.omit(result[, v])
+      var_f_name = paste0(v, '_', summaryFun[s])
+      if (any(is.finite(var_values))) {
+        mySummary = do.call(functions[[s]], list(var_values))  # NAs already removed
         # for smth like range, collapse and convert to character
         if (length(mySummary) > 1) {
           mySummary = paste0(mySummary, collapse = ', ')
         }
-        out[1, ls * (v - nVars_noSummary - 1) + s + nVars_noSummary] = mySummary
+        out[1, var_f_name] = mySummary
       } else {  # not finite, eg NA or -Inf - don't bother to calculate
-        out[1, ls * (v - nVars_noSummary - 1) + s + nVars_noSummary] = NA
+        out[1, var_f_name] = NA
       }
     }
   }
@@ -724,7 +729,6 @@ updateAnalyze = function(result,
                          pitch_true,
                          spectrogram = NULL) {
   result = result[-which(grepl('pitch', colnames(result)))]
-  result$duration = NULL
   result$pitch = pitch_true
   result$voiced = !is.na(pitch_true)
   result$amplVoiced = ifelse(result$voiced, result$ampl, NA)
