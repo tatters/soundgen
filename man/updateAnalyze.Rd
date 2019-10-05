@@ -6,13 +6,17 @@
 \usage{
 updateAnalyze(result, pitch_true, spectrogram = NULL)
 }
+\arguments{
+\item{result}{the matrix of results returned by analyze()}
+
+\item{pitch_true}{manual pitch contour of length nrow(result), with NAs}
+
+\item{spectrogram}{spectrogram with ncol = nrow(result)}
+}
 \description{
 Internal soundgen function
 }
 \details{
 Updates the output of analyze using manual pitch. Called by pitch_app().
- @param result the matrix of results returned by analyze()
- @param pitch_true manual pitch contour of length nrow(result), with NAs
- @param spectrogram spectrogram with ncol = nrow(result)
- @keywords internal
 }
+\keyword{internal}

@@ -731,13 +731,13 @@ summarizeAnalyze = function(
 
 #' Update analyze
 #'
-#'  Internal soundgen function
+#' Internal soundgen function
 #'
-#'  Updates the output of analyze using manual pitch. Called by pitch_app().
-#'  @param result the matrix of results returned by analyze()
-#'  @param pitch_true manual pitch contour of length nrow(result), with NAs
-#'  @param spectrogram spectrogram with ncol = nrow(result)
-#'  @keywords internal
+#' Updates the output of analyze using manual pitch. Called by pitch_app().
+#' @param result the matrix of results returned by analyze()
+#' @param pitch_true manual pitch contour of length nrow(result), with NAs
+#' @param spectrogram spectrogram with ncol = nrow(result)
+#' @keywords internal
 updateAnalyze = function(result,
                          pitch_true,
                          spectrogram = NULL) {

@@ -19,17 +19,24 @@ soundgen_app = function() {
 
 #' Interactive pitch editor
 #'
-#' Starts a shiny app for manually editing pitch contours extracted by
-#' \code{\link{analyze}}. Supported browsers: Firefox / Chrome. Note that the
-#' browser has to be able to play back WAV audio files, otherwise there will be
-#' no sound. The settings in the panels on the left correspond to arguments to
-#' \code{\link{analyze}} - see `?analyze` and the vignette on acoustic analysis
-#' for help and examples.
+#' Starts a shiny app for manually editing pitch contours. Think of it as
+#' running \code{\link{analyze}} with manual pitch control. All pitch-dependent
+#' descriptives (percentage of voiced frames, energy in harmonics, amplVoiced,
+#' etc.) are calculated from the manually corrected pitch contour. Supported
+#' browsers: Firefox / Chrome. Note that the browser has to be able to play back
+#' WAV audio files, otherwise there will be no sound. The settings in the panels
+#' on the left correspond to arguments to \code{\link{analyze}} - see `?analyze`
+#' and the vignette on acoustic analysis for help and examples. Loudness and
+#' formants are not analyzed to avoid delays; run \code{\link{analyzeFolder}}
+#' separately with no pitch tracking (`pitchMethods = NULL`) and merge the two
+#' datasets. Same for syllable segmentation: run \code{\link{segmentFolder}}
+#' separately since it doesn't depend on accurate pitch tracking.
 #'
-#' @return The app produces a .csv file with four columns: file name,
-#' duration (ms), time stamps (the midpoint of each STFT frame, ms), and
-#' manually corrected pitch values for each frame (Hz). To process pitch
-#' contours further in R, do something like:
+#' @return The app produces a .csv file with one row per audio file. Apart from
+#'   the usual descriptives from analyze(), there are two additional columns:
+#'   "time" with time stamps (the midpoint of each STFT frame, ms) and "pitch"
+#'   with the manually corrected pitch values for each frame (Hz). To process
+#'   pitch contours further in R, do something like:
 #'
 #' \preformatted{
 #' a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -44,8 +51,9 @@ soundgen_app = function() {
 #' manageable chunks (ideally <10 s). Adjust the settings as needed, edit the
 #' pitch contour in the first file to your satisfaction, then click "Next" to
 #' proceed to the next file, etc. When done, click "Save results". If working
-#' with many files, you might want to save the results occasionally in case the app
-#' crashes (although you should still be able to recover your data - see below).
+#' with many files, you might want to save the results occasionally in case the
+#' app crashes (although you should still be able to recover your data - see
+#' below).
 #'
 #' \bold{How to edit pitch contours}
 #'
@@ -77,6 +85,14 @@ soundgen_app = function() {
 #' "[R_installation_folder]/soundgen/shiny/pitch_app/www/temp.csv", for example,
 #' "/home/allgoodguys/R/x86_64-pc-linux-gnu-library/3.6/soundgen/shiny/pitch_app/www/temp.csv"
 #' @export
+#' @examples
+#' \dontrun{
+#' pitch_app()
+#' df1 = read.csv('output.csv')  # saved output from pitch_app()
+#' df2 = analyzeFolder('path_to_audio', pitchMethods = NULL, nFormants = 5)
+#' df3 = segmentFolder('path_to_audio')
+#' # merge in R or a spreadsheet editor to have all acoustic descriptives together
+#' }
 pitch_app = function() {
     appDir = system.file("shiny", "pitch_app", package = "soundgen")
   if (appDir == "") {
