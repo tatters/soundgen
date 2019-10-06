@@ -741,6 +741,7 @@ summarizeAnalyze = function(
 updateAnalyze = function(result,
                          pitch_true,
                          spectrogram = NULL) {
+  # remove all pitch-related columns except dom
   result = result[-which(grepl('pitch', colnames(result)))]
   result$pitch = pitch_true
   result$voiced = !is.na(pitch_true)
@@ -756,5 +757,6 @@ updateAnalyze = function(result,
                sum(spectrogram[, x]))
     })
   }
+  result = result[, c(1:3, 3 + order(colnames(result)[4:ncol(result)]))]
   return(result)
 }

@@ -253,23 +253,18 @@ spectrogram = function(
   if (!is.matrix(z)) z = matrix(z, ncol = 1)
   # adjust the timing of spectrogram to match the actual time stamps
   # in getFrameBank (~the middle of each fft frame)
-  if (!is.null(sound)) {
-    X = seq(1, max(1, (length(sound) - windowLength_points)),
-            step / 1000 * samplingRate) / samplingRate * 1000 + windowLength / 2
-  } else {
-    # if calling spectrogram from analyze() with only frameBank
-    X = seq(0, duration * 1000 - windowLength,
-            length.out = ncol(z)) + windowLength / 2
-  }
+  X = as.numeric(colnames(frameBank))
   if (length(X) < 2) {
-    stop('The sound is too short for plotting a spectrogram')
+    message('The sound is too short for plotting a spectrogram')
+    return(NA)
   }
   bin_width = samplingRate / 2 / windowLength_points
   Y = seq(bin_width / 2,
           samplingRate / 2 - bin_width / 2,
           length.out = nrow(z)) / 1000  # frequency stamp
   if (length(Y) < 2) {
-    stop('The sound and/or the windowLength is too short for plotting a spectrogram')
+    message('The sound and/or the windowLength is too short for plotting a spectrogram')
+    return(NA)
   }
   rownames(z) = Y
   colnames(z) = X
@@ -570,18 +565,15 @@ getFrameBank = function(sound,
                         normalize = TRUE,
                         filter = NULL) {
   # # normalize to range from no less than -1 to no more than +1
-  if (!is.numeric(sound)) {
-    return(NA)
-  }
-  if (any(is.na(sound))) {
-    sound[is.na(sound)] = 0
-  }
+  if (!is.numeric(sound)) return(NA)
+  sound[is.na(sound)] = 0
   if (normalize & any(sound != 0)) {
     sound = sound - mean(sound)
     sound = sound / max(abs(max(sound)), abs(min(sound)))
   }
+  step_points = round(step / 1000 * samplingRate)
   myseq = seq(1, max(1, (length(sound) - windowLength_points)),
-              step / 1000 * samplingRate)
+              by = step_points)
   if (is.null(filter)) {
     filter = ftwindow_modif(wl = windowLength_points, wn = wn)
   }
@@ -598,6 +590,8 @@ getFrameBank = function(sound,
       sound[x:(windowLength_points + x - 1)] * filter
     })
   }
+  colnames(frameBank) = (myseq - 1 + windowLength_points / 2) *
+                         1000 / samplingRate
   return(frameBank)
 }
 

@@ -751,9 +751,7 @@ analyze = function(
   if (!is.null(formants)) result = cbind(result, formants)
   result$entropy = entropy
   result$ampl = ampl
-  result$time = round(seq(0,
-                          duration * 1000 - windowLength,
-                          length.out = nrow(result)) + windowLength / 2, 0)
+  result$time = as.numeric(colnames(frameBank))
   result$duration_noSilence = duration_noSilence
   result$duration = duration
   nc = ncol(result)

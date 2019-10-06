@@ -25,10 +25,11 @@ Start by clicking "Load audio" to upload one or several audio files
 (wav/mp3). Long files will be very slow, so please cut your audio into
 manageable chunks (ideally <10 s). Adjust the settings as needed, edit the
 pitch contour in the first file to your satisfaction, then click "Next" to
-proceed to the next file, etc. When done, click "Save results". If working
-with many files, you might want to save the results occasionally in case the
-app crashes (although you should still be able to recover your data - see
-below).
+proceed to the next file, etc. Remember that setting a reasonable prior is
+often faster than adjusting the contour one anchor at a time. When done,
+click "Save results". If working with many files, you might want to save the
+results occasionally in case the app crashes (although you should still be
+able to recover your data if it does - see below).
 
 \bold{How to edit pitch contours}
 
@@ -38,14 +39,14 @@ making a change in one frame can affect the path through candidates in
 adjacent frames. You can control this behavior by changing the settings in
 Out/Path and Out/Smoothing. If correctly configured, the app corrects the
 contour with only a few manual values - you shouldn't need to manually edit
-every single frame. For longer files, use the zoom buttons "<+->" to zoom
-in/out and navigate within the file. You can also select a region and
-voice/unvoice or shift it as a whole (see the buttons under the spectrogram).
+every single frame. For longer files, you can zoom in/out and navigate within
+the file. You can also select a region to voice/unvoice or shift it as a
+whole or to set a prior based on selected frequency range.
 
 \bold{Audio playback}
 
-The "Play" button plays the currently plotted region, but it uses R for
-playback, which may or may not work - see \code{\link{playme}} for
+The "Play" button / spacebar plays the currently plotted region, but it uses
+R for playback, which may or may not work - see \code{\link{playme}} for
 troubleshooting. As a fallback option, the html audio tag at the top plays
 the entire file.
 

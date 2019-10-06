@@ -134,7 +134,7 @@ server = function(input, output, session) {
                 samplingRate = myPars$samplingRate,
                 dynamicRange = input$dynamicRange,
                 windowLength = input$windowLength,
-                step = input$step,
+                overlap = input$overlap,
                 wn = input$wn,
                 zp = 2 ^ input$zp,
                 contrast = input$specContrast,
@@ -255,7 +255,6 @@ server = function(input, output, session) {
                     pitchCeiling = input$pitchCeiling,
                     priorMean = input$priorMean,
                     priorSD = input$priorSD,
-                    priorPlot = FALSE,
                     nCands = input$nCands,
                     minVoicedCands = input$minVoicedCands,
                     domThres = input$domThres,
@@ -286,13 +285,8 @@ server = function(input, output, session) {
                 myPars$pitchCands = temp_anal$pitchCands
                 myPars$spectrogram = temp_anal$spectrogram
                 windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
-                myPars$X = seq(
-                    1,
-                    max(1, (length(myPars$myAudio) - windowLength_points)),
-                    length.out = nrow(myPars$result)
-                ) / myPars$samplingRate * 1000 + input$windowLength / 2
+                myPars$X = as.numeric(colnames(myPars$spectrogram))
                 # add: update defaults that depend on samplingRate, eg cepSmooth
-
 
                 # if rerunning analyze() for the same audio, preserve the old manual values
                 # (if any) and paste them back in
