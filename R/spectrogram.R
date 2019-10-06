@@ -53,6 +53,9 @@
 #'   \code{\link{osc_dB}} for details
 #' @param heights a vector of length two specifying the relative height of the
 #'   spectrogram and the oscillogram
+#' @param padWithSilence if TRUE, pads the sound with just enough silence to
+#'   resolve the edges properly (only the original region is plotted, so
+#'   apparent duration doesn't change)
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
 #'   or any palette from \code{\link[grDevices]{palette}} such as
 #'   'heat.colors', 'cm.colors', etc
@@ -145,6 +148,7 @@ spectrogram = function(
   osc = FALSE,
   osc_dB = FALSE,
   heights = c(3, 1),
+  padWithSilence = TRUE,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
   xlab = 'Time, ms',
   ylab = 'Frequency, kHz',
@@ -192,7 +196,8 @@ spectrogram = function(
       zp = zp,
       normalize = normalize,
       wn = wn,
-      filter = NULL
+      filter = NULL,
+      padWithSilence = padWithSilence
     )
   } else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
@@ -210,14 +215,15 @@ spectrogram = function(
         stop('The sound and/or the windowLength is too short for plotting a spectrogram')
       }
       frameBank = getFrameBank(
-        sound = x,
+        sound = sound,
         samplingRate = samplingRate,
         windowLength_points = windowLength_points,
         step = step,
         zp = zp,
         normalize = normalize,
         wn = wn,
-        filter = NULL
+        filter = NULL,
+        padWithSilence = padWithSilence
       )
     }
   }
@@ -563,7 +569,8 @@ getFrameBank = function(sound,
                         step,
                         zp,
                         normalize = TRUE,
-                        filter = NULL) {
+                        filter = NULL,
+                        padWithSilence = FALSE) {
   # # normalize to range from no less than -1 to no more than +1
   if (!is.numeric(sound)) return(NA)
   sound[is.na(sound)] = 0
@@ -572,8 +579,23 @@ getFrameBank = function(sound,
     sound = sound / max(abs(max(sound)), abs(min(sound)))
   }
   step_points = round(step / 1000 * samplingRate)
+
+  if (padWithSilence) {
+    # pad with silence to make sure edges are properly analyzed
+    sound = c(rep(0, step_points),
+              sound,
+              rep(0, (windowLength_points + step_points)))
+  }
   myseq = seq(1, max(1, (length(sound) - windowLength_points)),
               by = step_points)
+  if (padWithSilence) {
+    time_stamps = (myseq - 1 + windowLength_points / 2 - step_points) *
+      1000 / samplingRate
+  } else {
+    time_stamps = (myseq - 1 + windowLength_points / 2) *
+      1000 / samplingRate
+  }
+
   if (is.null(filter)) {
     filter = ftwindow_modif(wl = windowLength_points, wn = wn)
   }
@@ -590,8 +612,7 @@ getFrameBank = function(sound,
       sound[x:(windowLength_points + x - 1)] * filter
     })
   }
-  colnames(frameBank) = (myseq - 1 + windowLength_points / 2) *
-                         1000 / samplingRate
+  colnames(frameBank) = time_stamps
   return(frameBank)
 }
 

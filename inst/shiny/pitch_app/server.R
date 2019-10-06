@@ -283,9 +283,9 @@ server = function(input, output, session) {
                 myPars$summary = temp_anal$summary
                 myPars$result = temp_anal$result
                 myPars$pitchCands = temp_anal$pitchCands
-                myPars$spectrogram = temp_anal$spectrogram
+                myPars$spec_from_anal = temp_anal$spectrogram
                 windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
-                myPars$X = as.numeric(colnames(myPars$spectrogram))
+                myPars$X = as.numeric(colnames(myPars$spec_from_anal))
                 # add: update defaults that depend on samplingRate, eg cepSmooth
 
                 # if rerunning analyze() for the same audio, preserve the old manual values
@@ -594,7 +594,7 @@ server = function(input, output, session) {
             result_new = soundgen:::updateAnalyze(
                 result = myPars$result,
                 pitch_true = myPars$pitch,
-                spectrogram = myPars$spectrogram
+                spectrogram = myPars$spec_from_anal
             )
             summary_new = soundgen:::summarizeAnalyze(
                 result_new,

@@ -8,6 +8,9 @@
 #' vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
 #' details.
 #'
+#' @seealso \code{\link{pitch_app}} \code{\link{getLoudness}}
+#'   \code{\link{segment}} \code{\link{analyzeFolder}}
+#'
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
 #' @param silence (0 to 1) frames with RMS amplitude below silence threshold are
@@ -170,7 +173,7 @@
 #' a = analyze(sound, samplingRate = 16000,
 #'   plot = FALSE,         # no plotting
 #'   pitchMethods = NULL,  # no pitch tracking
-#'   SPL_measured = NULL,  # no loudness analysis
+#'   SPL_measured = 0,     # no loudness analysis
 #'   nFormants = 0         # no formant analysis
 #' )
 #'
@@ -432,6 +435,7 @@ analyze = function(
     }
   }
   duration = length(sound) / samplingRate
+
   if (!is.numeric(windowLength) | windowLength <= 0 |
       windowLength > (duration * 1000)) {
     windowLength = min(50, duration / 2 * 1000)
@@ -587,7 +591,8 @@ analyze = function(
     step = step,
     zp = zp,
     normalize = TRUE,
-    filter = NULL
+    filter = NULL,
+    padWithSilence = FALSE
   )
 
   if (plot == TRUE & plotSpec) {
@@ -618,14 +623,14 @@ analyze = function(
   ), extraSpecPars))
 
   # calculate rms amplitude of each frame
-  myseq = seq(1, (length(sound) - windowLength_points), length.out = ncol(s))
-  ampl = apply(as.matrix(1:ncol(s)), 1, function(x) {
+  myseq = (as.numeric(colnames(frameBank)) - step) * samplingRate / 1000 + 1
+  ampl = apply(as.matrix(1:length(myseq)), 1, function(x) {
     # perceived intensity - root mean square of amplitude
     # (NB: m / scale corrects the scale back to original, otherwise sound is [-1, 1])
     sqrt(mean((sound[myseq[x]:(myseq[x] + windowLength_points - 1)] * m / scale) ^ 2))
   })
   # dynamically adjust silence threshold
-  silence = max(silence, min(ampl))
+  silence = max(silence, min(ampl, na.rm = TRUE))
 
   # calculate entropy of each frame within the most relevant
   # vocal range only (up to to cutFreq Hz)

@@ -11,10 +11,11 @@ spectrogram(x, samplingRate = NULL, dynamicRange = 80,
   brightness = 0, method = c("spectrum", "spectralDerivative")[1],
   output = c("original", "processed", "complex")[1], ylim = NULL,
   yScale = c("linear", "log")[1], plot = TRUE, osc = FALSE,
-  osc_dB = FALSE, heights = c(3, 1), colorTheme = c("bw", "seewave",
-  "heat.colors", "...")[1], xlab = "Time, ms", ylab = "Frequency, kHz",
-  mar = c(5.1, 4.1, 4.1, 2), main = "", grid = NULL,
-  frameBank = NULL, duration = NULL, ...)
+  osc_dB = FALSE, heights = c(3, 1), padWithSilence = TRUE,
+  colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
+  xlab = "Time, ms", ylab = "Frequency, kHz", mar = c(5.1, 4.1, 4.1,
+  2), main = "", grid = NULL, frameBank = NULL, duration = NULL,
+  ...)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
@@ -84,6 +85,10 @@ FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 
 \item{heights}{a vector of length two specifying the relative height of the
 spectrogram and the oscillogram}
+
+\item{padWithSilence}{if TRUE, pads the sound with just enough silence to
+resolve the edges properly (only the original region is plotted, so
+apparent duration doesn't change)}
 
 \item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
 or any palette from \code{\link[grDevices]{palette}} such as

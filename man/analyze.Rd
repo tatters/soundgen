@@ -263,7 +263,7 @@ a = analyze(sound, samplingRate = 16000, plot = TRUE)
 a = analyze(sound, samplingRate = 16000,
   plot = FALSE,         # no plotting
   pitchMethods = NULL,  # no pitch tracking
-  SPL_measured = NULL,  # no loudness analysis
+  SPL_measured = 0,     # no loudness analysis
   nFormants = 0         # no formant analysis
 )
 
@@ -348,4 +348,8 @@ median(getLoudness(sound2, windowLength = 25, overlap = 50,
                    SPL_measured = 40)$loudness)
 median(getRMS(sound2, windowLength = 25, overlap = 50, scale = 1))
 }
+}
+\seealso{
+\code{\link{pitch_app}} \code{\link{getLoudness}}
+  \code{\link{segment}} \code{\link{analyzeFolder}}
 }

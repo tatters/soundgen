@@ -437,9 +437,9 @@ modulationSpectrum = function(
     if (is.character(savePath)) dev.off()
   }
 
-  return(list('original' = out_aggreg,
-              'processed' = out_transf,
-              'roughness' = roughness))
+  invisible(list('original' = out_aggreg,
+                 'processed' = out_transf,
+                 'roughness' = roughness))
 }
 
 
