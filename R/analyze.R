@@ -109,7 +109,7 @@
 #' @param showLegend if TRUE, adds a legend with pitch tracking methods
 #' @param savePath if a valid path is specified, a plot is saved in this folder
 #'   (defaults to NA)
-#' @param plotSpec if \code{FALSE}, the spectrogram will not be plotted
+#' @param plotSpec deprecated
 #' @param candPlot a list of graphical parameters for displaying
 #' individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress
 #' @param pitchPlot a list of graphical parameters for displaying the final
@@ -182,20 +182,23 @@
 #'   noise = list(time = c(0, 300), value = c(-40, 0)),
 #'   temperature = 0.001, addSilence = 0)
 #' # improve the quality of postprocessing:
-#' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
+#' a1 = analyze(sound1, samplingRate = 16000, priorSD = 24,
+#'              plot = TRUE, pathfinding = 'slow')
 #' median(a1$pitch, na.rm = TRUE)
 #' # (can vary, since postprocessing is stochastic)
 #' # compare to the true value:
 #' median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
 #'   value = c(300, 900, 400, 2300)), len = 1000))
 #'
-#' # the same pitch contour, but harder b/c of subharmonics and jitter
+#' # the same pitch contour, but harder to analyze b/c of
+#' subharmonics and jitter
 #' sound2 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   noise = list(time = c(0, 900), value = c(-40, 0)),
 #'   subDep = 100, jitterDep = 0.5, nonlinBalance = 100, temperature = 0.001)
 #' # playme(sound2, 16000)
-#' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
+#' a2 = analyze(sound2, samplingRate = 16000, priorSD = 24,
+#'              plot = TRUE, pathfinding = 'slow')
 #' # many candidates are off, but the overall contour should be mostly accurate
 #'
 #' # Fancy plotting options:
@@ -207,10 +210,8 @@
 #'     col = c('gray70', 'yellow', 'purple'),  # same order as pitchMethods
 #'     pch = c(1, 3, 5),
 #'     cex = 3),
-#'   pitchPlot = list(col = 'black', lty = 3, lwd = 3))
-#'
-#'# Plot pitch candidates w/o a spectrogram
-#' a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
+#'   pitchPlot = list(col = 'black', lty = 3, lwd = 3),
+#'   osc_dB = TRUE, heights = c(2, 1))
 #'
 #' # Different formatting options for output
 #' a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame
@@ -312,7 +313,9 @@ analyze = function(
   plot = TRUE,
   showLegend = TRUE,
   savePath = NA,
-  plotSpec = TRUE,
+  plotSpec = 'deprecated',
+  osc = TRUE,
+  osc_dB = FALSE,
   pitchPlot = list(
     col = rgb(0, 0, 1, .75),
     lwd = 3
@@ -332,11 +335,8 @@ analyze = function(
   if (!missing(priorPlot)) {
     message('priorPlot is deprecated. Use getPrior(..., plot = TRUE) to preview the pitch prior')
   }
-  if ('osc' %in% names(match.call()) |
-      'osc_dB' %in% names(match.call())) {
-    # we are working with frameBank, not raw waveform
-    osc = FALSE
-    message('Plotting a spectrogram with oscillogram from analyze() is currently not implemented')
+  if (!missing(plotSpec)) {
+    message('plotSpec is deprecated')
   }
 
   # import a sound
@@ -595,12 +595,6 @@ analyze = function(
     padWithSilence = FALSE
   )
 
-  if (plot == TRUE & plotSpec) {
-    plot_spec = TRUE
-  } else {
-    plot_spec = FALSE
-  }
-
   extraSpecPars = list(...)
   extraSpecPars$osc = NULL
   s = do.call(spectrogram, c(list(
@@ -614,12 +608,12 @@ analyze = function(
     wn = wn,
     step = step,
     main = plotname,
-    plot = plot_spec,
     normalize = FALSE,
     output = 'original',
     ylim = ylim,
     xlab = xlab,
-    ylab = ylab
+    ylab = ylab,
+    plot = FALSE
   ), extraSpecPars))
 
   # calculate rms amplitude of each frame
@@ -887,19 +881,45 @@ analyze = function(
 
   ## Add pitch contours to the spectrogram
   if (plot) {
-    addPitchCands(pitchCands = pitchCands_list$freq,
-                  pitchCert = pitchCands_list$cert,
-                  pitchSource = pitchCands_list$source,
-                  pitch = result$pitch,
-                  candPlot = candPlot,
-                  pitchPlot = pitchPlot,
-                  addToExistingPlot = plot_spec,
-                  showLegend = showLegend,
-                  ylim = ylim,
-                  xlab = xlab,
-                  ylab = ylab,
-                  main = plotname,
-                  ...)
+    # we call spectrogram() a second time to get nice silence padding and to add
+    # pitch contours internally in spectrogram() - a hassle, but it only take
+    # a few ms, and otherwise it's hard to add pitch contours b/c the y-axis
+    # is messed up if spectrogram() calls layout() to add an oscillogram
+    do.call(spectrogram, c(list(
+      x = sound,
+      frameBank = frameBank,
+      dynamicRange = dynamicRange,
+      duration = duration,
+      samplingRate = samplingRate,
+      windowLength = windowLength,
+      zp = zp,
+      wn = wn,
+      step = step,
+      main = plotname,
+      normalize = FALSE,
+      scale = scale,
+      output = 'original',
+      ylim = ylim,
+      xlab = xlab,
+      ylab = ylab,
+      plot = TRUE,
+      osc = osc,
+      osc_dB = osc_dB,
+      pitch = list(
+        pitchCands = pitchCands_list$freq,
+        pitchCert = pitchCands_list$cert,
+        pitchSource = pitchCands_list$source,
+        pitch = result$pitch,
+        candPlot = candPlot,
+        pitchPlot = pitchPlot,
+        addToExistingPlot = TRUE,
+        showLegend = showLegend,
+        ylim = ylim,
+        xlab = xlab,
+        ylab = ylab,
+        main = plotname,
+        ...
+      )), extraSpecPars))
   }
   if (is.character(savePath)) {
     dev.off()
@@ -1011,7 +1031,7 @@ analyzeFolder = function(myfolder,
                          plot = FALSE,
                          showLegend = TRUE,
                          savePlots = FALSE,
-                         plotSpec = TRUE,
+                         plotSpec = 'deprecated',
                          pitchPlot = list(
                            col = rgb(0, 0, 1, .75),
                            lwd = 3

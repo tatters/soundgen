@@ -22,10 +22,10 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   snakePlot = FALSE, smooth = 1, smoothVars = c("pitch", "dom"),
   summary = TRUE, summaryFun = c("mean", "median", "sd"),
   plot = FALSE, showLegend = TRUE, savePlots = FALSE,
-  plotSpec = TRUE, pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
-  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2),
-  ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
+  plotSpec = "deprecated", pitchPlot = list(col = rgb(0, 0, 1, 0.75),
+  lwd = 3), candPlot = list(levels = c("autocor", "spec", "dom", "cep"),
+  col = c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex =
+  2), ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
   width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
@@ -219,7 +219,7 @@ acoustic characteristic}
 
 \item{savePlots}{if TRUE, saves plots as .png files}
 
-\item{plotSpec}{if \code{FALSE}, the spectrogram will not be plotted}
+\item{plotSpec}{deprecated}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{NULL} or \code{NA} to suppress}

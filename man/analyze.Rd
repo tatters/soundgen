@@ -22,11 +22,11 @@ analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
   smoothVars = c("pitch", "dom"), summary = FALSE,
   summaryFun = c("mean", "median", "sd"), plot = TRUE,
-  showLegend = TRUE, savePath = NA, plotSpec = TRUE,
-  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  candPlot = list(), ylim = NULL, xlab = "Time, ms", ylab = "kHz",
-  main = NULL, width = 900, height = 500, units = "px", res = NA,
-  ...)
+  showLegend = TRUE, savePath = NA, plotSpec = "deprecated",
+  osc = TRUE, osc_dB = FALSE, pitchPlot = list(col = rgb(0, 0, 1,
+  0.75), lwd = 3), candPlot = list(), ylim = NULL, xlab = "Time, ms",
+  ylab = "kHz", main = NULL, width = 900, height = 500,
+  units = "px", res = NA, ...)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
@@ -183,7 +183,15 @@ acoustic characteristic}
 \item{savePath}{if a valid path is specified, a plot is saved in this folder
 (defaults to NA)}
 
-\item{plotSpec}{if \code{FALSE}, the spectrogram will not be plotted}
+\item{plotSpec}{deprecated}
+
+\item{osc}{should an oscillogram be shown under the spectrogram? TRUE/
+FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
+\code{\link{osc_dB}} for details}
+
+\item{osc_dB}{should an oscillogram be shown under the spectrogram? TRUE/
+FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
+\code{\link{osc_dB}} for details}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{NULL} or \code{NA} to suppress}
@@ -272,20 +280,23 @@ sound1 = soundgen(sylLen = 900, pitch = list(
   noise = list(time = c(0, 300), value = c(-40, 0)),
   temperature = 0.001, addSilence = 0)
 # improve the quality of postprocessing:
-a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
+a1 = analyze(sound1, samplingRate = 16000, priorSD = 24,
+             plot = TRUE, pathfinding = 'slow')
 median(a1$pitch, na.rm = TRUE)
 # (can vary, since postprocessing is stochastic)
 # compare to the true value:
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
   value = c(300, 900, 400, 2300)), len = 1000))
 
-# the same pitch contour, but harder b/c of subharmonics and jitter
+# the same pitch contour, but harder to analyze b/c of
+subharmonics and jitter
 sound2 = soundgen(sylLen = 900, pitch = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
   noise = list(time = c(0, 900), value = c(-40, 0)),
   subDep = 100, jitterDep = 0.5, nonlinBalance = 100, temperature = 0.001)
 # playme(sound2, 16000)
-a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
+a2 = analyze(sound2, samplingRate = 16000, priorSD = 24,
+             plot = TRUE, pathfinding = 'slow')
 # many candidates are off, but the overall contour should be mostly accurate
 
 # Fancy plotting options:
@@ -297,10 +308,8 @@ a = analyze(sound2, samplingRate = 16000, plot = TRUE,
     col = c('gray70', 'yellow', 'purple'),  # same order as pitchMethods
     pch = c(1, 3, 5),
     cex = 3),
-  pitchPlot = list(col = 'black', lty = 3, lwd = 3))
-
-# Plot pitch candidates w/o a spectrogram
-a = analyze(sound2, samplingRate = 16000, plot = TRUE, plotSpec = FALSE)
+  pitchPlot = list(col = 'black', lty = 3, lwd = 3),
+  osc_dB = TRUE, heights = c(2, 1))
 
 # Different formatting options for output
 a = analyze(sound2, samplingRate = 16000, summary = FALSE)  # frame-by-frame

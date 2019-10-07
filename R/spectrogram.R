@@ -133,6 +133,7 @@ spectrogram = function(
   wn = 'gaussian',
   zp = 0,
   normalize = TRUE,
+  scale = NULL,
   smoothFreq = 0,
   smoothTime = 0,
   qTime = 0,
@@ -157,6 +158,7 @@ spectrogram = function(
   grid = NULL,
   frameBank = NULL,
   duration = NULL,
+  pitch = NULL,
   ...
 ) {
   sound = NULL
@@ -204,7 +206,11 @@ spectrogram = function(
       stop ('Please specify samplingRate, eg 44100')
     } else {
       sound = x
-      maxAmpl = max(abs(sound))
+      if (is.null(scale)) {
+        maxAmpl = max(abs(sound))
+      } else {
+        maxAmpl = scale
+      }
       duration = length(sound) / samplingRate
       windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
       if (windowLength_points > (length(sound) / 2)) {
@@ -397,6 +403,9 @@ spectrogram = function(
       n_grid_per_kHz = diff(range(ylim)) * grid
       grid(nx = n_grid_per_kHz, ny = n_grid_per_kHz,
            col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3)
+    }
+    if (!is.null(pitch)) {
+      do.call(addPitchCands, pitch)
     }
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)

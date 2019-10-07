@@ -80,7 +80,7 @@ getRMS = function(x,
       step = round(windowLength * (1 - overlap / 100))
     }
     if (windowLength_points == 0) {
-      stop('The sound and/or the windowLength is too short for plotting a spectrogram')
+      stop('The sound and/or the windowLength is too short')
     }
     duration = length(sound) / samplingRate
   } else if (class(x) == 'numeric' & length(x) > 1) {

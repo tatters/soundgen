@@ -142,6 +142,7 @@ getLoudness = function(x,
     sound_scaled, samplingRate = samplingRate,
     windowLength = windowLength, step = step,
     output = 'original', normalize = FALSE,
+    padWithSilence = FALSE,
     plot = plot, mar = mar, ...) ^ 2
   # range(log10(powerSpec) * 10)
 
