@@ -686,7 +686,7 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
     }
   }
 
-  return (formants)
+  return(formants)
 }
 
 
@@ -704,6 +704,10 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' the spectral filter containing the specified formants, and transforms back to
 #' a time series via inverse STFT. This is a subroutine in
 #' \code{\link{soundgen}}, but it can also be used on any existing sound.
+#'
+#' @seealso \code{\link{getSpectralEnvelope}} \code{\link{transplantFormants}}
+#'   \code{\link{soundgen}}
+#'
 #' @param sound numeric vector with \code{samplingRate}
 #' @param action 'add' = add formants to the sound, 'remove' = remove formants
 #'   (inverse filtering)
@@ -953,6 +957,9 @@ addFormants = function(sound,
 #' Algorithm: makes spectrograms of both sounds, interpolates and smoothes the
 #' donor spectrogram, flattens the recipient spectrogram, multiplies the
 #' spectrograms, and transforms back into time domain with inverse STFT.
+#'
+#' @seealso \code{\link{getSpectralEnvelope}} \code{\link{addFormants}}
+#'   \code{\link{soundgen}}
 #'
 #' @inheritParams spectrogram
 #' @param donor the sound that provides the formants

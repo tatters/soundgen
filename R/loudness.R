@@ -20,6 +20,10 @@
 #' al., 2004), sums across all critical bands, and applies a correction
 #' coefficient to standardize output. Calibrated so as to return a loudness of 1
 #' sone for a 1 kHz pure tone with SPL of 40 dB.
+#'
+#' @seealso \code{\link{getLoudnessFolder}} \code{\link{getRMS}}
+#'   \code{\link{analyze}}
+#'
 #' @inheritParams spectrogram
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than an audio file), must be > 2000 Hz
@@ -302,6 +306,10 @@ getLoudness = function(x,
 #' or, if \code{summary = TRUE}, a dataframe with a single summary value of loudness
 #' per file. This summary value can be mean, max and so on, as per
 #' \code{summaryFun}.
+#'
+#' @seealso \code{\link{getLoudness}} \code{\link{getRMS}}
+#'   \code{\link{analyze}}
+#'
 #' @param myfolder path to folder containing wav/mp3 files
 #' @inheritParams getLoudness
 #' @param summary if TRUE, returns only a single value of loudness per file

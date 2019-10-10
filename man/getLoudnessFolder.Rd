@@ -56,3 +56,7 @@ getLoudnessFolder('~/Downloads/temp', summaryFun = c('mean', 'difRan'))
 l = getLoudnessFolder('~/Downloads/temp', summary = FALSE)
 }
 }
+\seealso{
+\code{\link{getLoudness}} \code{\link{getRMS}}
+  \code{\link{analyze}}
+}

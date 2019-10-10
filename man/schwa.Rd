@@ -119,3 +119,6 @@ s = schwa(formants_relative = c(-20, 40), vocalTract = 15)
 #   target relative formant values (low F1, high F2)
 schwa(formants = s$ff_theoretical)
 }
+\seealso{
+\code{\link{estimateVTL}}
+}

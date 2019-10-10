@@ -101,3 +101,6 @@ and/or measuring the roughness of multiple files. See
 ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE, kernelSize = 15)
 }
 }
+\seealso{
+\code{\link{modulationSpectrum}}
+}

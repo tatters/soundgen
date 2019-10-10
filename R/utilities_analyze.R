@@ -613,6 +613,9 @@ getPitchSpec = function(frame,
 #' mean = priorMean (Hz) and sd = priorSD (semitones) normalized so max = 1 over
 #' [pitchFloor, pitchCeiling]. Useful for previewing the prior given to
 #' \code{\link{analyze}}.
+#'
+#' @seealso \code{\link{analyze}} \code{\link{pitch_app}}
+#'
 #' @return Returns a numeric vector of certainties of length \code{len} if
 #'   pitchCands is NULL and a numeric matrix of the same dimensions as
 #'   pitchCands otherwise.

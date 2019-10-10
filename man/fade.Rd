@@ -77,3 +77,6 @@ y = fade(x,
          steepness = 4,
          plot = TRUE)
 }
+\seealso{
+\code{\link{crossFade}}
+}

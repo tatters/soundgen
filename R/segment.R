@@ -16,6 +16,9 @@
 #' optimization against 260 human vocalizations in Anikin, A. & Persson, T.
 #' (2017). Non-linguistic vocalizations from online amateur videos for emotion
 #' research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
+#'
+#' @seealso \code{\link{segmentFolder}} \code{\link{analyze}}  \code{\link{ssm}}
+#'
 #' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
@@ -281,6 +284,8 @@ segment = function(x,
 #' analyzing the syllables and bursts in a large number of audio files at a
 #' time. In verbose mode, it also reports ETA every ten iterations. With default
 #' settings, running time should be about a second per minute of audio.
+#'
+#' @seealso \code{\link{segment}}
 #'
 #' @param myfolder full path to target folder
 #' @inheritParams segment

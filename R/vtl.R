@@ -79,6 +79,9 @@ getFormantDispersion = function(formants,
 #' indicators of body size in men and women: a meta-analysis". See also
 #' \code{\link{schwa}} for VTL estimation with additional information on formant
 #' frequencies.
+#'
+#' @seealso \code{\link{schwa}}
+#'
 #' @param formants a character string like "aaui" referring to default presets
 #'   for speaker "M1"; a vector of formant frequencies; or a list of formant
 #'   times, frequencies, amplitudes, and bandwidths, with a single value of each
@@ -196,6 +199,9 @@ estimateVTL = function(formants,
 #' the vocal tract. See also \code{\link{estimateVTL}} on the algorithm for
 #' estimating formant dispersion if VTL is not known (note that \code{schwa}
 #' calls \code{\link{estimateVTL}} with the option \code{method = 'regression'}.
+#'
+#' @seealso \code{\link{estimateVTL}}
+#'
 #' @return Returns a list with the following components: \describe{
 #'   \item{vtl_measured}{VTL as provided by the user, cm}
 #'   \item{vocalTract_apparent}{VTL estimated based on formants frequencies

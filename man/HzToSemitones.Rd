@@ -23,3 +23,6 @@ s = HzToSemitones(c(440, 293, 115))
 notesDict$note[1 + round(s)]
 # note the "1 +": semitones ABOVE C-5, i.e. notesDict[1, ] is C-5
 }
+\seealso{
+\code{\link{semitonesToHz}}
+}

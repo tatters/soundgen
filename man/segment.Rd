@@ -129,3 +129,6 @@ s = segment(sound, samplingRate = 16000, savePath = '~/Downloads/',
             width = 1920, height = 1080, units = 'px')
 }
 }
+\seealso{
+\code{\link{segmentFolder}} \code{\link{analyze}}  \code{\link{ssm}}
+}

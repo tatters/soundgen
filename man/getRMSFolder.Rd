@@ -55,3 +55,6 @@ meanSD = function(x) {
 getRMSFolder('~/Downloads/temp', summaryFun = 'meanSD')
 }
 }
+\seealso{
+\code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
+}

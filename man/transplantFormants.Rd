@@ -88,3 +88,7 @@ spectrogram(s2, samplingRate, osc = TRUE)
 seewave::meanspec(s2, f = samplingRate, dB = 'max0')
 }
 }
+\seealso{
+\code{\link{getSpectralEnvelope}} \code{\link{addFormants}}
+  \code{\link{soundgen}}
+}

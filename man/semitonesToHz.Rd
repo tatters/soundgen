@@ -15,3 +15,6 @@ semitonesToHz(s, ref = 0.5109875)
 Converts from semitones above C-5 (~0.5109875 Hz) to Hz. See
 \code{\link{HzToSemitones}}
 }
+\seealso{
+\code{\link{HzToSemitones}}
+}

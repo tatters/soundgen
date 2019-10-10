@@ -13,6 +13,10 @@
 #' calculate it as \code{sqrt(mean(x^2))}, where \code{x} is your waveform.
 #' Having RMS estimates per frame gives more flexibility: RMS per sound can be
 #' calculated as the mean / median / max of RMS values per frame.
+#'
+#' @seealso \code{\link{getRMSFolder}}
+#'   \code{\link{analyze}}\code{\link{getLoudness}}
+#'
 #' @inheritParams spectrogram
 #' @param scale maximum possible amplitude of input used for normalization (not
 #'   needed for audio files)
@@ -143,6 +147,9 @@ getRMS = function(x,
 #' or, if \code{summary = TRUE}, a dataframe with a single summary value of RMS
 #' per file. This summary value can be mean, max and so on, as per
 #' \code{summaryFun}.
+#'
+#' @seealso \code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
+#'
 #' @param myfolder path to folder containing wav/mp3 files
 #' @inheritParams getRMS
 #' @param summary if TRUE, returns only a single value of RMS per file
@@ -228,6 +235,8 @@ getRMSFolder = function(myfolder,
 #' or RMS amplitude or subjective loudness. This is good for playback
 #' experiments, which require that all sounds should have similar intensity or
 #' loudness.
+#'
+#' @seealso \code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
 #'
 #' Algorithm: first all files are rescaled to have the same peak amplitude of
 #' \code{maxAmp} dB. If \code{type = 'peak'}, the process ends here. If

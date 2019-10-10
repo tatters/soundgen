@@ -345,3 +345,7 @@ s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
 # on project's homepage: http://cogsci.se/soundgen.html
 }
 }
+\seealso{
+\code{\link{generateNoise}} \code{\link{generateNoise}}
+  \code{\link{fart}} \code{\link{beat}}
+}

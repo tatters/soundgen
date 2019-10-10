@@ -90,6 +90,9 @@ playme = function(sound,
 #'
 #' Applies fade-in and/or fade-out of variable length, shape, and steepness. The
 #' resulting effect softens the attack and release of a waveform.
+#'
+#' @seealso \code{\link{crossFade}}
+#'
 #' @param x zero-centered (!) numeric vector such as a waveform
 #' @param fadeIn,fadeOut length of segments for fading in and out, interpreted
 #'   as points if \code{samplingRate = NULL} and as ms otherwise (0 = no fade)
@@ -329,6 +332,9 @@ flatEnv = function(sound,
 #' gluing together epochs with different regimes of pitch effects (see the
 #' vignette on sound generation), but it can also be useful for joining two
 #' separately generated sounds without audible artifacts.
+#'
+#' @seealso \code{\link{fade}}
+#'
 #' @param ampl1,ampl2 two numeric vectors (waveforms) to be joined
 #' @param crossLenPoints (optional) the length of overlap in points
 #' @param crossLen the length of overlap in ms (overrides crossLenPoints)
@@ -432,6 +438,8 @@ crossFade = function(ampl1,
 #' makes a spectrogram, flattens the real part of the smoothed spectrum of each
 #' STFT frame, and transforms back into time domain with inverse STFT (see also
 #' \code{\link{addFormants}}).
+#'
+#' @seealso \code{\link{addFormants}} \code{\link{transplantFormants}}
 #'
 #' @return Returns a numeric vector with the same sampling rate as the input.
 #' @inheritParams spectrogram

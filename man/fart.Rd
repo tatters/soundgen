@@ -57,3 +57,7 @@ while (TRUE) {
 }
 }
 }
+\seealso{
+\code{\link{soundgen}} \code{\link{generateNoise}}
+  \code{\link{beat}}
+}

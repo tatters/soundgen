@@ -984,6 +984,9 @@ intplPitch = function(pitch, idx_unv = NULL) {
 #' (unvoiced frames), performs FFT to obtain the spectrum, multiplies by a
 #' Gaussian filter, performs an inverse FFT, and fills the missing values back
 #' in.
+#'
+#' @seealso \code{\link{analyze}}
+#'
 #' @param pitch numeric vector of pitch values (NA = unvoiced)
 #' @param bandwidth the bandwidth of low-pass filter, Hz (high = less smoothing,
 #'   close to zero = more smoothing)

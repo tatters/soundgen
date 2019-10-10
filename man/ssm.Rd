@@ -112,4 +112,7 @@ m = ssm(sound, samplingRate = 16000,
 }
 \seealso{
 \code{\link{spectrogram}} \code{\link{modulationSpectrum}}
+  \code{\link{segment}}
+
+\code{\link{spectrogram}} \code{\link{modulationSpectrum}}
 }

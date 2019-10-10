@@ -157,3 +157,6 @@ par(mfrow = c(1, 1))
 # but becomes more and more like the original at longer window lengths)
 }
 }
+\seealso{
+\code{\link{soundgen}} \code{\link{fart}} \code{\link{beat}}
+}

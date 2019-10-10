@@ -13,6 +13,9 @@
 #' f0. Plot the output with different parameter values and see examples below
 #' and the vignette to get a feel for how to use \code{\link{getRolloff}}
 #' effectively.
+#'
+#' @seealso \code{\link{soundgen}}
+#'
 #' @param pitch_per_gc a vector of f0 per glottal cycle, Hz
 #' @param nHarmonics maximum number of harmonics to generate (very weak
 #'   harmonics with amplitude < \code{-dynamicRange} will be discarded)

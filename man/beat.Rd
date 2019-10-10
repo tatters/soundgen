@@ -56,3 +56,7 @@ s = beat(nSyl = 3, sylLen = 300,
 s = beat(nSyl = 10, sylLen = 10, pauseLen = 50,
          pitch = c(2300, 300), play = playback)
 }
+\seealso{
+\code{\link{soundgen}} \code{\link{generateNoise}}
+  \code{\link{fart}}
+}

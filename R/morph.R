@@ -5,6 +5,9 @@
 #' attempting to go from one target sound to the other in a specified number of
 #' equal steps. Normally you will want to set \code{temperature} very low; the
 #' \code{tempEffects} argument is not supported.
+#'
+#' @seealso \code{\link{soundgen}}
+#'
 #' @param formula1,formula2 lists of parameters for calling
 #'   \code{\link{soundgen}} that produce the two target sounds between which
 #'   morphing will occur. Character strings containing the full call to soundgen

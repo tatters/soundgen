@@ -19,6 +19,9 @@
 #' averaged. This is different from the behavior of
 #' \code{\link{modulationSpectrumFolder}}, which produces a separate modulation
 #' spectrum per file, without averaging.
+#'
+#' @seealso \code{\link{modulationSpectrumFolder}} \code{\link{spectrogram}}
+#'
 #' @references \itemize{
 #'   \item Singh, N. C., & Theunissen, F. E. (2003). Modulation spectra of
 #'   natural sounds and ethological theories of auditory processing. The Journal
@@ -449,6 +452,9 @@ modulationSpectrum = function(
 #' each file, without averaging. Good for saving plots of the modulation spectra
 #' and/or measuring the roughness of multiple files. See
 #' \code{\link{modulationSpectrum}} for further details.
+#'
+#' @seealso \code{\link{modulationSpectrum}}
+#'
 #' @inheritParams analyzeFolder
 #' @inheritParams modulationSpectrum
 #' @inheritParams spectrogram

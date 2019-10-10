@@ -17,6 +17,10 @@ NULL
 #' animal or human non-linguistic vocalizations. For more information, see
 #' \url{http://cogsci.se/soundgen.html} and vignette('sound_generation', package
 #' = 'soundgen').
+#'
+#' @seealso \code{\link{generateNoise}} \code{\link{generateNoise}}
+#'   \code{\link{fart}} \code{\link{beat}}
+#'
 #' @param repeatBout number of times the whole bout should be repeated
 #' @param nSyl number of syllables in the bout. `pitchGlobal`, `amplGlobal`, and
 #'   `formants` span multiple syllables, but not multiple bouts

@@ -73,3 +73,7 @@ r = getRMS(s, samplingRate = 16000,
 r = getRMS('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
 }
 }
+\seealso{
+\code{\link{getRMSFolder}}
+  \code{\link{analyze}}\code{\link{getLoudness}}
+}

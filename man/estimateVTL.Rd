@@ -83,3 +83,6 @@ cor(out)
 # give broadly comparable results
 }
 }
+\seealso{
+\code{\link{schwa}}
+}

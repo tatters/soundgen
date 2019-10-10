@@ -279,3 +279,7 @@ plot(log(key), log(trial))
 abline(a=0, b=1, col='red')
 }
 }
+\seealso{
+\code{\link{analyze}} \code{\link{pitch_app}}
+  \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
+}

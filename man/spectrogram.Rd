@@ -174,5 +174,7 @@ spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 }
 }
 \seealso{
+\code{\link{modulationSpectrum}} \code{\link{ssm}} \code{\link{osc_dB}}
+
 \code{\link{modulationSpectrum}} \code{\link{ssm}}
 }

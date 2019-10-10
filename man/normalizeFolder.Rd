@@ -43,7 +43,20 @@ or RMS amplitude or subjective loudness. This is good for playback
 experiments, which require that all sounds should have similar intensity or
 loudness.
 }
-\details{
+\examples{
+\dontrun{
+# put a few short audio files in a folder, eg '~/Downloads/temp'
+getRMSFolder('~/Downloads/temp', summaryFun = 'mean')  # different
+normalizeFolder('~/Downloads/temp', type = 'rms', summaryFun = 'mean',
+  savepath = '~/Downloads/temp/normalized')
+getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')  # same
+# If the saved audio files are treated as stereo with one channel missing,
+# try reconverting with ffmpeg (saving is handled by tuneR::writeWave)
+}
+}
+\seealso{
+\code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
+
 Algorithm: first all files are rescaled to have the same peak amplitude of
 \code{maxAmp} dB. If \code{type = 'peak'}, the process ends here. If
 \code{type = 'rms'}, there are two additional steps. First the original RMS
@@ -56,15 +69,4 @@ of the "quietest" sound, and their peak amplitudes become smaller,
 loudness of each sound is estimated by \code{\link{getLoudness}}, which
 assumes frequency sensitivity typical of human hearing. The following
 normalization procedure is similar to that for \code{type = 'rms'}.
-}
-\examples{
-\dontrun{
-# put a few short audio files in a folder, eg '~/Downloads/temp'
-getRMSFolder('~/Downloads/temp', summaryFun = 'mean')  # different
-normalizeFolder('~/Downloads/temp', type = 'rms', summaryFun = 'mean',
-  savepath = '~/Downloads/temp/normalized')
-getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')  # same
-# If the saved audio files are treated as stereo with one channel missing,
-# try reconverting with ffmpeg (saving is handled by tuneR::writeWave)
-}
 }

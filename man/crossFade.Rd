@@ -73,3 +73,6 @@ playme(crossFade(sound3, sound4, samplingRate = 16000,
                  crossLen = 300, shape = 'cos'), 16000)
 }
 }
+\seealso{
+\code{\link{fade}}
+}

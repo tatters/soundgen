@@ -1,6 +1,10 @@
 #' Self-similarity matrix
 #'
 #' Calculates the self-similarity matrix and novelty vector of a sound.
+#'
+#' @seealso \code{\link{spectrogram}} \code{\link{modulationSpectrum}}
+#'   \code{\link{segment}}
+#'
 #' @references \itemize{
 #'   \item El Badawy, D., Marmaroli, P., & Lissek, H. (2013). Audio
 #'   Novelty-Based Segmentation of Music Concerts. In Acoustics 2013 (No.

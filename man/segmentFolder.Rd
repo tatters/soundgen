@@ -130,3 +130,6 @@ boxplot(trial ~ as.integer(key), xlab='key')
 abline(a=0, b=1, col='red')
 }
 }
+\seealso{
+\code{\link{segment}}
+}

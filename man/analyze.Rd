@@ -359,6 +359,7 @@ median(getRMS(sound2, windowLength = 25, overlap = 50, scale = 1))
 }
 }
 \seealso{
-\code{\link{pitch_app}} \code{\link{getLoudness}}
-  \code{\link{segment}} \code{\link{analyzeFolder}}
+\code{\link{analyzeFolder}} \code{\link{pitch_app}}
+  \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
+  \code{\link{modulationSpectrum}} \code{\link{ssm}}
 }

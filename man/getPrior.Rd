@@ -56,3 +56,6 @@ soundgen:::getPrior(150, 6)
 s = soundgen:::getPrior(450, 24, pitchCeiling = 6000)
 plot(s)
 }
+\seealso{
+\code{\link{analyze}} \code{\link{pitch_app}}
+}

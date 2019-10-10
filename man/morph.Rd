@@ -98,3 +98,6 @@ m = morph(
 )
 }
 }
+\seealso{
+\code{\link{soundgen}}
+}

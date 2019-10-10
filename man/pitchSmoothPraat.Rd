@@ -39,3 +39,6 @@ NA, NA)
 pitch_sm = pitchSmoothPraat(pitch, bandwidth = 2,
                             samplingRate = 39.57244, plot = TRUE)
 }
+\seealso{
+\code{\link{analyze}}
+}

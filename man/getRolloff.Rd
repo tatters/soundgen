@@ -129,3 +129,6 @@ s3 = soundgen(sylLen = 1000, pitch = 250,
              rolloffParab = 20, rolloffParabHarm = 1:15, plot = TRUE)
 }
 }
+\seealso{
+\code{\link{soundgen}}
+}

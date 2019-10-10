@@ -32,3 +32,6 @@ v3 = rep(100, 15)
 addVectors(v1, v3, insertionPoint = -4, normalize = FALSE)
 addVectors(v2, v3, insertionPoint = 7, normalize = FALSE)
 }
+\seealso{
+\code{\link{soundgen}}
+}

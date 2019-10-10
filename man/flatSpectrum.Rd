@@ -80,3 +80,6 @@ playme(sheep_aii, samplingRate)
 # seewave::spec(sheep_aii, f = samplingRate, dB = 'max0')
 }
 }
+\seealso{
+\code{\link{addFormants}} \code{\link{transplantFormants}}
+}

@@ -7,6 +7,9 @@
 #' routines for noise reduction, smoothing in time and frequency domains, manual
 #' control of contrast and brightness, plotting the oscillogram on a dB scale,
 #' grid, etc.
+#'
+#' @seealso \code{\link{modulationSpectrum}} \code{\link{ssm}} \code{\link{osc_dB}}
+#'
 #' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if

@@ -117,3 +117,7 @@ loud
   Spectral Distortion (EMBSD): An Objective Speech Quality Measure Based on
   Audible Distortion and Cognitive Model. Temple University. }
 }
+\seealso{
+\code{\link{getLoudnessFolder}} \code{\link{getRMS}}
+  \code{\link{analyze}}
+}

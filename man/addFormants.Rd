@@ -156,3 +156,7 @@ par(mfrow = c(1, 1))
 # harmonics and noise, while the new sound is purely tonal
 }
 }
+\seealso{
+\code{\link{getSpectralEnvelope}} \code{\link{transplantFormants}}
+  \code{\link{soundgen}}
+}

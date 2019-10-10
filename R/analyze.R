@@ -8,8 +8,9 @@
 #' vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
 #' details.
 #'
-#' @seealso \code{\link{pitch_app}} \code{\link{getLoudness}}
-#'   \code{\link{segment}} \code{\link{analyzeFolder}}
+#' @seealso \code{\link{analyzeFolder}} \code{\link{pitch_app}}
+#'   \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
+#'   \code{\link{modulationSpectrum}} \code{\link{ssm}}
 #'
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
@@ -944,6 +945,10 @@ analyze = function(
 #'
 #' Acoustic analysis of all wav/mp3 files in a folder. See \code{\link{analyze}}
 #' and vignette('acoustic_analysis', package = 'soundgen') for further details.
+#'
+#' @seealso \code{\link{analyze}} \code{\link{pitch_app}}
+#'   \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
+#'
 #' @param myfolder full path to target folder
 #' @param verbose if TRUE, reports progress and estimated time left
 #' @inheritParams analyze
