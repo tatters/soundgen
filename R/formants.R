@@ -1069,6 +1069,7 @@ transplantFormants = function(donor,
     wn = wn,
     zp = zp,
     output = 'complex',
+    padWithSilence = FALSE,
     plot = FALSE
   )
   spec_donor = spectrogram(
@@ -1081,6 +1082,7 @@ transplantFormants = function(donor,
     wn = wn,
     zp = zp,
     output = 'original',
+    padWithSilence = FALSE,
     plot = FALSE
   )
 

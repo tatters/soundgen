@@ -19,6 +19,8 @@
 #' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular,
 #'   blackman, flattop
 #' @param normalize if TRUE, scales input prior to FFT
+#' @param scale maximum possible amplitude of input used for normalization of
+#'   input vector (not needed if input is an audio file)
 #' @param zp window length after zero padding, points
 #' @param smoothFreq,smoothTime length of the window, in data points (0 to
 #'   +inf), for calculating a rolling median. Applies median smoothing to
@@ -62,7 +64,7 @@
 #' @param xlab,ylab,main,mar graphical parameters
 #' @param grid if numeric, adds n = \code{grid} dotted lines per kHz
 #' @param ... other graphical parameters
-#' @param frameBank,duration ignore (only needed for pitch tracking)
+#' @param frameBank,duration,pitch ignore (only used internally)
 #' @export
 #' @return Returns nothing (if output = 'none'), absolute - not power! -
 #'   spectrum (if output = 'original'), denoised and/or smoothed spectrum (if

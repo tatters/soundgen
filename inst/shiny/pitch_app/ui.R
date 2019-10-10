@@ -93,12 +93,18 @@ ui = fluidPage(
                                            sliderInput('interpolCert', 'Interpolation certainty', value=defaults_analyze['interpolCert', 'default'], min=defaults_analyze['interpolCert', 'low'], max=defaults_analyze['interpolCert', 'high'], step=defaults_analyze['interpolCert', 'step'])
                                   ),
 
-                                  tabPanel("Plot",
+                                  tabPanel("Spectrogram",
                                            sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
                                            numericInput('spec_cex', 'Point size', value = 2, min = .1, max = 10, step = .1),
                                            radioButtons(inputId='spec_colorTheme', label="Color scheme", choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
                                            sliderInput('specContrast', 'Contrast', value=defaults_analyze['specContrast','default'], min=defaults_analyze['specContrast', 'low'], max=defaults_analyze['specContrast', 'high'], step=defaults_analyze['specContrast','step']),
                                            sliderInput('specBrightness', 'Brightness', value=defaults_analyze['specBrightness','default'], min=defaults_analyze['specBrightness', 'low'], max=defaults_analyze['specBrightness', 'high'], step=defaults_analyze['specBrightness','step'])
+                                  ),
+
+                                  tabPanel("Oscillogram",
+                                           selectInput('osc', 'Oscillogram type', choices = c('none', 'linear', 'dB'), selected = 'linear', multiple = FALSE),
+                                           sliderInput('osc_height', 'Oscillogram height, px', value=100, min=25, max=500, step=25),
+                                           sliderInput('osc_res', 'Oscillogram resolution', value = .5, min = 0, max = 1, step = .05)
                                   )
                        )
            ),
@@ -153,7 +159,8 @@ ui = fluidPage(
            ),
 
            fluidRow(
-             plotOutput('spectrogram', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE))  # , style = "max-width: 66vw; overflow-x: auto;"
+             plotOutput('spectrogram', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)), # , style = "max-width: 66vw; overflow-x: auto;"
+             plotOutput('oscillogram')
            ),
 
            fluidRow(

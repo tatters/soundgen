@@ -328,7 +328,7 @@ seewave::meanspec(s_withf0, f = 16000, dB = 'max0', flim = c(0, 3))
 ```
 
 The pitch is tracked correctly:
-```{r fig.show = "hold", fig.height = 4, fig.width = 5}
+```{r fig.show = "hold", fig.height = 6, fig.width = 6}
 a_withf0 = analyze(s_withf0, 16000, pitchMethods = c('autocor', 'cep', 'spec'),
              ylim = c(0, 3), dynamicRange = 60)
 ```
@@ -342,7 +342,7 @@ seewave::meanspec(s_withoutf0, f = 16000, dB = 'max0', flim = c(0, 3))
 ```
 
 Again, no problem with pitch tracking, although now the pitch contour is following a partial that is no longer there:
-```{r fig.show = "hold", fig.height = 4, fig.width = 5}
+```{r fig.show = "hold", fig.height = 6, fig.width = 6}
 a_withoutf0 = analyze(s_withoutf0, 16000, pitchMethods = c('autocor', 'cep', 'spec'),
              ylim = c(0, 3), dynamicRange = 60)
 ```
@@ -381,12 +381,12 @@ a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              snakeStep = 0, smooth = 0,
              interpolWin = 0,   # disable interpolation
              pathfinding = 'none',  
-             main = 'No interpolation', showLegend = FALSE)
+             main = 'No interpolation', showLegend = FALSE, osc = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .4, step = 25,
              pathfinding = 'none',
              snakeStep = 0, smooth = 0, 
-             main = 'Interpolation', showLegend = FALSE)  
+             main = 'Interpolation', showLegend = FALSE, osc = FALSE)  
 
 par(mfrow = c(1, 1))
 ```
@@ -401,12 +401,14 @@ a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = 0, smooth = 0, interpolTol = Inf,
              certWeight = 0,  # minimize pitch jumps
-             main = 'Minimize jumps', showLegend = FALSE)  
+             main = 'Minimize jumps', 
+             showLegend = FALSE, osc = FALSE)  
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = 0, smooth = 0, interpolTol = Inf,
              certWeight = 1,  # minimize deviation from high-certainty candidates
-             main = 'Pass through top cand-s', showLegend = FALSE)  
+             main = 'Pass through top cand-s', 
+             showLegend = FALSE, osc = FALSE)  
 par(mfrow = c(1, 1))
 ```
 
@@ -438,11 +440,13 @@ par(mfrow = c(1, 2))
 a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = 0, interpolTol = Inf,
-             smooth = 0, main = 'No smoothing', showLegend = FALSE)
+             smooth = 0, main = 'No smoothing', 
+             showLegend = FALSE, osc = FALSE)
 a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = 0, interpolTol = Inf,
-             smooth = 1, main = 'Default smoothing', showLegend = FALSE)
+             smooth = 1, main = 'Default smoothing', 
+             showLegend = FALSE, osc = FALSE)
 par(mfrow = c(1, 1))
 ```
 
@@ -453,12 +457,19 @@ When analyzing a sound, and even when batch-processing an entire folder, it is o
 
 ```{r fig.height = 5, fig.width = 7}
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
+            xlab = 'Time (ms)',
+            main = 'My spectrogram',
+            
             # options for spectrogram(): see ?spectrogram
             contrast = .75,
             brightness = -0.5,
             colorTheme = 'seewave',
             ylim = c(0, 4),
             # + other pars passed to soundgen:::filled.contour.mod()
+            
+            # options for oscillogram
+            osc_dB = TRUE, 
+            heights = c(3, 1),
             
             # options for plotting the final pitch contour (line)
             pitchPlot = list(       

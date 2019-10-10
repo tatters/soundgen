@@ -513,6 +513,7 @@ flatSpectrum = function(x,
                      wn = wn,
                      zp = zp,
                      output = 'complex',
+                     padWithSilence = FALSE,
                      plot = FALSE)
 
   # calculate the width of smoothing window in bins

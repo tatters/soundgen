@@ -173,7 +173,7 @@ server = function(input, output, session) {
     output$spectrogram = renderPlot({
         if (myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
-            par(mar = c(2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
+            par(mar = c(0.2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
                 text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~10 s')
@@ -193,10 +193,12 @@ server = function(input, output, session) {
                     levels = seq(0, 1, length = 30),
                     color.palette = color.palette,
                     xlim = myPars$spec_xlim,
-                    xlab = 'Time, ms', ylab = 'Frequency, kHz',
+                    xaxt = 'n', # xaxs = 'i', xlab = 'Time, ms',
+                    ylab = 'Frequency, kHz',
                     main = '',
                     ylim = c(input$spec_ylim[1], input$spec_ylim[2])
                 )
+                # axis(side = 2)
                 # add manual values to the list of pitch candidates for seamless plotting
                 n = ncol(myPars$pitchCands$freq)
                 # if (length(n>0) == 0 | length(nrow(myPars$manual)>0) == 0) browser()
@@ -232,6 +234,53 @@ server = function(input, output, session) {
             }
         }
     })
+
+    observe({
+        output$oscillogram = renderPlot({
+            if (!is.null(myPars$myAudio_path) & input$osc != 'none') {
+                par(mar = c(2, 2, 0, 2))
+                maxAmpl = max(abs(myPars$myAudio))
+                # to speed up plotting the osc of very long files
+                # convert osc_res [0,1] to smth that varies from 1000'ish to length(myPars$myAudio)
+                l = length(myPars$myAudio)
+                log_len_range = log(c(1000, l))
+                maxLen = exp(log_len_range[1] + input$osc_res * diff(log_len_range))
+                # demo:
+                # osc_res = seq(0, 1, length.out = 100)
+                # log_len_range = log(c(1000, length(myPars$myAudio)))
+                # maxLen = exp(log_len_range[1] + osc_res * diff(log_len_range))
+                # plot(osc_res, maxLen, type = 'p')
+                idx = seq(1, l, length.out = min(l, maxLen))
+                if (input$osc == 'dB') {
+                    sound = osc_dB(myPars$myAudio,
+                                   dynamicRange = input$dynamicRange,
+                                   maxAmpl = maxAmpl,
+                                   plot = FALSE,
+                                   returnWave = TRUE)[idx]
+                    ylim_osc = c(-input$dynamicRange, input$dynamicRange)
+                } else {
+                    sound = myPars$myAudio[idx]
+                    ylim_osc = c(-maxAmpl, maxAmpl)
+                }
+                plot(idx / l * myPars$dur,
+                     sound,
+                     type = 'l',
+                     xlim = myPars$spec_xlim,
+                     ylim = ylim_osc,
+                     axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
+                     xlab = 'Time, ms',
+                     ylab = '')
+                box()
+                axis(side = 1)
+                if (input$osc == 'dB') {
+                    axis(side = 4, at = seq(0, input$dynamicRange, by = 10))
+                    mtext("dB", side = 2, line = 3)
+                }
+                abline(h = 0, lty = 2)
+            }
+        }, height = input$osc_height)
+    })
+
 
     obs_anal = observe({
         # analyze the file (executes every time a slider with arg value is changed)
@@ -715,11 +764,16 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='interpolTol', title = "Tolerated deviance from 'best guess' before adding an interpolated candidate: proportion of best guess frequency", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='interpolCert', title = "Certainty assigned to interpolated pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    # plot
+    # spectrogram
     shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+
+    # oscillogram
+    shinyBS::addTooltip(session, id='osc', title = 'The type of oscillogram to show', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='osc_height', title = 'The height of oscillogram, pixels', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='osc_res', title = '0 = very low (fast), 1 = maximum (slow)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # action buttons
     shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

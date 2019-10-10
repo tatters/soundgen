@@ -40,6 +40,9 @@ blackman, flattop}
 
 \item{normalize}{if TRUE, scales input prior to FFT}
 
+\item{scale}{maximum possible amplitude of input used for normalization of
+input vector (not needed if input is an audio file)}
+
 \item{smoothFreq, smoothTime}{length of the window, in data points (0 to
 +inf), for calculating a rolling median. Applies median smoothing to
 spectrogram in frequency and time domains, respectively}
@@ -98,7 +101,7 @@ or any palette from \code{\link[grDevices]{palette}} such as
 
 \item{grid}{if numeric, adds n = \code{grid} dotted lines per kHz}
 
-\item{frameBank, duration}{ignore (only needed for pitch tracking)}
+\item{frameBank, duration, pitch}{ignore (only used internally)}
 
 \item{...}{other graphical parameters}
 }

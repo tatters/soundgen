@@ -14,6 +14,7 @@ MINOR:
   * ssm(), spectrogram(), modulationSpectrum(), analyze(): standardized specification of "colorTheme"
   * analyze(): more flexible "cutFreq" defaults
   * analyze(): priorPlot deprecated
+  * analyze(): support for plotting both spetrogram & oscillogram (finally!)
 
 
           CHANGES IN SOUNDGEN VERSION 1.5.0 [11-September-2019]

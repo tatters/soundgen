@@ -17,8 +17,6 @@
 #'   not analyzed at all. NB: this number is dynamically updated: the actual
 #'   silence threshold may be higher depending on the quietest frame, but it
 #'   will never be lower than this specified number.
-#' @param scale maximum possible amplitude of input used for normalization of
-#'   input vector (not needed if input is an audio file)
 #' @param SPL_measured sound pressure level at which the sound is presented, dB
 #'   (set to 0 to skip analyzing subjective loudness)
 #' @param cutFreq (2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
