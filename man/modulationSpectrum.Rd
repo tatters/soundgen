@@ -201,6 +201,4 @@ ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
 }
 \seealso{
 \code{\link{modulationSpectrumFolder}} \code{\link{spectrogram}}
-
-\code{\link{spectrogram}} \code{\link{ssm}}
 }

@@ -951,8 +951,7 @@ addFormants = function(sound,
 #' \code{freqWindow_recipient} are crucial parameters that regulate the amount
 #' of spectral smoothing in both sounds. The default is to set them to the
 #' estimated median pitch, but this is time-consuming and error-prone, so set
-#' them to reasonable values manually if possible. See also
-#' \code{\link{flatSpectrum}} and \code{\link{addFormants}}.
+#' them to reasonable values manually if possible.
 #'
 #' Algorithm: makes spectrograms of both sounds, interpolates and smoothes the
 #' donor spectrogram, flattens the recipient spectrogram, multiplies the

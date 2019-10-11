@@ -835,6 +835,7 @@ findVoicedSegments = function(pitchCands,
 #' @param showLegend if TRUE, shows a legend
 #' @param ... other graphical parameters used for creating a new plot if
 #'   addToExistingPlot = FALSE
+#' @keywords internal
 #' @examples
 #' \dontrun{
 #' s = soundgen()
@@ -949,6 +950,7 @@ addPitchCands = function(pitchCands,
 #' @inheritParams pitchSmoothPraat
 #' @param idx_unv which(is.na(pitch))
 #' @return Returns the same numeric vector with NAs filled in by interpolation.
+#' @keywords internal
 #' @examples
 #' soundgen:::intplPitch(c(NA, 405, 441, 460, NA, NA, NA, 480, 490, NA, NA))
 intplPitch = function(pitch, idx_unv = NULL) {

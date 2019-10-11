@@ -44,3 +44,4 @@ addPitchCands(pitchCands = a$pitchCands,
               pitch = a$result$pitch)
 }
 }
+\keyword{internal}

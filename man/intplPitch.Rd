@@ -25,3 +25,4 @@ pitchSmoothPraat().
 \examples{
 soundgen:::intplPitch(c(NA, 405, 441, 460, NA, NA, NA, 480, 490, NA, NA))
 }
+\keyword{internal}

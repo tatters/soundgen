@@ -236,8 +236,6 @@ getRMSFolder = function(myfolder,
 #' experiments, which require that all sounds should have similar intensity or
 #' loudness.
 #'
-#' @seealso \code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
-#'
 #' Algorithm: first all files are rescaled to have the same peak amplitude of
 #' \code{maxAmp} dB. If \code{type = 'peak'}, the process ends here. If
 #' \code{type = 'rms'}, there are two additional steps. First the original RMS
@@ -250,6 +248,9 @@ getRMSFolder = function(myfolder,
 #' loudness of each sound is estimated by \code{\link{getLoudness}}, which
 #' assumes frequency sensitivity typical of human hearing. The following
 #' normalization procedure is similar to that for \code{type = 'rms'}.
+#'
+#' @seealso \code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
+#'
 #' @inheritParams getRMSFolder
 #' @param type normalize so the output files has the same peak amplitude
 #'   ('peak'), root mean square amplitude ('rms'), or subjective loudness in

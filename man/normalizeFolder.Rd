@@ -43,6 +43,20 @@ or RMS amplitude or subjective loudness. This is good for playback
 experiments, which require that all sounds should have similar intensity or
 loudness.
 }
+\details{
+Algorithm: first all files are rescaled to have the same peak amplitude of
+\code{maxAmp} dB. If \code{type = 'peak'}, the process ends here. If
+\code{type = 'rms'}, there are two additional steps. First the original RMS
+amplitude of all files is calculated per frame by \code{\link{getRMS}}. The
+"quietest" sound with the lowest summary RMS value is not modified, so its
+peak amplitude remains \code{maxAmp} dB. All the remaining sounds are
+rescaled linearly, so that their summary RMS values becomes the same as that
+of the "quietest" sound, and their peak amplitudes become smaller,
+\code{<maxAmp}. Finally, if \code{type = 'loudness'}, the subjective
+loudness of each sound is estimated by \code{\link{getLoudness}}, which
+assumes frequency sensitivity typical of human hearing. The following
+normalization procedure is similar to that for \code{type = 'rms'}.
+}
 \examples{
 \dontrun{
 # put a few short audio files in a folder, eg '~/Downloads/temp'
@@ -56,17 +70,4 @@ getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')  # same
 }
 \seealso{
 \code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
-
-Algorithm: first all files are rescaled to have the same peak amplitude of
-\code{maxAmp} dB. If \code{type = 'peak'}, the process ends here. If
-\code{type = 'rms'}, there are two additional steps. First the original RMS
-amplitude of all files is calculated per frame by \code{\link{getRMS}}. The
-"quietest" sound with the lowest summary RMS value is not modified, so its
-peak amplitude remains \code{maxAmp} dB. All the remaining sounds are
-rescaled linearly, so that their summary RMS values becomes the same as that
-of the "quietest" sound, and their peak amplitudes become smaller,
-\code{<maxAmp}. Finally, if \code{type = 'loudness'}, the subjective
-loudness of each sound is estimated by \code{\link{getLoudness}}, which
-assumes frequency sensitivity typical of human hearing. The following
-normalization procedure is similar to that for \code{type = 'rms'}.
 }

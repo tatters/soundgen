@@ -68,7 +68,6 @@
 #' spectrum within \code{roughRange} of temporal modulation frequencies, \%
 #' }
 #' @export
-#' @seealso \code{\link{spectrogram}} \code{\link{ssm}}
 #' @examples
 #' # white noise
 #' ms = modulationSpectrum(runif(16000), samplingRate = 16000,
