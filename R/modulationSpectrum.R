@@ -279,7 +279,8 @@ modulationSpectrum = function(
                      wn = wn,
                      zp = zp,
                      plot = FALSE,
-                     output = 'original')
+                     output = 'original',
+                     padWithSilence = FALSE)
     # image(t(s1))
     # log-transform amplitudes
     if (logSpec) {

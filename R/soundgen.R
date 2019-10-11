@@ -1,4 +1,4 @@
-# TODO: check everything; add @seealso tags in most function descriptions; test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check everything; test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # pitch_app: check what happens with temp.csv on shinyapps.io; load audio + results to double-check old work; maybe prior from sel should affect only current file (?)
 
@@ -245,7 +245,8 @@ NULL
 #'   nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
 #'   pitch = c(559, 785, 557),
 #'   mouth = c(0, 0.5, 0),
-#'   vocalTract = 5, play = playback)
+#'   vocalTract = 5, formants = NULL,
+#'   play = playback, plot = TRUE)
 #'
 #' # Use nonlinRandomWalk to crease reproducible examples of sounds with
 #' nonlinear effects. For ex., to make a sound with no effect in the first

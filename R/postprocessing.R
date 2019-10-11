@@ -559,4 +559,3 @@ flatSpectrum = function(x,
   # spectrogram(sound_new, samplingRate)
   return(sound_new)
 }
-

@@ -9,7 +9,7 @@ NEW FUNCTIONS:
 
 MINOR:
   * soundgen_app(): improved tips
-  * spectrogram(): option to plot frequencies on a logarithmic scale (yScale = 'log')
+  * spectrogram(): option to plot frequencies on a logarithmic scale (yScale = 'log') and specify units (ms/s and Hz/kHz)
   * spectrogram(): option to pad sound with silence so as to analyze the edges (padWithSilence = TRUE)
   * ssm(), spectrogram(), modulationSpectrum(), analyze(): standardized specification of "colorTheme"
   * analyze(): more flexible "cutFreq" defaults

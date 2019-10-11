@@ -327,7 +327,8 @@ sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
   nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
   pitch = c(559, 785, 557),
   mouth = c(0, 0.5, 0),
-  vocalTract = 5, play = playback)
+  vocalTract = 5, formants = NULL,
+  play = playback, plot = TRUE)
 
 # Use nonlinRandomWalk to crease reproducible examples of sounds with
 nonlinear effects. For ex., to make a sound with no effect in the first

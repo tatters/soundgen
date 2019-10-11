@@ -163,7 +163,8 @@
 #' @examples
 #' sound = soundgen(sylLen = 300, pitch = c(900, 400, 2300),
 #'   noise = list(time = c(0, 300), value = c(-40, 0)),
-#'   temperature = 0.001, addSilence = 0)
+#'   temperature = 0.001,
+#'   addSilence = 50)  # NB: always have some silence before and after!!!
 #' # playme(sound, 16000)
 #' a = analyze(sound, samplingRate = 16000, plot = TRUE)
 #'
@@ -179,7 +180,7 @@
 #' sound1 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .9, 1), value = c(300, 900, 400, 2300)),
 #'   noise = list(time = c(0, 300), value = c(-40, 0)),
-#'   temperature = 0.001, addSilence = 0)
+#'   temperature = 0.001)
 #' # improve the quality of postprocessing:
 #' a1 = analyze(sound1, samplingRate = 16000, priorSD = 24,
 #'              plot = TRUE, pathfinding = 'slow')

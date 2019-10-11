@@ -8,12 +8,19 @@
 #' control of contrast and brightness, plotting the oscillogram on a dB scale,
 #' grid, etc.
 #'
-#' @seealso \code{\link{modulationSpectrum}} \code{\link{ssm}} \code{\link{osc_dB}}
+#' Many soundgen functions call \code{spectrogram}, and you can pass along most
+#' of its graphical parameters from functions like \code{\link{soundgen}},
+#' \code{\link{analyze}}, etc. However, in some cases this will not work (eg for
+#' "units") or may produce unexpected results. If in doubt, omit extra graphical
+#' parameters.
+#'
+#' @seealso \code{\link{modulationSpectrum}} \code{\link{ssm}}
+#'   \code{\link{osc_dB}}
 #'
 #' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
-#' @param samplingRate sampling rate of \code{x} (only needed if
-#'   \code{x} is a numeric vector, rather than an audio file)
+#' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
+#'   numeric vector, rather than an audio file)
 #' @param dynamicRange dynamic range, dB. All values more than one dynamicRange
 #'   under maximum are treated as zero
 #' @param windowLength length of FFT window, ms
@@ -28,12 +35,11 @@
 #' @param smoothFreq,smoothTime length of the window, in data points (0 to
 #'   +inf), for calculating a rolling median. Applies median smoothing to
 #'   spectrogram in frequency and time domains, respectively
-#' @param qTime the quantile to be subtracted for each frequency
-#'   bin. For ex., if qTime = 0.5, the median of each frequency
-#'   bin (over the entire sound duration) will be calculated and subtracted from
-#'   each frame (see examples)
-#' @param percentNoise percentage of frames (0 to 100\%) used for calculating noise
-#'   spectrum
+#' @param qTime the quantile to be subtracted for each frequency bin. For ex.,
+#'   if qTime = 0.5, the median of each frequency bin (over the entire sound
+#'   duration) will be calculated and subtracted from each frame (see examples)
+#' @param percentNoise percentage of frames (0 to 100\%) used for calculating
+#'   noise spectrum
 #' @param noiseReduction how much noise to remove (0 to +inf, recommended 0 to
 #'   2). 0 = no noise reduction, 2 = strong noise reduction: \eqn{spectrum -
 #'   (noiseReduction * noiseSpectrum)}, where noiseSpectrum is the average
@@ -57,13 +63,15 @@
 #'   FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 #'   \code{\link{osc_dB}} for details
 #' @param heights a vector of length two specifying the relative height of the
-#'   spectrogram and the oscillogram
+#'   spectrogram and the oscillogram (including time axes labels)
 #' @param padWithSilence if TRUE, pads the sound with just enough silence to
 #'   resolve the edges properly (only the original region is plotted, so
 #'   apparent duration doesn't change)
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
-#'   or any palette from \code{\link[grDevices]{palette}} such as
-#'   'heat.colors', 'cm.colors', etc
+#'   or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
+#'   'cm.colors', etc
+#' @param units c('ms', 'kHz') is the default, and anything else is interpreted
+#'   as s (for time) and Hz (for frequency)
 #' @param xlab,ylab,main,mar graphical parameters
 #' @param grid if numeric, adds n = \code{grid} dotted lines per kHz
 #' @param ... other graphical parameters
@@ -86,12 +94,16 @@
 #'
 #' # add bells and whistles
 #' spectrogram(sound, samplingRate = 16000,
-#'   osc = TRUE, noiseReduction = 1.1,
-#'   brightness = -1, colorTheme = 'heat.colors',
-#'   ylim = c(0, 5), cex.lab = .75,
-#'   main = 'My spectrogram',
-#'   yaxp = c(0, 5, 10),  # tip: for base graphics, see ?par
-#'   grid = 5  # tip: to customize, add manually with graphics::grid()
+#'   osc = TRUE,  # plot oscillogram under the spectrogram
+#'   noiseReduction = 1.1,  # subtract the spectrum of noisy parts
+#'   brightness = -1,  # reduce brightness
+#'   colorTheme = 'heat.colors',  # pick color theme
+#'   cex.lab = .75, cex.axis = .75,  # text size and other base graphics pars
+#'   grid = 5,  # lines per kHz; to customize, add manually with graphics::grid()
+#'   units = c('s', 'Hz'),  # plot in s or ms, Hz or kHz
+#'   ylim = c(0, 5000),  # in specified units (Hz)
+#'   main = 'My spectrogram' # title
+#'   # + axis labels, etc
 #' )
 #'
 #' \dontrun{
@@ -127,6 +139,10 @@
 #'
 #' # increase contrast, reduce brightness
 #' spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
+#'
+#' # specify location of tick marks etc - see ?par() for base graphics
+#' spectrogram(sound, samplingRate = 16000,
+#'             ylim = c(0, 3), yaxp = c(0, 3, 5), xaxp = c(0, 1400, 4))
 #' }
 spectrogram = function(
   x,
@@ -156,8 +172,9 @@ spectrogram = function(
   heights = c(3, 1),
   padWithSilence = TRUE,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
-  xlab = 'Time, ms',
-  ylab = 'Frequency, kHz',
+  units = c('ms', 'kHz'),
+  xlab = paste('Time,', units[1]),
+  ylab = paste('Frequency,', units[2]),
   mar = c(5.1, 4.1, 4.1, 2),
   main = '',
   grid = NULL,
@@ -247,7 +264,11 @@ spectrogram = function(
 
   # fix default settings
   if (is.null(ylim)) {
-    ylim = c(0, samplingRate / 2 / 1000)
+    if (units[2] == 'kHz') {
+      ylim = c(0, samplingRate / 2 / 1000)
+    } else {
+      ylim = c(0, samplingRate / 2)
+    }
   }
   contrast_exp = exp(3 * contrast)
   brightness_exp = exp(3 * brightness)
@@ -373,18 +394,23 @@ spectrogram = function(
       }
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
       par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
+      if (units[1] == 'ms') {
+        time_stamps = seq(0, duration * 1000, length.out = length(sound))
+      } else {
+        time_stamps = seq(0, duration, length.out = length(sound))
+      }
       plot(
-        seq(0, duration * 1000, length.out = length(sound)),
+        time_stamps,
         sound,
         type = "l",
         ylim = ylim_osc,
         axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
         xlab = xlab, ylab = '', main = '', ...)
       box()
-      axis(side = 1)
+      axis(side = 1, ...)
       if (osc_dB) {
-        axis(side = 4, at = seq(0, dynamicRange, by = 10))
-        mtext("dB", side = 2, line = 3)
+        axis(side = 4, at = seq(0, dynamicRange, by = 10), ...)
+        mtext("dB", side = 2, line = 3, ...)
       }
       abline(h = 0, lty = 2)
       par(mar = c(0, mar[2:4]), xaxt = 'n', yaxt = 's')
@@ -393,21 +419,33 @@ spectrogram = function(
       par(mar = mar)
     }
 
-    if (yScale == 'log' & ylim[1] < .01)  ylim[1] = .01
+    min_log_freq = ifelse(units[2] == 'kHz', .01, 10)
+    if (yScale == 'log' & ylim[1] < min_log_freq)  ylim[1] = min_log_freq
+    if (units[1] == 'ms') {
+      xlim = c(0, duration * 1000)
+    } else {
+      X = X / 1000
+      xlim = c(0, duration)
+    }
+    if (units[2] != 'kHz') Y = Y * 1000
     filled.contour.mod(
       x = X, y = Y, z = Z1,
       levels = seq(0, 1, length = 30),
       color.palette = color.palette,
       ylim = ylim, main = main,
       xlab = xlab, ylab = ylab,
-      xlim = c(0, duration * 1000),
+      xlim = xlim,
       log = ifelse(yScale == 'log', 'y', ''),
       ...
     )
     if (is.numeric(grid)) {
       n_grid_per_kHz = diff(range(ylim)) * grid
+      if (units[2] != 'kHz') n_grid_per_kHz = n_grid_per_kHz / 1000
       grid(nx = n_grid_per_kHz, ny = n_grid_per_kHz,
            col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3)
+      # grid(nx = NULL, ny = NULL,
+      #      col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3,
+      #      equilogs = TRUE)
     }
     if (!is.null(pitch)) {
       do.call(addPitchCands, pitch)
@@ -596,14 +634,14 @@ getFrameBank = function(sound,
 
   if (padWithSilence) {
     # pad with silence to make sure edges are properly analyzed
-    sound = c(rep(0, step_points),
+    sound = c(rep(0, windowLength_points / 2),
               sound,
               rep(0, (windowLength_points + step_points)))
   }
   myseq = seq(1, max(1, (length(sound) - windowLength_points)),
               by = step_points)
   if (padWithSilence) {
-    time_stamps = (myseq - 1 + windowLength_points / 2 - step_points) *
+    time_stamps = (myseq - 1) *
       1000 / samplingRate
   } else {
     time_stamps = (myseq - 1 + windowLength_points / 2) *

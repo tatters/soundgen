@@ -44,8 +44,8 @@ FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 \item{height}{parameters passed to
 \code{\link[grDevices]{png}} if the plot is saved}
 
-\item{units}{parameters passed to
-\code{\link[grDevices]{png}} if the plot is saved}
+\item{units}{c('ms', 'kHz') is the default, and anything else is interpreted
+as s (for time) and Hz (for frequency)}
 
 \item{res}{parameters passed to
 \code{\link[grDevices]{png}} if the plot is saved}

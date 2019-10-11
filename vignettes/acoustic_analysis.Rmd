@@ -16,7 +16,7 @@ vignette: >
   
 # Purpose
   
-There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat <a href="http://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is Sound Analysis Pro. In R, the most extensive acoustic toolkit by far is the <a href="https://CRAN.R-project.org/package=seewave">seewave</a> package. Soundgen builds upon the functionality of seewave, adding high-level functions for sound synthesis (see the vignette on sound synthesis) and acoustic analysis, particularly pitch tracking and audio segmentation.
+There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat <a href="http://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is Sound Analysis Pro. In R, the most extensive acoustic toolkit by far is the <a href="https://CRAN.R-project.org/package=seewave">seewave</a> package. Soundgen builds upon the functionality of seewave, adding high-level functions for sound synthesis (see the vignette on sound synthesis), manipulation, and analysis.
   
 Reasons to use `soundgen` for acoustic analysis might be: 
   
@@ -373,43 +373,43 @@ The next few blocks of postprocessing are performed by an internal function, `so
 ### Interpolation
 To make sure we have at least one pitch candidate for every frame in the supposedly continuous voiced fragment, we interpolate to fill in any missing values. The same algorithm also adds new pitch candidates with certainty `interpolCert` if a frame has no pitch candidates within `interpolTol` of the median of the "center of gravity" estimate over plus-minus `interpolWin` frames. The frequency of new candidates is equal to this median. For example, if `interpolTol = 0.05`, new candidates are calculated if there are none within 0.95 to 1.05 times the median over the interpolation window. You can also enable interpolation to fill in unvoiced frames, but without adding new pitch candidates in voiced frames. To do so, set `interpolTol = Inf`.
 
-As an illustration, compare the output of the following two commands:
+Here is an example (interpolated segments are shown with a dotted line)
+
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
-par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', cepThres = .4, step = 25,
              snakeStep = 0, smooth = 0,
              interpolWin = 0,   # disable interpolation
              pathfinding = 'none',  
-             main = 'No interpolation', showLegend = FALSE, osc = FALSE)
-a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
+             summary = FALSE,
+             plot = FALSE)
+a2 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', cepThres = .4, step = 25,
              pathfinding = 'none',
              snakeStep = 0, smooth = 0, 
-             main = 'Interpolation', showLegend = FALSE, osc = FALSE)  
+             summary = FALSE,
+             plot = FALSE)  
+plot(a1$time, a1$pitch, type = 'l', xlab = 'Time, ms', ylab = 'Pitch, Hz')
+points(a2$time, a2$pitch, type = 'l', col = 'red', lty = 3)
 
-par(mfrow = c(1, 1))
 ```
-
 
 ### Pathfinding
 The next step after interpolation is pathfinding proper - searching for the optimal path through pitch candidates. If `pathfinding = "none"`, this step is skipped, so we just continue working with the path that lies as close as possible to the (possibly interpolated) center of gravity of pitch candidates. If `pathfinding = "fast"` (the default option), a simple heuristic is employed, in which we walk down the path twice, first left to right and then right to left, trying to minimize the cost measured as a weighted mean of the distance from the center of gravity and the deviation from a smooth contour. The key setting is `certWeight`, which specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps / the internal tension of the resulting pitch curve. Low `certWeight` (close to 0): we are mostly concerned with avoiding rapid pitch fluctuations in our contour. High `certWeight` (close to 1): we mostly pay attention to our certainty in particular pitch candidates. The example below is intended as an illustration of how pathfinding works, so all other types of smoothing are disabled, forcing the final pitch contour to pass strictly through existing candidates.
 
-```{r fig.show = "hold", fig.height = 3, fig.width = 7}
-par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
+```{r fig.show = "hold", fig.height = 6, fig.width = 7}
+a1 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = 0, smooth = 0, interpolTol = Inf,
              certWeight = 0,  # minimize pitch jumps
              main = 'Minimize jumps', 
-             showLegend = FALSE, osc = FALSE)  
-a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
+             showLegend = FALSE, osc = FALSE, ylim = c(0, 3))  
+a2 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', cepThres = .15, nCands = 3,
              snakeStep = 0, smooth = 0, interpolTol = Inf,
              certWeight = 1,  # minimize deviation from high-certainty candidates
              main = 'Pass through top cand-s', 
-             showLegend = FALSE, osc = FALSE)  
-par(mfrow = c(1, 1))
+             showLegend = FALSE, osc = FALSE, ylim = c(0, 3))
 ```
 
 The final option is `pathfinding = 'slow'`, which calls `stats::optim(method = 'SANN')` to perform simulated annealing. This is a more powerful algorithm than the simple heuristic in `pathfinding = 'fast'`, but it is called "slow" for a good reason. In case you have plenty of time, it does improve the results, but note that this algorithm is stochastic, so each run may produce different results. Use an additional argument, `annealPars`, to control the algorithm. See `?stats::optim` for more details. 
@@ -436,18 +436,18 @@ If `smooth` is a positive number, contours of the variables in `smoothVars` are 
 This smoothing can be applied to any measured value, not only the final pitch contour. The default is `smoothVars = c('pitch', 'dom')`. To turn off the median smoothing, set `smooth = 0` or `smoothVars = NULL`.
 
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
-par(mfrow = c(1, 2))
-a1 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
+a1 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = 0, interpolTol = Inf,
-             smooth = 0, main = 'No smoothing', 
-             showLegend = FALSE, osc = FALSE)
-a2 = analyze(s1, samplingRate = 16000, plotSpec = FALSE, priorMean = NA,
+             smooth = 0,  # no smoothing
+             summary = FALSE, plot = FALSE)
+a2 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              pathfinding = 'none', snakeStep = 0, interpolTol = Inf,
-             smooth = 1, main = 'Default smoothing', 
-             showLegend = FALSE, osc = FALSE)
-par(mfrow = c(1, 1))
+             smooth = 1,  # default smoothing
+             summary = FALSE, plot = FALSE)
+plot(a1$time, a1$pitch, type = 'l', xlab = 'Time, ms', ylab = 'Pitch, Hz')
+points(a2$time, a2$pitch, type = 'l', col = 'red', lty = 3, lwd = 2)
 ```
 
 *TIP Pathfinding ("slow", "fast" or "none") is the only postprocessing module that does not deviate from pitch candidates actually returned by pitch tracking algorithms. Interpolation, snake, and median smoothing produce new pitch values per frame, which may be quite different from any actual candidates*
