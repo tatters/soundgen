@@ -1271,7 +1271,7 @@ server = function(input, output, session) {
       # this is the new sound file. NB: has to be saved in www/ !!!
       seewave::savewav(myPars$sound, f = input$samplingRate,
                        filename = paste0('www/', myPars$myfile))
-      output$myAudio = renderUI(
+      output$htmlAudio = renderUI(
         tags$audio(src = myPars$myfile, type = "audio/wav", autoplay = NA, controls = NA)
       )
     })
