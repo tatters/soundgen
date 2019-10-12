@@ -697,7 +697,7 @@ filled.contour.mod = function(
   zlim = range(z, finite = TRUE),
   levels = pretty(zlim, nlevels),
   nlevels = 30,
-  color.palette = function(n) hcl.colors(n, "YlOrRd", rev = TRUE),
+  color.palette = function(n) grDevices::hcl.colors(n, "YlOrRd", rev = TRUE),
   col = color.palette(length(levels) - 1),
   asp = NA,
   xaxs = "i",

@@ -7,10 +7,10 @@
 filled.contour.mod(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len =
   ncol(z)), z, xlim = range(x, finite = TRUE), ylim = range(y, finite =
   TRUE), zlim = range(z, finite = TRUE), levels = pretty(zlim,
-  nlevels), nlevels = 30, color.palette = function(n) hcl.colors(n,
-  "YlOrRd", rev = TRUE), col = color.palette(length(levels) - 1),
-  asp = NA, xaxs = "i", yaxs = "i", log = "", axisX = TRUE,
-  axisY = TRUE, ...)
+  nlevels), nlevels = 30, color.palette = function(n)
+  grDevices::hcl.colors(n, "YlOrRd", rev = TRUE),
+  col = color.palette(length(levels) - 1), asp = NA, xaxs = "i",
+  yaxs = "i", log = "", axisX = TRUE, axisY = TRUE, ...)
 }
 \arguments{
 \item{x, y}{locations of grid lines}
