@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.5.1 [...date...]
+          CHANGES IN SOUNDGEN VERSION 1.5.1 [12-October-2019]
 BUGS FIXED:
   * pitch_app() runs locally, new layout, multiple new features, integrated with analyze()
   * analyze() and pitch_app(): improved accuracy of autocorrelation-based pitch tracking at high frequencies
@@ -10,10 +10,10 @@ NEW FUNCTIONS:
 MINOR:
   * soundgen_app(): improved tips
   * spectrogram(): option to plot frequencies on a logarithmic scale (yScale = 'log') and specify units (ms/s and Hz/kHz)
-  * spectrogram(): option to pad sound with silence so as to analyze the edges (padWithSilence = TRUE)
+  * spectrogram(): by default pads sounds with silence so as to analyze the edges (padWithSilence = TRUE)
   * ssm(), spectrogram(), modulationSpectrum(), analyze(): standardized specification of "colorTheme"
   * analyze(): more flexible "cutFreq" defaults
-  * analyze(): priorPlot deprecated
+  * analyze(): priorPlot and plotSpec deprecated
   * analyze(): support for plotting both spetrogram & oscillogram (finally!)
 
 
