@@ -753,12 +753,12 @@ updateAnalyze = function(result,
   if (!is.null(spectrogram)) {
     # Re-calculate the % of energy in harmonics based on the manual pitch estimates
     threshold = 1.25 * result$pitch / 1000
-    result$harmonics = apply(matrix(1:ncol(spectrogram)), 1, function(x) {
+    result$harmonics = to_dB(apply(matrix(1:ncol(spectrogram)), 1, function(x) {
       ifelse(is.na(threshold[x]),
              NA,
              sum(spectrogram[as.numeric(rownames(spectrogram)) > threshold[x], x]) /
                sum(spectrogram[, x]))
-    })
+    }))
   }
   result = result[, c(1:3, 3 + order(colnames(result)[4:ncol(result)]))]
   return(result)

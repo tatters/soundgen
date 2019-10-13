@@ -79,6 +79,11 @@ ui = fluidPage(
                        ),
 
                        navbarMenu("Out",
+                                  tabPanel("Output",
+                                           checkboxGroupInput('summaryFun', label = 'Summary function', choiceValues = c('mean', 'sd', 'median', 'min', 'max'), choiceNames = c('Mean', 'SD', 'Median', 'Min', 'Max'), selected = c('mean', 'sd')),
+                                           textInput('summaryFun_text', label = 'Manual summary function', value = '', placeholder = 'function(x) diff(range(x, na.rm = TRUE))')
+                                  ),
+
                                   tabPanel("Path",
                                            selectInput('pathfinding', 'Pathfinding method', choices = c('none', 'fast', 'slow'), selected = 'fast', multiple = FALSE),
                                            sliderInput('certWeight', 'Certainty weight', value=defaults_analyze['certWeight', 'default'], min=defaults_analyze['certWeight', 'low'], max=defaults_analyze['certWeight', 'high'], step=defaults_analyze['certWeight', 'step']),

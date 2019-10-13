@@ -281,6 +281,14 @@ server = function(input, output, session) {
         }, height = input$osc_height)
     })
 
+    observe({
+        if (input$summaryFun_text != '') {
+            myPars$summaryFun = input$summaryFun_text
+        } else {
+            myPars$summaryFun = input$summaryFun
+        }
+        print(myPars$summaryFun)
+    })
 
     obs_anal = observe({
         # analyze the file (executes every time a slider with arg value is changed)
@@ -647,7 +655,7 @@ server = function(input, output, session) {
             )
             summary_new = soundgen:::summarizeAnalyze(
                 result_new,
-                summaryFun = c('mean', 'sd'))
+                summaryFun = isolate(myPars$summaryFun),)
             new = cbind(new$file,
                         summary_new,
                         new[, c('time', 'pitch')])
@@ -753,6 +761,8 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='specSinglePeakCert', title = 'If pitch is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its certainty is taken to be specSinglePeakCert', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # pathfinder
+    shinyBS::addTooltip(session, id='summaryFun', title = "The function(s) used to summarize output", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='summaryFun_text', title = "If specified, overrides the options above. For short column names, define and name your function in R prior to starting pitch_app", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='pathfinding', title = "Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing (initial analysis only)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='certWeight', title = 'Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='shortestSyl', title = 'Shorter voiced segments (ms) will be treated as voiceless or merged with longer segments', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
