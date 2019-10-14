@@ -9,8 +9,8 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   SPL_measured = 70, Pref = 2e-05, windowLength = 50, step = NULL,
   overlap = 50, wn = "gaussian", zp = 0, cutFreq = 6000,
   nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
-  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
-  priorMean = 300, priorSD = 6, priorPlot = FALSE, nCands = 1,
+  pitchManual = NULL, entropyThres = 0.6, pitchFloor = 75,
+  pitchCeiling = 3500, priorMean = 300, priorSD = 6, nCands = 1,
   minVoicedCands = NULL, domThres = 0.1, domSmooth = 220,
   autocorThres = 0.7, autocorSmooth = NULL, cepThres = 0.3,
   cepSmooth = NULL, cepZp = 0, specThres = 0.3, specPeak = 0.35,
@@ -22,10 +22,10 @@ analyzeFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
   snakePlot = FALSE, smooth = 1, smoothVars = c("pitch", "dom"),
   summary = TRUE, summaryFun = c("mean", "median", "sd"),
   plot = FALSE, showLegend = TRUE, savePlots = FALSE,
-  plotSpec = "deprecated", pitchPlot = list(col = rgb(0, 0, 1, 0.75),
-  lwd = 3), candPlot = list(levels = c("autocor", "spec", "dom", "cep"),
-  col = c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex =
-  2), ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
+  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
+  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2),
+  ylim = NULL, xlab = "Time, ms", ylab = "kHz", main = NULL,
   width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
@@ -77,6 +77,11 @@ pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 NULL = no pitch analysis)}
 
+\item{pitchManual}{normally the output of \code{\link{pitch_app}} with the
+same windowLength and step as current call to analyzeFolder, with manually
+corrected pitch contours: a dataframe with at least two columns: "file"
+(w/o path, with extension) and "pitch" (character like "NA, 150, 175, NA")}
+
 \item{entropyThres}{pitch tracking is not performed for frames with Weiner
 entropy above \code{entropyThres}, but other spectral descriptives are
 still calculated}
@@ -96,9 +101,6 @@ an octave)}
 most likely pitch values for this file. For ex., \code{priorMean = 300,
 priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
-
-\item{priorPlot}{deprecated; use \code{\link{getPrior}} to visualize the
-prior}
 
 \item{nCands}{maximum number of pitch candidates per method (except for
 \code{dom}, which returns at most one candidate per frame), normally 1...4}
@@ -219,8 +221,6 @@ acoustic characteristic}
 
 \item{savePlots}{if TRUE, saves plots as .png files}
 
-\item{plotSpec}{deprecated}
-
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{NULL} or \code{NA} to suppress}
 
@@ -263,20 +263,33 @@ and vignette('acoustic_analysis', package = 'soundgen') for further details.
 # http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/260sounds_wav.zip
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
-s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 15-30 minutes!
+s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 10-20 minutes!
+# s = write.csv(s, paste0(myfolder, '/temp.csv'))  # save a backup
 
-# Save spectrograms with pitch contours plus an html file for easy access
-a = analyzeFolder('~/Downloads/temp', savePlots = TRUE,
+# Check accuracy: import manually verified pitch values (our "key")
+# ?pitchManual   # "ground truth" of mean pitch per sound
+# ?pitchContour  # "ground truth" of complete pitch contours per sound
+files_manual = paste0(names(pitchManual), '.wav')
+idx = match(s$sound, files_manual)  # in case the order is wrong
+s$key = pitchManual[idx]
+
+# Compare manually verified mean pitch with the output of analyzeFolder:
+cor(s$key, s$pitch_median, use = 'pairwise.complete.obs')
+plot(s$key, s$pitch_median, log = 'xy')
+abline(a=0, b=1, col='red')
+
+# Re-running analyzeFolder with manually corrected contours gives correct
+pitch-related descriptives like amplVoiced and harmonics (NB: you get it "for
+free" when running pitch_app)
+s1 = analyzeFolder(myfolder, verbose = TRUE, pitchManual = s$key)
+plot(s$harmonics_median, s1$harmonics_median)
+abline(a=0, b=1, col='red')
+
+# Save spectrograms with pitch contours plus an html file for easy access # CHECK IF PITCHMANUAL PLOTTED CORRECTLY!
+s2 = analyzeFolder('~/Downloads/temp', savePlots = TRUE,
   showLegend = TRUE,
   width = 20, height = 12,
   units = 'cm', res = 300)
-
-# Check accuracy: import manually verified pitch values (our "key")
-key = pitchManual  # a vector of 260 floats
-trial = s$pitch_median
-cor(key, trial, use = 'pairwise.complete.obs')
-plot(log(key), log(trial))
-abline(a=0, b=1, col='red')
 }
 }
 \seealso{

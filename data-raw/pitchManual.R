@@ -1,27 +1,13 @@
-# A vector of manually estimated (based on checking pitch contours) pitch per file in the corpus of 260 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/personal/results/01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/01_anikin-persson_2016_naturalistic-non-linguistic-vocalizations.html
-# pm = read.csv('/home/allgoodguys/Documents/Studying/Lund_PhD/epistles/004_real-fake/analysis/all_sep2016.csv')
-# pitchManual = round(pm$pitch_manually[which(pm$in260 == TRUE)])
-# paste(pitchManual, collapse = ', ')
-pitchManual = c(447, 695, 2800, 610, 331, 631, 399, 1000, 393, 1170, 2214,
-                400, 778, 322, 1100, 1231, 1222, 576, 364, 284, 413, 415,
-                619, 156, 180, 125, 151, 345, 341, 190, 255, 320, 416, 560,
-                369, 258, 209, 245, 390, 165, 317, 112, 340, 353, 131, 167,
-                178, 115, 156, 226, 302, 180, 300, 300, 316, 363, 349, 400,
-                320, 420, 273, 444, 538, 654, 550, 746, 294, 300, 324, 369,
-                229, 447, 374, 237, 566, 300, 507, 220, 360, 304, 509, 385,
-                548, 680, 135, 430, 1194, 1000, 1443, 450, 1175, 1303, 983,
-                1771, 1220, 1900, 1304, 2345, 1908, 1521, 1015, 428, 267,
-                961, 380, 1249, 315, 1281, 415, 1000, 1872, 494, 513, 917,
-                374, 794, 211, 514, 500, 394, 368, 727, 400, 159, 677, 240,
-                199, 377, 662, 882, 446, 770, 382, 260, 585, 323, 370, 250,
-                247, 280, 1586, 897, 469, 896, 797, 670, 1712, 700, 579, 811,
-                471, 659, 1197, 768, 471, 369, 334, 418, 1210, 473, 371, 360,
-                285, 410, 1250, 254, 857, 581, 540, 347, 288, 448, 262, 253,
-                1078, 353, 852, 911, 720, 834, 640, 1813, 1231, 826, 923, 787,
-                720, 185, 1323, 682, 494, 806, 940, 864, 910, 306, 169, 640,
-                249, 362, 800, 663, 360, 282, 271, 312, 200, 538, 960, 442, 435,
-                264, 726, 349, 362, 533, 520, 427, 640, 262, 414, 222, 478, 395,
-                512, 369, 498, 478, 558, 406, 346, 457, 266, 530, 474, 166, 208,
-                135, 137, 190, 300, 150, 198, 157, 170, 265, 223, 293, 760, 722,
-                454, 400, 460, 1213, 421, 650, 1120, 433, 1837, 1314)
-# devtools::use_data(pitchManual, overwrite = TRUE)
+# A vector of manually estimated (based on checking pitch contours) pitch per file in the corpus of 260 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/260sounds_wav.zip
+# df = read.csv('/home/allgoodguys/Documents/Studying/Lund_PhD/sounds_corpora/ut_oct2019.csv', stringsAsFactors = FALSE)
+# df = df[df$in260 == TRUE & !is.na(df$in260), ]
+# pitchContour = df[, c('file', 'pitch')]
+# pitchContour$file = substr(pitchContour$file, 5, nchar(pitchContour$file))
+# pitchManual = vector('numeric', length = nrow(pitchContour))
+# for (i in 1:nrow(pitchContour)) {
+#   pm = as.numeric(unlist(strsplit(pitchContour$pitch[i], ',')))
+#   pitchManual[i] = mean(pm, na.rm = TRUE)
+# }
+# names(pitchManual) = pitchContour$file
+usethis::use_data(pitchManual, overwrite = TRUE)
+usethis::use_data(pitchContour, overwrite = TRUE)

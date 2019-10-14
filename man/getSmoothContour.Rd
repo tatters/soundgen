@@ -9,7 +9,8 @@ getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
   interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
   jumpThres = 0.01, valueFloor = NULL, valueCeiling = NULL,
   plot = FALSE, main = "", xlim = NULL, ylim = NULL,
-  samplingRate = 16000, voiced = NULL, contourLabel = NULL, ...)
+  samplingRate = 16000, voiced = NULL, contourLabel = NULL,
+  NA_to_zero = TRUE, ...)
 }
 \arguments{
 \item{anchors}{a numeric vector of values or a list/dataframe with one column
@@ -54,6 +55,8 @@ adding pitch jumps)}
 
 \item{voiced, contourLabel}{graphical pars for plotting breathing contours
 (see examples below)}
+
+\item{NA_to_zero}{if TRUE, all NAs are replaced with zero}
 
 \item{...}{other plotting options passed to \code{plot()}}
 }

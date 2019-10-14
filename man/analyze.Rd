@@ -9,18 +9,18 @@ analyze(x, samplingRate = NULL, dynamicRange = 80, silence = 0.04,
   step = NULL, overlap = 50, wn = "gaussian", zp = 0,
   cutFreq = min(samplingRate/2, max(7000, pitchCeiling * 2)),
   nFormants = 3, pitchMethods = c("autocor", "spec", "dom"),
-  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
-  priorMean = 300, priorSD = 6, priorPlot = "deprecated",
-  nCands = 1, minVoicedCands = NULL, domThres = 0.1,
-  domSmooth = 220, autocorThres = 0.7, autocorSmooth = NULL,
-  cepThres = 0.3, cepSmooth = 400, cepZp = 0, specThres = 0.3,
-  specPeak = 0.35, specSinglePeakCert = 0.4, specHNRslope = 0.8,
-  specSmooth = 150, specMerge = 1, shortestSyl = 20,
-  shortestPause = 60, interpolWin = 75, interpolTol = 0.3,
-  interpolCert = 0.3, pathfinding = c("none", "fast", "slow")[2],
-  annealPars = list(maxit = 5000, temp = 1000), certWeight = 0.5,
-  snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
-  smoothVars = c("pitch", "dom"), summary = FALSE,
+  pitchManual = NULL, entropyThres = 0.6, pitchFloor = 75,
+  pitchCeiling = 3500, priorMean = 300, priorSD = 6,
+  priorPlot = "deprecated", nCands = 1, minVoicedCands = NULL,
+  domThres = 0.1, domSmooth = 220, autocorThres = 0.7,
+  autocorSmooth = NULL, cepThres = 0.3, cepSmooth = 400, cepZp = 0,
+  specThres = 0.3, specPeak = 0.35, specSinglePeakCert = 0.4,
+  specHNRslope = 0.8, specSmooth = 150, specMerge = 1,
+  shortestSyl = 20, shortestPause = 60, interpolWin = 75,
+  interpolTol = 0.3, interpolCert = 0.3, pathfinding = c("none",
+  "fast", "slow")[2], annealPars = list(maxit = 5000, temp = 1000),
+  certWeight = 0.5, snakeStep = 0.05, snakePlot = FALSE,
+  smooth = 1, smoothVars = c("pitch", "dom"), summary = FALSE,
   summaryFun = c("mean", "median", "sd"), plot = TRUE,
   showLegend = TRUE, savePath = NA, plotSpec = "deprecated",
   osc = TRUE, osc_dB = FALSE, pitchPlot = list(col = rgb(0, 0, 1,
@@ -76,6 +76,10 @@ settings}
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 NULL = no pitch analysis)}
+
+\item{pitchManual}{manually corrected pitch contour - a numeric vector of any
+length, but ideally as returned by \code{\link{pitch_app}} with the same
+windowLength and step as in current call to analyze}
 
 \item{entropyThres}{pitch tracking is not performed for frames with Weiner
 entropy above \code{entropyThres}, but other spectral descriptives are
