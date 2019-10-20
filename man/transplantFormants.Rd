@@ -62,16 +62,26 @@ playme(donor, samplingRate)
 spectrogram(donor, samplingRate, osc = TRUE)
 seewave::meanspec(donor, f = samplingRate, dB = 'max0')
 
+recipient = soundgen(sylLen = 1200,
+                     pitch = c(100, 300, 250, 200),
+                     vibratoFreq = 9, vibratoDep = 1,
+                     addSilence = 180,
+                     samplingRate = samplingRate)
+playme(recipient, samplingRate)
+spectrogram(recipient, samplingRate, osc = TRUE)
+
 s1 = transplantFormants(
   donor = donor,
-  recipient = soundgen(sylLen = 1200,
-                       pitch = c(100, 300, 250, 200),
-                       vibratoFreq = 9, vibratoDep = 1,
-                       samplingRate = samplingRate),
+  recipient = recipient,
   samplingRate = samplingRate)
 playme(s1, samplingRate)
 spectrogram(s1, samplingRate, osc = TRUE)
 seewave::meanspec(s1, f = samplingRate, dB = 'max0')
+
+# if needed, transplant amplitude envelopes as well:
+s2 = seewave::setenv(s1, donor, f = samplingRate)[, 1]
+playme(s2, samplingRate)
+spectrogram(s2, samplingRate, osc = TRUE)
 
 s2 = transplantFormants(
   donor = donor,

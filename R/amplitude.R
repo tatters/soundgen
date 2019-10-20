@@ -1,3 +1,126 @@
+#' Get amplitude envelope
+#'
+#' Internal soundgen function
+#'
+#' Returns the smoothed amplitude envelope of a waveform on the original scale.
+#' @inheritParams flatEnv
+#' @param method 'peak' for peak amplitude per window, 'rms' for root mean
+#'   square amplitude, 'mean' for mean (for DC offset removal), 'hil' for
+#'   Hilbert
+#' @keywords internal
+#' @examples
+#' a = rnorm(500) * seq(1, 0, length.out = 500)
+#' windowLength_points = 50
+#' plot(a, type = 'l')
+#' points(soundgen:::getEnv(a, windowLength_points, 'rms'),
+#'        type = 'l', col = 'red')
+#' points(soundgen:::getEnv(a, windowLength_points, 'peak'),
+#'        type = 'l', col = 'green')
+#' points(soundgen:::getEnv(a, windowLength_points, 'hil'),
+#'        type = 'l', col = 'blue')
+#' points(soundgen:::getEnv(a, windowLength_points, 'mean'),
+#'        type = 'l', lty = 3, lwd = 3)
+getEnv = function(sound,
+                  windowLength_points,
+                  method = c('rms', 'peak', 'mean', 'hil')[1]) {
+  len = length(sound)
+  if (method == 'peak') sound_abs = abs(sound)  # avoid repeated calculations
+
+  if (windowLength_points >= len / 2) {
+    # short sound relative to window - just take beginning and end (2 points)
+    s = c(1, len)
+  } else {
+    s = c(1,
+          seq(from = floor(windowLength_points / 2),
+              to = length(sound) - floor(windowLength_points / 2),
+              by = windowLength_points),
+          length(sound))
+  }
+  # s is a sequence of starting indices for windows over which we average
+  envShort = rep(NA, length(s) - 1)
+  for (i in 1:(length(s) - 1)) {
+    seg = s[i] : s[i+1]
+    if (method == 'peak') {
+      # get moving peak amplitude
+      envShort[i] = max(sound_abs[seg])
+    } else if (method == 'rms') {
+      # get moving RMS amplitude
+      envShort[i] = sqrt(mean(sound[seg] ^ 2))
+    } else if (method == 'mean') {
+      envShort[i] = mean(sound[seg])
+    } else if (method == 'hil') {
+      envShort[i] = mean(Mod(seewave::hilbert(sound[seg],
+                                              f = 1,  # not actually needed
+                                              fftw = FALSE)))
+    }
+  }
+
+  # upsample and smooth
+  env = getSmoothContour(
+    anchors = data.frame(time = seq(0, 1, length.out = length(envShort)),
+                         value = envShort),
+    len = length(sound)
+  )
+  return(env)
+}
+
+
+#' Kill DC
+#'
+#' Removes DC offset or similar disbalance in a waveform dynamically, by
+#' subtracting a smoothed ~moving average. Simplified compared to a true moving
+#' average, but very fast (a few ms per second of 44100 audio).
+#' @inheritParams flatEnv
+#' @param plot if TRUE, plots the original sound, smoothed moving average, and
+#'   modified sound
+#' @keywords internal
+#' @examples
+#' # remove static DC offset
+#' a = rnorm(500) + .3
+#' b = soundgen:::killDC(a, windowLength_points = 500, plot = TRUE)
+#'
+#' # remove trend
+#' a = rnorm(500) + seq(0, 1, length.out = 500)
+#' b = soundgen:::killDC(a, windowLength_points = 100, plot = TRUE)
+#'
+#' # can also be used as a high-pass filter
+#' a = rnorm(500) + sin(1:500 / 50)
+#' b = soundgen:::killDC(a, windowLength_points = 25, plot = TRUE)
+killDC = function(sound,
+                  windowLength = 200,
+                  samplingRate = 16000,
+                  windowLength_points = NULL,
+                  plot = FALSE) {
+  if (!is.numeric(windowLength_points)) {
+    if (is.numeric(windowLength)) {
+      if (is.numeric(samplingRate)) {
+        windowLength_points = windowLength / 1000 * samplingRate
+      } else {
+        stop(paste('Please, specify either windowLength (ms) plus samplingRate (Hz)',
+                   'or the length of smoothing window in points (windowLength_points)'))
+      }
+    }
+  }
+
+  env = getEnv(sound = sound,
+               windowLength_points = windowLength_points,
+               method = 'mean')
+  soundNorm = sound - env
+
+  if (plot) {
+    op = par('mfrow')
+    par(mfrow = c(1, 2))
+    plot(sound, type = 'l', main = 'Original')
+    points(env, type = 'l', lty = 1, col = 'blue')
+    points(rep(0, length(sound)), type = 'l', lty = 2)
+    plot(soundNorm, type = 'l', main = 'Env removed')
+    points(rep(0, length(sound)), type = 'l', col = 'blue')
+    par(mfrow = op)
+  }
+  return(soundNorm)
+}
+
+
 #' RMS amplitude per frame
 #'
 #' Calculates root mean square (RMS) amplitude in overlapping frames, providing
@@ -405,3 +528,184 @@ normalizeFolder = function(myfolder,
 # summary(mod)  # a = 0, b = 12, c = 0.6
 # # so loud1/loud2 = coef1^c / coef2^c = (coef1/coef2)^c, where c = 0.6,
 # # so coef1/coef2 = (loud1/loud2)^(1/0.6) = (loud1/loud2)^(5/3)
+
+
+#' Flat envelope
+#'
+#' Flattens the amplitude envelope of a waveform. This is achieved by dividing
+#' the waveform by some function of its smoothed amplitude envelope (Hilbert,
+#' peak or root mean square).
+#' @param sound input vector oscillating about zero
+#' @param windowLength the length of smoothing window, ms
+#' @param samplingRate the sampling rate, Hz. Only needed if the length of
+#'   smoothing window is specified in ms rather than points
+#' @param method 'hil' for Hilbert envelope, 'rms' for root mean square
+#'   amplitude, 'peak' for peak amplitude per window
+#' @param windowLength_points the length of smoothing window, points. If
+#'   specified, overrides both \code{windowLength} and \code{samplingRate}
+#' @param killDC if TRUE, dynamically removes DC offset or similar deviations of
+#'   average waveform from zero
+#' @param dynamicRange parts of sound quieter than \code{-dynamicRange} dB will
+#'   not be amplified
+#' @param plot if TRUE, plots the original sound, smoothed envelope, and
+#'   flattened sound
+#' @export
+#' @examples
+#' a = rnorm(500) * seq(1, 0, length.out = 500)
+#' b = flatEnv(a, plot = TRUE, windowLength_points = 5)    # too short
+#' c = flatEnv(a, plot = TRUE, windowLength_points = 250)  # too long
+#' d = flatEnv(a, plot = TRUE, windowLength_points = 50)   # about right
+#'
+#' \dontrun{
+#' s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE, osc = TRUE)
+#' # playme(s)
+#' s_flat1 = flatEnv(s, plot = TRUE, windowLength = 50, method = 'hil')
+#' s_flat2 = flatEnv(s, plot = TRUE, windowLength = 10, method = 'rms')
+#' s_flat3 = flatEnv(s, plot = TRUE, windowLength = 10, method = 'peak')
+#' # playme(s_flat2)
+#'
+#' # Remove DC offset
+#' s1 = c(rep(0, 50), runif(1000, -1, 1), rep(0, 50)) +
+#'      seq(.3, 1, length.out = 1100)
+#' s2 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = FALSE)
+#' s3 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = TRUE)
+#' }
+flatEnv = function(sound,
+                   windowLength = 200,
+                   samplingRate = 16000,
+                   method = c('hil', 'rms', 'peak')[1],
+                   windowLength_points = NULL,
+                   killDC = FALSE,
+                   dynamicRange = 80,
+                   plot = FALSE) {
+  if (!is.numeric(windowLength_points)) {
+    if (is.numeric(windowLength)) {
+      if (is.numeric(samplingRate)) {
+        windowLength_points = windowLength / 1000 * samplingRate
+      } else {
+        stop(paste('Please specify either windowLength (ms) plus samplingRate (Hz)',
+                   'or the length of smoothing window in points (windowLength_points)'))
+      }
+    }
+  }
+
+  m = max(abs(sound))       # original scale (eg -1 to +1 gives m = 1)
+  soundNorm = sound / m    # normalize
+  throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
+  # get smoothed amplitude envelope
+  env = getEnv(sound = soundNorm,
+               windowLength_points = windowLength_points,
+               method = method)
+  env = env / max(abs(env))
+
+  # don't amplify very quiet sections
+  env_cut = env
+  env_cut[env_cut < throwaway_lin] = 1
+  # flatten amplitude envelope
+  soundFlat = soundNorm / env_cut
+  # re-normalize to original scale
+  soundFlat = soundFlat / max(abs(soundFlat)) * m
+  # remove DC offset
+  if (killDC) {
+    soundFlat = killDC(sound = soundFlat,
+                       windowLength_points = windowLength_points,
+                       plot = FALSE)
+  }
+
+  if (plot) {
+    op = par('mfrow')
+    par(mfrow = c(1, 2))
+    plot(sound, type = 'l', main = 'Original')
+    points(env * m, type = 'l', lty = 1, col = 'blue')
+    plot(soundFlat, type = 'l', main = 'Flattened')
+    par(mfrow = op)
+  }
+  return(soundFlat)
+}
+
+
+#' Transplant envelope
+#'
+#' Extracts a smoothed amplitude envelope of the \code{donor} sound and applies
+#' it to the \code{recipient} sound. Both sounds are provided as numeric
+#' vectors; they can differ in length and sampling rate. Note that the result
+#' depends on the amount of smoothing (controlled by \code{windowLength}) and
+#' the chosen method of calculating the envelope. Very similar to
+#' \code{\link[seewave]{setenv}}, but with a different smoothing algorithm and
+#' with a choice of several types of envelope: hil, rms, or peak.
+#'
+#' @seealso \code{\link{flatEnv}}, \code{\link[seewave]{setenv}}
+#'
+#' @param donor the sound that "donates" the amplitude envelope
+#' @param recipient the sound that needs to have its amplitude envelope adjusted
+#' @param samplingRateD,samplingRateR sampling rate of the donor and recipient,
+#'   respectively
+#' @inheritParams flatEnv
+#'
+#' @examples
+#' donor = rnorm(500) * seq(1, 0, length.out = 500)
+#' recipient = soundgen(sylLen = 600, addSilence = 50)
+#' transplantEnv(donor, samplingRateD = 200,
+#'                recipient, samplingRateR = 16000,
+#'                windowLength = 50, method = 'hil', plot = TRUE)
+#' transplantEnv(donor, samplingRateD = 200,
+#'                recipient, samplingRateR = 16000,
+#'                windowLength = 10, method = 'peak', plot = TRUE)
+transplantEnv = function(
+  donor,
+  samplingRateD,
+  recipient,
+  samplingRateR = samplingRateD,
+  windowLength = 200,
+  method = c('hil', 'rms', 'peak')[1],
+  killDC = FALSE,
+  dynamicRange = 80,
+  plot = FALSE
+) {
+  windowLength_points_donor = windowLength / 1000 * samplingRateD
+  windowLength_points_recip = windowLength / 1000 * samplingRateR
+  throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
+
+  # get the amplitude envelope of the recipient
+  env_recipient = getEnv(sound = recipient,
+                         windowLength_points = windowLength_points_recip,
+                         method = method)
+  len_recipient = length(env_recipient)
+  # don't amplify very quiet sections
+  env_recip_cut = env_recipient
+  env_recip_cut[env_recip_cut < throwaway_lin] = 1
+
+  # get the amplitude envelope of the donor
+  env_donor = getEnv(sound = donor,
+                     windowLength_points = windowLength_points_donor,
+                     method = method)
+  env_donor1 = env_donor / max(env_donor)  # normalize
+  env_donor1 = approx(env_donor1, n = len_recipient)$y
+
+  # flatten the envelope of the recipient and apply the donor's envelope
+  out = recipient / env_recip_cut * env_donor1
+  if (plot) {
+    len_donor = length(env_donor)
+    time_donor = seq(0, len_donor / samplingRateD, length.out = len_donor)
+    max_donor = max(abs(donor))
+
+    time_recipient = seq(0, len_recipient / samplingRateR, length.out = len_recipient)
+    max_recipient = max(abs(recipient))
+    max_out = max(abs(out))
+
+    op = par('mfrow')
+    par(mfrow = c(1, 3))
+
+    plot(time_donor, donor, type = 'l', main = 'Donor', ylim = c(-max_donor, max_donor), xlab = '', ylab = 'Amplitude')
+    points(time_donor, env_donor, type = 'l', lty = 1, col = 'blue')
+
+    plot(time_recipient, recipient, type = 'l', main = 'Recipient', ylim = c(-max_recipient, max_recipient), xlab = 'Time, s', ylab = '')
+    points(time_recipient, env_recipient, type = 'l', lty = 1, col = 'blue')
+
+    plot(time_recipient, out, type = 'l', main = 'Output', ylim = c(-max_out, max_out), xlab = '', ylab = '')
+    points(time_recipient, getEnv(out, windowLength_points_recip, method), type = 'l', lty = 1, col = 'blue')
+
+    par(mfrow = op)
+  }
+  invisible(out)
+}
