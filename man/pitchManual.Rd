@@ -9,6 +9,8 @@
 pitchManual
 }
 \description{
-A vector of manually verified pitch values per sound in the corpus of 590 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/publications.html
+A vector of manually verified pitch values per sound in the corpus of 590
+human non-linguistic emotional vocalizations from Anikin & Persson (2017).
+The corpus can be downloaded from http://cogsci.se/publications.html
 }
 \keyword{datasets}

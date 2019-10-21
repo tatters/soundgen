@@ -32,5 +32,7 @@ soundgen:::upsamplePitchContour(pitchManual, len = 25, plot = TRUE)
 pitchManual = c(NA, 150, 250, NA, NA, 300, 280, 270, NA)
 soundgen:::upsamplePitchContour(pitchManual, len = 5, plot = TRUE)
 soundgen:::upsamplePitchContour(pitchManual, len = 25, plot = TRUE)
+
+soundgen:::upsamplePitchContour(c(NA, NA), len = 5)
 }
 \keyword{internal}

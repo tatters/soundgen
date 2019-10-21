@@ -9,6 +9,8 @@
 segmentManual
 }
 \description{
-A vector of the number of syllables in the corpus of 260 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/publications.html
+A vector of the number of syllables in the corpus of 260 human non-linguistic
+emotional vocalizations from Anikin & Persson (2017). The corpus can be
+downloaded from http://cogsci.se/publications.html
 }
 \keyword{datasets}

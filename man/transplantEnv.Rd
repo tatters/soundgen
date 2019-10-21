@@ -5,9 +5,8 @@
 \title{Transplant envelope}
 \usage{
 transplantEnv(donor, samplingRateD, recipient,
-  samplingRateR = samplingRateD, windowLength = 200,
-  method = c("hil", "rms", "peak")[1], killDC = FALSE,
-  dynamicRange = 80, plot = FALSE)
+  samplingRateR = samplingRateD, windowLength = 50, method = c("hil",
+  "rms", "peak")[1], killDC = FALSE, dynamicRange = 80, plot = FALSE)
 }
 \arguments{
 \item{donor}{the sound that "donates" the amplitude envelope}

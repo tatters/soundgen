@@ -9,15 +9,25 @@
 
 #' Manual counts of syllables in 260 sounds
 #'
-#' A vector of the number of syllables in the corpus of 260 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/publications.html
+#' A vector of the number of syllables in the corpus of 260 human non-linguistic
+#' emotional vocalizations from Anikin & Persson (2017). The corpus can be
+#' downloaded from http://cogsci.se/publications.html
 "segmentManual"
 
 
 #' Manual pitch estimation in 260 sounds
 #'
-#' A vector of manually verified pitch values per sound in the corpus of 590 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/publications.html
+#' A vector of manually verified pitch values per sound in the corpus of 590
+#' human non-linguistic emotional vocalizations from Anikin & Persson (2017).
+#' The corpus can be downloaded from http://cogsci.se/publications.html
 "pitchManual"
 
+#' Manually corrected pitch contours in 260 sounds
+#'
+#' A dataframe of 260 rows and two columns: "file" for filename in the corpus
+#' (Anikin & Persson, 2017) and "pitch" for pitch values per frame. The corpus
+#' can be downloaded from http://cogsci.se/publications.html
+"pitchContour"
 
 #' Conversion table from Hz to musical notation
 #'

@@ -641,7 +641,7 @@ flatEnv = function(sound,
 #' @param samplingRateD,samplingRateR sampling rate of the donor and recipient,
 #'   respectively
 #' @inheritParams flatEnv
-#'
+#' @export
 #' @examples
 #' donor = rnorm(500) * seq(1, 0, length.out = 500)
 #' recipient = soundgen(sylLen = 600, addSilence = 50)
@@ -656,7 +656,7 @@ transplantEnv = function(
   samplingRateD,
   recipient,
   samplingRateR = samplingRateD,
-  windowLength = 200,
+  windowLength = 50,
   method = c('hil', 'rms', 'peak')[1],
   killDC = FALSE,
   dynamicRange = 80,

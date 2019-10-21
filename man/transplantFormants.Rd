@@ -79,18 +79,16 @@ spectrogram(s1, samplingRate, osc = TRUE)
 seewave::meanspec(s1, f = samplingRate, dB = 'max0')
 
 # if needed, transplant amplitude envelopes as well:
-s2 = seewave::setenv(s1, donor, f = samplingRate)[, 1]
+s2 = transplantEnv(donor = donor, samplingRateD = samplingRate,
+                   recipient = s1, windowLength = 10)
 playme(s2, samplingRate)
 spectrogram(s2, samplingRate, osc = TRUE)
 
+# now we use human formants on sheep source: the sheep says "why?"
 s2 = transplantFormants(
-  donor = donor,
-  recipient = soundgen(sylLen = 1500,
-                       pitch = c(150, 200, 120),
-                       nonlinBalance = 50,
-                       subFreq = 80, subDep = 50, jitterDep = 0,
-                       noise = -20,
-                       samplingRate = samplingRate),
+  donor = soundgen(formants = 'uaaai',
+                   samplingRate = samplingRate),
+  recipient = donor,
   samplingRate = samplingRate)
 playme(s2, samplingRate)
 spectrogram(s2, samplingRate, osc = TRUE)
@@ -98,6 +96,6 @@ seewave::meanspec(s2, f = samplingRate, dB = 'max0')
 }
 }
 \seealso{
-\code{\link{getSpectralEnvelope}} \code{\link{addFormants}}
-  \code{\link{soundgen}}
+\code{\link{transplantEnv}} \code{\link{getSpectralEnvelope}}
+  \code{\link{addFormants}} \code{\link{soundgen}}
 }

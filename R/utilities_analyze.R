@@ -787,7 +787,10 @@ updateAnalyze = function(result,
 #' pitchManual = c(NA, 150, 250, NA, NA, 300, 280, 270, NA)
 #' soundgen:::upsamplePitchContour(pitchManual, len = 5, plot = TRUE)
 #' soundgen:::upsamplePitchContour(pitchManual, len = 25, plot = TRUE)
+#'
+#' soundgen:::upsamplePitchContour(c(NA, NA), len = 5)
 upsamplePitchContour = function(pitch, len, plot = FALSE) {
+  if (!any(!is.na(pitch))) return(rep(NA, len))
   len_orig = length(pitch)
   time_stamps1 = seq(0, 1, length.out = len_orig)
 
@@ -809,8 +812,8 @@ upsamplePitchContour = function(pitch, len, plot = FALSE) {
     d = diff(is.na(pitch))  # 1 = beginning of NA episode, -1 = end of NA episode
     beg = which(d == 1) + 1
     end = which(d == -1) + 1
-    if (is.na(pitchManual[1])) beg = c(1, beg)
-    if (is.na(pitchManual[len_orig])) end = c(end, len_orig)
+    if (is.na(pitch[1])) beg = c(1, beg)
+    if (is.na(pitch[len_orig])) end = c(end, len_orig)
     na_pos_01 = data.frame(beg = time_stamps1[beg], end = time_stamps1[end])
     na_pos2 = round(na_pos_01 * len)  # from % to position indices
     na_pos2_vector = unlist(apply(na_pos2, 1, function(x) x[1]:x[2]))

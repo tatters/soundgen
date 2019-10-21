@@ -281,15 +281,15 @@ abline(a=0, b=1, col='red')
 # Re-running analyzeFolder with manually corrected contours gives correct
 pitch-related descriptives like amplVoiced and harmonics (NB: you get it "for
 free" when running pitch_app)
-s1 = analyzeFolder(myfolder, verbose = TRUE, pitchManual = s$key)
+s1 = analyzeFolder(myfolder, verbose = TRUE, pitchManual = pitchContour)
 plot(s$harmonics_median, s1$harmonics_median)
 abline(a=0, b=1, col='red')
 
-# Save spectrograms with pitch contours plus an html file for easy access # CHECK IF PITCHMANUAL PLOTTED CORRECTLY!
+# Save spectrograms with pitch contours plus an html file for easy access
 s2 = analyzeFolder('~/Downloads/temp', savePlots = TRUE,
-  showLegend = TRUE,
+  showLegend = TRUE, pitchManual = pitchContour,
   width = 20, height = 12,
-  units = 'cm', res = 300)
+  units = 'cm', res = 300, ylim = c(0, 5))
 }
 }
 \seealso{

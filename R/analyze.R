@@ -1005,15 +1005,15 @@ analyze = function(
 #' # Re-running analyzeFolder with manually corrected contours gives correct
 #' pitch-related descriptives like amplVoiced and harmonics (NB: you get it "for
 #' free" when running pitch_app)
-#' s1 = analyzeFolder(myfolder, verbose = TRUE, pitchManual = s$key)
+#' s1 = analyzeFolder(myfolder, verbose = TRUE, pitchManual = pitchContour)
 #' plot(s$harmonics_median, s1$harmonics_median)
 #' abline(a=0, b=1, col='red')
 #'
-#' # Save spectrograms with pitch contours plus an html file for easy access # CHECK IF PITCHMANUAL PLOTTED CORRECTLY!
+#' # Save spectrograms with pitch contours plus an html file for easy access
 #' s2 = analyzeFolder('~/Downloads/temp', savePlots = TRUE,
-#'   showLegend = TRUE,
+#'   showLegend = TRUE, pitchManual = pitchContour,
 #'   width = 20, height = 12,
-#'   units = 'cm', res = 300)
+#'   units = 'cm', res = 300, ylim = c(0, 5))
 #' }
 analyzeFolder = function(myfolder,
                          htmlPlots = TRUE,
@@ -1088,6 +1088,7 @@ analyzeFolder = function(myfolder,
                          units = 'px',
                          res = NA,
                          ...) {
+  warnAboutResetSummary = FALSE
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
   # in order to provide more accurate estimates of time to completion,
@@ -1102,7 +1103,7 @@ analyzeFolder = function(myfolder,
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
     'myfolder' , 'htmlPlots', 'verbose', 'savePlots',
-    'pitchPlot', 'candPlot')]
+    'pitchPlot', 'candPlot', 'pitchManual')]
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
   # add plot pars correctly, without flattening the lists
@@ -1110,9 +1111,30 @@ analyzeFolder = function(myfolder,
   myPars$candPlot = candPlot
   if (savePlots) myPars$savePath = myfolder
 
+  # add pitchManual, if any
+  if (!is.null(pitchManual)) {
+    file_noExt = basename(filenames)
+    file_noExt = substr(file_noExt, 1, (nchar(file_noExt) - 4))
+    pitchManual_idx = match(file_noExt, pitchManual$file)
+  }
+
   result = list()
   for (i in 1:length(filenames)) {
-    result[[i]] = do.call(analyze, c(filenames[i], myPars, ...))
+    pitch_file = NULL
+    if (!is.null(pitchManual)) {
+      if (is.finite(pitchManual_idx[i])) {
+        pitch_file = suppressWarnings(as.numeric(unlist(strsplit(
+          pitchManual$pitch[pitchManual_idx[i]], ','))))
+      } else {
+        message(paste('File', file_noExt[i], 'not found in pitchManual$file'))
+        summary = FALSE
+        warnAboutResetSummary = TRUE
+      }
+    }
+    result[[i]] = do.call(analyze, c(filenames[i],
+                                     myPars,
+                                     list(pitchManual = pitch_file),
+                                     ...))
     if (verbose) {
       reportTime(i = i, nIter = length(filenames),
                  time_start = time_start, jobs = filesizes)
@@ -1120,6 +1142,9 @@ analyzeFolder = function(myfolder,
   }
 
   # prepare output
+  if (warnAboutResetSummary) {
+    message('Cannot summarize the results when some files are missing in pitchManual')
+  }
   if (summary == TRUE) {
     output = as.data.frame(t(sapply(result, function(x) unlist(rbind(x)))))
     output$sound = apply(matrix(1:length(filenames)), 1, function(x) {
