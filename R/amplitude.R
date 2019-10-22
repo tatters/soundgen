@@ -3,6 +3,8 @@
 #' Internal soundgen function
 #'
 #' Returns the smoothed amplitude envelope of a waveform on the original scale.
+#' NB: unlike seewave::env, this function returns an envelope of the same length
+#' as the original sound, regardless of the amount of smoothing.
 #' @inheritParams flatEnv
 #' @param method 'peak' for peak amplitude per window, 'rms' for root mean
 #'   square amplitude, 'mean' for mean (for DC offset removal), 'hil' for

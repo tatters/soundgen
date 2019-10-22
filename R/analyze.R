@@ -934,8 +934,7 @@ analyze = function(
         ylim = ylim,
         xlab = xlab,
         ylab = ylab,
-        main = plotname,
-        ...
+        main = plotname
       )), extraSpecPars))
   }
   if (is.character(savePath)) {

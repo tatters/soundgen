@@ -69,7 +69,8 @@
 #' sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
 #'   pitch = c(368, 284), temperature = 0.1,
 #'   noise = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
-#'   rolloff_noise = -8, amplAnchorsGlobal = c(0, -20))
+#'   rolloff_noise = -8, amplGlobal = c(0, -20),
+#'   dynamicRange = 120)
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #'  # playme(sound, samplingRate = 16000)
 #'
@@ -80,6 +81,9 @@
 #'
 #' # just a summary
 #' segment(sound, samplingRate = 16000, summary = TRUE)
+#' # Note that syllables are slightly longer and pauses shorter than they should
+#' # be (b/c of the smoothing of amplitude envelope), while interburst intervals
+#' # are right on target
 #'
 #' # customizing the plot
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
@@ -165,12 +169,13 @@ segment = function(x,
   ## normalize
   sound = sound - mean(sound)  # center around 0
   sound = sound / max(abs(sound))  # range approx. -1 to 1
+  len = length(sound)
   # plot(sound, type='l')
 
   ## extract amplitude envelope
   windowLength_points = ceiling(windowLength * samplingRate / 1000)
-  if (windowLength_points > length(sound) / 2) {
-    windowLength_points = length(sound) / 2
+  if (windowLength_points > len / 2) {
+    windowLength_points = len / 2
   }
 
   sound_downsampled = seewave::env(
@@ -181,11 +186,14 @@ segment = function(x,
     fftw = FALSE,
     plot = FALSE
   )
-  timestep = 1000 / samplingRate *
-    (length(sound) / length(sound_downsampled)) # time step in the envelope, ms
-  envelope = data.frame(time = ( (1:length(sound_downsampled) - 1) * timestep),
+  timestep_points = windowLength_points - (windowLength_points * overlap / 100)
+  timestep = timestep_points / samplingRate * 1000
+  time_stamps = (seq(1, len - windowLength_points, by = timestep_points) +
+                   windowLength_points / 2) / samplingRate * 1000
+  # timing starts from the middle of the first window
+  envelope = data.frame(time = time_stamps,
                         value = sound_downsampled)
-  # plot (envelope, type='l')
+  # plot(envelope, type='l')
 
   ## find syllables and get descriptives
   threshold = mean(envelope$value) * sylThres
@@ -231,16 +239,32 @@ segment = function(x,
       last_char = substr(savePath, nchar(savePath), nchar(savePath))
       if(last_char != '/') savePath = paste0(savePath, '/')
       png(filename = paste0(savePath, plotname, ".png"),
-           width = width, height = height, units = units, res = res)
+          width = width, height = height, units = units, res = res)
     }
-    plot(x = envelope$time, y = envelope$value, type = 'l', col = col,
-         xlab = xlab, ylab = ylab, main = main, ...)
+
+    op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
+    layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(2, 1))
+    par(mar = c(op$mar[1:2], 0, op$mar[4]), xaxt = 's', yaxt = 's')
+    xlim = c(0, len / samplingRate * 1000)
+    plot(x = 1:len / samplingRate * 1000,
+         y = sound, type = 'l', xlim = xlim,
+         axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
+         xlab = xlab, ylab = '', main = '', ...)
+    box()
+    axis(side = 1, ...)
+    abline(h = 0, lty = 2)
+    par(mar = c(0, op$mar[2:4]), xaxt = 'n', yaxt = 's')
+    plot(x = envelope$time, y = envelope$value, type = 'l',
+         xlim =xlim, col = col,
+         xaxs = "i", xlab = '', ylab = ylab, main = main, ...)
     points(bursts, col = burstPlot$col, cex = burstPlot$cex, pch = burstPlot$pch)
     for (s in 1:nrow(syllables)) {
       segments(x0 = syllables$start[s], y0 = threshold,
                x1 = syllables$end[s], y1 = threshold,
                lty = sylPlot$lty, lwd = sylPlot$lwd, col = sylPlot$col)
     }
+    # restore original pars
+    par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
     if (is.character(savePath)){
       dev.off()
     }

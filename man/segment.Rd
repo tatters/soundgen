@@ -102,7 +102,8 @@ research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
 sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
   pitch = c(368, 284), temperature = 0.1,
   noise = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
-  rolloff_noise = -8, amplAnchorsGlobal = c(0, -20))
+  rolloff_noise = -8, amplGlobal = c(0, -20),
+  dynamicRange = 120)
 spectrogram(sound, samplingRate = 16000, osc = TRUE)
  # playme(sound, samplingRate = 16000)
 
@@ -113,6 +114,9 @@ s = segment(sound, samplingRate = 16000, plot = TRUE,
 
 # just a summary
 segment(sound, samplingRate = 16000, summary = TRUE)
+# Note that syllables are slightly longer and pauses shorter than they should
+# be (b/c of the smoothing of amplitude envelope), while interburst intervals
+# are right on target
 
 # customizing the plot
 s = segment(sound, samplingRate = 16000, plot = TRUE,

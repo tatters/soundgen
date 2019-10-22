@@ -515,7 +515,7 @@ Sometimes we are more interested in the rate of syllables per second and in thei
 
 Soundgen package contains a function called `segment`, which uses both these approaches: it looks for both syllables and bursts. These two algorithms are not independent: syllables are found first, and then the median length of a syllable becomes the expected interburst interval, guiding burst detection. `segment` operates with amplitude envelopes - smoothed contours of sound intensity. To demonstrate how it works, we will look at the example from `?segment` and go through the control parameters.
 
-```{r fig.height = 3, fig.width = 7}
+```{r fig.height = 5, fig.width = 7}
 # for info on using soundgen() function, see the vignette on sound synthesis 
 s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
               pitch = c(368, 284),
@@ -533,32 +533,27 @@ Some other settings worth mentioning are:
 
 * `windowLength`, `overlap`: length (ms) and overlap (%) of the smoothing window used to produce the amplitude envelope. See `?seewave::env`, which is called with the argument msmooth = c(smooth_points, smoothOverlap), where smooth_points =  ceiling(windowLength * samplingRate / 1000). Setting the overlap too low makes the enveloped jagged and imprecise, while setting the window length too low produces insufficient smoothing:
 
-```{r fig.show = "hold", fig.height = 7, fig.width = 5}
-par(mfrow = c(3, 1))
+```{r fig.show = "hold", fig.height = 4, fig.width = 5}
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
              windowLength = 40, overlap = 0, main = 'overlap too low')
 a2 = suppressWarnings(segment(s2, samplingRate = 16000, plot = TRUE, 
              windowLength = 5, overlap = 80, main = 'window too short'))
 a3 = segment(s2, samplingRate = 16000, plot = TRUE, 
              windowLength = 150, overlap = 80, main = 'window too long')
-par(mfrow = c(1, 1))
 ```
 
 * `shortestSyl` and `shortestPause` incorporate our prior knowledge by expecting the syllables and pauses between them to be at least 40 ms long (by default). Setting `shortestSyl` and `shortestPause` too low may inflate the number of discovered syllables, but burst detection should not be affected as much. If `shortestSyl` is too high, excluding shorter fragments, we won't find any syllables, but burst detection can still succeed. The most damaging mistake is to set `shortestPause` too high, because separate syllables are then merged and the expected interburst interval becomes inflated, preventing the algorithm from recognizing closely spaced bursts (see the example below). 
 
-```{r fig.show = "hold", fig.height = 7, fig.width = 5}
-par(mfrow = c(2, 1))
+```{r fig.show = "hold", fig.height = 4, fig.width = 5}
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
              shortestSyl = 80)    # too long, but at least bursts are detected
 a2 = segment(s2, samplingRate = 16000, plot = TRUE, 
              shortestPause = 80)  # merges syllables
-par(mfrow = c(1, 1))
 ```
 
 * `burstThres` and `peakToTrough` control how high a burst has to be in absolute terms (compared to the global maximum of the envelope) and in relative terms (compared to the local minimum). So a burst is a local maximum that is at least `burstThres` high and at least `peakToTrough` times higher than the local minimum. The size of the analysis window for finding local maxima and minima is controlled by `interburst`, which defaults to the median length of detected syllables times `interburstMult`. By default the local minimum is only calculated to the left of the candidate burst (`troughLeft = TRUE, troughRight = FALSE`). The left-right distinction is irrelevant with this artificial, perfectly symmetrical example, but it appears to improve performance with real-life sounds, which often display assymmetrical attack with sharp onset and more gentle decay.
 
-```{r fig.show = "hold", fig.height = 5, fig.width = 5}
-par(mfrow = c(2, 1))
+```{r fig.show = "hold", fig.height = 4, fig.width = 5}
 # absolute threshold burstThres set too high
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
              burstThres = 0.5)
@@ -566,7 +561,6 @@ a1 = segment(s2, samplingRate = 16000, plot = TRUE,
 # specified interburst
 a2 = segment(s2, samplingRate = 16000, plot = TRUE, 
              shortestPause = 80, interburst = 100) 
-par(mfrow = c(1, 1))
 ```
 
 ### Batch processing: `segmentFolder`

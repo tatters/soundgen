@@ -22,14 +22,16 @@ findSyllables = function(envelope,
                          shortestPause,
                          mergeSyl) {
   # find strings of TTTTT
-  envelope$aboveThres = ifelse (envelope$value > threshold, 1, 0)
-  env_above_thres = data.frame (value = rle(envelope$aboveThres)[[2]],
-                                count = rle(envelope$aboveThres)[[1]])
+  envelope$aboveThres = ifelse(envelope$value > threshold, 1, 0)
+  env_above_thres = data.frame(value = rle(envelope$aboveThres)[[2]],
+                               count = rle(envelope$aboveThres)[[1]])
   env_above_thres$idx = 1:nrow(env_above_thres) # a convoluted way of tracing
   # the time stamp in the output of rle
   # exclude segments of length < shortestSyl or below threshold
-  env_short = na.omit(env_above_thres[env_above_thres$value == 1 &
-                env_above_thres$count > ceiling(shortestSyl / timestep), ])
+  env_short = na.omit(
+    env_above_thres[env_above_thres$value == 1 &
+                      env_above_thres$count > ceiling(shortestSyl / timestep), ]
+  )
   nSyllables = nrow(env_short)
 
   # save the time of each syllable for plotting
@@ -39,13 +41,14 @@ findSyllables = function(envelope,
                            end = NA,
                            dur = NA)
   } else {
-    syllables = data.frame(
-      syllable = 1:nSyllables,
-      start = apply(matrix(1:nSyllables), 1, function(x) {
-        sum(env_above_thres$count[1:(env_short$idx[x] - 1)]) * timestep
-      }),
-      end = NA
-    )
+    syllables = data.frame(syllable = 1:nSyllables, start = NA, end = NA)
+    for (i in 1:nSyllables) {
+      idx = 1:(env_short$idx[i] - 1)
+      # assume that the syllable began between the last value below threshold
+      # and the first value above threshold
+      syllables$start[i] = envelope$time[sum(env_above_thres$count[idx]) + 1] -
+        timestep / 2
+    }
     if (env_above_thres$value[1] == 1) {   # if the sounds begins with a syllable
       syllables$start[1] = 0  # the first syllable begins at zero
     }
@@ -61,7 +64,7 @@ findSyllables = function(envelope,
     if (nrow(syllables) > 1) {
       for (i in 1:(nrow(syllables) - 1)) {
         syllables$pauseLen[i] = syllables$start[i + 1] -
-                                syllables$end[i]
+          syllables$end[i]
       }
     }
   }
@@ -162,7 +165,7 @@ findBursts = function(envelope,
                          envelope$value[i] / local_min_right > peakToTrough,
                          TRUE)  # always TRUE if we're not interested in what's right
     if (cond1 & cond2 & cond3_left & cond3_right) {
-      bursts = rbind(bursts, c(i * timestep, envelope$value[i]))
+      bursts = rbind(bursts, c(envelope$time[i], envelope$value[i]))
     }
   }
 

@@ -22,6 +22,8 @@ Internal soundgen function
 }
 \details{
 Returns the smoothed amplitude envelope of a waveform on the original scale.
+NB: unlike seewave::env, this function returns an envelope of the same length
+as the original sound, regardless of the amount of smoothing.
 }
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
