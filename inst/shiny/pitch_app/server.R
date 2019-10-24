@@ -173,7 +173,7 @@ server = function(input, output, session) {
     output$spectrogram = renderPlot({
         if (myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
-            par(mar = c(0.2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
                 text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~10 s')
@@ -193,12 +193,17 @@ server = function(input, output, session) {
                     levels = seq(0, 1, length = 30),
                     color.palette = color.palette,
                     xlim = myPars$spec_xlim,
-                    xaxt = 'n', # xaxs = 'i', xlab = 'Time, ms',
+                    xaxt = 'n',
+                    xaxs = 'i', xlab = '',
                     ylab = 'Frequency, kHz',
                     main = '',
                     ylim = c(input$spec_ylim[1], input$spec_ylim[2])
                 )
-                # axis(side = 2)
+                if (input$osc == 'none') {
+                    axis(side = 1)
+                    title(xlab = 'Time, ms')
+                }
+
                 # add manual values to the list of pitch candidates for seamless plotting
                 n = ncol(myPars$pitchCands$freq)
                 # if (length(n>0) == 0 | length(nrow(myPars$manual)>0) == 0) browser()
