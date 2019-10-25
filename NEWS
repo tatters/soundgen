@@ -1,4 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.5.1.9000 [...date...]
+BUGS FIXED:
+  * analyze(): proper plotting of oscillogram for audio files
+
 NEW FUNCTIONS:
   * transplantEnv(): transplants the amplitude envelope from one sound to another
 

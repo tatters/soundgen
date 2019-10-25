@@ -388,7 +388,7 @@ spectrogram = function(
                        maxAmpl = maxAmpl,
                        plot = FALSE,
                        returnWave = TRUE)
-        ylim_osc = c(-dynamicRange, dynamicRange)
+        ylim_osc = c(-2 * dynamicRange, 0)
       } else {
         ylim_osc = c(-maxAmpl, maxAmpl)
       }
@@ -409,10 +409,12 @@ spectrogram = function(
       box()
       axis(side = 1, ...)
       if (osc_dB) {
-        axis(side = 4, at = seq(0, dynamicRange, by = 10), ...)
+        axis(side = 4, at = seq(-dynamicRange, 0, by = 10), ...)
+        abline(h = -dynamicRange, lty = 2, col = 'gray70')
         mtext("dB", side = 2, line = 3, ...)
+      } else {
+        abline(h = 0, lty = 2, col = 'gray70')
       }
-      abline(h = 0, lty = 2)
       par(mar = c(0, mar[2:4]), xaxt = 'n', yaxt = 's')
       xlab = ''
     } else {
@@ -807,9 +809,9 @@ osc_dB = function(x,
   neg = which(s1 < -floor)
 
   # log-transform
-  sound[pos] = 20 * log10(s1[pos]) + dynamicRange
-  sound[neg] = -20 * log10(-s1[neg]) - dynamicRange
-  sound[zero] = 0
+  sound[pos] = 20 * log10(s1[pos])
+  sound[neg] = -20 * log10(-s1[neg]) - 2 * dynamicRange
+  sound[zero] = -dynamicRange
 
   # plot
   if (plot) {
@@ -822,9 +824,9 @@ osc_dB = function(x,
     }
     # plot(time, sound, type = 'l', xlab = xlab, ylab = ylab, ...)
     plot(time, sound, type = 'l', xlab = xlab, ylab = ylab,
-         bty = bty, yaxt = 'n', ylim = c(-dynamicRange, dynamicRange), ...)
-    axis(side = 2, at = seq(0, dynamicRange, by = 10))
-    if (midline) abline(h = 0, lty = 2, col = 'gray70')
+         bty = bty, yaxt = 'n', ylim = c(-2 * dynamicRange, 0), ...)
+    axis(side = 2, at = seq(-dynamicRange, 0, by = 10))
+    if (midline) abline(h = -dynamicRange, lty = 2, col = 'gray70')
   }
 
   if (returnWave) return(sound)
