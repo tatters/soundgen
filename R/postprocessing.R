@@ -6,8 +6,9 @@
 #' "aplay".
 #' @param sound numeric vector or path to wav/mp3 file
 #' @param samplingRate sampling rate (only needed if sound is a vector)
-#' @param player the name of player to use, eg "aplay", "play", "vlc", etc. In
-#'   case of errors, try setting another default player for
+#' @param player the name of player to use, eg "aplay", "play", "vlc", etc.
+#'   Defaults to "play" on Linux, "afplay" on MacOS, and tuneR default on
+#'   Windows. In case of errors, try setting another default player for
 #'   \code{\link[tuneR]{play}}
 #' @param from,to play a selected time range (s)
 #' @param ... additional parameters passed to \code{\link[tuneR]{play}}
@@ -72,7 +73,9 @@ playme = function(sound,
     os = Sys.info()[['sysname']]
     if (os == 'Linux' | os == 'linux') {
       p = tuneR::play(soundWave, 'play')
-    } else {  # windows | darwin
+    } else if (os == 'Darwin' | os == 'darwin') {
+       p = tuneR::play(soundWave, 'afplay')
+    } else {  # a good default on windows?
       p = tuneR::play(soundWave)
     }
   }
