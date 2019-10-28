@@ -244,7 +244,7 @@ server = function(input, output, session) {
         output$oscillogram = renderPlot({
             if (!is.null(myPars$myAudio_path) & input$osc != 'none') {
                 par(mar = c(2, 2, 0, 2))
-                maxAmpl = max(abs(myPars$myAudio))
+                maxAmpl = 2 ^ (myPars$temp_audio@bit - 1) # max(abs(myPars$myAudio))
                 # to speed up plotting the osc of very long files
                 # convert osc_res [0,1] to smth that varies from 1000'ish to length(myPars$myAudio)
                 l = length(myPars$myAudio)
@@ -262,7 +262,7 @@ server = function(input, output, session) {
                                    maxAmpl = maxAmpl,
                                    plot = FALSE,
                                    returnWave = TRUE)[idx]
-                    ylim_osc = c(-input$dynamicRange, input$dynamicRange)
+                    ylim_osc = c(-2 * input$dynamicRange, 0)
                 } else {
                     sound = myPars$myAudio[idx]
                     ylim_osc = c(-maxAmpl, maxAmpl)
