@@ -12,8 +12,9 @@ playme(sound, samplingRate = 16000, player = NULL, from = NULL,
 
 \item{samplingRate}{sampling rate (only needed if sound is a vector)}
 
-\item{player}{the name of player to use, eg "aplay", "play", "vlc", etc. In
-case of errors, try setting another default player for
+\item{player}{the name of player to use, eg "aplay", "play", "vlc", etc.
+Defaults to "play" on Linux, "afplay" on MacOS, and tuneR default on
+Windows. In case of errors, try setting another default player for
 \code{\link[tuneR]{play}}}
 
 \item{from, to}{play a selected time range (s)}
