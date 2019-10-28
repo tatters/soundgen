@@ -53,6 +53,24 @@ server = function(input, output, session) {
         # (only draw it after extracting it)
     }
 
+    resetSliders = function() {
+        sliders_to_reset = names(input)[which(names(input) %in% rownames(defaults_analyze))]
+        for (v in sliders_to_reset) {
+            new_value = defaults_analyze[v, 'default']
+            try(updateSliderInput(session, v, value = new_value))
+            try(updateNumericInput(session, v, value = new_value))
+            updateSelectInput(session, 'wn', selected = 'gaussian')
+            updateCheckboxGroupInput(session, 'pitchMethods', selected = c('dom', 'autocor'))
+            updateCheckboxGroupInput(session, 'summaryFun', selected = c('mean', 'sd'))
+            updateTextInput(session, 'summaryFun_text', value = '')
+            updateSelectInput(session, 'pathfinding', selected = 'fast')
+            updateSliderInput(session, 'spec_ylim', value=c(0, defaults_analyze['spec_ylim','default']))
+            updateRadioButtons(session, 'spec_colorTheme', selected='bw')
+            updateSelectInput(session, 'osc', selected = 'linear')
+        }
+    }
+    observeEvent(input$reset_to_def, resetSliders())
+
 
     observeEvent(input$loadAudio, {
         if (myPars$print) print('Loading audio...')

@@ -25,6 +25,7 @@ ui = fluidPage(
            tabsetPanel(id='parGroup',
                        navbarMenu("In",
                                   tabPanel("STFT",
+                                           actionButton('reset_to_def', label = 'Reset all settings'),
                                            numericInput('windowLength', 'Window length, ms', value=defaults_analyze['windowLength','default'], min=defaults_analyze['windowLength', 'low'], max=defaults_analyze['windowLength', 'high'], step=defaults_analyze['windowLength','step']),
                                            sliderInput('overlap', 'Overlap, %', value=defaults_analyze['overlap','default'], min=defaults_analyze['overlap', 'low'], max=defaults_analyze['overlap', 'high'], step=defaults_analyze['overlap','step']),
                                            sliderInput('dynamicRange', 'Dynamic range, dB', value=defaults_analyze['dynamicRange','default'], min=defaults_analyze['dynamicRange', 'low'], max=defaults_analyze['dynamicRange', 'high'], step=defaults_analyze['dynamicRange','step']),
