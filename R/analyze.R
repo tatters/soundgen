@@ -621,7 +621,8 @@ analyze = function(
   ), extraSpecPars))
 
   # calculate rms amplitude of each frame
-  myseq = (as.numeric(colnames(frameBank)) - step) * samplingRate / 1000 + 1
+  myseq = (as.numeric(colnames(frameBank)) - windowLength / 2) * samplingRate / 1000 + 1
+  myseq[1] = 1  # just in case of rounding errors
   ampl = apply(as.matrix(1:length(myseq)), 1, function(x) {
     # perceived intensity - root mean square of amplitude
     # (NB: m / scale corrects the scale back to original, otherwise sound is [-1, 1])
