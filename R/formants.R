@@ -1144,8 +1144,10 @@ transplantFormants = function(donor,
   }
   for (i in 1:ncol(spec_recipient)) {
     abs_s = abs(spec_recipient[, i])
+    # plot(abs_s, type = 'l')
     cor_coef = flatEnv(abs_s, method = 'peak',
                        windowLength_points = freqWindow_rec_bins) / abs_s
+    # plot(Re(spec_recipient[, i]) * cor_coef, type = 'l')
     spec_recipient[, i] = complex(
       real = Re(spec_recipient[, i]) * cor_coef,
       imaginary = Im(spec_recipient[, i])
@@ -1164,6 +1166,7 @@ transplantFormants = function(donor,
       output = "matrix"
     )
   )
+  # spectrogram(donor, samplingRate)
   # spectrogram(recipient_new, samplingRate)
   return(recipient_new)
 }

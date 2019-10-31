@@ -6,7 +6,7 @@ NEW FUNCTIONS:
   * transplantEnv(): transplants the amplitude envelope from one sound to another
 
 MINOR:
-  * pitch_app(): choose summary function
+  * pitch_app(): choose summary function, reset to defaults, etc.
   * analyze() and analyzeFolder() accept manually checked pitch contours as produced by pitch_app ("pitchManual" argument)
   * segment(), segmentFolder(): added oscillogram, improved accuracy of timing
 

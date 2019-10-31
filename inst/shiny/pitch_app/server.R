@@ -121,6 +121,7 @@ server = function(input, output, session) {
 
         myPars$myAudio = as.numeric(myPars$temp_audio@left)
         myPars$samplingRate = myPars$temp_audio@samp.rate
+        updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$spec_xlim = c(0, myPars$dur)
         # for the first audio only, update autocorSmooth
