@@ -10,7 +10,8 @@ transplantFormants(donor, freqWindow_donor = NULL, recipient,
   wn = "gaussian", zp = 0)
 }
 \arguments{
-\item{donor}{the sound that provides the formants}
+\item{donor}{the sound that provides the formants or the desired spectral
+filter as returned by \code{\link{getSpectralEnvelope}}}
 
 \item{freqWindow_donor, freqWindow_recipient}{the width of smoothing window.
 Defaults to median pitch of each respective sound estimated by
@@ -44,7 +45,8 @@ formants in the recipient sound while preserving the original intonation and
 \code{freqWindow_recipient} are crucial parameters that regulate the amount
 of spectral smoothing in both sounds. The default is to set them to the
 estimated median pitch, but this is time-consuming and error-prone, so set
-them to reasonable values manually if possible.
+them to reasonable values manually if possible. Also ensure that both sounds
+have the same sampling rate.
 }
 \details{
 Algorithm: makes spectrograms of both sounds, interpolates and smoothes the
@@ -84,7 +86,7 @@ s2 = transplantEnv(donor = donor, samplingRateD = samplingRate,
 playme(s2, samplingRate)
 spectrogram(s2, samplingRate, osc = TRUE)
 
-# now we use human formants on sheep source: the sheep says "why?"
+# Now we use human formants on sheep source: the sheep says "why?"
 s2 = transplantFormants(
   donor = soundgen(formants = 'uaaai',
                    samplingRate = samplingRate),
@@ -93,6 +95,18 @@ s2 = transplantFormants(
 playme(s2, samplingRate)
 spectrogram(s2, samplingRate, osc = TRUE)
 seewave::meanspec(s2, f = samplingRate, dB = 'max0')
+
+# We can also transplant synthetic formants w/o synthesizing a donor sound to
+save time
+s3 = transplantFormants(
+  donor = getSpectralEnvelope(
+            nr = 512, nc = 100,  # fairly arbitrary dimensions
+            formants = 'uaaai',
+            samplingRate = samplingRate),
+  recipient = donor,
+  samplingRate = samplingRate)
+playme(s3, samplingRate)
+spectrogram(s3, samplingRate, osc = TRUE)
 }
 }
 \seealso{

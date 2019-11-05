@@ -951,7 +951,8 @@ addFormants = function(sound,
 #' \code{freqWindow_recipient} are crucial parameters that regulate the amount
 #' of spectral smoothing in both sounds. The default is to set them to the
 #' estimated median pitch, but this is time-consuming and error-prone, so set
-#' them to reasonable values manually if possible.
+#' them to reasonable values manually if possible. Also ensure that both sounds
+#' have the same sampling rate.
 #'
 #' Algorithm: makes spectrograms of both sounds, interpolates and smoothes the
 #' donor spectrogram, flattens the recipient spectrogram, multiplies the
@@ -961,7 +962,8 @@ addFormants = function(sound,
 #'   \code{\link{addFormants}} \code{\link{soundgen}}
 #'
 #' @inheritParams spectrogram
-#' @param donor the sound that provides the formants
+#' @param donor the sound that provides the formants or the desired spectral
+#'   filter as returned by \code{\link{getSpectralEnvelope}}
 #' @param recipient the sound that receives the formants
 #' @param freqWindow_donor,freqWindow_recipient the width of smoothing window.
 #'   Defaults to median pitch of each respective sound estimated by
@@ -1000,7 +1002,7 @@ addFormants = function(sound,
 #' playme(s2, samplingRate)
 #' spectrogram(s2, samplingRate, osc = TRUE)
 #'
-#' # now we use human formants on sheep source: the sheep says "why?"
+#' # Now we use human formants on sheep source: the sheep says "why?"
 #' s2 = transplantFormants(
 #'   donor = soundgen(formants = 'uaaai',
 #'                    samplingRate = samplingRate),
@@ -1009,6 +1011,18 @@ addFormants = function(sound,
 #' playme(s2, samplingRate)
 #' spectrogram(s2, samplingRate, osc = TRUE)
 #' seewave::meanspec(s2, f = samplingRate, dB = 'max0')
+#'
+#' # We can also transplant synthetic formants w/o synthesizing a donor sound to
+#' save time
+#' s3 = transplantFormants(
+#'   donor = getSpectralEnvelope(
+#'             nr = 512, nc = 100,  # fairly arbitrary dimensions
+#'             formants = 'uaaai',
+#'             samplingRate = samplingRate),
+#'   recipient = donor,
+#'   samplingRate = samplingRate)
+#' playme(s3, samplingRate)
+#' spectrogram(s3, samplingRate, osc = TRUE)
 #' }
 transplantFormants = function(donor,
                               freqWindow_donor = NULL,
@@ -1086,48 +1100,32 @@ transplantFormants = function(donor,
     padWithSilence = FALSE,
     plot = FALSE
   )
-  spec_donor = spectrogram(
-    donor,
-    samplingRate = samplingRate,
-    dynamicRange = dynamicRange,
-    windowLength = windowLength,
-    step = step,
-    overlap = overlap,
-    wn = wn,
-    zp = zp,
-    output = 'original',
-    padWithSilence = FALSE,
-    plot = FALSE
-  )
-
-  # Make sure the donor spec has the same dimensions as the recipient spec
-  spec_donor_rightDim = interpolMatrix(m = spec_donor,
-                                       nr = nrow(spec_recipient),
-                                       nc = ncol(spec_recipient))
-  rownames(spec_donor_rightDim) = rownames(spec_recipient)
-
-
-  # Smooth the donor spectrogram
-  if (!is.numeric(freqWindow_donor)) {
-    anal_donor = analyze(donor, samplingRate, plot = FALSE)
-    freqWindow_donor = median(anal_donor$pitch, na.rm = TRUE)
-  }
-  freqRange_kHz_donor = diff(range(as.numeric(rownames(spec_donor_rightDim))))
-  freqBin_Hz_donor = freqRange_kHz_donor * 1000 / nrow(spec_donor_rightDim)
-  freqWindow_donor_bins = round(freqWindow_donor / freqBin_Hz_donor, 0)
-  if (freqWindow_donor_bins < 3) {
-    message(paste('freqWindow_donor has to be at least 3 bins wide;
-                  resetting to', ceiling(freqBin_Hz_donor * 3)))
-    freqWindow_donor_bins = 3
-  }
-  # plot(spec_donor_rightDim[, 10], type = 'l')
-  for (i in 1:ncol(spec_donor_rightDim)) {
-    spec_donor_rightDim[, i] = getEnv(
-      sound = spec_donor_rightDim[, i],
-      windowLength_points = freqWindow_donor_bins,
-      method = 'peak'
+  if (!is.matrix(donor)) {
+    # donor is a sound
+    spec_donor = spectrogram(
+      donor,
+      samplingRate = samplingRate,
+      dynamicRange = dynamicRange,
+      windowLength = windowLength,
+      step = step,
+      overlap = overlap,
+      wn = wn,
+      zp = zp,
+      output = 'original',
+      padWithSilence = FALSE,
+      plot = FALSE
     )
+    # Make sure the donor spec has the same dimensions as the recipient spec
+    spec_donor_rightDim = interpolMatrix(m = spec_donor,
+                                         nr = nrow(spec_recipient),
+                                         nc = ncol(spec_recipient))
+  } else {
+    # donor is a matrix (spectrogram giving the desired formant structure)
+    spec_donor_rightDim = interpolMatrix(m = donor,
+                                nr = nrow(spec_recipient),
+                                nc = ncol(spec_recipient))
   }
+  rownames(spec_donor_rightDim) = rownames(spec_recipient)
 
   # Flatten the recipient spectrogram
   if (!is.numeric(freqWindow_recipient)) {
@@ -1153,6 +1151,32 @@ transplantFormants = function(donor,
       imaginary = Im(spec_recipient[, i])
     )
     # plot(abs(spec_recipient[, i]), type = 'l')
+  }
+
+  # Smooth the donor spectrogram
+  if (!is.numeric(freqWindow_donor)) {
+    if (is.matrix(donor)) {
+      freqWindow_donor = freqWindow_recipient
+    } else {
+      anal_donor = analyze(donor, samplingRate, plot = FALSE)
+      freqWindow_donor = median(anal_donor$pitch, na.rm = TRUE)
+    }
+  }
+  freqRange_kHz_donor = diff(range(as.numeric(rownames(spec_donor_rightDim))))
+  freqBin_Hz_donor = freqRange_kHz_donor * 1000 / nrow(spec_donor_rightDim)
+  freqWindow_donor_bins = round(freqWindow_donor / freqBin_Hz_donor, 0)
+  if (freqWindow_donor_bins < 3) {
+    message(paste('freqWindow_donor has to be at least 3 bins wide;
+                  resetting to', ceiling(freqBin_Hz_donor * 3)))
+    freqWindow_donor_bins = 3
+  }
+  # plot(spec_donor_rightDim[, 10], type = 'l')
+  for (i in 1:ncol(spec_donor_rightDim)) {
+    spec_donor_rightDim[, i] = getEnv(
+      sound = spec_donor_rightDim[, i],
+      windowLength_points = freqWindow_donor_bins,
+      method = 'peak'
+    )
   }
 
   # Multiply the spectrograms and reconstruct the audio

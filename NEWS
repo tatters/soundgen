@@ -9,6 +9,7 @@ MINOR:
   * pitch_app(): choose summary function, reset to defaults, etc.
   * analyze() and analyzeFolder() accept manually checked pitch contours as produced by pitch_app ("pitchManual" argument)
   * segment(), segmentFolder(): added oscillogram, improved accuracy of timing
+  * transplantFormants() accepts spectral filter produced by getSpectralEnvelope() as an alternative to donor sound
 
 
           CHANGES IN SOUNDGEN VERSION 1.5.1 [12-October-2019]
