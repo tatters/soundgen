@@ -164,7 +164,7 @@ above the highest specified formant, dB (only if temperature > 0)}
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
 opens and closes. If \code{NULL} or \code{NA}, the length is estimated
-based on specified formant frequencies (if any)}
+based on specified formant frequencies, if any (anchor format)}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
 dynamically so f0 is always a multiple of subFreq) (anchor format)}

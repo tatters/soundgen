@@ -1,6 +1,6 @@
-# TODO: check filter for really long vtl - too steep; vectorized vtl & temperature; ylim on spectrogram in pitch_app should adapt if samplingRate is raised really high; test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: analyzeFolder - remove priorPlot & plotSpec; check rolloff graph in soundgen_app for rolloff=0; check formantDep; check filter for really long vtl - too steep; test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
-# pitch_app: see a list of all uploaded files; reset the defaults without refreshing the page; load audio + results to double-check old work
+# pitch_app: see a list of all uploaded files; load audio + results to double-check old work
 
 #' @import stats graphics utils grDevices shinyBS
 #' @encoding UTF-8
@@ -123,7 +123,7 @@ NULL
 #' @param vocalTract the length of vocal tract, cm. Used for calculating formant
 #'   dispersion (for adding extra formants) and formant transitions as the mouth
 #'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated
-#'   based on specified formant frequencies (if any)
+#'   based on specified formant frequencies, if any (anchor format)
 #' @param subFreq target frequency of subharmonics, Hz (lower than f0, adjusted
 #'   dynamically so f0 is always a multiple of subFreq) (anchor format)
 #' @param subDep the width of subharmonic band, Hz. Regulates how quickly the
@@ -378,7 +378,7 @@ soundgen = function(
 
   if (!interpol %in% c('approx', 'spline', 'loess')) {
     warning(paste('Supported interpol: approx, spline, loess;',
-            'defaulting to loess'))
+                  'defaulting to loess'))
     interpol = 'loess'
   }
 
@@ -407,7 +407,7 @@ soundgen = function(
 
   # check and, if necessary, reformat anchors to dataframes
   for (anchor in c('pitch', 'pitchGlobal', 'glottis',
-                   'ampl', 'amplGlobal', 'mouth',
+                   'ampl', 'amplGlobal', 'mouth', 'vocalTract',
                    'vibratoFreq', 'vibratoDep', 'subFreq', 'subDep',
                    'jitterLen', 'jitterDep', 'shimmerLen', 'shimmerDep',
                    'rolloff', 'rolloffOct', 'rolloffKHz',
@@ -448,9 +448,9 @@ soundgen = function(
   # check amplitude anchors and make all values negative
   if (is.list(ampl)) {
     if (any(ampl$value > 0)) {
-      ampl$value = ampl$value - dynamicRange
+      ampl$value = ampl$value - max(ampl$value)
       message(paste('The recommended range for ampl is (-dynamicRange, 0).',
-                    'If positive, values are transformed by subtracting dynamicRange'))
+                    'If positive, values are transformed to be non-positive'))
     }
   }
 
@@ -508,12 +508,12 @@ soundgen = function(
     # for breathy voice, add breathing
     if (!is.list(noise)) {
       noise = data.frame(time = c(0, sylLen[1] + 100),
-                                value = c(-dynamicRange, -dynamicRange))
+                         value = c(-dynamicRange, -dynamicRange))
     }
     noise$value = noise$value +
       creakyBreathy * (dynamicRange + permittedValues['noiseAmpl', 'high'])
     noise$value[noise$value >
-                         permittedValues['noiseAmpl', 'high']] =
+                  permittedValues['noiseAmpl', 'high']] =
       permittedValues['noiseAmpl', 'high']
     # increase formant bandwidths by up to 100%
     if (is.list(formants)) {
@@ -575,8 +575,10 @@ soundgen = function(
       }
     }
     # vocalTract varies by 25% from the average
-    if (is.numeric(vocalTract)) {
-      vocalTract = vocalTract * (1 - .25 * maleFemale)
+    if (is.list(vocalTract)) {
+      if (is.numeric(vocalTract$value)) {
+        vocalTract$value = vocalTract$value * (1 - .25 * maleFemale)
+      }
     }
   }
 
@@ -977,11 +979,11 @@ soundgen = function(
     # followed by independent normalization of voiced & unvoiced
     if (noiseAmpRef == 'filtered' & !is.list(formantsNoise)) {
       formantsNoise = formants
-      if (!is.numeric(vocalTract) & is.list(formantsNoise)) {
+      if (!is.list(vocalTract) & is.list(formantsNoise)) {
         # estimate VTL, otherwise extra formants not added as we reinterpret
         # "formants" as "formantsNoise"
         vocalTract = estimateVTL(formants = formantsNoise,
-                    checkFormat = FALSE)  # already checked
+                                 checkFormat = FALSE)  # already checked
       }
     }
 

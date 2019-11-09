@@ -36,7 +36,7 @@ the spectrum of a recorded sound}
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
 opens and closes. If \code{NULL} or \code{NA}, the length is estimated
-based on specified formant frequencies (if any)}
+based on specified formant frequencies, if any (anchor format)}
 
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}

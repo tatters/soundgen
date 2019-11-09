@@ -56,7 +56,7 @@ radiation) when the mouth is open \code{>mouthOpenThres}, 0 to 1}
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
 opens and closes. If \code{NULL} or \code{NA}, the length is estimated
-based on specified formant frequencies (if any)}
+based on specified formant frequencies, if any (anchor format)}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
@@ -122,13 +122,16 @@ e = getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
   temperature = 0.1, formantDepStoch = 20, plot = TRUE)
 
-# a schwa based on the length of vocal tract = 15.5 cm
-e = getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
-  temperature = .1, vocalTract = 15.5, plot = TRUE)
+# a schwa based on variable length of vocal tract
+e = getSpectralEnvelope(nr = 512, nc = 100, formants = NA,
+  vocalTract = list(time = c(0, .4, 1), value = c(13, 18, 17)),
+  temperature = .1, plot = TRUE)
 
 # no formants at all, only lip radiation
-e = getSpectralEnvelope(nr = 512, nc = 50,
-  formants = NA, temperature = 0, plot = TRUE)
+e = getSpectralEnvelope(nr = 512, nc = 50, lipRad = 6,
+  formants = NA, temperature = 0, plot = FALSE)
+plot(e[, 1], type = 'l')              # linear scale
+plot(20 * log10(e[, 1]), type = 'l')  # dB scale - 6 dB/oct
 
 # mouth opening
 e = getSpectralEnvelope(nr = 512, nc = 50,
@@ -136,10 +139,14 @@ e = getSpectralEnvelope(nr = 512, nc = 50,
   mouth = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 
 # scale formant amplitude and/or bandwidth
-e = getSpectralEnvelope(nr = 512, nc = 50,
+e1 = getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
-  formantWidth = 2, formantDep = .5,
-  temperature = 0, plot = TRUE)
+  formantWidth = 1, formantDep = 1)  # defaults
+e2 = getSpectralEnvelope(nr = 512, nc = 50,
+  formants = soundgen:::convertStringToFormants('a'),
+  formantWidth = 1.5, formantDep = 1.5)
+plot(e2[, 1], type = 'l', col = 'red', lty = 2)
+points(e1[, 1], type = 'l')
 
 # manual specification of formants
 e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,
