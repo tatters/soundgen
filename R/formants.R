@@ -243,7 +243,7 @@ getSpectralEnvelope = function(nr,
         ff = unlist(lapply(formants[!non_integer_formants], function(x) x$freq[1]))
         formantDispersion = getFormantDispersion(ff,
                                                  speedSound = speedSound,
-                                                 method = 'accurate')
+                                                 method = 'regression')
       } else if (is.numeric(vocalTract)) {
         formantDispersion = speedSound / (2 * vocalTract)
       } else {
@@ -261,38 +261,36 @@ getSpectralEnvelope = function(nr,
         # 2 * nyquist = (2 * nExtraFormants - 1) / 2 * formantDispersion
         # Solving for nExtraFormants gives (nyquist * 4 / formantDispersion + 1) / 2:
         nExtraFormants = round((samplingRate * 2 / min(formantDispersion) + 1) / 2) - nFormants
-        if (is.numeric(nExtraFormants)) {
+        if (is.numeric(nExtraFormants) && nExtraFormants > 0) {
           nf = length(formantDispersion)
-          extraFreqs = extraWidths = vector('list', length = nf)
+          extraFreqs = extraWidths = matrix(NA, nrow = nc, ncol = nExtraFormants)
           extraAmps = rgamma(
             nExtraFormants,
             # mean = formantDepStoch, sd = formantDepStoch * temperature
             1 / temperature ^ 2,
             1 / (formantDepStoch * temperature ^ 2)
           )
-          if (nExtraFormants > 0) {
-            for (frame in 1:nf) {
-              # once for static vtl, for each frame in 1:nc otherwise
-              idx = (nFormants_integer + 1) : (nFormants_integer + nExtraFormants)
-              extraFreqs_regular = (2 * idx - 1) / 2 * formantDispersion[frame]
-              extraFreqs[[frame]] = rgamma(
-                nExtraFormants,
-                # mean = extraFreqs_regular, sd = sdG
-                extraFreqs_regular ^ 2 / sdG[frame] ^ 2,
-                extraFreqs_regular / sdG[frame] ^ 2
-              )
-              extraWidths[[frame]] = getBandwidth(extraFreqs[[frame]])
-            }
+          for (frame in 1:nf) {
+            # once for static vtl, for each frame in 1:nc otherwise
+            idx = (nFormants_integer + 1) : (nFormants_integer + nExtraFormants)
+            extraFreqs_regular = (2 * idx - 1) / 2 * formantDispersion[frame]
+            extraFreqs[frame, ] = rgamma(
+              nExtraFormants,
+              # mean = extraFreqs_regular, sd = sdG
+              extraFreqs_regular ^ 2 / sdG[frame] ^ 2,
+              extraFreqs_regular / sdG[frame] ^ 2
+            )
+            extraWidths[frame, ] = getBandwidth(extraFreqs[[frame]])
+          }
 
-            for (f in 1:nExtraFormants) {
-              formants_upsampled[[nFormants + 1]] = data.frame (
-                'time' = formants_upsampled[[1]][, 'time'],
-                'freq' = extraFreqs[[frame]][f] * vocalTract[1] / vocalTract,
-                'amp' = ifelse(any_zeros, extraAmps[f], NA),
-                'width' = extraWidths[[frame]][f]
-              )
-              nFormants = length(formants_upsampled)
-            }
+          for (f in 1:nExtraFormants) {
+            formants_upsampled[[nFormants + 1]] = data.frame (
+              'time' = formants_upsampled[[1]][, 'time'],
+              'freq' = extraFreqs[, f],
+              'amp' = ifelse(any_zeros, extraAmps[f], NA),
+              'width' = extraWidths[, f]
+            )
+            nFormants = length(formants_upsampled)
           }
         }
       }
