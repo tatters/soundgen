@@ -8,7 +8,7 @@
 server = function(input, output, session) {
     myPars = reactiveValues()
     myPars$zoomFactor = 2     # zoom buttons ch+ange zoom by this factor
-    myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
+    myPars$print = FALSE       # if TRUE, some functions print a meassage to the console when called
     myPars$out = NULL         # for storing the output
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
@@ -76,7 +76,7 @@ server = function(input, output, session) {
         if (myPars$print) print('Loading audio...')
         myPars$n = 1   # file number in queue
         myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
-
+        myPars$fileList = paste(input$loadAudio$name, collapse = ', ')
         # set up a list for storing manual anchors for each of uploaded files
         myPars$history = vector('list', length = myPars$nFiles)
         names(myPars$history) = input$loadAudio$name
@@ -311,7 +311,7 @@ server = function(input, output, session) {
         } else {
             myPars$summaryFun = input$summaryFun
         }
-        print(myPars$summaryFun)
+        # print(myPars$summaryFun)
     })
 
     obs_anal = observe({
@@ -751,6 +751,7 @@ server = function(input, output, session) {
     ## TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay
     # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
     # STFT
+    shinyBS::addTooltip(session, id='reset_to_def', title = 'Reset all settings to default values', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range of spectrogram, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

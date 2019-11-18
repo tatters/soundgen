@@ -11,7 +11,7 @@ MINOR:
   * analyze() and analyzeFolder() accept manually checked pitch contours as produced by pitch_app ("pitchManual" argument)
   * segment(), segmentFolder(): added oscillogram, improved accuracy of timing
   * transplantFormants() accepts spectral filter produced by getSpectralEnvelope() as an alternative to donor sound
-  * soundgen(): vectorized vocal tract length ("vocalTract" argument)
+  * soundgen(): vectorized vocal tract length ("vocalTract" argument) - note that this is similar to the "mouth" argument, but with bandwidths adjusted appropriately and with no limitation on the magnitude of formant frequency shifts
 
 
           CHANGES IN SOUNDGEN VERSION 1.5.1 [12-October-2019]

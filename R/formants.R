@@ -263,7 +263,7 @@ getSpectralEnvelope = function(nr,
         nExtraFormants = round((samplingRate * 2 / min(formantDispersion) + 1) / 2) - nFormants
         if (is.numeric(nExtraFormants) && nExtraFormants > 0) {
           nf = length(formantDispersion)
-          extraFreqs = extraWidths = matrix(NA, nrow = nc, ncol = nExtraFormants)
+          extraFreqs = extraWidths = matrix(NA, nrow = nf, ncol = nExtraFormants)
           extraAmps = rgamma(
             nExtraFormants,
             # mean = formantDepStoch, sd = formantDepStoch * temperature
