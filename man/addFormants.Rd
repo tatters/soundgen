@@ -6,11 +6,11 @@
 \usage{
 addFormants(sound, formants, spectralEnvelope = NULL, action = c("add",
   "remove")[1], vocalTract = NA, formantDep = 1,
-  formantDepStoch = 20, formantWidth = 1, lipRad = 6, noseRad = 4,
-  mouthOpenThres = 0, mouth = NA, interpol = c("approx", "spline",
-  "loess")[3], temperature = 0.025, formDrift = 0.3, formDisp = 0.2,
-  samplingRate = 16000, windowLength_points = 800, overlap = 75,
-  normalize = TRUE)
+  formantDepStoch = 20, formantWidth = 1, formantCeiling = 2,
+  lipRad = 6, noseRad = 4, mouthOpenThres = 0, mouth = NA,
+  interpol = c("approx", "spline", "loess")[3], temperature = 0.025,
+  formDrift = 0.3, formDisp = 0.2, samplingRate = 16000,
+  windowLength_points = 800, overlap = 75, normalize = TRUE)
 }
 \arguments{
 \item{sound}{numeric vector with \code{samplingRate}}
@@ -44,7 +44,11 @@ to amplitudes in \code{formants})}
 \item{formantDepStoch}{the amplitude of additional stochastic formants added
 above the highest specified formant, dB (only if temperature > 0)}
 
-\item{formantWidth}{= scale factor of formant bandwidth (1 = no change)}
+\item{formantWidth}{scale factor of formant bandwidth (1 = no change)}
+
+\item{formantCeiling}{frequency to which stochastic formants are calculated,
+in multiples of the Nyquist frequency; increase up to ~10 for long vocal
+tracts to avoid losing energy in the upper part of the spectrum}
 
 \item{lipRad}{the effect of lip radiation on source spectrum, dB/oct (the
 default of +6 dB/oct produces a high-frequency boost when the mouth is

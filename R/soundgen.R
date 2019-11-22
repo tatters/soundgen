@@ -120,9 +120,9 @@ NULL
 #' @param formantDepStoch the amplitude of additional stochastic formants added
 #'   above the highest specified formant, dB (only if temperature > 0)
 #' @param formantWidth scale factor of formant bandwidth (1 = no change)
-#' @param formantCeiling frequency to which stochastic formants are calculated, in
-#'   multiples of the Nyquist frequency; increase for long vocal tracts to avoid
-#'   losing energy in the upper part of the spectrum
+#' @param formantCeiling frequency to which stochastic formants are calculated,
+#'   in multiples of the Nyquist frequency; increase up to ~10 for long vocal
+#'   tracts to avoid losing energy in the upper part of the spectrum
 #' @param vocalTract the length of vocal tract, cm. Used for calculating formant
 #'   dispersion (for adding extra formants) and formant transitions as the mouth
 #'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated

@@ -9,10 +9,10 @@ getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1,
   interpol = c("approx", "spline", "loess")[3], mouthOpenThres = 0.2,
   openMouthBoost = 0, vocalTract = NULL, temperature = 0.05,
   formDrift = 0.3, formDisp = 0.2, formantDepStoch = 20,
-  smoothLinearFactor = 1, samplingRate = 16000, speedSound = 35400,
-  plot = FALSE, duration = NULL, colorTheme = c("bw", "seewave",
-  "...")[1], nCols = 100, xlab = "Time", ylab = "Frequency, kHz",
-  ...)
+  smoothLinearFactor = 1, formantCeiling = 2, samplingRate = 16000,
+  speedSound = 35400, plot = FALSE, duration = NULL,
+  colorTheme = c("bw", "seewave", "...")[1], nCols = 100,
+  xlab = "Time", ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where
@@ -30,7 +30,7 @@ specified in ms or an any other arbitrary scale.}
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}
 
-\item{formantWidth}{= scale factor of formant bandwidth (1 = no change)}
+\item{formantWidth}{scale factor of formant bandwidth (1 = no change)}
 
 \item{lipRad}{the effect of lip radiation on source spectrum, dB/oct (the
 default of +6 dB/oct produces a high-frequency boost when the mouth is
@@ -78,6 +78,10 @@ necessary because the input \code{formants} normally contains fewer
 sets of formant values than the number of fft steps.
 \code{smoothLinearFactor} = 0: close to default spline; >3: approaches
 linear extrapolation}
+
+\item{formantCeiling}{frequency to which stochastic formants are calculated,
+in multiples of the Nyquist frequency; increase up to ~10 for long vocal
+tracts to avoid losing energy in the upper part of the spectrum}
 
 \item{samplingRate}{sampling frequency, Hz}
 

@@ -15,7 +15,7 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   rolloffParabHarm = 3, rolloffExact = NULL, lipRad = 6,
   noseRad = 4, mouthOpenThres = 0, formants = c(860, 1430, 2900),
   formantDep = 1, formantDepStoch = 20, formantWidth = 1,
-  vocalTract = NA, subFreq = 100, subDep = 100,
+  formantCeiling = 2, vocalTract = NA, subFreq = 100, subDep = 100,
   shortestEpoch = 300, amDep = 0, amFreq = 30, amShape = 0,
   noise = NULL, formantsNoise = NA, rolloffNoise = -4,
   noiseFlatSpec = 1200, noiseAmpRef = c("f0", "source", "filtered")[3],
@@ -159,7 +159,11 @@ to amplitudes in \code{formants})}
 \item{formantDepStoch}{the amplitude of additional stochastic formants added
 above the highest specified formant, dB (only if temperature > 0)}
 
-\item{formantWidth}{= scale factor of formant bandwidth (1 = no change)}
+\item{formantWidth}{scale factor of formant bandwidth (1 = no change)}
+
+\item{formantCeiling}{frequency to which stochastic formants are calculated,
+in multiples of the Nyquist frequency; increase up to ~10 for long vocal
+tracts to avoid losing energy in the upper part of the spectrum}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
