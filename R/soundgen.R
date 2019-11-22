@@ -1,4 +1,4 @@
-# TODO: re-check getSpectralEnvelope with all possible inputs; modulationSpectrum with inversed routine to filter a sound - eg remove roughness; rolloffNoiseExp around -6 dB/oct so flat after lipRad (Klatt & Klatt, 1990); AM aspiration noise with source if synthesizing with a closed phase (glottis > 0); check filter for really long vtl - too steep(?); test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: modulationSpectrum with inversed routine to filter a sound - eg remove roughness; rolloffNoiseExp around -6 dB/oct so flat after lipRad (Klatt & Klatt, 1990); add aspiration noise as an intrinsic part of source to be exactly the same length as the voiced segment (+play with noise spectrum to replace upper harmonics); AM aspiration noise with source if synthesizing with a closed phase (glottis > 0); check filter for really long vtl - too steep(?); test upsampling in pitchAutocor - maybe also lower the .975 threshold (optimize formally); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?); option to adjust the filter to be flat regardless of the number of formants (?)
 
 # pitch_app: see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
@@ -119,7 +119,10 @@ NULL
 #'   to amplitudes in \code{formants})
 #' @param formantDepStoch the amplitude of additional stochastic formants added
 #'   above the highest specified formant, dB (only if temperature > 0)
-#' @param formantWidth = scale factor of formant bandwidth (1 = no change)
+#' @param formantWidth scale factor of formant bandwidth (1 = no change)
+#' @param formantCeiling frequency to which stochastic formants are calculated, in
+#'   multiples of the Nyquist frequency; increase for long vocal tracts to avoid
+#'   losing energy in the upper part of the spectrum
 #' @param vocalTract the length of vocal tract, cm. Used for calculating formant
 #'   dispersion (for adding extra formants) and formant transitions as the mouth
 #'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated
@@ -299,6 +302,7 @@ soundgen = function(
   formantDep = 1,
   formantDepStoch = 20,
   formantWidth = 1,
+  formantCeiling = 2,
   vocalTract = NA,
   subFreq = 100,
   subDep = 100,
@@ -963,6 +967,7 @@ soundgen = function(
       vocalTract = vocalTract,
       formantDep = formantDep,
       formantWidth = formantWidth,
+      formantCeiling = formantCeiling,
       lipRad = lipRad,
       noseRad = noseRad,
       mouthOpenThres = mouthOpenThres,

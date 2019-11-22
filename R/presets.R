@@ -50,6 +50,7 @@ permittedValues = matrix(c(
   'formantDep', 1, 0, 2, .1,
   'formantDepStoch', 20, 0, 40, 5,
   'formantWidth', 1, .1, 10, .1,
+  'formantCeiling', 2, 1, 20, .1,
   'subFreq', 100, 10, 1000, 10,
   'subDep', 100, 0, 500, 10,
   'shortestEpoch', 300, 50, 500, 25,
@@ -59,7 +60,7 @@ permittedValues = matrix(c(
   'samplingRate', 16000, 8000, 44100, 100,
   'windowLength', 40, 5, 100, 2.5, # default, low, high, step
   'dynamicRange', 80, 10, 200, 10,
-  'rolloffNoise', -4, -20, 20, 1,
+  'rolloffNoise', -4, -100, 100, 1,
 
   # other soundgen settings, which are NOT updateable sliders in soundgen_app()
   'vocalTract', 15.5, 2, 100, .5,

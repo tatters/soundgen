@@ -112,6 +112,7 @@ getSpectralEnvelope = function(nr,
                                formDisp = .2,
                                formantDepStoch = 20,
                                smoothLinearFactor = 1,
+                               formantCeiling = 2,
                                samplingRate = 16000,
                                speedSound = 35400,
                                plot = FALSE,
@@ -208,27 +209,6 @@ getSpectralEnvelope = function(nr,
     }
     names(formants_upsampled) = names(formants)
 
-    # formants_upsampled = lapply(formants, function(f) {
-    #   temp = apply(f, 2, function(y) {
-    #     if (length(y) > 1 & !any(is.na(y))) {
-    #       # just spline produces imprecise, overly smoothed curves. Loess is just
-    #       # too slow for this. So we apply linear extrapolation to formant values
-    #       # first, to get a fairly straight line between anchors, and THEN smooth
-    #       # it out with spline
-    #       out = spline(approx(y, n = nPoints + 2 ^ smoothLinearFactor,
-    #                           x = f$time)$y, n = nc)$y
-    #     } else {
-    #       out = rep(y[1], nc)
-    #     }
-    #     out
-    #   })
-    #   if (!is.matrix(temp)) {
-    #     # if nc==1, we get numeric instead of matrix and need to convert
-    #     temp = t(as.matrix(temp))
-    #   }
-    #   temp
-    # }) # check that class(formants_upsampled[[1]]) == 'matrix'
-
     ## Stochastic part (only for temperature > 0)
     if (temperature > 0) {
       # non-integer formants like "f1.4" refer to extra zero-pole pairs.
@@ -260,7 +240,7 @@ getSpectralEnvelope = function(nr,
         # (to compensate for downward drag of lower formants)
         # 2 * nyquist = (2 * nExtraFormants - 1) / 2 * formantDispersion
         # Solving for nExtraFormants gives (nyquist * 4 / formantDispersion + 1) / 2:
-        nExtraFormants = round((samplingRate * 2 / min(formantDispersion) + 1) / 2) - nFormants
+        nExtraFormants = round((samplingRate * formantCeiling / min(formantDispersion) + 1) / 2) - nFormants
         if (is.numeric(nExtraFormants) && nExtraFormants > 0) {
           nf = length(formantDispersion)
           extraFreqs = extraWidths = matrix(NA, nrow = nf, ncol = nExtraFormants)
@@ -498,12 +478,46 @@ getSpectralEnvelope = function(nr,
   # plot(spectralEnvelope[, 1], type = 'l')
   # image(t(spectralEnvelope))
 
+  # save frequency and time stamps
+  freqs = seq(bin_width / 2,
+              samplingRate / 2 - bin_width / 2,
+              length.out = nr) / 1000
+  rownames(spectralEnvelope) = freqs
+  if (is.numeric(duration)) {
+    colnames(spectralEnvelope) = seq(0, duration, length.out = nc)
+  } else {
+    colnames(spectralEnvelope) = seq(0, 1, length.out = nc)
+  }
+
   # add correction for not adding higher formants
-  # rolloffAdjust = 0 - 12 * log2(((nr*1):1)) [1:nr]
-  # rolloffAdjust = rolloffAdjust - min(rolloffAdjust)
-  # spectralEnvelope = apply(spectralEnvelope,
-  #                          2,
-  #                          function(x) x + rolloffAdjust)
+  if (FALSE) {
+    # add correction for not adding higher formants
+    # rolloffAdjust = 0 - 12 * log2(((nr*1):1)) [1:nr]
+    # rolloffAdjust = rolloffAdjust - min(rolloffAdjust)
+    # spectralEnvelope = apply(spectralEnvelope,
+    #                          2,
+    #                          function(x) x + rolloffAdjust)
+
+    # or:
+    # s = as.matrix(data.frame(freq = freqs,
+    #                          amp = spectralEnvelope[, 1]))
+    # peaks = as.data.frame(seewave::fpeaks(s, f = samplingRate, plot = FALSE))
+    # mod = nls(amp ~ a + b * freq ^ c, peaks, start = list(a = 0, b = -1, c = 1))
+    # if (FALSE) {
+    #   peaks$pred = predict(mod)
+    #   plot(peaks$freq, peaks$amp, type = 'b')
+    #   points(peaks$freq, peaks$pred, type = 'l', col = 'red')
+    # }
+    #
+    # ms = summary(mod)
+    # msc = ms$coefficients[, 1]
+    # specAdjust = as.numeric(-(msc[1] + msc[2] * s[, 'freq'] ^ msc[3]))
+    # specAdjust = specAdjust - min(specAdjust)
+    # for (c in 1:ncol(spectralEnvelope)) {
+    #   spectralEnvelope[, c] = spectralEnvelope[, c] + specAdjust
+    # }
+  }
+  # image(t(spectralEnvelope))
   # END OF FORMANTS
 
   # add lip radiation when the mouth is open and nose radiation when the mouth is closed
@@ -517,16 +531,6 @@ getSpectralEnvelope = function(nr,
       mouthOpen_binary[c] * openMouthBoost
   }
   # plot(spectralEnvelope[, 1], type = 'l')
-
-  # save frequency and time stamps
-  rownames(spectralEnvelope) = seq(bin_width / 2,
-                                   samplingRate / 2 - bin_width / 2,
-                                   length.out = nr) / 1000
-  if (is.numeric(duration)) {
-    colnames(spectralEnvelope) = seq(0, duration, length.out = nc)
-  } else {
-    colnames(spectralEnvelope) = seq(0, 1, length.out = nc)
-  }
 
   # convert from dB to linear multiplier of power spectrum
   spectralEnvelope_lin = 10 ^ (spectralEnvelope / 20)
@@ -850,6 +854,7 @@ addFormants = function(sound,
                        formantDep = 1,
                        formantDepStoch = 20,
                        formantWidth = 1,
+                       formantCeiling = 2,
                        lipRad = 6,
                        noseRad = 4,
                        mouthOpenThres = 0,
@@ -909,6 +914,7 @@ addFormants = function(sound,
         formantDep = formantDep,
         formantDepStoch = formantDepStoch,
         formantWidth = formantWidth,
+        formantCeiling = formantCeiling,
         lipRad = lipRad,
         noseRad = noseRad,
         mouthOpenThres = mouthOpenThres,

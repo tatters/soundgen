@@ -12,6 +12,7 @@ MINOR:
   * segment(), segmentFolder(): added oscillogram, improved accuracy of timing
   * transplantFormants() accepts spectral filter produced by getSpectralEnvelope() as an alternative to donor sound
   * soundgen(): vectorized vocal tract length ("vocalTract" argument) - note that this is similar to the "mouth" argument, but with bandwidths adjusted appropriately and with no limitation on the magnitude of formant frequency shifts
+  * soundgen(): a new argument, "formantCeiling", adjusts the frequency to which formant are calculated - increase for extra precision, particularly for longer-than-human vocal tracts
 
 
           CHANGES IN SOUNDGEN VERSION 1.5.1 [12-October-2019]
