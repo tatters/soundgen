@@ -940,7 +940,6 @@ addFormants = function(sound,
     # image(t(spectralEnvelope))
 
     # fft and filtering
-    # NB: stft is supposed to be renamed to stdft in seewave 2.0.6
     z = seewave::stdft(
       wave = as.matrix(sound),
       f = samplingRate,

@@ -287,7 +287,7 @@ modulationSpectrum = function(
       s1 = s1 - min(s1) + 1e-16  # positive
     }
     # center - see spec.fft function in "spectral" package
-    s2 = s1 * (-1)^(row(s1) + col(s1))
+    s2 = s1 * (-1)^(row(s1) + col(s1))  # checkerboard of ±1
     # 2D fft
     s3 = abs(fft(s2, inverse = FALSE))
     # image(t(s3))

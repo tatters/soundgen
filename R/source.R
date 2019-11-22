@@ -1,4 +1,5 @@
-# Functions for generating excitation source: either noise with generateNoise() or harmonics with generateHarmonics()
+# Functions for generating excitation source: either noise with generateNoise()
+# or harmonics with generateHarmonics()
 
 #' Generate noise
 #'
@@ -132,10 +133,10 @@ generateNoise = function(len,
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
     len = rnorm_truncated(n = 1,
-                        mean = len,
-                        sd = len * temperature * .5,
-                        low = 0, high = samplingRate * 10,  # max 10 s
-                        roundToInteger = TRUE)
+                          mean = len,
+                          sd = len * temperature * .5,
+                          low = 0, high = samplingRate * 10,  # max 10 s
+                          roundToInteger = TRUE)
     if (is.list(rolloffNoise)) {
       rolloffNoise = wiggleAnchors(
         rolloffNoise,
@@ -155,13 +156,13 @@ generateNoise = function(len,
       )
     }
     noiseFlatSpec = rnorm_truncated(n = 1,
-                                  mean = noiseFlatSpec,
-                                  sd = noiseFlatSpec * temperature * .5,
-                                  low = 0, high = samplingRate / 2)
+                                    mean = noiseFlatSpec,
+                                    sd = noiseFlatSpec * temperature * .5,
+                                    low = 0, high = samplingRate / 2)
     attackLen = rnorm_truncated(n = length(attackLen),
-                              mean = attackLen,
-                              sd = attackLen * temperature * .5,
-                              low = 0, high = len / samplingRate * 1000 / 2)
+                                mean = attackLen,
+                                sd = attackLen * temperature * .5,
+                                low = 0, high = len / samplingRate * 1000 / 2)
     noise = wiggleAnchors(
       reformatAnchors(noise),
       temperature = temperature,
@@ -661,7 +662,7 @@ generateHarmonics = function(pitch,
     }
   }
 
-    # pitch drift is accompanied by amplitude drift
+  # pitch drift is accompanied by amplitude drift
   if (temperature > 0 & amplDriftDep > 0) {
     drift_ampl = zeroOne(drift) * temperature
     drift_ampl = drift_ampl - mean(drift_ampl) + 1  # hist(drift_ampl)
@@ -769,6 +770,12 @@ generateGC = function(pitch_per_gc,
 
     if (wn == 'none') {
       waveform = c(waveform, cycle, rep(0, gc_closed_adj[i]))
+      # Alternative to simple concatenation: cross-fade (doesn't make much difference in practice)
+      # fadeTime_ms = 2
+      # fadeTime_points = round(fadeTime_ms * samplingRate / 1000)
+      # fadeTime_points = min(fadeTime_points, 2 * round(gc_closed_adj[i] / 4))
+      # new = crossFade(cycle, rep(0, gc_closed_adj[i] + 2 * fadeTime_points), crossLenPoints = fadeTime_points, shape = 'lin')
+      # waveform = crossFade(waveform, new, crossLenPoints = fadeTime_points, shape = 'lin')
     } else {
       # window before glueing gc with pauses
       win = ftwindow_modif(wl = gc_len_adj[i], wn = wn)
@@ -910,22 +917,22 @@ fart = function(glottis = c(50, 200),
   # wiggle pars
   if (temperature > 0) {
     rolloff = rnorm_truncated(n = 1,
-                            mean = rolloff,
-                            sd = rolloff * temperature * .5,
-                            low = -50, high = 10)
+                              mean = rolloff,
+                              sd = rolloff * temperature * .5,
+                              low = -50, high = 10)
     sylLen = rnorm_truncated(n = 1,
-                           mean = sylLen,
-                           sd = sylLen * temperature * .5,
-                           low = 0, high = 10000)
+                             mean = sylLen,
+                             sd = sylLen * temperature * .5,
+                             low = 0, high = 10000)
 
     glottis = wiggleAnchors(
       glottis, temperature, temp_coef = .5,
       low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
-      )
+    )
     pitch = wiggleAnchors(
       pitch, temperature, temp_coef = 1,
       low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
-      )
+    )
   }
 
   # prepare pitch contour
