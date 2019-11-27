@@ -260,7 +260,7 @@ getSpectralEnvelope = function(nr,
               extraFreqs_regular ^ 2 / sdG[frame] ^ 2,
               extraFreqs_regular / sdG[frame] ^ 2
             )
-            extraWidths[frame, ] = getBandwidth(extraFreqs[[frame]])
+            extraWidths[frame, ] = getBandwidth(extraFreqs[frame, ])
           }
 
           for (f in 1:nExtraFormants) {
