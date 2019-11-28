@@ -54,8 +54,8 @@ getFormantDispersion = function(formants,
     # Reby et al. (2005) "Red deer stags use formants..."
     deltaF = (2 * (1:length(formants)) - 1) / 2
     # plot(deltaF, formants)
-    mod = lm(formants ~ deltaF - 1)  # NB: no intercept, i.e. forced to pass through 0
-    formantDispersion = summary(mod)$coef[1]
+    mod = suppressWarnings(lm(formants ~ deltaF - 1))  # NB: no intercept, i.e. forced to pass through 0
+    formantDispersion = suppressWarnings(summary(mod)$coef[1])
   }
   return(formantDispersion)
 }

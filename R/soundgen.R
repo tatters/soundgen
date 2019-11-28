@@ -1031,7 +1031,7 @@ soundgen = function(
         if (length(sound_unvoiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           # add extra stochastic formants to unvoiced only if vocalTract is user-specified
           fds = ifelse(
-            is.list(vocalTract), formantDepStoch, 0
+            is.null(vocalTract) || is.na(vocalTract), 0, formantDepStoch
           )
           unvoicedFiltered = do.call(addFormants, c(
             formantPars,
