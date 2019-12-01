@@ -477,7 +477,7 @@ formants = list(
                     amp = c(30, 20), width = c(120, 200)), 
   f3   = data.frame(time=c(0, 1), freq = c(2900, 3100), 
                     amp = 25, width = 200))
-soundgen(sylLen = 1500, play = playback, pitch = 140, formants = formants)
+s = soundgen(sylLen = 1500, play = playback, pitch = 140, formants = formants)
 spectrogram(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5, 
             windowLength = 10, step = 5, colorTheme = 'seewave')
 # long-term average spectrum (less helpful for moving formants but very good for stationary):

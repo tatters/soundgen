@@ -3,6 +3,7 @@ BUGS FIXED:
   * analyze(): proper plotting of oscillogram for audio files
 
 NEW FUNCTIONS:
+  * invertSpectrogram(): reconstructs audio from a spectrogram by trying to guess the phase
   * transplantEnv(): transplants the amplitude envelope from one sound to another
 
 MINOR:
