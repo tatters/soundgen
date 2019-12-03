@@ -41,6 +41,8 @@
 #'   FFT
 #' @param power raise modulation spectrum to this power (eg power = 2 for ^2, or
 #'   "power spectrum")
+#' @param returnComplex if TRUE, returns a complex modulation spectrum (without
+#'   normalization and warping)
 #' @param plot if TRUE, plots the modulation spectrum
 #' @param savePath if a valid path is specified, a plot is saved in this folder
 #'   (defaults to NA)
@@ -66,6 +68,8 @@
 #' \item \code{$processed} modulation spectrum after blurring and log-warping
 #' \item \code{$roughness} proportion of energy / amplitude of the modulation
 #' spectrum within \code{roughRange} of temporal modulation frequencies, \%
+#' \item \code{$complex} untransformed complex modulation spectrum (only if
+#' returnComplex = TRUE)
 #' }
 #' @export
 #' @examples
@@ -152,6 +156,11 @@
 #' # Log-transform the spectrogram prior to 2D FFT (affects roughness):
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = FALSE)
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
+#'
+#' # Complex modulation spectrum with phase preserved
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+#'                         returnComplex = TRUE)
+#' image(t(log(abs(ms$complex))))
 #' }
 modulationSpectrum = function(
   x,
@@ -165,6 +174,7 @@ modulationSpectrum = function(
   zp = 0,
   power = 1,
   roughRange = c(30, 150),
+  returnComplex = FALSE,
   plot = TRUE,
   savePath = NA,
   logWarp = 2,
@@ -270,6 +280,11 @@ modulationSpectrum = function(
 
   # extract modulation spectrum per sound
   out = vector('list', length(myInput))
+  if (returnComplex) {
+    out_complex = out
+  } else {
+    out_aggreg_complex = NULL
+  }
   for (i in 1:length(myInput)) {
     s1 = spectrogram(myInput[[i]],
                      samplingRate = samplingRate[i],
@@ -279,38 +294,45 @@ modulationSpectrum = function(
                      zp = zp,
                      plot = FALSE,
                      output = 'original',
-                     padWithSilence = FALSE)
-    # image(t(s1))
+                     padWithSilence = FALSE,
+                     normalize = TRUE)
+    # image(t(log(s1))); s1[1:3, 1:3]; dim(s1); range(s1)
     # log-transform amplitudes
     if (logSpec) {
       s1 = log(s1)
       s1 = s1 - min(s1) + 1e-16  # positive
     }
-    # center - see spec.fft function in "spectral" package
-    s2 = s1 * (-1)^(row(s1) + col(s1))  # checkerboard of ±1
     # 2D fft
-    s3 = abs(fft(s2, inverse = FALSE))
-    # image(t(s3))
-    # image(t(log(s3)))
-    s4 = s3[(nrow(s3) / 2 + 1) : nrow(s3), ]  # take only the upper half (always even)
+    ms_complex = specToMS(s1, samplingRate[i], step = step)
+    ms = abs(ms_complex)
+    # image(t(log(ms)))
+    symAxis = floor(nrow(ms) / 2) + 1
+    # ms[(symAxis - 2) : (symAxis + 2), 1:2]
+    ms_half = ms[symAxis:nrow(ms), ]  # take only the upper half (always even)
+
     # power
-    if (is.numeric(power)) s4 = s4 ^ power
+    if (is.numeric(power) && power != 1) ms_half = ms_half ^ power
+
     # normalize
-    s5 = s4 - min(s4)
-    s5 = s5 / max(s5)
-    # image(t(log(s5)))
-    out[[i]] = t(s5)
+    ms_half = ms_half - min(ms_half)
+    ms_half = ms_half / max(ms_half)
+    # image(t(log(ms_half)))
+    out[[i]] = ms_half
+
+    if (returnComplex) {
+      out_complex[[i]] = ms_complex
+    }
   }
 
   # average modulation spectra across all sounds
-  max_rows = max(unlist(lapply(out, nrow)))
-  if (max_rows %% 2 == 0) max_rows = max_rows + 1  # make uneven to have a clear 0
+  max_cols = max(unlist(lapply(out, ncol)))
   # normally same samplingRate, but in case not, upsample frequency resolution
   # typical ncol (depends on sound dur)
-  typicalCols = round(median(unlist(lapply(out, ncol))))
+  typicalRows = round(median(unlist(lapply(out, nrow))))
   sr = max(samplingRate)  # again, in case not the same
-  out1 = lapply(out, function(x) interpolMatrix(x, nr = max_rows, nc = typicalCols))
+  out1 = lapply(out, function(x) interpolMatrix(x, nr = typicalRows, nc = max_cols))
   out_aggreg = Reduce('+', out1) / length(myInput)
+  # image(t(log(out_aggreg)))
 
   # get time and frequency labels
   max_am = 1000 / step / 2
@@ -320,23 +342,32 @@ modulationSpectrum = function(
       'increase overlap / decrease step to improve temporal resolution,',
       'or else look for roughness in a lower range'))
   }
-  X = seq(-max_am, max_am, length.out = nrow(out_aggreg))  # time modulation
-  max_fm = ncol(out_aggreg) / (sr / 2 / 1000)
-  Y = seq(0, max_fm, length.out = ncol(out_aggreg))  # frequency modulation
-  rownames(out_aggreg) = X
-  colnames(out_aggreg) = Y
+  X = seq(-max_am, max_am, length.out = ncol(out_aggreg))  # time modulation
+  max_fm = nrow(out_aggreg) / (sr / 2 / 1000)
+  Y = seq(max_fm / nrow(out_aggreg), max_fm, length.out = nrow(out_aggreg))  # frequency modulation
+  rownames(out_aggreg) = Y
+  colnames(out_aggreg) = X
+
+  # prepare a separate summary of the complex ms
+  if (returnComplex) {
+    out1_complex = lapply(out_complex, function(x) interpolMatrix(x, nr = typicalRows * 2, nc = max_cols))
+    out_aggreg_complex = Reduce('+', out1_complex) / length(myInput)
+    colnames(out_aggreg_complex) = X
+    rownames(out_aggreg_complex) = c(-rev(Y), Y)
+    # image(t(log(abs(out_aggreg_complex))))
+  }
 
   # extract a measure of roughness
   roughness = getRough(out_aggreg, roughRange)
 
   # log-transform the axes (or, actually, warp the matrix itself)
   if (is.numeric(logWarp)) {
-    zero_row = ceiling(max_rows / 2)
-    m_left = logMatrix(out_aggreg[zero_row:1, ], base = logWarp)  # NB: flip the left half!
-    m_right = logMatrix(out_aggreg[zero_row : max_rows, ], base = logWarp)
-    out_transf = rbind(m_left[nrow(m_left):1, ], m_right[2:nrow(m_right), ])
-    X1 = as.numeric(rownames(out_transf))  # warped by logMatrix
-    Y1 = as.numeric(colnames(out_transf))  # warped by logMatrix
+    zero_col = ceiling(max_cols / 2)
+    m_left = logMatrix(out_aggreg[, zero_col:1], base = logWarp)  # NB: flip the left half!
+    m_right = logMatrix(out_aggreg[, zero_col:max_cols], base = logWarp)
+    out_transf = cbind(m_left[, ncol(m_left):1], m_right[, 2:ncol(m_right)])
+    X1 = as.numeric(colnames(out_transf))  # warped by logMatrix
+    Y1 = as.numeric(rownames(out_transf))  # warped by logMatrix
   } else {
     out_transf = out_aggreg
   }
@@ -363,7 +394,7 @@ modulationSpectrum = function(
     color.palette = switchColorTheme(colorTheme)
     if (is.numeric(logWarp)) {
       filled.contour.mod(
-        x = X, y = Y, z = out_transf,
+        x = X, y = Y, z = t(out_transf),
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
         xlab = xlab, ylab = ylab,
@@ -419,7 +450,7 @@ modulationSpectrum = function(
       #      labels = yl)
     } else {
       filled.contour.mod(
-        x = X, y = Y, z = out_transf,
+        x = X, y = Y, z = t(out_transf),
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
         xlab = xlab, ylab = ylab,
@@ -431,7 +462,7 @@ modulationSpectrum = function(
     # qntls = quantile(out_aggreg, probs = quantiles)  # could try HDI instead
     qntls = pDistr(as.numeric(out_transf), quantiles = quantiles)
     par(new = TRUE)
-    contour(x = X, y = Y, z = out_transf,
+    contour(x = X, y = Y, z = t(out_transf),
             levels = qntls, labels = quantiles * 100,
             xaxs = 'i', yaxs = 'i',
             axes = FALSE, frame.plot = FALSE,
@@ -442,6 +473,7 @@ modulationSpectrum = function(
 
   invisible(list('original' = out_aggreg,
                  'processed' = out_transf,
+                 'complex' = out_aggreg_complex,
                  'roughness' = roughness))
 }
 
@@ -555,11 +587,11 @@ modulationSpectrumFolder = function(
 #' rownames(m) = seq(-10, 10, length.out = nrow(m))
 #' soundgen:::getRough(m, roughRange = c(6, 8))
 getRough = function(m, roughRange) {
-  rn = abs(as.numeric(rownames(m)))
-  rough_rows = which(rn > roughRange[1] &
-                       rn < roughRange[2])
-  if (length(rough_rows) > 0) {
-    roughness = sum(m[rough_rows, ]) / sum(m) * 100
+  colNames = abs(as.numeric(colnames(m)))
+  rough_cols = which(colNames > roughRange[1] &
+                       colNames < roughRange[2])
+  if (length(rough_cols) > 0) {
+    roughness = sum(m[, rough_cols]) / sum(m) * 100
   } else {
     roughness = 0
   }

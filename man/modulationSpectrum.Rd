@@ -7,11 +7,11 @@
 modulationSpectrum(x, samplingRate = NULL, maxDur = 5,
   logSpec = FALSE, windowLength = 25, step = NULL, overlap = 80,
   wn = "gaussian", zp = 0, power = 1, roughRange = c(30, 150),
-  plot = TRUE, savePath = NA, logWarp = 2, quantiles = c(0.5, 0.8,
-  0.9), kernelSize = 5, kernelSD = 0.5, colorTheme = c("bw",
-  "seewave", "heat.colors", "...")[1], xlab = "Hz", ylab = "1/KHz",
-  main = NULL, width = 900, height = 500, units = "px", res = NA,
-  ...)
+  returnComplex = FALSE, plot = TRUE, savePath = NA, logWarp = 2,
+  quantiles = c(0.5, 0.8, 0.9), kernelSize = 5, kernelSD = 0.5,
+  colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
+  xlab = "Hz", ylab = "1/KHz", main = NULL, width = 900,
+  height = 500, units = "px", res = NA, ...)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
@@ -43,6 +43,9 @@ blackman, flattop}
 
 \item{roughRange}{the range of temporal modulation frequencies that
 constitute the "roughness" zone, Hz}
+
+\item{returnComplex}{if TRUE, returns a complex modulation spectrum (without
+normalization and warping)}
 
 \item{plot}{if TRUE, plots the modulation spectrum}
 
@@ -83,6 +86,8 @@ spectral modulation frequencies (cycles/KHz).
 \item \code{$processed} modulation spectrum after blurring and log-warping
 \item \code{$roughness} proportion of energy / amplitude of the modulation
 spectrum within \code{roughRange} of temporal modulation frequencies, \%
+\item \code{$complex} untransformed complex modulation spectrum (only if
+returnComplex = TRUE)
 }
 }
 \description{
@@ -190,6 +195,11 @@ modulationSpectrum(s, samplingRate = 16000, kernelSize = 17)$roughness
 # Log-transform the spectrogram prior to 2D FFT (affects roughness):
 ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = FALSE)
 ms = modulationSpectrum(soundgen(), samplingRate = 16000, logSpec = TRUE)
+
+# Complex modulation spectrum with phase preserved
+ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+                        returnComplex = TRUE)
+image(t(log(abs(ms$complex))))
 }
 }
 \references{
