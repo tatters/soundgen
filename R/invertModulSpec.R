@@ -1,61 +1,120 @@
-#' Invert modulation spectrum
+#' Filter modulation spectrum
 #'
-#' samplingRate = 16000
-#' s = soundgen(sylLen = 1500, pitch = 200, amFreq = 25, amDep = 50, samplingRate = samplingRate)
-#' playme(s, samplingRate)
-#' spec = spectrogram(s, samplingRate, windowLength = 25, overlap = 80, wn = 'hanning', osc = TRUE, padWithSilence = FALSE)
-#' s_rev = invertSpectrogram(spec, samplingRate = samplingRate, windowLength = 25, overlap = 80, wn = 'hanning')
-#'   playme(s_rev, samplingRate)
-#'   spectrogram(s_rev, samplingRate, osc = TRUE)
+#' Filters a modulation spectrum by removing a certain range of amplitude
+#' modulation (AM) and frequency modulation (FM) frequencies.
+#' @param ms a modulation spectrum as returned by
+#'   \code{\link{modulationSpectrum}} - a matrix of real or complex values, AM
+#'   in columns, FM in rows
+#' @param amCond,fmCond character strings with valid conditions on AM or FM (see
+#'   examples)
+#' @param jointCond character string with a valid joint condition on AM and FM
+#' @param action should the defined AM-FM region be removed ('remove') or
+#'   preserved, while everything else is removed ('preserve')?
+#' @param plot if TRUE, plots the filtered modulation spectrum
+#' @return Returns the filtered modulation spectrum - a matrix of the original
+#'   dimensions, real or complex.
+#' @examples
+#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
+#'                         returnComplex = TRUE)$complex
+#' # Remove all AM over 25 Hz
+#' ms_filt = filterMS(ms, amCond = 'abs(am) > 25')
 #'
-#' ms = modulationSpectrum(s, samplingRate = samplingRate, windowLength = 25, overlap = 80, wn = 'hanning', maxDur = Inf, logSpec = FALSE, power = NA, logWarp = NA, returnComplex = TRUE, kernelSize = 1)$complex
-#' ms = specToMS(spec, samplingRate = samplingRate)
-#' image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)), z = t(log(abs(ms))))
+#' # amCond and fmCond are OR-conditions
+#' filterMS(ms, amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5', action = 'remove')
+#' filterMS(ms, amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5', action = 'preserve')
+#' filterMS(ms, amCond = 'abs(am) > 10 & abs(am) < 25', action = 'remove')
 #'
-#' # Filter as needed - for ex., remove AM > 3 Hz
-#' am = as.numeric(colnames(ms))
-#' fm = as.numeric(rownames(ms))
-#' idx_row = 1:nrow(ms)
-#' idx_col = which(abs(am) > 5)
-#' ms_filt = ms
-#' ms_filt[idx_row, idx_col] = 0
-#' image(t(log(abs(ms_filt))))
+#' # jointCond is an AND-condition
+#' filterMS(ms, jointCond = 'am * fm < 5', action = 'remove')
+#' filterMS(ms, jointCond = 'am^2 + fm^2 < 100', action = 'preserve')
 #'
-#' # Convert back to a spectrogram
-#' spec_filt = msToSpec(ms_filt, samplingRate = samplingRate)
-#' image(t(log(abs(spec_filt))))
+#' # So:
+#' filterMS(ms, jointCond = 'abs(am) > 5 | abs(fm) < 5')
+#' # ...is the same as:
+#' filterMS(ms, amCond = 'abs(am) > 5', fmCond = 'abs(fm) < 5')
 #'
-#' Invert the spectrogram
-#' s_filt = invertSpectrogram(abs(spec_filt), samplingRate = samplingRate, windowLength = 25, overlap = 80, initialPhase = 'spsi', nIter = 50)
-#'
-#' # Compare with the original
-#' playme(s, samplingRate)
-#' spectrogram(s, samplingRate, osc = TRUE)
-#' playme(s_filt, samplingRate)
-#' spectrogram(s_filt, samplingRate, osc = TRUE)
-invertModulationSpectrum = function(ms) {
-  # ms[1:5, 1:5]
-  # s1 = msToSpec(t(ms), samplingRate, windowLength = NULL, step = NULL)
-  # # image(t(log(s1)))
-  #
-  # # inverse to go back to time domain and thus reconstruct the (modified) sound
-  # s2 = fft(t(ms), inverse = TRUE) # s2_new[1:3, 1:3] - s2[1:3, 1:3]
-  # # image(t(log(abs(s2))))
-  # s1 = s2 / (-1)^(row(s2) + col(s2))
-  # image(t(log(abs(s1))))
-  # t(s1)[1:3, 1:3]
-  # abs(s2_new2)[1:3, 1:3]
-  # # image(log(abs(s1)))
-  # dim(s1)
-  #
-  # s_new = invertSpectrogram(s1, samplingRate = samplingRate, windowLength = 25, overlap = 80, wn = 'hanning')
-  # s_new = invertSpectrogram(abs(s2_new2), samplingRate = samplingRate, windowLength = 25, overlap = 80, wn = 'hanning')
-  #
-  # s_new = invertSpectrogram(temp1, samplingRate = samplingRate, windowLength = 25, overlap = 80, wn = 'hanning')
-  # s_new = invertSpectrogram(abs(temp2_new2), samplingRate = samplingRate, windowLength = 25, overlap = 80, wn = 'hanning')
-  #
-  # playme(s_new, samplingRate)
-  # spectrogram(s_new, samplingRate, osc = TRUE)
+#' \dontrun{
+#' }
+filterMS = function(ms,
+                    amCond = NULL,
+                    fmCond = NULL,
+                    jointCond = NULL,
+                    action = c('remove', 'preserve')[1],
+                    plot = TRUE) {
+  nr = nrow(ms)
+  nc = ncol(ms)
+  am = as.numeric(colnames(ms))
+  fm = as.numeric(rownames(ms))
+
+  # Set up an empty filter matrix
+  if (action == 'remove') {
+    filter = matrix(1, nrow = nr, ncol = nc)
+  } else if (action == 'preserve') {
+    filter = matrix(0, nrow = nr, ncol = nc)
+  }
+
+  # Calculate the affected region
+  if (is.character(jointCond)) {  # use only jointCond
+    joint_cond = gsub('am', 'am[j]', jointCond)
+    joint_cond = gsub('fm', 'fm[i]', joint_cond)
+    affectedRegion = matrix(FALSE, nrow = nr, ncol = nc)
+    for (i in 1:nr) {
+      for (j in 1:nc) {
+        affectedRegion[i, j] = try(eval(parse(text = joint_cond)), silent = TRUE)
+        if (class(affectedRegion[i, j]) == 'try-error') {
+          stop('jointCond is invalid - see examples')
+        }
+      }
+    }
+    if (action == 'remove') {
+      filter[which(affectedRegion == TRUE)] = 0
+    } else if (action == 'preserve') {
+      filter[which(affectedRegion == TRUE)] = 1
+    }
+  } else {  # use only separate conditions for am & fm
+    if (is.character(amCond)) {
+      am_cond = paste0('which(', amCond, ')')
+      idx_col = try(eval(parse(text = am_cond)), silent = TRUE)
+      if (class(idx_col) == 'try-error') {
+        stop('amCond must be a valid expression to pass to which() - see examples')
+      }
+    } else {
+      idx_col = logical(0)
+    }
+
+    if (is.character(fmCond)) {
+      fm_cond = paste0('which(', fmCond, ')')
+      idx_row = try(eval(parse(text = fm_cond)), silent = TRUE)
+      if (class(idx_row) == 'try-error') {
+        stop('fmCond must be a valid expression to pass to which() - see examples')
+      }
+    } else {
+      idx_row = logical(0)
+    }
+
+    if (action == 'remove') {
+      filter[idx_row, ] = 0
+      filter[, idx_col] = 0
+    } else if (action == 'preserve') {
+      filter[idx_row, ] = 1
+      filter[, idx_col] = 1
+    }
+  }
+
+  # Multiply the original ms by the prepared filter
+  out = ms * filter
+
+  if (plot) {
+    if(is.complex(out[1, 1])) {
+      out_plot = abs(out)
+    } else (
+      out_plot = out
+    )
+    image(x = as.numeric(colnames(out_plot)),
+          y = as.numeric(rownames(out_plot)),
+          z = t(log(out_plot)))
+  }
+  invisible(out)
 }
 
 

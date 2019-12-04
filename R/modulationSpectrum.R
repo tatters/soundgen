@@ -7,7 +7,7 @@
 #' \code{\link{spectrogram}}, take its logarithm (if \code{logSpec = TRUE}),
 #' center, perform a 2D Fourier transform (see also spec.fft() in the "spectral"
 #' package), take the upper half of the resulting symmetric matrix, and raise it
-#' to \code{power = 2}. The result is returned as \code{$original}. Roughness is
+#' to \code{power}. The result is returned as \code{$original}. Roughness is
 #' calculated as the proportion of energy / amplitude of the modulation spectrum
 #' within \code{roughRange} of temporal modulation frequencies. By default, the
 #' modulation matrix is then smoothed with Gaussian blur (see
@@ -59,17 +59,17 @@
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed on to \code{filled.contour.mod}
 #'   and \code{\link[graphics]{contour}} (see \code{\link{spectrogram}})
-#' @return Returns a list with three components:
+#' @return Returns a list with four components:
 #' \itemize{
 #' \item \code{$original} modulation spectrum prior to blurring and log-warping,
 #' but after squaring if \code{power = TRUE}, a matrix of nonnegative values.
-#' Rownames are temporal modulation frequencies (Hz), and colnames are
-#' spectral modulation frequencies (cycles/KHz).
+#' Rownames are spectral modulation frequencies (cycles/KHz), and colnames are
+#' temporal modulation frequencies (Hz).
 #' \item \code{$processed} modulation spectrum after blurring and log-warping
 #' \item \code{$roughness} proportion of energy / amplitude of the modulation
 #' spectrum within \code{roughRange} of temporal modulation frequencies, \%
-#' \item \code{$complex} untransformed complex modulation spectrum (only if
-#' returnComplex = TRUE)
+#' \item \code{$complex} untransformed complex modulation spectrum (returned
+#' only if returnComplex = TRUE)
 #' }
 #' @export
 #' @examples

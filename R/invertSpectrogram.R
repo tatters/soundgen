@@ -77,7 +77,7 @@ invertSpectrogram = function(spec,
                              wn = 'hanning',
                              specType = c('abs', 'log', 'dB')[1],
                              initialPhase = c('zero', 'random', 'spsi')[3],
-                             nIter = 10,
+                             nIter = 50,
                              normalize = TRUE,
                              play = TRUE,
                              verbose = FALSE,
@@ -128,11 +128,11 @@ invertSpectrogram = function(spec,
   # Inverse STFT
   spec_complex = spec * exp(1i * phase)
   out = as.numeric(seewave::istft(spec_complex,
-                                   f = samplingRate,
-                                   ovlp = overlap,
-                                   wn = wn,
-                                   wl = windowLength_points,
-                                   output = 'matrix'))
+                                  f = samplingRate,
+                                  ovlp = overlap,
+                                  wn = wn,
+                                  wl = windowLength_points,
+                                  output = 'matrix'))
   if (normalize) out = out / max(abs(out))
 
   # Play the reconstructed audio
@@ -269,25 +269,25 @@ guessPhase_GL = function(spec,
     spec_complex = spec * exp(1i * phase)
     # Inverse STFT to a candidate time series
     x = seewave::istft(spec_complex,
-                        f = samplingRate,
-                        ovlp = overlap,
-                        wn = wn,
-                        wl = windowLength_points,
-                        output = 'matrix')
+                       f = samplingRate,
+                       ovlp = overlap,
+                       wn = wn,
+                       wl = windowLength_points,
+                       output = 'matrix')
 
     # STFT of the candidate time series
     if (is.null(step_seq)) {
       step_seq = seq(1, length(x) + 1 - windowLength_points, step_points)
     }
     spec_new = seewave::stdft(wave = as.matrix(x),
-                               wn = wn,
-                               wl = windowLength_points,
-                               f = samplingRate,
-                               zp = 0,
-                               step = step_seq,
-                               scale = TRUE,
-                               norm = FALSE,
-                               complex = TRUE)
+                              wn = wn,
+                              wl = windowLength_points,
+                              f = samplingRate,
+                              zp = 0,
+                              step = step_seq,
+                              scale = TRUE,
+                              norm = FALSE,
+                              complex = TRUE)
 
     # Set phase to that of the new spectrogram
     phase = Arg(spec_new)

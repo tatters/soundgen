@@ -4,6 +4,7 @@ BUGS FIXED:
 
 NEW FUNCTIONS:
   * invertSpectrogram(): reconstructs audio from a spectrogram by trying to guess the phase
+  * filterMS(): filters a modulation spectrum by removing a certain range of amplitude modulation (AM) and frequency modulation (FM) frequencies
   * transplantEnv(): transplants the amplitude envelope from one sound to another
 
 MINOR:

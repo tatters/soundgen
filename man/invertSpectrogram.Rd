@@ -6,7 +6,7 @@
 \usage{
 invertSpectrogram(spec, samplingRate, windowLength, overlap, step = NULL,
   wn = "hanning", specType = c("abs", "log", "dB")[1],
-  initialPhase = c("zero", "random", "spsi")[3], nIter = 10,
+  initialPhase = c("zero", "random", "spsi")[3], nIter = 50,
   normalize = TRUE, play = TRUE, verbose = FALSE, plotError = TRUE)
 }
 \arguments{
