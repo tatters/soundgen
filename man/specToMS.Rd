@@ -4,14 +4,13 @@
 \alias{specToMS}
 \title{Spectrogram to modulation spectrum}
 \usage{
-specToMS(spec, samplingRate = NULL, step = NULL)
+specToMS(spec, windowLength = NULL, step = NULL)
 }
 \arguments{
 \item{spec}{target spectrogram (numeric matrix, frequency in rows, time in
 columns)}
 
-\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file)}
+\item{windowLength}{length of FFT window, ms}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms}
 }
@@ -20,10 +19,15 @@ Returns a MS - matrix of complex values of the same dimension as
   spec, with AM in rows and FM in columns.
 }
 \description{
-Internal soundgen function.
-}
-\details{
 Takes a spectrogram (either complex or magnitude) and returns a MS with
 proper row and column labels.
 }
-\keyword{internal}
+\examples{
+s = soundgen(sylLen = 500, amFreq = 25, amDep = 50,
+             pitch = 250, samplingRate = 16000)
+spec = spectrogram(s, samplingRate = 16000, windowLength = 25, step = 5)
+ms = specToMS(spec)
+image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
+      z = t(log(abs(ms))), xlab = 'Amplitude modulation, Hz',
+      ylab = 'Frequency modulation, cycles/kHz')
+}

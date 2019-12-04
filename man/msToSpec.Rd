@@ -4,13 +4,10 @@
 \alias{msToSpec}
 \title{Modulation spectrum to spectrogram}
 \usage{
-msToSpec(ms, samplingRate, windowLength = NULL, step = NULL)
+msToSpec(ms, windowLength = NULL, step = NULL)
 }
 \arguments{
 \item{ms}{target modulation spectrum (matrix of complex numbers)}
-
-\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file)}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -21,10 +18,19 @@ Returns a spectrogram - a numeric matrix of complex numbers of
   the same dimensions as ms.
 }
 \description{
-Internal soundgen function.
-}
-\details{
 Takes a complex MS and transforms it to a complex spectrogram with proper row
 (frequency) and column (time) labels.
 }
-\keyword{internal}
+\examples{
+s = soundgen(sylLen = 500, amFreq = 25, amDep = 50,
+             pitch = 250, samplingRate = 16000)
+spec = spectrogram(s, samplingRate = 16000, windowLength = 25, step = 5)
+ms = specToMS(spec)
+image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
+      z = t(log(abs(ms))), xlab = 'Amplitude modulation, Hz',
+      ylab = 'Frequency modulation, cycles/kHz')
+spec_new = msToSpec(ms)
+image(x = as.numeric(colnames(spec_new)), y = as.numeric(rownames(spec_new)),
+      z = t(log(abs(spec_new))), xlab = 'Time, ms',
+      ylab = 'Frequency, kHz')
+}

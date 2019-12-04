@@ -120,8 +120,6 @@ filterMS = function(ms,
 
 #' Spectrogram to modulation spectrum
 #'
-#' Internal soundgen function.
-#'
 #' Takes a spectrogram (either complex or magnitude) and returns a MS with
 #' proper row and column labels.
 #' @return Returns a MS - matrix of complex values of the same dimension as
@@ -129,10 +127,18 @@ filterMS = function(ms,
 #' @param spec target spectrogram (numeric matrix, frequency in rows, time in
 #'   columns)
 #' @inheritParams spectrogram
-#' @keywords internal
-specToMS = function(spec, samplingRate = NULL, step = NULL) {
+#' @export
+#' @examples
+#' s = soundgen(sylLen = 500, amFreq = 25, amDep = 50,
+#'              pitch = 250, samplingRate = 16000)
+#' spec = spectrogram(s, samplingRate = 16000, windowLength = 25, step = 5)
+#' ms = specToMS(spec)
+#' image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
+#'       z = t(log(abs(ms))), xlab = 'Amplitude modulation, Hz',
+#'       ylab = 'Frequency modulation, cycles/kHz')
+specToMS = function(spec, windowLength = NULL, step = NULL) {
   if ((is.null(colnames(spec)) & is.null(step)) |
-      (is.null(rownames(spec)) & is.null(samplingRate))) {
+      (is.null(rownames(spec)) & is.null(windowLength))) {
     addNames = FALSE
     message(paste("If spec doesn't have rownames/colnames,",
                   "you have to specify STFT step and samplingRate,",
@@ -154,7 +160,13 @@ specToMS = function(spec, samplingRate = NULL, step = NULL) {
     max_am = 1000 / step / 2
     colnames(ms) = seq(-max_am, max_am, length.out = ncol(ms))   # AM
     nr = nrow(ms)
-    max_fm = nr / (samplingRate / 1000)
+    if (is.null(windowLength)) {
+      samplingRate = (max(abs(as.numeric(rownames(spec)))) +  # middle of top bin
+                        min(abs(as.numeric(rownames(spec))))) *  # bin/2
+        1000 * 2
+      windowLength = nr * 2 / (samplingRate / 1000)
+    }
+    max_fm = windowLength / 2
     rownames(ms) = seq(-max_fm, max_fm, length.out = nr)     # FM
   }
   return(ms)
@@ -163,25 +175,34 @@ specToMS = function(spec, samplingRate = NULL, step = NULL) {
 
 #' Modulation spectrum to spectrogram
 #'
-#' Internal soundgen function.
-#'
 #' Takes a complex MS and transforms it to a complex spectrogram with proper row
 #' (frequency) and column (time) labels.
 #' @return Returns a spectrogram - a numeric matrix of complex numbers of
 #'   the same dimensions as ms.
 #' @param ms target modulation spectrum (matrix of complex numbers)
 #' @inheritParams spectrogram
-#' @keywords internal
-msToSpec = function(ms, samplingRate, windowLength = NULL, step = NULL) {
-  if ((is.null(rownames(ms)) | is.null(colnames(ms))) &
-      (is.null(windowLength) | is.null(step))) {
+#' @export
+#' @examples
+#' s = soundgen(sylLen = 500, amFreq = 25, amDep = 50,
+#'              pitch = 250, samplingRate = 16000)
+#' spec = spectrogram(s, samplingRate = 16000, windowLength = 25, step = 5)
+#' ms = specToMS(spec)
+#' image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
+#'       z = t(log(abs(ms))), xlab = 'Amplitude modulation, Hz',
+#'       ylab = 'Frequency modulation, cycles/kHz')
+#' spec_new = msToSpec(ms)
+#' image(x = as.numeric(colnames(spec_new)), y = as.numeric(rownames(spec_new)),
+#'       z = t(log(abs(spec_new))), xlab = 'Time, ms',
+#'       ylab = 'Frequency, kHz')
+msToSpec = function(ms, windowLength = NULL, step = NULL) {
+  addNames = TRUE
+  if ((is.null(colnames(ms)) & is.null(step)) |
+      (is.null(rownames(ms)) & is.null(windowLength))) {
     addNames = FALSE
     message(paste("If ms doesn't have rownames/colnames,",
                   "you have to specify windowLength and step,",
                   "otherwise frequency and time stamps can't be",
                   "added to the spectrogram"))
-  } else {
-    addNames = TRUE
   }
 
   # Inverse FFT
@@ -192,18 +213,19 @@ msToSpec = function(ms, samplingRate, windowLength = NULL, step = NULL) {
 
   # Add rownames & colnames
   if (addNames) {
-    step = 1000 / 2 / abs(as.numeric(rownames(ms)[1]))
-    windowLength = abs(as.numeric(colnames(ms)[1])) * 2
-    windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-    bin_width = samplingRate / 2 / windowLength_points
+    if (is.null(step)) {
+      max_am = abs(as.numeric(colnames(ms)[1]))
+      step = 1000 / 2 / max_am
+    }
+    if (is.null(windowLength)) {
+      max_fm = max(abs(as.numeric(rownames(ms))))
+      windowLength = max_fm * 2
+    }
+    bin_width = 1000 / windowLength / 2
     rownames(s2) = seq(bin_width / 2,
                        samplingRate / 2 - bin_width / 2,
-                       length.out = nrow(s2)) / 1000  # frequency stamp
-
-    step_points = round(step / 1000 * samplingRate)
-    myseq = (0:(ncol(s2) - 1)) * step_points + 1
-    colnames(s2) = (myseq - 1 + windowLength_points / 2) *
-      1000 / samplingRate
+                       length.out = nrow(s2)) / 1000        # frequency stamps
+    colnames(s2) = windowLength / 2 + (0:(ncol(s2) - 1)) * step  # time stamps
   }
   return(s2)
 }
