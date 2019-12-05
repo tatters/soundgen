@@ -105,7 +105,7 @@ matchPars = function(target,
       stop ('Please specify samplingRate, eg 44100')
     }
     targetWave = tuneR::Wave(target, samp.rate = samplingRate, bit = 16)
-  } else if (class(target) == 'Wave') {
+  } else if (class(target)[1] == 'Wave') {
     targetWave = target
     samplingRate = targetWave@samp.rate
   }
@@ -168,7 +168,7 @@ matchPars = function(target,
   output = list(list(pars = parDefault, sim = NA))
   parLoop = parDefault
   cand = try(do.call(soundgen, parLoop), silent = FALSE)
-  if (class(cand) == 'try-error') {
+  if (class(cand)[1] == 'try-error') {
     stop ('Invalid initial pars')
   }
   output[[1]]$sim = compareSounds(
@@ -202,7 +202,7 @@ matchPars = function(target,
                         stepVariance = stepVariance)
     # generate a sound based on mutated pars
     cand = try(do.call(soundgen, parMut), silent = FALSE)
-    if (class(cand) == 'try-error') {
+    if (class(cand)[1] == 'try-error') {
       sim_new = -Inf
       delta = -Inf
       warning(paste('soundgen crashed with settings',
@@ -380,7 +380,7 @@ compareSounds = function(target,
     if ('dtw' %in% method) {
       d = try(dtw::dtw(targetSpec[,c], candSpec[,c],
                        distance.only = TRUE)$normalizedDistance, silent = TRUE)
-      if (class(d) == 'try-error') d = NA
+      if (class(d)[1] == 'try-error') d = NA
       sim_by_column$dtw[c] = 1 - d
     }
   }
@@ -533,7 +533,7 @@ getMelSpec = function(s,
       stop ('Please specify samplingRate, eg 44100')
     }
     sWave = tuneR::Wave(s, samp.rate = samplingRate, bit = 16)
-  } else if (class(s) == 'Wave') {
+  } else if (class(s)[1] == 'Wave') {
     sWave = s
     samplingRate = sWave@samp.rate
   }

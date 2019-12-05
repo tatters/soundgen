@@ -101,7 +101,7 @@ getLoudness = function(x,
                        ...) {
   # import sound
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  if (class(x) == 'character') {
+  if (class(x)[1] == 'character') {
     extension = substr(x, nchar(x) - 2, nchar(x))
     if (extension == 'wav' | extension == 'WAV') {
       sound_wav = tuneR::readWave(x)
@@ -113,7 +113,7 @@ getLoudness = function(x,
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left
     scale = 2 ^ (sound_wav@bit - 1) # range(sound)
-  } else if (class(x) == 'numeric' & length(x) > 1) {
+  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {

@@ -349,7 +349,7 @@ soundgen = function(
 
   for (p in pars_to_check) {
     gp = try(get(p), silent = TRUE)
-    if (class(gp) != "try-error") {
+    if (class(gp)[1] != "try-error") {
       if (is.numeric(gp)) {
         if (any(gp < permittedValues[p, 'low']) |
             any(gp > permittedValues[p, 'high'])) {
@@ -866,7 +866,7 @@ soundgen = function(
       # playme(syllable, samplingRate = samplingRate)
       # ***THE ACTUAL SYNTHESIS IS HERE***
 
-      if (class(syllable) == 'try-error') {
+      if (class(syllable)[1] == 'try-error') {
         stop('Failed to generate the new syllable!')
       }
       # if (any(is.na(syllable))) {

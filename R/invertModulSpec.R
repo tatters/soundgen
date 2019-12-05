@@ -13,6 +13,7 @@
 #' @param plot if TRUE, plots the filtered modulation spectrum
 #' @return Returns the filtered modulation spectrum - a matrix of the original
 #'   dimensions, real or complex.
+#' @export
 #' @examples
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
 #'                         returnComplex = TRUE)$complex
@@ -61,7 +62,7 @@ filterMS = function(ms,
     for (i in 1:nr) {
       for (j in 1:nc) {
         affectedRegion[i, j] = try(eval(parse(text = joint_cond)), silent = TRUE)
-        if (class(affectedRegion[i, j]) == 'try-error') {
+        if (class(affectedRegion[i, j])[1] == 'try-error') {
           stop('jointCond is invalid - see examples')
         }
       }
@@ -75,7 +76,7 @@ filterMS = function(ms,
     if (is.character(amCond)) {
       am_cond = paste0('which(', amCond, ')')
       idx_col = try(eval(parse(text = am_cond)), silent = TRUE)
-      if (class(idx_col) == 'try-error') {
+      if (class(idx_col)[1] == 'try-error') {
         stop('amCond must be a valid expression to pass to which() - see examples')
       }
     } else {
@@ -85,7 +86,7 @@ filterMS = function(ms,
     if (is.character(fmCond)) {
       fm_cond = paste0('which(', fmCond, ')')
       idx_row = try(eval(parse(text = fm_cond)), silent = TRUE)
-      if (class(idx_row) == 'try-error') {
+      if (class(idx_row)[1] == 'try-error') {
         stop('fmCond must be a valid expression to pass to which() - see examples')
       }
     } else {
@@ -222,10 +223,10 @@ msToSpec = function(ms, windowLength = NULL, step = NULL) {
       windowLength = max_fm * 2
     }
     bin_width = 1000 / windowLength / 2
-    rownames(s2) = seq(bin_width / 2,
-                       samplingRate / 2 - bin_width / 2,
-                       length.out = nrow(s2)) / 1000        # frequency stamps
-    colnames(s2) = windowLength / 2 + (0:(ncol(s2) - 1)) * step  # time stamps
+    # frequency stamps
+    rownames(s2) = (bin_width / 2 + (0 : (nrow(s2) - 1)) * bin_width) / 1000
+    # time stamps
+    colnames(s2) = windowLength / 2 + (0:(ncol(s2) - 1)) * step
   }
   return(s2)
 }

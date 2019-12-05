@@ -47,8 +47,8 @@ morphDF = function(a,
     return(rep(list(a), nMorphs))
   }
 
-  if (class(a) != 'data.frame') a = as.data.frame(a)
-  if (class(b) != 'data.frame') b = as.data.frame(b)
+  if (class(a)[1] != 'data.frame') a = as.data.frame(a)
+  if (class(b)[1] != 'data.frame') b = as.data.frame(b)
 
   # in case one df is NA or NULL, we copy the other one
   if ((any(is.na(a)) | ncol(a) < 2) & (!any(is.na(b)) & ncol(b) == 2)) {

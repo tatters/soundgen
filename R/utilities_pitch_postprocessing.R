@@ -350,7 +350,7 @@ pathfinding_fast = function(pitchCands,
   }
   #
   #   er = try(costPathForward < costPathBackward, silent = TRUE)
-  #   if (class(er) == 'try-error' | is.na(er)) browser()
+  #   if (class(er)[1] == 'try-error' | is.na(er)) browser()
   if (length(costPathForward) != 1 | length(costPathBackward) != 1) browser()
   if (costPathForward < costPathBackward) {
     bestPath = path

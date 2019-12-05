@@ -469,7 +469,7 @@ wiggleAnchors = function(df,
                          invalidArgAction = c('adjust', 'abort', 'ignore')[1]) {
   if (temperature == 0 | temp_coef == 0) return(df)
   if (any(is.na(df))) return(NA)
-  if (class(df) != 'data.frame') df = as.data.frame(df)
+  if (class(df)[1] != 'data.frame') df = as.data.frame(df)
 
   if (ncol(df) != length(low) |
       ncol(df) != length(high) |
@@ -494,7 +494,7 @@ wiggleAnchors = function(df,
         low = low[idx],
         high = high[idx],
         invalidArgAction = invalidArgAction))
-      if (class(newAnchor) == 'try-error') {
+      if (class(newAnchor)[1] == 'try-error') {
         stop(paste('Failed to add an anchor to df:', paste(df, collapse = ', ')))
       } else {
         df = rbind(df, c(1, newAnchor))
@@ -557,7 +557,7 @@ wiggleAnchors = function(df,
       roundToInteger = FALSE,
       invalidArgAction = invalidArgAction
     ))
-    if (class(w) == 'try-error') {
+    if (class(w)[1] == 'try-error') {
       warning(paste('Failed to wiggle column', i, 'of df:',
                     paste(df, collapse = ', ')))
     } else {

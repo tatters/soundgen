@@ -36,7 +36,7 @@ playme = function(sound,
                   from = NULL,
                   to = NULL) {
   # input: a vector of numbers on any scale or a path to a .wav file
-  if (class(sound) == 'character') {
+  if (class(sound)[1] == 'character') {
     extension = substr(sound, nchar(sound) - 2, nchar(sound))
     if (extension == 'wav' | extension == 'WAV') {
       soundWave = tuneR::readWave(sound)
@@ -45,7 +45,7 @@ playme = function(sound,
     } else {
       stop('Input not recognized: must be a numeric vector or wav/mp3 file')
     }
-  } else if (class(sound) == 'numeric' | class(sound) == 'integer') {
+  } else if (class(sound)[1] == 'numeric' | class(sound)[1] == 'integer') {
     soundWave = tuneR::Wave(
       left = sound,
       samp.rate = samplingRate,

@@ -113,10 +113,10 @@ ssm = function(x,
   }
 
   ## import a sound
-  if (class(x) == 'character') {
+  if (class(x)[1] == 'character') {
     sound = tuneR::readWave(x)
     samplingRate = sound@samp.rate
-  }  else if (class(x) == 'numeric' & length(x) > 1) {
+  }  else if (class(x)[1] == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {

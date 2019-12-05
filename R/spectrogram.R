@@ -191,7 +191,7 @@ spectrogram = function(
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
 
   # import audio
-  if (class(x) == 'character') {
+  if (class(x)[1] == 'character') {
     extension = substr(x, nchar(x) - 2, nchar(x))
     if (extension == 'wav' | extension == 'WAV') {
       sound_wav = tuneR::readWave(x)
@@ -223,7 +223,7 @@ spectrogram = function(
       filter = NULL,
       padWithSilence = padWithSilence
     )
-  } else if (class(x) == 'numeric' & length(x) > 1) {
+  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
@@ -255,7 +255,7 @@ spectrogram = function(
       )
     }
   }
-  if (class(frameBank) != 'matrix') {
+  if (class(frameBank)[1] != 'matrix') {
     stop(
       'Input format not recognized. Please provide path to .wav or .mp3 file,
       a vector of amplitudes plus samplingRate, or a preprocessed frameBank'
@@ -782,7 +782,7 @@ osc_dB = function(x,
                   midline = TRUE,
                   ...) {
   # import a sound
-  if (class(x) == 'character') {
+  if (class(x)[1] == 'character') {
     sound_wav = tuneR::readWave(x)
     samplingRate = sound_wav@samp.rate
     sound = sound_wav@left

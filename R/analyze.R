@@ -344,7 +344,7 @@ analyze = function(
   }
 
   # import a sound
-  if (class(x) == 'character') {
+  if (class(x)[1] == 'character') {
     extension = substr(x, nchar(x) - 2, nchar(x))
     if (extension == 'wav' | extension == 'WAV') {
       sound_wav = tuneR::readWave(x)
@@ -412,7 +412,7 @@ analyze = function(
                  'interpolWin', 'interpolCert')
   for (p in simplePars) {
     gp = try(get(p), silent = TRUE)
-    if (class(gp) != "try-error") {
+    if (class(gp)[1] != "try-error") {
       if (is.numeric(gp)) {
         if (any(gp < defaults_analyze[p, 'low']) |
             any(gp > defaults_analyze[p, 'high'])) {
@@ -678,7 +678,7 @@ analyze = function(
                                        fs = samplingRate,
                                        verify = FALSE),
                silent = TRUE)
-      if (class(ff) != 'try-error' & is.list(ff)) {
+      if (is.list(ff)) {
         temp = matrix(NA, nrow = nFormants, ncol = 2)
         availableRows = 1:min(nFormants, nrow(ff))
         temp[availableRows, ] = as.matrix(ff[availableRows, ])

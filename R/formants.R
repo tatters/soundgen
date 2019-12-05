@@ -577,7 +577,7 @@ getSpectralEnvelope = function(nr,
 #'      f2 = list(freq = c(1500, 1700, 2200), width = c(100, 150, 175))
 #' ))
 reformatFormants = function(formants) {
-  if (class(formants) == 'character') {
+  if (class(formants)[1] == 'character') {
     # "aui" etc - read off values from presets$M1
     formants = convertStringToFormants(formants)
   } else if (is.numeric(formants)) {

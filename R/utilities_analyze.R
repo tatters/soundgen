@@ -342,7 +342,7 @@ getPitchAutocor = function(autoCorrelation,
       autocorPeaks = try(autocorPeaks[order(autocorPeaks$amp, decreasing = TRUE),
                                       , drop = FALSE], silent = TRUE)
     }
-    if (class(autocorPeaks) != 'try-error') {
+    if (class(autocorPeaks)[1] != 'try-error') {
       if (nrow(autocorPeaks) > 0) {
         # if some peaks satisfy all criteria, return them:
         pitchAutocor_array = data.frame (
@@ -419,7 +419,7 @@ getPitchCep = function(frame,
   idx = zoo::index(temp)[zoo::coredata(temp)]
 
   absCepPeak = try(idx[which.max(b$cep[idx])], silent = TRUE)
-  if (class(absCepPeak) != 'try-error') {
+  if (class(absCepPeak)[1] != 'try-error') {
     idx = idx[b$freq[idx] > b$freq[absCepPeak] / 1.8]
   } # to avoid false subharmonics
   # plot (b, type = 'l')

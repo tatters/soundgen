@@ -142,7 +142,7 @@ segment = function(x,
   if (overlap > 99) overlap = 99
 
   ## import a sound
-  if (class(x) == 'character') {
+  if (class(x)[1] == 'character') {
     extension = substr(x, nchar(x) - 2, nchar(x))
     if (extension == 'wav' | extension == 'WAV') {
       sound_wav = tuneR::readWave(x)
@@ -156,7 +156,7 @@ segment = function(x,
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = substring(plotname, 1, nchar(plotname) - 4)
     if (is.null(main)) main = plotname
-  }  else if (class(x) == 'numeric' & length(x) > 1) {
+  }  else if (class(x)[1] == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {

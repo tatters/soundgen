@@ -223,7 +223,7 @@ evaluatePars = function(p,
   params = as.list(p)
   names(params) = pars
   s = try(do.call(myfun, c(params, myfolder = myfolder, otherPars)))
-  if (class(s) == 'try-error') {
+  if (class(s)[1] == 'try-error') {
     stop('Error in myfun')
   } else {
     trial = as.numeric(s[, fitnessPar])

@@ -191,7 +191,7 @@ getRMS = function(x,
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
 
   # import audio
-  if (class(x) == 'character') {
+  if (class(x)[1] == 'character') {
     extension = substr(x, nchar(x) - 2, nchar(x))
     if (extension == 'wav' | extension == 'WAV') {
       sound_wav = tuneR::readWave(x)
@@ -212,7 +212,7 @@ getRMS = function(x,
       stop('The sound and/or the windowLength is too short')
     }
     duration = length(sound) / samplingRate
-  } else if (class(x) == 'numeric' & length(x) > 1) {
+  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
