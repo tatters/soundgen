@@ -3,9 +3,10 @@ BUGS FIXED:
   * analyze(): proper plotting of oscillogram for audio files
 
 NEW FUNCTIONS:
+  * filterSoundByMS(): manipulates the modulation spectrum of a sound (for ex., removing amplitude and/or frequency modulation above a certain threshold)
+  * filterMS(): filters a modulation spectrum by removing a certain range of amplitude modulation (AM) and frequency modulation (FM) frequencies (called by filterSoundByMS)
   * invertSpectrogram(): reconstructs audio from a spectrogram by trying to guess the phase
-  * filterMS(): filters a modulation spectrum by removing a certain range of amplitude modulation (AM) and frequency modulation (FM) frequencies
-  * specToMS(), msToSpec(): transform a spectrogram to a modulation spectrum and back again with proper labels
+  * specToMS(), msToSpec(): transform a spectrogram to a modulation spectrum and back again with proper AM/FM or time/frequency labels
   * transplantEnv(): transplants the amplitude envelope from one sound to another
 
 MINOR:

@@ -18,7 +18,7 @@
 #' https://github.com/lonce/SPSI_Python. The Griffin-Lim (GL) algorithm is based
 #' on Griffin & Lim (1984).
 #'
-#' @seealso \code{\link{spectrogram}} \code{\link{invertModulationSpectrum}}
+#' @seealso \code{\link{spectrogram}} \code{\link{filterSoundByMS}}
 #'
 #' @references \itemize{
 #'   \item Griffin, D., & Lim, J. (1984). Signal estimation from modified

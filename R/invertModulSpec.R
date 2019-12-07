@@ -1,3 +1,142 @@
+#' Filter sound by modulation spectrum
+#'
+#' Manipulates the modulation spectrum (MS) of a sound so as to remove certain
+#' frequencies of amplitude modulation (AM) and frequency modulation (FM).
+#' Algorithm: produces a modulation spectrum with
+#' \code{\link{modulationSpectrum}}, modifies it with \code{\link{filterMS}},
+#' converts the modified MS to a spectrogram with \code{\link{msToSpec}}, and
+#' finally inverts the spectrogram with \code{\link{invertSpectrogram}}, thus
+#' producing a sound with (approximately) the desired characteristics of the MS.
+#' Note that the last step of inverting the spectrogram introduces some noise,
+#' so the resulting MS is not precisely the same as the intermediate filtered
+#' version. In practice this means that some residual energy will still be
+#' present in the filtered-out frequency range (see examples).
+#'
+#' @seealso \code{\link{invertSpectrogram}} \code{\link{filterMS}}
+#'
+#' @return Returns the filtered audio as a numeric vector normalized to [-1, 1]
+#'   with the same sampling rate as input.
+#' @inheritParams modulationSpectrum
+#' @inheritParams filterMS
+#' @inheritParams invertSpectrogram
+#' @param play if TRUE, plays back the output
+#' @param plot if TRUE, produces a triple plot: original MS, filtered MS, and
+#'   the MS of the output sound
+#' @export
+#' @examples
+#' # Create a sound to be filtered
+#' samplingRate = 16000
+#' s = soundgen(sylLen = 500, pitch = rnorm(n = 20, mean = 200, sd = 25),
+#'   amFreq = 25, amDep = 50, samplingRate = samplingRate,
+#'   plot = TRUE, osc = TRUE)
+#' # playme(s, samplingRate)
+#'
+#' # Filter
+#' s_filt = filterSoundByMS(s, samplingRate = samplingRate,
+#'   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
+#'   action = 'remove', nIter = 15)
+#' # playme(s_filt, samplingRate)
+#'
+#' # add exs with an audio file as an input, etc
+#' \dontrun{
+#' # You can also use manual filters w/o calling filterSoundByMS
+#'
+#' #' # Check that the spectrogram can be successfully inverted
+#' s_rev = invertSpectrogram(spec, samplingRate = samplingRate,
+#'   windowLength = 25, overlap = 80, wn = 'hamming', play = FALSE)
+#' # playme(s_rev, samplingRate)
+#' spectrogram(s_rev, samplingRate, osc = TRUE)
+#'
+#' }
+filterSoundByMS = function(
+  x,
+  samplingRate = NULL,
+  logSpec = FALSE,
+  windowLength = 25,
+  step = NULL,
+  overlap = 80,
+  wn = 'hamming',
+  zp = 0,
+  amCond = NULL,
+  fmCond = NULL,
+  jointCond = NULL,
+  action = c('remove', 'preserve')[1],
+  initialPhase = c('zero', 'random', 'spsi')[3],
+  nIter = 50,
+  play = FALSE,
+  plot = TRUE,
+  savePath = NA) {
+
+  # Get a modulation spectrum
+  ms = modulationSpectrum(
+    x,
+    samplingRate = samplingRate,
+    windowLength = windowLength,
+    step = step, overlap = overlap, wn = wn,
+    maxDur = Inf, logSpec = logSpec,
+    power = NA, returnComplex = TRUE,
+    plot = FALSE
+  )$complex
+  # image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)), z = t(log(abs(ms))))
+
+  # Filter as needed
+  ms_filt = filterMS(ms, amCond = amCond, fmCond = fmCond,
+                     jointCond = jointCond,
+                     action = 'remove', plot = FALSE)
+
+  # Convert back to a spectrogram
+  spec_filt = msToSpec(ms_filt, windowLength = windowLength, step = step)
+  # image(x = as.numeric(colnames(spec_filt)), y = as.numeric(rownames(spec_filt)), z = t(log(abs(spec_filt))))
+
+  # Invert the spectrogram
+  s_new = invertSpectrogram(
+    abs(spec_filt), samplingRate = samplingRate,
+    windowLength = windowLength, wn = wn,
+    overlap = overlap, step = step,
+    specType = ifelse(logSpec, 'log', 'abs'),
+    initialPhase = initialPhase,
+    nIter = nIter,
+    normalize = TRUE,
+    play = FALSE,
+    verbose = FALSE,
+    plotError = FALSE
+  )
+
+  if (play) playme(s_filt, samplingRate)
+
+  if (plot) {
+    # Get an MS of the new sound
+    ms_actual = modulationSpectrum(
+      s_new,
+      samplingRate = samplingRate,
+      windowLength = windowLength,
+      step = step, overlap = overlap, wn = wn,
+      maxDur = Inf, logSpec = logSpec,
+      power = NA, returnComplex = TRUE,
+      plot = FALSE
+    )$complex
+
+    par(mfrow = c(1, 3))
+    image(x = as.numeric(colnames(ms)),
+          y = as.numeric(rownames(ms)),
+          z = t(log(abs(ms))),
+          main = 'Original MS',
+          xlab = '', ylab = 'FM, cycle/kHz')
+    image(x = as.numeric(colnames(ms_filt)),
+          y = as.numeric(rownames(ms_filt)),
+          z = t(log(abs(ms_filt))),
+          main = 'Filtered MS',
+          xlab = 'AM, Hz', ylab = '')
+    image(x = as.numeric(colnames(ms_actual)),
+          y = as.numeric(rownames(ms_actual)),
+          z = t(log(abs(ms_actual))),
+          main = 'Achieved MS',
+          xlab = '', ylab = '')
+    par(mfrow = c(1, 1))
+  }
+  return(s_new)
+}
+
 #' Filter modulation spectrum
 #'
 #' Filters a modulation spectrum by removing a certain range of amplitude
@@ -222,9 +361,23 @@ msToSpec = function(ms, windowLength = NULL, step = NULL) {
       max_fm = max(abs(as.numeric(rownames(ms))))
       windowLength = max_fm * 2
     }
+    # From the def in spectrogram():
+    # windowLength_points = windowLength * samplingRate / 1000
+    # Y = seq(bin_width / 2,
+    #   samplingRate / 2 - bin_width / 2,
+    #   length.out = nrow(s2)) / 1000
+    # So:
+    # bin_width = samplingRate / 2 / windowLength_points =
+    # = samplingRate / 2 / windowLength / samplingRate * 1000 =
+    # = 1 / 2 / windowLength * 1000 = 1000 / windowLength / 2
     bin_width = 1000 / windowLength / 2
+    windowLength_points = nrow(s2) * 2
+    samplingRate = windowLength_points / windowLength * 1000
+
     # frequency stamps
-    rownames(s2) = (bin_width / 2 + (0 : (nrow(s2) - 1)) * bin_width) / 1000
+    rownames(s2) = seq(bin_width / 2,
+                       samplingRate / 2 - bin_width / 2,
+                       length.out = nrow(s2)) / 1000
     # time stamps
     colnames(s2) = windowLength / 2 + (0:(ncol(s2) - 1)) * step
   }

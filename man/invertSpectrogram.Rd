@@ -103,5 +103,5 @@ spectrogram(s_new, samplingRate, osc = TRUE)
 }
 }
 \seealso{
-\code{\link{spectrogram}} \code{\link{invertModulationSpectrum}}
+\code{\link{spectrogram}} \code{\link{filterSoundByMS}}
 }
