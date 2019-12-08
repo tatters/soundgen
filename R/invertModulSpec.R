@@ -36,17 +36,81 @@
 #'   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
 #'   action = 'remove', nIter = 15)
 #' # playme(s_filt, samplingRate)
-#'
-#' # add exs with an audio file as an input, etc
 #' \dontrun{
-#' # You can also use manual filters w/o calling filterSoundByMS
+#' # A recorded example: a bit of speech (sampled at 16000 Hz)
+#' # Download it from: cogsci.se/soundgen/audio/speechEx.wav
+#' playme('~/Downloads/speechEx.wav')
+#' spectrogram('~/Downloads/speechEx.wav', osc = TRUE)
 #'
-#' #' # Check that the spectrogram can be successfully inverted
+#' # Remove AM above 3 Hz from a bit of speech (remove most temporal details)
+#' s_filt1 = filterSoundByMS('~/Downloads/speechEx.wav',
+#'   amCond = 'abs(am) > 3', nIter = 15)
+#' playme(s_filt1, samplingRate = 16000)
+#' spectrogram(s_filt1, samplingRate = 16000, osc = TRUE)
+#'
+#' # Remove slow AM/FM (prosody) to achieve a "robotic" voice
+#' s_filt2 = filterSoundByMS('~/Downloads/speechEx.wav',
+#'   jointCond = 'am^2 + (fm*3)^2 < 300', nIter = 15)
+#' playme(s_filt2, samplingRate = 16000)
+#'
+#' ## An alternative manual workflow w/o calling filterSoundByMS()
+#' # This way you can modify the MS directly and more flexibly
+#' # than with the filterMS() function called by filterSoundByMS()
+#'
+#' # (optional) Check that the target spectrogram can be successfully inverted
+#' spec = spectrogram(s, samplingRate, windowLength = 25, overlap = 80,
+#'   wn = 'hanning', osc = TRUE, padWithSilence = FALSE)
 #' s_rev = invertSpectrogram(spec, samplingRate = samplingRate,
 #'   windowLength = 25, overlap = 80, wn = 'hamming', play = FALSE)
-#' # playme(s_rev, samplingRate)
+#' # playme(s_rev, samplingRate)  # should be close to the original
 #' spectrogram(s_rev, samplingRate, osc = TRUE)
 #'
+#' # Get modulation spectrum starting from the sound...
+#' ms = modulationSpectrum(s, samplingRate = samplingRate, windowLength = 25,
+#'   overlap = 80, wn = 'hanning', maxDur = Inf, logSpec = FALSE,
+#'   power = NA, returnComplex = TRUE, plot = FALSE)$complex
+#' # ... or starting from the spectrogram:
+#' # ms = specToMS(spec)
+#' image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
+#'   z = t(log(abs(ms))))  # this is the original MS
+
+#' # Filter as needed - for ex., remove AM > 10 Hz and FM > 3 cycles/kHz
+#' # (removes f0, preserves formants)
+#' am = as.numeric(colnames(ms))
+#' fm = as.numeric(rownames(ms))
+#' idx_row = which(abs(fm) > 3)
+#' idx_col = which(abs(am) > 10)
+#' ms_filt = ms
+#' ms_filt[idx_row, ] = 0
+#' ms_filt[, idx_col] = 0
+#' image(x = as.numeric(colnames(ms_filt)), y = as.numeric(rownames(ms_filt)),
+#'   t(log(abs(ms_filt))))  # this is the filtered MS
+
+#' # Convert back to a spectrogram
+#' spec_filt = msToSpec(ms_filt)
+#' image(t(log(abs(spec_filt))))
+
+#' # Invert the spectrogram
+#' s_filt = invertSpectrogram(abs(spec_filt), samplingRate = samplingRate,
+#'   windowLength = 25, overlap = 80, wn = 'hanning')
+#' # NB: use the same settings as in "spec = spectrogram(s, ...)" above
+
+#' # Compare with the original
+#' playme(s, samplingRate)
+#' spectrogram(s, samplingRate, osc = TRUE)
+#' playme(s_filt, samplingRate)
+#' spectrogram(s_filt, samplingRate, osc = TRUE)
+
+# Check that the modulation spectrum is as desired
+#' ms_new = modulationSpectrum(s_filt, samplingRate = samplingRate,
+#'   windowLength = 25, overlap = 80, wn = 'hanning', maxDur = Inf,
+#'   plot = FALSE, returnComplex = TRUE)$complex
+#' image(x = as.numeric(colnames(ms_new)), y = as.numeric(rownames(ms_new)),
+#'   z = t(log(abs(ms_new))))
+#' plot(as.numeric(colnames(ms)), log(abs(ms[nrow(ms) / 2, ])), type = 'l')
+#' points(as.numeric(colnames(ms_new)), log(ms_new[nrow(ms_new) / 2, ]), type = 'l',
+#'   col = 'red', lty = 3)
+#' # AM peaks at 25 Hz are removed, but inverting the spectrogram adds a bit of noise
 #' }
 filterSoundByMS = function(
   x,
@@ -67,14 +131,43 @@ filterSoundByMS = function(
   plot = TRUE,
   savePath = NA) {
 
+  ## import a sound
+  if (class(x)[1] == 'character') {
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    samplingRate = sound_wav@samp.rate
+    sound = as.numeric(sound_wav@left)
+  }  else if (class(x)[1] == 'numeric' & length(x) > 1) {
+    if (is.null(samplingRate)) {
+      stop ('Please specify samplingRate, eg 44100')
+    } else {
+      sound = x
+    }
+  }
+
+  # make sure windowLength_points and step_points are not fractions
+  if (is.null(step)) step = windowLength * (1 - overlap / 100)
+  step_points = round(step / 1000 * samplingRate)
+  step = step_points / samplingRate * 1000
+  windowLength_points = round(windowLength / 1000 * samplingRate)
+  windowLength = windowLength_points / samplingRate * 1000
+  overlap = 100 * (1 - step_points / windowLength_points)
+
   # Get a modulation spectrum
   ms = modulationSpectrum(
-    x,
+    sound,
     samplingRate = samplingRate,
     windowLength = windowLength,
     step = step, overlap = overlap, wn = wn,
     maxDur = Inf, logSpec = logSpec,
     power = NA, returnComplex = TRUE,
+    aggregComplex = FALSE,
     plot = FALSE
   )$complex
   # image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)), z = t(log(abs(ms))))
@@ -102,7 +195,7 @@ filterSoundByMS = function(
     plotError = FALSE
   )
 
-  if (play) playme(s_filt, samplingRate)
+  if (play) playme(s_new, samplingRate)
 
   if (plot) {
     # Get an MS of the new sound
@@ -113,6 +206,7 @@ filterSoundByMS = function(
       step = step, overlap = overlap, wn = wn,
       maxDur = Inf, logSpec = logSpec,
       power = NA, returnComplex = TRUE,
+      aggregComplex = FALSE,
       plot = FALSE
     )$complex
 
@@ -140,13 +234,18 @@ filterSoundByMS = function(
 #' Filter modulation spectrum
 #'
 #' Filters a modulation spectrum by removing a certain range of amplitude
-#' modulation (AM) and frequency modulation (FM) frequencies.
+#' modulation (AM) and frequency modulation (FM) frequencies. Conditions can be
+#' specified either separately for AM and FM with \code{amCond = ..., fmCond =
+#' ...}, implying an OR combination of conditions, or jointly on AM and FM with
+#' \code{jointCond}. \code{jointCond} is more general, but using
+#' \code{amCond/fmCond} is ~100 times faster.
 #' @param ms a modulation spectrum as returned by
 #'   \code{\link{modulationSpectrum}} - a matrix of real or complex values, AM
 #'   in columns, FM in rows
-#' @param amCond,fmCond character strings with valid conditions on AM or FM (see
-#'   examples)
-#' @param jointCond character string with a valid joint condition on AM and FM
+#' @param amCond,fmCond character strings with valid conditions on amplitude and
+#'   frequency modulation (see examples)
+#' @param jointCond character string with a valid joint condition amplitude and
+#'   frequency modulation
 #' @param action should the defined AM-FM region be removed ('remove') or
 #'   preserved, while everything else is removed ('preserve')?
 #' @param plot if TRUE, plots the filtered modulation spectrum
@@ -166,15 +265,12 @@ filterSoundByMS = function(
 #'
 #' # jointCond is an AND-condition
 #' filterMS(ms, jointCond = 'am * fm < 5', action = 'remove')
-#' filterMS(ms, jointCond = 'am^2 + fm^2 < 100', action = 'preserve')
+#' filterMS(ms, jointCond = 'am^2 + (fm*3)^2 < 200', action = 'preserve')
 #'
 #' # So:
-#' filterMS(ms, jointCond = 'abs(am) > 5 | abs(fm) < 5')
+#' filterMS(ms, jointCond = 'abs(am) > 5 | abs(fm) < 5')  # slow but general
 #' # ...is the same as:
-#' filterMS(ms, amCond = 'abs(am) > 5', fmCond = 'abs(fm) < 5')
-#'
-#' \dontrun{
-#' }
+#' filterMS(ms, amCond = 'abs(am) > 5', fmCond = 'abs(fm) < 5')  # fast
 filterMS = function(ms,
                     amCond = NULL,
                     fmCond = NULL,
@@ -185,6 +281,7 @@ filterMS = function(ms,
   nc = ncol(ms)
   am = as.numeric(colnames(ms))
   fm = as.numeric(rownames(ms))
+  myf = function() {}  # otherwise R CMD check complains
 
   # Set up an empty filter matrix
   if (action == 'remove') {
@@ -195,15 +292,12 @@ filterMS = function(ms,
 
   # Calculate the affected region
   if (is.character(jointCond)) {  # use only jointCond
-    joint_cond = gsub('am', 'am[j]', jointCond)
-    joint_cond = gsub('fm', 'fm[i]', joint_cond)
+    eval(parse(text = paste0('myf = function(am = NULL, fm = NULL) return(',
+                             jointCond, ')')))
     affectedRegion = matrix(FALSE, nrow = nr, ncol = nc)
     for (i in 1:nr) {
       for (j in 1:nc) {
-        affectedRegion[i, j] = try(eval(parse(text = joint_cond)), silent = TRUE)
-        if (class(affectedRegion[i, j])[1] == 'try-error') {
-          stop('jointCond is invalid - see examples')
-        }
+        affectedRegion[i, j] = myf(am = am[j], fm = fm[i])
       }
     }
     if (action == 'remove') {

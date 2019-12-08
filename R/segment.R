@@ -152,7 +152,7 @@ segment = function(x,
       stop('Input not recognized: must be a numeric vector or wav/mp3 file')
     }
     samplingRate = sound_wav@samp.rate
-    sound = sound_wav@left
+    sound = as.numeric(sound_wav@left)
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
     plotname = substring(plotname, 1, nchar(plotname) - 4)
     if (is.null(main)) main = plotname

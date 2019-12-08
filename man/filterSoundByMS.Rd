@@ -33,13 +33,14 @@ blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
-\item{amCond}{character strings with valid conditions on AM or FM (see
-examples)}
+\item{amCond}{character strings with valid conditions on amplitude and
+frequency modulation (see examples)}
 
-\item{fmCond}{character strings with valid conditions on AM or FM (see
-examples)}
+\item{fmCond}{character strings with valid conditions on amplitude and
+frequency modulation (see examples)}
 
-\item{jointCond}{character string with a valid joint condition on AM and FM}
+\item{jointCond}{character string with a valid joint condition amplitude and
+frequency modulation}
 
 \item{action}{should the defined AM-FM region be removed ('remove') or
 preserved, while everything else is removed ('preserve')?}
@@ -89,17 +90,75 @@ s_filt = filterSoundByMS(s, samplingRate = samplingRate,
   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
   action = 'remove', nIter = 15)
 # playme(s_filt, samplingRate)
-
-# add exs with an audio file as an input, etc
 \dontrun{
-# You can also use manual filters w/o calling filterSoundByMS
+# A recorded example: a bit of speech (sampled at 16000 Hz)
+# Download it from: cogsci.se/soundgen/audio/speechEx.wav
+playme('~/Downloads/speechEx.wav')
+spectrogram('~/Downloads/speechEx.wav', osc = TRUE)
 
-#' # Check that the spectrogram can be successfully inverted
+# Remove AM above 3 Hz from a bit of speech (remove most temporal details)
+s_filt1 = filterSoundByMS('~/Downloads/speechEx.wav',
+  amCond = 'abs(am) > 3', nIter = 15)
+playme(s_filt1, samplingRate = 16000)
+spectrogram(s_filt1, samplingRate = 16000, osc = TRUE)
+
+# Remove slow AM/FM (prosody) to achieve a "robotic" voice
+s_filt2 = filterSoundByMS('~/Downloads/speechEx.wav',
+  jointCond = 'am^2 + (fm*3)^2 < 300', nIter = 15)
+playme(s_filt2, samplingRate = 16000)
+
+## An alternative manual workflow w/o calling filterSoundByMS()
+# This way you can modify the MS directly and more flexibly
+# than with the filterMS() function called by filterSoundByMS()
+
+# (optional) Check that the target spectrogram can be successfully inverted
+spec = spectrogram(s, samplingRate, windowLength = 25, overlap = 80,
+  wn = 'hanning', osc = TRUE, padWithSilence = FALSE)
 s_rev = invertSpectrogram(spec, samplingRate = samplingRate,
   windowLength = 25, overlap = 80, wn = 'hamming', play = FALSE)
-# playme(s_rev, samplingRate)
+# playme(s_rev, samplingRate)  # should be close to the original
 spectrogram(s_rev, samplingRate, osc = TRUE)
 
+# Get modulation spectrum starting from the sound...
+ms = modulationSpectrum(s, samplingRate = samplingRate, windowLength = 25,
+  overlap = 80, wn = 'hanning', maxDur = Inf, logSpec = FALSE,
+  power = NA, returnComplex = TRUE, plot = FALSE)$complex
+# ... or starting from the spectrogram:
+# ms = specToMS(spec)
+image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
+  z = t(log(abs(ms))))  # this is the original MS
+# Filter as needed - for ex., remove AM > 10 Hz and FM > 3 cycles/kHz
+# (removes f0, preserves formants)
+am = as.numeric(colnames(ms))
+fm = as.numeric(rownames(ms))
+idx_row = which(abs(fm) > 3)
+idx_col = which(abs(am) > 10)
+ms_filt = ms
+ms_filt[idx_row, ] = 0
+ms_filt[, idx_col] = 0
+image(x = as.numeric(colnames(ms_filt)), y = as.numeric(rownames(ms_filt)),
+  t(log(abs(ms_filt))))  # this is the filtered MS
+# Convert back to a spectrogram
+spec_filt = msToSpec(ms_filt)
+image(t(log(abs(spec_filt))))
+# Invert the spectrogram
+s_filt = invertSpectrogram(abs(spec_filt), samplingRate = samplingRate,
+  windowLength = 25, overlap = 80, wn = 'hanning')
+# NB: use the same settings as in "spec = spectrogram(s, ...)" above
+# Compare with the original
+playme(s, samplingRate)
+spectrogram(s, samplingRate, osc = TRUE)
+playme(s_filt, samplingRate)
+spectrogram(s_filt, samplingRate, osc = TRUE)
+ms_new = modulationSpectrum(s_filt, samplingRate = samplingRate,
+  windowLength = 25, overlap = 80, wn = 'hanning', maxDur = Inf,
+  plot = FALSE, returnComplex = TRUE)$complex
+image(x = as.numeric(colnames(ms_new)), y = as.numeric(rownames(ms_new)),
+  z = t(log(abs(ms_new))))
+plot(as.numeric(colnames(ms)), log(abs(ms[nrow(ms) / 2, ])), type = 'l')
+points(as.numeric(colnames(ms_new)), log(ms_new[nrow(ms_new) / 2, ]), type = 'l',
+  col = 'red', lty = 3)
+# AM peaks at 25 Hz are removed, but inverting the spectrogram adds a bit of noise
 }
 }
 \seealso{

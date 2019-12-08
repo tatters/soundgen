@@ -12,10 +12,11 @@ filterMS(ms, amCond = NULL, fmCond = NULL, jointCond = NULL,
 \code{\link{modulationSpectrum}} - a matrix of real or complex values, AM
 in columns, FM in rows}
 
-\item{amCond, fmCond}{character strings with valid conditions on AM or FM (see
-examples)}
+\item{amCond, fmCond}{character strings with valid conditions on amplitude and
+frequency modulation (see examples)}
 
-\item{jointCond}{character string with a valid joint condition on AM and FM}
+\item{jointCond}{character string with a valid joint condition amplitude and
+frequency modulation}
 
 \item{action}{should the defined AM-FM region be removed ('remove') or
 preserved, while everything else is removed ('preserve')?}
@@ -28,7 +29,11 @@ Returns the filtered modulation spectrum - a matrix of the original
 }
 \description{
 Filters a modulation spectrum by removing a certain range of amplitude
-modulation (AM) and frequency modulation (FM) frequencies.
+modulation (AM) and frequency modulation (FM) frequencies. Conditions can be
+specified either separately for AM and FM with \code{amCond = ..., fmCond =
+...}, implying an OR combination of conditions, or jointly on AM and FM with
+\code{jointCond}. \code{jointCond} is more general, but using
+\code{amCond/fmCond} is ~100 times faster.
 }
 \examples{
 ms = modulationSpectrum(soundgen(), samplingRate = 16000,
@@ -43,13 +48,10 @@ filterMS(ms, amCond = 'abs(am) > 10 & abs(am) < 25', action = 'remove')
 
 # jointCond is an AND-condition
 filterMS(ms, jointCond = 'am * fm < 5', action = 'remove')
-filterMS(ms, jointCond = 'am^2 + fm^2 < 100', action = 'preserve')
+filterMS(ms, jointCond = 'am^2 + (fm*3)^2 < 200', action = 'preserve')
 
 # So:
-filterMS(ms, jointCond = 'abs(am) > 5 | abs(fm) < 5')
+filterMS(ms, jointCond = 'abs(am) > 5 | abs(fm) < 5')  # slow but general
 # ...is the same as:
-filterMS(ms, amCond = 'abs(am) > 5', fmCond = 'abs(fm) < 5')
-
-\dontrun{
-}
+filterMS(ms, amCond = 'abs(am) > 5', fmCond = 'abs(fm) < 5')  # fast
 }

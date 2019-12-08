@@ -43,6 +43,10 @@
 #'   "power spectrum")
 #' @param returnComplex if TRUE, returns a complex modulation spectrum (without
 #'   normalization and warping)
+#' @param aggregComplex if TRUE, aggregates complex MS from multiple inputs,
+#'   otherwise returns the complex MS of the first input (recommended when
+#'   filtering and inverting the MS of a single sound, e.g. with
+#'   \code{\link{filterSoundByMS}})
 #' @param plot if TRUE, plots the modulation spectrum
 #' @param savePath if a valid path is specified, a plot is saved in this folder
 #'   (defaults to NA)
@@ -94,8 +98,18 @@
 #'     pitch = runif(3, 400, 600))
 #' }
 #' # lapply(ss, playme)
-#' ms = modulationSpectrum(ss[[1]], samplingRate = 16000)  # the first sound
-#' ms = modulationSpectrum(ss, samplingRate = 16000)  # all 10 sounds
+#' ms1 = modulationSpectrum(ss[[1]], samplingRate = 16000)  # the first sound
+#' dim(ms1$original)
+#' ms2 = modulationSpectrum(ss, samplingRate = 16000)  # all 10 sounds
+#' dim(ms2$original)
+#'
+#' # Careful with complex MS of multiple inputs:
+#' ms3 = modulationSpectrum(ss, samplingRate = 16000,
+#'   returnComplex = TRUE, aggregComplex = FALSE)
+#' dim(ms3$complex)  # complex MS of the first input only
+#' ms4 = modulationSpectrum(ss, samplingRate = 16000,
+#'   returnComplex = TRUE, aggregComplex = TRUE)
+#' dim(ms4$complex)  # aggregated over inputs
 #'
 #' # As with spectrograms, there is a tradeoff in time-frequency resolution
 #' s = soundgen(pitch = 500, amFreq = 50, amDep = 100, samplingRate = 44100)
@@ -124,8 +138,6 @@
 #' ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 11)
 #' # NB: longer files will be split into fragments <maxDur in length
 #'
-#' # "power = 2" returns squared modulation spectrum - note that this affects
-#' the roughness measure!
 #' # A sound with ~3 syllables per second and only downsweeps in F0 contour
 #' s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 #' # playme(s)
@@ -133,6 +145,9 @@
 #'   xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
 #'   power = 2)
 #' # note the asymmetry b/c of downsweeps
+#'
+#' # "power = 2" returns squared modulation spectrum - note that this affects
+#' # the roughness measure!
 #' ms$roughness
 #' # compare:
 #' modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
@@ -170,11 +185,12 @@ modulationSpectrum = function(
   windowLength = 25,
   step = NULL,
   overlap = 80,
-  wn = 'gaussian',
+  wn = 'hanning',
   zp = 0,
   power = 1,
   roughRange = c(30, 150),
   returnComplex = FALSE,
+  aggregComplex = TRUE,
   plot = TRUE,
   savePath = NA,
   logWarp = 2,
@@ -234,7 +250,6 @@ modulationSpectrum = function(
   } else {
     stop('Input not recognized')
   }
-  if (is.null(step)) step = windowLength * (1 - overlap / 100)
 
   # load input
   duration = rep(NA, length(myInput))
@@ -259,6 +274,15 @@ modulationSpectrum = function(
     }
   }
 
+  # Re-set windowLength, step, and overlap so as to ensure that
+  # windowLength_points and step_points are not fractions
+  if (is.null(step)) step = windowLength * (1 - overlap / 100)
+  step_points = round(step / 1000 * samplingRate)
+  step = step_points[1] / samplingRate[1] * 1000
+  windowLength_points = round(windowLength / 1000 * samplingRate)
+  windowLength = windowLength_points[1] / samplingRate[1] * 1000
+  overlap = 100 * (1 - step_points[1] / windowLength_points[1])
+
   # split sounds that exceed maxDur
   toSplit = which(duration > maxDur)
   if (length(toSplit) > 0) {
@@ -272,6 +296,8 @@ modulationSpectrum = function(
         end = idx[j + 1]
         myInput[[length(myInput) + 1]] = myInput[[i]][start:end]
         samplingRate = c(samplingRate, samplingRate[i])
+        windowLength_points = c(windowLength_points, windowLength_points[length(windowLength_points)])
+        step_points = c(step_points, step_points[length(step_points)])
       }
       # the first fragment replaces the old long sound in myInput
       myInput[[i]] = myInput[[i]][1:idx[2]]
@@ -286,24 +312,42 @@ modulationSpectrum = function(
     out_aggreg_complex = NULL
   }
   for (i in 1:length(myInput)) {
-    s1 = spectrogram(myInput[[i]],
-                     samplingRate = samplingRate[i],
-                     windowLength = windowLength,
-                     step = step,
-                     wn = wn,
-                     zp = zp,
-                     plot = FALSE,
-                     output = 'original',
-                     padWithSilence = FALSE,
-                     normalize = TRUE)
+    # s1 = spectrogram(myInput[[i]],
+    #                  samplingRate = samplingRate[i],
+    #                  windowLength = windowLength,
+    #                  step = step,
+    #                  wn = wn,
+    #                  zp = zp,
+    #                  plot = FALSE,
+    #                  output = 'original',
+    #                  padWithSilence = FALSE,
+    #                  normalize = TRUE)
+    # Calling stdft is ~80 times faster than going through spectrogram (!)
+    step_seq = seq(1, length(myInput[[i]]) + 1 - windowLength_points[i], step_points[i])
+    s1 = seewave::stdft(wave = as.matrix(myInput[[i]]),
+                        wn = wn,
+                        wl = windowLength_points[i],  # for multiple inputs, samplingRate, wl etc can vary
+                        f = samplingRate[i],
+                        zp = zp,
+                        step = step_seq,
+                        scale = TRUE,
+                        norm = FALSE,
+                        complex = FALSE)
     # image(t(log(s1))); s1[1:3, 1:3]; dim(s1); range(s1)
     # log-transform amplitudes
     if (logSpec) {
-      s1 = log(s1)
+      positives = which(s1 > 0)
+      nonpositives = which(s1 <= 0)
+      s1[positives] = log(s1[positives])
+      if (length(positives) > 0 & length(nonpositives) > 0) {
+        s1[nonpositives] = min(s1[positives])
+      }
       s1 = s1 - min(s1) + 1e-16  # positive
+      # s1 = log(s1 + 1e-16)
+      # s1 = s1 - min(s1) + 1e-16  # positive
     }
     # 2D fft
-    ms_complex = specToMS(s1, samplingRate[i], step = step)
+    ms_complex = specToMS(s1, windowLength = windowLength, step = step)
     ms = abs(ms_complex)
     # image(t(log(ms)))
     symAxis = floor(nrow(ms) / 2) + 1
@@ -325,12 +369,12 @@ modulationSpectrum = function(
   }
 
   # average modulation spectra across all sounds
-  max_cols = max(unlist(lapply(out, ncol)))
+  max_rows = max(unlist(lapply(out, nrow)))
   # normally same samplingRate, but in case not, upsample frequency resolution
   # typical ncol (depends on sound dur)
-  typicalRows = round(median(unlist(lapply(out, nrow))))
+  typicalCols = round(median(unlist(lapply(out, ncol))))
   sr = max(samplingRate)  # again, in case not the same
-  out1 = lapply(out, function(x) interpolMatrix(x, nr = typicalRows, nc = max_cols))
+  out1 = lapply(out, function(x) interpolMatrix(x, nr = max_rows, nc = typicalCols))
   out_aggreg = Reduce('+', out1) / length(myInput)
   # image(t(log(out_aggreg)))
 
@@ -350,21 +394,27 @@ modulationSpectrum = function(
 
   # prepare a separate summary of the complex ms
   if (returnComplex) {
-    out1_complex = lapply(out_complex, function(x) interpolMatrix(x, nr = typicalRows * 2, nc = max_cols))
-    out_aggreg_complex = Reduce('+', out1_complex) / length(myInput)
-    colnames(out_aggreg_complex) = X
-    rownames(out_aggreg_complex) = c(-rev(Y), Y)
-    # image(t(log(abs(out_aggreg_complex))))
+    if (aggregComplex) {
+      out1_complex = lapply(out_complex, function(x) {
+        interpolMatrix(x, nr = max_rows * 2, nc = typicalCols)
+      })
+      out_aggreg_complex = Reduce('+', out1_complex) / length(myInput)
+      colnames(out_aggreg_complex) = X
+      rownames(out_aggreg_complex) = c(-rev(Y), Y)
+      # image(t(log(abs(out_aggreg_complex))))
+    } else {
+      out_aggreg_complex = out_complex[[1]]
+    }
   }
 
   # extract a measure of roughness
   roughness = getRough(out_aggreg, roughRange)
 
-  # log-transform the axes (or, actually, warp the matrix itself)
+  # log-transform the axes (or, actually, warps the matrix itself)
   if (is.numeric(logWarp)) {
-    zero_col = ceiling(max_cols / 2)
+    zero_col = ceiling(ncol(out_aggreg) / 2)
     m_left = logMatrix(out_aggreg[, zero_col:1], base = logWarp)  # NB: flip the left half!
-    m_right = logMatrix(out_aggreg[, zero_col:max_cols], base = logWarp)
+    m_right = logMatrix(out_aggreg[, zero_col:ncol(out_aggreg)], base = logWarp)
     out_transf = cbind(m_left[, ncol(m_left):1], m_right[, 2:ncol(m_right)])
     X1 = as.numeric(colnames(out_transf))  # warped by logMatrix
     Y1 = as.numeric(rownames(out_transf))  # warped by logMatrix

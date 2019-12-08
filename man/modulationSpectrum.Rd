@@ -6,12 +6,12 @@
 \usage{
 modulationSpectrum(x, samplingRate = NULL, maxDur = 5,
   logSpec = FALSE, windowLength = 25, step = NULL, overlap = 80,
-  wn = "gaussian", zp = 0, power = 1, roughRange = c(30, 150),
-  returnComplex = FALSE, plot = TRUE, savePath = NA, logWarp = 2,
-  quantiles = c(0.5, 0.8, 0.9), kernelSize = 5, kernelSD = 0.5,
-  colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
-  xlab = "Hz", ylab = "1/KHz", main = NULL, width = 900,
-  height = 500, units = "px", res = NA, ...)
+  wn = "hanning", zp = 0, power = 1, roughRange = c(30, 150),
+  returnComplex = FALSE, aggregComplex = TRUE, plot = TRUE,
+  savePath = NA, logWarp = 2, quantiles = c(0.5, 0.8, 0.9),
+  kernelSize = 5, kernelSD = 0.5, colorTheme = c("bw", "seewave",
+  "heat.colors", "...")[1], xlab = "Hz", ylab = "1/KHz", main = NULL,
+  width = 900, height = 500, units = "px", res = NA, ...)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
@@ -46,6 +46,11 @@ constitute the "roughness" zone, Hz}
 
 \item{returnComplex}{if TRUE, returns a complex modulation spectrum (without
 normalization and warping)}
+
+\item{aggregComplex}{if TRUE, aggregates complex MS from multiple inputs,
+otherwise returns the complex MS of the first input (recommended when
+filtering and inverting the MS of a single sound, e.g. with
+\code{\link{filterSoundByMS}})}
 
 \item{plot}{if TRUE, plots the modulation spectrum}
 
@@ -133,8 +138,18 @@ for (i in 1:length(ss)) {
     pitch = runif(3, 400, 600))
 }
 # lapply(ss, playme)
-ms = modulationSpectrum(ss[[1]], samplingRate = 16000)  # the first sound
-ms = modulationSpectrum(ss, samplingRate = 16000)  # all 10 sounds
+ms1 = modulationSpectrum(ss[[1]], samplingRate = 16000)  # the first sound
+dim(ms1$original)
+ms2 = modulationSpectrum(ss, samplingRate = 16000)  # all 10 sounds
+dim(ms2$original)
+
+# Careful with complex MS of multiple inputs:
+ms3 = modulationSpectrum(ss, samplingRate = 16000,
+  returnComplex = TRUE, aggregComplex = FALSE)
+dim(ms3$complex)  # complex MS of the first input only
+ms4 = modulationSpectrum(ss, samplingRate = 16000,
+  returnComplex = TRUE, aggregComplex = TRUE)
+dim(ms4$complex)  # aggregated over inputs
 
 # As with spectrograms, there is a tradeoff in time-frequency resolution
 s = soundgen(pitch = 500, amFreq = 50, amDep = 100, samplingRate = 44100)
@@ -163,8 +178,6 @@ ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav')
 ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 11)
 # NB: longer files will be split into fragments <maxDur in length
 
-# "power = 2" returns squared modulation spectrum - note that this affects
-the roughness measure!
 # A sound with ~3 syllables per second and only downsweeps in F0 contour
 s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 # playme(s)
@@ -172,6 +185,9 @@ ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
   xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
   power = 2)
 # note the asymmetry b/c of downsweeps
+
+# "power = 2" returns squared modulation spectrum - note that this affects
+# the roughness measure!
 ms$roughness
 # compare:
 modulationSpectrum(s, samplingRate = 16000, maxDur = .5,

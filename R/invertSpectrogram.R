@@ -85,8 +85,8 @@ invertSpectrogram = function(spec,
   nr = nrow(spec)  # frequency bins
   nc = ncol(spec)  # time frames
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  step_points = step / 1000 * samplingRate
-  windowLength_points = windowLength / 1000 * samplingRate
+  step_points = round(step / 1000 * samplingRate)
+  windowLength_points = round(windowLength / 1000 * samplingRate)
 
   # Rescale the spectrogram
   if (specType == 'log') {
