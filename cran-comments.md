@@ -4,9 +4,10 @@
   - Ubuntu Linux 16.04 LTS, R-release, GCC
   - Fedora Linux, R-devel, clang, gfortran
   - Windows Server 2008 R2 SP1, R-devel
+* win-builder, R-devel, x86_64-w64-mingw32 (https://win-builder.r-project.org/8kLVzEia8gzR)
 
 ## R CMD check results
-One NOTE on all platforms:
+One NOTE on all platforms except win-builder:
 
 NOTES:
 ------
@@ -16,4 +17,3 @@ NOTES:
     doc   4.1Mb
     
 Comment: I do have two large vignettes (the .Rmd text alone is ~200 KB, plus illustrations) that have not increased in size over the past few updates.
-
