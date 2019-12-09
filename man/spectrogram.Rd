@@ -156,14 +156,15 @@ parameters.
 }
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise
-sound = soundgen(sylLen = 1000, temperature = 0.001, noise = list(
-  time = c(0, 1300), value = c(-40, 0)), formantsNoise = list(
+sound = soundgen(sylLen = 500, temperature = 0.001, noise = list(
+  time = c(0, 650), value = c(-40, 0)), formantsNoise = list(
   f1 = list(freq = 5000, width = 10000)))
 # playme(sound, samplingRate = 16000)
 
 # basic spectrogram
 spectrogram(sound, samplingRate = 16000)
 
+\dontrun{
 # add bells and whistles
 spectrogram(sound, samplingRate = 16000,
   osc = TRUE,  # plot oscillogram under the spectrogram
@@ -178,7 +179,6 @@ spectrogram(sound, samplingRate = 16000,
   # + axis labels, etc
 )
 
-\dontrun{
 # change dynamic range
 spectrogram(sound, samplingRate = 16000, dynamicRange = 40)
 spectrogram(sound, samplingRate = 16000, dynamicRange = 120)

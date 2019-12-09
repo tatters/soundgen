@@ -63,7 +63,7 @@
 #' # in the original (ie you have to know how the spectrogram was created)
 #' s_new = invertSpectrogram(spec, samplingRate = samplingRate,
 #'   windowLength = windowLength, overlap = overlap, wn = wn,
-#'   initialPhase = 'spsi', nIter = 25, specType = 'abs', play = FALSE)
+#'   initialPhase = 'spsi', nIter = 10, specType = 'abs', play = FALSE)
 #'
 #' # Verify the quality of audio reconstruction
 #' # playme(s, samplingRate); playme(s_new, samplingRate)

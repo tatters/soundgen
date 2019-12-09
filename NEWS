@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.5.1.9000 [...date...]
+          CHANGES IN SOUNDGEN VERSION 1.6.0 [09-December-2019]
 BUGS FIXED:
   * analyze(): proper plotting of oscillogram for audio files
 

@@ -93,15 +93,15 @@ present in the filtered-out frequency range (see examples).
 \examples{
 # Create a sound to be filtered
 samplingRate = 16000
-s = soundgen(sylLen = 500, pitch = rnorm(n = 20, mean = 200, sd = 25),
+s = soundgen(pitch = rnorm(n = 20, mean = 200, sd = 25),
   amFreq = 25, amDep = 50, samplingRate = samplingRate,
-  plot = TRUE, osc = TRUE)
+  addSilence = 50, plot = TRUE, osc = TRUE)
 # playme(s, samplingRate)
 
 # Filter
 s_filt = filterSoundByMS(s, samplingRate = samplingRate,
   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
-  action = 'remove', nIter = 15)
+  action = 'remove', nIter = 10)
 # playme(s_filt, samplingRate)
 \dontrun{
 # Download an example - a bit of speech (sampled at 16000 Hz)
