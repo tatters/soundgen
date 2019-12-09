@@ -4,9 +4,16 @@
 \alias{wiggleAnchors}
 \title{Randomly modify anchors}
 \usage{
-wiggleAnchors(df, temperature = 0.05, temp_coef = 1, low = c(0,
-  -Inf), high = c(1, Inf), wiggleAllRows = FALSE, sd_values = NULL,
-  invalidArgAction = c("adjust", "abort", "ignore")[1])
+wiggleAnchors(
+  df,
+  temperature = 0.05,
+  temp_coef = 1,
+  low = c(0, -Inf),
+  high = c(1, Inf),
+  wiggleAllRows = FALSE,
+  sd_values = NULL,
+  invalidArgAction = c("adjust", "abort", "ignore")[1]
+)
 }
 \arguments{
 \item{df}{dataframe of anchors, for ex. \code{data.frame(time = c(0, .1, .8,

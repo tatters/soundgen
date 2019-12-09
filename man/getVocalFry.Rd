@@ -4,8 +4,14 @@
 \alias{getVocalFry}
 \title{Subharmonics}
 \usage{
-getVocalFry(rolloff, pitch_per_gc, subFreq = 100, subDep = 100,
-  dynamicRange = 80, shortestEpoch = 300)
+getVocalFry(
+  rolloff,
+  pitch_per_gc,
+  subFreq = 100,
+  subDep = 100,
+  dynamicRange = 80,
+  shortestEpoch = 300
+)
 }
 \arguments{
 \item{rolloff}{matrix of original amplitudes of each harmonic in f0 stack

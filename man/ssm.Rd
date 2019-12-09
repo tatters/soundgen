@@ -4,18 +4,32 @@
 \alias{ssm}
 \title{Self-similarity matrix}
 \usage{
-ssm(x, samplingRate = NULL, windowLength = 40, overlap = 75,
-  step = NULL, ssmWin = 40, maxFreq = NULL, nBands = NULL,
-  MFCC = 2:13, input = c("mfcc", "audiogram", "spectrum")[1],
-  norm = FALSE, simil = c("cosine", "cor")[1],
-  returnSSM = "deprecated", kernelLen = 200, kernelSD = 0.2,
-  padWith = 0, plot = TRUE, heights = c(2, 1),
-  specPars = list(levels = seq(0, 1, length = 30), colorTheme = c("bw",
-  "seewave", "heat.colors", "...")[2], xlab = "Time, s", ylab = "kHz", ylim
-  = c(0, maxFreq/1000)), ssmPars = list(levels = seq(0, 1, length = 30),
-  colorTheme = c("bw", "seewave", "heat.colors", "...")[2], xlab =
-  "Time, s", ylab = "Time, s", main = "Self-similarity matrix"),
-  noveltyPars = list(type = "b", pch = 16, col = "black", lwd = 3))
+ssm(
+  x,
+  samplingRate = NULL,
+  windowLength = 40,
+  overlap = 75,
+  step = NULL,
+  ssmWin = 40,
+  maxFreq = NULL,
+  nBands = NULL,
+  MFCC = 2:13,
+  input = c("mfcc", "audiogram", "spectrum")[1],
+  norm = FALSE,
+  simil = c("cosine", "cor")[1],
+  returnSSM = "deprecated",
+  kernelLen = 200,
+  kernelSD = 0.2,
+  padWith = 0,
+  plot = TRUE,
+  heights = c(2, 1),
+  specPars = list(levels = seq(0, 1, length = 30), colorTheme = c("bw", "seewave",
+    "heat.colors", "...")[2], xlab = "Time, s", ylab = "kHz", ylim = c(0, maxFreq/1000)),
+  ssmPars = list(levels = seq(0, 1, length = 30), colorTheme = c("bw", "seewave",
+    "heat.colors", "...")[2], xlab = "Time, s", ylab = "Time, s", main =
+    "Self-similarity matrix"),
+  noveltyPars = list(type = "b", pch = 16, col = "black", lwd = 3)
+)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified

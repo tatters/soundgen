@@ -4,10 +4,21 @@
 \alias{invertSpectrogram}
 \title{Invert spectrogram}
 \usage{
-invertSpectrogram(spec, samplingRate, windowLength, overlap, step = NULL,
-  wn = "hanning", specType = c("abs", "log", "dB")[1],
-  initialPhase = c("zero", "random", "spsi")[3], nIter = 50,
-  normalize = TRUE, play = TRUE, verbose = FALSE, plotError = TRUE)
+invertSpectrogram(
+  spec,
+  samplingRate,
+  windowLength,
+  overlap,
+  step = NULL,
+  wn = "hanning",
+  specType = c("abs", "log", "dB")[1],
+  initialPhase = c("zero", "random", "spsi")[3],
+  nIter = 50,
+  normalize = TRUE,
+  play = TRUE,
+  verbose = FALSE,
+  plotError = TRUE
+)
 }
 \arguments{
 \item{spec}{the spectrogram that is to be transform to a time series: numeric

@@ -4,10 +4,20 @@
 \alias{generateNoise}
 \title{Generate noise}
 \usage{
-generateNoise(len, rolloffNoise = 0, noiseFlatSpec = 1200,
-  spectralEnvelope = NULL, noise = NULL, temperature = 0.1,
-  attackLen = 10, windowLength_points = 1024, samplingRate = 16000,
-  overlap = 75, dynamicRange = 80, play = FALSE)
+generateNoise(
+  len,
+  rolloffNoise = 0,
+  noiseFlatSpec = 1200,
+  spectralEnvelope = NULL,
+  noise = NULL,
+  temperature = 0.1,
+  attackLen = 10,
+  windowLength_points = 1024,
+  samplingRate = 16000,
+  overlap = 75,
+  dynamicRange = 80,
+  play = FALSE
+)
 }
 \arguments{
 \item{len}{length of output}

@@ -4,12 +4,25 @@
 \alias{filterSoundByMS}
 \title{Filter sound by modulation spectrum}
 \usage{
-filterSoundByMS(x, samplingRate = NULL, logSpec = FALSE,
-  windowLength = 25, step = NULL, overlap = 80, wn = "hamming",
-  zp = 0, amCond = NULL, fmCond = NULL, jointCond = NULL,
-  action = c("remove", "preserve")[1], initialPhase = c("zero",
-  "random", "spsi")[3], nIter = 50, play = FALSE, plot = TRUE,
-  savePath = NA)
+filterSoundByMS(
+  x,
+  samplingRate = NULL,
+  logSpec = FALSE,
+  windowLength = 25,
+  step = NULL,
+  overlap = 80,
+  wn = "hamming",
+  zp = 0,
+  amCond = NULL,
+  fmCond = NULL,
+  jointCond = NULL,
+  action = c("remove", "preserve")[1],
+  initialPhase = c("zero", "random", "spsi")[3],
+  nIter = 50,
+  play = FALSE,
+  plot = TRUE,
+  savePath = NA
+)
 }
 \arguments{
 \item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
@@ -91,21 +104,24 @@ s_filt = filterSoundByMS(s, samplingRate = samplingRate,
   action = 'remove', nIter = 15)
 # playme(s_filt, samplingRate)
 \dontrun{
-# A recorded example: a bit of speech (sampled at 16000 Hz)
-# Download it from: cogsci.se/soundgen/audio/speechEx.wav
-playme('~/Downloads/speechEx.wav')
-spectrogram('~/Downloads/speechEx.wav', osc = TRUE)
+# Download an example - a bit of speech (sampled at 16000 Hz)
+download.file('http://cogsci.se/soundgen/audio/speechEx.wav',
+              destfile = '~/Downloads/speechEx.wav')  # modify as needed
+target = '~/Downloads/speechEx.wav'
+samplingRate = tuneR::readWave(target)@samp.rate
+playme(target, samplingRate)
+spectrogram(target, samplingRate = samplingRate, osc = TRUE)
 
 # Remove AM above 3 Hz from a bit of speech (remove most temporal details)
-s_filt1 = filterSoundByMS('~/Downloads/speechEx.wav',
+s_filt1 = filterSoundByMS(target, samplingRate = samplingRate,
   amCond = 'abs(am) > 3', nIter = 15)
-playme(s_filt1, samplingRate = 16000)
-spectrogram(s_filt1, samplingRate = 16000, osc = TRUE)
+playme(s_filt1, samplingRate)
+spectrogram(s_filt1, samplingRate = samplingRate, osc = TRUE)
 
 # Remove slow AM/FM (prosody) to achieve a "robotic" voice
-s_filt2 = filterSoundByMS('~/Downloads/speechEx.wav',
+s_filt2 = filterSoundByMS(target, samplingRate = samplingRate,
   jointCond = 'am^2 + (fm*3)^2 < 300', nIter = 15)
-playme(s_filt2, samplingRate = 16000)
+playme(s_filt2, samplingRate)
 
 ## An alternative manual workflow w/o calling filterSoundByMS()
 # This way you can modify the MS directly and more flexibly

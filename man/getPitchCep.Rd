@@ -4,8 +4,16 @@
 \alias{getPitchCep}
 \title{Cepstral pitch tracker}
 \usage{
-getPitchCep(frame, cepZp, samplingRate, pitchFloor, pitchCeiling, cepThres,
-  cepSmooth, nCands)
+getPitchCep(
+  frame,
+  cepZp,
+  samplingRate,
+  pitchFloor,
+  pitchCeiling,
+  cepThres,
+  cepSmooth,
+  nCands
+)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by

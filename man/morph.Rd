@@ -4,8 +4,14 @@
 \alias{morph}
 \title{Morph sounds}
 \usage{
-morph(formula1, formula2, nMorphs, playMorphs = TRUE, savePath = NA,
-  samplingRate = 16000)
+morph(
+  formula1,
+  formula2,
+  nMorphs,
+  playMorphs = TRUE,
+  savePath = NA,
+  samplingRate = 16000
+)
 }
 \arguments{
 \item{formula1, formula2}{lists of parameters for calling

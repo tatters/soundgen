@@ -4,9 +4,15 @@
 \alias{crossFade}
 \title{Join two waveforms by cross-fading}
 \usage{
-crossFade(ampl1, ampl2, crossLenPoints = 240, crossLen = NULL,
-  samplingRate = NULL, shape = c("lin", "exp", "log", "cos",
-  "logistic")[1], steepness = 1)
+crossFade(
+  ampl1,
+  ampl2,
+  crossLenPoints = 240,
+  crossLen = NULL,
+  samplingRate = NULL,
+  shape = c("lin", "exp", "log", "cos", "logistic")[1],
+  steepness = 1
+)
 }
 \arguments{
 \item{ampl1, ampl2}{two numeric vectors (waveforms) to be joined}

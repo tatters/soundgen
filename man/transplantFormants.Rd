@@ -4,10 +4,19 @@
 \alias{transplantFormants}
 \title{Transplant formants}
 \usage{
-transplantFormants(donor, freqWindow_donor = NULL, recipient,
-  freqWindow_recipient = NULL, samplingRate = NULL,
-  dynamicRange = 80, windowLength = 50, step = NULL, overlap = 90,
-  wn = "gaussian", zp = 0)
+transplantFormants(
+  donor,
+  freqWindow_donor = NULL,
+  recipient,
+  freqWindow_recipient = NULL,
+  samplingRate = NULL,
+  dynamicRange = 80,
+  windowLength = 50,
+  step = NULL,
+  overlap = 90,
+  wn = "gaussian",
+  zp = 0
+)
 }
 \arguments{
 \item{donor}{the sound that provides the formants or the desired spectral

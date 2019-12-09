@@ -4,9 +4,17 @@
 \alias{divideIntoSyllables}
 \title{Syllable structure of a bout}
 \usage{
-divideIntoSyllables(nSyl, sylLen, pauseLen, sylDur_min = 20,
-  sylDur_max = 10000, pauseDur_min = 20, pauseDur_max = 1000,
-  temperature = 0.025, plot = FALSE)
+divideIntoSyllables(
+  nSyl,
+  sylLen,
+  pauseLen,
+  sylDur_min = 20,
+  sylDur_max = 10000,
+  pauseDur_min = 20,
+  pauseDur_max = 1000,
+  temperature = 0.025,
+  plot = FALSE
+)
 }
 \arguments{
 \item{nSyl}{the desired number of syllables}

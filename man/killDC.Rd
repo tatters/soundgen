@@ -4,8 +4,13 @@
 \alias{killDC}
 \title{Kill DC}
 \usage{
-killDC(sound, windowLength = 200, samplingRate = 16000,
-  windowLength_points = NULL, plot = FALSE)
+killDC(
+  sound,
+  windowLength = 200,
+  samplingRate = 16000,
+  windowLength_points = NULL,
+  plot = FALSE
+)
 }
 \arguments{
 \item{sound}{input vector oscillating about zero}

@@ -4,14 +4,35 @@
 \alias{modulationSpectrumFolder}
 \title{Modulation spectrum per folder}
 \usage{
-modulationSpectrumFolder(myfolder, summary = TRUE, htmlPlots = TRUE,
-  verbose = TRUE, maxDur = 5, logSpec = FALSE, windowLength = 25,
-  step = NULL, overlap = 80, wn = "gaussian", zp = 0, power = 1,
-  roughRange = c(30, 150), plot = FALSE, savePlots = FALSE,
-  logWarp = 2, quantiles = c(0.5, 0.8, 0.9), kernelSize = 5,
-  kernelSD = 0.5, colorTheme = c("bw", "seewave", "...")[1],
-  xlab = "Hz", ylab = "1/KHz", width = 900, height = 500,
-  units = "px", res = NA, ...)
+modulationSpectrumFolder(
+  myfolder,
+  summary = TRUE,
+  htmlPlots = TRUE,
+  verbose = TRUE,
+  maxDur = 5,
+  logSpec = FALSE,
+  windowLength = 25,
+  step = NULL,
+  overlap = 80,
+  wn = "hamming",
+  zp = 0,
+  power = 1,
+  roughRange = c(30, 150),
+  plot = FALSE,
+  savePlots = FALSE,
+  logWarp = 2,
+  quantiles = c(0.5, 0.8, 0.9),
+  kernelSize = 5,
+  kernelSD = 0.5,
+  colorTheme = c("bw", "seewave", "...")[1],
+  xlab = "Hz",
+  ylab = "1/KHz",
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
+  ...
+)
 }
 \arguments{
 \item{myfolder}{full path to target folder}

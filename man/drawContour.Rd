@@ -4,8 +4,14 @@
 \alias{drawContour}
 \title{Draw contour}
 \usage{
-drawContour(len, anchors, interpol, valueFloor, valueCeiling,
-  duration_ms = 500)
+drawContour(
+  len,
+  anchors,
+  interpol,
+  valueFloor,
+  valueCeiling,
+  duration_ms = 500
+)
 }
 \arguments{
 \item{len}{the required length of the output contour. If NULL, it will be

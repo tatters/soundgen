@@ -4,17 +4,28 @@
 \alias{transplantEnv}
 \title{Transplant envelope}
 \usage{
-transplantEnv(donor, samplingRateD, recipient,
-  samplingRateR = samplingRateD, windowLength = 50, method = c("hil",
-  "rms", "peak")[1], killDC = FALSE, dynamicRange = 80, plot = FALSE)
+transplantEnv(
+  donor,
+  samplingRateD,
+  recipient,
+  samplingRateR = samplingRateD,
+  windowLength = 50,
+  method = c("hil", "rms", "peak")[1],
+  killDC = FALSE,
+  dynamicRange = 80,
+  plot = FALSE
+)
 }
 \arguments{
-\item{donor}{the sound that "donates" the amplitude envelope}
+\item{donor}{the sound that "donates" the amplitude envelope (numeric vector
+- NOT an audio file)}
 
 \item{samplingRateD, samplingRateR}{sampling rate of the donor and recipient,
-respectively}
+respectively (if only samplingRateD is provided, samplingRateR is assumed
+to be the same)}
 
-\item{recipient}{the sound that needs to have its amplitude envelope adjusted}
+\item{recipient}{the sound that needs to have its amplitude envelope adjusted
+(numeric vector - NOT an audio file)}
 
 \item{windowLength}{the length of smoothing window, ms}
 
@@ -29,6 +40,10 @@ not be amplified}
 
 \item{plot}{if TRUE, plots the original sound, smoothed envelope, and
 flattened sound}
+}
+\value{
+Returns the recipient sound with the donor's amplitude envelope - a
+  numeric vector with the same sampling rate as the recipient
 }
 \description{
 Extracts a smoothed amplitude envelope of the \code{donor} sound and applies

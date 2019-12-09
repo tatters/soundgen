@@ -4,8 +4,17 @@
 \alias{getFrameBank}
 \title{Frame bank}
 \usage{
-getFrameBank(sound, samplingRate, windowLength_points, wn, step, zp,
-  normalize = TRUE, filter = NULL, padWithSilence = FALSE)
+getFrameBank(
+  sound,
+  samplingRate,
+  windowLength_points,
+  wn,
+  step,
+  zp,
+  normalize = TRUE,
+  filter = NULL,
+  padWithSilence = FALSE
+)
 }
 \arguments{
 \item{sound}{numeric vector}

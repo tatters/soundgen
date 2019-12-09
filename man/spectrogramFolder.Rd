@@ -4,11 +4,25 @@
 \alias{spectrogramFolder}
 \title{Save spectrograms per folder}
 \usage{
-spectrogramFolder(myfolder, htmlPlots = TRUE, verbose = TRUE,
-  windowLength = 50, step = NULL, overlap = 50, wn = "gaussian",
-  zp = 0, ylim = NULL, osc = TRUE, xlab = "Time, ms",
-  ylab = "kHz", width = 900, height = 500, units = "px",
-  res = NA, ...)
+spectrogramFolder(
+  myfolder,
+  htmlPlots = TRUE,
+  verbose = TRUE,
+  windowLength = 50,
+  step = NULL,
+  overlap = 50,
+  wn = "gaussian",
+  zp = 0,
+  ylim = NULL,
+  osc = TRUE,
+  xlab = "Time, ms",
+  ylab = "kHz",
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
+  ...
+)
 }
 \arguments{
 \item{myfolder}{full path to the folder containing wav/mp3 files}

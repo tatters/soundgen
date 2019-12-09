@@ -4,10 +4,20 @@
 \alias{getLoudness}
 \title{Get loudness}
 \usage{
-getLoudness(x, samplingRate = NULL, scale = NULL, windowLength = 50,
-  step = NULL, overlap = 50, SPL_measured = 70, Pref = 2e-05,
-  spreadSpectrum = TRUE, plot = TRUE, mar = c(5.1, 4.1, 4.1, 4.1),
-  ...)
+getLoudness(
+  x,
+  samplingRate = NULL,
+  scale = NULL,
+  windowLength = 50,
+  step = NULL,
+  overlap = 50,
+  SPL_measured = 70,
+  Pref = 2e-05,
+  spreadSpectrum = TRUE,
+  plot = TRUE,
+  mar = c(5.1, 4.1, 4.1, 4.1),
+  ...
+)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified

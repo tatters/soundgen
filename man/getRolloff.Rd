@@ -4,10 +4,20 @@
 \alias{getRolloff}
 \title{Control rolloff of harmonics}
 \usage{
-getRolloff(pitch_per_gc = c(440), nHarmonics = NULL, rolloff = -6,
-  rolloffOct = 0, rolloffParab = 0, rolloffParabHarm = 3,
-  rolloffParabCeiling = NULL, rolloffKHz = 0, baseline = 200,
-  dynamicRange = 80, samplingRate = 16000, plot = FALSE)
+getRolloff(
+  pitch_per_gc = c(440),
+  nHarmonics = NULL,
+  rolloff = -6,
+  rolloffOct = 0,
+  rolloffParab = 0,
+  rolloffParabHarm = 3,
+  rolloffParabCeiling = NULL,
+  rolloffKHz = 0,
+  baseline = 200,
+  dynamicRange = 80,
+  samplingRate = 16000,
+  plot = FALSE
+)
 }
 \arguments{
 \item{pitch_per_gc}{a vector of f0 per glottal cycle, Hz}

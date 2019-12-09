@@ -4,13 +4,26 @@
 \alias{getSmoothContour}
 \title{Smooth contour from anchors}
 \usage{
-getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
-  len = NULL, thisIsPitch = FALSE, normalizeTime = TRUE,
-  interpol = c("approx", "spline", "loess")[3], discontThres = 0.05,
-  jumpThres = 0.01, valueFloor = NULL, valueCeiling = NULL,
-  plot = FALSE, main = "", xlim = NULL, ylim = NULL,
-  samplingRate = 16000, voiced = NULL, contourLabel = NULL,
-  NA_to_zero = TRUE, ...)
+getSmoothContour(
+  anchors = data.frame(time = c(0, 1), value = c(0, 1)),
+  len = NULL,
+  thisIsPitch = FALSE,
+  normalizeTime = TRUE,
+  interpol = c("approx", "spline", "loess")[3],
+  discontThres = 0.05,
+  jumpThres = 0.01,
+  valueFloor = NULL,
+  valueCeiling = NULL,
+  plot = FALSE,
+  main = "",
+  xlim = NULL,
+  ylim = NULL,
+  samplingRate = 16000,
+  voiced = NULL,
+  contourLabel = NULL,
+  NA_to_zero = TRUE,
+  ...
+)
 }
 \arguments{
 \item{anchors}{a numeric vector of values or a list/dataframe with one column

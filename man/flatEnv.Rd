@@ -4,9 +4,16 @@
 \alias{flatEnv}
 \title{Flat envelope}
 \usage{
-flatEnv(sound, windowLength = 200, samplingRate = 16000,
-  method = c("hil", "rms", "peak")[1], windowLength_points = NULL,
-  killDC = FALSE, dynamicRange = 80, plot = FALSE)
+flatEnv(
+  sound,
+  windowLength = 200,
+  samplingRate = 16000,
+  method = c("hil", "rms", "peak")[1],
+  windowLength_points = NULL,
+  killDC = FALSE,
+  dynamicRange = 80,
+  plot = FALSE
+)
 }
 \arguments{
 \item{sound}{input vector oscillating about zero}

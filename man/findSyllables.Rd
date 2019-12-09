@@ -4,8 +4,14 @@
 \alias{findSyllables}
 \title{Find syllables}
 \usage{
-findSyllables(envelope, timestep, threshold, shortestSyl, shortestPause,
-  mergeSyl)
+findSyllables(
+  envelope,
+  timestep,
+  threshold,
+  shortestSyl,
+  shortestPause,
+  mergeSyl
+)
 }
 \arguments{
 \item{envelope}{downsampled amplitude envelope}

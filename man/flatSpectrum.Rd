@@ -4,9 +4,17 @@
 \alias{flatSpectrum}
 \title{Flat spectrum}
 \usage{
-flatSpectrum(x, freqWindow = NULL, samplingRate = NULL,
-  dynamicRange = 80, windowLength = 50, step = NULL, overlap = 90,
-  wn = "gaussian", zp = 0)
+flatSpectrum(
+  x,
+  freqWindow = NULL,
+  samplingRate = NULL,
+  dynamicRange = 80,
+  windowLength = 50,
+  step = NULL,
+  overlap = 90,
+  wn = "gaussian",
+  zp = 0
+)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified

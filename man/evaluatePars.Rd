@@ -4,10 +4,18 @@
 \alias{evaluatePars}
 \title{Evaluate parameters for optimization}
 \usage{
-evaluatePars(p, pars, myfun, bounds = NULL, fitnessPar,
-  fitnessFun = function(x) 1 - cor(x, key, use =
-  "pairwise.complete.obs"), myfolder, key, otherPars = list(plot = FALSE,
-  verbose = FALSE), verbose = TRUE)
+evaluatePars(
+  p,
+  pars,
+  myfun,
+  bounds = NULL,
+  fitnessPar,
+  fitnessFun = function(x) 1 - cor(x, key, use = "pairwise.complete.obs"),
+  myfolder,
+  key,
+  otherPars = list(plot = FALSE, verbose = FALSE),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{p}{numeric vector of evaluated values of parameters}

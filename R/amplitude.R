@@ -638,11 +638,16 @@ flatEnv = function(sound,
 #'
 #' @seealso \code{\link{flatEnv}}, \code{\link[seewave]{setenv}}
 #'
-#' @param donor the sound that "donates" the amplitude envelope
+#' @param donor the sound that "donates" the amplitude envelope (numeric vector
+#'   - NOT an audio file)
 #' @param recipient the sound that needs to have its amplitude envelope adjusted
+#'   (numeric vector - NOT an audio file)
 #' @param samplingRateD,samplingRateR sampling rate of the donor and recipient,
-#'   respectively
+#'   respectively (if only samplingRateD is provided, samplingRateR is assumed
+#'   to be the same)
 #' @inheritParams flatEnv
+#' @return Returns the recipient sound with the donor's amplitude envelope - a
+#'   numeric vector with the same sampling rate as the recipient
 #' @export
 #' @examples
 #' donor = rnorm(500) * seq(1, 0, length.out = 500)

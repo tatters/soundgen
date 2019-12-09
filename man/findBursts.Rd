@@ -4,8 +4,15 @@
 \alias{findBursts}
 \title{Find bursts}
 \usage{
-findBursts(envelope, timestep, interburst, burstThres, peakToTrough,
-  troughLeft = TRUE, troughRight = FALSE)
+findBursts(
+  envelope,
+  timestep,
+  interburst,
+  burstThres,
+  peakToTrough,
+  troughLeft = TRUE,
+  troughRight = FALSE
+)
 }
 \arguments{
 \item{envelope}{downsampled amplitude envelope}

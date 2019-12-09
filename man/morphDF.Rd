@@ -4,8 +4,16 @@
 \alias{morphDF}
 \title{Morph dataframes}
 \usage{
-morphDF(a, b, nMorphs = 5, method = c("smooth", "perAnchor")[2],
-  lenSmooth = 50, matchIdx = NULL, plot = F, ...)
+morphDF(
+  a,
+  b,
+  nMorphs = 5,
+  method = c("smooth", "perAnchor")[2],
+  lenSmooth = 50,
+  matchIdx = NULL,
+  plot = F,
+  ...
+)
 }
 \arguments{
 \item{a, b}{dataframes to morph}

@@ -4,10 +4,24 @@
 \alias{getRMS}
 \title{RMS amplitude per frame}
 \usage{
-getRMS(x, samplingRate = NULL, windowLength = 50, step = NULL,
-  overlap = 75, killDC = FALSE, scale = NULL, normalize = TRUE,
-  windowDC = 200, plot = TRUE, xlab = "Time, ms", ylab = "",
-  type = "b", col = "blue", lwd = 2, ...)
+getRMS(
+  x,
+  samplingRate = NULL,
+  windowLength = 50,
+  step = NULL,
+  overlap = 75,
+  killDC = FALSE,
+  scale = NULL,
+  normalize = TRUE,
+  windowDC = 200,
+  plot = TRUE,
+  xlab = "Time, ms",
+  ylab = "",
+  type = "b",
+  col = "blue",
+  lwd = 2,
+  ...
+)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified

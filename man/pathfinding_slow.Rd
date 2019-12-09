@@ -4,9 +4,14 @@
 \alias{pathfinding_slow}
 \title{Path through pitch candidates: slow}
 \usage{
-pathfinding_slow(pitchCands = pitchCands, pitchCert = pitchCert,
-  certWeight = certWeight, pitchCenterGravity = pitchCenterGravity,
-  manual = NULL, annealPars = list(maxit = 5000, temp = 1000))
+pathfinding_slow(
+  pitchCands = pitchCands,
+  pitchCert = pitchCert,
+  certWeight = certWeight,
+  pitchCenterGravity = pitchCenterGravity,
+  manual = NULL,
+  annealPars = list(maxit = 5000, temp = 1000)
+)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each

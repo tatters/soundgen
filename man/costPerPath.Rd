@@ -4,8 +4,14 @@
 \alias{costPerPath}
 \title{Cost per path}
 \usage{
-costPerPath(path, pitchCands, pitchCert, certWeight, pitchCenterGravity,
-  manual = NULL)
+costPerPath(
+  path,
+  pitchCands,
+  pitchCert,
+  certWeight,
+  pitchCenterGravity,
+  manual = NULL
+)
 }
 \arguments{
 \item{path}{evaluated path through pitch candidates (as integers specifying

@@ -4,19 +4,45 @@
 \alias{spectrogram}
 \title{Spectrogram}
 \usage{
-spectrogram(x, samplingRate = NULL, dynamicRange = 80,
-  windowLength = 50, step = NULL, overlap = 70, wn = "gaussian",
-  zp = 0, normalize = TRUE, scale = NULL, smoothFreq = 0,
-  smoothTime = 0, qTime = 0, percentNoise = 10, noiseReduction = 0,
-  contrast = 0.2, brightness = 0, method = c("spectrum",
-  "spectralDerivative")[1], output = c("original", "processed",
-  "complex")[1], ylim = NULL, yScale = c("linear", "log")[1],
-  plot = TRUE, osc = FALSE, osc_dB = FALSE, heights = c(3, 1),
-  padWithSilence = TRUE, colorTheme = c("bw", "seewave", "heat.colors",
-  "...")[1], units = c("ms", "kHz"), xlab = paste("Time,", units[1]),
-  ylab = paste("Frequency,", units[2]), mar = c(5.1, 4.1, 4.1, 2),
-  main = "", grid = NULL, frameBank = NULL, duration = NULL,
-  pitch = NULL, ...)
+spectrogram(
+  x,
+  samplingRate = NULL,
+  dynamicRange = 80,
+  windowLength = 50,
+  step = NULL,
+  overlap = 70,
+  wn = "gaussian",
+  zp = 0,
+  normalize = TRUE,
+  scale = NULL,
+  smoothFreq = 0,
+  smoothTime = 0,
+  qTime = 0,
+  percentNoise = 10,
+  noiseReduction = 0,
+  contrast = 0.2,
+  brightness = 0,
+  method = c("spectrum", "spectralDerivative")[1],
+  output = c("original", "processed", "complex")[1],
+  ylim = NULL,
+  yScale = c("linear", "log")[1],
+  plot = TRUE,
+  osc = FALSE,
+  osc_dB = FALSE,
+  heights = c(3, 1),
+  padWithSilence = TRUE,
+  colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
+  units = c("ms", "kHz"),
+  xlab = paste("Time,", units[1]),
+  ylab = paste("Frequency,", units[2]),
+  mar = c(5.1, 4.1, 4.1, 2),
+  main = "",
+  grid = NULL,
+  frameBank = NULL,
+  duration = NULL,
+  pitch = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified

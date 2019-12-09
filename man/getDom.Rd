@@ -4,8 +4,7 @@
 \alias{getDom}
 \title{Get lowest dominant frequency band}
 \usage{
-getDom(frame, samplingRate, bin, domSmooth, domThres, pitchFloor,
-  pitchCeiling)
+getDom(frame, samplingRate, bin, domSmooth, domThres, pitchFloor, pitchCeiling)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by

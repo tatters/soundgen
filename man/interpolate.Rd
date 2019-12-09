@@ -4,8 +4,15 @@
 \alias{interpolate}
 \title{Interpolate}
 \usage{
-interpolate(pitchCands, pitchCert, pitchSource, pitchCenterGravity,
-  interpolWin_bin = 3, interpolTol = 0.3, interpolCert = 0.3)
+interpolate(
+  pitchCands,
+  pitchCert,
+  pitchSource,
+  pitchCenterGravity,
+  interpolWin_bin = 3,
+  interpolTol = 0.3,
+  interpolCert = 0.3
+)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each

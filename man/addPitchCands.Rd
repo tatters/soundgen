@@ -4,9 +4,17 @@
 \alias{addPitchCands}
 \title{Plot pitch candidates}
 \usage{
-addPitchCands(pitchCands, pitchCert, pitchSource, pitch,
-  candPlot = list(), pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd =
-  3), addToExistingPlot = TRUE, showLegend = TRUE, ...)
+addPitchCands(
+  pitchCands,
+  pitchCert,
+  pitchSource,
+  pitch,
+  candPlot = list(),
+  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  addToExistingPlot = TRUE,
+  showLegend = TRUE,
+  ...
+)
 }
 \arguments{
 \item{pitchCands, pitchCert, pitchSource}{matrices of pitch candidates, their

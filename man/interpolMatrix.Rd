@@ -4,8 +4,7 @@
 \alias{interpolMatrix}
 \title{Interpolate matrix}
 \usage{
-interpolMatrix(m, nr = NULL, nc = NULL, interpol = c("approx",
-  "spline")[1])
+interpolMatrix(m, nr = NULL, nc = NULL, interpol = c("approx", "spline")[1])
 }
 \arguments{
 \item{m}{input matrix of numeric values}

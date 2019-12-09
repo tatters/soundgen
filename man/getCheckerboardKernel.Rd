@@ -4,8 +4,13 @@
 \alias{getCheckerboardKernel}
 \title{Checkerboard kernel}
 \usage{
-getCheckerboardKernel(size, kernel_mean = 0, kernelSD = 0.5,
-  plot = FALSE, checker = TRUE)
+getCheckerboardKernel(
+  size,
+  kernel_mean = 0,
+  kernelSD = 0.5,
+  plot = FALSE,
+  checker = TRUE
+)
 }
 \arguments{
 \item{size}{kernel size (points), preferably an even number}

@@ -4,8 +4,16 @@
 \alias{getPrior}
 \title{Get prior for pitch candidates}
 \usage{
-getPrior(priorMean, priorSD, pitchFloor = 75, pitchCeiling = 3000,
-  len = 100, plot = TRUE, pitchCands = NULL, ...)
+getPrior(
+  priorMean,
+  priorSD,
+  pitchFloor = 75,
+  pitchCeiling = 3000,
+  len = 100,
+  plot = TRUE,
+  pitchCands = NULL,
+  ...
+)
 }
 \arguments{
 \item{priorMean}{specifies the mean (Hz) and standard deviation

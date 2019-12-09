@@ -4,8 +4,16 @@
 \alias{getMelSpec}
 \title{Mel-transformed spectrum}
 \usage{
-getMelSpec(s, samplingRate = NULL, windowLength = 40, overlap = 50,
-  step = NULL, dynamicRange = 80, maxFreq = NULL, plot = FALSE)
+getMelSpec(
+  s,
+  samplingRate = NULL,
+  windowLength = 40,
+  overlap = 50,
+  step = NULL,
+  dynamicRange = 80,
+  maxFreq = NULL,
+  plot = FALSE
+)
 }
 \arguments{
 \item{s}{input sound (path to a .wav file or numeric vector)}

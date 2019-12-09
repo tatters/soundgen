@@ -4,9 +4,15 @@
 \alias{fade}
 \title{Fade}
 \usage{
-fade(x, fadeIn = 1000, fadeOut = 1000, samplingRate = NULL,
-  shape = c("lin", "exp", "log", "cos", "logistic")[1], steepness = 1,
-  plot = FALSE)
+fade(
+  x,
+  fadeIn = 1000,
+  fadeOut = 1000,
+  samplingRate = NULL,
+  shape = c("lin", "exp", "log", "cos", "logistic")[1],
+  steepness = 1,
+  plot = FALSE
+)
 }
 \arguments{
 \item{x}{zero-centered (!) numeric vector such as a waveform}

@@ -4,8 +4,18 @@
 \alias{guessPhase_GL}
 \title{Guess phase GL}
 \usage{
-guessPhase_GL(spec, phase, nIter, samplingRate, overlap, wn,
-  windowLength_points, step_points, verbose = TRUE, plotError = TRUE)
+guessPhase_GL(
+  spec,
+  phase,
+  nIter,
+  samplingRate,
+  overlap,
+  wn,
+  windowLength_points,
+  step_points,
+  verbose = TRUE,
+  plotError = TRUE
+)
 }
 \arguments{
 \item{spec}{the spectrogram that is to be transform to a time series: numeric

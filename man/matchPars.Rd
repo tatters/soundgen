@@ -4,12 +4,25 @@
 \alias{matchPars}
 \title{Match soundgen pars (experimental)}
 \usage{
-matchPars(target, samplingRate = NULL, pars = NULL, init = NULL,
-  method = c("cor", "cosine", "pixel", "dtw"), probMutation = 0.25,
-  stepVariance = 0.1, maxIter = 50, minExpectedDelta = 0.001,
-  windowLength = 40, overlap = 50, step = NULL, verbose = TRUE,
-  padWith = NA, penalizeLengthDif = TRUE, dynamicRange = 80,
-  maxFreq = NULL)
+matchPars(
+  target,
+  samplingRate = NULL,
+  pars = NULL,
+  init = NULL,
+  method = c("cor", "cosine", "pixel", "dtw"),
+  probMutation = 0.25,
+  stepVariance = 0.1,
+  maxIter = 50,
+  minExpectedDelta = 0.001,
+  windowLength = 40,
+  overlap = 50,
+  step = NULL,
+  verbose = TRUE,
+  padWith = NA,
+  penalizeLengthDif = TRUE,
+  dynamicRange = 80,
+  maxFreq = NULL
+)
 }
 \arguments{
 \item{target}{the sound we want to reproduce using soundgen: path to a .wav

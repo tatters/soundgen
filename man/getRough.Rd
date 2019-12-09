@@ -7,7 +7,7 @@
 getRough(m, roughRange)
 }
 \arguments{
-\item{m}{numeric matrix of non-negative values with rownames giving temporal
+\item{m}{numeric matrix of non-negative values with colnames giving temporal
 modulation frequency}
 
 \item{roughRange}{range of temporal modulation frequencies corresponding to
@@ -24,8 +24,7 @@ Helper function for calculating roughness - the proportion of energy /
 amplitude in the roughness range
 }
 \examples{
-m = matrix(rnorm(100, 10, 1), nrow = 10)
-rownames(m) = seq(-10, 10, length.out = nrow(m))
-soundgen:::getRough(m, roughRange = c(6, 8))
+m = modulationSpectrum(soundgen(), samplingRate = 16000)$original
+soundgen:::getRough(m, roughRange = c(30, Inf))
 }
 \keyword{internal}

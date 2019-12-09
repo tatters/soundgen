@@ -4,8 +4,7 @@
 \alias{playme}
 \title{Play audio}
 \usage{
-playme(sound, samplingRate = 16000, player = NULL, from = NULL,
-  to = NULL)
+playme(sound, samplingRate = 16000, player = NULL, from = NULL, to = NULL)
 }
 \arguments{
 \item{sound}{numeric vector or path to wav/mp3 file}

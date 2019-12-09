@@ -4,10 +4,19 @@
 \alias{normalizeFolder}
 \title{Normalize folder}
 \usage{
-normalizeFolder(myfolder, type = c("peak", "rms", "loudness")[1],
-  maxAmp = 0, summaryFun = "mean", windowLength = 50, step = NULL,
-  overlap = 70, killDC = FALSE, windowDC = 200, savepath = NULL,
-  verbose = TRUE)
+normalizeFolder(
+  myfolder,
+  type = c("peak", "rms", "loudness")[1],
+  maxAmp = 0,
+  summaryFun = "mean",
+  windowLength = 50,
+  step = NULL,
+  overlap = 70,
+  killDC = FALSE,
+  windowDC = 200,
+  savepath = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{myfolder}{path to folder containing wav/mp3 files}

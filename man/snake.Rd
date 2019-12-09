@@ -4,8 +4,15 @@
 \alias{snake}
 \title{Snake}
 \usage{
-snake(pitch, pitchCands, pitchCert, certWeight, pitchCenterGravity,
-  snakeStep = 0.05, snakePlot = FALSE)
+snake(
+  pitch,
+  pitchCands,
+  pitchCert,
+  certWeight,
+  pitchCenterGravity,
+  snakeStep = 0.05,
+  snakePlot = FALSE
+)
 }
 \arguments{
 \item{pitch}{numeric vector representing our best guess at pitch contour,

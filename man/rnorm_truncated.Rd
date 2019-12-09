@@ -4,9 +4,15 @@
 \alias{rnorm_truncated}
 \title{Random draw from a truncated normal distribution}
 \usage{
-rnorm_truncated(n = 1, mean = 0, sd = 1, low = NULL, high = NULL,
-  roundToInteger = FALSE, invalidArgAction = c("adjust", "abort",
-  "ignore")[1])
+rnorm_truncated(
+  n = 1,
+  mean = 0,
+  sd = 1,
+  low = NULL,
+  high = NULL,
+  roundToInteger = FALSE,
+  invalidArgAction = c("adjust", "abort", "ignore")[1]
+)
 }
 \arguments{
 \item{n}{the number of values to return}

@@ -4,8 +4,11 @@
 \alias{getFormantDispersion}
 \title{Get formant dispersion}
 \usage{
-getFormantDispersion(formants, method = c("meanDispersion",
-  "regression")[2], speedSound = 35400)
+getFormantDispersion(
+  formants,
+  method = c("meanDispersion", "regression")[2],
+  speedSound = 35400
+)
 }
 \arguments{
 \item{formants}{a character string like "aaui" referring to default presets

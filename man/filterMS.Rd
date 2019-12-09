@@ -4,8 +4,14 @@
 \alias{filterMS}
 \title{Filter modulation spectrum}
 \usage{
-filterMS(ms, amCond = NULL, fmCond = NULL, jointCond = NULL,
-  action = c("remove", "preserve")[1], plot = TRUE)
+filterMS(
+  ms,
+  amCond = NULL,
+  fmCond = NULL,
+  jointCond = NULL,
+  action = c("remove", "preserve")[1],
+  plot = TRUE
+)
 }
 \arguments{
 \item{ms}{a modulation spectrum as returned by

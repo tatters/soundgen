@@ -4,13 +4,29 @@
 \alias{addFormants}
 \title{Add formants}
 \usage{
-addFormants(sound, formants, spectralEnvelope = NULL, action = c("add",
-  "remove")[1], vocalTract = NA, formantDep = 1,
-  formantDepStoch = 20, formantWidth = 1, formantCeiling = 2,
-  lipRad = 6, noseRad = 4, mouthOpenThres = 0, mouth = NA,
-  interpol = c("approx", "spline", "loess")[3], temperature = 0.025,
-  formDrift = 0.3, formDisp = 0.2, samplingRate = 16000,
-  windowLength_points = 800, overlap = 75, normalize = TRUE)
+addFormants(
+  sound,
+  formants,
+  spectralEnvelope = NULL,
+  action = c("add", "remove")[1],
+  vocalTract = NA,
+  formantDep = 1,
+  formantDepStoch = 20,
+  formantWidth = 1,
+  formantCeiling = 2,
+  lipRad = 6,
+  noseRad = 4,
+  mouthOpenThres = 0,
+  mouth = NA,
+  interpol = c("approx", "spline", "loess")[3],
+  temperature = 0.025,
+  formDrift = 0.3,
+  formDisp = 0.2,
+  samplingRate = 16000,
+  windowLength_points = 800,
+  overlap = 75,
+  normalize = TRUE
+)
 }
 \arguments{
 \item{sound}{numeric vector with \code{samplingRate}}

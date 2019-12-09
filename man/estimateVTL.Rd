@@ -4,8 +4,12 @@
 \alias{estimateVTL}
 \title{Estimate vocal tract length}
 \usage{
-estimateVTL(formants, method = c("meanFormant", "meanDispersion",
-  "regression")[3], speedSound = 35400, checkFormat = TRUE)
+estimateVTL(
+  formants,
+  method = c("meanFormant", "meanDispersion", "regression")[3],
+  speedSound = 35400,
+  checkFormat = TRUE
+)
 }
 \arguments{
 \item{formants}{a character string like "aaui" referring to default presets

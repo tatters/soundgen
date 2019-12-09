@@ -4,9 +4,19 @@
 \alias{osc_dB}
 \title{Oscillogram dB}
 \usage{
-osc_dB(x, dynamicRange = 80, maxAmpl = NULL, samplingRate = NULL,
-  returnWave = FALSE, plot = TRUE, xlab = NULL, ylab = "dB",
-  bty = "n", midline = TRUE, ...)
+osc_dB(
+  x,
+  dynamicRange = 80,
+  maxAmpl = NULL,
+  samplingRate = NULL,
+  returnWave = FALSE,
+  plot = TRUE,
+  xlab = NULL,
+  ylab = "dB",
+  bty = "n",
+  midline = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified

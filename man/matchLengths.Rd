@@ -4,8 +4,12 @@
 \alias{matchLengths}
 \title{Resize vector to required length}
 \usage{
-matchLengths(myseq, len, padDir = c("left", "right", "central")[3],
-  padWith = 0)
+matchLengths(
+  myseq,
+  len,
+  padDir = c("left", "right", "central")[3],
+  padWith = 0
+)
 }
 \arguments{
 \item{myseq}{input vector}

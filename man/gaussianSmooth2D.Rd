@@ -4,8 +4,7 @@
 \alias{gaussianSmooth2D}
 \title{Gaussian smoothing in 2D}
 \usage{
-gaussianSmooth2D(m, kernelSize = 5, kernelSD = 0.5,
-  plotKernel = FALSE)
+gaussianSmooth2D(m, kernelSize = 5, kernelSD = 0.5, plotKernel = FALSE)
 }
 \arguments{
 \item{m}{input matrix (numeric, on any scale, doesn't have to be square)}

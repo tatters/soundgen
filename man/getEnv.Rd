@@ -4,8 +4,7 @@
 \alias{getEnv}
 \title{Get amplitude envelope}
 \usage{
-getEnv(sound, windowLength_points, method = c("rms", "peak", "mean",
-  "hil")[1])
+getEnv(sound, windowLength_points, method = c("rms", "peak", "mean", "hil")[1])
 }
 \arguments{
 \item{sound}{input vector oscillating about zero}

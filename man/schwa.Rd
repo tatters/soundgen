@@ -4,8 +4,13 @@
 \alias{schwa}
 \title{Schwa-related formant conversion}
 \usage{
-schwa(formants = NULL, vocalTract = NULL, formants_relative = NULL,
-  nForm = 8, speedSound = 35400)
+schwa(
+  formants = NULL,
+  vocalTract = NULL,
+  formants_relative = NULL,
+  nForm = 8,
+  speedSound = 35400
+)
 }
 \arguments{
 \item{formants}{a numeric vector of observed (measured) formant frequencies,

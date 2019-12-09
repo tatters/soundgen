@@ -558,7 +558,7 @@ modulationSpectrumFolder = function(
   windowLength = 25,
   step = NULL,
   overlap = 80,
-  wn = 'gaussian',
+  wn = 'hamming',
   zp = 0,
   power = 1,
   roughRange = c(30, 150),
@@ -626,16 +626,15 @@ modulationSpectrumFolder = function(
 #'
 #' Helper function for calculating roughness - the proportion of energy /
 #' amplitude in the roughness range
-#' @param m numeric matrix of non-negative values with rownames giving temporal
+#' @param m numeric matrix of non-negative values with colnames giving temporal
 #'   modulation frequency
 #' @param roughRange range of temporal modulation frequencies corresponding to
 #'   roughness
 #' @return Returns roughness in percent.
 #' @keywords internal
 #' @examples
-#' m = matrix(rnorm(100, 10, 1), nrow = 10)
-#' rownames(m) = seq(-10, 10, length.out = nrow(m))
-#' soundgen:::getRough(m, roughRange = c(6, 8))
+#' m = modulationSpectrum(soundgen(), samplingRate = 16000)$original
+#' soundgen:::getRough(m, roughRange = c(30, Inf))
 getRough = function(m, roughRange) {
   colNames = abs(as.numeric(colnames(m)))
   rough_cols = which(colNames > roughRange[1] &

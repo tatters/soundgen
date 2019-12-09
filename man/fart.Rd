@@ -4,9 +4,16 @@
 \alias{fart}
 \title{Fart}
 \usage{
-fart(glottis = c(50, 200), pitch = 65, temperature = 0.25,
-  sylLen = 600, rolloff = -10, samplingRate = 16000, play = FALSE,
-  plot = FALSE)
+fart(
+  glottis = c(50, 200),
+  pitch = 65,
+  temperature = 0.25,
+  sylLen = 600,
+  rolloff = -10,
+  samplingRate = 16000,
+  play = FALSE,
+  plot = FALSE
+)
 }
 \arguments{
 \item{glottis}{anchors for specifying the proportion of a

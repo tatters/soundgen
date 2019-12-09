@@ -4,8 +4,14 @@
 \alias{pathfinding_fast}
 \title{Path through pitch candidates: fast}
 \usage{
-pathfinding_fast(pitchCands, pitchCert, pitchSource, manual,
-  pitchCenterGravity, certWeight)
+pathfinding_fast(
+  pitchCands,
+  pitchCert,
+  pitchSource,
+  manual,
+  pitchCenterGravity,
+  certWeight
+)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each

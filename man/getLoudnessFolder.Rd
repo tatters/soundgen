@@ -4,10 +4,18 @@
 \alias{getLoudnessFolder}
 \title{Loudness per folder}
 \usage{
-getLoudnessFolder(myfolder, windowLength = 50, step = NULL,
-  overlap = 50, SPL_measured = 70, Pref = 2e-05,
-  spreadSpectrum = TRUE, summary = TRUE, summaryFun = "mean",
-  verbose = TRUE)
+getLoudnessFolder(
+  myfolder,
+  windowLength = 50,
+  step = NULL,
+  overlap = 50,
+  SPL_measured = 70,
+  Pref = 2e-05,
+  spreadSpectrum = TRUE,
+  summary = TRUE,
+  summaryFun = "mean",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{myfolder}{path to folder containing wav/mp3 files}

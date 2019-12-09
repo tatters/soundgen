@@ -4,8 +4,7 @@
 \alias{getSigmoid}
 \title{Get sigmoid filter}
 \usage{
-getSigmoid(len, samplingRate = 16000, freq = 5, shape = 0,
-  spikiness = 1)
+getSigmoid(len, samplingRate = 16000, freq = 5, shape = 0, spikiness = 1)
 }
 \arguments{
 \item{len}{the length of output vector}

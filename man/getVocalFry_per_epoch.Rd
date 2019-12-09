@@ -4,8 +4,13 @@
 \alias{getVocalFry_per_epoch}
 \title{Constant subharmonics regime}
 \usage{
-getVocalFry_per_epoch(rolloff, pitch_per_gc, nSubharm,
-  sideband_width_vector, throwaway01)
+getVocalFry_per_epoch(
+  rolloff,
+  pitch_per_gc,
+  nSubharm,
+  sideband_width_vector,
+  throwaway01
+)
 }
 \arguments{
 \item{rolloff}{matrix of original amplitudes of each harmonic in f0 stack

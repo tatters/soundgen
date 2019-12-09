@@ -4,9 +4,17 @@
 \alias{findVoicedSegments}
 \title{Find voiced segments}
 \usage{
-findVoicedSegments(pitchCands, shortestSyl, shortestPause, step,
-  samplingRate, minVoicedCands, pitchMethods, manualV = NULL,
-  manualUnv = NULL)
+findVoicedSegments(
+  pitchCands,
+  shortestSyl,
+  shortestPause,
+  step,
+  samplingRate,
+  minVoicedCands,
+  pitchMethods,
+  manualV = NULL,
+  manualUnv = NULL
+)
 }
 \arguments{
 \item{pitchCands}{matrix of possible pitch values per column. One column is

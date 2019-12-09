@@ -4,9 +4,18 @@
 \alias{getRMSFolder}
 \title{RMS amplitude per folder}
 \usage{
-getRMSFolder(myfolder, windowLength = 50, step = NULL, overlap = 70,
-  normalize = TRUE, killDC = FALSE, windowDC = 200, summary = TRUE,
-  summaryFun = "mean", verbose = TRUE)
+getRMSFolder(
+  myfolder,
+  windowLength = 50,
+  step = NULL,
+  overlap = 70,
+  normalize = TRUE,
+  killDC = FALSE,
+  windowDC = 200,
+  summary = TRUE,
+  summaryFun = "mean",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{myfolder}{path to folder containing wav/mp3 files}

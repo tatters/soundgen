@@ -4,9 +4,16 @@
 \alias{getDiscreteContour}
 \title{Discrete smooth contour from anchors}
 \usage{
-getDiscreteContour(len, anchors = data.frame(time = c(0, 1), value = c(1,
-  1)), interpol = c("spline", "loess")[2], valueFloor = NULL,
-  valueCeiling = NULL, ylim = NULL, plot = FALSE, ...)
+getDiscreteContour(
+  len,
+  anchors = data.frame(time = c(0, 1), value = c(1, 1)),
+  interpol = c("spline", "loess")[2],
+  valueFloor = NULL,
+  valueCeiling = NULL,
+  ylim = NULL,
+  plot = FALSE,
+  ...
+)
 }
 \arguments{
 \item{len}{the number of syllables (equivalently, the length of generated

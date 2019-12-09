@@ -4,15 +4,35 @@
 \alias{getSpectralEnvelope}
 \title{Spectral envelope}
 \usage{
-getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1,
-  formantWidth = 1, lipRad = 6, noseRad = 4, mouth = NA,
-  interpol = c("approx", "spline", "loess")[3], mouthOpenThres = 0.2,
-  openMouthBoost = 0, vocalTract = NULL, temperature = 0.05,
-  formDrift = 0.3, formDisp = 0.2, formantDepStoch = 20,
-  smoothLinearFactor = 1, formantCeiling = 2, samplingRate = 16000,
-  speedSound = 35400, plot = FALSE, duration = NULL,
-  colorTheme = c("bw", "seewave", "...")[1], nCols = 100,
-  xlab = "Time", ylab = "Frequency, kHz", ...)
+getSpectralEnvelope(
+  nr,
+  nc,
+  formants = NA,
+  formantDep = 1,
+  formantWidth = 1,
+  lipRad = 6,
+  noseRad = 4,
+  mouth = NA,
+  interpol = c("approx", "spline", "loess")[3],
+  mouthOpenThres = 0.2,
+  openMouthBoost = 0,
+  vocalTract = NULL,
+  temperature = 0.05,
+  formDrift = 0.3,
+  formDisp = 0.2,
+  formantDepStoch = 20,
+  smoothLinearFactor = 1,
+  formantCeiling = 2,
+  samplingRate = 16000,
+  speedSound = 35400,
+  plot = FALSE,
+  duration = NULL,
+  colorTheme = c("bw", "seewave", "...")[1],
+  nCols = 100,
+  xlab = "Time",
+  ylab = "Frequency, kHz",
+  ...
+)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where

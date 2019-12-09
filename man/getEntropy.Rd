@@ -4,8 +4,12 @@
 \alias{getEntropy}
 \title{Entropy}
 \usage{
-getEntropy(x, type = c("weiner", "shannon")[1], normalize = FALSE,
-  convertNonPositive = 1e-10)
+getEntropy(
+  x,
+  type = c("weiner", "shannon")[1],
+  normalize = FALSE,
+  convertNonPositive = 1e-10
+)
 }
 \arguments{
 \item{x}{vector of positive floats}
