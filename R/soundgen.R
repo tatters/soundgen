@@ -420,12 +420,16 @@ soundgen = function(
     assign(anchor, reformatAnchors(get(anchor)))
   }
   if (is.numeric(noise)) {
+    # if noise is numeric, fix exactly same timing as voiced
+    lockNoiseToVoiced = TRUE
     if (length(noise) > 0) {
       noise = data.frame(
         time = seq(0, sylLen[1], length.out = max(2, length(noise))),
         value = noise
       )
     }
+  } else {
+    lockNoiseToVoiced = FALSE
   }
   if (is.list(pitch)) {
     if (any(pitch$value < pitchFloor)) {
@@ -505,7 +509,6 @@ soundgen = function(
   } else {
     formantDepStoch_noise = formantDepStoch
   }
-
 
   ## adjust parameters according to the specified hyperparameters
   # effects of creakyBreathy hyper
@@ -661,7 +664,7 @@ soundgen = function(
     }
   }
 
-  # make sure pitch$time range from 0 to 1
+  # make sure pitch$time ranges from 0 to 1
   if (is.list(pitch)) {
     if (min(pitch$time) < 0) {
       pitch$time = pitch$time - min(pitch$time)
@@ -672,8 +675,10 @@ soundgen = function(
   }
 
   wiggleNoise = FALSE
-  if (is.numeric(noise) | is.list(noise)) {
-    if (temperature > 0 & any(noise$value > -dynamicRange)) {
+  if (is.list(noise)) {
+    if (temperature > 0 &
+        any(noise$value > -dynamicRange) &
+        !lockNoiseToVoiced) {
       wiggleNoise = TRUE
     }
   }
@@ -891,14 +896,25 @@ soundgen = function(
       }
 
       # add syllable and pause to the growing bout
+      actualSylLen = length(syllable) / samplingRate * 1000
       voiced = c(voiced, syllable, pause)
 
       # update syllable timing info, b/c with temperature > 0, jitter etc
       # there may be deviations from the target duration
+      actualBoutLen = length(voiced) / samplingRate * 1000
       if (s < nrow(syllables)) {
-        correction = length(voiced) / samplingRate * 1000 - syllables[s + 1, 'start']
+        correction = actualBoutLen - syllables[s + 1, 'start']
         syllables[(s + 1):nrow(syllables), c('start', 'end')] =
           syllables[(s + 1):nrow(syllables), c('start', 'end')] + correction
+      }
+
+      # scale noise anchors again to take into account the actual sylLen
+      if (lockNoiseToVoiced) {
+        noise_syl[[s]]$time = scaleNoiseAnchors(
+          noiseTime = noise_syl[[s]]$time,
+          sylLen_old = max(noise_syl[[s]]$time),
+          sylLen_new = actualSylLen # syllables$dur[s]
+        )
       }
 
       # generate the unvoiced part, but don't add it to the sound just yet

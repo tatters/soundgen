@@ -1,6 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.6.0.9000 [---date---]
 BUGS FIXED:
   * soundgen(): stochastic formants were not added to breathing noise unless VTL was specified
+  * soundgen(): noise component is time-locked to voiced component if noise is numeric rather than a list (ie precisely the same timing)
 
 
           CHANGES IN SOUNDGEN VERSION 1.6.0 [09-December-2019]

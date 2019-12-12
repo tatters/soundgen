@@ -442,3 +442,5 @@ presets = list(
 # # playme(s, 16000)
 # # spectrogram(s, 16000, osc=T)
 # # seewave::savewav(s, f = 16000, '~/Downloads/cow_soundgen.wav')
+
+# a good ex. of a breathy [a]: s = soundgen(ampl = c(0, -20), sylLen = 1200, pitch = 200, formants = c(720, 1370, 2900, 3800, 4900, 5500, 6500), noise = -15, rolloffNoise = 0, rolloff = -24, plot = T, play = T, formantDep = 1.5, formantCeiling = 5)
