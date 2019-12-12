@@ -497,6 +497,11 @@ soundgen = function(
   # expand formants to full format for adjusting bandwidth if creakyBreathy > 0
   formants = reformatFormants(formants)
   formantsNoise = reformatFormants(formantsNoise)
+  if (is.list(formantsNoise)) {
+    noiseType = 'other'
+  } else {
+    noiseType = 'breathing'
+  }
 
   ## adjust parameters according to the specified hyperparameters
   # effects of creakyBreathy hyper
@@ -1030,7 +1035,9 @@ soundgen = function(
         # add formants to unvoiced
         if (length(sound_unvoiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           # add extra stochastic formants to unvoiced only if vocalTract is user-specified
-          fds_cond = is.null(vocalTract) || !any(is.na(vocalTract))
+          # or if noiseType = 'breathing'
+          fds_cond = noiseType != 'breathing' &
+            (is.null(vocalTract) || !any(is.na(vocalTract)))
           fds = ifelse(fds_cond, 0, formantDepStoch)
           unvoicedFiltered = do.call(addFormants, c(
             formantPars,
