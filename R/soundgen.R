@@ -497,11 +497,15 @@ soundgen = function(
   # expand formants to full format for adjusting bandwidth if creakyBreathy > 0
   formants = reformatFormants(formants)
   formantsNoise = reformatFormants(formantsNoise)
-  if (is.list(formantsNoise)) {
-    noiseType = 'other'
+  if (is.list(formantsNoise) & !is.numeric(vocalTract) & !is.list(vocalTract)) {
+    # the only cond in which we do not create extra stochastic formants for
+    # noise is when we have user-specified formantsNoise (ie not just breathing)
+    # and we don't know VTL
+    formantDepStoch_noise = 0
   } else {
-    noiseType = 'breathing'
+    formantDepStoch_noise = formantDepStoch
   }
+
 
   ## adjust parameters according to the specified hyperparameters
   # effects of creakyBreathy hyper
@@ -989,12 +993,6 @@ soundgen = function(
     # followed by independent normalization of voiced & unvoiced
     if (noiseAmpRef == 'filtered' & !is.list(formantsNoise)) {
       formantsNoise = formants
-      if (!is.list(vocalTract) & is.list(formantsNoise)) {
-        # estimate VTL, otherwise extra formants not added as we reinterpret
-        # "formants" as "formantsNoise"
-        vocalTract = estimateVTL(formants = formantsNoise,
-                                 checkFormat = FALSE)  # already checked
-      }
     }
 
     if (length(unvoiced) > 0) {
@@ -1034,16 +1032,11 @@ soundgen = function(
         }
         # add formants to unvoiced
         if (length(sound_unvoiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
-          # add extra stochastic formants to unvoiced only if vocalTract is user-specified
-          # or if noiseType = 'breathing'
-          fds_cond = noiseType != 'breathing' &
-            (is.null(vocalTract) || !any(is.na(vocalTract)))
-          fds = ifelse(fds_cond, 0, formantDepStoch)
           unvoicedFiltered = do.call(addFormants, c(
             formantPars,
             list(sound = sound_unvoiced,
                  formants = formantsNoise,
-                 formantDepStoch = fds,
+                 formantDepStoch = formantDepStoch_noise,
                  normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
           ))
         } else {
