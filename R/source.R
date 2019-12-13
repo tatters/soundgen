@@ -265,9 +265,9 @@ generateNoise = function(len,
     breathing = rep(0, len)
   } else {
     ## instead of synthesizing the time series and then doing fft-ifft,
-    #   we can simply synthesize spectral noise, convert to complex
-    #   (setting imaginary=0), and then do inverse FFT just once
-    # set up spectrum with white noise
+    # we can simply synthesize spectral noise, convert to complex
+    # (setting imaginary=0), and then do inverse FFT just once
+    # set up spectrum with white noise (works b/c phase doesn't matter for noise)
     z1 = matrix(as.complex(runif(nr * nc)), nrow = nr, ncol = nc)
     # multiply by filter
     z1_filtered = z1 * spectralEnvelope
