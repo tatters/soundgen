@@ -77,6 +77,10 @@
 #'   vocalTract = 16, plot = TRUE, lipRad = 6, noseRad = 4,
 #'   mouth = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 #'
+#' # dynamic VTL
+#' e = getSpectralEnvelope(nr = 512, nc = 50, formants = 'a',
+#'   vocalTract = c(15, 17.5, 18), plot = TRUE)
+#'
 #' # scale formant amplitude and/or bandwidth
 #' e1 = getSpectralEnvelope(nr = 512, nc = 50,
 #'   formants = soundgen:::convertStringToFormants('a'),
@@ -90,11 +94,11 @@
 #' # manual specification of formants
 #' e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,
 #'   formants = list(f1 = data.frame(time = c(0, 1), freq = c(900, 500),
-#'                                   amp = 20, width = c(80, 50)),
+#'                                   amp = c(30, 35), width = c(80, 50)),
 #'                   f2 = data.frame(time = c(0, 1), freq = c(1200, 2500),
-#'                                   amp = 20, width = 100),
+#'                                   amp = c(25, 30), width = 100),
 #'                   f3 = data.frame(time = 0, freq = 2900,
-#'                                   amp = 20, width = 120)))
+#'                                   amp = 30, width = 120)))
 getSpectralEnvelope = function(nr,
                                nc,
                                formants = NA,
@@ -123,6 +127,13 @@ getSpectralEnvelope = function(nr,
                                ylab = 'Frequency, kHz',
                                ...) {
   # standard formatting
+  if (is.list(formants)) {
+    bandwidth_specified = as.numeric(which(unlist(
+      lapply(formants, function(x) 'width' %in% names(x))
+    )))
+  } else {
+    bandwidth_specified = numeric(0)
+  }
   formants = reformatFormants(formants)
   if (!is.null(vocalTract)) {
     if (!any(is.na(vocalTract))) {
@@ -188,7 +199,7 @@ getSpectralEnvelope = function(nr,
     formants_upsampled = vector('list', length = length(formants))
     for (f in 1:length(formants)) {
       formant_f = data.frame(time = seq(0, 1, length.out = nc))
-      for (v in c('freq', 'amp')) {
+      for (v in c('freq', 'amp', 'width')) {
         if (length(formants[[f]][, v]) > 1 & !any(is.na(formants[[f]][, v]))) {
           # just spline produces imprecise, overly smoothed curves. Loess is just
           # too slow for this. So we apply linear extrapolation to formant values
@@ -204,7 +215,9 @@ getSpectralEnvelope = function(nr,
         }
       }
       formant_f$freq = formant_f$freq * vocalTract[1] / vocalTract
-      formant_f$width = getBandwidth(formant_f$freq)
+      if (!f %in% bandwidth_specified) {
+        formant_f$width = getBandwidth(formant_f$freq)
+      }
       formants_upsampled[[f]] = formant_f
     }
     names(formants_upsampled) = names(formants)
@@ -334,15 +347,17 @@ getSpectralEnvelope = function(nr,
         # is.finite() returns F for NaN, NA, inf, etc
         adjustment_hz = (mouthOpening_upsampled - 0.5) * speedSound /
           (4 * vocalTract) # speedSound = 35400 cm/s, speed of sound in warm
-        # air. The formula for mouth opening is adapted from Moore (2016)
-        # "A Real-Time Parametric General-Purpose Mammalian Vocal Synthesiser".
+        # air. The formula for mouth opening is adapted from Moore (2016) "A
+        # Real-Time Parametric General-Purpose Mammalian Vocal Synthesiser".
         # mouthOpening = .5 gives no modification (neutral, "default" position).
-        # Basically we assume a closed-closed tube for closed mouth and a
+        # Basically we could assume a closed-closed tube for closed mouth and a
         # closed-open tube for open mouth, but since formants can be specified
         # rather than calculated based on vocalTract, we just subtract half the
         # total difference between open and closed tubes in Hz from each formant
-        # value as the mouth goes from half-open (neutral) to fully closed, or we
-        # add half that value as the mouth goes from neutral to max open
+        # value as the mouth goes from half-open (neutral) to fully closed, or
+        # we add half that value as the mouth goes from neutral to max open. NB:
+        # so "closed" is actually "half-closed", and we assume that nostrils are
+        # always open (so not really a closed-closed tube)
         adjustment_bins = (adjustment_hz - bin_width / 2) / bin_width + 1
       }
     }
@@ -398,7 +413,8 @@ getSpectralEnvelope = function(nr,
     zeros = as.numeric(which(sapply(formants_upsampled, function(x) any(x[, 'amp'] < 0))))
     if (length(zeros) > 0) poles = poles[-zeros]
     s = complex(real = 0, imaginary = 2 * pi * freqs_bins)
-    na_amp = sapply(formants_upsampled, function(x) is.na(x[1, 'amp']))  # check only the first frame
+    # check only the first frame
+    na_amp = sapply(formants_upsampled, function(x) is.na(x[1, 'amp']))
 
     if (length(zeros) == 0) {  # all-pole
       # special case for faster computing (saves ~10 to 30 ms). Stevens 2000 p. 131
@@ -412,12 +428,13 @@ getSpectralEnvelope = function(nr,
           # actually much faster w/o log-transform, and numbers don't get very large anyhow
           tns = s1[c] * s1c[c] / (s - s1[c]) / (s - s1c[c])
           formant[, c] = log10(abs(tns))
+          # print(range(formant[, c]))
           if (na_amp[f]) {
             formant[, c] = formant[, c] * 20  # formantDepStoch can be 0
           } else {
-            formant[, c] = formant[, c] / max(formant[, c]) * formants_upsampled[[f]][c, 'amp']
+            formant[, c] = formant[, c] / max(abs(formant[, c])) *
+              formants_upsampled[[f]][c, 'amp']
           }
-          # plot(bin_freqs, formant[, c], type = 'l')
         }
         spectralEnvelope = spectralEnvelope + formant
       }

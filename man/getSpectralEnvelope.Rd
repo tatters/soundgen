@@ -162,6 +162,10 @@ e = getSpectralEnvelope(nr = 512, nc = 50,
   vocalTract = 16, plot = TRUE, lipRad = 6, noseRad = 4,
   mouth = data.frame(time = c(0, .5, 1), value = c(0, 0, .5)))
 
+# dynamic VTL
+e = getSpectralEnvelope(nr = 512, nc = 50, formants = 'a',
+  vocalTract = c(15, 17.5, 18), plot = TRUE)
+
 # scale formant amplitude and/or bandwidth
 e1 = getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
@@ -175,9 +179,9 @@ points(e1[, 1], type = 'l')
 # manual specification of formants
 e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,
   formants = list(f1 = data.frame(time = c(0, 1), freq = c(900, 500),
-                                  amp = 20, width = c(80, 50)),
+                                  amp = c(30, 35), width = c(80, 50)),
                   f2 = data.frame(time = c(0, 1), freq = c(1200, 2500),
-                                  amp = 20, width = 100),
+                                  amp = c(25, 30), width = 100),
                   f3 = data.frame(time = 0, freq = 2900,
-                                  amp = 20, width = 120)))
+                                  amp = 30, width = 120)))
 }
