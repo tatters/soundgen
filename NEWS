@@ -1,7 +1,8 @@
-          CHANGES IN SOUNDGEN VERSION 1.6.0.9000 [---date---]
+          CHANGES IN SOUNDGEN VERSION 1.6.1 [---date---]
 BUGS FIXED:
   * soundgen(): stochastic formants properly added to breathing noise even without specifying VTL (bug introduced in v1.6.0)
   * soundgen(), getSpectralEnvelope(): manually specifying bandwidth works again (bug introduced in v1.6.0)
+  * soundgen(): tempEffects(pitchDriftDep = 0) no longer crashes because removing pitch drift no longer prevents amplitude drift from working
 
 MINOR:
   * soundgen(): noise component is time-locked to voiced component if noise is numeric rather than a list (ie precisely the same timing)

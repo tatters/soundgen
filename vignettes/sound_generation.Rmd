@@ -227,7 +227,7 @@ s = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, plot = TRUE, play = playbac
 *TIP Calling `soundgen` with argument `plot = TRUE` produces a spectrogram using a function from soundgen package, `spectrogram`. Type `?spectrogram` or `?spectrogramFolder` and see the vignette on acoustic analysis for plotting tips and advanced options. You can also plot the waveform produced by `soundgen` using any other function, e.g. `seewave::spectro`*
 
 ### Vibrato
-Vibrato adds frequency modulation (FM) to f0 contour by modifying f0 per glottal cycle. In contrast to irregular jitter and temperature-related random drift, however, this FM is regular, namely sinusoidal:
+Vibrato adds frequency modulation (FM) to f0 contour by modifying f0 per glottal cycle. In contrast to irregular jitter and temperature-related random drift, this FM is regular, namely sinusoidal:
 ```{r fig.width = 5, fig.height = 5}
 s1 = soundgen(vibratoDep = 0:3, vibratoFreq = 7:5, 
               sylLen = 2000, pitch = c(300, 280), 
@@ -364,7 +364,7 @@ soundgen(formants = 'aaai', play = playback)
 ### Manual formants
 Presets give you some rudimentary control over vowels. More subtle control is necessary for animal sounds, as well as for human vowels that are not included in the presets dictionary or for non-default speakers. For such cases you will have to specify at least the frequency of each formant (and optionally, also amplitude, bandwidth, and time stamps for each value). The easiest, and normally sufficient, approach is to specify frequencies only and have soundgen() figure out the appropriate amplitude and bandwidth for each formant. Bandwidth is calculated from frequency using a formula derived from human phonetic research. Namely, above 500 Hz it follows the original formula known as "TMF-1963" (Tappert, Martony, and Fant, 1963), and below 500 Hz it applies a correction to allow for energy losses at low frequencies (Khodai-Joopari & Clermont, 2002). Below 250 Hz the bandwidth starts to decrease again, in a purely empirical attempt to achieve reasonable values even for formant frequencies below ordinary human range. See the internal function soundgen:::getBandwidth() if you are interested and note that for anything but ordinary human voices it may be safer to specify formant bandwidths manually.
 
-Formant amplitudes are normally assumed to be determined by their frequency and bandwidth (see Stevens, 2000), but you can override this by specifying amplitudes explicitly. Note that you should then specify the amplitudes of all formants, not just one, otherwise you can get unexpected behavior.
+Formant amplitudes are normally assumed to be determined by their frequency and bandwidth (see Stevens, 2000), but you can override this by specifying amplitudes explicitly. Note that changing the amplitude of one formant affects the entire spectrum above it.
 
 For moving formants, provide multiple values, which assumes equal time steps, or specify time points explicitly, where time varies from 0 to 1 (to be scaled appropriately depending on the length of sound). For example:
 ```{r}
@@ -397,7 +397,7 @@ estimateVTL(formants = c(300, 1100, 2000))  # 22.8 cm
 
 *TIP A more general function called `schwa()` both estimates VTL and allows you to compare measured formant frequencies with those expected for a neutral schwa sound and perform more sophisticated operations with formants. See `?schwa` for more details if you are working with vowels*
 
-It is usually useful to allow soundgen to create upper formants automatically based on the estimated VTL, since upper formants are typically less perceptually salient. As a result, we don't want to spend too much time specifying them manually, but still we don't want them to be completely absent, either, since that makes for very weak high frequencies in the spectrum. An approximation based on standard open-ended tube models is often good enough for calculating the missing formant frequencies. You can remove them by setting `temperature = 0` or `formantDepStoch = 0`, but note that without higher formants the entire spectrum loses energy at higher frequencies:
+It is usually useful to allow soundgen to create upper formants automatically based on the estimated VTL, since upper formants are typically less perceptually salient. As a result, we don't want to spend too much time specifying them manually, but still we don't want them to be completely absent, either, since that makes for very weak high frequencies in the spectrum. An approximation based on standard open-closed tube models is often good enough for calculating the missing formant frequencies. You can remove them by setting `temperature = 0` or `formantDepStoch = 0`, but note that without higher formants the entire spectrum loses energy at higher frequencies:
 
 ```{r fig.width = 7, fig.height = 4}
 soundgen(formants = c(800, 1200), play = playback, plot = TRUE)
@@ -412,7 +412,7 @@ soundgen(formants = NULL, vocalTract = 24, play = playback, plot = TRUE)
 soundgen(formants = NULL, vocalTract = 12, play = playback, plot = TRUE)
 ```
 
-For very long vocal tracts, it is advisable to increase `formantCeiling` to ~5-10 times the Nyquist frequency, otherwise the filter dampens high frequencies too much. The default setting is `formantCeiling = 2`, which is much faster and not too inaccurate for human-length vocal tracts. Compare:
+For very long vocal tracts, it is advisable to increase `formantCeiling` to maximum ~5-10 times the Nyquist frequency, otherwise the filter dampens high frequencies too much. The default setting is `formantCeiling = 2`, which is much faster and not too inaccurate for human-length vocal tracts. Compare:
 ```{r fig.width = 7, fig.height = 4}
 soundgen(formants = NULL, vocalTract = 35, pitch = 80, formantCeiling = 2, 
          play = playback, plot = TRUE)
@@ -420,7 +420,7 @@ soundgen(formants = NULL, vocalTract = 35, pitch = 80, formantCeiling = 5,
          play = playback, plot = TRUE)
 ```
 
-Vocal tract length can be variable. This is an easy way to create parallel formant transitions. Unlike the argument "mouth", variable "vocalTract" parameter recalculates formant bandwidths and is thus more accurate, but it requires you to specify the actual length of the virtual vocal tract, in cm.
+Vocal tract length can be variable. This is an easy way to create parallel formant transitions. Unlike the argument "mouth", variable "vocalTract" parameter recalculates formant bandwidths (unless these are specified manually) and is thus more accurate, but it requires you to specify a reasonable vocal tract length, in cm.
 ```{r fig.width = 7, fig.height = 4}
 soundgen(sylLen = 800, formants = NULL, 
          vocalTract = c(12, 18, 19), play = playback, plot = TRUE)
@@ -448,16 +448,16 @@ Sometimes it may be useful to view moving formants before synthesizing the sound
 s = getSpectralEnvelope(nr = 1024,  # freq bins in FFT frame (window_length / 2)
                         nc = 50,    # time bins
                         samplingRate = 16000, 
-                        formants = formants,
+                        formants = list(f1 = c(500, 250), 
+                                        f2 = c(1500, 2800), 
+                                        f3 = 3500, f4 = 4300),
                         plot = TRUE, 
                         dur = 1500,   # just an example
                         colorTheme = 'seewave',
-                        lipRad = 6) 
-# Note that lip radiation is also specified here (dB). 
-# This has the effect of amplifying higher frequencies to mimic lip radiation. 
+                        lipRad = 6)  # lip radiation, dB/octave
 ```
 
-Note that, in addition to formants, lip and nose radiation are also handled by this function (see the next section on mouth opening).
+Note that, in addition to formants, lip and nose radiation are also handled by this function (see the next section on mouth opening). This has the effect of boosting high frequencies. 
 
 *TIP When using the app, you can start with a formant preset by typing in a vowel string, and then you can modify it. This way you don't have to remember the right format. If you edit the list of formants and nothing in the sound seems to be changing, there may be a misprint, missing comma, etc.*
 
@@ -551,7 +551,7 @@ s = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
 ### Closed glottis
 If f0 is very low, as in vocal fry or some animal vocalizations like crocodile roaring or elephant rumbling, individual glottal pulses can be both seen on a spectrogram and peiceived as distinct percussion-like acoustic events separated by noticeable pauses. Soundgen can create such sounds by switching to a new mode of production: instead of synthesizing continous sine waves spanning the entire syllable, it creates each glottal pulse individually (each with its full set of harmonics) and then glues them together with pauses in between. 
 
-This is a lot slower than continuous sine wave synthesis and mostly justified for very low-pitched sounds, since with higher pitch there will be too few points per glottal cycle to sound convincing without increasing `samplingRate` to astronomical values. For example:
+This is a lot slower than continuous sine wave synthesis and mostly justified for very low-pitched sounds, since with higher pitch there will be too few points per glottal cycle to sound convincing without increasing `samplingRate` to astronomical values. Also note that some spectral artifacts may appear. Example:
 ```{r fig.width = 7, fig.height = 7}
 # Not a good idea: samplingRate is too low
 s1 = soundgen(pitch = c(1500, 800), glottis = 75, 
@@ -756,11 +756,11 @@ s = soundgen(
   samplingRate = 22050, pitchSamplingRate = 22050,  
   # other settings
   sylLen = 1000, pitch = c(240, 200),
-  rolloff = c(-20, -18, -23, -28), vibratoDep = .2,
+  rolloff = c(-20, -18, -23, -28) + 4, vibratoDep = .2,
   formants = c(800, 1400, 2500, 3700, 5000, 6800),
   noise = data.frame(time = c(0, 340, 900, 1000), 
-                     value = c(-60, -45, -60, -80) + 30),
-  rolloffNoise = -8,
+                     value = c(-60, -45, -60, -80) + 10),
+  rolloffNoise = 0,
   mouth = c(.55, .5, .45, .6),
   play = playback, plot = TRUE, osc = TRUE, ylim = c(0, 4)
 )
@@ -990,7 +990,7 @@ cow1 = soundgen(sylLen = 1400,
                 mouth = list(time = c(0, 0.82, 1), 
                              value = c(0.6, 0, 1)), 
                 noise = list(time = c(0, 1400), 
-                             value = c(-25, -25)),
+                             value = c(-45, -45)),
                 rolloffNoise = -4, addSilence = 0)
 cow2 = soundgen(sylLen = 310, pitch = c(359, 359), 
                 temperature = 0.05, nonlinBalance = 100, 
@@ -998,7 +998,7 @@ cow2 = soundgen(sylLen = 310, pitch = c(359, 359),
                 rolloff = -6, rolloffOct = -3, rolloffKHz = -0, 
                 formants = NULL, vocalTract = 36.5, 
                 noise = list(time = c(0, 26, 317, 562), 
-                             value = c(-80, -23, -22, -80)), 
+                             value = c(-80, -33, -32, -80)), 
                 rolloffNoise = -6,
                 attackLen = 0, addSilence = 0)
 s = crossFade(cow1 * 3, cow2,  # adjust the relative volume by scaling
@@ -1007,7 +1007,7 @@ s = crossFade(cow1 * 3, cow2,  # adjust the relative volume by scaling
 spectrogram(s, 16000, osc=T, ylim = c(0, 4))
 ```
 
-If you want the two sounds to overlap, you can use `addVectors()`, which simply makes sure two waveforms are padded with zeros to the same length and overlapped intelligently. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add chirping of birds in the background:
+If you want the two sounds to overlap without a cross-fade, you can use `addVectors()`, which simply makes sure two waveforms are padded with zeros to the same length and overlapped intelligently. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add chirping of birds in the background:
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 sound1 = soundgen(sylLen = 700, pitch = 250:180, 

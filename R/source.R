@@ -518,7 +518,7 @@ generateHarmonics = function(pitch,
     rw_smoothing = .9 - temperature * pitchDriftFreq -
       1.2 / (1 + exp(-.008 * (length(pitch_per_gc) - 10))) + .6
     # rw_range is 1 semitone per second at temp = .05 and pitchDriftDep = .5 (defaults)
-    rw_range = temperature * pitchDriftDep * 40 *  # 40 * .05 * .5 = 1
+    rw_range = temperature * 40 *  # 40 * .05 * .5 = 1
       length(pitch) / pitchSamplingRate / 12
     drift = getRandomWalk(
       len = length(pitch_per_gc),
@@ -526,12 +526,14 @@ generateHarmonics = function(pitch,
       rw_smoothing = rw_smoothing,
       method = 'spline'
     )
+    drift_centered = drift - mean(drift)
+    drift = 2 ^ drift_centered # plot (drift, type = 'l')
+    drift_pitch = 2 ^ (drift_centered * pitchDriftDep)
     # we get a separate random walk for this slow drift of intonation.
     #   Its smoothness vs wiggleness depends on temperature and duration
     #   (in glottal cycles). For ex., temperature * 2 means that pitch will
     #   vary within one octave if temperature == 1
-    drift = 2 ^ (drift - mean(drift)) # plot (drift, type = 'l')
-    pitch_per_gc = pitch_per_gc * drift  # plot(pitch_per_gc, type = 'l')
+    pitch_per_gc = pitch_per_gc * drift_pitch  # plot(pitch_per_gc, type = 'l')
   }
 
   # as a result of adding pitch effects, F0 might have dropped to indecent
