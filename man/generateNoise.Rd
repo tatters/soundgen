@@ -16,6 +16,7 @@ generateNoise(
   samplingRate = 16000,
   overlap = 75,
   dynamicRange = 80,
+  invalidArgAction = c("adjust", "abort", "ignore")[1],
   play = FALSE
 )
 }
@@ -56,6 +57,10 @@ and fade-out)}
 \item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
 dynamicRange under maximum amplitude are discarded to save computational
 resources}
+
+\item{invalidArgAction}{what to do if an argument is invalid or outside the
+range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
+= stop execution, 'ignore' = throw a warning and continue (may crash)}
 
 \item{play}{if TRUE, plays the synthesized sound using the default player on
 your system. If character, passed to \code{\link[tuneR]{play}} as the name

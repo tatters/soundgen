@@ -321,6 +321,7 @@ getGlottalCycles = function (pitch, samplingRate) {
 #'   syllable segmentation; 0 = no stochasticity; 1 = sd of proposals is equal
 #'   to sylLen (very strong stochasticity)
 #' @param plot produce a plot of syllable structure?
+#' @inheritParams soundgen
 #' @return Returns a matrix with a list of start-end points for syllables
 #' @keywords internal
 #' @examples
@@ -343,6 +344,7 @@ divideIntoSyllables = function (nSyl,
                                 pauseDur_min = 20,
                                 pauseDur_max = 1000,
                                 temperature = 0.025,
+                                invalidArgAction = c('adjust', 'abort', 'ignore')[1],
                                 plot = FALSE) {
   if (nSyl == 1) {
     # no variation for a single syllable
@@ -362,14 +364,16 @@ divideIntoSyllables = function (nSyl,
       mean = sylLen,
       low = sylDur_min,
       high = sylDur_max,
-      sd = sylLen * temperature
+      sd = sylLen * temperature,
+      invalidArgAction = invalidArgAction
     )
     pauses = rnorm_truncated(
       n = nSyl - 1,
       mean = pauseLen,
       low = pauseDur_min,
       high = pauseDur_max,
-      sd = pauseLen * temperature
+      sd = pauseLen * temperature,
+      invalidArgAction = invalidArgAction
     )
 
     out = data.frame(start = rep(0, nSyl), end = rep(0, nSyl))

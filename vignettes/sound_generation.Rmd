@@ -920,6 +920,14 @@ s8 = soundgen(noiseAmpRef = 'filtered', formants = 'u',
 *TIP If you need a very precise balance of harmonics and noise based on another normalization (RMS amplitude, minimum or median instead of maximum amplitude, etc.), you can always synthesize the harmonic and noise components separately and then simply add them up at whatever amplitudes you like*
 
 ### Noise timing
+If you want noise to be time-locked to the voiced component, make the argument `noise` a numeric vector. Anchor format with `time = c(), value = c()` is more flexible, but note that it may cause the noise and voiced components to be slightly desynchronized.
+ 
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(nSyl = 2,
+             noise = c(-10, 0),
+             plot = TRUE, osc = TRUE, ylim = c(0, 4), play = playback)
+```
+
 Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 

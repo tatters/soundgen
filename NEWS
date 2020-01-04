@@ -5,8 +5,8 @@ BUGS FIXED:
   * soundgen(): tempEffects(pitchDriftDep = 0) no longer crashes because removing pitch drift no longer prevents amplitude drift from working
 
 MINOR:
-  * soundgen(): noise component is time-locked to voiced component if noise is numeric rather than a list (ie precisely the same timing)
-
+  * soundgen(): if "noise" argument is numeric rather than a list, noise component is time-locked to voiced component  to ensure precisely the same timing
+  * soundgen - invalidArgAction="ignore" consistently removes all limits (noise-related pars were reset to defaults in earlier versions)
 
           CHANGES IN SOUNDGEN VERSION 1.6.0 [09-December-2019]
 BUGS FIXED:

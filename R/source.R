@@ -129,6 +129,7 @@ generateNoise = function(len,
                          samplingRate = 16000,
                          overlap = 75,
                          dynamicRange = 80,
+                         invalidArgAction = c('adjust', 'abort', 'ignore')[1],
                          play = FALSE) {
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
@@ -136,7 +137,8 @@ generateNoise = function(len,
                           mean = len,
                           sd = len * temperature * .5,
                           low = 0, high = samplingRate * 10,  # max 10 s
-                          roundToInteger = TRUE)
+                          roundToInteger = TRUE,
+                          invalidArgAction = 'adjust')
     if (is.list(rolloffNoise)) {
       rolloffNoise = wiggleAnchors(
         rolloffNoise,
@@ -144,6 +146,7 @@ generateNoise = function(len,
         temp_coef = .5,
         low = c(-Inf, permittedValues['rolloffNoise', 'low']),
         high = c(Inf, permittedValues['rolloffNoise', 'high']),
+        invalidArgAction = invalidArgAction,
         wiggleAllRows = TRUE
       )
     } else {
@@ -151,24 +154,34 @@ generateNoise = function(len,
         n = length(rolloffNoise),
         mean = rolloffNoise,
         sd = abs(rolloffNoise) * temperature * .5,
-        low = -20,
-        high = 20
+        low = permittedValues['rolloffNoise', 'low'],
+        high = permittedValues['rolloffNoise', 'high'],
+        invalidArgAction = invalidArgAction
       )
     }
-    noiseFlatSpec = rnorm_truncated(n = 1,
-                                    mean = noiseFlatSpec,
-                                    sd = noiseFlatSpec * temperature * .5,
-                                    low = 0, high = samplingRate / 2)
-    attackLen = rnorm_truncated(n = length(attackLen),
-                                mean = attackLen,
-                                sd = attackLen * temperature * .5,
-                                low = 0, high = len / samplingRate * 1000 / 2)
+    noiseFlatSpec = rnorm_truncated(
+      n = 1,
+      mean = noiseFlatSpec,
+      sd = noiseFlatSpec * temperature * .5,
+      low = permittedValues['noiseFlatSpec', 'low'],
+      high = permittedValues['noiseFlatSpec', 'high'], # samplingRate / 2,
+      invalidArgAction = invalidArgAction
+    )
+    attackLen = rnorm_truncated(
+      n = length(attackLen),
+      mean = attackLen,
+      sd = attackLen * temperature * .5,
+      low = permittedValues['attackLen', 'low'],
+      high = len / samplingRate * 1000 / 2,
+      invalidArgAction = invalidArgAction
+    )
     noise = wiggleAnchors(
       reformatAnchors(noise),
       temperature = temperature,
       temp_coef = .5,
       low = c(0, -dynamicRange),
       high = c(1, 0),
+      invalidArgAction = invalidArgAction,
       wiggleAllRows = TRUE
     )
     if (is.vector(spectralEnvelope)) {
@@ -176,7 +189,8 @@ generateNoise = function(len,
         n = length(spectralEnvelope),
         mean = spectralEnvelope + .1,  # to wiggle zeros
         sd = spectralEnvelope * temperature * .5,
-        low = 0, high = Inf
+        low = 0, high = Inf,
+        invalidArgAction = 'adjust'
       )
     }
   }
@@ -929,11 +943,13 @@ fart = function(glottis = c(50, 200),
 
     glottis = wiggleAnchors(
       glottis, temperature, temp_coef = .5,
-      low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
+      low = c(0, 0), high = c(1, 10000),
+      wiggleAllRows = TRUE
     )
     pitch = wiggleAnchors(
       pitch, temperature, temp_coef = 1,
-      low = c(0, 0), high = c(1, 10000), wiggleAllRows = TRUE
+      low = c(0, 0), high = c(1, 10000),
+      wiggleAllRows = TRUE
     )
   }
 

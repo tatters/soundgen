@@ -13,6 +13,7 @@ divideIntoSyllables(
   pauseDur_min = 20,
   pauseDur_max = 1000,
   temperature = 0.025,
+  invalidArgAction = c("adjust", "abort", "ignore")[1],
   plot = FALSE
 )
 }
@@ -32,6 +33,10 @@ duration, in ms}
 \item{temperature}{a non-negative float regulating the stochasticity of
 syllable segmentation; 0 = no stochasticity; 1 = sd of proposals is equal
 to sylLen (very strong stochasticity)}
+
+\item{invalidArgAction}{what to do if an argument is invalid or outside the
+range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
+= stop execution, 'ignore' = throw a warning and continue (may crash)}
 
 \item{plot}{produce a plot of syllable structure?}
 }
