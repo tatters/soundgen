@@ -1115,6 +1115,9 @@ transplantFormants = function(donor,
                               overlap = 90,
                               wn = 'gaussian',
                               zp = 0) {
+  if (!is.null(step)) {
+    overlap = (1 - step / windowLength) * 100  # for istft
+  }
   # First check that both sounds have the same sampling rate
   samplingRate_donor = samplingRate_recipient = 0
   if (is.character(donor)) {
