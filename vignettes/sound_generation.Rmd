@@ -166,7 +166,7 @@ s = soundgen(
 ### One syllable
 When we hear a tonal sound such as someone singing, one of its most salient characteristics is intonation or, more precisely, the contour of the fundamental frequency (f0), or, even more precisely, the contour of the physically present or perceptually extrapolated spectral band which is perceived to correspond to the fundamental frequency (pitch). Soundgen literally generates a sine wave corresponding to f0 and several more sine waves corresponding to higher harmonics, so f0 is straightforward to implement. However, how can its contour be specified with as few parameters as possible? The solution adopted in soundgen is to take one or more anchors as input and generate a smooth contour that passes through all anchors. 
 
-In the simplest case, all anchors are equidistant, dividing the sound into equal time steps. You can then use the "short format", specifying anchors as a numeric vector. For example:
+In the simplest case, all anchors are equidistant, dividing the sound into equal time steps. You can then specify anchors as a numeric vector. For example:
 
 ```{r}
 sound = soundgen(pitch = 440, play = playback)  # steady pitch at 440 Hz
@@ -182,15 +182,9 @@ plot(anchors, type = 'l', xlab = 'Time (points)', ylab = 'Pitch (Hz)')
 sound = soundgen(pitch = anchors, sylLen = 1000, play = playback)
 ```
 
-For more flexibility, anchors can also be specified at arbitary times using the "long format" - a dataframe with two columns: `time` (ms) and `value` (in the case of pitch, this is frequency in Hz). This is particularly useful for `noise`, since the unvoiced component can be present both before and after the voiced component (see the section on unvoiced component), and for adding anchors interactively in the Shiny app. The function that generates smooth contours of f0 and other parameters is `getSmoothContour()`, and its interpolation algorithm is controlled by soundgen argument `interpol`. You do not have to call `getSmoothContour()` explicitly, but sometimes it can be helpful to do so in order to visualize the curve implied by your anchors. Time can range from 0 to 1, or it can be specified in ms – it makes no difference, since the produced contour is rescaled to match syllable duration.
+For more flexibility, anchors can also be specified at arbitary times using the "anchor format" - a dataframe with two columns: `time` (ms) and `value` (in the case of pitch, this is frequency in Hz). The function that generates smooth contours of f0 and other parameters is `getSmoothContour()`, and its interpolation algorithm is controlled by soundgen argument `interpol`. You do not have to call `getSmoothContour()` explicitly, but sometimes it can be helpful to do so in order to visualize the curve implied by your anchors. Time can range from 0 to 1, or it can be specified in ms – it makes no difference, since the produced contour is rescaled to match syllable duration.
 
-For example, say we want f0 first to increase sharply from 350 to 700 Hz and then to slowly return to baseline. Time anchors can then be specified as `c(0, .1, 1)` (think of it as "start", "10%", and "end" of the sound), and the arguments `len` and `samplingRate` together determine the duration: `len / samplingRate` gives duration in seconds. Values are processed on a logarithmic (musical) scale if `thisIsPitch` is `TRUE`, and the resulting curve is smoothed (the default behavior is to use loess for up to 10 anchors, cubic spline for 11-50 anchors, and linear interpolation for >50 anchors):
-
-```{r fig.width = 4, fig.height = 4}
-a = getSmoothContour(anchors = data.frame(time = c(0, .1, 1), 
-                                          value = c(350, 700, 350)),
-                     len = 7000, thisIsPitch = TRUE, plot = TRUE, samplingRate = 3500)
-```
+For example, say we want f0 first to increase sharply from 350 to 700 Hz and then to slowly return to baseline. Time anchors can then be specified as `c(0, .1, 1)` (think of it as "start", "10%", and "end" of the sound), and the arguments `len` and `samplingRate` together determine the duration: `len / samplingRate` gives duration in seconds. Values are processed on a logarithmic (musical) scale if `thisIsPitch` is `TRUE`, and the resulting curve is smoothed (the default behavior is to use loess for up to 10 anchors, cubic spline for 11-50 anchors, and linear interpolation for >50 anchors). 
 
 A sound with this intonation can be generated as follows:
 ```{r}
@@ -199,7 +193,48 @@ sound = soundgen(sylLen = 900, play = playback,
                                     value = c(350, 700, 350)))
 ```
 
-*TIP Many arguments to soundgen are vectorized, and most vectorized arguments understand the "anchor format" you just encountered above, namely something like `my_argument = data.frame(time = ..., value = ...)`, where time can be in ms or ~[0, 1]. See ?soundgen for a complete list of anchor-format arguments and keep in mind two important special cases that use a slightly different format: `formants` and `noise` (see below).*
+Beware of smoothing! A curve interpolated from a few anchors is not uniquely defined, and the interpolation algorithm has a major effect on its shape. If you call `loess()` from `getSmoothContour()`, for example, the amount of smoothing can be controlled with the `loessSpan` parameter:
+
+```{r fig.width = 7, fig.height = 4}
+sylLen = 500  # desired syllable length, in ms
+samplingRate = 16000
+sylLen_points = sylLen / 1000 * samplingRate
+
+par(mfrow = c(1, 2))
+getSmoothContour(
+  anchors = data.frame(time = c(0, .1, 1), 
+                       value = c(350, 700, 350)),
+  len = sylLen_points,
+  loessSpan = 0.75,
+  thisIsPitch = TRUE, plot = TRUE, 
+  main = 'loessSpan = .75', samplingRate = samplingRate
+)
+getSmoothContour(
+  anchors = data.frame(time = c(0, .1, 1), 
+                       value = c(350, 700, 350)),
+  len = sylLen_points,
+  loessSpan = 1,
+  thisIsPitch = TRUE, plot = TRUE, 
+  main = 'loessSpan = 1', samplingRate = samplingRate
+)
+par(mfrow = c(1, 1))
+```
+
+If you are not satisfied with the smooth curve generated by `soundgen()` based on your anchors, you can produce a longer vector with `getSmoothContour()` or in fact any other method (e.g., you could use `analyze()` or `pitch_app()` to extract the pitch contour of an existing recording), and then you can feed soundgen with this arbitrarily long vector instead of using the anchor format, ensuring very precise control over the intonation contour:
+
+```{r fig.width = 7, fig.height = 4}
+par(mfrow = c(1, 2))
+pitch = getSmoothContour(len = 900 / 1000 * 16000,
+                         anchors = data.frame(time = c(0, .1, 1),  # or (c(0, 30, 300)) - in ms
+                                    value = c(350, 700, 350)),
+                         interpol = 'loess', loessSpan = 1.75,
+                         thisIsPitch = TRUE, plot = TRUE)
+sound = soundgen(sylLen = 900, play = playback,
+                 pitch = pitch, plot = TRUE)
+par(mfrow = c(1, 2))
+```
+
+*TIP Many arguments to soundgen are vectorized, and most vectorized arguments understand the "anchor format" you just encountered above, namely something like `my_argument = data.frame(time = ..., value = ...)`, where time can be in ms or ~[0, 1]. See ?soundgen for a complete list of anchor-format arguments and keep in mind two important special cases that use a slightly different format: `formants` and `noise` (see below). And remember to check that interpolation looks reasonable!*
 
 To get more complex curves, simply add more anchors. The assumption behind specifying an entire contour with a few discrete anchors is that the contour is smooth and continuous. However, there may be special occasions when you do want a discontinuity such as an instantaneous pitch jump. The default behavior of `getSmoothContour()` is to make a jump if two anchors are closer than one percent of the syllable length (as specified with the default `jumpThres = 0.01`). To make a pitch jump, you thus provide two values of f0 that are very close in time, for example:
 

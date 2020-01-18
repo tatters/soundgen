@@ -422,7 +422,7 @@ getNovelty = function(ssm,
   # indices in the padded matrix where we'll paste the original ssm
   idx = c(kernelSize / 2 + 1, nrow(ssm_padded) - kernelSize / 2)
   # paste original. Now we have a padded ssm
-  ssm_padded [idx[1]:idx[2], idx[1]:idx[2]] = ssm
+  ssm_padded[idx[1]:idx[2], idx[1]:idx[2]] = ssm
 
   ## get novelty
   novelty = rep(NA, nrow(ssm))

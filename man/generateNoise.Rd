@@ -16,6 +16,7 @@ generateNoise(
   samplingRate = 16000,
   overlap = 75,
   dynamicRange = 80,
+  interpol = c("approx", "spline", "loess")[3],
   invalidArgAction = c("adjust", "abort", "ignore")[1],
   play = FALSE
 )
@@ -57,6 +58,11 @@ and fade-out)}
 \item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
 dynamicRange under maximum amplitude are discarded to save computational
 resources}
+
+\item{interpol}{the method of smoothing envelopes based on provided anchors:
+'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
+= polynomial local smoothing function. NB: this does not affect contours for
+"noise", "glottal", and the smoothing of formants}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the
 range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'

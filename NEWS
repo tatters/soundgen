@@ -6,7 +6,9 @@ BUGS FIXED:
 
 MINOR:
   * soundgen(): if "noise" argument is numeric rather than a list, noise component is time-locked to voiced component  to ensure precisely the same timing
-  * soundgen - invalidArgAction="ignore" consistently removes all limits (noise-related pars were reset to defaults in earlier versions)
+  * soundgen(): invalidArgAction="ignore" consistently removes all limits (noise-related pars were reset to defaults in earlier versions)
+  * soundgen(): the "interpol" parameter is applied to (almost all) types smoothing more consistently
+  * getSmoothContour(): a new argument "loessSpan" passed on to loess() for controlling the amount of smoothing of pitch contours, etc
 
           CHANGES IN SOUNDGEN VERSION 1.6.0 [09-December-2019]
 BUGS FIXED:

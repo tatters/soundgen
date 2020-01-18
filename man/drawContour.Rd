@@ -10,7 +10,8 @@ drawContour(
   interpol,
   valueFloor,
   valueCeiling,
-  duration_ms = 500
+  duration_ms = 500,
+  loessSpan = NULL
 )
 }
 \arguments{
@@ -29,11 +30,15 @@ can be on any scale.}
 = polynomial local smoothing function. NB: this does not affect contours for
 "noise", "glottal", and the smoothing of formants}
 
-\item{valueFloor}{lower/upper bounds for the contour}
+\item{valueFloor}{lowser/upper bounds for the contour}
 
-\item{valueCeiling}{lower/upper bounds for the contour}
+\item{valueCeiling}{lowser/upper bounds for the contour}
 
 \item{duration_ms}{contour duration, ms}
+
+\item{loessSpan}{parameter that controlled the amount of smoothing when
+interpolating pitch etc between anchors; passed on to
+\code{\link[stats]{loess}}, so only has an effect if interpol = 'loess'}
 }
 \description{
 Internal soundgen function

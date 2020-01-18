@@ -129,6 +129,7 @@ generateNoise = function(len,
                          samplingRate = 16000,
                          overlap = 75,
                          dynamicRange = 80,
+                         interpol = c('approx', 'spline', 'loess')[3],
                          invalidArgAction = c('adjust', 'abort', 'ignore')[1],
                          play = FALSE) {
   # wiggle pars
@@ -201,6 +202,7 @@ generateNoise = function(len,
       len = len,
       anchors = noise,
       normalizeTime = FALSE,
+      interpol = interpol,
       valueFloor = permittedValues['noiseAmpl', 'low'],
       valueCeiling = permittedValues['noiseAmpl', 'high'],
       samplingRate = samplingRate,
@@ -235,6 +237,7 @@ generateNoise = function(len,
       rolloffNoise = getSmoothContour(
         anchors = rolloffNoise,
         len = nc,
+        interpol = interpol,
         valueFloor = permittedValues['rolloffNoise', 'low'],
         valueCeiling = permittedValues['rolloffNoise', 'high']
       )
@@ -462,6 +465,7 @@ generateHarmonics = function(pitch,
         len = nGC,
         valueFloor = -dynamicRange,
         valueCeiling = 0,
+        interpol = interpol,
         samplingRate = samplingRate
       )
       # plot(amplContour, type='l')
@@ -645,9 +649,12 @@ generateHarmonics = function(pitch,
       }
     }
     r = unlist(r, recursive = FALSE)  # get rid of epochs
-    glottisClosed_per_gc = getSmoothContour(anchors = glottis,
-                                            len = nGC,
-                                            valueFloor = 0)
+    glottisClosed_per_gc = getSmoothContour(
+      anchors = glottis,
+      interpol = interpol,
+      len = nGC,
+      valueFloor = 0
+    )
     waveform = generateGC(pitch_per_gc = pitch_per_gc,
                           glottisClosed_per_gc = glottisClosed_per_gc,
                           rolloff_per_gc = r,
@@ -702,6 +709,7 @@ generateHarmonics = function(pitch,
         anchors = ampl,
         len = length(waveform),
         valueFloor = -dynamicRange,
+        interpol = interpol,
         samplingRate = samplingRate
       )
       # plot(amplEnvelope, type = 'l')

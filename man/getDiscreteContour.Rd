@@ -31,9 +31,9 @@ can be on any scale.}
 = polynomial local smoothing function. NB: this does not affect contours for
 "noise", "glottal", and the smoothing of formants}
 
-\item{valueFloor}{lower/upper bounds for the contour}
+\item{valueFloor}{lowser/upper bounds for the contour}
 
-\item{valueCeiling}{lower/upper bounds for the contour}
+\item{valueCeiling}{lowser/upper bounds for the contour}
 
 \item{ylim}{ylim for plotting}
 

@@ -21,13 +21,16 @@
 #'   before smoothing and plots in both Hz and musical notation
 #' @param normalizeTime if TRUE, normalizes anchors$time values to range from 0 to 1
 #' @inheritParams soundgen
-#' @param valueFloor,valueCeiling lower/upper bounds for the contour
+#' @param loessSpan parameter that controlled the amount of smoothing when
+#'   interpolating pitch etc between anchors; passed on to
+#'   \code{\link[stats]{loess}}, so only has an effect if interpol = 'loess'
+#' @param valueFloor,valueCeiling lowser/upper bounds for the contour
 #' @param plot (boolean) produce a plot?
 #' @param samplingRate sampling rate used to convert time values to points (Hz)
 #' @param voiced,contourLabel graphical pars for plotting breathing contours
 #'   (see examples below)
 #' @param NA_to_zero if TRUE, all NAs are replaced with zero
-#' @param main,xlim,ylim plotting options
+#' @param xlim,ylim plotting options
 #' @param ... other plotting options passed to \code{plot()}
 #' @export
 #' @return Returns a numeric vector.
@@ -75,10 +78,10 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             interpol = c('approx', 'spline', 'loess')[3],
                             discontThres = .05,
                             jumpThres = .01,
+                            loessSpan = NULL,
                             valueFloor = NULL,
                             valueCeiling = NULL,
                             plot = FALSE,
-                            main = '',
                             xlim = NULL,
                             ylim = NULL,
                             samplingRate = 16000,
@@ -86,6 +89,15 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             contourLabel = NULL,
                             NA_to_zero = TRUE,
                             ...) {
+  my_args = match.call()
+  if (is.null(my_args$main)) {
+    if (thisIsPitch)
+      main = 'Pitch contour'
+    else
+      main = ''
+  }
+  # if (is.null(my_args$main)) {
+
   anchors = reformatAnchors(anchors, normalizeTime = normalizeTime)
   if (is.list(anchors)) {
     if (nrow(anchors) > 10 & nrow(anchors) < 50 & interpol == 'loess') {
@@ -143,6 +155,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     smoothContour = drawContour(len = len,
                                 anchors = anchors,
                                 interpol = interpol,
+                                loessSpan = loessSpan,
                                 valueFloor = valueFloor,
                                 valueCeiling = valueCeiling,
                                 duration_ms = duration_ms)
@@ -160,6 +173,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
       cont = drawContour(len = segm_len,
                          anchors = anchors[sections$start[i]:sections$end[i], ],
                          interpol = interpol,
+                         loessSpan = loessSpan,
                          valueFloor = valueFloor,
                          valueCeiling = valueCeiling,
                          duration_ms = duration_ms)
@@ -231,7 +245,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
       par(mar = c(5, 4, 4, 3)) # c(bottom, left, top, right)
       plot(x, smoothContour_downsampled,
            type = 'l', yaxt = "n", ylab = 'Frequency, Hz', xlab = 'Time, ms',
-           main = 'Pitch contour', ylim = ylim, ...)
+           ylim = ylim, ...)
       axis(2, at = lbls_semitones, labels = lbls_Hz, las = 1)
       axis(4, at = lbls_semitones, labels = lbls_notes, las = 1)
       points(anchors$time, anchors$value, col = 'blue', cex = 3)
@@ -275,7 +289,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     smoothContour[is.na(smoothContour)] = 0
   if (thisIsPitch)
     smoothContour = semitonesToHz(smoothContour)
-  return(smoothContour)
+  invisible(smoothContour)
 }
 
 
@@ -293,7 +307,8 @@ drawContour = function(len,
                        interpol,
                        valueFloor,
                        valueCeiling,
-                       duration_ms = 500) {
+                       duration_ms = 500,
+                       loessSpan = NULL) {
   time = 1:len
   if (nrow(anchors) == 1) {
     # flat
@@ -321,7 +336,12 @@ drawContour = function(len,
       anchors_long[anchor_time_points] = anchors$value # plot (anchors_long)
 
       # let's draw a smooth curve through the given anchors
-      span = (1 / (1 + exp(duration_ms / 500)) + 0.5) / 1.1 ^ (nrow(anchors) - 3)
+      if (is.null(loessSpan)) {
+        span = (1 / (1 + exp(duration_ms / 500)) + 0.5) /
+          1.1 ^ (nrow(anchors) - 3)
+      } else {
+        span = loessSpan
+      }
       # NB: need to compensate for variable number of points, namely decrease
       # smoothing as the number of points increases, hence the "1.1^..." term
       # duration_ms = 50:9000
@@ -329,24 +349,26 @@ drawContour = function(len,
       # plot(duration_ms, span, type = 'l')
       l = suppressWarnings(loess(anchors_long ~ time, span = span))
       # plot (time, anchors_long)
-      smoothContour = try (predict(l, time), silent = TRUE)
+      smoothContour = try(predict(l, time), silent = TRUE)
       # plot(time, smoothContour)
 
       # for long duration etc, larger span may be needed to avoid error in loess
-      while (class(smoothContour)[1] == 'try-error') {
-        span = span + 0.1
-        l = suppressWarnings(loess(anchors_long ~ time, span = span))
-        smoothContour = try (predict(l, time), silent = TRUE)
-      }
-      # plot (smoothContour, type = 'l')
+      if (is.null(loessSpan)) {
+        while(class(smoothContour)[1] == 'try-error') {
+          span = span + 0.1
+          l = suppressWarnings(loess(anchors_long ~ time, span = span))
+          smoothContour = try(predict(l, time), silent = TRUE)
+        }
+        # plot(smoothContour, type = 'l')
 
-      while (sum(smoothContour < valueFloor - 1e-6, na.rm = TRUE) > 0) {
-        # in case we get values below valueFloor, less smoothing should be used
-        # NB: -1e-6 avoids floating point problem, otherwise we get
-        # weird cases of -120 (float) < -120 (integer)
-        span = span / 1.1
-        l = suppressWarnings(loess(anchors_long ~ time, span = span))
-        smoothContour = try(predict(l, time), silent = TRUE)
+        while(sum(smoothContour < valueFloor - 1e-6, na.rm = TRUE) > 0) {
+          # in case we get values below valueFloor, less smoothing should be used
+          # NB: -1e-6 avoids floating point problem, otherwise we get
+          # weird cases of -120 (float) < -120 (integer)
+          span = span / 1.1
+          l = suppressWarnings(loess(anchors_long ~ time, span = span))
+          smoothContour = try(predict(l, time), silent = TRUE)
+        }
       }
     }
     smoothContour[smoothContour < valueFloor] = valueFloor

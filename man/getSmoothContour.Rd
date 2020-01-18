@@ -12,10 +12,10 @@ getSmoothContour(
   interpol = c("approx", "spline", "loess")[3],
   discontThres = 0.05,
   jumpThres = 0.01,
+  loessSpan = NULL,
   valueFloor = NULL,
   valueCeiling = NULL,
   plot = FALSE,
-  main = "",
   xlim = NULL,
   ylim = NULL,
   samplingRate = 16000,
@@ -58,11 +58,13 @@ transition between these anchors; if anchors are closer than
 \code{jumpThres}, a new section starts with no transition at all (e.g. for
 adding pitch jumps)}
 
-\item{valueFloor, valueCeiling}{lower/upper bounds for the contour}
+\item{loessSpan}{parameter that controlled the amount of smoothing when
+interpolating pitch etc between anchors; passed on to
+\code{\link[stats]{loess}}, so only has an effect if interpol = 'loess'}
+
+\item{valueFloor, valueCeiling}{lowser/upper bounds for the contour}
 
 \item{plot}{(boolean) produce a plot?}
-
-\item{main, xlim, ylim}{plotting options}
 
 \item{samplingRate}{sampling rate used to convert time values to points (Hz)}
 
@@ -72,6 +74,8 @@ adding pitch jumps)}
 \item{NA_to_zero}{if TRUE, all NAs are replaced with zero}
 
 \item{...}{other plotting options passed to \code{plot()}}
+
+\item{main, xlim, ylim}{plotting options}
 }
 \value{
 Returns a numeric vector.
