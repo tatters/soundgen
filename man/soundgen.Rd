@@ -51,6 +51,7 @@ soundgen(
   formantsNoise = NA,
   rolloffNoise = -4,
   noiseFlatSpec = 1200,
+  rolloffNoiseExp = 0,
   noiseAmpRef = c("f0", "source", "filtered")[3],
   mouth = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
   ampl = NA,
@@ -128,6 +129,8 @@ from creaky (-1) to breathy (+1); 0 = no change}
 proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
+
+\item{nonlinDep}{deprecated}
 
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
@@ -240,10 +243,12 @@ voiced component. If NA (default), the unvoiced component will be filtered
 through the same formants as the voiced component, approximating aspiration
 noise [h]}
 
-\item{rolloffNoise}{linear rolloff of the excitation source for the unvoiced
-component, dB/kHz (anchor format)}
+\item{rolloffNoise, noiseFlatSpec}{linear rolloff of the excitation source for
+the unvoiced component, \code{rolloffNoise} dB/kHz (anchor format) applied
+above \code{noiseFlatSpec} Hz}
 
-\item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
+\item{rolloffNoiseExp}{exponential rolloff of the excitation source for the
+unvoiced component, dB/oct (anchor format) applied above 0 Hz}
 
 \item{noiseAmpRef}{noise amplitude is defined relative to: "f0" = the
 amplitude of the first partial (fundamental frequency), "source" = the

@@ -240,7 +240,8 @@ ui = fluidPage(
                                            sidebarLayout(
                                              sidebarPanel(
                                                selectInput(inputId='noiseType', label="Presets", choices=c('Breathing'='b', 'Snuffling'='n', 'h'='h', 'sh'='x','f'='f', 's'='s'), selected='b'),
-                                               sliderInput('rolloffNoise', 'Noise rolloff, dB/oct', value=permittedValues['rolloffNoise','default'], min=permittedValues['rolloffNoise', 'low'], max=permittedValues['rolloffNoise', 'high'], step=permittedValues['rolloffNoise','step']),
+                                               sliderInput('rolloffNoise', 'Linear noise rolloff, dB/oct', value=permittedValues['rolloffNoise','default'], min=permittedValues['rolloffNoise', 'low'], max=permittedValues['rolloffNoise', 'high'], step=permittedValues['rolloffNoise','step']),
+                                               sliderInput('rolloffNoiseExp', 'Exponential noise rolloff, dB/oct', value=permittedValues['rolloffNoiseExp','default'], min=permittedValues['rolloffNoiseExp', 'low'], max=permittedValues['rolloffNoiseExp', 'high'], step=permittedValues['rolloffNoiseExp','step']),
                                                shinyBS::bsCollapsePanel("Show & modify formants manually",
                                                                         tags$style(type="text/css", "textarea {width:100%}"), # NB: this little hack ties the width of the following textarea to the width of the panel in which it is embedded; see http://stackoverflow.com/questions/32640875/r-shiny-tie-textarea-width-to-wellpanel-width
                                                                         tags$textarea(id="formantsNoise", label='Exact formants for unvoiced part', rows=10, cols=20, value="", placeholder ="list()")

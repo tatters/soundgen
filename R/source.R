@@ -121,6 +121,7 @@
 generateNoise = function(len,
                          rolloffNoise = 0,
                          noiseFlatSpec = 1200,
+                         rolloffNoiseExp = 0,
                          spectralEnvelope = NULL,
                          noise = NULL,
                          temperature = .1,
@@ -168,6 +169,28 @@ generateNoise = function(len,
       high = permittedValues['noiseFlatSpec', 'high'], # samplingRate / 2,
       invalidArgAction = invalidArgAction
     )
+
+    if (is.list(rolloffNoiseExp)) {
+      rolloffNoiseExp = wiggleAnchors(
+        rolloffNoiseExp,
+        temperature = temperature,
+        temp_coef = .5,
+        low = c(-Inf, permittedValues['rolloffNoiseExp', 'low']),
+        high = c(Inf, permittedValues['rolloffNoiseExp', 'high']),
+        invalidArgAction = invalidArgAction,
+        wiggleAllRows = TRUE
+      )
+    } else {
+      rolloffNoiseExp = rnorm_truncated(
+        n = length(rolloffNoise),
+        mean = rolloffNoiseExp,
+        sd = abs(rolloffNoiseExp) * temperature * .5,
+        low = permittedValues['rolloffNoiseExp', 'low'],
+        high = permittedValues['rolloffNoiseExp', 'high'],
+        invalidArgAction = invalidArgAction
+      )
+    }
+
     attackLen = rnorm_truncated(
       n = length(attackLen),
       mean = attackLen,
@@ -232,8 +255,11 @@ generateNoise = function(len,
     binsPerKHz = round(1000 / bin)
     flatBins = round(noiseFlatSpec / bin)
     idx = (flatBins + 1):nr  # the bins affected by rolloffNoise
+
     if (is.list(rolloffNoise) |
         (is.numeric(rolloffNoise) & length(rolloffNoise) > 1)) {
+      # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 7.1:
+      # spectrum of turbulent noise
       rolloffNoise = getSmoothContour(
         anchors = rolloffNoise,
         len = nc,
@@ -245,11 +271,34 @@ generateNoise = function(len,
       for (c in 1:nc) {
         spectralEnvelope[idx, c] = 10 ^ (rolloffNoise[c] / 20 * (idx - flatBins) / binsPerKHz)
       }
-      # Johnson_2012_Acoustic-and-Auditory-Phonetics, Fig. 7.1: spectrum of turbulent noise
     } else {
       a = rep(1, nr)
       a[idx] = 10 ^ (rolloffNoise / 20 * (idx - flatBins) / binsPerKHz)
       spectralEnvelope = matrix(rep(a, nc), ncol = nc)
+    }
+
+    # exponential rolloff starting from 0 Hz (Klatt & Klatt, 1990)
+    if ((is.list(rolloffNoiseExp) && any(rolloffNoiseExp$value != 0)) |
+        (is.numeric(rolloffNoiseExp) && any(rolloffNoiseExp != 0))) {
+      if ((is.list(rolloffNoiseExp) && length(rolloffNoiseExp$value) > 1) |
+          (is.numeric(rolloffNoiseExp) && length(rolloffNoiseExp) > 1)) {
+        rolloffNoiseExp = getSmoothContour(
+          anchors = rolloffNoiseExp,
+          len = nc,
+          interpol = interpol,
+          valueFloor = permittedValues['rolloffNoiseExp', 'low'],
+          valueCeiling = permittedValues['rolloffNoiseExp', 'high']
+        )
+        for (c in 1:nc) {
+          spectralEnvelope[, c] = spectralEnvelope[, c] *
+            10 ^ (log2(1:nr) * rolloffNoiseExp[c] / 20)
+        }
+      } else {
+        r_exp = 10 ^ (log2(1:nr) * rolloffNoiseExp / 20)
+        for (c in 1:nc) {
+          spectralEnvelope[, c] = spectralEnvelope[, c] * r_exp
+        }
+      }
     }
     # image(t(spectralEnvelope))
   } else {

@@ -1,4 +1,4 @@
-# TODO: soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); rolloffNoiseExp around -6 dB/oct so flat after lipRad (Klatt & Klatt, 1990); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: rolloffNoiseExp around -6 dB/oct so flat after lipRad (Klatt & Klatt, 1990); soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # pitch_app: see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
@@ -64,6 +64,7 @@ NULL
 #'   proportion of sound with different regimes of pitch effects (none /
 #'   subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 #'   entire sound has jitter + subharmonics. Ignored if temperature = 0
+#' @param nonlinDep deprecated
 #' @param nonlinRandomWalk a numeric vector specifying the timing of nonliner
 #'   regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer
 #' @param jitterLen duration of stable periods between pitch jumps, ms. Use a
@@ -144,9 +145,11 @@ NULL
 #'   voiced component. If NA (default), the unvoiced component will be filtered
 #'   through the same formants as the voiced component, approximating aspiration
 #'   noise [h]
-#' @param rolloffNoise linear rolloff of the excitation source for the unvoiced
-#'   component, dB/kHz (anchor format)
-#' @param noiseFlatSpec keeps noise spectrum flat to this frequency, Hz
+#' @param rolloffNoise,noiseFlatSpec linear rolloff of the excitation source for
+#'   the unvoiced component, \code{rolloffNoise} dB/kHz (anchor format) applied
+#'   above \code{noiseFlatSpec} Hz
+#' @param rolloffNoiseExp exponential rolloff of the excitation source for the
+#'   unvoiced component, dB/oct (anchor format) applied above 0 Hz
 #' @param noiseAmpRef noise amplitude is defined relative to: "f0" = the
 #'   amplitude of the first partial (fundamental frequency), "source" = the
 #'   amplitude of the harmonic component prior to applying formants, "filtered"
@@ -311,6 +314,7 @@ soundgen = function(
   formantsNoise = NA,
   rolloffNoise = -4,
   noiseFlatSpec = 1200,
+  rolloffNoiseExp = 0,
   noiseAmpRef = c('f0', 'source', 'filtered')[3],
   mouth = data.frame(time = c(0, 1),
                      value = c(.5, .5)),
@@ -451,7 +455,7 @@ soundgen = function(
     if (mp * 10 > pitchSamplingRate) {
       pitchSamplingRate = mp * 10
       message(paste0('pitchSampingRate should be much higher than the',
-      'highest pitch; resetting to ', mp * 10, ' Hz'))
+                     'highest pitch; resetting to ', mp * 10, ' Hz'))
     }
     if (pitchSamplingRate > samplingRate) {
       samplingRate = pitchSamplingRate
@@ -931,11 +935,33 @@ soundgen = function(
               invalidArgAction = invalidArgAction
             )
           }
+
+          if (is.list(rolloffNoiseExp)) {
+            rolloffNoiseExp_syl = wiggleAnchors(
+              rolloffNoiseExp,
+              temperature = temperature,
+              temp_coef = tempEffects$specDep,
+              low = c(-Inf, permittedValues['rolloffNoiseExp', 'low']),
+              high = c(Inf, permittedValues['rolloffNoiseExp', 'high']),
+              wiggleAllRows = TRUE,
+              invalidArgAction = invalidArgAction
+            )
+          } else {
+            rolloffNoiseExp_syl = rnorm_truncated(
+              n = length(rolloffNoiseExp),
+              mean = rolloffNoiseExp,
+              sd = abs(rolloffNoiseExp) * temperature * tempEffects$specDep,
+              low = permittedValues['rolloffNoiseExp', 'low'],
+              high = permittedValues['rolloffNoiseExp', 'high'],
+              invalidArgAction = invalidArgAction
+            )
+          }
           # synthesize the unvoiced part
           unvoiced[[s]] = generateNoise(
             len = round(diff(range(noise_syl[[s]]$time)) * samplingRate / 1000),
             noise = noise_syl[[s]],
             rolloffNoise = rolloffNoise_syl,
+            rolloffNoiseExp = rolloffNoiseExp_syl,
             noiseFlatSpec = noiseFlatSpec,
             temperature = 0,  # wiggled separately in soundgen
             attackLen = attackLen,

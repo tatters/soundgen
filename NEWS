@@ -4,8 +4,10 @@ BUGS FIXED:
   * soundgen(), getSpectralEnvelope(): manually specifying bandwidth works again (bug introduced in v1.6.0)
   * soundgen(): tempEffects(pitchDriftDep = 0) no longer crashes because removing pitch drift no longer prevents amplitude drift from working
   * transplantFormants(): step no longer conflicts with overlap
+  * soundgen_app(): debugged consonant presets
 
 MINOR:
+  * soundgen(), generateNoise(): a new argument "rolloffNoiseExp" to control rolloff of the unvoiced component
   * soundgen(): if "noise" argument is numeric rather than a list, noise component is time-locked to voiced component to ensure precisely the same timing
   * soundgen(): invalidArgAction="ignore" consistently removes all limits (noise-related pars were reset to defaults in earlier versions)
   * soundgen(): change in defaults related to nonlinear phenomena: nonlinBalance defaults to 100%, with no jitter, shimmer, or subharmonics

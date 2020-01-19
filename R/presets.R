@@ -60,6 +60,7 @@ permittedValues = matrix(c(
   'windowLength', 40, 5, 100, 2.5, # default, low, high, step
   'dynamicRange', 80, 10, 200, 10,
   'rolloffNoise', -4, -100, 100, 1,
+  'rolloffNoiseExp', 0, -30, 30, 1,
 
   # other soundgen settings, which are NOT updateable sliders in soundgen_app()
   'vocalTract', 15.5, 2, 100, .5,
@@ -125,6 +126,7 @@ defaults = list(
   samplingRate = 16000,
   windowLength = 40,
   rolloffNoise = -4,
+  rolloffNoiseExp = 0,
   windowLength_points = 512,
   overlap = 75,
   addSilence = 100,

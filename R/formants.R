@@ -127,6 +127,7 @@ getSpectralEnvelope = function(nr,
                                ylab = 'Frequency, kHz',
                                ...) {
   # standard formatting
+  formants = reformatFormants(formants)
   if (is.list(formants)) {
     bandwidth_specified = as.numeric(which(unlist(
       lapply(formants, function(x) 'width' %in% names(x))
@@ -134,7 +135,7 @@ getSpectralEnvelope = function(nr,
   } else {
     bandwidth_specified = numeric(0)
   }
-  formants = reformatFormants(formants)
+
   if (!is.null(vocalTract)) {
     if (!any(is.na(vocalTract))) {
       if (is.list(vocalTract) |

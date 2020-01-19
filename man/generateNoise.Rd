@@ -8,6 +8,7 @@ generateNoise(
   len,
   rolloffNoise = 0,
   noiseFlatSpec = 1200,
+  rolloffNoiseExp = 0,
   spectralEnvelope = NULL,
   noise = NULL,
   temperature = 0.1,
@@ -24,10 +25,16 @@ generateNoise(
 \arguments{
 \item{len}{length of output}
 
-\item{rolloffNoise}{linear rolloff of the excitation source for the unvoiced
-component, dB/kHz (anchor format)}
+\item{rolloffNoise}{linear rolloff of the excitation source for
+the unvoiced component, \code{rolloffNoise} dB/kHz (anchor format) applied
+above \code{noiseFlatSpec} Hz}
 
-\item{noiseFlatSpec}{keeps noise spectrum flat to this frequency, Hz}
+\item{noiseFlatSpec}{linear rolloff of the excitation source for
+the unvoiced component, \code{rolloffNoise} dB/kHz (anchor format) applied
+above \code{noiseFlatSpec} Hz}
+
+\item{rolloffNoiseExp}{exponential rolloff of the excitation source for the
+unvoiced component, dB/oct (anchor format) applied above 0 Hz}
 
 \item{spectralEnvelope}{(optional): as an alternative to using rolloffNoise,
 we can provide the exact filter - a vector of non-negative numbers
