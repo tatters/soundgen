@@ -16,11 +16,14 @@ soundgen(
   tempEffects = list(),
   maleFemale = 0,
   creakyBreathy = 0,
-  nonlinBalance = 0,
-  nonlinDep = 50,
+  nonlinBalance = 100,
+  nonlinDep = "deprecated",
   nonlinRandomWalk = NULL,
+  subFreq = 100,
+  subDep = 0,
+  shortestEpoch = 300,
   jitterLen = 1,
-  jitterDep = 1,
+  jitterDep = 0,
   vibratoFreq = 5,
   vibratoDep = 0,
   shimmerDep = 0,
@@ -41,9 +44,6 @@ soundgen(
   formantWidth = 1,
   formantCeiling = 2,
   vocalTract = NA,
-  subFreq = 100,
-  subDep = 100,
-  shortestEpoch = 300,
   amDep = 0,
   amFreq = 30,
   amShape = 0,
@@ -129,12 +129,18 @@ proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{nonlinDep}{hyperparameter for regulating the intensity of subharmonics
-and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified,
-<50\% weaker, >50\% stronger). Ignored if temperature = 0}
-
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
+
+\item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
+dynamically so f0 is always a multiple of subFreq) (anchor format)}
+
+\item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
+strength of subharmonics fades as they move away from harmonics in f0 stack
+(anchor format)}
+
+\item{shortestEpoch}{minimum duration of each epoch with unchanging
+subharmonics regime, in ms}
 
 \item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
 low value for harsh noise, a high value for irregular vibrato or shaky
@@ -215,16 +221,6 @@ tracts to avoid losing energy in the upper part of the spectrum}
 dispersion (for adding extra formants) and formant transitions as the mouth
 opens and closes. If \code{NULL} or \code{NA}, the length is estimated
 based on specified formant frequencies, if any (anchor format)}
-
-\item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
-dynamically so f0 is always a multiple of subFreq) (anchor format)}
-
-\item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
-strength of subharmonics fades as they move away from harmonics in f0 stack
-(anchor format)}
-
-\item{shortestEpoch}{minimum duration of each epoch with unchanging
-subharmonics regime, in ms}
 
 \item{amDep}{amplitude modulation depth, \%. 0: no change; 100: amplitude
 modulation with amplitude range equal to the dynamic range of the sound

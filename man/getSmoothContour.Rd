@@ -66,6 +66,8 @@ interpolating pitch etc between anchors; passed on to
 
 \item{plot}{(boolean) produce a plot?}
 
+\item{xlim, ylim}{plotting options}
+
 \item{samplingRate}{sampling rate used to convert time values to points (Hz)}
 
 \item{voiced, contourLabel}{graphical pars for plotting breathing contours
@@ -74,8 +76,6 @@ interpolating pitch etc between anchors; passed on to
 \item{NA_to_zero}{if TRUE, all NAs are replaced with zero}
 
 \item{...}{other plotting options passed to \code{plot()}}
-
-\item{main, xlim, ylim}{plotting options}
 }
 \value{
 Returns a numeric vector.

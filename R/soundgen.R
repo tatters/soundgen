@@ -64,9 +64,6 @@ NULL
 #'   proportion of sound with different regimes of pitch effects (none /
 #'   subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 #'   entire sound has jitter + subharmonics. Ignored if temperature = 0
-#' @param nonlinDep hyperparameter for regulating the intensity of subharmonics
-#'   and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified,
-#'   <50\% weaker, >50\% stronger). Ignored if temperature = 0
 #' @param nonlinRandomWalk a numeric vector specifying the timing of nonliner
 #'   regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer
 #' @param jitterLen duration of stable periods between pitch jumps, ms. Use a
@@ -279,11 +276,14 @@ soundgen = function(
   tempEffects = list(),
   maleFemale = 0,
   creakyBreathy = 0,
-  nonlinBalance = 0,
-  nonlinDep = 50,
+  nonlinBalance = 100,
+  nonlinDep = 'deprecated',
   nonlinRandomWalk = NULL,
+  subFreq = 100,
+  subDep = 0,
+  shortestEpoch = 300,
   jitterLen = 1,
-  jitterDep = 1,
+  jitterDep = 0,
   vibratoFreq = 5,
   vibratoDep = 0,
   shimmerDep = 0,
@@ -304,9 +304,6 @@ soundgen = function(
   formantWidth = 1,
   formantCeiling = 2,
   vocalTract = NA,
-  subFreq = 100,
-  subDep = 100,
-  shortestEpoch = 300,
   amDep = 0,
   amFreq = 30,
   amShape = 0,
@@ -337,10 +334,9 @@ soundgen = function(
   ...
 ) {
   # deprecated pars
-  # if (!missing('throwaway')) {
-  #   dynamicRange = -throwaway
-  #   message('throwaway is deprecated; used dynamicRange instead')
-  # }
+  if (!missing('nonlinDep')) {
+    message('nonlinDep is deprecated; set subDep/jitterDep/shimmerDep manually')
+  }
 
   # check that values of numeric arguments are valid and within range
   pars_to_check = rownames(permittedValues)[1:which(
@@ -560,20 +556,6 @@ soundgen = function(
     )
   }
 
-  # effects of nonlinDep hyper
-  subFreq$value = 2 * (subFreq$value - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50
-  # subFreq unchanged for nonlinDep=50%, raised for lower and
-  # lowered for higher noise intensities. Max set at 2*subFreq-50, min at 50 Hz.
-  # Jitter and shimmer go to 0 if nonlinDep = 0 and double if nonlinDep = 1
-  # Illustration: subFreq=250; nonlinDep=0:100; plot(nonlinDep,
-  #   2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50, type = 'l')
-  jitterDep$value = 2 * jitterDep$value / (1 + exp(.1 * (50 - nonlinDep)))
-  # Illustration: jitterDep = 1; nonlinDep = 0:100;
-  # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))), type = 'l')
-  shimmerDep$value = 2 * shimmerDep$value / (1 + exp(.1 * (50 - nonlinDep)))
-  # Illustration: shimmerDep = 1.5; nonlinDep = 0:100;
-  # plot(nonlinDep, 2 * shimmerDep / (1 + exp(.1 * (50 - nonlinDep))), type = 'l')
-
   # effects of maleFemale hyper
   if (maleFemale != 0) {
     # adjust pitch and formants along the male-female dimension
@@ -600,7 +582,6 @@ soundgen = function(
 
   # prepare a list of pars for calling generateHarmonics()
   pars_to_vary = c(
-    'nonlinDep',
     'attackLen',
     'shortestEpoch'
   )  # don't add nonlinBalance, otherwise there is no simple way to remove noise at temp>0
@@ -637,7 +618,6 @@ soundgen = function(
     'subFreq' = subFreq,
     'subDep' = subDep,
     'nonlinBalance' = nonlinBalance,
-    'nonlinDep' = nonlinDep,
     'nonlinRandomWalk' = nonlinRandomWalk,
     'pitchFloor' = pitchFloor,
     'pitchCeiling' = pitchCeiling,

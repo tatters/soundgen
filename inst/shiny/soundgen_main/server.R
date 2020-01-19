@@ -1187,7 +1187,6 @@ server = function(input, output, session) {
       maleFemale = input$maleFemale,
       creakyBreathy = input$creakyBreathy,
       nonlinBalance = input$nonlinBalance,
-      nonlinDep = input$nonlinDep,
       jitterDep = input$jitterDep,
       jitterLen = input$jitterLen,
       vibratoFreq = input$vibratoFreq,
@@ -1356,7 +1355,6 @@ server = function(input, output, session) {
 
   # Source / nonlinear
   shinyBS::addTooltip(session, id='nonlinBalance', title = '3 regimes of nonlinear effects: none / subharmonics / subharmonics + jitter', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='nonlinDep', title = 'Modulates the strength of nonlinear effects specified in "Advanced" below, when these effects are added', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='shortestEpoch', title = 'Change nonlinear regime no sooner than after ... ms', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='subFreq', title = 'The approximate target frequency of subharmonics; the actual frequency is forced to be a fraction of f0 at every time point', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='subDep', title = 'Width of subharmonic sidebands, ie the strength of subharmonics depending on their distance from F-harmonics', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

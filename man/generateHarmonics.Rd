@@ -66,10 +66,6 @@ proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{nonlinDep}{hyperparameter for regulating the intensity of subharmonics
-and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified,
-<50\% weaker, >50\% stronger). Ignored if temperature = 0}
-
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 

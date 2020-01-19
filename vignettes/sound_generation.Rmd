@@ -41,21 +41,21 @@ At this crucial stage, we "paint" the spectrogram of the glottal source based on
 <p> Note that soundgen currently implements only sine wave synthesis of voiced fragments. This is different from modeling glottal cycles themselves, as in phonetic models and some popular text-to-speech engines (e.g. Klatt, 1980). Normally multiple glottal cycles are generated simultaneously, with no pauses in between them (no closed phase) and with a continuously changing f0. It is also possible to add a closed phase, in which case each glottal cycle is generated separately, with f0 held stable within each cycle. In future versions of soundgen there may be an option to use a particular parametric model of the glottal cycle as excitation source as an alternative to generating a separate sine wave for each harmonic.</p>
   
 2.  Generation of the turbulent noise component (aspiration, hissing, etc.).
-In addition to harmonic oscillations of the vocal cords, there are other sources of excitation, notably turbulent noise. For example, aspiration noise may be synthesized as white noise with rolloff -6 dB/octave (Klatt, 1990) and added to the glottal source before formant filtering. It is similarly straightforward to add other types of noise, which may originate higher up in the vocal tract and thus display a different formant structure from the glottal source (e.g., high-frequency hissing, broadband clicks for tongue smacking, etc.) 
+In addition to harmonic oscillations of the vocal cords, there are other sources of excitation, notably turbulent noise. For example, aspiration noise may be synthesized as white noise and added to the glottal source before formant filtering. It is similarly straightforward to add other types of noise, which may originate higher up in the vocal tract and thus display a different formant structure from the glottal source (e.g., high-frequency hissing, broadband clicks for tongue smacking, etc.) 
 
 <p> Some form of noise is synthesized in most sound generators. In soundgen noise is created in the frequency domain (i.e., as a spectrogram) and then converted into a time series via inverse FFT. Noise is generated with a flat spectrum up to a certain threshold, followed by user-specified linear rolloff (Johnson, 2012).</p>
   
 3.  Spectral filtering (formants and lip radiation).
 The vocal tract acts as a resonator that modifies the source spectrum by amplifying certain frequencies and dampening others. In speech, time-varying resonance frequencies (formants) are responsible for the distinctions between different vowels, but formants are also ubiquitous in animal vocalizations. Just as we "painted" a spectrogram for the acoustic source in (1), we now "paint" a spectral filter with a specified number of stationary or moving formants. We then take a short-time Fourier transform (STFT) of the generated waveform to convert it back to a spectrogram, multiply the latter by our filter, and then take an inverse STFT to go back to the time domain. This filtering can be applied to harmonic and noise components separately or - for noise sources close to the glottis - the harmonic component and the noise component can be added first and then filtered together. 
 
-<p> Note that this STFT-mediated method of adding formants is different from the more traditional convolution, but with multiple formants it is both considerably faster and (arguably) more intuitive. If you are wondering why we should bother to do iSTFT and then again STFT before filtering the voiced component, rather than simply applying the filter to the rolloff matrix before the iSTFT, this is an annoying consequence of some complexities of the temporal structure of a bout, especially of applying non-stationary filters (moving formants) that span multiple syllables. With noise, however, this extra step can be avoided, and we only do iSTFT once.</p>
+<p> Note that this STFT-mediated method of adding formants is different from the more traditional convolution, but with multiple formants it is both considerably faster and (arguably) more intuitive. If you are wondering why we don't simply apply the filter to the rolloff matrix before the iSTFT, this is an annoying consequence of some complexities of the temporal structure of a bout, especially of applying non-stationary filters (moving formants) that span multiple syllables. For the noise component, however, this extra step can be avoided, and we only do iSTFT once.</p>
   
 Having briefly looked at the fundamental principles of sound generation, we proceed to control parameters. The aim of the following presentation is to offer practical tips on using soundgen. For further information on more fundamental principles of acoustics and sound synthesis, you may find the vignettes in `seewave` very helpful, or you can check out the book on sound synthesis in R by Jerome Sueur, the author of the `seewave` package. Some essential references are also listed at the end of this vignette, especially those sources that have inspired particular routines in soundgen.
   
   
 # Using soundgen
 ## Where to start
-To generate a sound, you can either type `soundgen_app()` to open an interactive Shiny app or call `soundgen()` from R console with manually specified parameters. An object called `presets` contains a collection of presets that demonstrate some of the possibilities. More information is available on the project's homepage at <a href="http://cogsci.se/soundgen.html">http://cogsci.se/soundgen.html</a>.
+To generate a sound, you can either type `soundgen_app()` to open an interactive Shiny app or call `soundgen()` from R console with manually specified parameters. The app offers nice visualizations and is more user-friendly if you are not used to programming, but note that it doesn't support some advanced features (e.g., vectorization of some control parameters). An object called `presets` contains a collection of presets that demonstrate some of the possibilities. More information is available on the project's homepage at <a href="http://cogsci.se/soundgen.html">http://cogsci.se/soundgen.html</a>.
   
 ## Audio playback
 Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback, via a wrapper function called `playme()` that accepts both Wave objects and simple numeric vectors. If `soundgen(play = TRUE)` throws an error, make sure the audio can be played before you proceed with using soundgen. To do so, save some sound as a vector first: `sound = soundgen(play = FALSE)` or even simply `sound = rnorm(10000)`. Then try to find a way to play this vector `sound`. You may need to change the default player in `tuneR` or install additional software. See the <a href="https://CRAN.R-project.org/package=seewave">seewave vignette</a> on sound input/output for an in-depth discussion of audio playback in R. Some tips are also available <a href="http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf">here</a>. Sueur (2018, p. 100) recommends Window Media Player on Windows, AudioUnits for Mac OS, SoX for Linux (the player is called "play"), or VLC on any platform.
@@ -176,10 +176,13 @@ sound = soundgen(pitch = c(150, 250, 100), sylLen = 700, play = playback)  # up 
 
 You can also use a mathematical formula to produce very precise pitch modulation, just check that the values are on the right scale. For example, sinusoidal pitch modulation can be created as follows:
 
-```{r fig.show = "hold", fig.width = 4, fig.height = 4}
+```{r fig.show = "hold", fig.width = 7, fig.height = 4}
 anchors = (sin(1:70 / 3) * .25 + 1) * 350
+par(mfrow = c(1, 2))
 plot(anchors, type = 'l', xlab = 'Time (points)', ylab = 'Pitch (Hz)')
-sound = soundgen(pitch = anchors, sylLen = 1000, play = playback)
+sound = soundgen(pitch = anchors, sylLen = 1000, 
+                 play = playback, plot = TRUE)
+par(mfrow = c(1, 1))
 ```
 
 For more flexibility, anchors can also be specified at arbitary times using the "anchor format" - a dataframe with two columns: `time` (ms) and `value` (in the case of pitch, this is frequency in Hz). The function that generates smooth contours of f0 and other parameters is `getSmoothContour()`, and its interpolation algorithm is controlled by soundgen argument `interpol`. You do not have to call `getSmoothContour()` explicitly, but sometimes it can be helpful to do so in order to visualize the curve implied by your anchors. Time can range from 0 to 1, or it can be specified in ms – it makes no difference, since the produced contour is rescaled to match syllable duration.
@@ -195,7 +198,7 @@ sound = soundgen(sylLen = 900, play = playback,
 
 Beware of smoothing! A curve interpolated from a few anchors is not uniquely defined, and the interpolation algorithm has a major effect on its shape. If you call `loess()` from `getSmoothContour()`, for example, the amount of smoothing can be controlled with the `loessSpan` parameter:
 
-```{r fig.width = 7, fig.height = 4}
+```{r fig.show = "hold", fig.width = 7, fig.height = 4}
 sylLen = 500  # desired syllable length, in ms
 samplingRate = 16000
 sylLen_points = sylLen / 1000 * samplingRate
