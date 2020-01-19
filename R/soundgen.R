@@ -1,4 +1,4 @@
-# TODO: soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - check why longer dur in screams even w/o nonlin; soundgen - pitch2 for dual source (desynchronized vocal folds); rolloffNoiseExp around -6 dB/oct so flat after lipRad (Klatt & Klatt, 1990); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); rolloffNoiseExp around -6 dB/oct so flat after lipRad (Klatt & Klatt, 1990); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # pitch_app: see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
@@ -325,7 +325,7 @@ soundgen = function(
   addSilence = 100,
   pitchFloor = 1,
   pitchCeiling = 3500,
-  pitchSamplingRate = 3500,
+  pitchSamplingRate = 16000,
   dynamicRange = 80,
   invalidArgAction = c('adjust', 'abort', 'ignore')[1],
   plot = FALSE,
@@ -446,6 +446,17 @@ soundgen = function(
       pitchCeiling = samplingRate / 2
       message(paste('Some pitch values exceed pitchCeiling.',
                     'Resetting pitchCeiling to Nyquist frequency (samplingRate / 2).'))
+    }
+    mp = max(pitch$value)
+    if (mp * 10 > pitchSamplingRate) {
+      pitchSamplingRate = mp * 10
+      message(paste0('pitchSampingRate should be much higher than the',
+      'highest pitch; resetting to ', mp * 10, ' Hz'))
+    }
+    if (pitchSamplingRate > samplingRate) {
+      samplingRate = pitchSamplingRate
+      message(paste0('Resetting samplingRate to ',
+                     samplingRate, ' Hz because of high pitch'))
     }
   }
 

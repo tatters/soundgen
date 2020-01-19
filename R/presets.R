@@ -67,7 +67,7 @@ permittedValues = matrix(c(
   'addSilence', 100, 0, 1000, 50,
   'pitchFloor', 1, 1, 1000, 1,
   'pitchCeiling', 3500, 10, 100000, 10,
-  'pitchSamplingRate', 3500, 10, 100000, 10,
+  'pitchSamplingRate', 16000, 10, 100000, 10,
   'noiseFlatSpec', 1200, 0, 4000, 100,
 
   # soundgen_app() settings, which are not needed for soundgen()
@@ -130,7 +130,7 @@ defaults = list(
   addSilence = 100,
   pitchFloor = 1,
   pitchCeiling = 3500,
-  pitchSamplingRate = 3500,
+  pitchSamplingRate = 16000,
   dynamicRange = 80,
   pitch = list(
     time = c(0, .1, .9, 1),

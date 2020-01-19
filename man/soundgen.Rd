@@ -64,7 +64,7 @@ soundgen(
   addSilence = 100,
   pitchFloor = 1,
   pitchCeiling = 3500,
-  pitchSamplingRate = 3500,
+  pitchSamplingRate = 16000,
   dynamicRange = 80,
   invalidArgAction = c("adjust", "abort", "ignore")[1],
   plot = FALSE,

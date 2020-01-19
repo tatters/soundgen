@@ -388,6 +388,8 @@ s1 = fade(s, fadeIn = 200, fadeOut = 300, samplingRate = 16000,
 # different fades are available: linear, logarithmic, etc
 ```
 
+*TIP: attackLen in soundgen is applied only to voiced source, and before it is filtered (i.e., before formants are added). Artifacts are possible, such as audible clicks because the sound terminates too abruptly. In that case, please increase attackLen or fade in-out manually in post-production.*
+
 ## Spectral filter (formants)
 ### Vowel presets
 Argument `formants` (tab "Tract / Formants" in the app) sets the formants – frequency bands used to filter the excitation source. Just as an equalizer in a sound player amplifies some frequencies and dampens others, aappropriate filters can be applied to a tonal sound to make it resemble a human voice saying different vowels. Formants are created in the frequency domain using all-pole models if all formant amplitudes are positive and zero-pole models if there are anti-formants with negative amplitudes (Stevens, 2000, ch. 3).
@@ -402,7 +404,17 @@ soundgen(formants = 'aaai', play = playback)
 ### Manual formants
 Presets give you some rudimentary control over vowels. More subtle control is necessary for animal sounds, as well as for human vowels that are not included in the presets dictionary or for non-default speakers. For such cases you will have to specify at least the frequency of each formant (and optionally, also amplitude, bandwidth, and time stamps for each value). The easiest, and normally sufficient, approach is to specify frequencies only and have soundgen() figure out the appropriate amplitude and bandwidth for each formant. Bandwidth is calculated from frequency using a formula derived from human phonetic research. Namely, above 500 Hz it follows the original formula known as "TMF-1963" (Tappert, Martony, and Fant, 1963), and below 500 Hz it applies a correction to allow for energy losses at low frequencies (Khodai-Joopari & Clermont, 2002). Below 250 Hz the bandwidth starts to decrease again, in a purely empirical attempt to achieve reasonable values even for formant frequencies below ordinary human range. See the internal function soundgen:::getBandwidth() if you are interested and note that for anything but ordinary human voices it may be safer to specify formant bandwidths manually.
 
-Formant amplitudes are normally assumed to be determined by their frequency and bandwidth (see Stevens, 2000), but you can override this by specifying amplitudes explicitly. Note that changing the amplitude of one formant affects the entire spectrum above it.
+```{r fig.show = "hold", fig.width = 4, fig.height = 4}
+freqs = 2 ^ seq(log2(20), log2(20000), length.out = 500)
+plot(freqs, soundgen:::getBandwidth(freqs), type = 'l', 
+     log = 'xy', xlab = 'Center frequency, Hz',
+     ylab = 'Bandwidth, Hz', 
+     main = 'Default formant bandwidths')
+abline(v = 250, lty = 3)
+abline(v = 500, lty = 3)
+```
+
+Formant amplitudes are normally assumed to be determined by their frequency and bandwidth (see Stevens, 2000), but you can override this by specifying amplitudes explicitly. Note that changing the amplitude (or frequency, or bandwidth) of one formant affects the entire spectrum above it.
 
 For moving formants, provide multiple values, which assumes equal time steps, or specify time points explicitly, where time varies from 0 to 1 (to be scaled appropriately depending on the length of sound). For example:
 ```{r}
@@ -446,25 +458,14 @@ soundgen(formants = c(800, 1200), formantDepStoch = 0,
 Another useful method is to specify vocal tract length without any formants. In this case soundgen() approximates a neutral schwa sound for an animal with a vocal tract that looks like a uniform tube of this length. Crude, but often sufficient. A toy example (check presets for some more realistic sounds created using this method):
 
 ```{r fig.width = 7, fig.height = 4}
-soundgen(formants = NULL, vocalTract = 24, play = playback, plot = TRUE)
-soundgen(formants = NULL, vocalTract = 12, play = playback, plot = TRUE)
-```
-
-For very long vocal tracts, it is advisable to increase `formantCeiling` to maximum ~5-10 times the Nyquist frequency, otherwise the filter dampens high frequencies too much. The default setting is `formantCeiling = 2`, which is much faster and not too inaccurate for human-length vocal tracts. Compare:
-```{r fig.width = 7, fig.height = 4}
-soundgen(formants = NULL, vocalTract = 35, pitch = 80, formantCeiling = 2, 
-         play = playback, plot = TRUE)
-soundgen(formants = NULL, vocalTract = 35, pitch = 80, formantCeiling = 5, 
+soundgen(sylLen = 800, formants = NULL, rolloff = -6,
+         vocalTract = c(12, 18, 19), formantCeiling = 5, 
          play = playback, plot = TRUE)
 ```
 
-Vocal tract length can be variable. This is an easy way to create parallel formant transitions. Unlike the argument "mouth", variable "vocalTract" parameter recalculates formant bandwidths (unless these are specified manually) and is thus more accurate, but it requires you to specify a reasonable vocal tract length, in cm.
-```{r fig.width = 7, fig.height = 4}
-soundgen(sylLen = 800, formants = NULL, 
-         vocalTract = c(12, 18, 19), play = playback, plot = TRUE)
-```
+For very long vocal tracts, it is advisable to increase `formantCeiling` to maximum ~5-10 times the Nyquist frequency, otherwise the filter dampens high frequencies too much. The default setting is `formantCeiling = 2`, which is much faster and not too inaccurate for human-length vocal tracts. Note that vocal tract length can be variable, providing an easy way to create parallel formant transitions. 
 
-If you provide both a few formant frequencies and a variable `vocalTract`, formants are synthesized as specified at the initial value of `vocalTract` (that is, at the very beginning of the sound) and can deviate afterwards as VTL changes. Careful with such combinations: make sure the *initial* value of the VTL is reasonable for these formant frequencies (any VTL is fine towards the end of the sound - the user-specified formants will move accordingly). Examples:
+Unlike the argument "mouth", variable "vocalTract" parameter recalculates formant bandwidths (unless these are specified manually) and is thus more accurate, but it requires you to specify a reasonable vocal tract length, in cm. If you provide both a few formant frequencies and a variable `vocalTract`, formants are synthesized as specified at the initial value of `vocalTract` (that is, at the very beginning of the sound) and can deviate afterwards as VTL changes. Careful with such combinations: make sure the *initial* value of the VTL is reasonable for these formant frequencies (any VTL is fine towards the end of the sound - the user-specified formants will move accordingly). Examples:
 ```{r fig.width = 7, fig.height = 4}
 formants = list(f1 = c(500, 250), f2 = c(1500, 2800), f3 = 3500, f4 = 4300)
 estimateVTL(formants)  # 13.7 cm - so the initial VTL should be close to 13.7
@@ -479,7 +480,7 @@ soundgen(sylLen = 800, rolloff = -6, formants = formants,
 
 
 ### Spectral envelope
-Sometimes it may be useful to view moving formants before synthesizing the sound. The way to do this is to call explicitly the function that handles all formant processing under the hood, namely `getSpectralEnvelope`:
+Sometimes it may be useful to view moving formants before synthesizing the sound, or you may want to create a spectral envelope and then apply it to another sound with `transplantFormants()`. The way to create and view a spectral envelope is to call the function that handles all formant processing under the hood in soundgen, namely `getSpectralEnvelope`:
 
 ```{r fig.width = 4, fig.height = 4}
 # plotting directly from getSpectralEnvelope() in spectrogram form
@@ -501,7 +502,8 @@ Note that, in addition to formants, lip and nose radiation are also handled by t
 
 ### Antiformants
 For even more advanced spectral filters, you can specify both formants (poles) and antiformants (zeros). This may be useful if you want to create a nasalized sound. The numbering of formants is arbitrary, as long as they are arranged in the right order. For example, if you want to insert a new formant between F1 and F2 without renaming all higher formants, call it "f1.5" or something like that. It is important to use a non-integer number, since otherwise these additional formants will be inappropriately used to estimate the length of vocal tract and adding stochastic formants above the ones you specify (that is, if temperature > 0 and vocalTract = NA). 
-If you want antiformants, you should specify the ampitude of all formants, not only zeros, since there is no simple way for soundgen() to "guess" the most appropriate amplitudes for zero-pole models. For example, a slow transition from [a] to [a nasalized] might be coded as follows (note that formant f1.7 has negative amplitude, so f1.5 and f1.7 form a pole-zero pair):
+
+If you want antiformants, you might want to specify the ampitude of all formants, not only zeros, since there is no simple way for soundgen() to "guess" the most appropriate amplitudes for zero-pole models. For example, a slow transition from [a] to [a nasalized] might be coded as follows (note that formant f1.7 has negative amplitude, so f1.5 and f1.7 form a pole-zero pair):
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 4}
 formants = list(
@@ -531,7 +533,9 @@ plot(20 * log10(se[, ncol(se)]), type = 'l', xlab = '', ylab = 'dB')
 
 
 ### Mouth opening
-In addition to variable vocal tract length (`vocalTract` argument), another convenient shortcut for creating parallel formant transitions without coding all transitions by hand is provided by the `mouth` argument (in the app, tab "Tract / Mouth opening"). This can be thought of as a hyper-parameter offering an easy way to define moving formants within a bout: all formants go down as the mouth closes and rise as it opens (see Moore, 2016). In addition, an open mouth has lip radiation, which has the effect of amplifying higher frequencies. Lip radiation is replaced by nose radiation when the mouth is completely closed, dampening the higher frequencies, and the vowel is automatically nasalized using a simple approximation (Hawkins & Stevens, 1985). Basically, with the mouth closed we switch from a tube open at one end to a tube closed at both ends and coupled with a (simplified) nasal cavity. Despite being a crude model of what really happens when a vocalizing animal closes its mouth, in many cases `mouth` can save you a lot of manual coding of formants. Here is a simple example, with the mouth gradually opening and closing again:
+In addition to variable vocal tract length (`vocalTract` argument), an even easier shortcut for creating parallel formant transitions without coding all transitions by hand is provided by the `mouth` argument (in the app, tab "Tract / Mouth opening"). This can be thought of as a hyper-parameter offering an easy way to define moving formants within a bout (easy because you don't need to know the VTL in cm): all formants simply go down relative to specified values as the mouth closes and rise as it opens (see Moore, 2016). 
+
+In addition, an open mouth has lip radiation, which has the effect of amplifying higher frequencies. Lip radiation is replaced by nose radiation when the mouth is completely closed, dampening the higher frequencies, and the vowel is automatically nasalized using a simple approximation (Hawkins & Stevens, 1985). Basically, with the mouth closed we switch from a tube open at one end to a tube closed at both ends and coupled with a (simplified) nasal cavity. Despite being a crude model of what really happens when a vocalizing animal closes its mouth, in many cases `mouth` can save you a lot of manual coding of formants. Here is a simple example, with the mouth gradually opening and closing again:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(sylLen = 1200, play = playback, pitch = 140, 
              mouth = list(time = c(0, .3, .75, 1), 
@@ -545,7 +549,7 @@ spectrogram(s, samplingRate = 16000,
 *TIP Here and elsewhere, I talk about applying soundgen to the task of synthesizing non-human sounds. It does work, but be aware that many computational routines are based on human phonetic research, simply because there is vastly more data available on human vocal production. For example, formant bandwidths and spectral consequences of nasalization are estimated based on human phonetics, but it is far from clear to what extent these equations are applicable to sounds produced by non-human mammals. Bird calls are again a whole new ball game. And once you move on to insects or non-biological sounds, just forget about hyperparameters like `mouth` and code everything at the lowest possible level.*
 
 ### Add formants to an existing sound
-For some purposes it may be useful to separate the generation of glottal source (or another source of acoustic excitation) from its spectral filtering. You may also need to add formants to an existing waveform. To do so, you can call the helper function `addFormants()`, which normally works under the hood in soundgen. The algorithm is to take an STFT, multiply the resulting spectrum by the filter, and then convert it back to time domain via inverse STFT. The same function can theoretically be used to perform inverse filtering - that is, to remove formants from a signal - as long as you can provide a very accurate formant filter. See `?addFormants` for more information.
+For some purposes it may be useful to separate the generation of glottal source (or another source of acoustic excitation) from its spectral filtering. You may also need to add formants to an existing waveform. To do so, you can call the helper function `addFormants()`, which normally works under the hood in soundgen. The algorithm is to take an STFT, multiply the resulting spectrum by the filter, and then convert it back to time domain via inverse STFT. The same function can theoretically be used to perform inverse filtering - that is, to remove formants from a signal - as long as you can provide a VERY accurate formant filter. See `?addFormants` for more information.
 
 You can also lift formants off one sound and "transplant" them onto another. See `?transplantFormants` for more information and examples.
 
@@ -616,10 +620,10 @@ spectrogram(s3, samplingRate = 16000, osc = TRUE, heights = c(1, 1))
 ## Nonlinear effects
 Soundgen can add subharmonics and sidebands or even approximate deterministic chaos by adding strong jitter and shimmer. These effects basically make the sound appear noisy / harsh / rough. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid amplitude and/or frequency modulation, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic based on the desired frequency of subharmonics (`subFreq`). The actual frequency will not be exactly equal to `subFreq`, since it must be a fraction of f0 at all time points (one half, one third, etc). The amplitude of each subharmonic is a function of its distance from the nearest harmonic of the f0 stack and the desired width of sidebands (`subDep`). This way we can create either subharmonics or narrow sidebands that vary naturally as f0 changes over time, producing bifurcations and switching between different subharmonic regimes (see Wilden et al., 2012). 
 
-The main limitation of this approach is that it is too computationally costly to generate variable numbers of subharmonics for the entire bout. The solution currently adopted in soundgen is to break longer sounds into so-called "epochs" with a constant number of subharmonics in each. The epochs are synthesized separately, trimmed to the nearest zero crossing, and then glued together with a rapid `crossFade()`. This is suboptimal, since it shortens the sound and may introduce audible artifacts at transitions between epochs. `shortestEpoch` controls the approximate minimum length of each epoch. Longer epochs minimize problems with transitions, but the behavior of subharmonics then becomes less variable, since their number is constrained to be constant within each epoch.
+The main limitation of this approach is that it is too computationally costly to generate variable numbers of subharmonics for the entire bout. The solution currently adopted in soundgen is to break longer sounds into so-called "epochs" with a constant number of subharmonics in each. The epochs are synthesized separately, trimmed to the nearest zero crossing, and then glued together with a rapid `crossFade()`. This is suboptimal, since it shortens the sound and may introduce audible artifacts at transitions between epochs. `shortestEpoch` controls the approximate minimum length of each epoch. Longer epochs minimize problems with transitions, but the behavior of subharmonics then becomes less variable since their number is constrained to be constant within each epoch.
 
 ### Nonlinear regimes
-To add nonlinear effects, you can use just two parameters – `nonlinBalance` and `nonlinDep`  – that together regulate what proportion of the sound is modified and to what extent. However, for best results it is advisable to set advanced settings manually (see below). At temperature > 0, `nonlinBalance` creates a random walk that divides each syllable into epochs defined by their regime, using two thresholds to determine when a new regime begins (see Fitch et al., 2002):
+To add nonlinear effects stochastically, you can use `nonlinBalance`, which regulates approximately what proportion of the sound is affected. However, for best results it is advisable to set advanced settings manually (see below). At temperature > 0, `nonlinBalance` creates a random walk that divides each syllable into epochs defined by their regime, using two thresholds to determine when a new regime begins (see Fitch et al., 2002):
 
 1.  Regime 1: no nonlinear effects. 
 If nonlinBalance = 0%, the whole syllable is in regime 1.
@@ -630,7 +634,7 @@ Note that subharmonics are only added to segments with subFreq < f0 / 2.
 1.  Regime 3: subharmonics and jitter. 
 If nonlinBalance = 100%, the whole syllable is in regime 3. 
 
-`nonlinDep` is a hyper-parameter that adjusts several settings at once, making the voice harsher in pitch regimes 2 and 3, but without affecting the balance between regimes.
+To see any effect, you have to set jitterDep, shimmerDep, and subFreq/subDep to some positive values (see below).
 
 ### Subharmonics
 Moving on to advanced nonlinear effects settings, `subFreq` ("Subharmonic frequency, Hz" in the app) and `subDep` ("Width of sidebands, Hz") define the properties of subharmonics in pitch regimes 2 and 3. Say your vocalization has a relatively flat intonation contour with a fundamental frequency of about 800 Hz, and you want to add a single subharmonic (g0). You then set the expected subharmonic frequency to 400 Hz. Since g0 is forced to be an integer fraction of f0 at all time points, it will not be exactly 400 Hz, but it will produce a single subharmonic at f0 / 2 (as long as f0 stays close to 800 Hz: if f0 goes up to 1200 Hz, you will get two subharmonics instead, since 1200 / 400 = 3). The width of sidebands defines how quickly the energy of subharmonics dissipates at a remove from the nearest f-harmonic. For example, our single subharmonic is audible but weak at sideband width = 150 Hz, while it becomes strong enough to be perceived as the new f0 at sideband width = 400 Hz, effectively halving the pitch:
@@ -688,14 +692,14 @@ As for jitter in pitch regime 3, it wiggles both f0 and g0 harmonic stacks, blur
 # To get jitter/shimmer without subharmonics, set `temperature = 0, subDep = 0`
 # or a positive temperature and `nonlinBalance = 100, subDep = 0`
 # and specify the required jitter depth and period
-s1 = soundgen(jitterLen = 50, jitterDep = 1,  # shaky voice
-              shimmerLen = 30, shimmerDep = 10,   
+s1 = soundgen(jitterLen = 40, jitterDep = 1,  # shaky voice
+              shimmerLen = 30, shimmerDep = 30,   
               sylLen = 1000, subDep = 0, nonlinBalance = 100,
-              pitch =  c(150, 170), play = playback)
+              pitch =  c(150, 170), play = playback, plot = TRUE)
 s2 = soundgen(jitterLen = 1, jitterDep = 1,   # harsh voice
               shimmerLen = 1, shimmerDep = 10, 
               sylLen = 1000, subDep = 0, nonlinBalance = 100,
-              pitch =  c(150, 170), play = playback)
+              pitch =  c(150, 170), play = playback, plot = TRUE)
 ```
 
 To get jitter + shimmer + subharmonics, set temperature to 0 (nonlinear effects are then applied to the entire sound, but note that extra formants are then not added) or - the recommended solution - use nonlinBalance close to 100% with temperature > 0, thus preserving stochastic behavior of other parameters. For example, barks of a small, annoying dog can be roughly approximated with this minimal code (ignoring respiration to keep things simple):
@@ -751,39 +755,7 @@ s = soundgen(sylLen = 800,
 ```
 
 ### Specifying the timing of each nonlinear regime
-Sometimes it may be necessary to control precisely the timing of each nonlinear regime. For example, in an experiment a sound containing nonlinear effects may need to be synthesized repeatedly, varying one parameter and preserving everything else, including nonlinear regimes. Normally soundgen divides a sound into different nonlinear regimes by generating a random walk, which also controls the drift of some other control parameters. Setting temperature at nearly zero (say, at 0.001) removes random variation in most control parameters, but the random walk for nonlinear effects still remains random. To standardize that random walk as well, use `nonlinRandomWalk`. 
-
-`nonlinRandomWalk` should be a vector containing 0, 1, and 2, where 0 = no nonlinearities, 1 = subharmonics, and 2 = subharmonics + jitter + shimmer. The number and order of 0/1/2 determines which nonlinear regime is active at which time. For example, this will make a sound with no effect in the first third, subharmonics in the second third, and jitter in the final third of the total duration:
-
-```{r fig.width = 5, fig.height = 5}
-rw_bin = c(rep(0, 100), rep(1, 100), rep(2, 100))
-s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
-             subFreq = 100, subDep = 70, jitterDep = 1,
-             nonlinRandomWalk = rw_bin, 
-             play = playback, plot = TRUE, ylim = c(0, 4))
-```
-
-Make `nonlinRandomWalk` a fairly long vector for greater precision, i.e. not just `c(0, 1)` - because of the way `approx` works, that will NOT split the sound into 50% with no nonlinear effects and 50% with subharmonics. Instead, write `c(rep(0, 50), rep(1, 50))` or some such. 
-
-You can also generate an actual random walk and then use it in several sounds to make sure their nonlinear effects have exactly the same timing. For example, here are two sounds with different pitch levels, but identical otherwise, including identical nonlinear regimes:
-
-```{r fig.show = "hold", fig.width = 5, fig.height = 3}
-# set up a random walk (repeat until satisfied with the contour)
-rw = getRandomWalk(len = 1000, rw_range = 100, 
-                   trend = c(0.5, -0.5), rw_smoothing = .3)
-rw_bin = getIntegerRandomWalk(rw, minLength = 100, plot = TRUE)
-# synthesize two sounds with identical nonlinear effects but different f0
-s1 = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
-              subFreq = 100, subDep = 70, jitterDep = 1,
-              nonlinRandomWalk = rw_bin, 
-              play = playback, plot = TRUE, ylim = c(0, 4))
-s2 = soundgen(sylLen = 800, pitch = 500, temperature = 0.001,
-              subFreq = 100, subDep = 70, jitterDep = 1,
-              nonlinRandomWalk = rw_bin, 
-              play = playback, plot = TRUE, ylim = c(0, 4))
-```
-
-In case this whole random walk routine gets a bit overwhelming, here is a much easier way to control the timing of nonlinear effects. Set `nonlinBalance` to 100 (the entire vocalization) and vary the strength of nonlinear effects with their vectorized "depth" settings:
+Sometimes it may be necessary to control precisely the timing of each nonlinear regime. For example, in an experiment a sound containing nonlinear effects may need to be synthesized repeatedly, varying one parameter and preserving everything else, including nonlinear regimes. To control the timing of nonlinear effects manually, set `nonlinBalance` to 100 (the entire vocalization) and vary the strength of nonlinear effects with their vectorized "depth" settings:
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 s = soundgen(
   # nonlinear settings
@@ -835,9 +807,39 @@ s = soundgen(
 )
 ```
 
+Here is another method of controlling the timing of nonlinear phenomena. When `nonlinBalance < 100`, soundgen divides a sound into different nonlinear regimes by generating a random walk, which also controls the drift of some other control parameters. Setting temperature at nearly zero (say, at 0.001) removes random variation in most control parameters, but the random walk for nonlinear effects still remains random. To standardize that random walk as well, use `nonlinRandomWalk`. `nonlinRandomWalk` should be a vector containing 0, 1, and 2, where 0 = no nonlinearities, 1 = subharmonics, and 2 = subharmonics + jitter + shimmer. The number and order of 0/1/2 determines which nonlinear regime is active at which time. For example, this will make a sound with no effect in the first third, subharmonics in the second third, and jitter in the final third of the total duration:
+
+```{r fig.width = 5, fig.height = 5}
+rw_bin = c(rep(0, 100), rep(1, 100), rep(2, 100))
+s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
+             subFreq = 100, subDep = 70, jitterDep = 1,
+             nonlinRandomWalk = rw_bin, 
+             play = playback, plot = TRUE, ylim = c(0, 4))
+```
+
+Make `nonlinRandomWalk` a fairly long vector for greater precision, i.e. not just `c(0, 1)` - because of the way `approx` works, that will NOT split the sound into 50% with no nonlinear effects and 50% with subharmonics. Instead, write `c(rep(0, 50), rep(1, 50))` or some such. 
+
+You can also generate an actual random walk and then use it in several sounds to make sure their nonlinear effects have exactly the same timing. For example, here are two sounds with different pitch levels, but identical otherwise, including identical nonlinear regimes:
+
+```{r fig.show = "hold", fig.width = 5, fig.height = 3}
+# set up a random walk (repeat until satisfied with the contour)
+rw = getRandomWalk(len = 1000, rw_range = 100, 
+                   trend = c(0.5, -0.5), rw_smoothing = .3)
+rw_bin = getIntegerRandomWalk(rw, minLength = 100, plot = TRUE)
+# synthesize two sounds with identical nonlinear effects but different f0
+s1 = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
+              subFreq = 100, subDep = 70, jitterDep = 1,
+              nonlinRandomWalk = rw_bin, 
+              play = playback, plot = TRUE, ylim = c(0, 4))
+s2 = soundgen(sylLen = 800, pitch = 500, temperature = 0.001,
+              subFreq = 100, subDep = 70, jitterDep = 1,
+              nonlinRandomWalk = rw_bin, 
+              play = playback, plot = TRUE, ylim = c(0, 4))
+```
+
 
 ## Unvoiced component (turbulent noise)
-In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. It's strongly recommended to include at least some noise in most vocalizations, if only because it's more natural to have noise instead of harmonics in the upper part of the source spectrum.
+In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. It is often appropriate to include at least some noise in synthetic vocalizations, if only because it is more natural to have noise instead of harmonics in the upper part of the source spectrum.
 
 ### Noise spectrum
 The perceptual quality of turbulent noise depends on its spectral composition, which is controlled by two soundgen arguments: `formantsNoise` and `rolloffNoise` (in the app, use "Tract / Unvoiced type"). Noise is generated as white noise with spectral rolloff given by `rolloffNoise` ("Noise rolloff, dB/octave" in the app) above a certain cutoff value (`flatSpectrum`, the default is currently 1200 Hz). The timing of the unvoiced component relative to the voiced component is controlled by the argument `noise`, which is discussed in the next section. There are two basic types of turbulent noise in soundgen:
@@ -917,42 +919,42 @@ s1 = soundgen(sylLen = 1500, vocalTract = 17.5,
 In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. In soundgen, the relevant argument is `noise = data.frame(time = ..., value = ...)`. It sets the timing and loudness of turbulent noise relative to the voiced component of a typical syllable. Starting from soundgen v1.4, you have three options in terms of how the amplitudes of the voiced and unvoiced components are compaired: 
 
 1. If `noiseAmpRef = 'f0'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the first harmonic (f0) of the voiced component. Until soundgen v1.4, this was the only available option. This setting makes the balance between harmonics and noise dependent on source spectrum (rolloff settings) and formants of both components. Example:
-```{r fig.width = 7, fig.height = 5}
+```{r}
 s1 = soundgen(noiseAmpRef = 'f0', rolloff = -1, 
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 s2 = soundgen(noiseAmpRef = 'f0', rolloff = -15, 
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 ```
 
 2. If `noiseAmpRef = 'source'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the unfiltered voiced component ("glottal source"). In other words, you are specifying how loud the noise is relative to the source of excitation, but the actual balance between harmonics and noise can vary depending on the formant structure. Example:
-```{r fig.width = 7, fig.height = 5}
+```{r}
 # Harmonics-noise balance doesn't depend on rolloff...
 s3 = soundgen(noiseAmpRef = 'source', rolloff = -15, rolloffNoise = 0,
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 s4 = soundgen(noiseAmpRef = 'source', rolloff = -1, rolloffNoise = -20,
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 
 # ...but it does depend on the formant structure
 s5 = soundgen(noiseAmpRef = 'source', formants = 'a', 
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 s6 = soundgen(noiseAmpRef = 'source', formants = 'u',
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 ```
 
 3. If `noiseAmpRef = 'filtered'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the filtered voiced component (after adding formants). The balance between harmonics and noise therefore doesn't depend on either rolloff or formants. This is the default option. Example:
-```{r fig.width = 7, fig.height = 5}
+```{r}
 s7 = soundgen(noiseAmpRef = 'filtered', formants = 'a', 
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 s8 = soundgen(noiseAmpRef = 'filtered', formants = 'u',
               noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              plot = T, osc = T, play = playback)
+              play = playback)
 ```
 
 *TIP If you need a very precise balance of harmonics and noise based on another normalization (RMS amplitude, minimum or median instead of maximum amplitude, etc.), you can always synthesize the harmonic and noise components separately and then simply add them up at whatever amplitudes you like*
@@ -977,9 +979,10 @@ s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120,
              plot = TRUE, osc = TRUE, ylim = c(0, 4), play = playback)
 ```
 
-Note that in the previous example `formantsNoise` defines the change of filter for the unvoiced components over the entire bout, i.e. across multiple syllables. This is similar to the way `formants` define the global change in formants across syllables. In contrast, if you have multiple bouts with one syllable in each, the change of unvoiced filter plays out within each bout, and the pause between is counted from the end of the unvoiced component, without any overlap between bouts. Compare the example above to the following (the only change is to use `repeatBout` instead of `nSyl`). Observe the difference in unvoiced formants and pause duration:
+Note that in the previous example `formantsNoise` defines the change of filter for the unvoiced components over the entire bout, i.e. across multiple syllables. This is similar to the way `formants` define the global change in formants across syllables. In contrast, if you have multiple bouts with one syllable in each, the change of unvoiced filter plays out within each bout, and the pause between the bouts is counted from the end of the unvoiced component, without any overlap between bouts. Compare the example above to the following (the only change is to use `repeatBout` instead of `nSyl`). Observe the behavior of `formantsNoise` (moving within each bout) and the duration of the pause between the syllables (~30 ms) and between the bouts (120 ms):
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(repeatBout = 2, sylLen = 120, pauseLen = 120, 
+s = soundgen(repeatBout = 2, nSyl = 2,
+             sylLen = 120, pauseLen = 120, 
              temperature = 0.001, rolloffNoise = -2, 
              noise = data.frame(time = c(39, 56, 209), 
                                 value = c(-40, 0, -20)),
@@ -1053,7 +1056,7 @@ s = crossFade(cow1 * 3, cow2,  # adjust the relative volume by scaling
 spectrogram(s, 16000, osc=T, ylim = c(0, 4))
 ```
 
-If you want the two sounds to overlap without a cross-fade, you can use `addVectors()`, which simply makes sure two waveforms are padded with zeros to the same length and overlapped intelligently. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add chirping of birds in the background:
+If you want the two sounds to overlap without a cross-fade, you can use `addVectors()`, which simply makes sure two waveforms are padded with zeros to the same length and overlapped intelligently. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add some chirping of birds in the background:
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 sound1 = soundgen(sylLen = 700, pitch = 250:180, 
@@ -1116,17 +1119,17 @@ m = suppressMessages(morph(formula1 = list(repeatBout = 2),
 When synthesizing a new sound with the function `soundgen()`, a serious challenge is to find the values of all its many arguments that will together produce the result you want. Below I discuss three methods for adjusting soundgen settings: (1) manual matching by ear, (2) matching by acoustic analysis, and (3) matching by formal optimization.
 
 ## Matching by ear
-If the sound you are trying to create exists only in your imagination, there is nothing for it but to tinker with argument values until a satisfactory result is achieved. Even if you have an existing audio recording that you wish to duplicate, the fastest and surest way to find the appropriate soundgen settings - in my experience - is to do it manually, using soundgen_app() and/or typing and editing R scripts with calls to soundgen(). I prefer to work with scripts.
+If the sound you are trying to create exists only in your imagination, there is nothing for it but to tinker with argument values until a satisfactory result is achieved. Even if you have an existing audio recording that you wish to duplicate, the fastest and surest way to find the appropriate soundgen settings - in my experience - is to do it manually, using soundgen_app() and/or typing and editing R scripts with calls to soundgen(). I prefer to work with scripts and match everything by ear, using Audacity for visualization.
 
 There is a separate vignette on manually matching an existing sound. Since it contains a lot of audio files, it is not published with the package, but you can access it on the project's webpage at <a href="http://cogsci.se/soundgen/matching/matching.html">http://cogsci.se/soundgen/matching/matching.html</a>. Here is a condensed version:
 
 1.  Open the target sound, if you have one, in an interactive audio editor(s) of your choice. I mostly use Audacity, although Praat offers the nice feature of being able to click on the spectrogram and see the exact frequency of a particular spectral element.
 1.  Match the temporal parameters. If there are several stereotypical syllables, set `repeatBout`. If syllables are repetitive but not identical, with an overall drift of f0 and formants, set `nSyl`. Note that `sylLen` and `pauseLen` refer to the duration of voiced segments and pauses between them - unvoiced segments do not count. If the syllables are very different, synthesize them one by one with separate calls to soundgen() and then concatenate as described in section 3 ("Combining two sounds"). Biphonic sounds with more than one fundamental frequency can be synthesized separately and overlaid with `addVectors()`.
-1.  Match the fundamental frequency. No existing pitch tracker is reliable enough, so just find f0 manually using your ears and a narrow-band spectrogram (window length of 40-50 ms is usually about right). Use as few pitch anchors as possible: `pitch = 440` for flat intonation, `pitch = c(440, 300)` for a linear slide, `pitch = c(300, 440, 300)` for a rising-falling contour, or `pitch = data.frame(time = c(0, .1, 1), value = c(300, 440, 300))` for more complex contours with values specified at arbitrary time points. For multiple syllables, describe how f0 changes across syllables using `pitchGlobal`. Remember that you don't need to manually code every tiny fluctuation of f0: you can also add (regular) vibrato, (irregular) jitter with large `jitterLen`, or increase the effect of temperature on f0 with `tempEffects = list(pitchDriftDep = ..., pitchDriftFreq = ..., pitchDep = ...)`.
+1.  Match the fundamental frequency. No existing pitch tracker is reliable enough, so just find f0 manually using your ears and a narrow-band spectrogram (window length of 40-50 ms is usually about right). Use as few pitch anchors as possible: `pitch = 440` for flat intonation, `pitch = c(440, 300)` for a linear slide, `pitch = c(300, 440, 300)` for a rising-falling contour, or `pitch = data.frame(time = c(0, .1, 1), value = c(300, 440, 300))` for more complex contours with values specified at arbitrary time points. For multiple syllables, describe how f0 changes across syllables using `pitchGlobal`. Remember that you don't need to manually code every tiny fluctuation of f0: you can also add (regular) vibrato, (irregular) jitter with large `jitterLen`, or increase the effect of temperature on f0 with `tempEffects = list(pitchDriftDep = ..., pitchDriftFreq = ..., pitchDep = ...)`. If you do want to repeat very precisely the pitch contour of an existing recording, I would recommend extracting a manually corrected pitch contour with `pitch_app()` or PRAAT.
 1.  Match the formants. No existing algorithm for finding formants even remotely approaches the sensitivity of human perception, so again, just do it manually. Often it may be tricky to find the formants by eyeballing the spectrogram, especially if the sound is short, tonal, and high-pitched. In the worst case try a schwa with `formants = NULL, vocalTract = my-best-guess-in-cm` (for humans vocal tract length is between 10 and 20 cm). If you can hear or see the first few formants, specify them using as few anchors as possible, always starting at F1. For example, for stationary F1-F3 type `formants = c(600, 1700, 3000)` (f4 and above will be added automatically based on the estimated vocal tract length); for moving F1, type `formants = list(f1 = c(500, 700), f2 = 1700, f3 = 3000`; for more complicated cases, see the section on formants above. Remember that formant transitions apply to the entire bout, i.e. across multiple syllables if `nSyl > 1`. If formant tracks are roughly parallel (e.g. all formants descend together), it's easier to write stationary formants and add something like `mouth = c(0.6, 0.4)`.
 1.  Match nonlinear effects by adding subharmonics / sidebands, jitter, and shimmer. Don't forget to set `nonlinBalance` to a positive number.
 1.  Match the turbulent noise component by adjusting `noise`. Often the formant structure of turbulent noise is similar enough to the voiced component to leave the default `formantsNoise = NULL`; if not, specify `formantsNoise` separately. A bit of breathing provides excellent glue between syllables - set the last value of `noise$time` to more than `sylLen` to extend breathing beyond the voiced part.
-1.  Match the spectral envelope by adjusting `rolloff` and `rolloffNoise`. Plot the long-term average spectrum of the target and of the candidate sound using `seewave::meanspec()` and try to match the two spectra. Don't start with this until you are satisfied that you have got the formants right, because spectral slope depends strongly on formant frequencies.
+1.  Match the spectral envelope by adjusting `rolloff` and `rolloffNoise`. Plot the long-term average spectrum of the target and of the candidate sound using `seewave::meanspec()` and try to match the two spectra. Don't start with this until you are satisfied that you have got the formants right, because spectral slope depends strongly on formant frequencies. Keep in mind that rolloff is hardly ever stable throughout the sound. It's very common to have something like `rolloff = c(-14, -9, -8, -15)` to have a brighter sound with strong harmonics in the middle of a call, with softer and breathier voice quality at the beginning and end.
 1.  Match the amplitude envelope with `ampl`, attack with `attackLen`, and/or amplitude modulation with `amDep = ..., amFreq = ...`. This is best done once you are happy with other settings, since amplitude envelope is affected by the chosen values of f0, formants, noise, and rolloff.
 1.  Adjust the amount of stochasticity by generating the sound repeatedly and varying `temperature` and `tempEffects = list(...)`. 
 

@@ -9,9 +9,11 @@ MINOR:
   * soundgen(): if "noise" argument is numeric rather than a list, noise component is time-locked to voiced component to ensure precisely the same timing
   * soundgen(): invalidArgAction="ignore" consistently removes all limits (noise-related pars were reset to defaults in earlier versions)
   * soundgen(): change in defaults related to nonlinear phenomena: nonlinBalance defaults to 100%, with no jitter, shimmer, or subharmonics
+  * soundgen(): higher default pitchSamplingRate, automatically reset to 10 * max pitch for more reliable control of syllable duration
   * soundgen(), soundgen_app(): nonlinDep is deprecated
   * soundgen(): the "interpol" parameter is applied to (almost all) types smoothing more consistently
   * getSmoothContour(): a new argument "loessSpan" passed on to loess() for controlling the amount of smoothing of pitch contours, etc
+
 
           CHANGES IN SOUNDGEN VERSION 1.6.0 [09-December-2019]
 BUGS FIXED:
