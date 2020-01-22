@@ -1,3 +1,6 @@
+          CHANGES IN SOUNDGEN VERSION 1.6.1.9000 [--Date--]
+
+
           CHANGES IN SOUNDGEN VERSION 1.6.1 [22-January-2020]
 BUGS FIXED:
   * soundgen(): stochastic formants properly added to breathing noise even without specifying VTL (bug introduced in v1.6.0)
