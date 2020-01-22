@@ -16,14 +16,14 @@ vignette: >
   
 # Purpose
   
-There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat <a href="http://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is Sound Analysis Pro. In R, the most extensive acoustic toolkit by far is the <a href="https://CRAN.R-project.org/package=seewave">seewave</a> package. Soundgen builds upon the functionality of seewave, adding high-level functions for sound synthesis (see the vignette on sound synthesis), manipulation, and analysis.
+There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat <a href="http://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is Sound Analysis Pro. In R, the most general-purpose acoustic toolkit is the <a href="https://CRAN.R-project.org/package=seewave">seewave</a> package. Soundgen builds upon the functionality of seewave, adding high-level functions for sound synthesis (see the vignette on sound synthesis), manipulation, and analysis.
   
 Reasons to use `soundgen` for acoustic analysis might be: 
   
   1. User-friendly approach: a single call to the `analyzeFolder` function will give you a dataframe containing dozens of commonly used acoustic descriptors for each file in an entire folder. So if you'd rather get started with model-building without delving too deeply into acoustics, you are one line of code away from your dataset.
   1. Flexible pitch tracking: soundgen uses several popular methods of pitch detection in parallel, followed by their integration and postprocessing. While the abundance of control parameters may initially seem daunting, for those who do wish to delve deeply this makes soundgen's pitch tracker very versatile and offers a lot of power for high-precision analysis.
   1. An interactive app for manual correction of pitch contours - `pitch_app()`.
-  1. Audio segmentation with in-built optimization: the tools for syllable segmentation are again very flexible. Control parameters can even be optimized automatically, as long as you have a manually segmented training sample.
+  1. Audio segmentation with in-built optimization: the tools for syllable segmentation and detection of energy bursts are fast and simple (based on smoothed intensity contours) but quite flexible. Control parameters can also be optimized automatically as long as you have a manually segmented training sample.
   1. Additional specialized tools for acoustic analysis such as modulation spectra and self-similarity matrices.
   
 Many of the large variety of existing tools for acoustic analysis were designed with a particular type of sound in mind, usually human speech or bird songs. Soundgen's pitch tracker was written to analyze human non-linguistic vocalizations like screams and laughs. These sounds are much harsher and noisier than ordinary speech and stand much closer to the vocalizations of other mammals than to human speech. In addition, the original corpus (Anikin & Persson, 2017) was collected from online videos, so that both sampling rate and microphone settings varied tremendously. From the very beginning, the focus has thus been on developing a pitch tracker and a segmenting tool that would be robust to noise and recording conditions. This makes soundgen highly suitable for performing acoustic analysis of animal vocalizations. You can of course apply soundgen to speech, but note that it was not optimized for speech, unlike specialized phonetic software like Praat.
@@ -56,9 +56,9 @@ To demonstrate acoustic analysis in practice, let's begin by generating a sound 
 library(soundgen)
 s1 = soundgen(sylLen = 900, temperature = 0,
               pitch = list(time = c(0, .3, .8, 1), 
-                           value = c(300, 900, 400, 2300)),
-              noise = c(-40, -20), subDep = 100, 
-              jitterDep = 0.5, nonlinBalance = 100,
+                           value = c(300, 900, 400, 1300)),
+              noise = c(-40, -20), 
+              subDep = 100, jitterDep = 0.5, 
               plot = TRUE, ylim = c(0, 4))
 # playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
 ```
@@ -66,9 +66,9 @@ s1 = soundgen(sylLen = 900, temperature = 0,
 The contour of f0 is determined by our pitch anchors, so we can calculate the true median pitch:
 ```{r}
 true_pitch = getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
-                                             value = c(300, 900, 400, 2300)),
+                                             value = c(300, 900, 400, 1300)),
                               len = 1000)  # any length will do
-median(true_pitch)  # 611 Hz
+median(true_pitch)  # 633 Hz
 ```
 
 
@@ -504,6 +504,8 @@ You may not feel too excited to learn that soundgen contains a wrapper around `a
 *TIP Processing time varies a lot depending on the exact settings and input, but expect up to a few seconds of machine time per second of audio. The surest way to speed things up is to reduce `step` and to avoid `pathfinding = 'slow'` (other types of postprocessing have very little effect on processing time)*
 
 
+## Manual correction of pitch contours with pitch_app()
+Just like `soundgen_app()` is an interactive shiny app for sound synthesis, `pitch_app()` provides a wrapper around `analyze()` with an option to step in and manually correct the intonation contour. The app runs in a browser; you can load one or more wav or mp3 files, adjust the settings, verify and correct the pitch contours, and save the output as a .csv file. Please see `?pitch_app` for more information.
 
 
 # Audio segmentation 
@@ -545,10 +547,12 @@ a3 = segment(s2, samplingRate = 16000, plot = TRUE,
 * `shortestSyl` and `shortestPause` incorporate our prior knowledge by expecting the syllables and pauses between them to be at least 40 ms long (by default). Setting `shortestSyl` and `shortestPause` too low may inflate the number of discovered syllables, but burst detection should not be affected as much. If `shortestSyl` is too high, excluding shorter fragments, we won't find any syllables, but burst detection can still succeed. The most damaging mistake is to set `shortestPause` too high, because separate syllables are then merged and the expected interburst interval becomes inflated, preventing the algorithm from recognizing closely spaced bursts (see the example below). 
 
 ```{r fig.show = "hold", fig.height = 4, fig.width = 5}
+# too long, but at least bursts are detected
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             shortestSyl = 80)    # too long, but at least bursts are detected
+             shortestSyl = 80, main = 'shortestSyl too long')    
+# merges syllables
 a2 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             shortestPause = 80)  # merges syllables
+             shortestPause = 80, main = 'shortestPause too long')  
 ```
 
 * `burstThres` and `peakToTrough` control how high a burst has to be in absolute terms (compared to the global maximum of the envelope) and in relative terms (compared to the local minimum). So a burst is a local maximum that is at least `burstThres` high and at least `peakToTrough` times higher than the local minimum. The size of the analysis window for finding local maxima and minima is controlled by `interburst`, which defaults to the median length of detected syllables times `interburstMult`. By default the local minimum is only calculated to the left of the candidate burst (`troughLeft = TRUE, troughRight = FALSE`). The left-right distinction is irrelevant with this artificial, perfectly symmetrical example, but it appears to improve performance with real-life sounds, which often display assymmetrical attack with sharp onset and more gentle decay.
@@ -556,7 +560,7 @@ a2 = segment(s2, samplingRate = 16000, plot = TRUE,
 ```{r fig.show = "hold", fig.height = 4, fig.width = 5}
 # absolute threshold burstThres set too high
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             burstThres = 0.5)
+             burstThres = 0.5, main = 'burstThres too high')
 # improper syllable merging due to shortestPause, but overriden by manually 
 # specified interburst
 a2 = segment(s2, samplingRate = 16000, plot = TRUE, 

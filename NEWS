@@ -1,7 +1,7 @@
-          CHANGES IN SOUNDGEN VERSION 1.6.1 [---date---]
+          CHANGES IN SOUNDGEN VERSION 1.6.1 [22-January-2020]
 BUGS FIXED:
   * soundgen(): stochastic formants properly added to breathing noise even without specifying VTL (bug introduced in v1.6.0)
-  * soundgen(), getSpectralEnvelope(): manually specifying bandwidth works again (bug introduced in v1.6.0)
+  * soundgen(), getSpectralEnvelope(): manually specifying formant bandwidth works again (bug introduced in v1.6.0)
   * soundgen(): tempEffects(pitchDriftDep = 0) no longer crashes because removing pitch drift no longer prevents amplitude drift from working
   * transplantFormants(): step no longer conflicts with overlap
   * soundgen_app(): debugged consonant presets
@@ -13,7 +13,7 @@ MINOR:
   * soundgen(): change in defaults related to nonlinear phenomena: nonlinBalance defaults to 100%, with no jitter, shimmer, or subharmonics
   * soundgen(): higher default pitchSamplingRate, automatically reset to 10 * max pitch for more reliable control of syllable duration
   * soundgen(), soundgen_app(): nonlinDep is deprecated
-  * soundgen(): the "interpol" parameter is applied to (almost all) types smoothing more consistently
+  * soundgen(): the "interpol" parameter is applied to (almost all) types of smoothing more consistently
   * getSmoothContour(): a new argument "loessSpan" passed on to loess() for controlling the amount of smoothing of pitch contours, etc
 
 

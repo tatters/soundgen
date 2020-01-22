@@ -1,4 +1,4 @@
-# TODO: rolloffNoiseExp around -6 dB/oct so flat after lipRad (Klatt & Klatt, 1990); soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # pitch_app: see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
@@ -454,7 +454,7 @@ soundgen = function(
     mp = max(pitch$value)
     if (mp * 10 > pitchSamplingRate) {
       pitchSamplingRate = mp * 10
-      message(paste0('pitchSampingRate should be much higher than the',
+      message(paste0('pitchSampingRate should be much higher than the ',
                      'highest pitch; resetting to ', mp * 10, ' Hz'))
     }
     if (pitchSamplingRate > samplingRate) {
