@@ -263,3 +263,116 @@ getRolloff = function(pitch_per_gc = c(440),
 
   return(r)
 }
+
+
+#' Lock to formants
+#'
+#' Internal soundgen function
+#'
+#' When f0 or another relatively strong harmonic is close to one of the formants, the pitch contour is modified so as to "lock" it to this formant. The relevant metric is energy gain (ratio of amplitudes before and after the adjustment) penalized by the magnitude of the necessary pitch jump (in semitones) and the amplitude of the locked harmonic relative to f0.
+#' @param pitch pitch contour, numeric vector (normally pitch_per_gc)
+#' @param specEnv spectral envelope as returned by getSpectralEnvelope
+#' @param rolloffMatrix rolloff matrix as returned by getRolloff
+#' @param lockProb the (approximate) proportion of sound affected by formant locking
+#' @param minLength the minimum number of consecutive pitch values affected (shorter segments of formant locking are ignored)
+#' @param plot if TRUE, plots the original and modified pitch contour
+#' @keywords internal
+#' @examples
+#' n = 50
+#' pitch = getSmoothContour(len = n, anchors = c(600, 2000, 1900, 400),
+#'   thisIsPitch = TRUE, plot = TRUE)
+#' rolloffMatrix = getRolloff(pitch_per_gc = pitch)
+#' specEnv = getSpectralEnvelope(nr = 512, nc = length(pitch),
+#'   formants = list(f1 = c(800, 1200), f2 = 2000, f3 = c(3500, 3200)),
+#'   lipRad = 0, temperature = .00001, plot = T)
+#' pitch2 = lockToFormants(pitch = pitch, specEnv = specEnv,
+#'   rolloffMatrix = rolloffMatrix,
+#'   lockProb = .5, minLength = 2, plot = TRUE)
+#' pitch2
+lockToFormants = function(pitch,
+                          specEnv,
+                          rolloffMatrix = NULL,
+                          lockProb = .1,
+                          minLength = 3,
+                          plot = FALSE) {
+  if (!is.null(rolloffMatrix)) {
+    nr = nrow(rolloffMatrix)
+  } else {
+    nr = 1
+    rolloffMatrix = matrix(1)
+  }
+
+  # Calculate how much we can gain by locking a harmonic to a formant at each time point
+  d = data.frame(pitch = pitch)
+  d$pitch2 = d$pitch1 = d$pitch
+  d[, c('idx_max_gain', 'gain', 'nearest_formant')] = NA
+  for (i in 1:length(pitch)){
+    if (FALSE) {
+      plot(freqs, specEnv[, i], type = 'l')
+      abline(v = pitch[i], lty = 3)
+    }
+    freqs = as.numeric(rownames(specEnv)) * 1000
+    formants = as.data.frame(seewave::fpeaks(cbind(freqs, specEnv[, i]), threshold = 1, plot = FALSE))
+
+    # for each harmonic in rolloffMatrix
+    temp = data.frame(harmonic = 1:nr, gain = NA, nearest_formant = NA)
+    for (h in 1:nr) {
+      nearest_formant = which.min(abs(formants$freq - pitch[i] * h))
+      nearest_formant_amp = formants$amp[nearest_formant]
+      idx_cur = which.min(abs(freqs - pitch[i] * h))
+      amp_gain = nearest_formant_amp / specEnv[idx_cur, i]  # how much E can be gained if locked to nearest formant
+      dist_to_nearest_formant = 12 * abs(log2(pitch[i] * h) - log2(formants$freq[nearest_formant])) # semitones
+      temp$gain[h] = amp_gain / dist_to_nearest_formant * rolloffMatrix[h, i]
+      temp$nearest_formant[h] = formants$freq[nearest_formant]
+    }
+    d$idx_max_gain[i] = which.max(temp$gain)
+    d$gain[i] = temp$gain[d$idx_max_gain[i]]
+    d$nearest_formant[i] = temp$nearest_formant[d$idx_max_gain[i]]
+    # the prob of locking to the nearest formant is some function of the gain in E
+    # penalized by dist_to_nearest_formant
+  }
+
+  #
+  lockThreshold = as.numeric(quantile(d$gain, probs = 1 - lockProb))
+  lock_idx = which(d$gain > lockThreshold)
+  d$pitch1[lock_idx] = d$nearest_formant[lock_idx] / d$idx_max_gain[lock_idx]
+
+  # only preserve sufficiently long fragments of formant locking
+  d$pitch2 = d$pitch1
+  if (is.numeric(minLength) && minLength > 1) {
+    d$modif1 = d$modif = (d$pitch != d$pitch1)
+    #modif1 = soundgen:::clumper(modif, minLength = 5)
+    r = rle(d$modif)
+    r = data.frame(len = r[[1]], val = r[[2]])
+    for (i in 1:nrow(r)) {
+      if (r$val[i] == TRUE & r$len[i] < minLength) {
+        if (i == 1) {
+          s = 1
+        } else {
+          s = sum(r$len[1:(i - 1)]) + 1
+        }
+        d$modif1[s:(s + r$len[i] - 1)] = FALSE
+      }
+    }
+    no_modif = which(d$modif1 == FALSE)
+    d$pitch2 = d$pitch1
+    d$pitch2[no_modif] = d$pitch[no_modif]
+  }
+
+
+  # # median smoothing to remove weird pitch jumps
+  # d$pitch2 = soundgen:::medianSmoother(data.frame(p = d$pitch1),
+  #                                             smoothing_ww = 30,
+  #                                             smoothingThres = 1)
+
+  if (plot) {
+    plot(d$pitch, type = 'l', lty = 2, col = 'red')
+    points(d$pitch1, type = 'l', lty =3, col = 'blue')
+    points(d$pitch2, type = 'l')
+    # for (f in 1:length(formants)) {
+    #   abline(h = formants[[f]]$freq, lty = 3)
+    # }
+  }
+
+  invisible(d$pitch2)
+}

@@ -1,4 +1,6 @@
           CHANGES IN SOUNDGEN VERSION 1.6.1.9000 [--Date--]
+BUGS FIXED:
+  * playme(): '...' removed from documentation
 
 
           CHANGES IN SOUNDGEN VERSION 1.6.1 [22-January-2020]

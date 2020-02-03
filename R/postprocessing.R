@@ -11,7 +11,6 @@
 #'   Windows. In case of errors, try setting another default player for
 #'   \code{\link[tuneR]{play}}
 #' @param from,to play a selected time range (s)
-#' @param ... additional parameters passed to \code{\link[tuneR]{play}}
 #' @export
 #' @examples
 #' # Play an audio file:

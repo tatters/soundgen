@@ -17,8 +17,6 @@ Windows. In case of errors, try setting another default player for
 \code{\link[tuneR]{play}}}
 
 \item{from, to}{play a selected time range (s)}
-
-\item{...}{additional parameters passed to \code{\link[tuneR]{play}}}
 }
 \description{
 Plays an audio file (wav or mp3) or a numeric vector. This is a simple

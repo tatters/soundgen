@@ -23,8 +23,9 @@ findSyllables = function(envelope,
                          mergeSyl) {
   # find strings of TTTTT
   envelope$aboveThres = ifelse(envelope$value > threshold, 1, 0)
-  env_above_thres = data.frame(value = rle(envelope$aboveThres)[[2]],
-                               count = rle(envelope$aboveThres)[[1]])
+  r = rle(envelope$aboveThres)
+  env_above_thres = data.frame(value = r[[2]],
+                               count = r[[1]])
   env_above_thres$idx = 1:nrow(env_above_thres) # a convoluted way of tracing
   # the time stamp in the output of rle
   # exclude segments of length < shortestSyl or below threshold

@@ -664,6 +664,8 @@ generateHarmonics = function(pitch,
     }
   }
 
+  # optional: add formantLocking here and recalculate rolloff_source
+
   # add vocal fry (subharmonics)
   if (!synthesize_per_gc &  # can't add subharmonics if doing one gc
       # at a time (one f0 period)

@@ -341,6 +341,7 @@ soundgen = function(
   if (!missing('nonlinDep')) {
     message('nonlinDep is deprecated; set subDep/jitterDep/shimmerDep manually')
   }
+  if (FALSE) shinyjs::info('adja')  # to avoid a NOTE on CRAN
 
   # check that values of numeric arguments are valid and within range
   pars_to_check = rownames(permittedValues)[1:which(
