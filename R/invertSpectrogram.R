@@ -65,10 +65,12 @@
 #'   windowLength = windowLength, overlap = overlap, wn = wn,
 #'   initialPhase = 'spsi', nIter = 10, specType = 'abs', play = FALSE)
 #'
+#' \dontrun{
 #' # Verify the quality of audio reconstruction
 #' # playme(s, samplingRate); playme(s_new, samplingRate)
 #' spectrogram(s, samplingRate, osc = TRUE)
 #' spectrogram(s_new, samplingRate, osc = TRUE)
+#' }
 invertSpectrogram = function(spec,
                              samplingRate,
                              windowLength,

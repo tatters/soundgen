@@ -1,4 +1,4 @@
-# TODO: soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: getSpectralEnvelope - add some formant drift even if formants are specified as stationary (check movingFormants in the soundgen function - should be TRUE if temperature > 0); soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # pitch_app: see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
@@ -121,6 +121,9 @@ NULL
 #' @param formantCeiling frequency to which stochastic formants are calculated,
 #'   in multiples of the Nyquist frequency; increase up to ~10 for long vocal
 #'   tracts to avoid losing energy in the upper part of the spectrum
+#' @param formantLocking the approximate proportion of sound in which one of the
+#'   harmonics is locked to the nearest formant, 0 = none, 1 = the entire sound
+#'   (anchor format)
 #' @param vocalTract the length of vocal tract, cm. Used for calculating formant
 #'   dispersion (for adding extra formants) and formant transitions as the mouth
 #'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated
@@ -306,6 +309,7 @@ soundgen = function(
   formantDepStoch = 20,
   formantWidth = 1,
   formantCeiling = 2,
+  formantLocking = 0,
   vocalTract = NA,
   amDep = 0,
   amFreq = 30,
@@ -412,7 +416,8 @@ soundgen = function(
 
   # check and, if necessary, reformat anchors to dataframes
   for (anchor in c('pitch', 'pitchGlobal', 'glottis',
-                   'ampl', 'amplGlobal', 'mouth', 'vocalTract',
+                   'ampl', 'amplGlobal',
+                   'mouth', 'vocalTract', 'formantLocking',
                    'vibratoFreq', 'vibratoDep', 'subFreq', 'subDep',
                    'jitterLen', 'jitterDep', 'shimmerLen', 'shimmerDep',
                    'rolloff', 'rolloffOct', 'rolloffKHz',
@@ -520,6 +525,14 @@ soundgen = function(
     formantDepStoch_noise = 0
   } else {
     formantDepStoch_noise = formantDepStoch
+  }
+
+  # Do we have source-filter interaction?
+  sourceFilterInter = FALSE
+  if (is.list(formantLocking)) {
+    if (any(formantLocking$value > 0)) {
+      sourceFilterInter = TRUE
+    }
   }
 
   ## adjust parameters according to the specified hyperparameters
@@ -714,6 +727,25 @@ soundgen = function(
     amplEnvelope = rep(1, nSyl)
   }
 
+  # prepare a list of formantPars in case we add source-filter interaction
+  formantPars = list(
+    vocalTract = vocalTract,
+    formantDep = formantDep,
+    formantWidth = formantWidth,
+    formantCeiling = formantCeiling,
+    lipRad = lipRad,
+    noseRad = noseRad,
+    mouthOpenThres = mouthOpenThres,
+    mouth = mouth,
+    interpol = interpol,
+    temperature = temperature,
+    formDrift = tempEffects$formDrift,
+    formDisp = tempEffects$formDisp,
+    samplingRate = samplingRate,
+    windowLength_points = windowLength_points,
+    overlap = overlap
+  )
+
   # START OF BOUT GENERATION
   for (b in 1:repeatBout) {
     # syllable segmentation
@@ -728,6 +760,26 @@ soundgen = function(
       temperature = temperature * tempEffects$sylLenDep
     )
     # end of syllable segmentation
+
+    # Prepare a spectral envelope. It's added after syllable generation,
+    # but we set it up here to be able to add source-filter interactions
+    # such as formant-locking
+    if (sourceFilterInter) {
+      step_points = windowLength_points - (overlap * windowLength_points / 100)
+      approx_dur_points = syllables$end[nrow(syllables)] / 1000 * samplingRate
+
+      specEnv_list = do.call(getSpectralEnvelope, c(
+        formantPars,
+        list(nc = round(approx_dur_points / step_points), # approximate n of windows for fft
+             nr = windowLength_points / 2, # n of frequency bins for fft
+             formants = formants,
+             formantDepStoch = formantDepStoch,
+             normalize = FALSE,
+             output = 'detailed')
+      ))
+      # image(t(specEnv_list$specEnv))
+    }
+
 
     # START OF SYLLABLE GENERATION
     voiced = vector()
@@ -867,7 +919,11 @@ soundgen = function(
           list(pitch = pitchContour_syl,
                ampl = ampl_per_syl,
                glottis = glottis_per_syl,
-               normalize = ifelse(noiseAmpRef == 'f0', FALSE, TRUE))
+               normalize = ifelse(noiseAmpRef == 'f0', FALSE, TRUE),
+               formantLocking = switch(sourceFilterInter + 1, NULL, formantLocking),
+               # ifelse doesn't return NULL properly, thus switch() instead
+               specEnv = switch(sourceFilterInter + 1, NULL, specEnv_list$specEnv),
+               formantSummary = switch(sourceFilterInter + 1, NULL, specEnv_list$formantSummary))
         )) * amplEnvelope[s]  # correction of amplitude per syllable
         )
       }
@@ -1008,23 +1064,6 @@ soundgen = function(
     }
 
     ## Merging voiced and unvoiced components and adding formants
-    formantPars = list(
-      vocalTract = vocalTract,
-      formantDep = formantDep,
-      formantWidth = formantWidth,
-      formantCeiling = formantCeiling,
-      lipRad = lipRad,
-      noseRad = noseRad,
-      mouthOpenThres = mouthOpenThres,
-      mouth = mouth,
-      interpol = interpol,
-      temperature = temperature,
-      formDrift = tempEffects$formDrift,
-      formDisp = tempEffects$formDisp,
-      samplingRate = samplingRate,
-      windowLength_points = windowLength_points,
-      overlap = overlap
-    )
     # for noiseAmpRef == "filtered", enforce adding formants separately
     # followed by independent normalization of voiced & unvoiced
     if (noiseAmpRef == 'filtered' & !is.list(formantsNoise)) {

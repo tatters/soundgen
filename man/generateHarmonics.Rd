@@ -25,6 +25,9 @@ generateHarmonics(
   rolloffParabHarm = 3,
   rolloff_perAmpl = 0,
   rolloffExact = NULL,
+  formantLocking = NULL,
+  specEnv = NULL,
+  formantSummary = NULL,
   temperature = 0.025,
   pitchDriftDep = 0.5,
   pitchDriftFreq = 0.125,
@@ -120,6 +123,13 @@ in higher frequencies}
 \item{rolloffExact}{user-specified exact strength of harmonics: a vector or
 matrix with one row per harmonic, scale 0 to 1 (overrides all other rolloff
 parameters)}
+
+\item{formantLocking}{the approximate proportion of sound in which one of the
+harmonics is locked to the nearest formant, 0 = none, 1 = the entire sound
+(anchor format)}
+
+\item{specEnv}{a matrix representing the filter (only needed for formant
+locking)}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}

@@ -25,6 +25,7 @@ getSpectralEnvelope(
   formantCeiling = 2,
   samplingRate = 16000,
   speedSound = 35400,
+  output = c("simple", "detailed")[1],
   plot = FALSE,
   duration = NULL,
   colorTheme = c("bw", "seewave", "...")[1],
@@ -107,6 +108,10 @@ tracts to avoid losing energy in the upper part of the spectrum}
 
 \item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
 phonetics", p. 138}
+
+\item{output}{"simple" returns just the spectral filter, while "detailed"
+also returns a data.frame of formant frequencies over time (needed for
+internal purposes such as formant locking)}
 
 \item{plot}{if TRUE, produces a plot of the spectral envelope}
 

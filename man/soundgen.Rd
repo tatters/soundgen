@@ -43,6 +43,7 @@ soundgen(
   formantDepStoch = 20,
   formantWidth = 1,
   formantCeiling = 2,
+  formantLocking = 0,
   vocalTract = NA,
   amDep = 0,
   amFreq = 30,
@@ -219,6 +220,10 @@ above the highest specified formant, dB (only if temperature > 0)}
 \item{formantCeiling}{frequency to which stochastic formants are calculated,
 in multiples of the Nyquist frequency; increase up to ~10 for long vocal
 tracts to avoid losing energy in the upper part of the spectrum}
+
+\item{formantLocking}{the approximate proportion of sound in which one of the
+harmonics is locked to the nearest formant, 0 = none, 1 = the entire sound
+(anchor format)}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth

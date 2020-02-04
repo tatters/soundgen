@@ -53,6 +53,7 @@ permittedValues = matrix(c(
   'formantDepStoch', 20, 0, 40, 5,
   'formantWidth', 1, .1, 10, .1,
   'formantCeiling', 2, 1, 20, .1,
+  'formantLocking', 0, 0, 1, .1,
   'amDep', 0, 0, 100, 5,
   'amFreq', 30, 1, 100, 1,
   'amShape', 0, -1, 1, .025,

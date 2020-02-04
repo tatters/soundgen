@@ -386,6 +386,8 @@ generateNoise = function(len,
 #'   rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be
 #'   upsampled before synthesis.
 #' @inheritParams soundgen
+#' @param specEnv a matrix representing the filter (only needed for formant
+#'   locking)
 #' @param pitchDriftDep scale factor regulating the effect of temperature on the
 #'   amount of slow random drift of f0 (like jitter, but slower): the higher,
 #'   the more f0 "wiggles" at a given temperature
@@ -435,6 +437,9 @@ generateHarmonics = function(pitch,
                              rolloffParabHarm = 3,
                              rolloff_perAmpl = 0,
                              rolloffExact = NULL,
+                             formantLocking = NULL,
+                             specEnv = NULL,
+                             formantSummary = NULL,
                              temperature = .025,
                              pitchDriftDep = .5,
                              pitchDriftFreq = .125,
@@ -664,7 +669,22 @@ generateHarmonics = function(pitch,
     }
   }
 
-  # optional: add formantLocking here and recalculate rolloff_source
+  # add formantLocking
+  if (!is.null(formantLocking) && !is.null(specEnv)) {
+    pitch_per_gc = lockToFormants(pitch = pitch_per_gc,
+                                  specEnv = specEnv,
+                                  formantSummary = formantSummary,
+                                  rolloffMatrix = rolloff_source,
+                                  lockProb = formantLocking,
+                                  minLength = 300,
+                                  plot = TRUE)
+    # make sure we don't have harmonics above Nyquist with the changed pitch
+    nHarmonics = floor(samplingRate / 2 / min(pitch_per_gc))
+    if (nrow(rolloff_source) > nHarmonics) {
+      rolloff_source = rolloff_source[1:nHarmonics, ]
+    }
+    # if we want to be super-precise, we could actually recalculate rolloff_source
+  }
 
   # add vocal fry (subharmonics)
   if (!synthesize_per_gc &  # can't add subharmonics if doing one gc
