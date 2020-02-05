@@ -927,20 +927,25 @@ addFormants = function(sound,
     nr = windowLength_points / 2 # number of frequency bins for fft
 
     # are formants moving or stationary?
+    # (basically always moving, unless temperature = 0 and nothing else changes)
     if (is.null(spectralEnvelope)) {
-      if (is.list(formants)) {
-        movingFormants = max(sapply(formants, function(x) sapply(x, length))) > 1
+      if (temperature > 0) {
+        movingFormants = TRUE
       } else {
-        movingFormants = FALSE
-      }
-      if (is.list(mouth)) {
-        if (sum(mouth$value != .5) > 0) {
-          movingFormants = TRUE
+        if (is.list(formants)) {
+          movingFormants = max(sapply(formants, function(x) sapply(x, length))) > 1
+        } else {
+          movingFormants = FALSE
         }
-      }
-      if (is.list(vocalTract)) {
-        if (length(vocalTract$value) > 1) {
-          movingFormants = TRUE
+        if (is.list(mouth)) {
+          if (sum(mouth$value != .5) > 0) {
+            movingFormants = TRUE
+          }
+        }
+        if (is.list(vocalTract)) {
+          if (length(vocalTract$value) > 1) {
+            movingFormants = TRUE
+          }
         }
       }
       nInt = ifelse(movingFormants, nc, 1)
