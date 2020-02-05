@@ -577,14 +577,18 @@ getSpectralEnvelope = function(nr,
   }
 
   if (output == 'detailed') {
-    formantSummary = as.data.frame(matrix(NA, nrow = nFormants, ncol = nc))
-    for (i in 1:nFormants) {
-      formantSummary[i, ] = (formants_upsampled[[i]]$freq - 1) *
-        bin_width + bin_width / 2  # from bins back to Hz
+    if (exists('formants_upsampled')) {
+      formantSummary = as.data.frame(matrix(NA, nrow = nFormants, ncol = nc))
+      for (i in 1:nFormants) {
+        formantSummary[i, ] = (formants_upsampled[[i]]$freq - 1) *
+          bin_width + bin_width / 2  # from bins back to Hz
+      }
+      max_freqs = apply(formantSummary, 1, max)  # save only to Nyquist
+      formantSummary = formantSummary[which(max_freqs < (samplingRate / 2)), ]
+      colnames(formantSummary) = colnames(spectralEnvelope)
+    } else {
+      formantSummary = NULL
     }
-    max_freqs = apply(formantSummary, 1, max)  # save only to Nyquist
-    formantSummary = formantSummary[which(max_freqs < (samplingRate / 2)), ]
-    colnames(formantSummary) = colnames(spectralEnvelope)
     invisible(list(formantSummary = formantSummary,
                    specEnv = spectralEnvelope_lin))
   } else {
@@ -1300,12 +1304,20 @@ transplantFormants = function(donor,
 #'
 #' Internal soundgen function
 #'
-#' When f0 or another relatively strong harmonic is close to one of the formants, the pitch contour is modified so as to "lock" it to this formant. The relevant metric is energy gain (ratio of amplitudes before and after the adjustment) penalized by the magnitude of the necessary pitch jump (in semitones) and the amplitude of the locked harmonic relative to f0.
+#' When f0 or another relatively strong harmonic is close to one of the
+#' formants, the pitch contour is modified so as to "lock" it to this formant.
+#' The relevant metric is energy gain (ratio of amplitudes before and after the
+#' adjustment) penalized by the magnitude of the necessary pitch jump (in
+#' semitones) and the amplitude of the locked harmonic relative to f0.
 #' @param pitch pitch contour, numeric vector (normally pitch_per_gc)
 #' @param specEnv spectral envelope as returned by getSpectralEnvelope
 #' @param rolloffMatrix rolloff matrix as returned by getRolloff
-#' @param lockProb the (approximate) proportion of sound affected by formant locking
-#' @param minLength the minimum number of consecutive pitch values affected (shorter segments of formant locking are ignored)
+#' @param formantSummary matrix of exact formant frequencies (formants in rows,
+#'   time in columns)
+#' @param lockProb the (approximate) proportion of sound affected by formant
+#'   locking
+#' @param minLength the minimum number of consecutive pitch values affected
+#'   (shorter segments of formant locking are ignored)
 #' @param plot if TRUE, plots the original and modified pitch contour
 #' @keywords internal
 #' @examples
@@ -1315,15 +1327,17 @@ transplantFormants = function(donor,
 #' rolloffMatrix = getRolloff(pitch_per_gc = pitch)
 #' specEnv = getSpectralEnvelope(nr = 512, nc = length(pitch),
 #'   formants = list(f1 = c(800, 1200), f2 = 2000, f3 = c(3500, 3200)),
-#'   lipRad = 0, temperature = .00001, plot = T)
-#' pitch2 = lockToFormants(pitch = pitch, specEnv = specEnv,
+#'   lipRad = 0, temperature = .00001, plot = TRUE)
+#' formantSummary = t(data.frame(f1 = c(800, 1200), f2 = c(2000, 2000), f3 = c(3500, 3200)))
+#' pitch2 = soundgen:::lockToFormants(pitch = pitch, specEnv = specEnv,
 #'   rolloffMatrix = rolloffMatrix,
-#'   lockProb = .5, minLength = 2, plot = TRUE)
-#'   lipRad = 0, temperature = .00001, plot = T)
-#' pitch3 = lockToFormants(pitch = pitch, specEnv = specEnv,
+#'   formantSummary = formantSummary,
+#'   lockProb = .5, minLength = 5, plot = TRUE)
+#' pitch3 = soundgen:::lockToFormants(pitch = pitch, specEnv = specEnv,
 #'   rolloffMatrix = rolloffMatrix,
+#'   formantSummary = formantSummary,
 #'   lockProb = list(time = c(0, .7, 1), value = c(0, 1, 0)),
-#'   minLength = 2, plot = TRUE)
+#'   minLength = 5, plot = TRUE)
 lockToFormants = function(pitch,
                           specEnv,
                           formantSummary,
@@ -1352,6 +1366,7 @@ lockToFormants = function(pitch,
     interpol = 'approx'
   )
   # rownames(specEnv) = freqs
+  formants = interpolMatrix(as.matrix(formantSummary), nc = n)
 
   # Calculate how much we can gain by locking a harmonic to a formant at each time point
   d = data.frame(pitch = pitch)
@@ -1364,7 +1379,6 @@ lockToFormants = function(pitch,
     }
     # formants = as.data.frame(seewave::fpeaks(cbind(freqs, specEnv[, i]),
     #                                          threshold = 1, plot = FALSE))
-    formants = interpolMatrix(as.matrix(formantSummary), nc = n)
 
     # for each harmonic in rolloffMatrix
     temp = data.frame(harmonic = 1:nr, gain = NA, nearest_formant = NA)
@@ -1374,16 +1388,11 @@ lockToFormants = function(pitch,
       idx_cur = which.min(abs(freqs - pitch[i] * h))
       amp_gain = nearest_formant_amp / specEnv[idx_cur, i]
       # amp_gain ~ how much E can be gained if locked to nearest formant
-      dist_to_nearest_formant = 12 * abs(log2(pitch[i] * h) - log2(formants[nearest_formant, i]))
-      # in semitones
-      if (dist_to_nearest_formant < .25) {
-        temp$gain[h] = 0
-        # don't try to move less than a quartertone b/c it's inaudible anyway,
-        # but at the same time it can create unnecessary pitch jumps b/c it can
-        # lock another harmonic to another formant cf to surrounding frames
-      } else {
-        temp$gain[h] = amp_gain / dist_to_nearest_formant * rolloffMatrix[h, i]
-      }
+      dist_to_nearest_formant = max(1, 12 * abs(log2(pitch[i] * h) - log2(formants[nearest_formant, i])))
+      # in semitones (anything closer than 1 semitone counts as 1 semitone to
+      # standardize penalization, otherwise we divide by very small numbers and
+      # thus inflate apparent gain)
+      temp$gain[h] = amp_gain / dist_to_nearest_formant * rolloffMatrix[h, i]
       temp$nearest_formant[h] = formants[nearest_formant, i]
     }
     d$idx_max_gain[i] = which.max(temp$gain)

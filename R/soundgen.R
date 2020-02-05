@@ -134,7 +134,7 @@ NULL
 #'   strength of subharmonics fades as they move away from harmonics in f0 stack
 #'   (anchor format)
 #' @param shortestEpoch minimum duration of each epoch with unchanging
-#'   subharmonics regime, in ms
+#'   subharmonics regime or formant locking, in ms
 #' @param amDep amplitude modulation depth, \%. 0: no change; 100: amplitude
 #'   modulation with amplitude range equal to the dynamic range of the sound
 #'   (anchor format)

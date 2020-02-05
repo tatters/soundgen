@@ -1,6 +1,9 @@
-          CHANGES IN SOUNDGEN VERSION 1.6.1.9000 [--Date--]
+          CHANGES IN SOUNDGEN VERSION 1.6.2 [--Date--]
 BUGS FIXED:
-  * playme(): '...' removed from documentation
+  * playme(): '...' removed from documentation (new CRAN requirements)
+
+MINOR:
+  * soundgen(): new argument "formantLocking" for temporarily locking a harmonic to a formant (a form of source-filter interaction)
 
 
           CHANGES IN SOUNDGEN VERSION 1.6.1 [22-January-2020]

@@ -147,7 +147,7 @@ is to get high in the middle and low at the beginning and end (i.e. max
 effect amplitude in the middle of a sound)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
-subharmonics regime, in ms}
+subharmonics regime or formant locking, in ms}
 
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
 dynamically so f0 is always a multiple of subFreq) (anchor format)}

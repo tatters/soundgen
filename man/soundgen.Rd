@@ -144,7 +144,7 @@ strength of subharmonics fades as they move away from harmonics in f0 stack
 (anchor format)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
-subharmonics regime, in ms}
+subharmonics regime or formant locking, in ms}
 
 \item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
 low value for harsh noise, a high value for irregular vibrato or shaky

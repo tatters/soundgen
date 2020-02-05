@@ -548,6 +548,24 @@ spectrogram(s, samplingRate = 16000,
 
 *TIP Here and elsewhere, I talk about applying soundgen to the task of synthesizing non-human sounds. It does work, but be aware that many computational routines are based on human phonetic research, simply because there is vastly more data available on human vocal production. For example, formant bandwidths and spectral consequences of nasalization are estimated based on human phonetics, but it is far from clear to what extent these equations are applicable to sounds produced by non-human mammals. Bird calls are again a whole new ball game. And once you move on to insects or non-biological sounds, just forget about hyperparameters like `mouth` and code everything at the lowest possible level.*
 
+### Formant locking
+The standard source-filter model (Fant, 1971) assumes that the vibration of the vocal folds is independent of the configuration of the supraglottal vocal tract - that is, that the source and filter are independent. However, in some situations this assumption does not hold, and the filter can have a noticeable effect on the vibration of the vocal folds. An example of such source-filter interaction that is implemented in soundgen is formant locking, in which the fundamental frequency or a higher harmonic becomes temporarily "locked" to the frequency of a formant. The relevant parameter is `formantLocking` (0 = none, 1 = the entire sound, vector form also accepted). This is an experimental feature introduced in version 1.6.2; it is at present slow and may produce unexpected results. See the internal function `soundgen:::lockToFormants()` for more information and examples.
+
+In humans, spontaneous formant locking is usually observed in high-pitched sounds like screams, although formant matching can also be performed intentionally in order to maximize sonority, as in soprano singing, or to produce unusual vocal effects such as Tuvinian throat singing. In animal vocalizations, formant locking appears to be particularly common when the vocal tract is long and formants are closely spaced (my speculation). For example, elk bugles often contain a series of stepwise pitch jumps from one formant to the next, a bit like this:
+```{r fig.width = 7, fig.height = 5}
+s = soundgen(
+  sylLen = 1500, rolloff = -20,
+  pitch = c(500, 1000, 1800, 1700, 500),
+  formants = NULL, vocalTract = 55,
+  formantLocking = c(0, 1, 1, 1, 1, 0),  # except the beginning and end
+  shortestEpoch = 200,  # both subharmonics and formantLocking
+  noise = -20,  # just to make formants visible in this example
+  temperature = .1,
+  samplingRate = 22000, pitchSamplingRate = 22000,
+  play = playback, plot = TRUE, ylim = c(0, 8), osc = TRUE
+)
+```
+
 ### Add formants to an existing sound
 For some purposes it may be useful to separate the generation of glottal source (or another source of acoustic excitation) from its spectral filtering. You may also need to add formants to an existing waveform. To do so, you can call the helper function `addFormants()`, which normally works under the hood in soundgen. The algorithm is to take an STFT, multiply the resulting spectrum by the filter, and then convert it back to time domain via inverse STFT. The same function can theoretically be used to perform inverse filtering - that is, to remove formants from a signal - as long as you can provide a VERY accurate formant filter. See `?addFormants` for more information.
 

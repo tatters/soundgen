@@ -19,11 +19,16 @@ lockToFormants(
 
 \item{specEnv}{spectral envelope as returned by getSpectralEnvelope}
 
+\item{formantSummary}{matrix of exact formant frequencies (formants in rows,
+time in columns)}
+
 \item{rolloffMatrix}{rolloff matrix as returned by getRolloff}
 
-\item{lockProb}{the (approximate) proportion of sound affected by formant locking}
+\item{lockProb}{the (approximate) proportion of sound affected by formant
+locking}
 
-\item{minLength}{the minimum number of consecutive pitch values affected (shorter segments of formant locking are ignored)}
+\item{minLength}{the minimum number of consecutive pitch values affected
+(shorter segments of formant locking are ignored)}
 
 \item{plot}{if TRUE, plots the original and modified pitch contour}
 }
@@ -31,7 +36,11 @@ lockToFormants(
 Internal soundgen function
 }
 \details{
-When f0 or another relatively strong harmonic is close to one of the formants, the pitch contour is modified so as to "lock" it to this formant. The relevant metric is energy gain (ratio of amplitudes before and after the adjustment) penalized by the magnitude of the necessary pitch jump (in semitones) and the amplitude of the locked harmonic relative to f0.
+When f0 or another relatively strong harmonic is close to one of the
+formants, the pitch contour is modified so as to "lock" it to this formant.
+The relevant metric is energy gain (ratio of amplitudes before and after the
+adjustment) penalized by the magnitude of the necessary pitch jump (in
+semitones) and the amplitude of the locked harmonic relative to f0.
 }
 \examples{
 n = 50
@@ -40,14 +49,16 @@ pitch = getSmoothContour(len = n, anchors = c(600, 2000, 1900, 400),
 rolloffMatrix = getRolloff(pitch_per_gc = pitch)
 specEnv = getSpectralEnvelope(nr = 512, nc = length(pitch),
   formants = list(f1 = c(800, 1200), f2 = 2000, f3 = c(3500, 3200)),
-  lipRad = 0, temperature = .00001, plot = T)
-pitch2 = lockToFormants(pitch = pitch, specEnv = specEnv,
+  lipRad = 0, temperature = .00001, plot = TRUE)
+formantSummary = t(data.frame(f1 = c(800, 1200), f2 = c(2000, 2000), f3 = c(3500, 3200)))
+pitch2 = soundgen:::lockToFormants(pitch = pitch, specEnv = specEnv,
   rolloffMatrix = rolloffMatrix,
-  lockProb = .5, minLength = 2, plot = TRUE)
-  lipRad = 0, temperature = .00001, plot = T)
-pitch3 = lockToFormants(pitch = pitch, specEnv = specEnv,
+  formantSummary = formantSummary,
+  lockProb = .5, minLength = 5, plot = TRUE)
+pitch3 = soundgen:::lockToFormants(pitch = pitch, specEnv = specEnv,
   rolloffMatrix = rolloffMatrix,
+  formantSummary = formantSummary,
   lockProb = list(time = c(0, .7, 1), value = c(0, 1, 0)),
-  minLength = 2, plot = TRUE)
+  minLength = 5, plot = TRUE)
 }
 \keyword{internal}

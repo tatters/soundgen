@@ -32,7 +32,7 @@ dynamicRange under maximum amplitude are discarded to save computational
 resources}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
-subharmonics regime, in ms}
+subharmonics regime or formant locking, in ms}
 }
 \value{
 Returns a list consisting of a list of rolloff matrices (one matrix
