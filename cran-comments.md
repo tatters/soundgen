@@ -1,5 +1,5 @@
 ## Test environments
-* local Linux Mint 19.1, R 3.6.2
+* local Linux Mint 19.3, R 3.6.2
 * rhub:
   - Ubuntu Linux 16.04 LTS, R-release, GCC
   - Fedora Linux, R-devel, clang, gfortran
@@ -9,7 +9,7 @@
 One NOTE:
 ------
 * checking installed package size ... NOTE
-  installed size is  5.2Mb
+  installed size is  5.3Mb
   sub-directories of 1Mb or more:
     doc   4Mb
     

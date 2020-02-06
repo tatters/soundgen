@@ -1,4 +1,4 @@
-# TODO: getSpectralEnvelope - add some formant drift even if formants are specified as stationary (check movingFormants in the soundgen function - should be TRUE if temperature > 0); soundgen - add formantLocking (if >0, consider the first ~3 harmonics, 3 formants - if a harmonic is close to a formant, it is drawn to it); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # pitch_app: see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
@@ -255,9 +255,9 @@ NULL
 #'   play = playback, plot = TRUE)
 #'
 #' # Use nonlinRandomWalk to crease reproducible examples of sounds with
-#' nonlinear effects. For ex., to make a sound with no effect in the first
-#' third, subharmonics in the second third, and jitter in the final third of the
-#' total duration:
+#' # nonlinear effects. For ex., to make a sound with no effect in the first
+#' # third, subharmonics in the second third, and jitter in the final third of the
+#' # total duration:
 #' a = c(rep(0, 100), rep(1, 100), rep(2, 100))
 #' s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
 #'              subFreq = 100, subDep = 70, jitterDep = 1,
