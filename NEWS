@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.6.2 [--Date--]
+          CHANGES IN SOUNDGEN VERSION 1.6.2 [06-February-2020]
 BUGS FIXED:
   * playme(): '...' removed from documentation (new CRAN requirements)
 
