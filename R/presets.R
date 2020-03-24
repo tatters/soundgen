@@ -36,7 +36,7 @@ permittedValues = matrix(c(
   'jitterDep', 0, 0, 24, 0.1,
   'jitterLen', 1, 1, 100, 1,
   'vibratoFreq', 5, 1, 20, .5,
-  'vibratoDep', 0, 0, 3, 0.125,
+  'vibratoDep', 0, 0, 12, 0.125,
   'shimmerDep', 0, 0, 100, 1,
   'shimmerLen', 1, 1, 100, 1,
   'attackLen', 50, 0, 200, 10,

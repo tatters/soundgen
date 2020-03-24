@@ -864,7 +864,7 @@ soundgen = function(
         # wiggle anchors except special cases (pitch, ampl, glottis)
         for (i in 4:length(anchors_to_wiggle)) {
           anchor = anchors_to_wiggle[i]
-          anchor_per_syl = paste0(anchor, '_per_syl')
+          # anchor_per_syl = paste0(anchor, '_per_syl')
           l = permittedValues[anchor, 'low']
           h = permittedValues[anchor, 'high']
           anchor_new = wiggleAnchors(
@@ -876,7 +876,8 @@ soundgen = function(
             sd_values = (h - l) * temperature * tempEffects$specDep,
             invalidArgAction = invalidArgAction
           )
-          assign(anchor_per_syl, anchor_new)
+          # assign(anchor_per_syl, anchor_new)
+          pars_syllable[[anchor]] = anchor_new
         }
       }
 

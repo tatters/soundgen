@@ -1,5 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.6.2.9000 [--Date--]
-
+BUGS FIXED:
+  * soundgen(): proper wiggling of secondary control parameters if temperature > 0
+  * soundgen(): vibratoFreq and vibratoDep can go beyond preset levels if invalidArgAction = 'ignore'
 
           CHANGES IN SOUNDGEN VERSION 1.6.2 [06-February-2020]
 BUGS FIXED:

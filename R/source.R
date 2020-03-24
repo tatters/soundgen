@@ -471,7 +471,7 @@ generateHarmonics = function(pitch,
             anchors = old,
             len = lp,
             valueFloor = permittedValues[p, 'low'],
-            valueCeiling = permittedValues[p, 'high'],
+            valueCeiling = Inf,  # permittedValues[p, 'high'],
             interpol = interpol)
           assign(p, new)
         }
