@@ -86,6 +86,7 @@ ui = fluidPage(
                                   ),
 
                                   tabPanel("Path",
+                                           checkboxInput('automPathUpdate', 'Update path automatically', value = TRUE),
                                            selectInput('pathfinding', 'Pathfinding method', choices = c('none', 'fast', 'slow'), selected = 'fast', multiple = FALSE),
                                            sliderInput('certWeight', 'Certainty weight', value=defaults_analyze['certWeight', 'default'], min=defaults_analyze['certWeight', 'low'], max=defaults_analyze['certWeight', 'high'], step=defaults_analyze['certWeight', 'step']),
                                            numericInput('shortestSyl', 'Shortest syllable, ms', value=defaults_analyze['shortestSyl', 'default'], min=defaults_analyze['shortestSyl', 'low'], max=defaults_analyze['shortestSyl', 'high'], step=defaults_analyze['shortestSyl', 'step']),
@@ -153,7 +154,8 @@ ui = fluidPage(
                     actionButton(inputId = "selection_voice", label = HTML("<img src='icons/voice.png' width = '25px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = "selection_octaveUp", label = HTML("<img src='icons/octaveUp.png' width = '25px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = "selection_octaveDown", label = HTML("<img src='icons/octaveDown.png' width = '25px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "selection_setPrior", label = HTML("<img src='icons/prior.png' width = '25px'>"), style = "padding: 2px 2px;")
+                    actionButton(inputId = "selection_setPrior", label = HTML("<img src='icons/prior.png' width = '25px'>"), style = "padding: 2px 2px;"),
+                    actionButton(inputId = "button_pathUpdate", label = HTML("<img src='icons/update.png' width = '25px'>"), style = "padding: 2px 2px;")
              ),
              column(3,
                     actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '25px'>"), style = "padding: 2px 2px;"),

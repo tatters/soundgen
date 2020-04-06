@@ -474,7 +474,11 @@ server = function(input, output, session) {
             # if this frame was manually flagged as unvoiced, remove this flag
             idx_rem = which(myPars$manualUnv == closest_frame)
             if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
-            obs_pitch()
+            if(input$automPathUpdate) {
+                obs_pitch()
+            } else {
+                myPars$pitch[closest_frame] = new_freq
+            }
         }
     })
 
@@ -489,7 +493,11 @@ server = function(input, output, session) {
             if (!closest_frame %in% myPars$manualUnv)
                 myPars$manualUnv = c(myPars$manualUnv, closest_frame)
             # re-run pitch contour
-            obs_pitch()
+            if(input$automPathUpdate) {
+                obs_pitch()
+            } else {
+                myPars$pitch[closest_frame] = NA
+            }
         }
     })
 
@@ -561,7 +569,11 @@ server = function(input, output, session) {
             # make sure we stay within pitchFloor/pitchCeiling
             myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
             myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
-            obs_pitch()
+            if (input$automPathUpdate) {
+                obs_pitch()
+            } else {
+                myPars$pitch[myPars$brush_sel_xy] = myPars$pitch[myPars$brush_sel_xy] * 2
+            }
         }
     })
 
@@ -579,7 +591,11 @@ server = function(input, output, session) {
             # make sure we stay within pitchFloor/pitchCeiling
             myPars$manual$freq[myPars$manual$freq < input$pitchFloor] = input$pitchFloor
             myPars$manual$freq[myPars$manual$freq > input$pitchCeiling] = input$pitchCeiling
-            obs_pitch()
+            if (input$automPathUpdate) {
+                obs_pitch()
+            } else {
+                myPars$pitch[myPars$brush_sel_xy] = myPars$pitch[myPars$brush_sel_xy] / 2
+            }
         }
     })
 
@@ -598,6 +614,10 @@ server = function(input, output, session) {
             updateSliderInput(session, 'priorMean', value = meanPr)
             updateSliderInput(session, 'priorSD', value = sdPr)
         }
+    })
+
+    observeEvent(input$button_pathUpdate, {
+        obs_pitch()
     })
 
     hover_label = reactive({
@@ -788,6 +808,7 @@ server = function(input, output, session) {
     # pathfinder
     shinyBS::addTooltip(session, id='summaryFun', title = "The function(s) used to summarize output", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='summaryFun_text', title = "If specified, overrides the options above. For short column names, define and name your function in R prior to starting pitch_app", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='automPathUpdate', title = "Update the optimal pitch contour automatically every time an anchor changes? Turn off to avoid delays when editing a long audio", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='pathfinding', title = "Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing (initial analysis only)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='certWeight', title = 'Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='shortestSyl', title = 'Shorter voiced segments (ms) will be treated as voiceless or merged with longer segments', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -819,6 +840,7 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='button_pathUpdate', title = 'Update the path through pitch candidates (only needed if Out/Path/Update path automatically is turned off)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # navigation / zoom
