@@ -4,7 +4,9 @@
 \name{pitchContour}
 \alias{pitchContour}
 \title{Manually corrected pitch contours in 260 sounds}
-\format{An object of class \code{data.frame} with 260 rows and 2 columns.}
+\format{
+An object of class \code{data.frame} with 260 rows and 2 columns.
+}
 \usage{
 pitchContour
 }

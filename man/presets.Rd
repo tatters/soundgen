@@ -4,7 +4,9 @@
 \name{presets}
 \alias{presets}
 \title{Presets}
-\format{A list of length 4.}
+\format{
+A list of length 4.
+}
 \usage{
 presets
 }

@@ -4,14 +4,16 @@
 \name{defaults_analyze}
 \alias{defaults_analyze}
 \title{Defaults and ranges for analyze()}
-\format{A matrix with 58 rows and 4 columns:
+\format{
+A matrix with 58 rows and 4 columns:
 \describe{
   \item{default}{default value}
   \item{low}{lowest permitted value}
   \item{high}{highest permitted value}
   \item{step}{increment for adjustment}
   ...
-}}
+}
+}
 \usage{
 defaults_analyze
 }

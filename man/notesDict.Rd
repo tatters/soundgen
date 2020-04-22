@@ -4,7 +4,9 @@
 \name{notesDict}
 \alias{notesDict}
 \title{Conversion table from Hz to musical notation}
-\format{An object of class \code{data.frame} with 192 rows and 2 columns.}
+\format{
+An object of class \code{data.frame} with 192 rows and 2 columns.
+}
 \usage{
 notesDict
 }

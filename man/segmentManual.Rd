@@ -4,7 +4,9 @@
 \name{segmentManual}
 \alias{segmentManual}
 \title{Manual counts of syllables in 260 sounds}
-\format{An object of class \code{numeric} of length 260.}
+\format{
+An object of class \code{numeric} of length 260.
+}
 \usage{
 segmentManual
 }
