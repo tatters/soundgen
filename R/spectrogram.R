@@ -479,7 +479,9 @@ spectrogram = function(
 #' and/or .mp3 files (e.g. Firefox or Chrome), you can view the spetrograms and
 #' click on them to play each sound. Unlike \code{\link{analyzeFolder}},
 #' spectrogramFolder supports plotting both a spectrogram and an oscillogram if
-#' \code{osc = TRUE}.
+#' \code{osc = TRUE}. The default approximate width of images in html (flexbox)
+#' is determined by the \code{width} parameter (ie it is the same as the width
+#' of png images, in pixels).
 #' @inheritParams spectrogram
 #' @inheritParams analyzeFolder
 #' @param myfolder full path to the folder containing wav/mp3 files
@@ -545,7 +547,7 @@ spectrogramFolder = function(myfolder,
     }
   }
   if (htmlPlots) {
-    htmlPlots(myfolder, myfiles = filenames)
+    htmlPlots(myfolder, myfiles = filenames, width = width)
   }
 }
 

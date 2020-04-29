@@ -75,7 +75,9 @@ in the same folder. If you open it in a browser that supports playing .wav
 and/or .mp3 files (e.g. Firefox or Chrome), you can view the spetrograms and
 click on them to play each sound. Unlike \code{\link{analyzeFolder}},
 spectrogramFolder supports plotting both a spectrogram and an oscillogram if
-\code{osc = TRUE}.
+\code{osc = TRUE}. The default approximate width of images in html (flexbox)
+is determined by the \code{width} parameter (ie it is the same as the width
+of png images, in pixels).
 }
 \examples{
 \dontrun{

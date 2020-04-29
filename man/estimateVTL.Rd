@@ -32,7 +32,7 @@ Returns the estimated vocal tract length in cm.
 }
 \description{
 Estimates the length of vocal tract based on formant frequencies, assuming
-that the vocal tract can be modeled as a tube open at both ends.
+that the vocal tract can be modeled as a tube open at one end.
 }
 \details{
 If \code{method = 'meanFormant'}, vocal tract length (VTL) is calculated

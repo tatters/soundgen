@@ -11,6 +11,7 @@
 #' soundgen:::getFormantDispersion(c(500, 1400, 2900, 3500),
 #'   method = 'regression')
 #' soundgen:::getFormantDispersion(c(500, 1400, NA, 3500))
+#' soundgen:::getFormantDispersion(c(NA, NA, NA))
 #' \dontrun{
 #' nIter = 100  # nIter = 10000 for better results
 #' speedSound = 35400
@@ -42,7 +43,9 @@
 getFormantDispersion = function(formants,
                                 method = c('meanDispersion', 'regression')[2],
                                 speedSound = 35400) {
-  if (!is.numeric(formants) | length(formants) < 1) return(NA)
+  if (!is.numeric(formants) |
+      length(formants) < 1 |
+      !any(!is.na(formants))) return(NA)
   if (method == 'meanDispersion') {
     l = length(formants)
     if (l > 1) {
@@ -65,7 +68,7 @@ getFormantDispersion = function(formants,
 #' Estimate vocal tract length
 #'
 #' Estimates the length of vocal tract based on formant frequencies, assuming
-#' that the vocal tract can be modeled as a tube open at both ends.
+#' that the vocal tract can be modeled as a tube open at one end.
 #'
 #' If \code{method = 'meanFormant'}, vocal tract length (VTL) is calculated
 #' separately for each formant as \eqn{(2 * formant_number - 1) * speedSound /
@@ -288,11 +291,6 @@ schwa = function(formants = NULL,
   # check input
   if (is.null(formants) & is.null(vocalTract)) {
     stop('Please pecify formant frequencies and/or vocal tract length')
-  }
-  if (!is.null(formants)) {
-    if (!is.numeric(formants) | any(formants[!is.na(formants)] < 0)) {
-      stop('formants must be positive numbers (Hz)')
-    }
   }
   if (!is.null(formants_relative)) {
     if (!is.numeric(formants_relative)) {

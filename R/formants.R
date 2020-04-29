@@ -663,7 +663,7 @@ reformatFormants = function(formants) {
       formants[[f]] = formant[, c('time', 'freq', 'amp', 'width')]
     }
   } else if (!is.null(formants)) {
-    if (!is.na(formants)) {
+    if (any(!is.na(formants))) {
       stop('If defined, formants must be either a list or a string of characters
          from dictionary presets: a, o, i, e, u, 0 (schwa)')
     }

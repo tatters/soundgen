@@ -2,9 +2,11 @@
 BUGS FIXED:
   * soundgen(): proper wiggling of secondary control parameters if temperature > 0
   * soundgen(): vibratoFreq and vibratoDep can go beyond preset levels if invalidArgAction = 'ignore'
+  * spectrogramFolder(): updated html output
 
 MINOR:
   * pitch_app(): an option to turn off automatic updating of the optimal pitch contour to speed up the processing of long audio files
+  * schwa() accepts missing values in formant frequencies
 
 
           CHANGES IN SOUNDGEN VERSION 1.6.2 [06-February-2020]

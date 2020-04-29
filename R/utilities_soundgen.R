@@ -92,6 +92,7 @@ convert_sec_to_hms = function(time_s) {
 #' Writes an html file for displaying clickable plots in a browser.
 #' @param myfolder full path to target folder, without a '/' at the end
 #' @param myfiles a list of full names of files (with paths and extensions)
+#' @param width default flex-basis, ie approximate default width of each image
 #' @keywords internal
 #' @examples
 #' \dontrun{
@@ -99,15 +100,14 @@ convert_sec_to_hms = function(time_s) {
 #'           myfiles = c('~/Downloads/temp/myfile1.wav',
 #'                       '~/Downloads/temp/myfile2.wav'))
 #' }
-htmlPlots = function(myfolder, myfiles) {
+htmlPlots = function(myfolder, myfiles, width) {
   # a list of basenames without extension
   basenames = basename(myfiles)
   basenames_stripped = as.character(sapply(
     basenames,
     function(x) substr(x, 1, nchar(x) - 4)
   ))
-  n = paste0(basenames, collapse = "', '")
-  n = paste0("var mylist = ['", n, "'];")
+  basenames_concat = paste0(basenames, collapse = "', '")
 
   # create an html file to display nice, clickable spectrograms
   out_html = file(paste0(myfolder,'/00_clickable_plots.html'))
@@ -115,43 +115,50 @@ htmlPlots = function(myfolder, myfiles) {
     c("<!DOCTYPE html>",
       "<html>",
       "<head>",
-      "<title>Labels</title>",
+      "<title>Click-to-play spectrograms</title>",
       "<meta charset='UTF-8'>",
+      "<meta name='viewport' content='width=device-width, initial-scale=1.0'>",
       "<style>",
-      "table { width:100%; float:center; }",
-      "table, th, td { border: 1px solid black; border-collapse: collapse; }",
-      "th, td { padding: 5px; text-align: center; }",
-      "table#t01 tr:nth-child(even) { background-color: #eee; }",
-      "table#t01 tr:nth-child(odd) { background-color:#fff; }",
-      "table#t01 th	{ background-color: black; color: white; }",
+      "#flexbox {",
+      "  display: flex;",
+      "  flex-flow: row wrap;",
+      "  justify-content: space-around;",
+      "  align-items: stretch;",
+      "}",
+      "#flexbox > div {",
+      paste0("  flex: 1 1 ", width, "px;"),
+      "  margin: 20px 5px;",
+      "  border: 1px gray solid;",
+      "  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 15px 0 rgba(0, 0, 0, 0.19);",
+      "}",
+      "#flexbox > div:hover{",
+      "  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 15px 0 rgba(0, 0, 0, 0.3);",
+      "}",
+      "#flexbox img {",
+      "  width: 100%;",
+      "}",
       "</style>",
-      "<script>",
-      n,
-      "</script>",
       "</head>",
       "<body>",
-      "<div id='instruction' style='font-size:200%; padding:5px; text-align:center'>Plots of all files in a folder</div>",
-      "<div id='container'> </div>",
+      "<div id='flexbox'> </div>",
       "<script>",
-      "var sound = [];",
-      "var table = document.createElement('table'), tr, td, row, cell;",
-      "for (row = 0; row < mylist.length; row++) {",
-      "  sound[row] = mylist[row].substring(0, mylist[row].length - 4);",
-      "  tr = document.createElement('tr');",
-      "  td = document.createElement('td');",
-      "  tr.appendChild(td);",
-      "  td.innerHTML = '<img src=\"' + sound[row] + '.png\">';",
-      "  var mysound = mylist[row];",
-      "  td.onclick = (function(mysound) {",
+      paste0("var mylist = ['", basenames_concat, "'];"),
+      "var sounds = [];",
+      "var flex = document.getElementById('flexbox');",
+      "for (var i = 0; i < mylist.length; i++) {",
+      "  sounds[i] = mylist[i].slice(0, -4);  // remove '.wav' / '.mp3'",
+      "  let newDiv = document.createElement('div');",
+      "  newDiv.innerHTML = '<img src=\"' + sounds[i] + '.png\">';",
+      "  flex.appendChild(newDiv);",
+      "  var mysound = mylist[i];",
+      "  newDiv.onclick = (function(mysound) {",
       "    return function() {",
       "      var audioElement = document.createElement('audio');",
       "      audioElement.setAttribute('src', mysound);",
       "      audioElement.play();",
       "    };",
       "  })(mysound);",
-      "  table.appendChild(tr);",
       "}",
-      "document.getElementById('container').appendChild(table);",
       "</script>",
       "</body>",
       "</html>",
