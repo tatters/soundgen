@@ -100,7 +100,7 @@ convert_sec_to_hms = function(time_s) {
 #'           myfiles = c('~/Downloads/temp/myfile1.wav',
 #'                       '~/Downloads/temp/myfile2.wav'))
 #' }
-htmlPlots = function(myfolder, myfiles, width) {
+htmlPlots = function(myfolder, myfiles, width = "900px") {
   # a list of basenames without extension
   basenames = basename(myfiles)
   basenames_stripped = as.character(sapply(
@@ -115,7 +115,7 @@ htmlPlots = function(myfolder, myfiles, width) {
     c("<!DOCTYPE html>",
       "<html>",
       "<head>",
-      "<title>Click-to-play spectrograms</title>",
+      "<title>Click to play</title>",
       "<meta charset='UTF-8'>",
       "<meta name='viewport' content='width=device-width, initial-scale=1.0'>",
       "<style>",
@@ -126,7 +126,7 @@ htmlPlots = function(myfolder, myfiles, width) {
       "  align-items: stretch;",
       "}",
       "#flexbox > div {",
-      paste0("  flex: 1 1 ", width, "px;"),
+      paste0("  flex: 1 1 ", width, ";"),
       "  margin: 20px 5px;",
       "  border: 1px gray solid;",
       "  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 15px 0 rgba(0, 0, 0, 0.19);",

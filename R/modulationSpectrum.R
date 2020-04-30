@@ -613,10 +613,10 @@ modulationSpectrumFolder = function(
   }
 
   if (htmlPlots & savePlots) {
-    htmlPlots(myfolder, myfiles = filenames)
+    htmlPlots(myfolder, myfiles = filenames, width = paste0(width, units))
   }
 
-  return(output)
+  invisible(output)
 }
 
 

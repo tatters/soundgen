@@ -4,7 +4,7 @@
 \alias{htmlPlots}
 \title{HTML for clickable plots}
 \usage{
-htmlPlots(myfolder, myfiles, width)
+htmlPlots(myfolder, myfiles, width = "900px")
 }
 \arguments{
 \item{myfolder}{full path to target folder, without a '/' at the end}

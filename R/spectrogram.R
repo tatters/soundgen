@@ -547,7 +547,7 @@ spectrogramFolder = function(myfolder,
     }
   }
   if (htmlPlots) {
-    htmlPlots(myfolder, myfiles = filenames, width = width)
+    htmlPlots(myfolder, myfiles = filenames, width = paste0(width, units))
   }
 }
 
