@@ -1,4 +1,4 @@
-# TODO: vtl estimation should accept multiple values of each formant (ie several observation from the same subject) to use in regression; soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # pitch_app: see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
@@ -130,9 +130,13 @@ NULL
 #'   based on specified formant frequencies, if any (anchor format)
 #' @param subFreq target frequency of subharmonics, Hz (lower than f0, adjusted
 #'   dynamically so f0 is always a multiple of subFreq) (anchor format)
-#' @param subDep the width of subharmonic band, Hz. Regulates how quickly the
-#'   strength of subharmonics fades as they move away from harmonics in f0 stack
+#' @param subDep the depth of subharmonics relative to f0 stack, \%. 0: no
+#'   subharmonics; 100: g0 harmonics are as strong as the nearest f0 harmonic
 #'   (anchor format)
+#' @param subWidth the width of sidebands, Hz. Regulates how quickly the
+#'   strength of subharmonics fades as they move away from harmonics in f0
+#'   stack: large values like the default 10000 means that all g0 harmonics are
+#'   equally strong (anchor format)
 #' @param shortestEpoch minimum duration of each epoch with unchanging
 #'   subharmonics regime or formant locking, in ms
 #' @param amDep amplitude modulation depth, \%. 0: no change; 100: amplitude
@@ -240,7 +244,7 @@ NULL
 #'   pitchGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 #'
 #' # Subharmonics in sidebands (noisy scream)
-#' sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
+#' sound = soundgen (subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
 #'   pitch = data.frame(
 #'     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
 #'   sylLen = 800,
@@ -248,21 +252,11 @@ NULL
 #'
 #' # Jitter and mouth opening (bark, dog-like)
 #' sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
-#'   nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
+#'   subFreq = 100, subDep = 100, subWidth = 60, jitterDep = 1,
 #'   pitch = c(559, 785, 557),
 #'   mouth = c(0, 0.5, 0),
 #'   vocalTract = 5, formants = NULL,
 #'   play = playback, plot = TRUE)
-#'
-#' # Use nonlinRandomWalk to crease reproducible examples of sounds with
-#' # nonlinear effects. For ex., to make a sound with no effect in the first
-#' # third, subharmonics in the second third, and jitter in the final third of the
-#' # total duration:
-#' a = c(rep(0, 100), rep(1, 100), rep(2, 100))
-#' s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
-#'              subFreq = 100, subDep = 70, jitterDep = 1,
-#'              nonlinRandomWalk = a, plot = TRUE, ylim = c(0, 4))
-#' # playme(s)
 #'
 #' # See the vignette on sound generation for more examples and in-depth
 #' # explanation of the arguments to soundgen()
@@ -287,6 +281,7 @@ soundgen = function(
   nonlinRandomWalk = NULL,
   subFreq = 100,
   subDep = 0,
+  subWidth = 10000,
   shortestEpoch = 300,
   jitterLen = 1,
   jitterDep = 0,
@@ -418,7 +413,7 @@ soundgen = function(
   for (anchor in c('pitch', 'pitchGlobal', 'glottis',
                    'ampl', 'amplGlobal',
                    'mouth', 'vocalTract', 'formantLocking',
-                   'vibratoFreq', 'vibratoDep', 'subFreq', 'subDep',
+                   'vibratoFreq', 'vibratoDep', 'subFreq', 'subDep', 'subWidth',
                    'jitterLen', 'jitterDep', 'shimmerLen', 'shimmerDep',
                    'rolloff', 'rolloffOct', 'rolloffKHz',
                    'rolloffParab', 'rolloffParabHarm',
@@ -544,7 +539,7 @@ soundgen = function(
     jitterDep$value[jitterDep$value < 0] = 0
     shimmerDep$value = shimmerDep$value - creakyBreathy * 5
     shimmerDep$value[shimmerDep$value < 0] = 0
-    subDep$value = subDep$value * 2 ^ (-creakyBreathy)
+    subDep$value = subDep$value - 100 * creakyBreathy
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
     if (!is.list(noise)) {
@@ -621,7 +616,7 @@ soundgen = function(
     'shimmerLen', 'shimmerDep',
     'rolloff', 'rolloffKHz', 'rolloffOct',
     'rolloffParab', 'rolloffParabHarm')
-  pars_to_round = c('attackLen', 'subFreq', 'subDep')
+  pars_to_round = c('attackLen', 'subFreq', 'subWidth')
   pars_list = list(
     'attackLen' = attackLen,
     'jitterDep' = jitterDep,
@@ -646,6 +641,7 @@ soundgen = function(
     'shortestEpoch' = shortestEpoch,
     'subFreq' = subFreq,
     'subDep' = subDep,
+    'subWidth' = subWidth,
     'nonlinBalance' = nonlinBalance,
     'nonlinRandomWalk' = nonlinRandomWalk,
     'pitchFloor' = pitchFloor,

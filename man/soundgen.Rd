@@ -21,6 +21,7 @@ soundgen(
   nonlinRandomWalk = NULL,
   subFreq = 100,
   subDep = 0,
+  subWidth = 10000,
   shortestEpoch = 300,
   jitterLen = 1,
   jitterDep = 0,
@@ -139,9 +140,14 @@ regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
 dynamically so f0 is always a multiple of subFreq) (anchor format)}
 
-\item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
-strength of subharmonics fades as they move away from harmonics in f0 stack
+\item{subDep}{the depth of subharmonics relative to f0 stack, \%. 0: no
+subharmonics; 100: g0 harmonics are as strong as the nearest f0 harmonic
 (anchor format)}
+
+\item{subWidth}{the width of sidebands, Hz. Regulates how quickly the
+strength of subharmonics fades as they move away from harmonics in f0
+stack: large values like the default 10000 means that all g0 harmonics are
+equally strong (anchor format)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime or formant locking, in ms}
@@ -372,7 +378,7 @@ sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
   pitchGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 
 # Subharmonics in sidebands (noisy scream)
-sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
+sound = soundgen (subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
   pitch = data.frame(
     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
   sylLen = 800,
@@ -380,21 +386,11 @@ sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
 
 # Jitter and mouth opening (bark, dog-like)
 sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
-  nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
+  subFreq = 100, subDep = 100, subWidth = 60, jitterDep = 1,
   pitch = c(559, 785, 557),
   mouth = c(0, 0.5, 0),
   vocalTract = 5, formants = NULL,
   play = playback, plot = TRUE)
-
-# Use nonlinRandomWalk to crease reproducible examples of sounds with
-# nonlinear effects. For ex., to make a sound with no effect in the first
-# third, subharmonics in the second third, and jitter in the final third of the
-# total duration:
-a = c(rep(0, 100), rep(1, 100), rep(2, 100))
-s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
-             subFreq = 100, subDep = 70, jitterDep = 1,
-             nonlinRandomWalk = a, plot = TRUE, ylim = c(0, 4))
-# playme(s)
 
 # See the vignette on sound generation for more examples and in-depth
 # explanation of the arguments to soundgen()

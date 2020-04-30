@@ -1209,6 +1209,7 @@ server = function(input, output, session) {
       vocalTract = vocalTract(),
       subFreq = input$subFreq,
       subDep = input$subDep,
+      subWidth = input$subWidth,
       shortestEpoch = input$shortestEpoch,
       amDep = input$amDep,
       amFreq = input$amFreq,

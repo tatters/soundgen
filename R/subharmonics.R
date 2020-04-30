@@ -26,6 +26,7 @@ getVocalFry_per_epoch = function(rolloff,
                                  pitch_per_gc,
                                  nSubharm,
                                  sideband_width_vector,
+                                 subDep_vector,
                                  throwaway01) {
   if (nSubharm < 1) {
     return(rolloff)
@@ -50,7 +51,8 @@ getVocalFry_per_epoch = function(rolloff,
   # is obviously a mirror symmetry, so we don't have to calculate multipl_upr
   # separately, just invert multipl_lwr
   multipl_lwr = list()
-  normaliz = dnorm(0, mean = 0, sd = sideband_width_vector) # the same for all g harmonics
+  # normaliz factor is the same for all g harmonics
+  normaliz = dnorm(0, mean = 0, sd = sideband_width_vector) / subDep_vector * 100
   for (s in 1:nSubharm) {
     dist_lwr = pitch_per_gc * s / (nSubharm + 1)
     dist_upr = pitch_per_gc - dist_lwr
@@ -109,6 +111,7 @@ getVocalFry = function(rolloff,
                        pitch_per_gc,
                        subFreq = 100,
                        subDep = 100,
+                       subWidth = 10000,
                        dynamicRange = 80,
                        shortestEpoch = 300) {
   # force subFreq to be a multiple of f0 at each point
@@ -147,8 +150,9 @@ getVocalFry = function(rolloff,
       rolloff = rolloff[, idx, drop = FALSE],
       pitch_per_gc = pitch_per_gc[idx],
       nSubharm = nSubharm_per_epoch[e],
-      sideband_width_vector = subDep[idx],
-      throwaway01 = throwaway01
+      sideband_width_vector = subWidth[idx],
+      throwaway01 = throwaway01,
+      subDep_vector = subDep[idx]
     )
     # View(rolloff_new[[1]])
   }

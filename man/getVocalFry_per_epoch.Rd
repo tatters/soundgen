@@ -9,6 +9,7 @@ getVocalFry_per_epoch(
   pitch_per_gc,
   nSubharm,
   sideband_width_vector,
+  subDep_vector,
   throwaway01
 )
 }

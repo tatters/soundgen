@@ -627,18 +627,17 @@ s2 = suppressWarnings(soundgen(pitch = c(1500, 800), glottis = 75,
 # Now this is what this feature is meant for: vocal fry
 s3 = soundgen(sylLen = 1500, pitch = c(110, 90), rolloff = -12,
               glottis = c(0, 500), 
-              nonlinBalance = 100,  
-              subDep = 0, # subharmonics with "glottis" not implemented
               jitterDep = 1, shimmerDep = 20,
+              # subharmonics not implemented with "glottis" 
               play = playback)
 spectrogram(s3, samplingRate = 16000, osc = TRUE, heights = c(1, 1))
 ```
 
 
 ## Nonlinear effects
-Soundgen can add subharmonics and sidebands or even approximate deterministic chaos by adding strong jitter and shimmer. These effects basically make the sound appear noisy / harsh / rough. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid amplitude and/or frequency modulation, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic based on the desired frequency of subharmonics (`subFreq`). The actual frequency will not be exactly equal to `subFreq`, since it must be a fraction of f0 at all time points (one half, one third, etc). The amplitude of each subharmonic is a function of its distance from the nearest harmonic of the f0 stack and the desired width of sidebands (`subDep`). This way we can create either subharmonics or narrow sidebands that vary naturally as f0 changes over time, producing bifurcations and switching between different subharmonic regimes (see Wilden et al., 2012). 
+Soundgen can add frequency jumps, subharmonics, sidebands (implemented as a modification of subharmonics or with amplitude modulation), and even approximate deterministic chaos by adding strong jitter and shimmer. These effects basically make the sound appear noisy / harsh / rough. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid amplitude and/or frequency modulation, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic based on the desired frequency of subharmonics, or g0 (`subFreq`). The actual g0 frequency will not be exactly equal to `subFreq`, since it must be a fraction of f0 at all time points (one half, one third, etc). To achieve sidebands, the amplitude of each subharmonic is set to be a function of its distance from the nearest harmonic of the f0 stack; the rate at which g0 harmonics lose energy away from the nearest f0 harmonic determines the width of sidebands (`subWidth`). This way we can create either subharmonics or narrow sidebands that vary naturally as f0 changes over time, producing bifurcations and switching between different subharmonic regimes (see Wilden et al., 2012). 
 
-The main limitation of this approach is that it is too computationally costly to generate variable numbers of subharmonics for the entire bout. The solution currently adopted in soundgen is to break longer sounds into so-called "epochs" with a constant number of subharmonics in each. The epochs are synthesized separately, trimmed to the nearest zero crossing, and then glued together with a rapid `crossFade()`. This is suboptimal, since it shortens the sound and may introduce audible artifacts at transitions between epochs. `shortestEpoch` controls the approximate minimum length of each epoch. Longer epochs minimize problems with transitions, but the behavior of subharmonics then becomes less variable since their number is constrained to be constant within each epoch.
+The main limitation of this approach is that it is too computationally costly to generate variable numbers of subharmonics for the entire bout. The solution currently adopted in soundgen is to break longer sounds into so-called "epochs" with a constant number of subharmonics in each. The epochs are synthesized separately, trimmed to the nearest zero crossing, and then glued together with a rapid `crossFade()`. This is suboptimal, since it shortens the sound and may introduce audible artifacts at transitions between epochs. `shortestEpoch` controls the approximate minimum length of each epoch. Longer epochs minimize problems with transitions, but the behavior of subharmonics then becomes less variable since their number is constrained to be constant within each epoch. NB: with short `shortestEpoch`, add ~20-30 ms per transition to the nominal sound duration in order to compensate for cross-fading the epochs.
 
 ### Nonlinear regimes
 To add nonlinear effects stochastically, you can use `nonlinBalance`, which regulates approximately what proportion of the sound is affected. However, for best results it is advisable to set advanced settings manually (see below). At temperature > 0, `nonlinBalance` creates a random walk that divides each syllable into epochs defined by their regime, using two thresholds to determine when a new regime begins (see Fitch et al., 2002):
@@ -652,33 +651,28 @@ Note that subharmonics are only added to segments with subFreq < f0 / 2.
 1.  Regime 3: subharmonics and jitter. 
 If nonlinBalance = 100%, the whole syllable is in regime 3. 
 
-To see any effect, you have to set jitterDep, shimmerDep, and subFreq/subDep to some positive values (see below).
+To see any effect, you have to set jitterDep, shimmerDep, and subFreq/subDep/subWidth to some positive values (see below).
 
 ### Subharmonics
-Moving on to advanced nonlinear effects settings, `subFreq` ("Subharmonic frequency, Hz" in the app) and `subDep` ("Width of sidebands, Hz") define the properties of subharmonics in pitch regimes 2 and 3. Say your vocalization has a relatively flat intonation contour with a fundamental frequency of about 800 Hz, and you want to add a single subharmonic (g0). You then set the expected subharmonic frequency to 400 Hz. Since g0 is forced to be an integer fraction of f0 at all time points, it will not be exactly 400 Hz, but it will produce a single subharmonic at f0 / 2 (as long as f0 stays close to 800 Hz: if f0 goes up to 1200 Hz, you will get two subharmonics instead, since 1200 / 400 = 3). The width of sidebands defines how quickly the energy of subharmonics dissipates at a remove from the nearest f-harmonic. For example, our single subharmonic is audible but weak at sideband width = 150 Hz, while it becomes strong enough to be perceived as the new f0 at sideband width = 400 Hz, effectively halving the pitch:
+Moving on to advanced nonlinear effects settings, `subFreq` ("Target subharmonic frequency, Hz" in the app) `subDep` ("Depth of subharmonics"), and `subWidth` ("Width of sidebands, Hz") define the properties of subharmonics in pitch regimes 2 and 3. Say your vocalization has a relatively flat intonation contour with a fundamental frequency of about 800 Hz, and you want to add a single subharmonic (g0). You then set the expected subharmonic frequency to 400 Hz. Since g0 is forced to be an integer fraction of f0 at all time points, it will not be exactly 400 Hz, but it will produce a single subharmonic at f0 / 2 (as long as f0 stays close to 800 Hz: if f0 goes up to 1200 Hz, you will get two subharmonics instead, since 1200 / 400 = 3).
 
-```{r fig.show = "hold", fig.width = 3, fig.height = 3}
-s1 = soundgen(subFreq = 400, subDep = 150, nonlinBalance = 100,
-              jitterDep = 0, shimmerDep = 0, temperature = 0, 
-              sylLen = 500, pitch = c(800, 900),
-              play = playback, plot = TRUE, ylim = c(0, 3))
-s2 = soundgen(subFreq = 400, subDep = 400, nonlinBalance = 100,
-              jitterDep = 0, shimmerDep = 0, temperature = 0, 
-              sylLen = 500, pitch = c(800, 900),
-              play = playback, plot = TRUE, ylim = c(0, 3))
+```{r fig.show = "hold", fig.width = 7, fig.height = 5}
+soundgen(subFreq = 400, subDep = c(0, 25),
+         jitterDep = 0, shimmerDep = 0, temperature = 0, 
+         sylLen = 800, pitch = c(700, 1300),
+         play = playback, plot = TRUE, ylim = c(0, 3), osc = TRUE, heights = c(2, 1))
 ```
 
-Sidebands may be easier to understand for high-pitched sounds with low subharmonic frequencies. For example, chimpanzees emit piercing screams with narrow subharmonic bands. If we set `subFreq` to 75 Hz and `subDep` to 130 Hz, subharmonics literally form a band around each harmonic of the main stack, creating a very distinct, immediately recognizable sound quality:
+Sidebands are best demonstrated with high-pitched sounds and low subharmonic frequencies. For example, chimpanzees emit piercing screams with narrow subharmonic bands. If we set `subFreq` to 75 Hz and `subWidth` to 130 Hz, subharmonics literally form a band around each harmonic of the main stack, creating a very distinct, immediately recognizable sound quality:
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 800, 
              pitch = data.frame(time=c(0, .3, .9, 1), 
                                 value = c(1200, 1547, 1487, 1154)),
              rolloff = -3, rolloffKHz = 0,
              # gradually increasing width of sidebands at 0-600 ms
-             nonlinBalance = 100,
-             subFreq = 75, 
-             subDep = data.frame(time = c(0, 600, 650, 800), 
-                                 value = c(0, 130, 0, 0)),  
+             subFreq = 75, subDep = 25,
+             subWidth = data.frame(time = c(0, 600, 650, 800), 
+                                   value = c(0, 130, 0, 0)),  
              jitterDep = 0, shimmerDep = 0, 
              vocalTract = 12, mouth = c(.1, .8, .1),
              temperature = .001,
@@ -712,11 +706,11 @@ As for jitter in pitch regime 3, it wiggles both f0 and g0 harmonic stacks, blur
 # and specify the required jitter depth and period
 s1 = soundgen(jitterLen = 40, jitterDep = 1,  # shaky voice
               shimmerLen = 30, shimmerDep = 30,   
-              sylLen = 1000, subDep = 0, nonlinBalance = 100,
+              sylLen = 1000, 
               pitch =  c(150, 170), play = playback, plot = TRUE)
 s2 = soundgen(jitterLen = 1, jitterDep = 1,   # harsh voice
               shimmerLen = 1, shimmerDep = 10, 
-              sylLen = 1000, subDep = 0, nonlinBalance = 100,
+              sylLen = 1000, 
               pitch =  c(150, 170), play = playback, plot = TRUE)
 ```
 
@@ -725,7 +719,7 @@ To get jitter + shimmer + subharmonics, set temperature to 0 (nonlinear effects 
 s = soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, 
              vocalTract = 8, formants = NULL, rolloff = 0,
              pitch = c(559, 785, 557), mouth =  c(0, 0.5, 0),
-             nonlinBalance = 100, jitterDep = 1, subDep = 60, play = playback) 
+             jitterDep = 1, subDep = 60, play = playback) 
 ```
 
 ### Chaos
@@ -736,7 +730,6 @@ s = soundgen(sylLen = 1200,
                time = c(0, 110, 111, 180, 350, 940, 941, 1100, 1200),
                value = c(700, 1150, 1550, 2000, 2240, 1940, 1180, 900, 500)),
              temperature = 0.05, tempEffects = list(pitchDep = 0),
-             nonlinBalance = 100, subDep = 0, 
              jitterDep = data.frame(time = c(0, 200, 201, 900, 901, 1200),
                                     value = c(0, 0,  1.7, 1.2, 0,   0)),
              formants = c(900, 1300, 3300, 4300),
@@ -759,7 +752,7 @@ s = soundgen(sylLen = 1200,
                          1620, 1540, 1220, 900)),
              temperature = 0.05, 
              tempEffects = list(pitchDep = 0),
-             nonlinBalance = 100, subDep = 0, jitterDep = .3,
+             jitterDep = .3,
              rolloffKHz = 0, rolloff = 0, formants = c(900, 1300, 3300, 4300),
              samplingRate = 22000, play = playback, plot = TRUE, osc = TRUE)
 ```
@@ -777,7 +770,6 @@ Sometimes it may be necessary to control precisely the timing of each nonlinear 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 s = soundgen(
   # nonlinear settings
-  nonlinBalance = 100, subDep = 0,  
   jitterDep = c(0, 0, 1.5, .5), shimmerDep = c(0, 0, 15, 5),
   # settings for high precision
   temperature = .001, dynamicRange = 120,             
@@ -800,7 +792,6 @@ In the example above `jitterDep = c(0, 0, 1.5, .5)` means that there is no jitte
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 s = soundgen(
   # nonlinear settings
-  nonlinBalance = 100, subDep = 0,  
   jitterDep = data.frame(
     time = c(0, 300, 301, 500, 501, 1000), 
     value = c(0, 0, 1.5, 1.5, 0, 0)
@@ -1060,7 +1051,7 @@ cow1 = soundgen(sylLen = 1400,
                              value = c(-45, -45)),
                 rolloffNoise = -4, addSilence = 0)
 cow2 = soundgen(sylLen = 310, pitch = c(359, 359), 
-                temperature = 0.05, nonlinBalance = 100, 
+                temperature = 0.05,
                 subFreq = 150, subDep = 70, jitterDep = 1.3, 
                 rolloff = -6, rolloffOct = -3, rolloffKHz = -0, 
                 formants = NULL, vocalTract = 36.5, 

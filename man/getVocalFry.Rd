@@ -9,6 +9,7 @@ getVocalFry(
   pitch_per_gc,
   subFreq = 100,
   subDep = 100,
+  subWidth = 10000,
   dynamicRange = 80,
   shortestEpoch = 300
 )
@@ -23,9 +24,14 @@ one value per glottal cycle}
 \item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
 dynamically so f0 is always a multiple of subFreq) (anchor format)}
 
-\item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
-strength of subharmonics fades as they move away from harmonics in f0 stack
+\item{subDep}{the depth of subharmonics relative to f0 stack, \%. 0: no
+subharmonics; 100: g0 harmonics are as strong as the nearest f0 harmonic
 (anchor format)}
+
+\item{subWidth}{the width of sidebands, Hz. Regulates how quickly the
+strength of subharmonics fades as they move away from harmonics in f0
+stack: large values like the default 10000 means that all g0 harmonics are
+equally strong (anchor format)}
 
 \item{dynamicRange}{dynamic range, dB. Harmonics and noise more than
 dynamicRange under maximum amplitude are discarded to save computational
