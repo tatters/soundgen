@@ -7,19 +7,28 @@
 getFormantDispersion(
   formants,
   method = c("meanDispersion", "regression")[2],
-  speedSound = 35400
+  speedSound = 35400,
+  plot = FALSE,
+  checkFormat = TRUE
 )
 }
 \arguments{
-\item{formants}{a character string like "aaui" referring to default presets
-for speaker "M1"; a vector of formant frequencies; or a list of formant
-times, frequencies, amplitudes, and bandwidths, with a single value of each
-for static or multiple values of each for moving formants}
+\item{formants}{formant frequencies in any format recognized by
+\code{\link{soundgen}}: a character string like \code{aaui} referring to
+default presets for speaker "M1"; a vector of formant frequencies like
+\code{c(550, 1600, 3200)}; or a list with multiple values per formant like
+\code{list(f1 = c(500, 550), f2 = 1200))}}
 
 \item{method}{the method of estimating vocal tract length (see details)}
 
-\item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
-phonetics", p. 138}
+\item{speedSound}{speed of sound in warm air, by default 35400 cm/s. Stevens
+(2000) "Acoustic phonetics", p. 138}
+
+\item{plot}{if TRUE, plots the regression line to illustrate the estimation
+of formant dispersion (method = "regression" only)}
+
+\item{checkFormat}{if FALSE, only a list of properly formatted formant
+frequencies is accepted}
 }
 \description{
 Internal soundgen function.
@@ -28,39 +37,7 @@ Internal soundgen function.
 Estimates formant dispersion based on one or more formant frequencies.
 }
 \examples{
-soundgen:::getFormantDispersion(c(500, 1400, 2900, 3500),
-  method = 'meanDispersion')
-soundgen:::getFormantDispersion(c(500, 1400, 2900, 3500),
-  method = 'regression')
-soundgen:::getFormantDispersion(c(500, 1400, NA, 3500))
-soundgen:::getFormantDispersion(c(NA, NA, NA))
-\dontrun{
-nIter = 100  # nIter = 10000 for better results
-speedSound = 35400
-out = data.frame(vtl = runif(nIter, 5, 70),
-                 nFormants = round(runif(nIter, 1, 10)),
-                 noise = runif(nIter, 0, .2),
-                 vtl_est = rep(NA, nIter),
-                 error = rep(NA, nIter))
-for (i in 1:nIter) {
-  a = 1:out$nFormants[i]
-  formants = sort(speedSound * (2 * a - 1) / (4 * out$vtl[i]) * rnorm(n = length(a),
-                                                                 mean = 1,
-                                                                 sd = out$noise[i]))
-  disp = soundgen:::getFormantDispersion(formants, method = 'fast')
-  out$vtl_est[i] = speedSound / 2 / disp
-  out$error[i] = (out$vtl[i] -  out$vtl_est[i]) / out$vtl[i]
-}
-
-library(ggplot2)
-ggplot(out, aes(x = nFormants, y = error)) +
-  geom_point(alpha = .1) +
-  geom_smooth() +
-  theme_bw()
-ggplot(out, aes(x = noise, y = error)) +
-  geom_point(alpha = .1) +
-  geom_smooth() +
-  theme_bw()
-}
+soundgen:::getFormantDispersion(
+  list(f1 = c(570, 750), f2 = NA, f3 = c(2400, 2200, NA)))
 }
 \keyword{internal}

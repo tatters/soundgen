@@ -8,24 +8,27 @@ estimateVTL(
   formants,
   method = c("meanFormant", "meanDispersion", "regression")[3],
   speedSound = 35400,
-  checkFormat = TRUE
+  checkFormat = TRUE,
+  plot = FALSE
 )
 }
 \arguments{
-\item{formants}{a character string like "aaui" referring to default presets
-for speaker "M1"; a vector of formant frequencies; or a list of formant
-times, frequencies, amplitudes, and bandwidths, with a single value of each
-for static or multiple values of each for moving formants}
+\item{formants}{formant frequencies in any format recognized by
+\code{\link{soundgen}}: a character string like \code{aaui} referring to
+default presets for speaker "M1"; a vector of formant frequencies like
+\code{c(550, 1600, 3200)}; or a list with multiple values per formant like
+\code{list(f1 = c(500, 550), f2 = 1200))}}
 
 \item{method}{the method of estimating vocal tract length (see details)}
 
-\item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
-phonetics", p. 138}
+\item{speedSound}{speed of sound in warm air, by default 35400 cm/s. Stevens
+(2000) "Acoustic phonetics", p. 138}
 
-\item{checkFormat}{if TRUE, expands shorthand format specifications into the
-canonical form of a list with four components: time, frequency, amplitude
-and bandwidth for each format (as returned by the internal function
-\code{reformatFormants})}
+\item{checkFormat}{if FALSE, only a list of properly formatted formant
+frequencies is accepted}
+
+\item{plot}{if TRUE, plots the regression line to illustrate the estimation
+of formant dispersion (method = "regression" only)}
 }
 \value{
 Returns the estimated vocal tract length in cm.
@@ -53,20 +56,26 @@ frequencies.
 estimateVTL(NA)
 estimateVTL(500)
 estimateVTL(c(600, 1850, 3100))
-estimateVTL(formants = list(f1 = 600, f2 = 1650, f3 = 2400))
+# Multiple measurements are OK
+estimateVTL(
+  formants = list(f1 = c(540, 600, 550),
+  f2 = 1650, f3 = c(2400, 2550)),
+  plot = TRUE)
+# NB: this is better than averaging formant values. Cf.:
+estimateVTL(
+  formants = list(f1 = mean(c(540, 600, 550)),
+  f2 = 1650, f3 = mean(c(2400, 2550))),
+  plot = TRUE)
 
 # Missing values are OK
 estimateVTL(c(600, 1850, 3100, NA, 5000))
-
-# For moving formants, frequencies are averaged over time,
-# i.e. this is identical to c(600, 1650, 2400)
-estimateVTL(formants = list(f1 = c(500, 700), f2 = 1650, f3 = c(2200, 2600)))
+estimateVTL(list(f1 = 500, f2 = c(1650, NA, 1400), f3 = 2700), plot = TRUE)
 
 # Note that VTL estimates based on the commonly reported 'meanDispersion'
 # depend only on the first and last formant
 estimateVTL(c(500, 1400, 2800, 4100), method = 'meanDispersion')
 estimateVTL(c(500, 1100, 2300, 4100), method = 'meanDispersion') # identical
-# ...but
+# ...but this is not the case for 'meanFormant' and 'regression' methods
 estimateVTL(c(500, 1400, 2800, 4100), method = 'meanFormant')
 estimateVTL(c(500, 1100, 2300, 4100), method = 'meanFormant') # much longer
 

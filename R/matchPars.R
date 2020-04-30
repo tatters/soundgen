@@ -139,10 +139,10 @@ matchPars = function(target,
   p = as.numeric(na.omit(aa$pitch))
   p = downsample(p, srNew = 5, srOld = 1 / step * 1000)  # downsample F0 measures to 5 Hz
   if (length(p) > 1) {
-    parDefault$pitch = data.frame(
+    parDefault$pitch = list(
       time = round(seq(0, 1, length.out = length(p)), 2),
       value = round(p)
-    )}
+  )}
   if (is.list(af)) {
     if (nrow(af) > 0) {
       for (f in 1:min(3, nrow(af))) {  # add max 3 formants

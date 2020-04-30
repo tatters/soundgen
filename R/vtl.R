@@ -6,60 +6,59 @@
 #' @inheritParams estimateVTL
 #' @keywords internal
 #' @examples
-#' soundgen:::getFormantDispersion(c(500, 1400, 2900, 3500),
-#'   method = 'meanDispersion')
-#' soundgen:::getFormantDispersion(c(500, 1400, 2900, 3500),
-#'   method = 'regression')
-#' soundgen:::getFormantDispersion(c(500, 1400, NA, 3500))
-#' soundgen:::getFormantDispersion(c(NA, NA, NA))
-#' \dontrun{
-#' nIter = 100  # nIter = 10000 for better results
-#' speedSound = 35400
-#' out = data.frame(vtl = runif(nIter, 5, 70),
-#'                  nFormants = round(runif(nIter, 1, 10)),
-#'                  noise = runif(nIter, 0, .2),
-#'                  vtl_est = rep(NA, nIter),
-#'                  error = rep(NA, nIter))
-#' for (i in 1:nIter) {
-#'   a = 1:out$nFormants[i]
-#'   formants = sort(speedSound * (2 * a - 1) / (4 * out$vtl[i]) * rnorm(n = length(a),
-#'                                                                  mean = 1,
-#'                                                                  sd = out$noise[i]))
-#'   disp = soundgen:::getFormantDispersion(formants, method = 'fast')
-#'   out$vtl_est[i] = speedSound / 2 / disp
-#'   out$error[i] = (out$vtl[i] -  out$vtl_est[i]) / out$vtl[i]
-#' }
-#'
-#' library(ggplot2)
-#' ggplot(out, aes(x = nFormants, y = error)) +
-#'   geom_point(alpha = .1) +
-#'   geom_smooth() +
-#'   theme_bw()
-#' ggplot(out, aes(x = noise, y = error)) +
-#'   geom_point(alpha = .1) +
-#'   geom_smooth() +
-#'   theme_bw()
-#' }
-getFormantDispersion = function(formants,
-                                method = c('meanDispersion', 'regression')[2],
-                                speedSound = 35400) {
-  if (!is.numeric(formants) |
-      length(formants) < 1 |
-      !any(!is.na(formants))) return(NA)
+#' soundgen:::getFormantDispersion(
+#'   list(f1 = c(570, 750), f2 = NA, f3 = c(2400, 2200, NA)))
+getFormantDispersion = function(
+  formants,
+  method = c('meanDispersion', 'regression')[2],
+  speedSound = 35400,
+  plot = FALSE,
+  checkFormat = TRUE
+) {
+  if (checkFormat) {
+    formants = reformatFormants(formants,
+                                output = 'freqs',
+                                keepNonInteger = FALSE)
+  }
+  if (!is.list(formants) |     # expect a preformatted list...
+      length(formants) < 1 |   # ...with at least one formant...
+      !any(!is.na(formants))) return(NA)  # ...and at least one non-NA
   if (method == 'meanDispersion') {
-    l = length(formants)
-    if (l > 1) {
-      formantDispersion = mean(diff(formants), na.rm = TRUE)
+    formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
+    if (length(formant_freqs) > 1) {
+      formantDispersion = mean(diff(formant_freqs), na.rm = TRUE)
     } else {
-      formantDispersion = 2 * formants
+      # a single formant
+      if (!is.na(formants$f1)) {
+        formantDispersion = 2 * formant_freqs
+      } else {
+        formantDispersion = NA
+      }
     }
   } else if (method == 'regression') {
     # Reby et al. (2005) "Red deer stags use formants..."
-    deltaF = (2 * (1:length(formants)) - 1) / 2
-    # plot(deltaF, formants)
-    mod = suppressWarnings(lm(formants ~ deltaF - 1))
+    fdf = NULL
+    for (i in 1:length(formants)) {
+      temp = data.frame(formantSpacing = (2 * i - 1) / 2,
+                        freq = formants[[i, drop = FALSE]]$freq)
+      if (is.null(fdf)) fdf = temp else fdf = rbind(fdf, temp)
+    }
+    mod = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf))
     # NB: no intercept, i.e. forced to pass through 0
     formantDispersion = suppressWarnings(summary(mod)$coef[1])
+    if (plot) {
+      plot(
+        fdf$formantSpacing, fdf$freq,
+        xlab = 'Formant spacing', ylab = 'Frequency, Hz',
+        xaxs = 'i', yaxs = 'i',
+        xlim = c(0, max(fdf$formantSpacing, na.rm = TRUE) * 1.04),
+        ylim = c(0, max(fdf$freq, na.rm = TRUE) * 1.04),
+        main = paste0('Formant dispersion = ',
+                      round(formantDispersion, 0),
+                      ' Hz')
+      )
+      abline(a = 0, b = formantDispersion, lty = 3)
+    }
   }
   return(formantDispersion)
 }
@@ -86,37 +85,44 @@ getFormantDispersion = function(formants,
 #'
 #' @seealso \code{\link{schwa}}
 #'
-#' @param formants a character string like "aaui" referring to default presets
-#'   for speaker "M1"; a vector of formant frequencies; or a list of formant
-#'   times, frequencies, amplitudes, and bandwidths, with a single value of each
-#'   for static or multiple values of each for moving formants
+#' @param formants formant frequencies in any format recognized by
+#'   \code{\link{soundgen}}: a character string like \code{aaui} referring to
+#'   default presets for speaker "M1"; a vector of formant frequencies like
+#'   \code{c(550, 1600, 3200)}; or a list with multiple values per formant like
+#'   \code{list(f1 = c(500, 550), f2 = 1200))}
 #' @param method the method of estimating vocal tract length (see details)
-#' @param speedSound speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
-#'   phonetics", p. 138
-#' @param checkFormat if TRUE, expands shorthand format specifications into the
-#'   canonical form of a list with four components: time, frequency, amplitude
-#'   and bandwidth for each format (as returned by the internal function
-#'   \code{reformatFormants})
+#' @param speedSound speed of sound in warm air, by default 35400 cm/s. Stevens
+#'   (2000) "Acoustic phonetics", p. 138
+#' @param checkFormat if FALSE, only a list of properly formatted formant
+#'   frequencies is accepted
+#' @param plot if TRUE, plots the regression line to illustrate the estimation
+#'   of formant dispersion (method = "regression" only)
 #' @return Returns the estimated vocal tract length in cm.
 #' @export
 #' @examples
 #' estimateVTL(NA)
 #' estimateVTL(500)
 #' estimateVTL(c(600, 1850, 3100))
-#' estimateVTL(formants = list(f1 = 600, f2 = 1650, f3 = 2400))
+#' # Multiple measurements are OK
+#' estimateVTL(
+#'   formants = list(f1 = c(540, 600, 550),
+#'   f2 = 1650, f3 = c(2400, 2550)),
+#'   plot = TRUE)
+#' # NB: this is better than averaging formant values. Cf.:
+#' estimateVTL(
+#'   formants = list(f1 = mean(c(540, 600, 550)),
+#'   f2 = 1650, f3 = mean(c(2400, 2550))),
+#'   plot = TRUE)
 #'
 #' # Missing values are OK
 #' estimateVTL(c(600, 1850, 3100, NA, 5000))
-#'
-#' # For moving formants, frequencies are averaged over time,
-#' # i.e. this is identical to c(600, 1650, 2400)
-#' estimateVTL(formants = list(f1 = c(500, 700), f2 = 1650, f3 = c(2200, 2600)))
+#' estimateVTL(list(f1 = 500, f2 = c(1650, NA, 1400), f3 = 2700), plot = TRUE)
 #'
 #' # Note that VTL estimates based on the commonly reported 'meanDispersion'
 #' # depend only on the first and last formant
 #' estimateVTL(c(500, 1400, 2800, 4100), method = 'meanDispersion')
 #' estimateVTL(c(500, 1100, 2300, 4100), method = 'meanDispersion') # identical
-#' # ...but
+#' # ...but this is not the case for 'meanFormant' and 'regression' methods
 #' estimateVTL(c(500, 1400, 2800, 4100), method = 'meanFormant')
 #' estimateVTL(c(500, 1100, 2300, 4100), method = 'meanFormant') # much longer
 #'
@@ -136,43 +142,34 @@ getFormantDispersion = function(formants,
 #' # 'meanDispersion' is pretty different, while 'meanFormant' and 'regression'
 #' # give broadly comparable results
 #' }
-estimateVTL = function(formants,
-                       method = c('meanFormant', 'meanDispersion', 'regression')[3],
-                       speedSound = 35400,
-                       checkFormat = TRUE) {
+estimateVTL = function(
+  formants,
+  method = c('meanFormant', 'meanDispersion', 'regression')[3],
+  speedSound = 35400,
+  checkFormat = TRUE,
+  plot = FALSE
+) {
   if (!method %in% c('meanFormant', 'meanDispersion', 'regression')) {
     stop('Invalid method; valid methods are: meanFormant, meanDispersion, regression')
   }
   if (checkFormat) {
-    formants = reformatFormants(formants)
+    # convert to a properly formatted list
+    formants = reformatFormants(formants, output = 'freqs', keepNonInteger = FALSE)
+    if (!is.list(formants)) return(NA)
   }
-  if (is.list(formants)) {
-    if (is.numeric(formants[[1]]$freq)) {
-      # if we don't know vocalTract, but at least one formant is defined,
-      # we guess the length of vocal tract
-      formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
-      non_integer_formants = apply(as.matrix(names(formant_freqs)),
-                                   1,
-                                   function(x) {
-                                     grepl('.', x, fixed = TRUE)
-                                   })
-      formant_freqs = formant_freqs[!non_integer_formants]
-      if (method == 'meanFormant') {
-        vtls = (2 * (1:length(formant_freqs)) - 1) * speedSound / 4 / formant_freqs
-        vocalTract = mean(vtls, na.rm = TRUE)
-      } else if (method %in% c('meanDispersion', 'regression')) {
-        formantDispersion = getFormantDispersion(formant_freqs,
-                                                 speedSound = speedSound,
-                                                 method = method)
-        vocalTract = ifelse(
-          is.numeric(formantDispersion),
-          speedSound / 2 / formantDispersion,
-          speedSound / 4 / formants$f1$freq
-        )
-      }
-    }
-  } else {
-    vocalTract = NA
+  # if we don't know vocalTract, but at least one formant is defined,
+  # we guess the length of vocal tract
+  if (method == 'meanFormant') {
+    formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
+    vtls = (2 * (1:length(formant_freqs)) - 1) * speedSound / 4 / formant_freqs
+    vocalTract = mean(vtls, na.rm = TRUE)
+  } else if (method %in% c('meanDispersion', 'regression')) {
+    formantDispersion = getFormantDispersion(formants,
+                                             speedSound = speedSound,
+                                             method = method,
+                                             plot = plot,
+                                             checkFormat = FALSE)
+    vocalTract = speedSound / 2 / formantDispersion
   }
   return(vocalTract)
 }

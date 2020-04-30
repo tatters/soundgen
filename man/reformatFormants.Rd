@@ -4,11 +4,21 @@
 \alias{reformatFormants}
 \title{Reformat formants}
 \usage{
-reformatFormants(formants)
+reformatFormants(
+  formants,
+  output = c("all", "freqs")[1],
+  keepNonInteger = TRUE
+)
 }
 \arguments{
-\item{formants}{either a character string like "aoiu" or a list with an entry
-for each formant}
+\item{formants}{character string like "aoiu", numeric vector like "c(500,
+1500, 2400)", or a list with an entry for each formant}
+
+\item{output}{'all' (default) includes times stamps, freqs, amplitudes, and
+bandwidths; 'freqs' includes only frequencies}
+
+\item{keepNonInteger}{if FALSE, fractional (anti)formants like 'f1.5' are
+removed}
 }
 \description{
 Internal soundgen function.
@@ -19,12 +29,23 @@ standard list of dataframes with time, frequency, amplitude, and bandwidth of
 each formant specified explicitly.
 }
 \examples{
-formants = soundgen:::reformatFormants('aau')
-formants = soundgen:::reformatFormants(c(500, 1500, 2500))
-formants = soundgen:::reformatFormants(list(f1 = 500, f2 = c(1500, 1700)))
-formants = soundgen:::reformatFormants(list(
+soundgen:::reformatFormants(NA)
+soundgen:::reformatFormants('aau')
+soundgen:::reformatFormants(c(500, 1500, 2500))
+soundgen:::reformatFormants(list(f1 = 500, f2 = c(1500, 1700)))
+soundgen:::reformatFormants(list(
      f1 = list(freq = 800, amp = 30),
      f2 = list(freq = c(1500, 1700, 2200), width = c(100, 150, 175))
 ))
+
+f = list(f1 = c(550, 600), f2 = c(1100, NA, 1600), f2.5 = 2500, f3 = 3000)
+soundgen:::reformatFormants(f)
+soundgen:::reformatFormants(f, output = 'freqs')
+soundgen:::reformatFormants(f, output = 'freqs', keepNonInteger = FALSE)
+
+soundgen:::reformatFormants(c(500, 1400), output = 'freqs')
+soundgen:::reformatFormants(list(f1 = 500, f2 = 1400), output = 'freqs')
+soundgen:::reformatFormants(list(f1 = c(570, 750),
+  f2 = NA, f3 = c(2400, 2200, NA)), output = 'freqs')
 }
 \keyword{internal}
