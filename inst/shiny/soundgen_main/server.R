@@ -1207,6 +1207,7 @@ server = function(input, output, session) {
       formantDepStoch = input$formantDepStoch,
       formantWidth = input$formantWidth,
       vocalTract = vocalTract(),
+      subRatio = input$subRatio,
       subFreq = input$subFreq,
       subDep = input$subDep,
       subWidth = input$subWidth,
@@ -1358,8 +1359,10 @@ server = function(input, output, session) {
   # Source / nonlinear
   shinyBS::addTooltip(session, id='nonlinBalance', title = '3 regimes of nonlinear effects: none / subharmonics / subharmonics + jitter', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='shortestEpoch', title = 'Change nonlinear regime no sooner than after ... ms', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='subRatio', title = 'f0/g0 ratio: 1 = no subharmonics, 2 = period doubling, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='subFreq', title = 'The approximate target frequency of subharmonics; the actual frequency is forced to be a fraction of f0 at every time point', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='subDep', title = 'Width of subharmonic sidebands, ie the strength of subharmonics depending on their distance from F-harmonics', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='subDep', title = 'The depth of g-harmonics (subharmonics) vs f-harmonics (main frequency component). 0: no subharmonics; 100: as strong as f-harmonics', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='subWidth', title = 'Width of subharmonic sidebands - regulates how rapidly g-harmonics weaken away from f-harmonics', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='jitterDep', title = 'Random variation in F0 per glottal cycle', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='jitterLen', title = 'The pitch jumps every ... ms. Low ~ harsh noise, high ~ shaky voice', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='shimmerDep', title = 'Random variation in amplitude per glottal cycle', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

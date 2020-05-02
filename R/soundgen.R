@@ -128,15 +128,20 @@ NULL
 #'   dispersion (for adding extra formants) and formant transitions as the mouth
 #'   opens and closes. If \code{NULL} or \code{NA}, the length is estimated
 #'   based on specified formant frequencies, if any (anchor format)
-#' @param subFreq target frequency of subharmonics, Hz (lower than f0, adjusted
-#'   dynamically so f0 is always a multiple of subFreq) (anchor format)
-#' @param subDep the depth of subharmonics relative to f0 stack, \%. 0: no
-#'   subharmonics; 100: g0 harmonics are as strong as the nearest f0 harmonic
-#'   (anchor format)
-#' @param subWidth the width of sidebands, Hz. Regulates how quickly the
-#'   strength of subharmonics fades as they move away from harmonics in f0
-#'   stack: large values like the default 10000 means that all g0 harmonics are
-#'   equally strong (anchor format)
+#' @param subRatio a positive integer giving the ratio of f0 (the main
+#'   fundamental) to g0 (a lower frequency): 1 = no subharmonics, 2 = period
+#'   doubling regardless of pitch changes, 3 = period tripling, etc; subRatio
+#'   overrides subFreq (anchor format)
+#' @param subFreq instead of a specific number of subharmonics (subRatio), we
+#'   can specify the approximate g0 frequency (Hz), which is used only if
+#'   subRatio = 1 and is adjusted to f0 so f0/g0 is always an integer (anchor
+#'   format)
+#' @param subDep the depth of subharmonics relative to the main frequency
+#'   component (f0), \%. 0: no subharmonics; 100: g0 harmonics are as strong as
+#'   the nearest f0 harmonic (anchor format)
+#' @param subWidth Width of subharmonic sidebands - regulates how rapidly
+#'   g-harmonics weaken away from f-harmonics: large values like the default
+#'   10000 means that all g0 harmonics are equally strong (anchor format)
 #' @param shortestEpoch minimum duration of each epoch with unchanging
 #'   subharmonics regime or formant locking, in ms
 #' @param amDep amplitude modulation depth, \%. 0: no change; 100: amplitude
@@ -279,7 +284,8 @@ soundgen = function(
   nonlinBalance = 100,
   nonlinDep = 'deprecated',
   nonlinRandomWalk = NULL,
-  subFreq = 100,
+  subRatio = 2,
+  subFreq = 0,
   subDep = 0,
   subWidth = 10000,
   shortestEpoch = 300,
@@ -413,7 +419,8 @@ soundgen = function(
   for (anchor in c('pitch', 'pitchGlobal', 'glottis',
                    'ampl', 'amplGlobal',
                    'mouth', 'vocalTract', 'formantLocking',
-                   'vibratoFreq', 'vibratoDep', 'subFreq', 'subDep', 'subWidth',
+                   'vibratoFreq', 'vibratoDep',
+                   'subRatio', 'subFreq', 'subDep', 'subWidth',
                    'jitterLen', 'jitterDep', 'shimmerLen', 'shimmerDep',
                    'rolloff', 'rolloffOct', 'rolloffKHz',
                    'rolloffParab', 'rolloffParabHarm',
@@ -616,7 +623,7 @@ soundgen = function(
     'shimmerLen', 'shimmerDep',
     'rolloff', 'rolloffKHz', 'rolloffOct',
     'rolloffParab', 'rolloffParabHarm')
-  pars_to_round = c('attackLen', 'subFreq', 'subWidth')
+  pars_to_round = c('attackLen', 'subRatio', 'subFreq', 'subWidth')
   pars_list = list(
     'attackLen' = attackLen,
     'jitterDep' = jitterDep,
@@ -639,6 +646,7 @@ soundgen = function(
     'subDriftDep' = tempEffects$subDriftDep,
     'rolloffDriftDep' = tempEffects$rolloffDriftDep,
     'shortestEpoch' = shortestEpoch,
+    'subRatio' = subRatio,
     'subFreq' = subFreq,
     'subDep' = subDep,
     'subWidth' = subWidth,

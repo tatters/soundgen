@@ -58,7 +58,7 @@ s1 = soundgen(sylLen = 900, temperature = 0,
               pitch = list(time = c(0, .3, .8, 1), 
                            value = c(300, 900, 400, 1300)),
               noise = c(-40, -20), 
-              subDep = 100, jitterDep = 0.5, 
+              subFreq = 100, subDep = 20, jitterDep = 0.5, 
               plot = TRUE, ylim = c(0, 4))
 # playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
 ```
@@ -289,7 +289,6 @@ a = analyze(s1,
             samplingRate = 16000, plot = TRUE, ylim = c(0, 4), priorMean = NA,
             pitchMethods = 'cep',
             cepThres = .3,
-            cepSmooth = 3,
             nCands = 2)
 ```
 

@@ -30,7 +30,8 @@ permittedValues = matrix(c(
   'maleFemale', 0, -1, 1, 0.1,
   'creakyBreathy', 0, -1, 1, 0.1,
   'nonlinBalance', 100, 0, 100, 1,
-  'subFreq', 100, 10, 1000, 10,
+  'subRatio', 2, 1, 20, 1,
+  'subFreq', 0, 0, 1000, 10,
   'subDep', 0, 0, 100, 1,
   'subWidth', 10000, 0, 10000, 10,
   'shortestEpoch', 300, 50, 500, 25,
@@ -101,7 +102,8 @@ defaults = list(
   maleFemale = 0,
   creakyBreathy = 0,
   nonlinBalance = 100,
-  subFreq = 100,
+  subRatio = 2,
+  subFreq = 0,
   subDep = 0,
   subWidth = 10000,
   shortestEpoch = 300,
@@ -250,7 +252,7 @@ presets = list(
 
     Gasp = 'soundgen(sylLen = 240, pitch = c(160, 150), jitterDep = 0.6, rolloff = -24, rolloffParab = 15, rolloffParabHarm = 2, formantDep = 1.5, shortestEpoch = 100, noise = list(time = c(-1, 170, 362), value = c(-14, 0, -26)), rolloffNoise = -7, mouth = list(time = c(0, 0.07, 1), value = c(0, 0.48, 0.32)))',
 
-    Roar = 'soundgen(sylLen = 960, pitch = list(time = c(0, 0.13, 0.9, 1), value = c(151, 187, 139, 120)), temperature = 0.1, nonlinBalance = 60, jitterDep = 0.7, rolloff = -12, rolloffOct = 1, formants = c(500, 1000, 1500), vocalTract = 19, subFreq = 90, subDep = 100, subWidth = 60, shortestEpoch = 150, mouth = list(time = c(0, 0.1, 1), value = c(0.38, 0.71, 0.42)))',
+    Roar = 'soundgen(sylLen = 960, pitch = list(time = c(0, 0.13, 0.9, 1), value = c(151, 187, 139, 120)), temperature = 0.1, nonlinBalance = 60, jitterDep = 0.7, rolloff = -12, rolloffOct = 1, formants = c(500, 1000, 1500), vocalTract = 19, subFreq = 90, subDep = 20, shortestEpoch = 150, mouth = list(time = c(0, 0.1, 1), value = c(0.38, 0.71, 0.42)))',
 
     Moan = 'soundgen(sylLen = 800, pitch = list(time = c(0, 0.21, 1), value = c(230, 181, 143)), jitterDep = 1, jitterLen = 60, attackLen = 100, rolloff = -12, formants = list(f1 = c(630, 860), f2 = c(900, 1430), f3 = c(3000, 2900), f4 = c(3960, 3960)), noise = list(time = c(-20, 801, 911), value = c(-30, -15, -80)), rolloffNoise = -8, mouth = c(0.54, 0.3), ampl = c(0, -9))',
 

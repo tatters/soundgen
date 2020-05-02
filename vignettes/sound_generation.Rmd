@@ -635,7 +635,7 @@ spectrogram(s3, samplingRate = 16000, osc = TRUE, heights = c(1, 1))
 
 
 ## Nonlinear effects
-Soundgen can add frequency jumps, subharmonics, sidebands (implemented as a modification of subharmonics or with amplitude modulation), and even approximate deterministic chaos by adding strong jitter and shimmer. These effects basically make the sound appear noisy / harsh / rough. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid amplitude and/or frequency modulation, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic based on the desired frequency of subharmonics, or g0 (`subFreq`). The actual g0 frequency will not be exactly equal to `subFreq`, since it must be a fraction of f0 at all time points (one half, one third, etc). To achieve sidebands, the amplitude of each subharmonic is set to be a function of its distance from the nearest harmonic of the f0 stack; the rate at which g0 harmonics lose energy away from the nearest f0 harmonic determines the width of sidebands (`subWidth`). This way we can create either subharmonics or narrow sidebands that vary naturally as f0 changes over time, producing bifurcations and switching between different subharmonic regimes (see Wilden et al., 2012). 
+Soundgen can add frequency jumps, subharmonics, sidebands (implemented as a modification of subharmonics or as amplitude modulation), and approximate deterministic chaos by adding strong jitter and shimmer. These effects basically make the sound appear noisy / harsh / rough / unpredictable / etc. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid amplitude and/or frequency modulation, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic. To achieve sidebands, the amplitude of each subharmonic is set to be a function of its distance from the nearest harmonic of the f0 stack; the rate at which g0 harmonics lose energy away from the nearest f0 harmonic determines the width of sidebands (`subWidth`). This way we can create either subharmonics or narrow sidebands that vary naturally as f0 changes over time, producing bifurcations and switching between different subharmonic regimes (see Wilden et al., 2012). 
 
 The main limitation of this approach is that it is too computationally costly to generate variable numbers of subharmonics for the entire bout. The solution currently adopted in soundgen is to break longer sounds into so-called "epochs" with a constant number of subharmonics in each. The epochs are synthesized separately, trimmed to the nearest zero crossing, and then glued together with a rapid `crossFade()`. This is suboptimal, since it shortens the sound and may introduce audible artifacts at transitions between epochs. `shortestEpoch` controls the approximate minimum length of each epoch. Longer epochs minimize problems with transitions, but the behavior of subharmonics then becomes less variable since their number is constrained to be constant within each epoch. NB: with short `shortestEpoch`, add ~20-30 ms per transition to the nominal sound duration in order to compensate for cross-fading the epochs.
 
@@ -654,13 +654,20 @@ If nonlinBalance = 100%, the whole syllable is in regime 3.
 To see any effect, you have to set jitterDep, shimmerDep, and subFreq/subDep/subWidth to some positive values (see below).
 
 ### Subharmonics
-Moving on to advanced nonlinear effects settings, `subFreq` ("Target subharmonic frequency, Hz" in the app) `subDep` ("Depth of subharmonics"), and `subWidth` ("Width of sidebands, Hz") define the properties of subharmonics in pitch regimes 2 and 3. Say your vocalization has a relatively flat intonation contour with a fundamental frequency of about 800 Hz, and you want to add a single subharmonic (g0). You then set the expected subharmonic frequency to 400 Hz. Since g0 is forced to be an integer fraction of f0 at all time points, it will not be exactly 400 Hz, but it will produce a single subharmonic at f0 / 2 (as long as f0 stays close to 800 Hz: if f0 goes up to 1200 Hz, you will get two subharmonics instead, since 1200 / 400 = 3).
+To add a single subharmonic between each pair of f-harmonics (period doubling), set `subRatio = 2`, for period tripling, `subRatio = 3`, etc. This number of subharmonics will be added regardless of pitch changes. Another way is to set `subFreq` ("Target subharmonic frequency, Hz" in the app), which gives an approximate g0 target, so that the number of subharmonics will vary with pitch. The amplitude (loudness) of subharmonics is controlled by `subDep` ("Depth of subharmonics"). All these parameters can vary within a syllable. 
 
-```{r fig.show = "hold", fig.width = 7, fig.height = 5}
-soundgen(subFreq = 400, subDep = c(0, 25),
-         jitterDep = 0, shimmerDep = 0, temperature = 0, 
-         sylLen = 800, pitch = c(700, 1300),
-         play = playback, plot = TRUE, ylim = c(0, 3), osc = TRUE, heights = c(2, 1))
+Add one subharmonic regardless of pitch:
+```{r fig.show = "hold", fig.width = 5, fig.height = 4}
+soundgen(subRatio = 2, subDep = c(5, 20),
+         sylLen = 800, pitch = c(700, 1300), formants = NULL,
+         play = playback, plot = TRUE, ylim = c(0, 3))
+```
+
+Set target g0, so that the number of subharmonics depends on pitch:
+```{r fig.show = "hold", fig.width = 5, fig.height = 4}
+soundgen(subFreq = 400, subDep = c(5, 20),
+         sylLen = 800, pitch = c(700, 1300), formants = NULL,
+         play = playback, plot = TRUE, ylim = c(0, 3))
 ```
 
 Sidebands are best demonstrated with high-pitched sounds and low subharmonic frequencies. For example, chimpanzees emit piercing screams with narrow subharmonic bands. If we set `subFreq` to 75 Hz and `subWidth` to 130 Hz, subharmonics literally form a band around each harmonic of the main stack, creating a very distinct, immediately recognizable sound quality:
@@ -673,7 +680,6 @@ s = soundgen(sylLen = 800,
              subFreq = 75, subDep = 25,
              subWidth = data.frame(time = c(0, 600, 650, 800), 
                                    value = c(0, 130, 0, 0)),  
-             jitterDep = 0, shimmerDep = 0, 
              vocalTract = 12, mouth = c(.1, .8, .1),
              temperature = .001,
              pitchSamplingRate = 22050, samplingRate = 22050,

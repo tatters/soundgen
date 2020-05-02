@@ -19,7 +19,8 @@ soundgen(
   nonlinBalance = 100,
   nonlinDep = "deprecated",
   nonlinRandomWalk = NULL,
-  subFreq = 100,
+  subRatio = 2,
+  subFreq = 0,
   subDep = 0,
   subWidth = 10000,
   shortestEpoch = 300,
@@ -137,17 +138,23 @@ entire sound has jitter + subharmonics. Ignored if temperature = 0}
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}
 
-\item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
-dynamically so f0 is always a multiple of subFreq) (anchor format)}
+\item{subRatio}{a positive integer giving the ratio of f0 (the main
+fundamental) to g0 (a lower frequency): 1 = no subharmonics, 2 = period
+doubling regardless of pitch changes, 3 = period tripling, etc; subRatio
+overrides subFreq (anchor format)}
 
-\item{subDep}{the depth of subharmonics relative to f0 stack, \%. 0: no
-subharmonics; 100: g0 harmonics are as strong as the nearest f0 harmonic
-(anchor format)}
+\item{subFreq}{instead of a specific number of subharmonics (subRatio), we
+can specify the approximate g0 frequency (Hz), which is used only if
+subRatio = 1 and is adjusted to f0 so f0/g0 is always an integer (anchor
+format)}
 
-\item{subWidth}{the width of sidebands, Hz. Regulates how quickly the
-strength of subharmonics fades as they move away from harmonics in f0
-stack: large values like the default 10000 means that all g0 harmonics are
-equally strong (anchor format)}
+\item{subDep}{the depth of subharmonics relative to the main frequency
+component (f0), \%. 0: no subharmonics; 100: g0 harmonics are as strong as
+the nearest f0 harmonic (anchor format)}
+
+\item{subWidth}{Width of subharmonic sidebands - regulates how rapidly
+g-harmonics weaken away from f-harmonics: large values like the default
+10000 means that all g0 harmonics are equally strong (anchor format)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime or formant locking, in ms}

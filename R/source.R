@@ -448,6 +448,7 @@ generateHarmonics = function(pitch,
                              rolloffDriftDep = 3,
                              randomWalk_trendStrength = .5,
                              shortestEpoch = 300,
+                             subRatio = 1,
                              subFreq = 100,
                              subDep = 0,
                              subWidth = 10000,
@@ -496,7 +497,8 @@ generateHarmonics = function(pitch,
   # vectorized par-s should be upsampled and converted from ms to gc scale
   update_pars = c(
     'rolloff', 'rolloffOct', 'rolloffParab', 'rolloffParabHarm', 'rolloffKHz',
-    'jitterDep', 'jitterLen', 'shimmerDep', 'shimmerLen', 'subFreq', 'subDep', 'subWidth'
+    'jitterDep', 'jitterLen', 'shimmerDep', 'shimmerLen',
+    'subRatio', 'subFreq', 'subDep', 'subWidth'
   )
   for (p in update_pars) {
     old = get(p)
@@ -701,6 +703,7 @@ generateHarmonics = function(pitch,
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,
+      subRatio = subRatio,
       subFreq = subFreq * rw ^ subDriftDep,
       subDep = subDep * rw ^ subDriftDep * vocalFry_on,
       subWidth = subWidth * rw ^ subDriftDep,
