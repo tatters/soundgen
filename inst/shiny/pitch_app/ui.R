@@ -142,8 +142,12 @@ ui = fluidPage(
            ),
 
            fluidRow(
-             column(3,
-                    radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Add anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
+             column(1,
+                    actionButton(inputId = 'zoomIn_freq', label = HTML("<img src='icons/zoomIn.png' width = '25px'>"), style = "padding: 2px 2px; display: block"),
+                    actionButton(inputId = 'zoomOut_freq', label = HTML("<img src='icons/zoomOut.png' width = '25px'>"), style = "padding: 2px 2px; display: block"),
+             ),
+             column(2,
+                    radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
              ),
              column(2,
                     htmlOutput('pitchAtCursor', inline = TRUE)

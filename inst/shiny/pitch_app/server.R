@@ -7,7 +7,8 @@
 
 server = function(input, output, session) {
     myPars = reactiveValues()
-    myPars$zoomFactor = 2     # zoom buttons ch+ange zoom by this factor
+    myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
+    myPars$zoomFactor_freq = 1.5  # same for frequency
     myPars$print = FALSE       # if TRUE, some functions print a meassage to the console when called
     myPars$out = NULL         # for storing the output
     myPars$drawSpec = TRUE
@@ -132,8 +133,7 @@ server = function(input, output, session) {
         }
 
         # update info - file number ... out of ...
-        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles, ': ',
-                          myPars$myAudio_filename)
+        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles) # , ': ', myPars$myAudio_filename)
         output$fileN = renderUI(HTML(file_lab))
 
         # if we've already worked with this file in current session,
@@ -528,6 +528,10 @@ server = function(input, output, session) {
             changeZoom(myPars$zoomFactor)
         } else if (button_code == 40) {  # arrow down
             changeZoom(1 / myPars$zoomFactor)
+        } else if (button_code == 61) {    # +
+            changeZoom_freq(1 / myPars$zoomFactor_freq)
+        } else if (button_code == 173) {    # -
+            changeZoom_freq(myPars$zoomFactor_freq)
         }
     })
 
@@ -651,6 +655,16 @@ server = function(input, output, session) {
         myPars$brush_sel_x = which(myPars$pitch_df$time > input$spectrogram_brush$xmin &
                                        myPars$pitch_df$time < input$spectrogram_brush$xmax)
     })
+
+    changeZoom_freq = function(coef) {
+        # midpoint = mean(input$spec_ylim)
+        # halfRan = diff(input$spec_ylim) / 2 / coef
+        # newLow = max(0, midpoint - halfRan)
+        # newHigh = min(myPars$samplingRate / 2, midpoint + halfRan)
+        updateSliderInput(session, 'spec_ylim', value = c(0, input$spec_ylim[2] * coef))
+    }
+    observeEvent(input$zoomIn_freq, changeZoom_freq(1 / myPars$zoomFactor_freq))
+    observeEvent(input$zoomOut_freq, changeZoom_freq(myPars$zoomFactor_freq))
 
     changeZoom = function(coef) {
         midpoint = mean(myPars$spec_xlim)
@@ -844,9 +858,11 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # navigation / zoom
+    shinyBS::addTooltip(session, id='zoomIn_freq', title = 'Zoom in frequency (+)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='zoomOut_freq', title = 'Zoom out frequency (-)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left (arrow LEFT)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out (arrow DOWN)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out time (arrow DOWN)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom out (arrow UP)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom in time (arrow UP)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='selection_scrollRight', title = 'Scroll right (arrow RIGHT)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 }
