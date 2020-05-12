@@ -11,6 +11,7 @@ BUGS FIXED:
 MINOR:
   * pitch_app(): an option to turn off automatic updating of the optimal pitch contour to speed up the processing of long audio files
   * pitch_app(): easy-to-access frequency zoom (+/- or icons)
+  * pitch_app(): hotkeys for navigation between files in the queue (enter/backspace)
   * schwa() accepts missing values in formant frequencies
   * spectrogramFolder(), modulationSpectrumFolder(), analyzeFolder(), segmentFolder(): updated html output
   * estimateVTL() regresses multiple frequency measurements of the same formant without pre-aggregating
