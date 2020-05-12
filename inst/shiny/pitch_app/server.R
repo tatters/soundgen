@@ -259,6 +259,7 @@ server = function(input, output, session) {
         }
     })
 
+
     observe({
         output$oscillogram = renderPlot({
             if (!is.null(myPars$myAudio_path) & input$osc != 'none') {

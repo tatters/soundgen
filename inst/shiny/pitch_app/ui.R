@@ -101,7 +101,6 @@ ui = fluidPage(
                                   ),
 
                                   tabPanel("Spectrogram",
-                                           sliderInput('spec_height', 'Spectrogram height, px', value=600, min=200, max=2000, step=25),
                                            sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
                                            numericInput('spec_cex', 'Point size', value = 2, min = .1, max = 10, step = .1),
                                            radioButtons(inputId='spec_colorTheme', label="Color scheme", choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
@@ -172,13 +171,13 @@ ui = fluidPage(
            ),
 
            fluidRow(
-             plotOutput('spectrogram', height = "500px", click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)), # , style = "max-width: 66vw; overflow-x: auto;"
-             plotOutput('oscillogram', height = "100px")
+             plotOutput('spectrogram', height = '500px', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)),# , style = "max-width: 66vw; overflow-x: auto;"
+             plotOutput('oscillogram')
            ),
 
-           fluidRow(
+           #fluidRow(
              # htmlOutput('statusBar')  # status bar here
-           ),
+           #),
            width = 9
     )
   )
