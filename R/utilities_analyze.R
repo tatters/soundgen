@@ -631,7 +631,7 @@ getPitchSpec = function(frame,
 #'                     priorSD = 2)      # semitones
 #' soundgen:::getPrior(150, 6)
 #' s = soundgen:::getPrior(450, 24, pitchCeiling = 6000)
-#' plot(s)
+#' plot(s, type = 'l')
 getPrior = function(priorMean,
                     priorSD,
                     pitchFloor = 75,
@@ -653,12 +653,10 @@ getPrior = function(priorMean,
   )
   prior_norm_max = max(prior_normalizer)
   prior = prior_normalizer / prior_norm_max
+  out = data.frame(freq = semitonesToHz(freqs),
+                   prob = prior)
   if (plot) {
-    plot(
-      x = semitonesToHz(freqs),
-      y = prior,
-      type = 'l',
-      log = 'x',
+    plot(out, type = 'l', log = 'x',
       xlab = 'Frequency, Hz',
       ylab = 'Multiplier of certainty',
       main = 'Prior belief in pitch values',
@@ -671,9 +669,9 @@ getPrior = function(priorMean,
       shape = shape,
       rate = rate
     ) / prior_norm_max
-    return(pitchCert_multiplier)
+    invisible(pitchCert_multiplier)
   } else {
-    invisible(prior)
+    invisible(out)
   }
 }
 

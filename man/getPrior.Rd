@@ -62,7 +62,7 @@ soundgen:::getPrior(priorMean = 150,  # Hz
                     priorSD = 2)      # semitones
 soundgen:::getPrior(150, 6)
 s = soundgen:::getPrior(450, 24, pitchCeiling = 6000)
-plot(s)
+plot(s, type = 'l')
 }
 \seealso{
 \code{\link{analyze}} \code{\link{pitch_app}}

@@ -223,6 +223,13 @@ server = function(input, output, session) {
                     title(xlab = 'Time, ms')
                 }
 
+                # show prior
+                points(myPars$prior$prob * myPars$dur * .05,  # 5% of plot width
+                       myPars$prior$freq / 1000, type = 'l', lty = 2)
+                text(x = myPars$dur * .05,
+                     y = input$priorMean / 1000,
+                     pos = 2, labels = 'Prior')
+
                 # add manual values to the list of pitch candidates for seamless plotting
                 n = ncol(myPars$pitchCands$freq)
                 # if (length(n>0) == 0 | length(nrow(myPars$manual)>0) == 0) browser()
@@ -519,28 +526,44 @@ server = function(input, output, session) {
 
     observeEvent(input$userPressedSmth, {
         button_code = floor(input$userPressedSmth)
-        if (button_code == 32) {  # spacebar
+        if (button_code == 32) {                      # SPACEBAR (play)
             playSel()
-        } else if (button_code == 37) {  # arrow left
+        } else if (button_code == 37) {               # ARROW LEFT (scroll left)
             shiftFrame('left')
-        } else if (button_code == 39) {  # arrow right
+        } else if (button_code == 39) {               # ARROW RIGHT (scroll right)
             shiftFrame('right')
-        } else if (button_code == 38) {  # arrow up
+        } else if (button_code == 38) {               # ARROW UP (horizontal zoom-in)
             changeZoom(myPars$zoomFactor)
-        } else if (button_code == 40) {  # arrow down
+        } else if (button_code == 83) {               # S (horizontal zoom to selection)
+            zoomToSel()
+        } else if (button_code == 40) {               # ARROW DOWN (horizontal zoom-out)
             changeZoom(1 / myPars$zoomFactor)
-        } else if (button_code %in% c(61, 107)) {    # +
+        } else if (button_code %in% c(61, 107)) {     # + (vertical zoom-in)
             changeZoom_freq(1 / myPars$zoomFactor_freq)
-        } else if (button_code %in% c(173, 109)) {    # -
+        } else if (button_code %in% c(173, 109)) {    # - (vertical zoom-out)
             changeZoom_freq(myPars$zoomFactor_freq)
-        } else if (button_code == 13) {    # enter
+        } else if (button_code == 13) {               # ENTER (next file)
             nextFile()
-        } else if (button_code == 8) {    # backspace
+        } else if (button_code == 8) {                # BACKSPACE (previous file)
             lastFile()
+        } else if (button_code == 85) {               # U (unvoice)
+            unvoiceSel()
+        } else if (button_code == 86) {               # V (voice)
+            voiceSel()
+        } else if (button_code == 82) {               # R (raise by an octave)
+            octaveUp()
+        } else if (button_code == 76) {               # L (lower by an octave)
+            octaveDown()
+        } else if (button_code == 80) {               # P (set prior)
+            setPrior()
         }
     })
 
+    # UNVOICE
     observeEvent(input$selection_unvoice, {
+        unvoiceSel()
+    })
+    unvoiceSel = function() {
         if (myPars$print) print('Unvoicing selection...')
         if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
             # NB: play forgets the previous selection, but other buttons do not,
@@ -551,9 +574,10 @@ server = function(input, output, session) {
             if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
             obs_pitch()
         }
-    })
+    }
 
-    observeEvent(input$selection_voice, {
+    # VOICE
+    voiceSel = function() {
         if (myPars$print) print('Voicing selection...')
         if (!is.null(myPars$bp) &
             length(myPars$brush_sel_x) > 0 &
@@ -562,9 +586,13 @@ server = function(input, output, session) {
             if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
             obs_pitch()
         }
+    }
+    observeEvent(input$selection_voice, {
+        voiceSel()
     })
 
-    observeEvent(input$selection_octaveUp, {
+    # SHIFT BY AN OCTAVE
+    octaveUp = function() {
         if (myPars$print) print('Selection octave up...')
         if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
             # remove previous manual cands in selection
@@ -584,9 +612,12 @@ server = function(input, output, session) {
                 myPars$pitch[myPars$brush_sel_xy] = myPars$pitch[myPars$brush_sel_xy] * 2
             }
         }
+    }
+    observeEvent(input$selection_octaveUp, {
+        octaveUp()
     })
 
-    observeEvent(input$selection_octaveDown, {
+    octaveDown = function() {
         if (myPars$print) print('Selection octave down...')
         if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
             # remove previous manual cands in selection
@@ -606,9 +637,23 @@ server = function(input, output, session) {
                 myPars$pitch[myPars$brush_sel_xy] = myPars$pitch[myPars$brush_sel_xy] / 2
             }
         }
+    }
+    observeEvent(input$selection_octaveDown, {
+        octaveDown()
     })
 
-    observeEvent(input$selection_setPrior, {
+    # PRIOR
+    observe({
+        myPars$prior = getPrior(
+            priorMean = input$priorMean,
+            priorSD = input$priorSD,
+            pitchFloor = input$pitchFloor,
+            pitchCeiling = input$pitchCeiling,
+            len = 100,
+            plot = FALSE
+        )
+    })
+    setPrior = function() {
         if (myPars$print) print('Setting prior...')
         if (!is.null(input$spectrogram_brush)) {
             pr = c(input$spectrogram_brush$ymin, input$spectrogram_brush$ymax) * 1000
@@ -623,12 +668,16 @@ server = function(input, output, session) {
             updateSliderInput(session, 'priorMean', value = meanPr)
             updateSliderInput(session, 'priorSD', value = sdPr)
         }
+    }
+    observeEvent(input$selection_setPrior, {
+        setPrior()
     })
 
     observeEvent(input$button_pathUpdate, {
         obs_pitch()
     })
 
+    # HOVER
     hover_label = reactive({
         hover_temp = input$spectrogram_hover
         if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
@@ -644,6 +693,7 @@ server = function(input, output, session) {
     })
     output$pitchAtCursor = renderUI(HTML(hover_label()))
 
+    # BRUSH
     brush = observeEvent(input$spectrogram_brush, {
         if (myPars$print) print('Running brush()...')
         myPars$pitch_df = data.frame(
@@ -661,6 +711,7 @@ server = function(input, output, session) {
                                        myPars$pitch_df$time < input$spectrogram_brush$xmax)
     })
 
+    # ZOOM
     changeZoom_freq = function(coef) {
         # midpoint = mean(input$spec_ylim)
         # halfRan = diff(input$spec_ylim) / 2 / coef
@@ -680,10 +731,13 @@ server = function(input, output, session) {
     }
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
-    observeEvent(input$zoomToSel, {
+    zoomToSel = function() {
         if (!is.null(input$spectrogram_brush)) {
             myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
         }
+    }
+    observeEvent(input$zoomToSel, {
+        zoomToSel()
     })
 
     shiftFrame = function(direction) {
@@ -700,6 +754,7 @@ server = function(input, output, session) {
     observeEvent(input$scrollLeft, shiftFrame('left'))
     observeEvent(input$scrollRight, shiftFrame('right'))
 
+    # SAVE OUTPUT
     done = function() {
         # meaning we have finished editing pitch contour for a sound - prepares the output
         if (myPars$print) print('Running done()...')
@@ -853,12 +908,12 @@ server = function(input, output, session) {
     # action buttons
     shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file (BACKSPACE)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file (ENTER)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS:::addTooltip(session, id='selection_play', title='Play selection (spacebar)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_voice', title = 'Undo treating selection as unvoiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS:::addTooltip(session, id='selection_play', title='Play selection (SPACEBAR)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced (U)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='selection_voice', title = 'Undo treating selection as unvoiced (V)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave (R)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave (L)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range (P)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='button_pathUpdate', title = 'Update the path through pitch candidates (only needed if Out/Path/Update path automatically is turned off)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
@@ -867,7 +922,7 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='zoomOut_freq', title = 'Zoom out frequency (-)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='scrollLeft', title = 'Scroll left (arrow LEFT)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='zoomOut', title = 'Zoom out time (arrow DOWN)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='zoomToSel', title = 'Zoom to selection (S)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='zoomIn', title = 'Zoom in time (arrow UP)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='selection_scrollRight', title = 'Scroll right (arrow RIGHT)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='scrollRight', title = 'Scroll right (arrow RIGHT)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 }
