@@ -963,16 +963,19 @@ analyze = function(
 #'
 #' Acoustic analysis of all wav/mp3 files in a folder. See \code{\link{analyze}}
 #' and vignette('acoustic_analysis', package = 'soundgen') for further details.
+#' See \code{\link{pitch_app}} for a more realistic workflow: extract manually
+#' corrected pitch contours with pitch_app(), then run analyzeFolder() with
+#' these manual contours
 #'
 #' @seealso \code{\link{analyze}} \code{\link{pitch_app}}
 #'   \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
 #'
 #' @param myfolder full path to target folder
 #' @param verbose if TRUE, reports progress and estimated time left
-#' @param pitchManual normally the output of \code{\link{pitch_app}} with the
-#'   same windowLength and step as current call to analyzeFolder, with manually
-#'   corrected pitch contours: a dataframe with at least two columns: "file"
-#'   (w/o path, with extension) and "pitch" (character like "NA, 150, 175, NA")
+#' @param pitchManual normally the output of \code{\link{pitch_app}} containing
+#'   a manually corrected pitch contour, ideally with the same windowLength and
+#'   step as current call to analyzeFolder; a dataframe with at least two
+#'   columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")
 #' @inheritParams analyze
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
@@ -991,10 +994,10 @@ analyze = function(
 #' # s = write.csv(s, paste0(myfolder, '/temp.csv'))  # save a backup
 #'
 #' # Check accuracy: import manually verified pitch values (our "key")
-#' # ?pitchManual   # "ground truth" of mean pitch per sound
-#' # ?pitchContour  # "ground truth" of complete pitch contours per sound
+#' # pitchManual   # "ground truth" of mean pitch per sound
+#' # pitchContour  # "ground truth" of complete pitch contours per sound
 #' files_manual = paste0(names(pitchManual), '.wav')
-#' idx = match(s$sound, files_manual)  # in case the order is wrong
+#' idx = match(s$file, files_manual)  # in case the order is wrong
 #' s$key = pitchManual[idx]
 #'
 #' # Compare manually verified mean pitch with the output of analyzeFolder:
@@ -1091,6 +1094,7 @@ analyzeFolder = function(myfolder,
   warnAboutResetSummary = FALSE
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
+  filenames_base = basename(filenames)
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = file.info(filenames)$size
@@ -1113,9 +1117,7 @@ analyzeFolder = function(myfolder,
 
   # add pitchManual, if any
   if (!is.null(pitchManual)) {
-    file_noExt = basename(filenames)
-    file_noExt = substr(file_noExt, 1, (nchar(file_noExt) - 4))
-    pitchManual_idx = match(file_noExt, pitchManual$file)
+    pitchManual_idx = match(filenames_base, pitchManual$file)
   }
 
   result = list()
@@ -1124,9 +1126,9 @@ analyzeFolder = function(myfolder,
     if (!is.null(pitchManual)) {
       if (is.finite(pitchManual_idx[i])) {
         pitch_file = suppressWarnings(as.numeric(unlist(strsplit(
-          pitchManual$pitch[pitchManual_idx[i]], ','))))
+          as.character(pitchManual$pitch[pitchManual_idx[i]]), ','))))
       } else {
-        message(paste('File', file_noExt[i], 'not found in pitchManual$file'))
+        message(paste('File', filenames_base[i], 'not found in pitchManual$file'))
         summary = FALSE
         warnAboutResetSummary = TRUE
       }
@@ -1147,13 +1149,11 @@ analyzeFolder = function(myfolder,
   }
   if (summary == TRUE) {
     output = as.data.frame(t(sapply(result, function(x) unlist(rbind(x)))))
-    output$sound = apply(matrix(1:length(filenames)), 1, function(x) {
-      tail(unlist(strsplit(filenames[x], '/')), 1)
-    })
-    output = output[, c('sound', colnames(output)[1:(ncol(output) - 1)])]
+    output$file = filenames_base
+    output = output[, c('file', colnames(output)[1:(ncol(output) - 1)])]
   } else {
     output = result
-    names(output) = filenames
+    names(output) = filenames_base
   }
 
   if (htmlPlots & savePlots) {

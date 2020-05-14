@@ -77,10 +77,28 @@ separately since it doesn't depend on accurate pitch tracking.
 }
 \examples{
 \dontrun{
-pitch_app()
-df1 = read.csv('output.csv')  # saved output from pitch_app()
-df2 = analyzeFolder('path_to_audio', pitchMethods = NULL, nFormants = 5)
-df3 = segmentFolder('path_to_audio')
-# merge in R or a spreadsheet editor to have all acoustic descriptives together
+# Recommended workflow for analyzing a lot of short audio files
+path_to_audio = '~/Downloads/temp'  # our audio lives here
+
+# STEP 1: extract manually corrected pitch contours
+pitch_app()  # runs in a browser
+df1 = read.csv('~/Downloads/output.csv')  # saved output from pitch_app()
+
+# STEP 2: run analyzeFolder() with manually corrected pitch contours to
+obtain accurate descriptives like the proportion of energy in harmonics above
+f0, etc. This also gives you formants and loudness estimates (disabled in
+pitch_app to speed things up)
+df2 = analyzeFolder(path_to_audio,
+  pitchMethods = NULL,  # don't need to re-analyze pitch
+  nFormants = 5,        # now we can measure formants as well
+  pitchManual = df1     # df1 contains our manually corrected contours
+)
+
+# STEP 3: add other acoustic descriptors, for ex.
+df3 = segmentFolder(path_to_audio)
+df4 = modulationSpectrumFolder(path_to_audio)
+
+# STEP 4: merge df2, df3, df4, ... in R or a spreadsheet editor to have all
+acoustic descriptives together
 }
 }

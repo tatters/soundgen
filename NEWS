@@ -16,6 +16,7 @@ MINOR:
   * schwa() accepts missing values in formant frequencies
   * spectrogramFolder(), modulationSpectrumFolder(), analyzeFolder(), segmentFolder(): updated html output
   * estimateVTL() regresses multiple frequency measurements of the same formant without pre-aggregating
+  * analyzeFolder(), segmentFolder(), modulationSpectrumFolder(): better integration with the output of pitch_app(), eg 'sound' renamed to 'file'
 
 
           CHANGES IN SOUNDGEN VERSION 1.6.2 [06-February-2020]

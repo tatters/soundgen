@@ -604,7 +604,7 @@ modulationSpectrumFolder = function(
   # prepare output
   if (summary == TRUE) {
     output = data.frame(
-      sound = basename(filenames),
+      file = basename(filenames),
       roughness = unlist(lapply(result, function(x) x$roughness))
     )
   } else {

@@ -408,10 +408,10 @@ segmentFolder = function(myfolder,
   # prepare output
   if (summary == TRUE) {
     output = as.data.frame(t(sapply(result, rbind)))
-    output$sound = apply(matrix(1:length(filenames)), 1, function(x) {
+    output$file = apply(matrix(1:length(filenames)), 1, function(x) {
       tail(unlist(strsplit(filenames[x], '/')), 1)
     })
-    output = output[, c('sound', colnames(output)[1:(ncol(output) - 1)])]
+    output = output[, c('file', colnames(output)[1:(ncol(output) - 1)])]
     output = as.data.frame(apply(output, 2, unlist))
   } else {
     output = result

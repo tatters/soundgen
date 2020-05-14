@@ -122,10 +122,10 @@ pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 NULL = no pitch analysis)}
 
-\item{pitchManual}{normally the output of \code{\link{pitch_app}} with the
-same windowLength and step as current call to analyzeFolder, with manually
-corrected pitch contours: a dataframe with at least two columns: "file"
-(w/o path, with extension) and "pitch" (character like "NA, 150, 175, NA")}
+\item{pitchManual}{normally the output of \code{\link{pitch_app}} containing
+a manually corrected pitch contour, ideally with the same windowLength and
+step as current call to analyzeFolder; a dataframe with at least two
+columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")}
 
 \item{entropyThres}{pitch tracking is not performed for frames with Weiner
 entropy above \code{entropyThres}, but other spectral descriptives are
@@ -301,6 +301,9 @@ If \code{summary} is TRUE, returns a dataframe with one row per audio
 \description{
 Acoustic analysis of all wav/mp3 files in a folder. See \code{\link{analyze}}
 and vignette('acoustic_analysis', package = 'soundgen') for further details.
+See \code{\link{pitch_app}} for a more realistic workflow: extract manually
+corrected pitch contours with pitch_app(), then run analyzeFolder() with
+these manual contours
 }
 \examples{
 \dontrun{
@@ -312,10 +315,10 @@ s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 10-20 minutes!
 # s = write.csv(s, paste0(myfolder, '/temp.csv'))  # save a backup
 
 # Check accuracy: import manually verified pitch values (our "key")
-# ?pitchManual   # "ground truth" of mean pitch per sound
-# ?pitchContour  # "ground truth" of complete pitch contours per sound
+# pitchManual   # "ground truth" of mean pitch per sound
+# pitchContour  # "ground truth" of complete pitch contours per sound
 files_manual = paste0(names(pitchManual), '.wav')
-idx = match(s$sound, files_manual)  # in case the order is wrong
+idx = match(s$file, files_manual)  # in case the order is wrong
 s$key = pitchManual[idx]
 
 # Compare manually verified mean pitch with the output of analyzeFolder:
