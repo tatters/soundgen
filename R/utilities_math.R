@@ -1066,3 +1066,40 @@ switchColorTheme = function(colorTheme) {
   }
   return(color.palette)
 }
+
+#' Parabolic peak interpolation
+#'
+#' Internal soundgen function
+#'
+#' Takes a spectral peak and two adjacent points, fits a parabola through them,
+#' and thus estimates true peak location relative to the discrete peak. See
+#' https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html
+#' @param points the amplitudes of three adjacent points (beta is the
+#'   peak), ideally spectrum on a dB scale, obtained with a Gaussian window
+#' @param plot if TRUE, plot the points and the fit parabola
+#' @return Returns a list: $p = the correction coefficient in bins (idx_beta + p
+#'   gives the true peak), $ampl_p = the amplitude of the true peak
+#' @keywords internal
+#' @examples
+#' soundgen:::parabPeakInterpol(c(-1, 0, -4), plot = TRUE)
+parabPeakInterpol = function(threePoints, plot = FALSE) {
+  if (any(is.na(threePoints)) | length(threePoints) < 3) {
+    stop(paste('invalid input:', threePoints))
+  }
+  alpha = threePoints[1]
+  beta = threePoints[2]
+  gamma = threePoints[3]
+  a = (alpha - 2 * beta + gamma) / 2
+  p = (alpha - gamma) / 4 / a
+  ampl_p = beta - (alpha - gamma) * p / 4
+  if (plot) {
+    b = beta - a * p ^ 2
+    x = seq(-2, 2, length.out = 100)
+    parab = a * (x - p) ^ 2 + b
+    plot(-1:1, c(alpha, beta, gamma), type = 'p',
+         xlim = c(-2, 2), ylim = c(gamma, ampl_p),
+         xlab = 'Bin', ylab = 'Ampl')
+    points(x, parab, type = 'l', col = 'blue')
+  }
+  return(list(p = p, ampl_p = ampl_p))
+}

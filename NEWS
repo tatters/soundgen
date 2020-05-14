@@ -13,6 +13,7 @@ MINOR:
   * pitch_app(): easy-to-access frequency zoom (+/- or icons)
   * pitch_app(): added hotkeys for most buttons
   * pitch_app(): pitch prior plotted on the spectrogram
+  * analyze(): improved resolution of pitch tracking methods 'spec' and 'dom' through parabolic interpolation of spectral peaks, modified algorithm of 'cep' method
   * schwa() accepts missing values in formant frequencies
   * spectrogramFolder(), modulationSpectrumFolder(), analyzeFolder(), segmentFolder(): updated html output
   * estimateVTL() regresses multiple frequency measurements of the same formant without pre-aggregating

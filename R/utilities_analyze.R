@@ -221,6 +221,7 @@ getDom = function(frame,
     row.names = NULL
   )
   dom = NA
+  freqs = as.numeric(names(frame)) * 1000
   # width of smoothing interval (in bins), forced to be an odd number
   domSmooth_bins = 2 * ceiling(domSmooth / bin / 2) - 1
 
@@ -232,24 +233,34 @@ getDom = function(frame,
                           isCentral.localMax(x, threshold = domThres)
                         })
   idx = zoo::index(temp)[zoo::coredata(temp)]
-  pitchFloor_idx = which(as.numeric(names(frame)) > pitchFloor / 1000)[1]
-  pitchCeiling_idx = which(as.numeric(names(frame)) > pitchCeiling / 1000)[1]
-  idx = idx[idx > pitchFloor_idx & idx < pitchCeiling_idx]
+  pitchFloor_idx = which(freqs > pitchFloor)[1]
+  pitchCeiling_idx = which(freqs > pitchCeiling)[1]
+  idx_peak = idx[which(idx > pitchFloor_idx & idx < pitchCeiling_idx)[1]]
+  # parabolic interpolation to get closer to the true peak
+  applyCorrecton = idx_peak > 1 & idx_peak < length(frame)
+  if (applyCorrecton) {
+    threePoints = log10(frame[(idx_peak - 1) : (idx_peak + 1)])
+    parabCor = parabPeakInterpol(threePoints)
+    dom = freqs[idx_peak] + bin * parabCor$p
+    dom_ampl = 10 ^ parabCor$ampl_p
+  } else {
+    dom = freqs[idx_peak]
+    dom_ampl = frame[idx_peak]
+  }
 
   if (length(idx) > 0) {
     # lowest dominant freq band - we take the first frequency in the spectrum at
     # least /domThres/ % of the amplitude of peak frequency, but high
     # enough to be above pitchFloor (and below pitchCeiling)
-    dom = as.numeric(names(frame)[idx[1]]) * 1000
     dom_array = data.frame(
       'pitchCand' = dom,
-      'pitchCert' = frame[idx[1]],
+      'pitchCert' = dom_ampl,
       'pitchSource' = 'dom',
       stringsAsFactors = FALSE,
       row.names = NULL
     )
   }
-  return (list(dom_array = dom_array, dom = dom))
+  return(list(dom_array = dom_array, dom = dom))
 }
 
 
@@ -418,34 +429,36 @@ getPitchCep = function(frame,
                           isCentral.localMax(x, threshold = cepThres))
   idx = zoo::index(temp)[zoo::coredata(temp)]
 
-  absCepPeak = try(idx[which.max(b$cep[idx])], silent = TRUE)
-  if (class(absCepPeak)[1] != 'try-error') {
-    idx = idx[b$freq[idx] > b$freq[absCepPeak] / 1.8]
-  } # to avoid false subharmonics
-  # plot (b, type = 'l')
-  # points(b$freq[idx], b$cep[idx])
-  idx = idx[order(b$cep[idx], decreasing = TRUE)]
-  acceptedCepPeaks = idx[1:min(length(idx), nCands)]
+  if (length(idx) > 0) {
+    absCepPeak = idx[which.max(b$cep[idx])]
+    # to avoid false subharmonics:
+    # idx = idx[b$freq[idx] > b$freq[absCepPeak] / 1.8]
+    # plot(b$freq, b$cep, type = 'l', log = 'x')
+    # points(b$freq[idx], b$cep[idx], log = 'x')
+    idx = idx[order(b$cep[idx], decreasing = TRUE)]
+    acceptedCepPeaks = idx[1:min(length(idx), nCands)]
 
-  if (length(acceptedCepPeaks) > 0) {
-    # if some peaks are found...
-    pitchCep_array = data.frame(
-      'pitchCand' = b$freq[acceptedCepPeaks],
-      'pitchCert' = b$cep[acceptedCepPeaks],
-      'pitchSource' = 'cep',
-      stringsAsFactors = FALSE,
-      row.names = NULL
-    )
-    # because cepstrum really stinks for frequencies above ~1 kHz, mostly
-    # picking up formants or just plain noise, we discount confidence in
-    # high-pitch cepstral estimates
-    pitchCep_array$pitchCert = pitchCep_array$pitchCert /
-      (1 + 5 / (1 + exp(2 - .25 * HzToSemitones(pitchCep_array$pitchCand / pitchFloor))))
-    # visualization: a = seq(pitchFloor, pitchCeiling, length.out = 100)
-    # b = 1 + 5 / (1 + exp(2 - .25 * HzToSemitones(a / pitchFloor)))
-    # plot (a, b, type = 'l')
+    if (length(acceptedCepPeaks) > 0) {
+      # if some peaks are found...
+      pitchCep_array = data.frame(
+        'pitchCand' = b$freq[acceptedCepPeaks],
+        'pitchCert' = b$cep[acceptedCepPeaks],
+        'pitchSource' = 'cep',
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+      # because cepstrum really stinks for frequencies above ~1 kHz, mostly
+      # picking up formants or just plain noise, we discount confidence in
+      # high-pitch cepstral estimates
+      pitchCep_array$pitchCert = pitchCep_array$pitchCert /
+        (1 + log2(pitchCep_array$pitchCand / pitchFloor))
+      # visualization: a = seq(pitchFloor, pitchCeiling, length.out = 100)
+      # b = 1 + log2(a / pitchFloor)
+      # plot(a, b, type = 'l')
+    }
   }
-  return (pitchCep_array)
+
+  return(pitchCep_array)
 }
 
 
@@ -477,6 +490,8 @@ getPitchSpec = function(frame,
                         nCands
 ) {
   pitchSpec_array = NULL
+  n = length(frame)
+  freqs = as.numeric(names(frame)) * 1000
   width = 2 * ceiling((specSmooth / bin + 1) * 20 / bin / 2) - 1 # to be always ~100 Hz,
   # regardless of bin, but an odd number
   if (!is.numeric(HNR)) {
@@ -497,10 +512,27 @@ getPitchSpec = function(frame,
                           # plot(zoo::as.zoo(frame), type='l')
                         })
   idx = zoo::index(temp)[zoo::coredata(temp)]
-  specPeaks = data.frame ('freq' = as.numeric(names(frame)[idx]) * 1000,
-                          'amp' = frame[idx])
+  specPeaks = data.frame('idx' = idx)
+  nr = nrow(specPeaks)
 
-  if (nrow(specPeaks) == 1) {
+  # parabolic interpolation to get closer to the true peak
+  if (nr > 0) {
+    for (i in 1:nr) {
+      idx_peak = specPeaks$idx[i]
+      applyCorrecton = idx_peak > 1 & idx_peak < n
+      if (applyCorrecton) {
+        threePoints = log10(frame[(idx_peak - 1) : (idx_peak + 1)])
+        parabCor = parabPeakInterpol(threePoints)
+        specPeaks$freq[i] = freqs[idx_peak] + bin * parabCor$p
+        specPeaks$amp[i] = 10 ^ parabCor$ampl_p
+      } else {
+        specPeaks$freq[i] = freqs[idx_peak]
+        specPeaks$amp[i] = frame[idx_peak]
+      }
+    }
+  }
+
+  if (nr == 1) {
     if (specPeaks[1, 1] < pitchCeiling & specPeaks[1, 1] > pitchFloor) {
       pitchSpec = specPeaks[1, 1]
       pitchCert = specSinglePeakCert
@@ -512,9 +544,9 @@ getPitchSpec = function(frame,
         row.names = NULL
       )
     }
-  } else if (nrow(specPeaks) > 1) {
+  } else if (nr > 1) {
     # analyze five lowest harmonics
-    specPeaks = specPeaks [1:min(5, nrow(specPeaks)), ]
+    specPeaks = specPeaks[1:min(5, nrow(specPeaks)), ]
 
     # A modified version of BaNa algorithm follows
     seq1 = 2:nrow(specPeaks)
@@ -550,8 +582,8 @@ getPitchSpec = function(frame,
     # add pitchCand based on the most common distances between harmonics
     # pitchCand = c(pitchCand, diff(specPeaks[,1]))
 
-    pitchCand = sort (pitchCand [pitchCand > pitchFloor &
-                                   pitchCand < pitchCeiling])
+    pitchCand = sort(pitchCand[pitchCand > pitchFloor &
+                                 pitchCand < pitchCeiling])
     if (length(pitchCand) > 0) {
       pitchSpec_array = data.frame(
         'pitchCand' = pitchCand,
@@ -657,10 +689,10 @@ getPrior = function(priorMean,
                    prob = prior)
   if (plot) {
     plot(out, type = 'l', log = 'x',
-      xlab = 'Frequency, Hz',
-      ylab = 'Multiplier of certainty',
-      main = 'Prior belief in pitch values',
-      ...
+         xlab = 'Frequency, Hz',
+         ylab = 'Multiplier of certainty',
+         main = 'Prior belief in pitch values',
+         ...
     )
   }
   if (!is.null(pitchCands)) {
@@ -825,6 +857,6 @@ upsamplePitchContour = function(pitch, len, plot = FALSE) {
          xlab = 'Relative position', ylab = 'Pitch')
     points(x = seq(0, 1, length.out = len), y = pitch1,
            type = 'b', col = 'red', pch = 3)
-   }
+  }
   return(pitch1)
 }
