@@ -578,7 +578,10 @@ modulationSpectrumFolder = function(
   ...
 ) {
   time_start = proc.time()  # timing
-  filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
+  filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
+  if (length(filenames) < 1) {
+    stop(paste('No wav/mp3 files found in', myfolder))
+  }
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = file.info(filenames)$size

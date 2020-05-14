@@ -344,7 +344,10 @@ getLoudnessFolder = function(myfolder,
                              summaryFun = 'mean',
                              verbose = TRUE) {
   time_start = proc.time()  # timing
-  filenames = list.files(myfolder, pattern = "*.wav|.mp3", full.names = TRUE)
+  filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
+  if (length(filenames) < 1) {
+    stop(paste('No wav/mp3 files found in', myfolder))
+  }
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = file.info(filenames)$size
@@ -366,7 +369,7 @@ getLoudnessFolder = function(myfolder,
 
   # prepare output
   if (summary == TRUE) {
-    output = data.frame(sound = basename(filenames))
+    output = data.frame(file = basename(filenames))
     for (s in 1:length(summaryFun)) {
       # for each summary function...
       f = eval(parse(text = summaryFun[s]))
