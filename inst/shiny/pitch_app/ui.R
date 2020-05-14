@@ -144,7 +144,7 @@ ui = fluidPage(
            fluidRow(
              column(1,
                     actionButton(inputId = 'zoomIn_freq', label = HTML("<img src='icons/zoomIn.png' width = '25px'>"), style = "padding: 2px 2px; display: block"),
-                    actionButton(inputId = 'zoomOut_freq', label = HTML("<img src='icons/zoomOut.png' width = '25px'>"), style = "padding: 2px 2px; display: block"),
+                    actionButton(inputId = 'zoomOut_freq', label = HTML("<img src='icons/zoomOut.png' width = '25px'>"), style = "padding: 2px 2px; display: block")
              ),
              column(2,
                     radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
@@ -171,7 +171,7 @@ ui = fluidPage(
            ),
 
            fluidRow(
-             plotOutput('spectrogram', height = '500px', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)),# , style = "max-width: 66vw; overflow-x: auto;"
+             plotOutput('spectrogram', height = '500px', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)),  # , style = "max-width: 66vw; overflow-x: auto;"
              plotOutput('oscillogram')
            ),
 
