@@ -6,6 +6,8 @@
 \usage{
 analyzeFrame(
   frame,
+  bin,
+  freqs,
   autoCorrelation = NULL,
   samplingRate = 44100,
   scaleCorrection = 1,
@@ -31,7 +33,7 @@ analyzeFrame(
 )
 }
 \arguments{
-\item{frame}{the real part of the spectrum of a frame, as returned by
+\item{frame}{the abs spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
 \item{autoCorrelation}{pre-calculated autocorrelation of the input frame

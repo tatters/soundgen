@@ -830,6 +830,7 @@ findVoicedSegments = function(pitchCands,
 #' @param pitch best guess at pitch contour; length = ncol(pitchCands)
 #' @param candPlot,pitchPlot lists of graphical settings for plotting candidates
 #'   and pitch contour, respectively
+#' @param extraContour another contour to add to the plot, such as harmHeight, Hz
 #' @param addToExistingPlot if TRUE, assumes that a spectrogram is already
 #'   plotted; if FALSE, sets up a new plot
 #' @param showLegend if TRUE, shows a legend
@@ -851,30 +852,36 @@ addPitchCands = function(pitchCands,
                          pitchCert,
                          pitchSource,
                          pitch,
+                         timestamps = NULL,
                          candPlot = list(),
                          pitchPlot = list(
                            col = rgb(0, 0, 1, .75),
                            lwd = 3
                          ),
+                         extraContour = NULL,
                          addToExistingPlot = TRUE,
                          showLegend = TRUE,
                          ...) {
-  if (length(pitchCands) < 1) invisible()
-  # if plot_spec is FALSE, we first have to set up an empty plot
+  if (is.null(pitchCands) & is.null(pitch)) invisible()
+  if (length(pitchCands) < 1 & length(pitch) < 1) invisible()
+  if (is.null(timestamps) & !is.null(pitchCands)) {
+    timestamps = as.numeric(colnames(pitchCands))
+  }
+  # if addToExistingPlot is FALSE, we first have to set up an empty plot
   if (addToExistingPlot == FALSE) {
     arguments = list(...)  # save ... arguments as a list
     m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
     if (is.na(m)) m = 5  # samplingRate / 2 / 1000
     arguments$ylim = c(0, m)
     do.call(plot,   # need do.call, otherwise can't pass the modified ylim
-            args = c(list(x = as.numeric(colnames(pitchCands)),
+            args = c(list(x = timestamps,
                           y = rep(0, ncol(pitchCands)),
                           type = 'n'),
                      arguments))
   }
   # add pitch candidates to the plot
   pitchMethods = unique(na.omit(as.character(pitchSource)))
-  if (any(!is.na(pitchCands))) {
+  if (length(pitchMethods) > 1) {
     if (is.null(candPlot$levels)) {
       candPlot$levels = pitchMethods # c('autocor', 'spec', 'dom', 'cep')
     }
@@ -902,43 +909,56 @@ addPitchCands = function(pitchCands,
       cex = pitchCert[r, ] * candPlot$cex
       cex[!is.numeric(cex)] = 2  # for manual, certainty could be Inf
       points(
-        x = as.numeric(colnames(pitchCands)),
+        x = timestamps,
         y = pitchCands[r, ] / 1000,
         col = candPlot$col[pitchSource_1234[r, ]],
         pch = candPlot$pch[pitchSource_1234[r, ]],
         cex = pitchCert[r, ] * candPlot$cex
       )
     }
-    # add the final pitch contour to the plot
-    if (any(is.numeric(pitch))) {
-      if (is.null(pitchPlot$col)) {
-        pitchPlot$col = rgb(0, 0, 1, .75)
-      }
-      if (is.null(pitchPlot$lwd)) {
-        pitchPlot$lwd = 3
-      }
-      do.call('lines', c(list(
-        x = as.numeric(colnames(pitchCands)),
-        y = pitch / 1000
-      ),
-      pitchPlot)
-      )
+  } else {
+    showLegend = FALSE
+  }
+
+  # add the final pitch contour to the plot
+  if (any(is.numeric(pitch))) {
+    if (is.null(pitchPlot$col)) {
+      pitchPlot$col = rgb(0, 0, 1, .75)
     }
-    # add a legend
-    if (showLegend) {
-      candPlot = as.data.frame(candPlot)
-      candPlot = candPlot[candPlot$levels %in% c(pitchMethods, 'combined'), ]
-      legend("topright",
-             legend = c(as.character(candPlot$levels), 'combined'),
-             pch = c(candPlot$pch, NA),
-             lty = c(rep(NA, length(pitchMethods)),
-                     ifelse(!is.null(pitchPlot$lty), pitchPlot$lty, 1)),
-             lwd = c(rep(NA, length(pitchMethods)), pitchPlot$lwd),
-             col = c(as.character(candPlot$col), pitchPlot$col),
-             bg = "white")
+    if (is.null(pitchPlot$lwd)) {
+      pitchPlot$lwd = 3
+    }
+    do.call('lines', c(list(
+      x = timestamps,
+      y = pitch / 1000
+    ),
+    pitchPlot)
+    )
+  }
+  # add a legend
+  if (showLegend) {
+    candPlot = as.data.frame(candPlot)
+    candPlot = candPlot[candPlot$levels %in% c(pitchMethods, 'combined'), ]
+    legend("topright",
+           legend = c(as.character(candPlot$levels), 'combined'),
+           pch = c(candPlot$pch, NA),
+           lty = c(rep(NA, length(pitchMethods)),
+                   ifelse(!is.null(pitchPlot$lty), pitchPlot$lty, 1)),
+           lwd = c(rep(NA, length(pitchMethods)), pitchPlot$lwd),
+           col = c(as.character(candPlot$col), pitchPlot$col),
+           bg = "white")
+  }
+
+  # Add another contour such as harmHeight
+  if (!is.null(extraContour)) {
+    if (any(!is.na(extraContour)) & length(timestamps) > 0) {
+      lines(timestamps,
+            extraContour / 1000,
+            lty = 2, lwd = 2, col = 'pink')
     }
   }
 }
+
 
 #' Interpolate pitch contour
 #'

@@ -6,9 +6,10 @@
 \usage{
 getPitchSpec(
   frame,
+  bin,
+  freqs,
   specSmooth,
   specHNRslope,
-  bin,
   HNR = NULL,
   specThres,
   specPeak,
@@ -20,16 +21,16 @@ getPitchSpec(
 )
 }
 \arguments{
-\item{frame}{the real part of the spectrum of a frame, as returned by
+\item{frame}{the abs spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
+
+\item{bin}{the width of spectral bin in \code{frame}, Hz}
 
 \item{specSmooth}{the width of window for detecting peaks in the spectrum, Hz}
 
 \item{specHNRslope}{when looking for putative harmonics in
 the spectrum, the threshold for peak detection is calculated as
 \code{specPeak * (1 - HNR * specHNRslope)}}
-
-\item{bin}{the width of spectral bin in \code{frame}, Hz}
 
 \item{HNR}{harmonics-to-noise ratio returned by \code{\link{getPitchAutocor}}}
 

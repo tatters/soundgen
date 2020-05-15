@@ -76,6 +76,9 @@
 #' @param specSinglePeakCert (0 to 1) if F0 is calculated based on a single
 #'   harmonic ratio (as opposed to several ratios converging on the same
 #'   candidate), its certainty is taken to be \code{specSinglePeakCert}
+#' @param harmHeight a list of control parameters for estimating how high
+#'   harmonics reach in the spectrum (see \code{?soundgen:::harmHeight} for
+#'   details)
 #' @param shortestSyl the smallest length of a voiced segment (ms) that
 #'   constitutes a voiced syllable (shorter segments will be replaced by NA, as
 #'   if unvoiced)
@@ -128,28 +131,30 @@
 #'   addition, the output contains pitch estimates by separate algorithms
 #'   included in \code{pitchMethods} and a number of other acoustic descriptors:
 #'   \describe{
-#'   \item{duration}{total duration, s}
-#'   \item{duration_noSilence}{duration from the beginning of the first
-#'   non-silent STFT frame to the end of the last non-silent STFT frame, s (NB:
-#'   depends strongly on \code{windowLength} and \code{silence} settings)}
-#'   \item{time}{time of the middle of each frame (ms)} \item{ampl}{root mean
-#'   square of amplitude per frame, calculated as sqrt(mean(frame ^ 2))}
-#'   \item{amplVoiced}{the same as ampl for voiced frames and NA for unvoiced
-#'   frames} \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking
-#'   methods / Dominant frequency" in the vignette)} \item{entropy}{Weiner
-#'   entropy of the spectrum of the current frame. Close to 0: pure tone or
-#'   tonal sound with nearly all energy in harmonics; close to 1: white noise}
-#'   \item{f1_freq, f1_width, ...}{the frequency and bandwidth of the first
-#'   nFormants formants per STFT frame, as calculated by phonTools::findformants
-#'   with default settings} \item{harmonics}{the amount of energy in upper
-#'   harmonics, namely the ratio of total spectral mass above 1.25 x F0 to the
-#'   total spectral mass below 1.25 x F0 (dB)} \item{HNR}{harmonics-to-noise
-#'   ratio (dB), a measure of harmonicity returned by soundgen:::getPitchAutocor
-#'   (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is
-#'   as much energy in harmonics as in noise} \item{loudness}{subjective
-#'   loudness, in sone, corresponding to the chosen SPL_measured - see
-#'   \code{\link{getLoudness}}} \item{medianFreq}{50th quantile of the frame's
-#'   spectrum} \item{peakFreq}{the frequency with maximum spectral power (Hz)}
+#'   \item{duration}{total duration, s} \item{duration_noSilence}{duration from
+#'   the beginning of the first non-silent STFT frame to the end of the last
+#'   non-silent STFT frame, s (NB: depends strongly on \code{windowLength} and
+#'   \code{silence} settings)} \item{time}{time of the middle of each frame
+#'   (ms)} \item{ampl}{root mean square of amplitude per frame, calculated as
+#'   sqrt(mean(frame ^ 2))} \item{amplVoiced}{the same as ampl for voiced frames
+#'   and NA for unvoiced frames} \item{dom}{lowest dominant frequency band (Hz)
+#'   (see "Pitch tracking methods / Dominant frequency" in the vignette)}
+#'   \item{entropy}{Weiner entropy of the spectrum of the current frame. Close
+#'   to 0: pure tone or tonal sound with nearly all energy in harmonics; close
+#'   to 1: white noise} \item{f1_freq, f1_width, ...}{the frequency and
+#'   bandwidth of the first nFormants formants per STFT frame, as calculated by
+#'   phonTools::findformants with default settings} \item{harmEnergy}{the amount
+#'   of energy in upper harmonics, namely the ratio of total spectral mass above
+#'   1.25 x F0 to the total spectral mass below 1.25 x F0
+#'   (dB)}\item{harmHeight}{how high harmonics reach in the spectrum, based on
+#'   the best guess at pitch (or the manually provided pitch values)}
+#'   \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
+#'   by soundgen:::getPitchAutocor (see "Pitch tracking methods /
+#'   Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as
+#'   in noise} \item{loudness}{subjective loudness, in sone, corresponding to
+#'   the chosen SPL_measured - see \code{\link{getLoudness}}}
+#'   \item{medianFreq}{50th quantile of the frame's spectrum}
+#'   \item{peakFreq}{the frequency with maximum spectral power (Hz)}
 #'   \item{peakFreqCut}{the frequency with maximum spectral power below cutFreq
 #'   (Hz)} \item{pitch}{post-processed pitch contour based on all F0 estimates}
 #'   \item{pitchAutocor}{autocorrelation estimate of F0}
@@ -159,8 +164,8 @@
 #'   center of gravity of the frame’s spectrum, first spectral moment (Hz)}
 #'   \item{specCentroidCut}{the center of gravity of the frame’s spectrum below
 #'   cutFreq} \item{specSlope}{the slope of linear regression fit to the
-#'   spectrum below cutFreq} \item{voiced}{is the current STFT frame voiced? TRUE
-#'   / FALSE}
+#'   spectrum below cutFreq} \item{voiced}{is the current STFT frame voiced?
+#'   TRUE / FALSE}
 #' }
 #' @export
 #' @examples
@@ -300,6 +305,7 @@ analyze = function(
   specHNRslope = 0.8,
   specSmooth = 150,
   specMerge = 1,
+  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5),
   shortestSyl = 20,
   shortestPause = 60,
   interpolWin = 75,
@@ -619,6 +625,8 @@ analyze = function(
     ylab = ylab,
     plot = FALSE
   ), extraSpecPars))
+  bin = samplingRate / 2 / nrow(s)  # width of spectral bin, Hz
+  freqs = as.numeric(rownames(s)) * 1000  # central bin freqs, Hz
 
   # calculate rms amplitude of each frame
   myseq = (as.numeric(colnames(frameBank)) - windowLength / 2) * samplingRate / 1000 + 1
@@ -634,7 +642,7 @@ analyze = function(
   # calculate entropy of each frame within the most relevant
   # vocal range only (up to to cutFreq Hz)
   rowLow = 1 # which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
-  rowHigh = tail(which(as.numeric(rownames(s)) * 1000 <= cutFreq), 1) # 6000 Hz etc
+  rowHigh = tail(which(freqs <= cutFreq), 1) # 6000 Hz etc
   if (length(rowHigh) < 1 | !is.finite(rowHigh)) rowHigh = nrow(s)
   entropy = apply(as.matrix(1:ncol(s)), 1, function(x) {
     getEntropy(s[rowLow:rowHigh, x], type = 'weiner')
@@ -723,6 +731,7 @@ analyze = function(
     # frames, no meanFreq, dom etc!)
     frameInfo[[i]] = analyzeFrame(
       frame = s[, i],
+      bin = bin, freqs = freqs,  # prepared in analyze() to save time
       autoCorrelation = autocorBank[, i],
       samplingRate = samplingRate,
       scaleCorrection = scaleCorrection,
@@ -767,6 +776,7 @@ analyze = function(
     nrow(y[['pitchCands_frame']]))))
   if (max_cands == 0) {  # no pitch candidates at all, purely unvoiced
     result[, c('pitch', 'pitchAutocor', 'pitchCep', 'pitchSpec')] = NA
+    pitchCands_list = list()
   } else {
     pitchCands_list = rep(list(matrix(
       NA,
@@ -853,9 +863,9 @@ analyze = function(
     # threshold before values are replaced by median over smoothing window).
     # smooth of 1 gives smoothingThres of 4 semitones
     smoothingThres = 4 / smooth
-    result[smoothVars] = medianSmoother(result[smoothVars],
-                                        smoothing_ww = smoothing_ww,
-                                        smoothingThres = smoothingThres)
+    result[, smoothVars] = medianSmoother(result[, smoothVars],
+                                          smoothing_ww = smoothing_ww,
+                                          smoothingThres = smoothingThres)
   }
 
   ## Update results using manual pitch contour, if provided
@@ -867,7 +877,7 @@ analyze = function(
     result = updateAnalyze(
       result = result,
       pitch_true = pitchManual,
-      spectrogram = s
+      spectrogram = NULL  # s
     )
   }
 
@@ -880,18 +890,29 @@ analyze = function(
   result[unvoiced_idx, c('quartile25', 'quartile50', 'quartile75')] = NA
   result$voiced = FALSE
   result$voiced[voiced_idx] = TRUE
+  result$harmEnergy = harmEnergy(pitch = result$pitch, s = s, freqs = freqs)
 
-  # Calculate the % of energy in harmonics based on the final pitch estimates
-  threshold = 1.25 * result$pitch / 1000
-  result$harmonics = apply(matrix(1:ncol(s)), 1, function(x) {
-    ifelse(is.na(threshold[x]),
-           NA,
-           sum(s[as.numeric(rownames(s)) > threshold[x], x]) / sum(s[, x]))
-  })
-
-  # Convert HNR and harmonics to dB
+  # Convert HNR and energy in harmonics to dB
   result$HNR = to_dB(result$HNR)
-  result$harmonics = to_dB(result$harmonics)
+  result$harmEnergy = to_dB(result$harmEnergy)
+
+  # Calculate how far harmonics reach in the spectrum
+  result$harmHeight = NA
+  for (f in voiced_idx) {
+    result$harmHeight[f] = do.call('harmHeight', c(
+      harmHeight,
+      list(frame = s[, f],
+           bin = bin,
+           freqs = freqs,
+           pitch = result$pitch[f]
+      )))$harmHeight
+  }
+  if (smooth > 0) {
+    result$harmHeight = medianSmoother(
+      result[, 'harmHeight', drop = FALSE],
+      smoothing_ww = smoothing_ww,
+      smoothingThres = smoothingThres)[, 1]
+  }
 
   # Arrange columns in alphabetical order (except the first three)
   result = result[, c(colnames(result)[1:3],
@@ -928,8 +949,10 @@ analyze = function(
         pitchCert = pitchCands_list$cert,
         pitchSource = pitchCands_list$source,
         pitch = result$pitch,
+        timestamps = result$time,
         candPlot = candPlot,
         pitchPlot = pitchPlot,
+        extraContour = result$harmHeight,
         addToExistingPlot = TRUE,
         showLegend = showLegend,
         ylim = ylim,
@@ -1018,79 +1041,82 @@ analyze = function(
 #'   width = 20, height = 12,
 #'   units = 'cm', res = 300, ylim = c(0, 5))
 #' }
-analyzeFolder = function(myfolder,
-                         htmlPlots = TRUE,
-                         verbose = TRUE,
-                         samplingRate = NULL,
-                         dynamicRange = 80,
-                         silence = 0.04,
-                         SPL_measured = 70,
-                         Pref = 2e-5,
-                         windowLength = 50,
-                         step = NULL,
-                         overlap = 50,
-                         wn = 'gaussian',
-                         zp = 0,
-                         cutFreq = 6000,
-                         nFormants = 3,
-                         pitchMethods = c('autocor', 'spec', 'dom'),
-                         pitchManual = NULL,
-                         entropyThres = 0.6,
-                         pitchFloor = 75,
-                         pitchCeiling = 3500,
-                         priorMean = 300,
-                         priorSD = 6,
-                         nCands = 1,
-                         minVoicedCands = NULL,
-                         domThres = 0.1,
-                         domSmooth = 220,
-                         autocorThres = 0.7,
-                         autocorSmooth = NULL,
-                         cepThres = 0.3,
-                         cepSmooth = NULL,
-                         cepZp = 0,
-                         specThres = 0.3,
-                         specPeak = 0.35,
-                         specSinglePeakCert = 0.4,
-                         specHNRslope = 0.8,
-                         specSmooth = 150,
-                         specMerge = 1,
-                         shortestSyl = 20,
-                         shortestPause = 60,
-                         interpolWin = 75,
-                         interpolTol = 0.3,
-                         interpolCert = 0.3,
-                         pathfinding = c('none', 'fast', 'slow')[2],
-                         annealPars = list(maxit = 5000, temp = 1000),
-                         certWeight = .5,
-                         snakeStep = 0.05,
-                         snakePlot = FALSE,
-                         smooth = 1,
-                         smoothVars = c('pitch', 'dom'),
-                         summary = TRUE,
-                         summaryFun = c('mean', 'median', 'sd'),
-                         plot = FALSE,
-                         showLegend = TRUE,
-                         savePlots = FALSE,
-                         pitchPlot = list(
-                           col = rgb(0, 0, 1, .75),
-                           lwd = 3
-                         ),
-                         candPlot = list(
-                           levels = c('autocor', 'spec', 'dom', 'cep'),
-                           col = c('green', 'red', 'orange', 'violet'),
-                           pch = c(16, 2, 3, 7),
-                           cex = 2
-                         ),
-                         ylim = NULL,
-                         xlab = 'Time, ms',
-                         ylab = 'kHz',
-                         main = NULL,
-                         width = 900,
-                         height = 500,
-                         units = 'px',
-                         res = NA,
-                         ...) {
+analyzeFolder = function(
+  myfolder,
+  htmlPlots = TRUE,
+  verbose = TRUE,
+  samplingRate = NULL,
+  dynamicRange = 80,
+  silence = 0.04,
+  SPL_measured = 70,
+  Pref = 2e-5,
+  windowLength = 50,
+  step = NULL,
+  overlap = 50,
+  wn = 'gaussian',
+  zp = 0,
+  cutFreq = 6000,
+  nFormants = 3,
+  pitchMethods = c('autocor', 'spec', 'dom'),
+  pitchManual = NULL,
+  entropyThres = 0.6,
+  pitchFloor = 75,
+  pitchCeiling = 3500,
+  priorMean = 300,
+  priorSD = 6,
+  nCands = 1,
+  minVoicedCands = NULL,
+  domThres = 0.1,
+  domSmooth = 220,
+  autocorThres = 0.7,
+  autocorSmooth = NULL,
+  cepThres = 0.3,
+  cepSmooth = NULL,
+  cepZp = 0,
+  specThres = 0.3,
+  specPeak = 0.35,
+  specSinglePeakCert = 0.4,
+  specHNRslope = 0.8,
+  specSmooth = 150,
+  specMerge = 1,
+  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5),
+  shortestSyl = 20,
+  shortestPause = 60,
+  interpolWin = 75,
+  interpolTol = 0.3,
+  interpolCert = 0.3,
+  pathfinding = c('none', 'fast', 'slow')[2],
+  annealPars = list(maxit = 5000, temp = 1000),
+  certWeight = .5,
+  snakeStep = 0.05,
+  snakePlot = FALSE,
+  smooth = 1,
+  smoothVars = c('pitch', 'dom'),
+  summary = TRUE,
+  summaryFun = c('mean', 'median', 'sd'),
+  plot = FALSE,
+  showLegend = TRUE,
+  savePlots = FALSE,
+  pitchPlot = list(
+    col = rgb(0, 0, 1, .75),
+    lwd = 3
+  ),
+  candPlot = list(
+    levels = c('autocor', 'spec', 'dom', 'cep'),
+    col = c('green', 'red', 'orange', 'violet'),
+    pch = c(16, 2, 3, 7),
+    cex = 2
+  ),
+  ylim = NULL,
+  xlab = 'Time, ms',
+  ylab = 'kHz',
+  main = NULL,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  ...
+) {
   warnAboutResetSummary = FALSE
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)

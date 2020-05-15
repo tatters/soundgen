@@ -16,7 +16,7 @@ getPitchCep(
 )
 }
 \arguments{
-\item{frame}{the real part of the spectrum of a frame, as returned by
+\item{frame}{the abs spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
 \item{cepZp}{zero-padding of the spectrum used for cepstral pitch detection

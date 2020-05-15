@@ -105,7 +105,8 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `dom`: lowest dominant frequency band (Hz) (see "Pitch tracking methods / Dominant frequency")
 * `entropy`: Weiner entropy of the spectrum of the current frame. Close to 0: pure tone or tonal sound with nearly all energy in harmonics; close to 1: white noise
 * `f1_freq`, `f1_width`, ...: the frequency and bandwidth of the first `nFormants` formants per STFT frame, as calculated by `phonTools::findformants` with default settings
-* `harmonics`: the amount of energy in upper harmonics, namely the ratio of total spectral energy above 1.25 x f0 to the total spectral energy below 1.25 x f0 (dB)
+* `harmEnergy`: the amount of energy in upper harmonics, namely the ratio of total spectral energy above 1.25 x f0 to the total spectral energy below 1.25 x f0 (dB)
+* `harmHeight`: how high harmonics reach in the spectrum, based on the best guess at pitch (or the manually provided pitch values): see `soundgen:::harmHeight` for details
 * `HNR`: harmonics-to-noise ratio (dB), a measure of harmonicity returned by `soundgen:::getPitchAutocor()` (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as in noise
 * `loudness`: subjective loudness in sone, assuming a certain sound pressure level (takes into account the energy in different frequency bands as well as the sensitivity of human ears to different frequencies); see `getLoudness()` and section on Loudness below for details
 * `medianFreq`: 50th quantile of the frame's spectrum

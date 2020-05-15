@@ -42,6 +42,7 @@ analyze(
   specHNRslope = 0.8,
   specSmooth = 150,
   specMerge = 1,
+  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5),
   shortestSyl = 20,
   shortestPause = 60,
   interpolWin = 75,
@@ -185,6 +186,10 @@ candidate), its certainty is taken to be \code{specSinglePeakCert}}
 \item{specMerge}{pitch candidates within \code{specMerge} semitones are
 merged with boosted certainty}
 
+\item{harmHeight}{a list of control parameters for estimating how high
+harmonics reach in the spectrum (see \code{?soundgen:::harmHeight} for
+details)}
+
 \item{shortestSyl}{the smallest length of a voiced segment (ms) that
 constitutes a voiced syllable (shorter segments will be replaced by NA, as
 if unvoiced)}
@@ -268,28 +273,30 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   addition, the output contains pitch estimates by separate algorithms
   included in \code{pitchMethods} and a number of other acoustic descriptors:
   \describe{
-  \item{duration}{total duration, s}
-  \item{duration_noSilence}{duration from the beginning of the first
-  non-silent STFT frame to the end of the last non-silent STFT frame, s (NB:
-  depends strongly on \code{windowLength} and \code{silence} settings)}
-  \item{time}{time of the middle of each frame (ms)} \item{ampl}{root mean
-  square of amplitude per frame, calculated as sqrt(mean(frame ^ 2))}
-  \item{amplVoiced}{the same as ampl for voiced frames and NA for unvoiced
-  frames} \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking
-  methods / Dominant frequency" in the vignette)} \item{entropy}{Weiner
-  entropy of the spectrum of the current frame. Close to 0: pure tone or
-  tonal sound with nearly all energy in harmonics; close to 1: white noise}
-  \item{f1_freq, f1_width, ...}{the frequency and bandwidth of the first
-  nFormants formants per STFT frame, as calculated by phonTools::findformants
-  with default settings} \item{harmonics}{the amount of energy in upper
-  harmonics, namely the ratio of total spectral mass above 1.25 x F0 to the
-  total spectral mass below 1.25 x F0 (dB)} \item{HNR}{harmonics-to-noise
-  ratio (dB), a measure of harmonicity returned by soundgen:::getPitchAutocor
-  (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is
-  as much energy in harmonics as in noise} \item{loudness}{subjective
-  loudness, in sone, corresponding to the chosen SPL_measured - see
-  \code{\link{getLoudness}}} \item{medianFreq}{50th quantile of the frame's
-  spectrum} \item{peakFreq}{the frequency with maximum spectral power (Hz)}
+  \item{duration}{total duration, s} \item{duration_noSilence}{duration from
+  the beginning of the first non-silent STFT frame to the end of the last
+  non-silent STFT frame, s (NB: depends strongly on \code{windowLength} and
+  \code{silence} settings)} \item{time}{time of the middle of each frame
+  (ms)} \item{ampl}{root mean square of amplitude per frame, calculated as
+  sqrt(mean(frame ^ 2))} \item{amplVoiced}{the same as ampl for voiced frames
+  and NA for unvoiced frames} \item{dom}{lowest dominant frequency band (Hz)
+  (see "Pitch tracking methods / Dominant frequency" in the vignette)}
+  \item{entropy}{Weiner entropy of the spectrum of the current frame. Close
+  to 0: pure tone or tonal sound with nearly all energy in harmonics; close
+  to 1: white noise} \item{f1_freq, f1_width, ...}{the frequency and
+  bandwidth of the first nFormants formants per STFT frame, as calculated by
+  phonTools::findformants with default settings} \item{harmEnergy}{the amount
+  of energy in upper harmonics, namely the ratio of total spectral mass above
+  1.25 x F0 to the total spectral mass below 1.25 x F0
+  (dB)}\item{harmHeight}{how high harmonics reach in the spectrum, based on
+  the best guess at pitch (or the manually provided pitch values)}
+  \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
+  by soundgen:::getPitchAutocor (see "Pitch tracking methods /
+  Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as
+  in noise} \item{loudness}{subjective loudness, in sone, corresponding to
+  the chosen SPL_measured - see \code{\link{getLoudness}}}
+  \item{medianFreq}{50th quantile of the frame's spectrum}
+  \item{peakFreq}{the frequency with maximum spectral power (Hz)}
   \item{peakFreqCut}{the frequency with maximum spectral power below cutFreq
   (Hz)} \item{pitch}{post-processed pitch contour based on all F0 estimates}
   \item{pitchAutocor}{autocorrelation estimate of F0}
@@ -299,8 +306,8 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   center of gravity of the frame’s spectrum, first spectral moment (Hz)}
   \item{specCentroidCut}{the center of gravity of the frame’s spectrum below
   cutFreq} \item{specSlope}{the slope of linear regression fit to the
-  spectrum below cutFreq} \item{voiced}{is the current STFT frame voiced? TRUE
-  / FALSE}
+  spectrum below cutFreq} \item{voiced}{is the current STFT frame voiced?
+  TRUE / FALSE}
 }
 }
 \description{

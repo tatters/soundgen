@@ -42,6 +42,7 @@ analyzeFolder(
   specHNRslope = 0.8,
   specSmooth = 150,
   specMerge = 1,
+  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5),
   shortestSyl = 20,
   shortestPause = 60,
   interpolWin = 75,
@@ -202,6 +203,10 @@ the spectrum, the threshold for peak detection is calculated as
 
 \item{specMerge}{pitch candidates within \code{specMerge} semitones are
 merged with boosted certainty}
+
+\item{harmHeight}{a list of control parameters for estimating how high
+harmonics reach in the spectrum (see \code{?soundgen:::harmHeight} for
+details)}
 
 \item{shortestSyl}{the smallest length of a voiced segment (ms) that
 constitutes a voiced syllable (shorter segments will be replaced by NA, as

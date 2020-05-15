@@ -9,8 +9,10 @@ addPitchCands(
   pitchCert,
   pitchSource,
   pitch,
+  timestamps = NULL,
   candPlot = list(),
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  extraContour = NULL,
   addToExistingPlot = TRUE,
   showLegend = TRUE,
   ...
@@ -25,6 +27,8 @@ analyze(); columns = STFT frames, rows = candidates}
 
 \item{candPlot, pitchPlot}{lists of graphical settings for plotting candidates
 and pitch contour, respectively}
+
+\item{extraContour}{another contour to add to the plot, such as harmHeight, Hz}
 
 \item{addToExistingPlot}{if TRUE, assumes that a spectrogram is already
 plotted; if FALSE, sets up a new plot}

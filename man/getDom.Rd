@@ -4,13 +4,11 @@
 \alias{getDom}
 \title{Get lowest dominant frequency band}
 \usage{
-getDom(frame, samplingRate, bin, domSmooth, domThres, pitchFloor, pitchCeiling)
+getDom(frame, bin, freqs, domSmooth, domThres, pitchFloor, pitchCeiling)
 }
 \arguments{
-\item{frame}{the real part of the spectrum of a frame, as returned by
+\item{frame}{the abs spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
-
-\item{samplingRate}{sampling rate (Hz)}
 
 \item{bin}{the width of one bin in spectrogram, Hz}
 
