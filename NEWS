@@ -1,7 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.6.2.9000 [--Date--]
-MAJOR:
+MAJOR (affects back-compatibility):
   A modified way of creating subharmonics and sidebands in soundgen():
-  * The old argument "subDep"" now controls the max amplitude of g0 vs f0 harmonics, while a new argument "subWidth" controls the width of sidebands. NB: this affects back-compatibility, check your old code! Setting "subDep = 100, subWidth = old_value_of_subDep" gives the same results as in earlier versions of soundgen
+  * The old argument "subDep"" now controls the max amplitude of g0 vs f0 harmonics, while a new argument "subWidth" controls the width of sidebands. Check your old code! Setting "subDep = 100, subWidth = old_value_of_subDep" gives the same results as in earlier versions of soundgen
   * A new argument "subRatio" controls the number of subharmonics, but this behavior can be overridden by the old argument "subFreq"
 
 BUGS FIXED:
@@ -16,9 +16,8 @@ MINOR:
   * analyze(), analyzeFolder(): a new argument and output "harmHeight" - an estimate of how far harmonics reach in the spectrum
   * analyze(): improved resolution of pitch tracking methods 'spec' and 'dom' through parabolic interpolation of spectral peaks, modified algorithm of 'cep' method
   * schwa() accepts missing values in formant frequencies
-  * spectrogramFolder(), modulationSpectrumFolder(), analyzeFolder(), segmentFolder(): updated html output
   * estimateVTL() regresses multiple frequency measurements of the same formant without pre-aggregating
-  * analyzeFolder(): better integration with pitch_app()
+  * spectrogramFolder(), modulationSpectrumFolder(), analyzeFolder(), segmentFolder(): updated html output
   * analyzeFolder(), segmentFolder(), modulationSpectrumFolder(), getLoudnessFolder(), getRMSFolder(): 'sound' renamed to 'file' in output
 
 

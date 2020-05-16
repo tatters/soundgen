@@ -859,6 +859,7 @@ addPitchCands = function(pitchCands,
                            lwd = 3
                          ),
                          extraContour = NULL,
+                         extraContour_pars = list(),
                          addToExistingPlot = TRUE,
                          showLegend = TRUE,
                          ...) {
@@ -952,9 +953,12 @@ addPitchCands = function(pitchCands,
   # Add another contour such as harmHeight
   if (!is.null(extraContour)) {
     if (any(!is.na(extraContour)) & length(timestamps) > 0) {
-      lines(timestamps,
-            extraContour / 1000,
-            lty = 2, lwd = 2, col = 'pink')
+      if (is.null(extraContour_pars$type)) extraContour_pars$type = 'l'
+      if (is.null(extraContour_pars$lty)) extraContour_pars$lty = 2
+      if (is.null(extraContour_pars$lwd)) extraContour_pars$lwd = 2
+      if (is.null(extraContour_pars$col)) extraContour_pars$col = 'pink'
+      do.call(lines, c(list(x = timestamps, y = extraContour / 1000),
+            extraContour_pars))
     }
   }
 }

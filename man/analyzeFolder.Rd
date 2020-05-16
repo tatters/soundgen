@@ -42,7 +42,8 @@ analyzeFolder(
   specHNRslope = 0.8,
   specSmooth = 150,
   specMerge = 1,
-  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5),
+  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5, plotPars = list(type
+    = "n")),
   shortestSyl = 20,
   shortestPause = 60,
   interpolWin = 75,

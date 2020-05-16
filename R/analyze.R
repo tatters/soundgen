@@ -309,7 +309,8 @@ analyze = function(
   specHNRslope = 0.8,
   specSmooth = 150,
   specMerge = 1,
-  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5),
+  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5,
+                    plotPars = list(type = 'n')),
   shortestSyl = 20,
   shortestPause = 60,
   interpolWin = 75,
@@ -331,10 +332,7 @@ analyze = function(
   plotSpec = 'deprecated',
   osc = TRUE,
   osc_dB = FALSE,
-  pitchPlot = list(
-    col = rgb(0, 0, 1, .75),
-    lwd = 3
-  ),
+  pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3),
   candPlot = list(),
   ylim = NULL,
   xlab = 'Time, ms',
@@ -432,9 +430,17 @@ analyze = function(
   }
 
   # Check parameters supplied as lists
+  if (!is.null(harmHeight$plotPars)) {
+    harm_plotPars = harmHeight$plotPars
+  } else {
+    harm_plotPars = list()
+  }
   listPars = list(harmHeight = c('harmThres', 'harmTol', 'harmPerSel'))
   for (i in 1:length(listPars)) {
     parGroup_user = get(names(listPars)[i])
+    # remove misspelled pars or other pars that we don't need to check,
+    # such as harmHeight$plotPars
+    parGroup_user = parGroup_user[names(parGroup_user) %in% listPars[[i]]]
     parGroup_def = listPars[[i]]
     for (p in parGroup_def) {
       if (is.null(parGroup_user[[p]])) {
@@ -971,6 +977,7 @@ analyze = function(
         candPlot = candPlot,
         pitchPlot = pitchPlot,
         extraContour = result$harmHeight,
+        extraContour_pars = harm_plotPars,
         addToExistingPlot = TRUE,
         showLegend = showLegend,
         ylim = ylim,
@@ -1097,7 +1104,8 @@ analyzeFolder = function(
   specHNRslope = 0.8,
   specSmooth = 150,
   specMerge = 1,
-  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5),
+  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5,
+                    plotPars = list(type = 'n')),
   shortestSyl = 20,
   shortestPause = 60,
   interpolWin = 75,

@@ -13,6 +13,7 @@ addPitchCands(
   candPlot = list(),
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
   extraContour = NULL,
+  extraContour_pars = list(),
   addToExistingPlot = TRUE,
   showLegend = TRUE,
   ...
