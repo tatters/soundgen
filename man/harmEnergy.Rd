@@ -4,7 +4,7 @@
 \alias{harmEnergy}
 \title{Energy in harmonics}
 \usage{
-harmEnergy(pitch, s, freqs, coef = 1.25)
+harmEnergy(pitch, s, freqs = NULL, coef = 1.25)
 }
 \arguments{
 \item{pitch}{pitch estimates, Hz (vector)}

@@ -769,25 +769,38 @@ summarizeAnalyze = function(
 #' @param result the matrix of results returned by analyze()
 #' @param pitch_true manual pitch contour of length nrow(result), with NAs
 #' @param spectrogram spectrogram with ncol = nrow(result)
+#' @param harmHeight_pars same as argument "harmHeight" to analyze() - a list of
+#'   settings passed to soundgen:::harmHeight()
 #' @keywords internal
 updateAnalyze = function(result,
                          pitch_true,
-                         spectrogram = NULL) {
+                         spectrogram = NULL,
+                         harmHeight_pars = NULL) {
   # remove all pitch-related columns except dom
   result = result[-which(grepl('pitch', colnames(result)))]
   result$pitch = pitch_true
   result$voiced = !is.na(pitch_true)
   result$amplVoiced = ifelse(result$voiced, result$ampl, NA)
-  result$harmonics = NA
-  if (!is.null(spectrogram)) {
+  result$harmEnergy = NA
+  result$harmHeight = NA
+  if (!is.null(spectrogram) & any(result$voiced)) {
+    freqs = as.numeric(rownames(spectrogram)) * 1000
+
     # Re-calculate the % of energy in harmonics based on the manual pitch estimates
-    threshold = 1.25 * result$pitch / 1000
-    result$harmonics = to_dB(apply(matrix(1:ncol(spectrogram)), 1, function(x) {
-      ifelse(is.na(threshold[x]),
-             NA,
-             sum(spectrogram[as.numeric(rownames(spectrogram)) > threshold[x], x]) /
-               sum(spectrogram[, x]))
-    }))
+    result$harmEnergy = to_dB(harmEnergy(
+      pitch = result$pitch,
+      s = spectrogram,
+      freqs = freqs))
+    # Re-calculate how high harmonics reach in the spectrum
+    for (f in which(result$voiced)) {
+      result$harmHeight[f] = do.call('harmHeight', c(
+        harmHeight_pars,
+        list(frame = spectrogram[, f],
+             bin = freqs[2] - freqs[1],
+             freqs = freqs,
+             pitch = result$pitch[f]
+        )))$harmHeight
+    }
   }
   result = result[, c(1:3, 3 + order(colnames(result)[4:ncol(result)]))]
   return(result)
@@ -1069,7 +1082,8 @@ harmHeight_dif = function(frame_dB,
 #' @param coef calculate above pitch * coef
 #' @param freqs as.numeric(rownames(s)) * 1000
 #' @keywords internal
-harmEnergy = function(pitch, s, freqs, coef = 1.25) {
+harmEnergy = function(pitch, s, freqs = NULL, coef = 1.25) {
+  if (is.null(freqs)) freqs = as.numeric(rownames(s)) * 1000
   threshold = coef * pitch
   he = apply(matrix(1:ncol(s)), 1, function(x) {
     ifelse(is.na(threshold[x]),

@@ -769,7 +769,11 @@ server = function(input, output, session) {
             result_new = soundgen:::updateAnalyze(
                 result = myPars$result,
                 pitch_true = myPars$pitch,
-                spectrogram = myPars$spec_from_anal
+                spectrogram = myPars$spec_from_anal,
+                harmHeight_pars = list(
+                    harmThres = defaults_analyze['harmThres', 'default'],
+                    harmTol = defaults_analyze['harmTol', 'default'],
+                    harmPerSel = defaults_analyze['harmPerSel', 'default'])
             )
             summary_new = soundgen:::summarizeAnalyze(
                 result_new,

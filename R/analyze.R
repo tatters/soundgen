@@ -894,7 +894,8 @@ analyze = function(
     result = updateAnalyze(
       result = result,
       pitch_true = pitchManual,
-      spectrogram = NULL  # s
+      spectrogram = NULL  # don't need to update harmEnergy and harmHeight here
+      # b/c we may not have pitchManual
     )
   }
 

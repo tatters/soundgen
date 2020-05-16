@@ -4,7 +4,7 @@
 \alias{updateAnalyze}
 \title{Update analyze}
 \usage{
-updateAnalyze(result, pitch_true, spectrogram = NULL)
+updateAnalyze(result, pitch_true, spectrogram = NULL, harmHeight_pars = NULL)
 }
 \arguments{
 \item{result}{the matrix of results returned by analyze()}
@@ -12,6 +12,9 @@ updateAnalyze(result, pitch_true, spectrogram = NULL)
 \item{pitch_true}{manual pitch contour of length nrow(result), with NAs}
 
 \item{spectrogram}{spectrogram with ncol = nrow(result)}
+
+\item{harmHeight_pars}{same as argument "harmHeight" to analyze() - a list of
+settings passed to soundgen:::harmHeight()}
 }
 \description{
 Internal soundgen function
