@@ -57,6 +57,7 @@ analyze(
   smoothVars = c("pitch", "dom"),
   summary = FALSE,
   summaryFun = c("mean", "median", "sd"),
+  invalidArgAction = c("adjust", "abort", "ignore")[1],
   plot = TRUE,
   showLegend = TRUE,
   savePath = NA,
@@ -231,6 +232,11 @@ frame-by-frame values}
 
 \item{summaryFun}{a vector of names of functions used to summarize each
 acoustic characteristic}
+
+\item{invalidArgAction}{what to do if an argument is invalid or outside the
+range in \code{defaults_analyze}: 'adjust' = reset to default value,
+'abort' = stop execution, 'ignore' = throw a warning and continue (may
+crash)}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 

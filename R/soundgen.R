@@ -273,8 +273,8 @@ soundgen = function(
   nSyl = 1,
   sylLen = 300,
   pauseLen = 200,
-  pitch = data.frame(time = c(0, .1, .9, 1),
-                     value = c(100, 150, 135, 100)),
+  pitch = list(time = c(0, .1, .9, 1),
+               value = c(100, 150, 135, 100)),
   pitchGlobal = NA,
   glottis = 0,
   temperature = 0.025,
@@ -321,8 +321,8 @@ soundgen = function(
   noiseFlatSpec = 1200,
   rolloffNoiseExp = 0,
   noiseAmpRef = c('f0', 'source', 'filtered')[3],
-  mouth = data.frame(time = c(0, 1),
-                     value = c(.5, .5)),
+  mouth = list(time = c(0, 1),
+               value = c(.5, .5)),
   ampl = NA,
   amplGlobal = NA,
   interpol = c('approx', 'spline', 'loess')[3],
@@ -357,25 +357,8 @@ soundgen = function(
     gp = try(get(p), silent = TRUE)
     if (class(gp)[1] != "try-error") {
       if (is.numeric(gp)) {
-        if (any(gp < permittedValues[p, 'low']) |
-            any(gp > permittedValues[p, 'high'])) {
-          if (invalidArgAction == 'abort') {
-            # exit with a warning
-            stop(paste(p, 'must be between',
-                       permittedValues[p, 'low'],
-                       'and',
-                       permittedValues[p, 'high']))
-          } else if (invalidArgAction == 'ignore') {
-            # throw a warning and continue
-            warning(paste(p, "outside its range in 'permittedValues'"))
-          } else {
-            # reset p to default, with a warning
-            assign(noquote(p), permittedValues[p, 'default'])
-            warning(paste0("\n", p, " outside permitted range, reset to ", get(p),
-                           ". Edit 'permittedValues' or use ",
-                           "invalidArgAction = 'ignore' to force."))
-          }
-        }
+        assign(noquote(p),
+               validatePars(p, gp, permittedValues, invalidArgAction))
       }
     }
   }

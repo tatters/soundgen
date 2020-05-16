@@ -110,6 +110,10 @@
 #'   frame-by-frame values
 #' @param summaryFun a vector of names of functions used to summarize each
 #'   acoustic characteristic
+#' @param invalidArgAction what to do if an argument is invalid or outside the
+#'   range in \code{defaults_analyze}: 'adjust' = reset to default value,
+#'   'abort' = stop execution, 'ignore' = throw a warning and continue (may
+#'   crash)
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param showLegend if TRUE, adds a legend with pitch tracking methods
 #' @param savePath if a valid path is specified, a plot is saved in this folder
@@ -320,6 +324,7 @@ analyze = function(
   smoothVars = c('pitch', 'dom'),
   summary = FALSE,
   summaryFun = c('mean', 'median', 'sd'),
+  invalidArgAction = c('adjust', 'abort', 'ignore')[1],
   plot = TRUE,
   showLegend = TRUE,
   savePath = NA,
@@ -420,18 +425,30 @@ analyze = function(
     gp = try(get(p), silent = TRUE)
     if (class(gp)[1] != "try-error") {
       if (is.numeric(gp)) {
-        if (any(gp < defaults_analyze[p, 'low']) |
-            any(gp > defaults_analyze[p, 'high'])) {
-          # reset p to default, with a warning
-          assign(noquote(p), defaults_analyze[p, 'default'])
-          warning(paste0(
-            "\n", p, " should be between ", defaults_analyze[p, 'low'],
-            " and ", defaults_analyze[p, 'high'],
-            "; resetting to ", defaults_analyze[p, 'default']
-          ))
+        assign(noquote(p),
+               validatePars(p, gp, defaults_analyze, invalidArgAction))
+      }
+    }
+  }
+
+  # Check parameters supplied as lists
+  listPars = list(harmHeight = c('harmThres', 'harmTol', 'harmPerSel'))
+  for (i in 1:length(listPars)) {
+    parGroup_user = get(names(listPars)[i])
+    parGroup_def = listPars[[i]]
+    for (p in parGroup_def) {
+      if (is.null(parGroup_user[[p]])) {
+        # fall back to the default value
+        parGroup_user[p] = defaults_analyze[p, 'default']
+      } else {
+        # validate user-defined value
+        if (is.numeric(parGroup_user[[p]])) {
+          parGroup_user[[p]] = validatePars(
+            p, parGroup_user[[p]], defaults_analyze, invalidArgAction)
         }
       }
     }
+    assign(noquote(names(listPars)[i]), parGroup_user)
   }
 
   # Check defaults that depend on other pars or require customized warnings

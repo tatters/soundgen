@@ -680,3 +680,43 @@ wiggleGC = function(dep, len, nGC, pitch_per_gc, rw, effect_on) {
   return(effect_per_gc)
 }
 
+#' Validate parameters
+#'
+#' Internal soundgen function
+#'
+#' Checks whether the value of a numeric parameter falls within the allowed
+#' range. Options: abort, reset to default, throw a warning and continue.
+#' @param p parameter name
+#' @param gp parameter value
+#' @param def matrix or dataframe containing reference values (low, high,
+#'   default)
+#' @param invalidArgAction what to do if an argument is invalid or outside the
+#'   range: 'adjust' = reset to default value, 'abort' = stop execution,
+#'   'ignore' = throw a warning and continue (may crash)
+#' @keywords internal
+validatePars = function(p, gp, def,
+                        invalidArgAction = c('adjust', 'abort', 'ignore')[1]) {
+  if (any(gp < def[p, 'low']) |
+      any(gp > def[p, 'high'])) {
+    if (invalidArgAction == 'abort') {
+      # exit with a warning
+      stop(paste0(
+        "\n", p, " should be between ", def[p, 'low'],  " and ",
+        def[p, 'high'], "; exiting",
+        ". Use invalidArgAction = 'ignore' to override"))
+    } else if (invalidArgAction == 'ignore') {
+      # throw a warning and continue
+      warning(paste0(
+        "\n", p, " should be between ", def[p, 'low'],  " and ",
+        def[p, 'high'], "; override with caution"))
+    } else {
+      # reset p to default, with a warning
+      gp = def[p, 'default']
+      warning(paste0(
+        "\n", p, " should be between ", def[p, 'low'],  " and ",
+        def[p, 'high'], "; resetting to ", def[p, 'default'],
+        ". Use invalidArgAction = 'ignore' to override"))
+    }
+  }
+  return(gp)
+}

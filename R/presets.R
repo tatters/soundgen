@@ -224,6 +224,10 @@ defaults_analyze = matrix(c(
   'interpolTol', 0.05, 0.01, 1, 0.01,
   'interpolCert', 0.3, 0, 1, 0.01,
 
+  'harmThres', 3, 0, 100, 1,
+  'harmTol', 0.25, 0, 1, 0.01,
+  'harmPerSel', 5, 1, 100, 1,
+
   # pitch_app() settings, which are not needed for analyze()
   'specContrast', .2, -1, 1, .05,
   'specBrightness', 0, -1, 1, .05,
