@@ -201,19 +201,29 @@ defaults_analyze = matrix(c(
   'priorMean', 300, 10, 10000, 10,
   'priorSD', 6, 0.1, 24, 1,
 
-  'autocorThres', 0.7, 0, 1, 0.01,
-  'autocorSmooth', 7, 1, 21, 2,
   'domThres', 0.1, 0, 1, 0.01,
   'domSmooth', 220, 1, 600, 10,
+
+  'autocorThres', 0.7, 0, 1, 0.01,
+  'autocorSmooth', 7, 1, 21, 2,
+  'autocorUpsample', 25, 0, 500, 1,
+  'autocorBestPeak', .975, 0, 1, .001,
+
   'cepThres', 0.3, 0, 1, 0.01,
   'cepSmooth', 400, 10, 1000, 10,
   'cepZp', 0, 0, 13, 1,
+
   'specThres', 0.3, 0, 1, 0.01,
   'specPeak', 0.35, 0, 1, 0.01,
   'specHNRslope', 0.8, 0, 5, 0.05,
   'specSmooth', 150, 1, 600, 10,
   'specMerge', 1, 0.01, 10, 0.1,
   'specSinglePeakCert', 0.4, 0, 1, 0.01,
+
+  'hpsNum', 5, 2, 100, 1,
+  'hpsThres', .1, 0, 1, .01,
+  'hpsNorm', 2, 0, 10, .1,
+  'hpsPenalty', 2, 0, 100, .1,
 
   'certWeight', 0.5, 0, 1, 0.01,
   'shortestSyl', 20, 0, 500, 1,
@@ -237,8 +247,38 @@ temp = defaults_analyze[,1]
 defaults_analyze = apply(defaults_analyze[,2:5], 2, as.numeric)
 colnames(defaults_analyze) = c('default', 'low', 'high', 'step')
 rownames(defaults_analyze) = temp
+defaults_analyze = as.data.frame(defaults_analyze)
 # usethis::use_data(defaults_analyze, overwrite = TRUE)
 
+#' Defaults for plotting with analyze()
+#'
+#' Default plotting settings for each pitch tracker in analyze() and
+#' pitch_app(). Adjust as needed.
+#'
+#' @format A dataframe with 8 rows and 5 columns:
+#' \describe{
+#'   \item{method}{pitch tracking method}
+#'   \item{col}{color}
+#'   \item{pch}{point character}
+#'   \item{lwd}{line width}
+#'   \item{lty}{line type}
+#'   ...
+#' }
+defaults_analyze_pitchCand = as.data.frame(matrix(c(
+  'final', '#0000FFBF', NA, 1, 3, 1,  # final pitch contour
+  'manual', 'blue', 18, 2, 1, 1,  # manual pitch candidates
+  'dom', 'orange', 3, 2, 1, 1,
+  'autocor', 'green', 16, 2, 1, 1,
+  'cep', 'violet', 7, 2, 1, 1,
+  'spec', 'red', 2, 2, 1, 1,
+  'hps', 'brown', 8, 2, 1, 1,
+  'def', 'black', 1, 2, 1, 1  # default par() for dealing with NAs
+), ncol = 6, byrow = TRUE), stringsAsFactors = FALSE)
+colnames(defaults_analyze_pitchCand) = c('method', 'col', 'pch', 'cex', 'lwd', 'lty')
+for (p in c('pch', 'cex', 'lwd', 'lty')) {
+  defaults_analyze_pitchCand[, p] = as.numeric(defaults_analyze_pitchCand[, p])
+}
+# usethis::use_data(defaults_analyze_pitchCand, overwrite = TRUE)
 
 
 # -------------------------------------------------------------

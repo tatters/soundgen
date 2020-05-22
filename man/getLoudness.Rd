@@ -16,6 +16,7 @@ getLoudness(
   spreadSpectrum = TRUE,
   plot = TRUE,
   mar = c(5.1, 4.1, 4.1, 4.1),
+  osc = TRUE,
   ...
 )
 }
@@ -46,6 +47,10 @@ frequency masking}
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
 \item{mar}{margins of the spectrogram}
+
+\item{osc}{should an oscillogram be shown under the spectrogram? TRUE/
+FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
+\code{\link{osc_dB}} for details}
 
 \item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }
@@ -103,11 +108,9 @@ loud
 
 \dontrun{
   s = soundgen()
-  l = getLoudness(s, SPL_measured = 70,
-                  samplingRate = 16000, plot = TRUE, osc = TRUE)
+  l = getLoudness(s, SPL_measured = 70, samplingRate = 16000)
   # The estimated loudness in sone depends on target SPL
-  l = getLoudness(s, SPL_measured = 40,
-                  samplingRate = 16000, plot = TRUE)
+  l = getLoudness(s, SPL_measured = 40, samplingRate = 16000)
 
   # ...but not (much) on windowLength and samplingRate
   l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,

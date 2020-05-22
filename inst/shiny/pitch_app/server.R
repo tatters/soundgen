@@ -224,11 +224,18 @@ server = function(input, output, session) {
                 }
 
                 # show prior
-                points(myPars$prior$prob * myPars$dur * .05,  # 5% of plot width
+                ran_x_5 = diff(range(myPars$spec_xlim)) * .05   # 5% of plot width
+                points(myPars$spec_xlim[1] + myPars$prior$prob * ran_x_5,
                        myPars$prior$freq / 1000, type = 'l', lty = 2)
-                text(x = myPars$dur * .05,
+                text(x = myPars$spec_xlim[1] + ran_x_5,
                      y = input$priorMean / 1000,
-                     pos = 2, labels = 'Prior')
+                     pos = 2, labels = 'Prior', offset = 0.25)
+                text(x = myPars$spec_xlim[1],
+                     y = input$pitchFloor / 1000,
+                      pos = 4, labels = 'floor', offset = 0)
+                text(x = myPars$spec_xlim[1],
+                     y = input$pitchCeiling / 1000,
+                     pos = 4, labels = 'ceiling', offset = 0)
 
                 # add manual values to the list of pitch candidates for seamless plotting
                 n = ncol(myPars$pitchCands$freq)
@@ -253,7 +260,7 @@ server = function(input, output, session) {
                     addToExistingPlot = TRUE,
                     showLegend = TRUE,
                     ylim = c(input$spec_ylim[1], input$spec_ylim[2]),
-                    candPlot = list(cex = input$spec_cex)
+                    pitchPlot = list(cex = input$spec_cex)
                 )
                 # Add text label of file name
                 ran_x = myPars$spec_xlim[2] - myPars$spec_xlim[1]
@@ -440,16 +447,16 @@ server = function(input, output, session) {
             if (input$smooth > 0) {
                 points_per_sec = length(myPars$pitch) / myPars$dur * 1000
                 # smooth of 1 means that smoothing window is ~100 ms
-                smoothing_ww = round(input$smooth * points_per_sec / 10, 0)
+                myPars$smoothing_ww = round(input$smooth * points_per_sec / 10, 0)
                 # the larger smooth, the heavier the smoothing (lower tolerance
                 # threshold before values are replaced by median over smoothing window).
                 # smooth of 1 gives smoothingThres of 4 semitones
-                smoothingThres = 4 / input$smooth
+                myPars$smoothingThres = 4 / input$smooth
                 #print(myPars$pitchCands$source)
                 myPars$pitch = soundgen:::medianSmoother(
                     as.data.frame(myPars$pitch),
-                    smoothing_ww = smoothing_ww,
-                    smoothingThres = smoothingThres,
+                    smoothing_ww = myPars$smoothing_ww,
+                    smoothingThres = myPars$smoothingThres,
                     inviolable = myPars$manual$frame
                 )[, 1]
             }
@@ -773,7 +780,10 @@ server = function(input, output, session) {
                 harmHeight_pars = list(
                     harmThres = defaults_analyze['harmThres', 'default'],
                     harmTol = defaults_analyze['harmTol', 'default'],
-                    harmPerSel = defaults_analyze['harmPerSel', 'default'])
+                    harmPerSel = defaults_analyze['harmPerSel', 'default']),
+                smooth = input$smooth,
+                smoothing_ww = myPars$smoothing_ww,
+                smoothingThres = myPars$smoothing_ww
             )
             summary_new = soundgen:::summarizeAnalyze(
                 result_new,
@@ -869,8 +879,8 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='priorSD', title = 'Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # trackers
-    shinyBS::addTooltip(session, id='domThres', title = 'Minimum amplitude of dominant frequency', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='domSmooth', title = 'Width of smoothing interval for finding the lowest dominant frequency band', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='domThres', title = 'Dominant frequency is defined as the lowest bin in a spectrum smoothed and normalized to range from 0 to 1 that it at least "domThres" high (1 = absolute maximum, ie peak frequency)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='domSmooth', title = 'Width of smoothing interval for finding the lowest dominant frequency band (low values = no smoothing)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='autocorThres', title = 'Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='autocorSmooth', title = 'Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='cepThres', title = 'Voicing threshold for cepstral algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -882,6 +892,10 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='specSmooth', title = 'Width of window for detecting harmonics in the spectrum, Hz', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specMerge', title = 'Pitch candidates within specMerge semitones are merged with boosted certainty', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specSinglePeakCert', title = 'If pitch is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its certainty is taken to be specSinglePeakCert', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='hpsNum', title = 'How many times to downsample and then multiply the spectra', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='hpsThres', title = 'How high a spectral peak has to be to be considered a pitch candidate, ~0 to 1', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='hpsNorm', title = 'Rather arbitrary normalization of certainty in hps candidates intended to make them more comparable to other pitch tracking methods (0 = no boost in certainty, 2 = default quadratic)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='hpsPenalty', title = 'HPS performs worse at low frequencies (relative to windowLength), so low-frequency pitch candidates are penalized (0 = no penalization, ~10-20 = a lot)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # pathfinder
     shinyBS::addTooltip(session, id='summaryFun', title = "The function(s) used to summarize output", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

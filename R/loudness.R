@@ -74,11 +74,9 @@
 #'
 #' \dontrun{
 #'   s = soundgen()
-#'   l = getLoudness(s, SPL_measured = 70,
-#'                   samplingRate = 16000, plot = TRUE, osc = TRUE)
+#'   l = getLoudness(s, SPL_measured = 70, samplingRate = 16000)
 #'   # The estimated loudness in sone depends on target SPL
-#'   l = getLoudness(s, SPL_measured = 40,
-#'                   samplingRate = 16000, plot = TRUE)
+#'   l = getLoudness(s, SPL_measured = 40, samplingRate = 16000)
 #'
 #'   # ...but not (much) on windowLength and samplingRate
 #'   l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,
@@ -98,6 +96,7 @@ getLoudness = function(x,
                        spreadSpectrum = TRUE,
                        plot = TRUE,
                        mar = c(5.1, 4.1, 4.1, 4.1),
+                       osc = TRUE,
                        ...) {
   # import sound
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
@@ -147,7 +146,7 @@ getLoudness = function(x,
     windowLength = windowLength, step = step,
     output = 'original', normalize = FALSE,
     padWithSilence = FALSE,
-    plot = plot, mar = mar, ...) ^ 2
+    plot = plot, mar = mar, osc = osc, ...) ^ 2
   # range(log10(powerSpec) * 10)
 
   # normalize power spectrum by the size of STFT frame
@@ -235,7 +234,7 @@ getLoudness = function(x,
     mtext("Loudness, sone", side = 4, line = 3)
     par('mar' = op$mar, 'new' = op$new)  # restore original pars
   }
-  return(list(specSone = specSone, loudness = loudness))
+  invisible(list(specSone = specSone, loudness = loudness))
 }
 
 # ## EMPIRICAL CALIBRATION OF LOUDNESS (SONE) RETURNED BY getLoudness()

@@ -23,25 +23,17 @@ analyzeFrame = function(frame, bin, freqs,
                         autoCorrelation = NULL,
                         samplingRate = 44100,
                         scaleCorrection = 1,
+                        cutFreq = 6000,
                         trackPitch = TRUE,
                         pitchMethods = c('autocor', 'cep', 'spec', 'dom'),
-                        cutFreq = 6000,
-                        domThres = 0.1,
-                        domSmooth = 220,
-                        autocorThres = 0.75,
-                        autocorSmooth = NULL,
-                        cepThres = 0.45,
-                        cepSmooth = 3,
-                        cepZp = 2 ^ 13,
-                        specThres = 0.45,
-                        specPeak = 0.8,
-                        specSinglePeakCert = 0.6,
-                        specSmooth = 100,
-                        specHNRslope = .1,
-                        specMerge = 1,
+                        nCands = 1,
+                        pitchDom = list(),
+                        pitchAutocor = list(),
+                        pitchCep = list(),
+                        pitchSpec = list(),
+                        pitchHps = list(),
                         pitchFloor = 75,
-                        pitchCeiling = 3500,
-                        nCands = 1) {
+                        pitchCeiling = 3500) {
   ## DESCRIPTIVES
   absSpec = data.frame(freq = freqs,
                        amp = frame)
@@ -83,18 +75,17 @@ analyzeFrame = function(frame, bin, freqs,
   specSlope = summary(lm(amp ~ freq, data = absSpec_cut))$coef[2, 1]
 
   ## PITCH TRACKING
-  frame = frame / max(frame) # plot (frame, type='l')
+  frame = frame / max(frame) # plot(frame, type='l')
 
   # lowest dominant frequency band
   if (trackPitch & 'dom' %in% pitchMethods) {
-    d = getDom(frame = frame,
-               bin = bin,
-               freqs = freqs,
-               domSmooth = domSmooth,
-               domThres = domThres,
-               pitchFloor = pitchFloor,
-               pitchCeiling = pitchCeiling
-    )
+    d = do.call(getDom,
+                c(pitchDom,
+                  list(frame = frame,
+                       bin = bin,
+                       freqs = freqs,
+                       pitchFloor = pitchFloor,
+                       pitchCeiling = pitchCeiling)))
     pitchCands_frame = d$dom_array
     dom = d$dom
   } else {
@@ -110,13 +101,13 @@ analyzeFrame = function(frame, bin, freqs,
 
   # autocorrelation (PRAAT)
   if (trackPitch & 'autocor' %in% pitchMethods) {
-    pa = getPitchAutocor(autoCorrelation = autoCorrelation,
-                         autocorThres = autocorThres,
-                         autocorSmooth = autocorSmooth,
-                         pitchFloor = pitchFloor,
-                         pitchCeiling = pitchCeiling,
-                         samplingRate = samplingRate,
-                         nCands = nCands)
+    pa = do.call(getPitchAutocor,
+                 c(pitchAutocor,
+                   list(autoCorrelation = autoCorrelation,
+                        samplingRate = samplingRate,
+                        nCands = nCands,
+                        pitchFloor = pitchFloor,
+                        pitchCeiling = pitchCeiling)))
     if(!is.null(pa$pitchAutocor_array)) {
       pitchCands_frame = rbind(pitchCands_frame, pa$pitchAutocor_array)
     }
@@ -127,42 +118,55 @@ analyzeFrame = function(frame, bin, freqs,
 
   # cepstrum
   if (trackPitch & 'cep' %in% pitchMethods) {
-    pitchCep_array = getPitchCep(frame = frame,
-                                 cepZp = cepZp,
-                                 samplingRate = samplingRate,
-                                 pitchFloor = pitchFloor,
-                                 pitchCeiling = pitchCeiling,
-                                 cepThres = cepThres,
-                                 cepSmooth = cepSmooth,
-                                 nCands = nCands)
-    if(!is.null(pitchCep_array)) pitchCands_frame = rbind(pitchCands_frame, pitchCep_array)
+    pitchCep_array = do.call(getPitchCep,
+                             c(pitchCep,
+                               list(frame = frame,
+                                    samplingRate = samplingRate,
+                                    nCands = nCands,
+                                    pitchFloor = pitchFloor,
+                                    pitchCeiling = pitchCeiling)))
+    if(!is.null(pitchCep_array))
+      pitchCands_frame = rbind(pitchCands_frame, pitchCep_array)
   }
 
   # spectral: ratios of harmonics (BaNa)
   if (trackPitch & 'spec' %in% pitchMethods) {
-    pitchSpec_array = getPitchSpec(frame = frame,
-                                   bin = bin,
-                                   freqs = freqs,
-                                   specSmooth = specSmooth,
-                                   specHNRslope = specHNRslope,
-                                   HNR = NULL,
-                                   specThres = specThres,
-                                   specPeak = specPeak,
-                                   specSinglePeakCert = specSinglePeakCert,
-                                   pitchFloor = pitchFloor,
-                                   pitchCeiling = pitchCeiling,
-                                   specMerge = specMerge,
-                                   nCands = nCands
-    )
-    if(!is.null(pitchSpec_array)) pitchCands_frame = rbind(pitchCands_frame, pitchSpec_array)
+    pitchSpec_array = do.call(getPitchSpec,
+                              c(pitchSpec,
+                                list(frame = frame,
+                                     bin = bin,
+                                     freqs = freqs,
+                                     HNR = NULL,
+                                     nCands = nCands,
+                                     pitchFloor = pitchFloor,
+                                     pitchCeiling = pitchCeiling)))
+    if(!is.null(pitchSpec_array))
+      pitchCands_frame = rbind(pitchCands_frame, pitchSpec_array)
+  }
+
+  # harmonic product spectrum (hps)
+  if (trackPitch & 'hps' %in% pitchMethods) {
+    pitchHps_array = do.call(getPitchHps,
+                             c(pitchHps,
+                               list(frame = frame,
+                                    freqs = freqs,
+                                    bin = bin,
+                                    # nCands = nCands,
+                                    pitchFloor = pitchFloor,
+                                    pitchCeiling = pitchCeiling)))
+    if(!is.null(pitchHps_array))
+      pitchCands_frame = rbind(pitchCands_frame, pitchHps_array)
   }
 
   # some adjustments of pitch candidates
   if (nrow(pitchCands_frame) > 0) {
-    pitchCands_frame[, 1:2] = apply(pitchCands_frame[, 1:2], 2, function(x) as.numeric(x))
+    pitchCands_frame[, 1:2] = apply(pitchCands_frame[, 1:2],
+                                    2,
+                                    function(x) as.numeric(x))
     # otherwise they become characters after rbind
   }
-  if (nrow(pitchCands_frame[pitchCands_frame$pitchSource == 'dom', ]) > 0 & !is.na(HNR)) {
+  if (nrow(pitchCands_frame[pitchCands_frame$pitchSource == 'dom', ]) > 0 &
+      !is.na(HNR)) {
     pitchCands_frame$pitchCert[pitchCands_frame$pitchSource == 'dom'] =
       1 / (1 + exp(3 * HNR - 1)) # dom is worth more for noisy sounds,
     # but its weight approaches ~0.2 as HNR approaches 1
@@ -190,448 +194,6 @@ analyzeFrame = function(frame, bin, freqs,
     )
   ))
 }
-
-
-#' Get lowest dominant frequency band
-#'
-#' Internal soundgen function.
-#'
-#' Calculate the lowest frequency band in the spectrum above pitchFloor whose
-#' power exceeds a certain threshold.
-#' @inheritParams analyzeFrame
-#' @inheritParams analyze
-#' @param bin the width of one bin in spectrogram, Hz
-#' @return Returns a list of $dom (NA or numeric) and $dom_array
-#'   (either NULL or a dataframe of pitch candidates).
-#' @keywords internal
-getDom = function(frame,
-                  bin,
-                  freqs,
-                  domSmooth,
-                  domThres,
-                  pitchFloor,
-                  pitchCeiling
-) {
-  dom_array = data.frame(
-    'pitchCand' = numeric(),
-    'pitchCert' = numeric(),
-    'pitchSource' = character(),
-    stringsAsFactors = FALSE,
-    row.names = NULL
-  )
-  dom = NA
-  # width of smoothing interval (in bins), forced to be an odd number
-  domSmooth_bins = 2 * ceiling(domSmooth / bin / 2) - 1
-
-  # find peaks in the smoothed spectrum (much faster than seewave::fpeaks)
-  temp = zoo::rollapply(zoo::as.zoo(frame),
-                        width = domSmooth_bins,
-                        align = 'center',
-                        function(x) {
-                          isCentral.localMax(x, threshold = domThres)
-                        })
-  idx = zoo::index(temp)[zoo::coredata(temp)]
-  pitchFloor_idx = which(freqs > pitchFloor)[1]
-  pitchCeiling_idx = which(freqs > pitchCeiling)[1]
-  idx_peak = idx[which(idx > pitchFloor_idx & idx < pitchCeiling_idx)[1]]
-  # parabolic interpolation to get closer to the true peak
-  applyCorrecton = length(idx_peak) > 1 &&
-    (idx_peak > 1 & idx_peak < length(frame))
-  if (applyCorrecton) {
-    threePoints = log10(frame[(idx_peak - 1) : (idx_peak + 1)])
-    parabCor = parabPeakInterpol(threePoints)
-    dom = freqs[idx_peak] + bin * parabCor$p
-    dom_ampl = 10 ^ parabCor$ampl_p
-  } else {
-    dom = freqs[idx_peak]
-    dom_ampl = frame[idx_peak]
-  }
-
-  if (length(idx) > 0) {
-    # lowest dominant freq band - we take the first frequency in the spectrum at
-    # least /domThres/ % of the amplitude of peak frequency, but high
-    # enough to be above pitchFloor (and below pitchCeiling)
-    dom_array = data.frame(
-      'pitchCand' = dom,
-      'pitchCert' = dom_ampl,
-      'pitchSource' = 'dom',
-      stringsAsFactors = FALSE,
-      row.names = NULL
-    )
-  }
-  return(list(dom_array = dom_array, dom = dom))
-}
-
-
-#' Autocorrelation pitch tracker
-#'
-#' Internal soundgen function.
-#'
-#' Attempts to find F0 of a frame by looking for peaks in the autocorrelation
-#' function (time domain analysis). Modified PRAAT's algorithm. See Boersma, P.
-#' (1993). Accurate short-term analysis of the fundamental frequency and the
-#' harmonics-to-noise ratio of a sampled sound. In Proceedings of the institute
-#' of phonetic sciences (Vol. 17, No. 1193, pp. 97-110).
-#' @inheritParams analyzeFrame
-#' @inheritParams analyze
-#' @param upsample_to_res upsamples acf to this resolution (Hz) to improve
-#'   accuracy in high frequencies
-#' @param autocorBestPeak amplitude of the lowest best candidate relative to the
-#'   absolute max of the acf
-#' @return Returns a list of $HNR (NA or numeric) and $pitchAutocor_array
-#'   (either NULL or a dataframe of pitch candidates).
-#' @keywords internal
-getPitchAutocor = function(autoCorrelation,
-                           autocorSmooth,
-                           autocorThres,
-                           pitchFloor,
-                           pitchCeiling,
-                           samplingRate,
-                           nCands,
-                           upsample_to_res = 25,
-                           autocorBestPeak = .975) {
-  # autoCorrelation = autocorBank[, 13]
-  pitchAutocor_array = NULL
-
-  # don't consider candidates above nyquist / 2 b/c there's not enough
-  # resolution in acf that high up
-  pitchCeiling = min(pitchCeiling, samplingRate / 4)
-
-  orig = data.frame('freq' = as.numeric(names(autoCorrelation)),
-                    'amp' = autoCorrelation)
-  rownames(orig) = NULL
-  a = orig[orig$freq > pitchFloor &
-             orig$freq < pitchCeiling, , drop = FALSE]
-  # plot(a$freq, a$amp, type='b')
-
-  # upsample to improve resolution in higher frequencies
-  if (upsample_to_res > 0) {
-    upsample_from_bin = 1  # in Hz, it's samplingRate / (upsample_from_bin + 1)
-    # same as which(a$freq < samplingRate / 4)[1], etc.
-    upsample_to_bin = which(diff(a$freq) > -upsample_to_res)[1]
-    upsample_len = round((a$freq[upsample_from_bin] - a$freq[upsample_to_bin]) /
-                           upsample_to_res)
-    if (pitchCeiling > a$freq[upsample_to_bin]) {
-      temp = spline(a$amp[upsample_from_bin:upsample_to_bin],
-                    n = upsample_len,
-                    x = a$freq[upsample_from_bin:upsample_to_bin])
-      # points(temp$x, temp$y, type = 'p', cex = .25, col = 'red')
-      a = rbind(a[1:upsample_from_bin, ],
-                data.frame(freq = rev(temp$x), amp = rev(temp$y)),
-                a[(upsample_to_bin + 1):nrow(a), ])
-    }
-  }
-
-  HNR = max(a$amp) # HNR is here defined as the maximum autocorrelation
-  # within the specified pitch range. It is also measured for the frames which
-  # are later classified as unvoiced (i.e. HNR can be <voicedThres)
-
-  # find peaks in the corrected autocorrelation function
-  a_zoo = zoo::as.zoo(a$amp)
-  temp = zoo::rollapply(a_zoo,
-                        width = autocorSmooth,
-                        align = 'center',
-                        function(x) {
-                          isCentral.localMax(x, threshold = autocorThres)
-                          # width = 7 chosen by optimization, but it doesn't make that much difference anyhow
-                        })
-  idx = zoo::index(temp)[zoo::coredata(temp)]
-  autocorPeaks = a[idx, ]
-
-  if (nrow(autocorPeaks) > 0) {
-    # if some peaks are found...
-    # we are only interested in frequencies above half of the best candidate
-    # (b/c otherwise we get false subharmonics)
-    bestFreq = autocorPeaks$freq[which(autocorPeaks$amp >
-                                         autocorBestPeak * max(autocorPeaks$amp))[1]]
-    # bestFreq = autocorPeaks$freq[which.max(autocorPeaks$amp)]
-    if (!is.na(bestFreq)) {
-      autocorPeaks = try(autocorPeaks[autocorPeaks$freq > bestFreq / 1.8,
-                                      , drop = FALSE], silent = TRUE)
-      # otherwise we get false subharmonics
-      autocorPeaks = try(autocorPeaks[order(autocorPeaks$amp, decreasing = TRUE),
-                                      , drop = FALSE], silent = TRUE)
-    }
-    if (class(autocorPeaks)[1] != 'try-error') {
-      if (nrow(autocorPeaks) > 0) {
-        # if some peaks satisfy all criteria, return them:
-        pitchAutocor_array = data.frame (
-          'pitchCand' = autocorPeaks [1:min(nrow(autocorPeaks), nCands), 1],
-          # save n candidates of pitchAutocor, convert to Hz
-          'pitchCert' = autocorPeaks[1:min(nrow(autocorPeaks), nCands), 2],
-          # save amplitudes corresponding to each pitchAutocor candidate
-          'pitchSource' = 'autocor',
-          stringsAsFactors = FALSE,
-          row.names = NULL
-        )
-      }
-    }
-  }
-  # very occasionally HNR can be calculated as 1.01 etc. To prevent this nonsense:
-  if (!is.na(HNR) & HNR >= 1) {
-    HNR = 1 / HNR  # See Boersma, 1993. Up to soundgen 1.2.1, it was just set to 0.9999 (40 dB)
-  }
-
-  return(list(pitchAutocor_array = pitchAutocor_array,
-              HNR = HNR))
-}
-
-
-#' Cepstral pitch tracker
-#'
-#' Internal soundgen function.
-#'
-#' Attempts to find F0 of a frame by looking for peaks in the cepstrum.
-#' See http://www.phon.ucl.ac.uk/courses/spsci/matlab/lect10.html
-#' @inheritParams analyzeFrame
-#' @inheritParams analyze
-#' @return Returns either NULL or a dataframe of pitch candidates.
-#' @keywords internal
-getPitchCep = function(frame,
-                       cepZp,
-                       samplingRate,
-                       pitchFloor,
-                       pitchCeiling,
-                       cepThres,
-                       cepSmooth,
-                       nCands) {
-  pitchCep_array = NULL
-
-  if (cepZp < length(frame)) {
-    frameZP = frame
-  } else {
-    zp = rep(0, (cepZp - length(frame)) / 2)
-    frameZP = c(zp, frame, zp)
-    cepSmooth = cepSmooth * round(cepZp / length(frame))
-  }
-
-  # fft of fft, whatever you call it - cepstrum or smth else
-  cepstrum = abs(fft(frameZP)) # plot(frameZP, type = 'l')
-  cepstrum = cepstrum / max(cepstrum) # plot (cepstrum, type = 'l')
-  l = length(cepstrum) %/% 2
-  b = data.frame(
-    # NB: divide by 2 because it's another fft, not inverse fft (cf. pitchAutocor)
-    freq = samplingRate / (1:l) / 2 * (length(frameZP) / length(frame)),
-    cep = cepstrum[1:l]
-  )
-  bin_width_Hz = samplingRate / 2 / l
-  cepSmooth_bins = max(1, 2 * ceiling(cepSmooth / bin_width_Hz / 2) - 1)
-  b = b[b$freq > pitchFloor & b$freq < pitchCeiling, ]
-  # plot(b, type = 'l')
-
-  # find peaks
-  a_zoo = zoo::as.zoo(b$cep)
-  temp = zoo::rollapply(a_zoo,
-                        width = cepSmooth_bins,
-                        align = 'center',
-                        function(x)
-                          isCentral.localMax(x, threshold = cepThres))
-  idx = zoo::index(temp)[zoo::coredata(temp)]
-
-  if (length(idx) > 0) {
-    absCepPeak = idx[which.max(b$cep[idx])]
-    # to avoid false subharmonics:
-    # idx = idx[b$freq[idx] > b$freq[absCepPeak] / 1.8]
-    # plot(b$freq, b$cep, type = 'l', log = 'x')
-    # points(b$freq[idx], b$cep[idx], log = 'x')
-    idx = idx[order(b$cep[idx], decreasing = TRUE)]
-    acceptedCepPeaks = idx[1:min(length(idx), nCands)]
-
-    if (length(acceptedCepPeaks) > 0) {
-      # if some peaks are found...
-      pitchCep_array = data.frame(
-        'pitchCand' = b$freq[acceptedCepPeaks],
-        'pitchCert' = b$cep[acceptedCepPeaks],
-        'pitchSource' = 'cep',
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-      # because cepstrum really stinks for frequencies above ~1 kHz, mostly
-      # picking up formants or just plain noise, we discount confidence in
-      # high-pitch cepstral estimates
-      pitchCep_array$pitchCert = pitchCep_array$pitchCert /
-        (1 + log2(pitchCep_array$pitchCand / pitchFloor))
-      # visualization: a = seq(pitchFloor, pitchCeiling, length.out = 100)
-      # b = 1 + log2(a / pitchFloor)
-      # plot(a, b, type = 'l')
-    }
-  }
-
-  return(pitchCep_array)
-}
-
-
-#' BaNa pitch tracker
-#'
-#' Internal soundgen function.
-#'
-#' Attempts to find F0 of a frame by calculating ratios of putative harmonics
-#' (frequency domain analysis, ~ modified BaNa algorithm). See Ba et al. (2012)
-#' "BaNa: A hybrid approach for noise resilient pitch detection." Statistical
-#' Signal Processing Workshop (SSP), 2012 IEEE.
-#' @inheritParams analyzeFrame
-#' @inheritParams analyze
-#' @param bin the width of spectral bin in \code{frame}, Hz
-#' @param HNR harmonics-to-noise ratio returned by \code{\link{getPitchAutocor}}
-#' @return Returns either NULL or a dataframe of pitch candidates.
-#' @keywords internal
-getPitchSpec = function(frame,
-                        bin,
-                        freqs,
-                        specSmooth,
-                        specHNRslope,
-                        HNR = NULL,
-                        specThres,
-                        specPeak,
-                        specSinglePeakCert,
-                        pitchFloor,
-                        pitchCeiling,
-                        specMerge,
-                        nCands
-) {
-  pitchSpec_array = NULL
-  n = length(frame)
-  width = 2 * ceiling((specSmooth / bin + 1) * 20 / bin / 2) - 1 # to be always ~100 Hz,
-  # regardless of bin, but an odd number
-  if (!is.numeric(HNR)) {
-    specPitchThreshold = specPeak # if HNR is NA, the sound is
-    # probably a mess, so we play safe by only looking at very strong harmonics
-  } else {
-    # for noisy sounds the threshold is high to avoid false sumharmonics etc,
-    # for tonal sounds it is low to catch weak harmonics
-    specPitchThreshold = specPeak * (1 - HNR * specHNRslope)
-  }
-
-  # find peaks in the spectrum (hopefully harmonics)
-  temp = zoo::rollapply(zoo::as.zoo(frame),
-                        width = width,
-                        align = 'center',
-                        function(x) {
-                          isCentral.localMax(x, threshold = specPitchThreshold)
-                          # plot(zoo::as.zoo(frame), type='l')
-                        })
-  idx = zoo::index(temp)[zoo::coredata(temp)]
-  specPeaks = data.frame('idx' = idx)
-  nr = nrow(specPeaks)
-
-  # parabolic interpolation to get closer to the true peak
-  if (nr > 0) {
-    for (i in 1:nr) {
-      idx_peak = specPeaks$idx[i]
-      applyCorrecton = idx_peak > 1 & idx_peak < n
-      if (applyCorrecton) {
-        threePoints = log10(frame[(idx_peak - 1) : (idx_peak + 1)])
-        parabCor = parabPeakInterpol(threePoints)
-        specPeaks$freq[i] = freqs[idx_peak] + bin * parabCor$p
-        specPeaks$amp[i] = 10 ^ parabCor$ampl_p
-      } else {
-        specPeaks$freq[i] = freqs[idx_peak]
-        specPeaks$amp[i] = frame[idx_peak]
-      }
-    }
-  }
-
-  if (nr == 1) {
-    if (specPeaks[1, 1] < pitchCeiling & specPeaks[1, 1] > pitchFloor) {
-      pitchSpec = specPeaks[1, 1]
-      pitchCert = specSinglePeakCert
-      pitchSpec_array = data.frame(
-        'pitchCand' = pitchSpec,
-        'pitchCert' = specSinglePeakCert,
-        'pitchSource' = 'spec',
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    }
-  } else if (nr > 1) {
-    # analyze five lowest harmonics
-    specPeaks = specPeaks[1:min(5, nrow(specPeaks)), ]
-
-    # A modified version of BaNa algorithm follows
-    seq1 = 2:nrow(specPeaks)
-    seq2 = 1:(nrow(specPeaks) - 1)
-    n = length(seq1) * length(seq2)
-    temp = data.frame (
-      'harmonicA' = rep(0, n),
-      'harmonicB' = rep(0, n),
-      'AtoB_ratio' = rep(0, n)
-    )
-    counter = 1
-    for (i in seq1) {
-      for (j in seq2) {
-        temp$harmonicA[counter] = i
-        temp$harmonicB[counter] = j
-        # get ratios of discovered harmonics to each other
-        temp$AtoB_ratio[counter] = specPeaks$freq[i] / specPeaks$freq[j]
-        counter = counter + 1
-      }
-    }
-    temp = temp[temp$harmonicA > temp$harmonicB, ]
-
-    pitchCand = numeric()
-    for (i in 1:nrow(temp)) {
-      # for each ratio that falls within the limits specified outside this
-      # function in a dataframe called "ratios", calculate the corresponding
-      # pitch. If several ratios suggest the same pitch, that's our best guess
-      divLow = BaNaRatios$divide_lower_by[temp$AtoB_ratio[i] > BaNaRatios$value_low &
-                                            temp$AtoB_ratio[i] < BaNaRatios$value_high]
-      pitchCand = c(pitchCand,
-                    as.numeric(specPeaks$freq[temp$harmonicB[i]] / divLow))
-    }
-    # add pitchCand based on the most common distances between harmonics
-    # pitchCand = c(pitchCand, diff(specPeaks[,1]))
-
-    pitchCand = sort(pitchCand[pitchCand > pitchFloor &
-                                 pitchCand < pitchCeiling])
-    if (length(pitchCand) > 0) {
-      pitchSpec_array = data.frame(
-        'pitchCand' = pitchCand,
-        'specAmplIdx' = 1,
-        'pitchSource' = 'spec',
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-      c = 1
-      while (c + 1 <= nrow(pitchSpec_array)) {
-        if (abs(log2(pitchSpec_array$pitchCand[c] /
-                     pitchSpec_array$pitchCand[c + 1])) < specMerge / 12) {
-          # merge cands within specMerge into one "super-candidate"
-          # and give this new super-candidate a certainty boost
-          pitchSpec_array$specAmplIdx[c] = pitchSpec_array$specAmplIdx[c] + 1
-          pitchSpec_array$pitchCand[c] = mean(c(
-            pitchSpec_array$pitchCand[c],
-            pitchSpec_array$pitchCand[c + 1]
-          ))
-          pitchSpec_array = pitchSpec_array[-(c + 1), ]
-        } else {
-          c = c + 1
-        }
-      }
-      pitchSpec_array$pitchCert = specSinglePeakCert +
-        (1 / (1 + exp(-(pitchSpec_array$specAmplIdx - 1))) - 0.5) * 2 *
-        (1 - specSinglePeakCert) # normalization. Visualization:
-      # a = 1:15
-      # b = specSinglePeakCert + (1 / (1 + exp(-(a - 1))) - 0.5) * 2 *
-      # (1 - specSinglePeakCert)
-      # plot(a, b, type = 'l')
-      pitchSpec_array = pitchSpec_array[
-        order(pitchSpec_array$pitchCert, decreasing = TRUE),
-        c('pitchCand', 'pitchCert', 'pitchSource')
-        ]
-    }
-  }
-  if (!is.null(pitchSpec_array)) {
-    if (sum(!is.na(pitchSpec_array)) > 0) {
-      pitchSpec_array = pitchSpec_array[pitchSpec_array$pitchCert > specThres,
-                                        , drop = FALSE]
-      # how many pitchSpec candidates to use (max)
-      pitchSpec_array = pitchSpec_array[1:min(nrow(pitchSpec_array), nCands), ]
-    }
-  }
-
-  return(pitchSpec_array)
-}
-
 
 #' Get prior for pitch candidates
 #'
@@ -774,17 +336,31 @@ summarizeAnalyze = function(
 #' @keywords internal
 updateAnalyze = function(result,
                          pitch_true,
-                         spectrogram = NULL,
-                         harmHeight_pars = NULL) {
+                         spectrogram,
+                         freqs = NULL,
+                         bin = NULL,
+                         harmHeight_pars,
+                         smooth,
+                         smoothing_ww,
+                         smoothingThres) {
   # remove all pitch-related columns except dom
   result = result[-which(grepl('pitch', colnames(result)))]
   result$pitch = pitch_true
+
+  # Finalize voicing (some measures are only reported for voiced frames)
   result$voiced = !is.na(pitch_true)
-  result$amplVoiced = ifelse(result$voiced, result$ampl, NA)
+  unvoiced_idx = which(!result$voiced)
+  result$amplVoiced = result$ampl
+  result$amplVoiced[unvoiced_idx] = NA
+  result[unvoiced_idx, c('quartile25', 'quartile50', 'quartile75')] = NA
+
+  # Calculate how far harmonics reach in the spectrum and how strong they are
+  # relative to f0
   result$harmEnergy = NA
   result$harmHeight = NA
-  if (!is.null(spectrogram) & any(result$voiced)) {
-    freqs = as.numeric(rownames(spectrogram)) * 1000
+  if (any(result$voiced)) {
+    if (is.null(freqs)) freqs = as.numeric(rownames(spectrogram)) * 1000
+    if (is.null(bin)) bin = freqs[2] - freqs[1]
 
     # Re-calculate the % of energy in harmonics based on the manual pitch estimates
     result$harmEnergy = to_dB(harmEnergy(
@@ -796,12 +372,20 @@ updateAnalyze = function(result,
       result$harmHeight[f] = do.call('harmHeight', c(
         harmHeight_pars,
         list(frame = spectrogram[, f],
-             bin = freqs[2] - freqs[1],
+             bin = bin,
              freqs = freqs,
              pitch = result$pitch[f]
         )))$harmHeight
     }
+    if (smooth > 0) {
+      result$harmHeight = medianSmoother(
+        result[, 'harmHeight', drop = FALSE],
+        smoothing_ww = smoothing_ww,
+        smoothingThres = smoothingThres)[, 1]
+    }
   }
+
+  # Arrange columns in alphabetical order (except the first three)
   result = result[, c(1:3, 3 + order(colnames(result)[4:ncol(result)]))]
   return(result)
 }
@@ -1018,7 +602,8 @@ harmHeight_dif = function(frame_dB,
 
   # slide a selection along the spectrum starting from f0
   pitch_bins = pitch / bin  # f0 location in bins
-  sel_bins = round(pitch_bins * harmPerSel)  # width of selection in bins
+  # width of selection in bins (no more than half the frame len)
+  sel_bins = min(round(pitch_bins * harmPerSel), length(frame_dB) / 2)
   harmTol_bins = round(pitch_bins * harmTol)  # tolerated deviance in bins
   i = pitch_bins  # start at f0
   pitch_bin_cep = pitch_bin_peaks = c()

@@ -20,7 +20,7 @@ analyzeFolder(
   zp = 0,
   cutFreq = 6000,
   nFormants = 3,
-  pitchMethods = c("autocor", "spec", "dom"),
+  pitchMethods = c("dom", "autocor"),
   pitchManual = NULL,
   entropyThres = 0.6,
   pitchFloor = 75,
@@ -29,21 +29,12 @@ analyzeFolder(
   priorSD = 6,
   nCands = 1,
   minVoicedCands = NULL,
-  domThres = 0.1,
-  domSmooth = 220,
-  autocorThres = 0.7,
-  autocorSmooth = NULL,
-  cepThres = 0.3,
-  cepSmooth = NULL,
-  cepZp = 0,
-  specThres = 0.3,
-  specPeak = 0.35,
-  specSinglePeakCert = 0.4,
-  specHNRslope = 0.8,
-  specSmooth = 150,
-  specMerge = 1,
-  harmHeight = list(harmThres = 3, harmTol = 0.25, harmPerSel = 5, plotPars = list(type
-    = "n")),
+  pitchDom = list(),
+  pitchAutocor = list(),
+  pitchCep = list(),
+  pitchSpec = list(),
+  pitchHps = list(),
+  harmHeight = list(type = "n"),
   shortestSyl = 20,
   shortestPause = 60,
   interpolWin = 75,
@@ -61,9 +52,7 @@ analyzeFolder(
   plot = FALSE,
   showLegend = TRUE,
   savePlots = FALSE,
-  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col = c("green", "red",
-    "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2),
+  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3, showPrior = TRUE),
   ylim = NULL,
   xlab = "Time, ms",
   ylab = "kHz",
@@ -156,58 +145,26 @@ an octave)}
 defined to consider a frame voiced (if NULL, defaults to 2 if \code{dom} is
 among other candidates and 1 otherwise)}
 
-\item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
-do short-term FFT and take the lowest frequency with amplitude at least
-domThres}
+\item{pitchDom}{a list of control parameters for pitch tracking using the
+lowest dominant frequency band or "dom" method; see details and
+\code{?soundgen:::getDom}}
 
-\item{domSmooth}{the width of smoothing interval (Hz) for finding
-\code{dom}}
+\item{pitchAutocor}{a list of control parameters for pitch tracking using the
+autocorrelation or "autocor" method; see details and
+\code{?soundgen:::getPitchAutocor}}
 
-\item{autocorThres}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is calculated even for unvoiced frames.}
+\item{pitchCep}{a list of control parameters for pitch tracking using the
+cepstrum or "cep" method; see details and \code{?soundgen:::getPitchCep}}
 
-\item{autocorSmooth}{the width of smoothing interval (in bins) for
-finding peaks in the autocorrelation function. Defaults to 7 for sampling
-rate 44100 and smaller odd numbers for lower values of sampling rate}
+\item{pitchSpec}{a list of control parameters for pitch tracking using the
+BaNa or "spec" method; see details and \code{?soundgen:::getPitchSpec}}
 
-\item{cepThres}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is calculated even for unvoiced frames.}
-
-\item{cepSmooth}{the width of smoothing interval (Hz) for finding peaks in
-the cepstrum}
-
-\item{cepZp}{zero-padding of the spectrum used for cepstral pitch detection
-(final length of spectrum after zero-padding in points, e.g. 2 ^ 13)}
-
-\item{specThres}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is calculated even for unvoiced frames.}
-
-\item{specPeak}{when looking for putative harmonics in
-the spectrum, the threshold for peak detection is calculated as
-\code{specPeak * (1 - HNR * specHNRslope)}}
-
-\item{specSinglePeakCert}{(0 to 1) if F0 is calculated based on a single
-harmonic ratio (as opposed to several ratios converging on the same
-candidate), its certainty is taken to be \code{specSinglePeakCert}}
-
-\item{specHNRslope}{when looking for putative harmonics in
-the spectrum, the threshold for peak detection is calculated as
-\code{specPeak * (1 - HNR * specHNRslope)}}
-
-\item{specSmooth}{the width of window for detecting peaks in the spectrum, Hz}
-
-\item{specMerge}{pitch candidates within \code{specMerge} semitones are
-merged with boosted certainty}
+\item{pitchHps}{a list of control parameters for pitch tracking using the
+harmonic product spectrum ("hps") method; see details and
+\code{?soundgen:::getPitchHps}}
 
 \item{harmHeight}{a list of control parameters for estimating how high
-harmonics reach in the spectrum (see \code{?soundgen:::harmHeight} for
-details)}
+harmonics reach in the spectrum; see details and \code{?soundgen:::harmHeight}}
 
 \item{shortestSyl}{the smallest length of a voiced segment (ms) that
 constitutes a voiced syllable (shorter segments will be replaced by NA, as
@@ -273,10 +230,7 @@ acoustic characteristic}
 \item{savePlots}{if TRUE, saves plots as .png files}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
-pitch contour. Set to \code{NULL} or \code{NA} to suppress}
-
-\item{candPlot}{a list of graphical parameters for displaying
-individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
+pitch contour. Set to \code{list(type = 'n')} to suppress}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 

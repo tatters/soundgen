@@ -4,7 +4,17 @@
 \alias{updateAnalyze}
 \title{Update analyze}
 \usage{
-updateAnalyze(result, pitch_true, spectrogram = NULL, harmHeight_pars = NULL)
+updateAnalyze(
+  result,
+  pitch_true,
+  spectrogram,
+  freqs = NULL,
+  bin = NULL,
+  harmHeight_pars,
+  smooth,
+  smoothing_ww,
+  smoothingThres
+)
 }
 \arguments{
 \item{result}{the matrix of results returned by analyze()}

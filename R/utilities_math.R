@@ -664,7 +664,7 @@ clumper = function(s, minLength) {
 #' soundgen:::isCentral.localMax(c(1,1,3,2,1), 2.5)
 isCentral.localMax = function(x, threshold) {
   middle = ceiling(length(x) / 2)
-  return(which.max(x) == middle & x[middle] > threshold)
+  return(x[middle] > threshold && which.max(x) == middle)
 }
 
 

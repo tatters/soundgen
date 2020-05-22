@@ -11,25 +11,17 @@ analyzeFrame(
   autoCorrelation = NULL,
   samplingRate = 44100,
   scaleCorrection = 1,
+  cutFreq = 6000,
   trackPitch = TRUE,
   pitchMethods = c("autocor", "cep", "spec", "dom"),
-  cutFreq = 6000,
-  domThres = 0.1,
-  domSmooth = 220,
-  autocorThres = 0.75,
-  autocorSmooth = NULL,
-  cepThres = 0.45,
-  cepSmooth = 3,
-  cepZp = 2^13,
-  specThres = 0.45,
-  specPeak = 0.8,
-  specSinglePeakCert = 0.6,
-  specSmooth = 100,
-  specHNRslope = 0.1,
-  specMerge = 1,
+  nCands = 1,
+  pitchDom = list(),
+  pitchAutocor = list(),
+  pitchCep = list(),
+  pitchSpec = list(),
+  pitchHps = list(),
   pitchFloor = 75,
-  pitchCeiling = 3500,
-  nCands = 1
+  pitchCeiling = 3500
 )
 }
 \arguments{
@@ -41,6 +33,12 @@ analyzeFrame(
 
 \item{samplingRate}{sampling rate (Hz)}
 
+\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
+spectral descriptives after discarding all info above \code{cutFreq}.
+Recommended if the original sampling rate varies across different analyzed
+audio files. Note that "entropyThres" applies only to this frequency range,
+which also affects which frames will not be analyzed with pitchAutocor.}
+
 \item{trackPitch}{if TRUE, attempt to find F0 in this frame (FALSE if entropy
 is above some threshold - specified in \code{\link{analyze}})}
 
@@ -49,67 +47,30 @@ pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 NULL = no pitch analysis)}
 
-\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
-spectral descriptives after discarding all info above \code{cutFreq}.
-Recommended if the original sampling rate varies across different analyzed
-audio files. Note that "entropyThres" applies only to this frequency range,
-which also affects which frames will not be analyzed with pitchAutocor.}
+\item{nCands}{maximum number of pitch candidates per method (except for
+\code{dom}, which returns at most one candidate per frame), normally 1...4}
 
-\item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
-do short-term FFT and take the lowest frequency with amplitude at least
-domThres}
+\item{pitchDom}{a list of control parameters for pitch tracking using the
+lowest dominant frequency band or "dom" method; see details and
+\code{?soundgen:::getDom}}
 
-\item{domSmooth}{the width of smoothing interval (Hz) for finding
-\code{dom}}
+\item{pitchAutocor}{a list of control parameters for pitch tracking using the
+autocorrelation or "autocor" method; see details and
+\code{?soundgen:::getPitchAutocor}}
 
-\item{autocorThres}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is calculated even for unvoiced frames.}
+\item{pitchCep}{a list of control parameters for pitch tracking using the
+cepstrum or "cep" method; see details and \code{?soundgen:::getPitchCep}}
 
-\item{autocorSmooth}{the width of smoothing interval (in bins) for
-finding peaks in the autocorrelation function. Defaults to 7 for sampling
-rate 44100 and smaller odd numbers for lower values of sampling rate}
+\item{pitchSpec}{a list of control parameters for pitch tracking using the
+BaNa or "spec" method; see details and \code{?soundgen:::getPitchSpec}}
 
-\item{cepThres}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is calculated even for unvoiced frames.}
-
-\item{cepSmooth}{the width of smoothing interval (Hz) for finding peaks in
-the cepstrum}
-
-\item{cepZp}{zero-padding of the spectrum used for cepstral pitch detection
-(final length of spectrum after zero-padding in points, e.g. 2 ^ 13)}
-
-\item{specThres}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is calculated even for unvoiced frames.}
-
-\item{specPeak}{when looking for putative harmonics in
-the spectrum, the threshold for peak detection is calculated as
-\code{specPeak * (1 - HNR * specHNRslope)}}
-
-\item{specSinglePeakCert}{(0 to 1) if F0 is calculated based on a single
-harmonic ratio (as opposed to several ratios converging on the same
-candidate), its certainty is taken to be \code{specSinglePeakCert}}
-
-\item{specSmooth}{the width of window for detecting peaks in the spectrum, Hz}
-
-\item{specHNRslope}{when looking for putative harmonics in
-the spectrum, the threshold for peak detection is calculated as
-\code{specPeak * (1 - HNR * specHNRslope)}}
-
-\item{specMerge}{pitch candidates within \code{specMerge} semitones are
-merged with boosted certainty}
+\item{pitchHps}{a list of control parameters for pitch tracking using the
+harmonic product spectrum ("hps") method; see details and
+\code{?soundgen:::getPitchHps}}
 
 \item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
 \item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
-
-\item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame), normally 1...4}
 }
 \value{
 Returns a list with two components: $pitchCands_frame contains pitch
