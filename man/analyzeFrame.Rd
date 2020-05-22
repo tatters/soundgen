@@ -9,19 +9,19 @@ analyzeFrame(
   bin,
   freqs,
   autoCorrelation = NULL,
-  samplingRate = 44100,
-  scaleCorrection = 1,
-  cutFreq = 6000,
+  samplingRate,
+  scaleCorrection,
+  cutFreq,
   trackPitch = TRUE,
-  pitchMethods = c("autocor", "cep", "spec", "dom"),
-  nCands = 1,
+  pitchMethods = c("dom", "autocor"),
+  nCands,
   pitchDom = list(),
   pitchAutocor = list(),
   pitchCep = list(),
   pitchSpec = list(),
   pitchHps = list(),
-  pitchFloor = 75,
-  pitchCeiling = 3500
+  pitchFloor,
+  pitchCeiling
 )
 }
 \arguments{
@@ -33,11 +33,12 @@ analyzeFrame(
 
 \item{samplingRate}{sampling rate (Hz)}
 
-\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
-spectral descriptives after discarding all info above \code{cutFreq}.
-Recommended if the original sampling rate varies across different analyzed
-audio files. Note that "entropyThres" applies only to this frequency range,
-which also affects which frames will not be analyzed with pitchAutocor.}
+\item{cutFreq}{if specified, spectral descriptives (peakFreq, specCentroid,
+specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
+when analyzing recordings with varying sampling rates: set to half the
+lowest sampling rate to make the spectra more comparable. Note that
+"entropyThres" applies only to this frequency range, which also affects
+which frames will not be analyzed with pitchAutocor.}
 
 \item{trackPitch}{if TRUE, attempt to find F0 in this frame (FALSE if entropy
 is above some threshold - specified in \code{\link{analyze}})}

@@ -64,14 +64,17 @@
 #'   will never be lower than this specified number.
 #' @param SPL_measured sound pressure level at which the sound is presented, dB
 #'   (set to 0 to skip analyzing subjective loudness)
-#' @param cutFreq (2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
-#'   spectral descriptives after discarding all info above \code{cutFreq}.
-#'   Recommended if the original sampling rate varies across different analyzed
-#'   audio files. Note that "entropyThres" applies only to this frequency range,
-#'   which also affects which frames will not be analyzed with pitchAutocor.
+#' @param cutFreq if specified, spectral descriptives (peakFreq, specCentroid,
+#'   specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
+#'   when analyzing recordings with varying sampling rates: set to half the
+#'   lowest sampling rate to make the spectra more comparable. Note that
+#'   "entropyThres" applies only to this frequency range, which also affects
+#'   which frames will not be analyzed with pitchAutocor.
+#' @param formants a list of arguments passed to
+#'   \code{\link[phonTools]{findformants}} - an external function called to
+#'   perform LPC analysis
 #' @param nFormants the number of formants to extract per STFT frame (0 = no
-#'   formant analysis). Calls \code{\link[phonTools]{findformants}} with default
-#'   settings
+#'   formant analysis)
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
@@ -172,8 +175,8 @@
 #'   entropy of the spectrum of the current frame. Close to 0: pure tone or
 #'   tonal sound with nearly all energy in harmonics; close to 1: white noise}
 #'   \item{f1_freq, f1_width, ...}{the frequency and bandwidth of the first
-#'   nFormants formants per STFT frame, as calculated by phonTools::findformants
-#'   with default settings} \item{harmEnergy}{the amount of energy in upper
+#'   nFormants formants per STFT frame, as calculated by
+#'   phonTools::findformants} \item{harmEnergy}{the amount of energy in upper
 #'   harmonics, namely the ratio of total spectral mass above 1.25 x F0 to the
 #'   total spectral mass below 1.25 x F0 (dB)}\item{harmHeight}{how high
 #'   harmonics reach in the spectrum, based on the best guess at pitch (or the
@@ -182,19 +185,15 @@
 #'   tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much
 #'   energy in harmonics as in noise} \item{loudness}{subjective loudness, in
 #'   sone, corresponding to the chosen SPL_measured - see
-#'   \code{\link{getLoudness}}} \item{medianFreq}{50th quantile of the frame's
-#'   spectrum} \item{peakFreq}{the frequency with maximum spectral power (Hz)}
-#'   \item{peakFreqCut}{the frequency with maximum spectral power below cutFreq
-#'   (Hz)} \item{pitch}{post-processed pitch contour based on all F0 estimates}
-#'   \item{pitchAutocor}{autocorrelation estimate of F0}
+#'   \code{\link{getLoudness}}} \item{peakFreq}{the frequency with maximum
+#'   spectral power (Hz)} \item{pitch}{post-processed pitch contour based on all
+#'   F0 estimates} \item{pitchAutocor}{autocorrelation estimate of F0}
 #'   \item{pitchCep}{cepstral estimate of F0} \item{pitchSpec}{BaNa estimate of
 #'   F0} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and 75th
-#'   quantiles of the spectrum of voiced frames below cutFreq (Hz)}
-#'   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
-#'   spectral moment (Hz)} \item{specCentroidCut}{the center of gravity of the
-#'   frame’s spectrum below cutFreq} \item{specSlope}{the slope of linear
-#'   regression fit to the spectrum below cutFreq} \item{voiced}{is the current
-#'   STFT frame voiced? TRUE / FALSE}
+#'   quantiles of the spectrum of voiced frames (Hz)} \item{specCentroid}{the
+#'   center of gravity of the frame’s spectrum, first spectral moment (Hz)}
+#'   \item{specSlope}{the slope of linear regression fit to the spectrum below
+#'   cutFreq} \item{voiced}{is the current STFT frame voiced? TRUE / FALSE}
 #' }
 #' @export
 #' @examples
@@ -307,7 +306,8 @@ analyze = function(
   overlap = 50,
   wn = 'gaussian',
   zp = 0,
-  cutFreq = min(samplingRate / 2, max(7000, pitchCeiling * 2)),
+  cutFreq = NULL,
+  formants = list(verify = FALSE),
   nFormants = 3,
   pitchMethods = c('dom', 'autocor'),
   pitchManual = NULL,
@@ -485,6 +485,16 @@ analyze = function(
   }
 
   # Check defaults that depend on other pars or require customized warnings
+  if (is.character(pitchMethods) && pitchMethods[1] != '') {
+    valid_names = c('dom', 'autocor', 'cep', 'spec', 'hps')
+    invalid_names = pitchMethods[!pitchMethods %in% valid_names]
+    if (length(invalid_names) > 0) {
+      message(paste('Ignoring unknown pitch tracking methods:',
+                    paste(invalid_names, collapse = ', '),
+                    '; valid pitchMethods:',
+                    paste(valid_names, collapse = ', ')))
+    }
+  }
   if (SPL_measured != 0) {  # if analyzing loudness
     if (samplingRate < 2000) {
       warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
@@ -535,10 +545,10 @@ analyze = function(
     zp = 0
     warning('"zp" must be non-negative; defaulting to 0')
   }
-  if (!is.numeric(cutFreq) | cutFreq <= 0 | cutFreq > (samplingRate / 2)) {
-    cutFreq = samplingRate / 2
-    warning(paste('"cutFreq" must be between 0 and samplingRate / 2;',
-                  'defaulting to samplingRate / 2'))
+  if (!is.null(cutFreq) &&
+      (!is.numeric(cutFreq) | cutFreq <= 0 | cutFreq > (samplingRate / 2))) {
+    cutFreq = NULL
+    warning(paste('"cutFreq" must be between 0 and samplingRate / 2; ignoring'))
   }
   if (!is.numeric(pitchFloor) | pitchFloor <= 0 |
       pitchFloor > samplingRate / 2) {
@@ -673,7 +683,7 @@ analyze = function(
   ), extraSpecPars))
   if (is.na(s)[1]) {
     message(paste('The sound is too short to analyze',
-    'with windowLength =', windowLength))
+                  'with windowLength =', windowLength))
     return(list(duration = duration))
   }
   bin = samplingRate / 2 / nrow(s)  # width of spectral bin, Hz
@@ -693,7 +703,11 @@ analyze = function(
   # calculate entropy of each frame within the most relevant
   # vocal range only (up to to cutFreq Hz)
   rowLow = 1 # which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
-  rowHigh = tail(which(freqs <= cutFreq), 1) # 6000 Hz etc
+  if (!is.null(cutFreq)) {
+    rowHigh = tail(which(freqs <= cutFreq), 1) # 6000 Hz etc
+  } else {
+    rowHigh = nrow(s)
+  }
   if (length(rowHigh) < 1 | !is.finite(rowHigh)) rowHigh = nrow(s)
   entropy = apply(as.matrix(1:ncol(s)), 1, function(x) {
     getEntropy(s[rowLow:rowHigh, x], type = 'weiner')
@@ -727,21 +741,22 @@ analyze = function(
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   ## FORMANTS
-  formants = NULL
+  fmts = NULL
   if (nFormants > 0) {
-    formants = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
-    colnames(formants) = paste0('f', rep(1:nFormants, each = 2),
+    fmts = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
+    colnames(fmts) = paste0('f', rep(1:nFormants, each = 2),
                                 rep(c('_freq', '_width'), nFormants))
     for (i in framesToAnalyze) {
-      ff = try(phonTools::findformants(frameBank[, i],
-                                       fs = samplingRate,
-                                       verify = FALSE),
+      ff = try(do.call(phonTools::findformants,
+                       c(formants,
+                         list(frameBank[, i],
+                              fs = samplingRate))),
                silent = TRUE)
       if (is.list(ff)) {
         temp = matrix(NA, nrow = nFormants, ncol = 2)
         availableRows = 1:min(nFormants, nrow(ff))
         temp[availableRows, ] = as.matrix(ff[availableRows, ])
-        formants[i, ] = matrix(t(temp), nrow = 1)
+        fmts[i, ] = matrix(t(temp), nrow = 1)
       }
     }
   }
@@ -765,10 +780,7 @@ analyze = function(
       'HNR' = NA,
       'dom' = NA,
       'specCentroid' = NA,
-      'specCentroidCut' = NA,
       'peakFreq' = NA,
-      'peakFreqCut' = NA,
-      'medianFreq' = NA,
       'quartile25' = NA,
       'quartile50' = NA,
       'quartile75' = NA,
@@ -804,7 +816,7 @@ analyze = function(
   result = lapply(frameInfo, function(y) y[['summaries']])
   result = data.frame(matrix(unlist(result), nrow=length(frameInfo), byrow=TRUE))
   colnames(result) = names(frameInfo[[1]]$summaries)
-  if (!is.null(formants)) result = cbind(result, formants)
+  if (!is.null(fmts)) result = cbind(result, fmts)
   result$entropy = entropy
   result$ampl = ampl
   result$time = as.numeric(colnames(frameBank))
@@ -1098,7 +1110,8 @@ analyzeFolder = function(
   overlap = 50,
   wn = 'gaussian',
   zp = 0,
-  cutFreq = 6000,
+  cutFreq = NULL,
+  formants = list(verify = FALSE),
   nFormants = 3,
   pitchMethods = c('dom', 'autocor'),
   pitchManual = NULL,

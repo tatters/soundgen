@@ -17,7 +17,8 @@ analyze(
   overlap = 50,
   wn = "gaussian",
   zp = 0,
-  cutFreq = min(samplingRate/2, max(7000, pitchCeiling * 2)),
+  cutFreq = NULL,
+  formants = list(verify = FALSE),
   nFormants = 3,
   pitchMethods = c("dom", "autocor"),
   pitchManual = NULL,
@@ -100,15 +101,19 @@ blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
-\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
-spectral descriptives after discarding all info above \code{cutFreq}.
-Recommended if the original sampling rate varies across different analyzed
-audio files. Note that "entropyThres" applies only to this frequency range,
-which also affects which frames will not be analyzed with pitchAutocor.}
+\item{cutFreq}{if specified, spectral descriptives (peakFreq, specCentroid,
+specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
+when analyzing recordings with varying sampling rates: set to half the
+lowest sampling rate to make the spectra more comparable. Note that
+"entropyThres" applies only to this frequency range, which also affects
+which frames will not be analyzed with pitchAutocor.}
+
+\item{formants}{a list of arguments passed to
+\code{\link[phonTools]{findformants}} - an external function called to
+perform LPC analysis}
 
 \item{nFormants}{the number of formants to extract per STFT frame (0 = no
-formant analysis). Calls \code{\link[phonTools]{findformants}} with default
-settings}
+formant analysis)}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
@@ -253,8 +258,8 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   entropy of the spectrum of the current frame. Close to 0: pure tone or
   tonal sound with nearly all energy in harmonics; close to 1: white noise}
   \item{f1_freq, f1_width, ...}{the frequency and bandwidth of the first
-  nFormants formants per STFT frame, as calculated by phonTools::findformants
-  with default settings} \item{harmEnergy}{the amount of energy in upper
+  nFormants formants per STFT frame, as calculated by
+  phonTools::findformants} \item{harmEnergy}{the amount of energy in upper
   harmonics, namely the ratio of total spectral mass above 1.25 x F0 to the
   total spectral mass below 1.25 x F0 (dB)}\item{harmHeight}{how high
   harmonics reach in the spectrum, based on the best guess at pitch (or the
@@ -263,19 +268,15 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much
   energy in harmonics as in noise} \item{loudness}{subjective loudness, in
   sone, corresponding to the chosen SPL_measured - see
-  \code{\link{getLoudness}}} \item{medianFreq}{50th quantile of the frame's
-  spectrum} \item{peakFreq}{the frequency with maximum spectral power (Hz)}
-  \item{peakFreqCut}{the frequency with maximum spectral power below cutFreq
-  (Hz)} \item{pitch}{post-processed pitch contour based on all F0 estimates}
-  \item{pitchAutocor}{autocorrelation estimate of F0}
+  \code{\link{getLoudness}}} \item{peakFreq}{the frequency with maximum
+  spectral power (Hz)} \item{pitch}{post-processed pitch contour based on all
+  F0 estimates} \item{pitchAutocor}{autocorrelation estimate of F0}
   \item{pitchCep}{cepstral estimate of F0} \item{pitchSpec}{BaNa estimate of
   F0} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and 75th
-  quantiles of the spectrum of voiced frames below cutFreq (Hz)}
-  \item{specCentroid}{the center of gravity of the frame’s spectrum, first
-  spectral moment (Hz)} \item{specCentroidCut}{the center of gravity of the
-  frame’s spectrum below cutFreq} \item{specSlope}{the slope of linear
-  regression fit to the spectrum below cutFreq} \item{voiced}{is the current
-  STFT frame voiced? TRUE / FALSE}
+  quantiles of the spectrum of voiced frames (Hz)} \item{specCentroid}{the
+  center of gravity of the frame’s spectrum, first spectral moment (Hz)}
+  \item{specSlope}{the slope of linear regression fit to the spectrum below
+  cutFreq} \item{voiced}{is the current STFT frame voiced? TRUE / FALSE}
 }
 }
 \description{

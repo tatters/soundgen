@@ -18,7 +18,8 @@ analyzeFolder(
   overlap = 50,
   wn = "gaussian",
   zp = 0,
-  cutFreq = 6000,
+  cutFreq = NULL,
+  formants = list(verify = FALSE),
   nFormants = 3,
   pitchMethods = c("dom", "autocor"),
   pitchManual = NULL,
@@ -98,15 +99,19 @@ blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
-\item{cutFreq}{(2 * pitchCeiling to Nyquist, Hz) repeat the calculation of
-spectral descriptives after discarding all info above \code{cutFreq}.
-Recommended if the original sampling rate varies across different analyzed
-audio files. Note that "entropyThres" applies only to this frequency range,
-which also affects which frames will not be analyzed with pitchAutocor.}
+\item{cutFreq}{if specified, spectral descriptives (peakFreq, specCentroid,
+specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
+when analyzing recordings with varying sampling rates: set to half the
+lowest sampling rate to make the spectra more comparable. Note that
+"entropyThres" applies only to this frequency range, which also affects
+which frames will not be analyzed with pitchAutocor.}
+
+\item{formants}{a list of arguments passed to
+\code{\link[phonTools]{findformants}} - an external function called to
+perform LPC analysis}
 
 \item{nFormants}{the number of formants to extract per STFT frame (0 = no
-formant analysis). Calls \code{\link[phonTools]{findformants}} with default
-settings}
+formant analysis)}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,

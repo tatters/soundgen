@@ -13,6 +13,7 @@ MAJOR (affects back-compatibility):
 MAJOR:
   * analyze(), analyzeFolder(), pitch_app(): a fifth method added for pitch tracking, namely Harmonic Product Spectrum ("hps")
   * analyze(), analyzeFolder(), pitch_app(): a new argument and output "harmHeight" - an estimate of how far harmonics reach in the spectrum
+  * analyze(), analyzeFolder(), pitch_app(): cutFreq defaults to NULL, and all spectral descriptives are exported only once (either for the entire spectrum or under cutFreq)
 
 BUGS FIXED:
   * soundgen(): proper wiggling of secondary control parameters if temperature > 0
@@ -25,6 +26,7 @@ MINOR:
   * pitch_app(), analyze(), analyzeFolder(): pitch prior and floor/ceiling plotted on the spectrogram
   * pitch_app(), analyze(), analyzeFolder(): improved resolution of pitch tracking methods 'spec' and 'dom' through parabolic interpolation of spectral peaks, modified algorithm of 'cep' method
   * pitch_app(), analyze(), analyzeFolder(): "invalidAction = 'ignore'" overrides defaults, just like in soundgen()
+  * pitch_app(), analyze(), analyzeFolder(): a new argument "formants" for passing a list of arguments to phonTools::findformants
   * analyzeFolder(), segmentFolder(), modulationSpectrumFolder(), getLoudnessFolder(), getRMSFolder(): 'sound' renamed to 'file' in output
   * schwa() accepts missing values in formant frequencies
   * estimateVTL() regresses multiple frequency measurements of the same formant without pre-aggregating
