@@ -427,6 +427,19 @@ median(getLoudness(sound4, windowLength = 25, overlap = 50,
                    SPL_measured = 40)$loudness)
 # NB: not identical b/c analyze() doesn't consider very quiet frames
 median(getRMS(sound4, windowLength = 25, overlap = 50, scale = 1))
+
+# Analyzing ultrasounds (slow but possible, just adjust pitchCeiling)
+s = soundgen(sylLen = 200, addSilence = 10,
+  pitch = c(25000, 35000, 30000),
+  formants = NA, rolloff = -12, rolloffKHz = 0,
+  pitchSamplingRate = 350000, samplingRate = 350000, windowLength = 5,
+  pitchCeiling = 45000, invalidArgAction = 'ignore')
+# s is a bat-like ultrasound inaudible to humans
+spectrogram(s, 350000, windowLength = 5)
+a = analyze(s, 350000, pitchCeiling = 45000, priorMean = NA,
+            windowLength = 5, overlap = 0,
+            nFormants = 0, SPL_measured = 0)
+# NB: ignore formants and loudness estimates for such non-human sounds
 }
 }
 \seealso{

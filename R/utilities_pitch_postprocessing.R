@@ -983,13 +983,13 @@ addPitchCands = function(pitchCands,
     text(x = ran_x_5,
          y = priorMean / 1000,
          pos = 2, labels = 'Prior', cex = 0.65, offset = 0.25)
-    text(x = 0,
-         y = pitchFloor / 1000,
-         pos = 4, labels = 'floor', cex = 0.65, offset = 0)
-    text(x = 0,
-         y = pitchCeiling / 1000,
-         pos = 4, labels = 'ceiling', cex = 0.65, offset = 0)
   }
+  text(x = 0,
+       y = pitchFloor / 1000,
+       pos = 4, labels = 'floor', cex = 0.65, offset = 0)
+  text(x = 0,
+       y = pitchCeiling / 1000,
+       pos = 4, labels = 'ceiling', cex = 0.65, offset = 0)
 
   # Add a legend
   if (showLegend) {
