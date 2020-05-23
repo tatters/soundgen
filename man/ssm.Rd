@@ -17,7 +17,6 @@ ssm(
   input = c("mfcc", "audiogram", "spectrum")[1],
   norm = FALSE,
   simil = c("cosine", "cor")[1],
-  returnSSM = "deprecated",
   kernelLen = 200,
   kernelSD = 0.2,
   padWith = 0,
@@ -62,8 +61,6 @@ windowLength / 20}. See \code{\link[tuneR]{melfcc}}}
 \item{simil}{method for comparing frames: "cosine" = cosine similarity, "cor"
 = Pearson's correlation}
 
-\item{returnSSM}{if TRUE, returns the SSM}
-
 \item{kernelLen}{length of checkerboard kernel for calculating novelty, ms
 (larger values favor global vs. local novelty)}
 
@@ -86,9 +83,8 @@ affecting the plot of SSM}
 \code{\link[graphics]{lines}} and affecting the novelty contour}
 }
 \value{
-If \code{returnSSM} is TRUE, returns a list of two components: $ssm
-  contains the self-similarity matrix, and $novelty contains the novelty
-  vector.
+Returns a list of two components: $ssm contains the self-similarity
+  matrix, and $novelty contains the novelty vector.
 }
 \description{
 Calculates the self-similarity matrix and novelty vector of a sound.

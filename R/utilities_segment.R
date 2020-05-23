@@ -38,9 +38,8 @@ findSyllables = function(envelope,
   # save the time of each syllable for plotting
   if (nSyllables == 0) {
     syllables = data.frame(syllable = 0,
-                           start = NA,
-                           end = NA,
-                           dur = NA)
+                           start = NA, end = NA, dur = NA,
+                           sylLen = NA, pauseLen = NA)
   } else {
     syllables = data.frame(syllable = 1:nSyllables, start = NA, end = NA)
     for (i in 1:nSyllables) {

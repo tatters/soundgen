@@ -52,7 +52,7 @@
 #'   syllables and vocal bursts. If FALSE, returns a list containing full stats
 #'   on each syllable and bursts (location, duration, amplitude, ...)
 #' @param plot if TRUE, produces a segmentation plot
-#' @param savePath full path to the folder in which to save the plots. Defaults
+#' @param savePath full path to the folder in which to save the plot. Defaults
 #'   to NA
 #' @param sylPlot a list of graphical parameters for displaying the syllables
 #' @param burstPlot a list of graphical parameters for displaying the bursts
@@ -83,7 +83,7 @@
 #' segment(sound, samplingRate = 16000, summary = TRUE)
 #' # Note that syllables are slightly longer and pauses shorter than they should
 #' # be (b/c of the smoothing of amplitude envelope), while interburst intervals
-#' # are right on target
+#' # are right on target (~120 ms)
 #'
 #' # customizing the plot
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
@@ -210,7 +210,7 @@ segment = function(x,
   # acceptable syllable length)
   if (is.null(interburst)) {
     median_scaled = suppressWarnings(median(syllables$sylLen) * interburstMult)
-    interburst = ifelse(is.numeric(median_scaled) & length(median_scaled) > 0,
+    interburst = ifelse(!is.na(median_scaled) & length(median_scaled) > 0,
                         median_scaled,
                         shortestSyl)
   }
@@ -278,7 +278,7 @@ segment = function(x,
       sylLen_median = ifelse(nrow(syllables) > 0,
                              median(syllables$sylLen),
                              NA),  # otherwise returns NULL
-      sylLen_sd = sd(syllables$sylLen),
+      sylLen_sd = sd(syllables$sylLen, na.rm = TRUE),
       pauseLen_mean = suppressWarnings(mean(syllables$pauseLen, na.rm = TRUE)),
       pauseLen_median = ifelse(nrow(syllables) > 1,
                                median(syllables$pauseLen, na.rm = TRUE),
@@ -313,7 +313,7 @@ segment = function(x,
 #'
 #' @param myfolder full path to target folder
 #' @inheritParams segment
-#' @param savePlots if TRUE, saves plots as .png files
+#' @param savePlots if TRUE, saves plots as .png files in the target folder
 #' @param htmlPlots if TRUE, saves an html file with clickable plots
 #' @param verbose,reportEvery if TRUE, reports progress every \code{reportEvery}
 #'   files and estimated time left
@@ -326,7 +326,7 @@ segment = function(x,
 #' # http://cogsci.se/publications.html
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
-#' s = segmentFolder(myfolder, verbose = TRUE, savePlot = TRUE)
+#' s = segmentFolder(myfolder, verbose = TRUE, savePlots = TRUE)
 #'
 #' # Check accuracy: import a manual count of syllables (our "key")
 #' key = segmentManual  # a vector of 260 integers
@@ -335,49 +335,46 @@ segment = function(x,
 #' boxplot(trial ~ as.integer(key), xlab='key')
 #' abline(a=0, b=1, col='red')
 #' }
-segmentFolder = function(myfolder,
-                         htmlPlots = TRUE,
-                         shortestSyl = 40,
-                         shortestPause = 40,
-                         sylThres = 0.9,
-                         interburst = NULL,
-                         interburstMult = 1,
-                         burstThres = 0.075,
-                         peakToTrough = 3,
-                         troughLeft = TRUE,
-                         troughRight = FALSE,
-                         windowLength = 40,
-                         overlap = 80,
-                         summary = TRUE,
-                         plot = FALSE,
-                         savePlots = FALSE,
-                         savePath = NA,
-                         verbose = TRUE,
-                         reportEvery = 10,
-                         col = 'green',
-                         xlab = 'Time, ms',
-                         ylab = 'Amplitude',
-                         main = NULL,
-                         width = 900,
-                         height = 500,
-                         units = 'px',
-                         res = NA,
-                         sylPlot = list(
-                           lty = 1,
-                           lwd = 2,
-                           col = 'blue'
-                         ),
-                         burstPlot = list(
-                           pch = 8,
-                           cex = 3,
-                           col = 'red'
-                         ),
-                         ...) {
-  # deprecated pars
-  if (!missing(savePath)) {
-    message('savePath is deprecated; use savePlots = TRUE instead')
-  }
-
+segmentFolder = function(
+  myfolder,
+  htmlPlots = TRUE,
+  shortestSyl = 40,
+  shortestPause = 40,
+  sylThres = 0.9,
+  interburst = NULL,
+  interburstMult = 1,
+  burstThres = 0.075,
+  peakToTrough = 3,
+  troughLeft = TRUE,
+  troughRight = FALSE,
+  windowLength = 40,
+  overlap = 80,
+  summary = TRUE,
+  plot = FALSE,
+  savePlots = FALSE,
+  savePath = NA,
+  verbose = TRUE,
+  reportEvery = 10,
+  col = 'green',
+  xlab = 'Time, ms',
+  ylab = 'Amplitude',
+  main = NULL,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  sylPlot = list(
+    lty = 1,
+    lwd = 2,
+    col = 'blue'
+  ),
+  burstPlot = list(
+    pch = 8,
+    cex = 3,
+    col = 'red'
+  ),
+  ...
+) {
   time_start = proc.time()  # timing
   # open all .wav files in folder
   filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)

@@ -81,7 +81,7 @@ on each syllable and bursts (location, duration, amplitude, ...)}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 
-\item{savePath}{full path to the folder in which to save the plots. Defaults
+\item{savePath}{full path to the folder in which to save the plot. Defaults
 to NA}
 
 \item{col, xlab, ylab, main}{main plotting parameters}
@@ -136,7 +136,7 @@ s = segment(sound, samplingRate = 16000, plot = TRUE,
 segment(sound, samplingRate = 16000, summary = TRUE)
 # Note that syllables are slightly longer and pauses shorter than they should
 # be (b/c of the smoothing of amplitude envelope), while interburst intervals
-# are right on target
+# are right on target (~120 ms)
 
 # customizing the plot
 s = segment(sound, samplingRate = 16000, plot = TRUE,

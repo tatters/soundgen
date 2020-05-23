@@ -64,7 +64,6 @@ NULL
 #'   proportion of sound with different regimes of pitch effects (none /
 #'   subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 #'   entire sound has jitter + subharmonics. Ignored if temperature = 0
-#' @param nonlinDep deprecated
 #' @param nonlinRandomWalk a numeric vector specifying the timing of nonliner
 #'   regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer
 #' @param jitterLen duration of stable periods between pitch jumps, ms. Use a
@@ -282,7 +281,6 @@ soundgen = function(
   maleFemale = 0,
   creakyBreathy = 0,
   nonlinBalance = 100,
-  nonlinDep = 'deprecated',
   nonlinRandomWalk = NULL,
   subRatio = 2,
   subFreq = 0,
@@ -343,9 +341,9 @@ soundgen = function(
   ...
 ) {
   # deprecated pars
-  if (!missing('nonlinDep')) {
-    message('nonlinDep is deprecated; set subDep/jitterDep/shimmerDep manually')
-  }
+  # if (!missing('x')) {
+  #   message('x is deprecated; use y instead')
+  # }
   if (FALSE) shinyjs::info('adja')  # to avoid a NOTE on CRAN
 
   # check that values of numeric arguments are valid and within range

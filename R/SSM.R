@@ -40,7 +40,6 @@
 #' @param kernelSD SD of checkerboard kernel for calculating novelty
 #' @param padWith how to treat edges when calculating novelty: NA = treat sound
 #'   before and after the recording as unknown, 0 = treat it as silence
-#' @param returnSSM if TRUE, returns the SSM
 #' @param plot if TRUE, plots the SSM
 #' @param heights relative sizes of the SSM and spectrogram/novelty plot
 #' @param specPars graphical parameters passed to \code{filled.contour.mod} and
@@ -49,9 +48,8 @@
 #'   affecting the plot of SSM
 #' @param noveltyPars graphical parameters passed to
 #'   \code{\link[graphics]{lines}} and affecting the novelty contour
-#' @return If \code{returnSSM} is TRUE, returns a list of two components: $ssm
-#'   contains the self-similarity matrix, and $novelty contains the novelty
-#'   vector.
+#' @return Returns a list of two components: $ssm contains the self-similarity
+#'   matrix, and $novelty contains the novelty vector.
 #' @export
 #' @seealso \code{\link{spectrogram}} \code{\link{modulationSpectrum}}
 #' @examples
@@ -82,7 +80,6 @@ ssm = function(x,
                input = c('mfcc', 'audiogram', 'spectrum')[1],
                norm = FALSE,
                simil = c('cosine', 'cor')[1],
-               returnSSM = 'deprecated',
                kernelLen = 200,
                kernelSD = .2,
                padWith = 0,
@@ -108,10 +105,6 @@ ssm = function(x,
                  col = 'black',
                  lwd = 3
                )) {
-  if (!missing('returnSSM')) {
-    message('returnSSM is deprecated; the result is returned invisibly anyway')
-  }
-
   ## import a sound
   if (class(x)[1] == 'character') {
     sound = tuneR::readWave(x)

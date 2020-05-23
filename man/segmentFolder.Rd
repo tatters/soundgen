@@ -89,9 +89,9 @@ on each syllable and bursts (location, duration, amplitude, ...)}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 
-\item{savePlots}{if TRUE, saves plots as .png files}
+\item{savePlots}{if TRUE, saves plots as .png files in the target folder}
 
-\item{savePath}{full path to the folder in which to save the plots. Defaults
+\item{savePath}{full path to the folder in which to save the plot. Defaults
 to NA}
 
 \item{verbose, reportEvery}{if TRUE, reports progress every \code{reportEvery}
@@ -142,7 +142,7 @@ settings, running time should be about a second per minute of audio.
 # http://cogsci.se/publications.html
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
-s = segmentFolder(myfolder, verbose = TRUE, savePlot = TRUE)
+s = segmentFolder(myfolder, verbose = TRUE, savePlots = TRUE)
 
 # Check accuracy: import a manual count of syllables (our "key")
 key = segmentManual  # a vector of 260 integers

@@ -17,7 +17,6 @@ soundgen(
   maleFemale = 0,
   creakyBreathy = 0,
   nonlinBalance = 100,
-  nonlinDep = "deprecated",
   nonlinRandomWalk = NULL,
   subRatio = 2,
   subFreq = 0,
@@ -132,8 +131,6 @@ from creaky (-1) to breathy (+1); 0 = no change}
 proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
-
-\item{nonlinDep}{deprecated}
 
 \item{nonlinRandomWalk}{a numeric vector specifying the timing of nonliner
 regimes: 0 = none, 1 = subharmonics, 2 = subharmonics + jitter + shimmer}

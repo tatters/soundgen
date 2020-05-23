@@ -18,6 +18,7 @@ MAJOR:
 BUGS FIXED:
   * soundgen(): proper wiggling of secondary control parameters if temperature > 0
   * soundgen(): vibratoFreq and vibratoDep can go beyond preset levels if invalidArgAction = 'ignore'
+  * segment(): very short sounds no longer crash
 
 MINOR:
   * pitch_app(): an option to turn off automatic updating of the optimal pitch contour to speed up the processing of long audio files
