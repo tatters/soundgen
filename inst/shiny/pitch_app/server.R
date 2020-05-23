@@ -232,7 +232,7 @@ server = function(input, output, session) {
                      pos = 2, labels = 'Prior', offset = 0.25)
                 text(x = myPars$spec_xlim[1],
                      y = input$pitchFloor / 1000,
-                      pos = 4, labels = 'floor', offset = 0)
+                     pos = 4, labels = 'floor', offset = 0)
                 text(x = myPars$spec_xlim[1],
                      y = input$pitchCeiling / 1000,
                      pos = 4, labels = 'ceiling', offset = 0)
@@ -353,19 +353,35 @@ server = function(input, output, session) {
                     priorSD = input$priorSD,
                     nCands = input$nCands,
                     minVoicedCands = input$minVoicedCands,
-                    domThres = input$domThres,
-                    domSmooth = input$domSmooth,
-                    autocorThres = input$autocorThres,
-                    autocorSmooth = input$autocorSmooth,
-                    cepThres = input$cepThres,
-                    cepSmooth = input$cepSmooth,
-                    cepZp = input$cepZp,
-                    specThres = input$specThres,
-                    specPeak = input$specPeak,
-                    specSinglePeakCert = input$specSinglePeakCert,
-                    specHNRslope = input$specHNRslope,
-                    specSmooth = input$specSmooth,
-                    specMerge = input$specMerge,
+                    pitchDom = list(
+                        domThres = input$domThres,
+                        domSmooth = input$domSmooth
+                    ),
+                    pitchAutocor = list(
+                        autocorThres = input$autocorThres,
+                        autocorSmooth = input$autocorSmooth,
+                        autocorUpsample = input$autocorUpsample,
+                        autocorBestPeak = input$autocorBestPeak
+                    ),
+                    pitchCep = list(
+                        cepThres = input$cepThres,
+                        cepSmooth = input$cepSmooth,
+                        cepZp = input$cepZp
+                    ),
+                    pitchSpec = list(
+                        specThres = input$specThres,
+                        specPeak = input$specPeak,
+                        specSinglePeakCert = input$specSinglePeakCert,
+                        specHNRslope = input$specHNRslope,
+                        specSmooth = input$specSmooth,
+                        specMerge = input$specMerge
+                    ),
+                    pitchHps = list(
+                        hpsThres = input$hpsThres,
+                        hpsNum = input$hpsNum,
+                        hpsNorm = input$hpsNorm,
+                        hpsPenalty = input$hpsPenalty
+                    ),
                     # we don't want analyze to waste time on pathfinding
                     # b/c we do it separately in obs_pitch()
                     interpolWin = 0,
@@ -766,7 +782,7 @@ server = function(input, output, session) {
         # meaning we have finished editing pitch contour for a sound - prepares the output
         if (myPars$print) print('Running done()...')
         session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
-        if (!is.null(myPars$myAudio_path)) {
+        if (!is.null(myPars$myAudio_path) && !is.null(myPars$result)) {
             new = data.frame(
                 file = basename(myPars$myAudio_filename),
                 time = paste(round(myPars$X), collapse = ', '),
@@ -883,6 +899,8 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='domSmooth', title = 'Width of smoothing interval for finding the lowest dominant frequency band (low values = no smoothing)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='autocorThres', title = 'Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='autocorSmooth', title = 'Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='autocorUpsample', title = 'Upsamples acf to this resolution (Hz) to improve accuracy in high frequencies', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='autocorBestPeak', title = 'Amplitude of the lowest best candidate relative to the absolute max of the acf', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='cepThres', title = 'Voicing threshold for cepstral algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='cepSmooth', title = 'Width of smoothing interval for finding peaks in the cepstrum', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='cepZp', title = 'Length of cepstral window after zero padding: 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

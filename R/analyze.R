@@ -750,7 +750,7 @@ analyze = function(
                            plot = FALSE)$acf / autoCorrelation_filter
   }
   autocorBank = autocorBank[-1, ]  # b/c it starts with zero lag (identity)
-  # plot(autocorBank[, 78], type = 'l')
+  # plot(autocorBank[, 15], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   ## FORMANTS

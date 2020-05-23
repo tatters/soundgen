@@ -60,7 +60,9 @@ ui = fluidPage(
 
                                   tabPanel('Autocorrelation ("autocor")',
                                            sliderInput('autocorThres', 'Voicing threshold ("autocorThres")', value=defaults_analyze['autocorThres', 'default'], min=defaults_analyze['autocorThres', 'low'], max=defaults_analyze['autocorThres', 'high'], step=defaults_analyze['autocorThres', 'step']),
-                                           sliderInput('autocorSmooth', 'Width of smoothing interval, bins ("autocorSmooth")', value=defaults_analyze['autocorSmooth', 'default'], min=defaults_analyze['autocorSmooth', 'low'], max=defaults_analyze['autocorSmooth', 'high'], step=defaults_analyze['autocorSmooth', 'step'])
+                                           sliderInput('autocorSmooth', 'Width of smoothing interval, bins ("autocorSmooth")', value=defaults_analyze['autocorSmooth', 'default'], min=defaults_analyze['autocorSmooth', 'low'], max=defaults_analyze['autocorSmooth', 'high'], step=defaults_analyze['autocorSmooth', 'step']),
+                                           sliderInput('autocorUpsample', 'Upsample resolution, Hz ("autocorUpsample")', value=defaults_analyze['autocorUpsample', 'default'], min=defaults_analyze['autocorUpsample', 'low'], max=defaults_analyze['autocorUpsample', 'high'], step=defaults_analyze['autocorUpsample', 'step']),
+                                           sliderInput('autocorBestPeak', 'Best candidate ("autocorBestPeak")', value=defaults_analyze['autocorBestPeak', 'default'], min=defaults_analyze['autocorBestPeak', 'low'], max=defaults_analyze['autocorBestPeak', 'high'], step=defaults_analyze['autocorBestPeak', 'step'])
                                   ),
 
                                   tabPanel('Cepstrum ("cep")',
