@@ -59,7 +59,7 @@ permittedValues = matrix(c(
   'amDep', 0, 0, 100, 5,
   'amFreq', 30, 1, 100, 1,
   'amShape', 0, -1, 1, .025,
-  'samplingRate', 16000, 8000, 44100, 100,
+  'samplingRate', 16000, 8000, 200000, 100,
   'windowLength', 40, 5, 100, 2.5, # default, low, high, step
   'dynamicRange', 80, 10, 200, 10,
   'rolloffNoise', -4, -100, 100, 1,
@@ -89,6 +89,7 @@ temp = permittedValues[,1]
 permittedValues = apply(permittedValues[,2:5], 2, as.numeric)
 colnames(permittedValues) = c('default', 'low', 'high', 'step')
 rownames(permittedValues) = temp
+permittedValues = as.data.frame(permittedValues)
 # usethis::use_data(permittedValues, overwrite = TRUE)
 
 # a list of default values for Shiny app - mostly the same as for

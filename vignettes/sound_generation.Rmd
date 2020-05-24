@@ -640,7 +640,7 @@ Soundgen can add frequency jumps, subharmonics, sidebands (implemented as a modi
 The main limitation of this approach is that it is too computationally costly to generate variable numbers of subharmonics for the entire bout. The solution currently adopted in soundgen is to break longer sounds into so-called "epochs" with a constant number of subharmonics in each. The epochs are synthesized separately, trimmed to the nearest zero crossing, and then glued together with a rapid `crossFade()`. This is suboptimal, since it shortens the sound and may introduce audible artifacts at transitions between epochs. `shortestEpoch` controls the approximate minimum length of each epoch. Longer epochs minimize problems with transitions, but the behavior of subharmonics then becomes less variable since their number is constrained to be constant within each epoch. NB: with short `shortestEpoch`, add ~20-30 ms per transition to the nominal sound duration in order to compensate for cross-fading the epochs.
 
 ### Nonlinear regimes
-To add nonlinear effects stochastically, you can use `nonlinBalance`, which regulates approximately what proportion of the sound is affected. However, for best results it is advisable to set advanced settings manually (see below). At temperature > 0, `nonlinBalance` creates a random walk that divides each syllable into epochs defined by their regime, using two thresholds to determine when a new regime begins (see Fitch et al., 2002):
+To add nonlinear effects stochastically, you can use `nonlinBalance`, which regulates approximately what proportion of the sound is affected. At temperature > 0, `nonlinBalance` creates a random walk that divides each syllable into epochs defined by their regime, using two thresholds to determine when a new regime begins (see Fitch et al., 2002):
 
 1.  Regime 1: no nonlinear effects. 
 If nonlinBalance = 0%, the whole syllable is in regime 1.
@@ -651,10 +651,17 @@ Note that subharmonics are only added to segments with subFreq < f0 / 2.
 1.  Regime 3: subharmonics and jitter. 
 If nonlinBalance = 100%, the whole syllable is in regime 3. 
 
-To see any effect, you have to set jitterDep, shimmerDep, and subFreq/subDep/subWidth to some positive values (see below).
+To see any effect, you have to set jitterDep, shimmerDep, and subFreq/subDep/subWidth to some positive values. With nonlinBalance < 100%, the result is a stochastic combination of the three regimes (tonal, subharmonics, subharmonics + jitter + shimmer):
+```{r fig.show = "hold", fig.width = 5, fig.height = 4}
+soundgen(sylLen = 1500, pitch = c(170, 420, 400, 190),
+         nonlinBalance = 60,
+         subDep = 10, jitterDep = 1.5, shimmerDep = 25,
+         play = playback, plot = TRUE, ylim = c(0, 5))
+```
+
 
 ### Subharmonics
-To add a single subharmonic between each pair of f-harmonics (period doubling), set `subRatio = 2`, for period tripling, `subRatio = 3`, etc. This number of subharmonics will be added regardless of pitch changes. Another way is to set `subFreq` ("Target subharmonic frequency, Hz" in the app), which gives an approximate g0 target, so that the number of subharmonics will vary with pitch. The amplitude (loudness) of subharmonics is controlled by `subDep` ("Depth of subharmonics"). All these parameters can vary within a syllable. 
+To add nonlinearities non-stochastically (exactly where you want them), keep `nonlinBalance` at the default value of 100% and specify the nature and timing of nonlinearities manually. To add a single subharmonic between each pair of f-harmonics (period doubling), set `subRatio = 2`, for period tripling, `subRatio = 3`, etc. This number of subharmonics will be added regardless of pitch changes. Another way is to set `subFreq` ("Target subharmonic frequency, Hz" in the app), which gives an approximate g0 target, so that the number of subharmonics will vary with pitch. The amplitude (loudness) of subharmonics is controlled by `subDep` ("Depth of subharmonics"). All these parameters can vary within a syllable. 
 
 Add one subharmonic regardless of pitch:
 ```{r fig.show = "hold", fig.width = 5, fig.height = 4}
@@ -706,22 +713,19 @@ s = soundgen(sylLen = 800,
 
 ### Jitter / shimmer
 As for jitter in pitch regime 3, it wiggles both f0 and g0 harmonic stacks, blurring the spectrum. Parameter `jitterDep` ("Jitter depth, semitones" in the app) defines how much the pitch fluctuates, while `jitterLen` ("Jitter period, ms") defines how rapid these fluctuations are. Slow jitter with a period of ~50 ms produces the effect of a shaky, unsteady voice. It may sound similar to a vibrato, but jitter is irregular. Rapid jitter with a period of ~1 ms, especially in combination with subharmonics, may be used to imitate deterministic chaos, which is found in voiced but highly irregular animal sounds such as barks, roars, noisy screams, etc. This works best for high-pitched sounds like screams. Shimmer is similar to jitter, except that it defines random fluctuations of the amplitude rather than frequency. It is controlled by two arguments, `shimmerDep` (percent) and `shimmerLen` (ms).
-```{r}
-# To get jitter/shimmer without subharmonics, set `temperature = 0, subDep = 0`
-# or a positive temperature and `nonlinBalance = 100, subDep = 0`
-# and specify the required jitter depth and period
+```{r fig.width = 5, fig.height = 4}
 s1 = soundgen(jitterLen = 40, jitterDep = 1,  # shaky voice
               shimmerLen = 30, shimmerDep = 30,   
-              sylLen = 1000, 
-              pitch =  c(150, 170), play = playback, plot = TRUE)
+              sylLen = 1000, pitch =  c(150, 170), 
+              play = playback, plot = TRUE, ylim = c(0, 3))
 s2 = soundgen(jitterLen = 1, jitterDep = 1,   # harsh voice
               shimmerLen = 1, shimmerDep = 10, 
-              sylLen = 1000, 
-              pitch =  c(150, 170), play = playback, plot = TRUE)
+              sylLen = 1000, pitch =  c(150, 170), 
+              play = playback, plot = TRUE, ylim = c(0, 3))
 ```
 
-To get jitter + shimmer + subharmonics, set temperature to 0 (nonlinear effects are then applied to the entire sound, but note that extra formants are then not added) or - the recommended solution - use nonlinBalance close to 100% with temperature > 0, thus preserving stochastic behavior of other parameters. For example, barks of a small, annoying dog can be roughly approximated with this minimal code (ignoring respiration to keep things simple):
-```{r}
+Jitter + shimmer + subharmonics work well together. For example, barks of a small, annoying dog can be roughly approximated with this minimal code (ignoring respiration to keep things simple):
+```{r fig.width = 5, fig.height = 4}
 s = soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, 
              vocalTract = 8, formants = NULL, rolloff = 0,
              pitch = c(559, 785, 557), mouth =  c(0, 0.5, 0),
@@ -743,7 +747,7 @@ s = soundgen(sylLen = 1200,
              samplingRate = 22000, play = playback, plot = TRUE, osc = TRUE)
 ```
 
-Another method is to encode very rapid pitch jumps between harmonically related values, like this:
+Another method is to encode very rapid pitch jumps, say f0 and a formant or between harmonically related values, like this:
 
 ```{r fig.width = 7, fig.height = 7}
 s = soundgen(sylLen = 1200, 
@@ -766,7 +770,7 @@ s = soundgen(sylLen = 1200,
 Incidentally, you can use similar tricks for introducing variation in any soundgen parameter. For example, you can use `runif()` or `rnorm()` to randomly vary things like mouth opening, pitch, amplitude. That's the best part of working in R!
 ```{r}
 # run several times to appreciate the randomness
-s = soundgen(sylLen = 800, 
+for (i in 1:5) s = soundgen(sylLen = 800, 
              mouth = rnorm(n = 5, mean = .5, sd = .3),
              play = playback)
 ```
@@ -1074,24 +1078,24 @@ spectrogram(s, 16000, osc=T, ylim = c(0, 4))
 If you want the two sounds to overlap without a cross-fade, you can use `addVectors()`, which simply makes sure two waveforms are padded with zeros to the same length and overlapped intelligently. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add some chirping of birds in the background:
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
+samplingRate = 48000  # >10 times the highest pitch 
 sound1 = soundgen(sylLen = 700, pitch = 250:180, 
-                  formants = 'aaao', 
-                  addSilence = 100, play = playback)
+                  formants = 'aaao',  addSilence = 100, 
+                  samplingRate = samplingRate, play = playback)
 sound2 = soundgen(nSyl = 2, sylLen = 150, 
                   pitch = 4300:2200, attackLen = 10,
                   formants = NA, temperature = .001, 
-                  pitchCeiling = 8000, pitchSamplingRate = 8000,  # >pitch
+                  pitchCeiling = samplingRate, pitchSamplingRate = samplingRate,  
                   addSilence = 0, play = playback)
 
 insertionTime = .1 + .15  # silence + 150 ms
-samplingRate = 16000
 insertionPoint = insertionTime * samplingRate
 comb = addVectors(sound1, 
                   sound2 * .05,  # to make sound2 quieter relative to sound1
                   insertionPoint = insertionPoint)
 # sound1 and sound2 have attack of 50 and 10 ms, so no clicks
-# playme(comb)
-spectrogram(comb, 16000, windowLength = 10, ylim = c(0, 5), 
+# playme(comb, samplingRate)
+spectrogram(comb, samplingRate, windowLength = 10, ylim = c(0, 5), 
             contrast = .5, colorTheme = 'seewave')
 ```
 

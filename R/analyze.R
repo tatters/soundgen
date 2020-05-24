@@ -738,11 +738,15 @@ analyze = function(
 
   # save duration of non-silent part of audio
   if (length(framesToAnalyze) > 0) {
-    time_start = step * (min(framesToAnalyze) - 1)  # the beginning of the first non-silent frame
-    time_end = step * (max(framesToAnalyze))        # the end of the last non-silent frame
+    # the beginning of the first non-silent frame
+    time_start = step * (min(framesToAnalyze) - 1)
+    # the end of the last non-silent frame
+    time_end = step * (max(framesToAnalyze))
     duration_noSilence = (time_end - time_start) / 1000
   } else {
     duration_noSilence = 0
+    message(paste('The audio is too quiet!',
+                  'No frames above silence =', silence))
   }
 
   # autocorrelation for each frame
@@ -762,7 +766,7 @@ analyze = function(
   if (nFormants > 0) {
     fmts = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
     colnames(fmts) = paste0('f', rep(1:nFormants, each = 2),
-                                rep(c('_freq', '_width'), nFormants))
+                            rep(c('_freq', '_width'), nFormants))
     for (i in framesToAnalyze) {
       ff = try(do.call(phonTools::findformants,
                        c(formants,
@@ -859,10 +863,12 @@ analyze = function(
 
   max_cands = max(unlist(lapply(frameInfo, function(y)
     nrow(y[['pitchCands_frame']]))))
-  if (max_cands == 0) {  # no pitch candidates at all, purely unvoiced
+  if (max_cands == 0) {
+    # no pitch candidates at all, purely unvoiced
     result[, c('pitch', pitchNames$pitchName)] = NA
     pitchCands_list = list()
   } else {
+    # some pitch candidates found
     pitchCands_list = rep(list(matrix(
       NA,
       nrow = max_cands,
