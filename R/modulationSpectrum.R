@@ -79,12 +79,12 @@
 #' @examples
 #' # white noise
 #' ms = modulationSpectrum(runif(16000), samplingRate = 16000,
-#'   logSpec = FALSE, power = TRUE, logWarp = NULL)
+#'   logSpec = FALSE, power = TRUE)
 #'
 #' # harmonic sound
 #' s = soundgen()
 #' ms = modulationSpectrum(s, samplingRate = 16000,
-#'   logSpec = FALSE, power = TRUE, logWarp = NULL)
+#'   logSpec = FALSE, power = TRUE)
 #'
 #' # embellish
 #' ms = modulationSpectrum(s, samplingRate = 16000,
@@ -127,22 +127,21 @@
 #'   xlim = c(-20, 20), ylim = c(0, 4),  # zoom in on the central region
 #'   quantiles = c(.25, .5, .8),  # customize contour lines
 #'   colorTheme = 'heat.colors',  # alternative palette
-#'   logWarp = NULL,              # don't log-warp the modulation spectrum
-#'   power = 2)  # ^2
+#'   power = 2)                   # ^2
 #' # NB: xlim/ylim currently won't work properly with logWarp on
 #'
 #' # Input can be a wav/mp3 file
 #' ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav')
 #'
 #' # Input can be path to folder with audio files (average modulation spectrum)
-#' ms = modulationSpectrum('~/Downloads/temp/', kernelSize = 11)
+#' ms = modulationSpectrum('~/Downloads/temp', kernelSize = 11)
 #' # NB: longer files will be split into fragments <maxDur in length
 #'
 #' # A sound with ~3 syllables per second and only downsweeps in F0 contour
 #' s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
 #' # playme(s)
 #' ms = modulationSpectrum(s, samplingRate = 16000, maxDur = .5,
-#'   xlim = c(-25, 25), colorTheme = 'seewave', logWarp = NULL,
+#'   xlim = c(-25, 25), colorTheme = 'seewave',
 #'   power = 2)
 #' # note the asymmetry b/c of downsweeps
 #'
@@ -156,11 +155,9 @@
 #'
 #' # Plotting with or without log-warping the modulation spectrum:
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
-#'   logWarp = NA, plot = T)
+#'   logWarp = NA, plot = TRUE)
 #' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
-#'   logWarp = 2, plot = T)
-#' ms = modulationSpectrum(soundgen(), samplingRate = 16000,
-#'   logWarp = 4.5, plot = T)
+#'   logWarp = 2, plot = TRUE)
 #'
 #' # logWarp and kernelSize have no effect on roughness
 #' # because it is calculated before these transforms:
@@ -193,7 +190,7 @@ modulationSpectrum = function(
   aggregComplex = TRUE,
   plot = TRUE,
   savePath = NA,
-  logWarp = 2,
+  logWarp = NA,
   quantiles = c(.5, .8, .9),
   kernelSize = 5,
   kernelSD = .5,
@@ -360,7 +357,7 @@ modulationSpectrum = function(
     # normalize
     ms_half = ms_half - min(ms_half)
     ms_half = ms_half / max(ms_half)
-    # image(t(log(ms_half)))
+    # image(x = as.numeric(colnames(ms_half)), z = t(log(ms_half)))
     out[[i]] = ms_half
 
     if (returnComplex) {
@@ -376,7 +373,7 @@ modulationSpectrum = function(
   sr = max(samplingRate)  # again, in case not the same
   out1 = lapply(out, function(x) interpolMatrix(x, nr = max_rows, nc = typicalCols))
   out_aggreg = Reduce('+', out1) / length(myInput)
-  # image(t(log(out_aggreg)))
+  # image(x = as.numeric(colnames(out_aggreg)), z = t(log(out_aggreg)))
 
   # get time and frequency labels
   max_am = 1000 / step / 2
@@ -546,7 +543,8 @@ modulationSpectrum = function(
 #' @export
 #' @examples
 #' \dontrun{
-#' ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE, kernelSize = 15)
+#' ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE,
+#'                               kernelSize = 15)
 #' }
 modulationSpectrumFolder = function(
   myfolder,
@@ -564,7 +562,7 @@ modulationSpectrumFolder = function(
   roughRange = c(30, 150),
   plot = FALSE,
   savePlots = FALSE,
-  logWarp = 2,
+  logWarp = NA,
   quantiles = c(.5, .8, .9),
   kernelSize = 5,
   kernelSD = .5,

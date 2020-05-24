@@ -157,7 +157,8 @@ specEnv_bleating = spectrogram(sound_orig, windowLength = 5,
 sound_unfilt = soundgen(sylLen = 2500, pitch = pitch,
   rolloff = 0, rolloffOct = 0, rolloffKHz = 0,
   temperature = 0, jitterDep = 0, subDep = 0,
-  formants = NULL, lipRad = 0, samplingRate = samplingRate)
+  formants = NULL, lipRad = 0, samplingRate = samplingRate,
+  invalidArgAction = 'ignore')  # prevent soundgen from increasing samplingRate
 # playme(sound_unfilt, samplingRate)
 # seewave::meanspec(sound_unfilt, f = samplingRate, dB = 'max0')  # ~flat
 

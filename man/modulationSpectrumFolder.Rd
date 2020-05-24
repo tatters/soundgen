@@ -20,7 +20,7 @@ modulationSpectrumFolder(
   roughRange = c(30, 150),
   plot = FALSE,
   savePlots = FALSE,
-  logWarp = 2,
+  logWarp = NA,
   quantiles = c(0.5, 0.8, 0.9),
   kernelSize = 5,
   kernelSD = 0.5,
@@ -119,7 +119,8 @@ and/or measuring the roughness of multiple files. See
 }
 \examples{
 \dontrun{
-ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE, kernelSize = 15)
+ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE,
+                              kernelSize = 15)
 }
 }
 \seealso{

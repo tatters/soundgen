@@ -143,6 +143,7 @@ ms = modulationSpectrum(s, samplingRate = samplingRate, windowLength = 25,
 # ms = specToMS(spec)
 image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
   z = t(log(abs(ms))))  # this is the original MS
+
 # Filter as needed - for ex., remove AM > 10 Hz and FM > 3 cycles/kHz
 # (removes f0, preserves formants)
 am = as.numeric(colnames(ms))
@@ -154,18 +155,22 @@ ms_filt[idx_row, ] = 0
 ms_filt[, idx_col] = 0
 image(x = as.numeric(colnames(ms_filt)), y = as.numeric(rownames(ms_filt)),
   t(log(abs(ms_filt))))  # this is the filtered MS
+
 # Convert back to a spectrogram
 spec_filt = msToSpec(ms_filt)
 image(t(log(abs(spec_filt))))
+
 # Invert the spectrogram
 s_filt = invertSpectrogram(abs(spec_filt), samplingRate = samplingRate,
   windowLength = 25, overlap = 80, wn = 'hanning')
 # NB: use the same settings as in "spec = spectrogram(s, ...)" above
+
 # Compare with the original
 playme(s, samplingRate)
 spectrogram(s, samplingRate, osc = TRUE)
 playme(s_filt, samplingRate)
 spectrogram(s_filt, samplingRate, osc = TRUE)
+
 ms_new = modulationSpectrum(s_filt, samplingRate = samplingRate,
   windowLength = 25, overlap = 80, wn = 'hanning', maxDur = Inf,
   plot = FALSE, returnComplex = TRUE)$complex

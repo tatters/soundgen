@@ -76,7 +76,7 @@
 #' # ms = specToMS(spec)
 #' image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
 #'   z = t(log(abs(ms))))  # this is the original MS
-
+#'
 #' # Filter as needed - for ex., remove AM > 10 Hz and FM > 3 cycles/kHz
 #' # (removes f0, preserves formants)
 #' am = as.numeric(colnames(ms))
@@ -88,22 +88,22 @@
 #' ms_filt[, idx_col] = 0
 #' image(x = as.numeric(colnames(ms_filt)), y = as.numeric(rownames(ms_filt)),
 #'   t(log(abs(ms_filt))))  # this is the filtered MS
-
+#'
 #' # Convert back to a spectrogram
 #' spec_filt = msToSpec(ms_filt)
 #' image(t(log(abs(spec_filt))))
-
+#'
 #' # Invert the spectrogram
 #' s_filt = invertSpectrogram(abs(spec_filt), samplingRate = samplingRate,
 #'   windowLength = 25, overlap = 80, wn = 'hanning')
 #' # NB: use the same settings as in "spec = spectrogram(s, ...)" above
-
+#'
 #' # Compare with the original
 #' playme(s, samplingRate)
 #' spectrogram(s, samplingRate, osc = TRUE)
 #' playme(s_filt, samplingRate)
 #' spectrogram(s_filt, samplingRate, osc = TRUE)
-
+#'
 # Check that the modulation spectrum is as desired
 #' ms_new = modulationSpectrum(s_filt, samplingRate = samplingRate,
 #'   windowLength = 25, overlap = 80, wn = 'hanning', maxDur = Inf,
@@ -373,6 +373,7 @@ filterMS = function(ms,
 #' image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
 #'       z = t(log(abs(ms))), xlab = 'Amplitude modulation, Hz',
 #'       ylab = 'Frequency modulation, cycles/kHz')
+#' abline(h = 0, lty = 3); abline(v = 0, lty = 3)
 specToMS = function(spec, windowLength = NULL, step = NULL) {
   if ((is.null(colnames(spec)) & is.null(step)) |
       (is.null(rownames(spec)) & is.null(windowLength))) {
@@ -386,7 +387,7 @@ specToMS = function(spec, windowLength = NULL, step = NULL) {
   }
 
   # Center - see spec.fft function in "spectral" package
-  spec_centered = spec * (-1)^(row(spec) + col(spec))  # checkerboard of ±1
+  spec_centered = spec * (-1)^(row(spec) + col(spec))  # *checkerboard of ±1
 
   # 2D fft
   ms = fft(spec_centered, inverse = FALSE) / length(spec_centered)

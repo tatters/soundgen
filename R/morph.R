@@ -37,15 +37,17 @@
 #' \dontrun{
 #' # morph intonation and vowel quality
 #' m = morph(
-#'   'soundgen(pitch = c(300, 250, 400), formants = c(350, 2900, 3600, 4700))',
-#'   'soundgen(pitch = c(300, 700, 500, 300), formants = c(800, 1250, 3100, 4500))',
+#'   'soundgen(pitch = c(300, 250, 400),
+#'             formants = c(350, 2900, 3600, 4700))',
+#'   'soundgen(pitch = c(300, 700, 500, 300),
+#'             formants = c(800, 1250, 3100, 4500))',
 #'   nMorphs = 5, playMorphs = playback
 #' )
 #'
 #' # from a grunt of disgust to a moan of pleasure
 #' m = morph(
 #'   formula1 = 'soundgen(sylLen = 180, pitch = c(160, 160, 120), rolloff = -12,
-#'     nonlinBalance = 70, subFreq = 75, subDep = 35, jitterDep = 2,
+#'     nonlinBalance = 70, subDep = 15, jitterDep = 2,
 #'     formants = c(550, 1200, 2100, 4300, 4700, 6500, 7300),
 #'     noise = data.frame(time = c(0, 180, 270), value = c(-25, -25, -40)),
 #'     rolloffNoise = 0)',
@@ -65,7 +67,6 @@
 #'     value = c(1000, 2900, 3200, 2900, 1000)),
 #'     rolloff = c(-5, 0, -25), rolloffKHz = 0,
 #'     temperature = 0.001,
-#'     nonlinBalance = 100, subDep = 0,
 #'     jitterDep = c(.5, 1, 0), shimmerDep = c(5, 15, 0),
 #'     formants = c(1100, 2300, 3100, 4000, 5300, 6200),
 #'     mouth = c(.3, .5, .6, .5, .3))",
@@ -73,7 +74,7 @@
 #'     pitch = c(300, 310, 300),
 #'     ampl = c(0, -30),
 #'     temperature = 0.001, rolloff = c(-18, -25),
-#'     nonlinBalance = 100, jitterDep = .05, shimmerDep = 2, subDep = 0,
+#'     jitterDep = .05, shimmerDep = 2,
 #'     formants = list(f1 = c(700, 900),
 #'       f2 = c(1600, 1400),
 #'       f3 = c(3600, 3500), f4 = c(4300, 4200)),

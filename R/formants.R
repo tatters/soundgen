@@ -917,7 +917,8 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' sound_unfilt = soundgen(sylLen = 2500, pitch = pitch,
 #'   rolloff = 0, rolloffOct = 0, rolloffKHz = 0,
 #'   temperature = 0, jitterDep = 0, subDep = 0,
-#'   formants = NULL, lipRad = 0, samplingRate = samplingRate)
+#'   formants = NULL, lipRad = 0, samplingRate = samplingRate,
+#'   invalidArgAction = 'ignore')  # prevent soundgen from increasing samplingRate
 #' # playme(sound_unfilt, samplingRate)
 #' # seewave::meanspec(sound_unfilt, f = samplingRate, dB = 'max0')  # ~flat
 #'
@@ -1141,7 +1142,8 @@ addFormants = function(sound,
 #'                      pitch = c(100, 300, 250, 200),
 #'                      vibratoFreq = 9, vibratoDep = 1,
 #'                      addSilence = 180,
-#'                      samplingRate = samplingRate)
+#'                      samplingRate = samplingRate,
+#'                      invalidArgAction = 'ignore')  # keep low samplingRate
 #' playme(recipient, samplingRate)
 #' spectrogram(recipient, samplingRate, osc = TRUE)
 #'
@@ -1162,7 +1164,8 @@ addFormants = function(sound,
 #' # Now we use human formants on sheep source: the sheep says "why?"
 #' s2 = transplantFormants(
 #'   donor = soundgen(formants = 'uaaai',
-#'                    samplingRate = samplingRate),
+#'                    samplingRate = samplingRate,
+#'                    invalidArgAction = 'ignore'),
 #'   recipient = donor,
 #'   samplingRate = samplingRate)
 #' playme(s2, samplingRate)
@@ -1170,7 +1173,7 @@ addFormants = function(sound,
 #' seewave::meanspec(s2, f = samplingRate, dB = 'max0')
 #'
 #' # We can also transplant synthetic formants w/o synthesizing a donor sound to
-#' save time
+#' # save time
 #' s3 = transplantFormants(
 #'   donor = getSpectralEnvelope(
 #'             nr = 512, nc = 100,  # fairly arbitrary dimensions

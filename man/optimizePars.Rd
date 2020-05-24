@@ -133,18 +133,18 @@ res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_m
 1 - res$fit  # correlations with key
 
 # Optimization of PITCH TRACKING (takes several hours!)
-res = optimizePars(myfolder = myfolder,
-                   myfun = 'analyzeFolder',
-                   key = log(pitchManual),  # log-scale better for pitch
-                   pars = c('specThres', 'specSmooth'),
-                   bounds = list(low = c(0, 0), high = c(1, Inf)),
-                   fitnessPar = 'pitch_median',
-                   nIter = 2,
-                   otherPars = list(plot = FALSE, verbose = FALSE, step = 50,
-                                    pitchMethods = 'spec'),
-                   fitnessFun = function(x) {
-                     1 - cor(log(x), key, use = 'pairwise.complete.obs') *
-                       (1 - mean(is.na(x) & !is.na(key)))  # penalize failing to detect F0
-                     })
+res = optimizePars(
+  myfolder = myfolder,
+    myfun = 'analyzeFolder',
+    key = log(pitchManual),  # log-scale better for pitch
+    pars = c('windowLength', 'silence'),
+    bounds = list(low = c(5, 0), high = c(500, 1)),
+    fitnessPar = 'pitch_median',
+    nIter = 2,
+    otherPars = list(plot = FALSE, verbose = FALSE, step = 50),
+    fitnessFun = function(x) {
+      1 - cor(log(x), key, use = 'pairwise.complete.obs') *
+      (1 - mean(is.na(x) & !is.na(key))) # penalize failing to detect f0
+})
 }
 }

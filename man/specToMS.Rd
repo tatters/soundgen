@@ -30,4 +30,5 @@ ms = specToMS(spec)
 image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)),
       z = t(log(abs(ms))), xlab = 'Amplitude modulation, Hz',
       ylab = 'Frequency modulation, cycles/kHz')
+abline(h = 0, lty = 3); abline(v = 0, lty = 3)
 }

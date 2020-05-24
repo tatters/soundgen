@@ -420,7 +420,7 @@ soundgen = function(
   } else {
     lockNoiseToVoiced = FALSE
   }
-  if (is.list(pitch)) {
+  if (is.list(pitch) & invalidArgAction != 'ignore') {
     if (any(pitch$value < pitchFloor)) {
       pitchFloor = 0.1
       message('Some pitch values are lower than pitchFloor; lowering to 0.1 Hz')

@@ -420,12 +420,16 @@ analyze = function(
   # yet, since most routines in analyze() require scale [-1, 1]
   scaleCorrection = NA
   if (is.numeric(SPL_measured) && SPL_measured > 0) {
-    # NB: m / scale = 1 if the sound is normalized  to 0 dB (max amplitude)
-    scaleCorrection = max(abs(scaleSPL(sound * m / scale,
-                                       scale = 1,
+    # NB: m / scale = 1 if the sound is normalized to 0 dB (max amplitude)
+    # scaleCorrection = max(abs(scaleSPL(sound * m / scale,
+    #                                    scale = 1,
+    #                                    SPL_measured = SPL_measured,
+    #                                    Pref = Pref))) /  # peak ampl of rescaled
+    #   m  # peak ampl of original
+    scaleCorrection = max(abs(scaleSPL(sound,
+                                       scale = scale,
                                        SPL_measured = SPL_measured,
-                                       Pref = Pref))) /  # peak ampl of rescaled
-      m  # peak ampl of original
+                                       Pref = Pref)))
   }
 
   # normalize to range from no less than -1 to no more than +1
@@ -954,7 +958,8 @@ analyze = function(
 
   ## Finalize / update results using the final pitch contour
   # (or the manual pitch contour, if provided)
-  if (!is.null(pitchManual)) {
+  if (!is.null(pitchManual) &
+      length(pitchManual) > 0) {  # numeric(0) if $pitch is missing in manual
     # up/downsample pitchManual to the right length
     pitch_true = upsamplePitchContour(
       pitch = pitchManual,

@@ -49,12 +49,12 @@ per file. This summary value can be mean, max and so on, as per
 }
 \examples{
 \dontrun{
-getLoudnessFolder('~/Downloads/temp')
+getLoudnessFolder('~/Downloads/temp1')
 # Compare:
-analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
+analyzeFolder('~/Downloads/temp1', pitchMethods = NULL,
               plot = FALSE)$loudness_mean
-# (per STFT frame; should be very similar, but not identical, because
-# analyze() discards frames considered silent or too noisy)
+# (per STFT frame; should be very similar, but not identical unless silence =
+0, because # analyze() discards frames considered silent)
 
 # custom summaryFun
 difRan = function(x) diff(range(x))

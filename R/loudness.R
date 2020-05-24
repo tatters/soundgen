@@ -219,10 +219,8 @@ getLoudness = function(x,
     par(new = TRUE, mar = mar)
     # adjust the timing of loudness to match the actual time stamps
     # in getFrameBank (~the middle of each fft frame)
-    windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+    X = as.numeric(colnames(powerSpec))
     duration = length(sound) / samplingRate
-    X = seq(1, max(1, (length(sound) - windowLength_points)),
-            step / 1000 * samplingRate) / samplingRate * 1000 + windowLength / 2
     plot(x = X,
          y = loudness,
          type = "b",
@@ -318,12 +316,12 @@ getLoudness = function(x,
 #' @export
 #' @examples
 #' \dontrun{
-#' getLoudnessFolder('~/Downloads/temp')
+#' getLoudnessFolder('~/Downloads/temp1')
 #' # Compare:
-#' analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
+#' analyzeFolder('~/Downloads/temp1', pitchMethods = NULL,
 #'               plot = FALSE)$loudness_mean
-#' # (per STFT frame; should be very similar, but not identical, because
-#' # analyze() discards frames considered silent or too noisy)
+#' # (per STFT frame; should be very similar, but not identical unless silence =
+#' 0, because # analyze() discards frames considered silent)
 #'
 #' # custom summaryFun
 #' difRan = function(x) diff(range(x))

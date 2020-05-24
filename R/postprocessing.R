@@ -113,12 +113,9 @@ playme = function(sound,
 #' s = soundgen(attack = 0, windowLength = 10,
 #'              sylLen = 500, addSilence = 0)
 #' # playme(s)
-#' # plot(s, type = 'l')
-#' s1 = fade(s, fadeIn = 10, fadeOut = 350,
-#'           samplingRate = 16000, shape = 'cos')
+#' s1 = fade(s, fadeIn = 40, fadeOut = 350,
+#'           samplingRate = 16000, shape = 'cos', plot = TRUE)
 #' # playme(s1)
-#' # plot(s1, type = 'l')
-#'
 #'
 #' # Illustration of fade shapes
 #' x = runif(5000, min = -1, max = 1)  # make sure to zero-center input!!!

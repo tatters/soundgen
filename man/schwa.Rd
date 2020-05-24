@@ -41,8 +41,8 @@ Returns a list with the following components: \describe{
   \item{ff_relative}{deviation of formant frequencies from those expected for
   a schwa, \% (e.g. if the first ff_relative is -25, it means that F1 is 25\%
   lower than expected for a schwa in this vocal tract)}
-  \item{ff_relative_semitones}{deviation of formant frequencies from those expected for
-  a schwa, semitones}
+  \item{ff_relative_semitones}{deviation of formant frequencies from those
+  expected for a schwa, semitones}
 }
 }
 \description{

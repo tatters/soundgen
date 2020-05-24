@@ -75,6 +75,7 @@ target = soundgen(sylLen = 500, formants = 'a',
                                      value = c(100, 150, 135, 100)),
                   temperature = 0.001)
 targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
+
 parsToTry = list(
   list(formants = 'i',                                            # wrong
        pitch = data.frame(time = c(0, 1),                         # wrong

@@ -77,7 +77,8 @@ recipient = soundgen(sylLen = 1200,
                      pitch = c(100, 300, 250, 200),
                      vibratoFreq = 9, vibratoDep = 1,
                      addSilence = 180,
-                     samplingRate = samplingRate)
+                     samplingRate = samplingRate,
+                     invalidArgAction = 'ignore')  # keep low samplingRate
 playme(recipient, samplingRate)
 spectrogram(recipient, samplingRate, osc = TRUE)
 
@@ -98,7 +99,8 @@ spectrogram(s2, samplingRate, osc = TRUE)
 # Now we use human formants on sheep source: the sheep says "why?"
 s2 = transplantFormants(
   donor = soundgen(formants = 'uaaai',
-                   samplingRate = samplingRate),
+                   samplingRate = samplingRate,
+                   invalidArgAction = 'ignore'),
   recipient = donor,
   samplingRate = samplingRate)
 playme(s2, samplingRate)
@@ -106,7 +108,7 @@ spectrogram(s2, samplingRate, osc = TRUE)
 seewave::meanspec(s2, f = samplingRate, dB = 'max0')
 
 # We can also transplant synthetic formants w/o synthesizing a donor sound to
-save time
+# save time
 s3 = transplantFormants(
   donor = getSpectralEnvelope(
             nr = 512, nc = 100,  # fairly arbitrary dimensions
