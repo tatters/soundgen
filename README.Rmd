@@ -1,4 +1,5 @@
 ---
+title: soundgen readme
 output:
   md_document:
     variant: gfm
