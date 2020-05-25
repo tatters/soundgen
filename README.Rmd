@@ -83,9 +83,11 @@ seewave::savewav(s, f = 44100, filename = 'man/figures/s.wav')
 system('ffmpeg -y -i man/figures/s.wav man/figures/s.mp3')
 file.remove('man/figures/s.wav')
 ```
+
 <audio controls style = "display: block"> <source src="man/figures/s.mp3" type="audio/mp3"> </audio>
 
 # Example of acoustic analysis
+
 Use the `analyze()` function to detect pitch and obtain other spectral descriptives of the sound we have just synthesized:
 ```{r analysis, fig.width = 7, fig.height = 5}
 a = analyze(s, 44100, ylim = c(0, 6))
