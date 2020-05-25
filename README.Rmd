@@ -1,7 +1,7 @@
 ---
 output:
   md_document:
-    variant: markdown_github
+    variant: gfm
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -78,13 +78,16 @@ s = soundgen(
 )
 ```
 
+<p>
+<audio controls style = "display: block"> <source src="man/figures/s.mp3" type="audio/mp3"> </audio>
+</p>
+
 ```{r echo = FALSE, results = FALSE}
 seewave::savewav(s, f = 44100, filename = 'man/figures/s.wav')
 system('ffmpeg -y -i man/figures/s.wav man/figures/s.mp3')
 file.remove('man/figures/s.wav')
 ```
 
-<audio controls style = "display: block"> <source src="man/figures/s.mp3" type="audio/mp3"> </audio>
 
 # Example of acoustic analysis
 
