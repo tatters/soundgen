@@ -1,7 +1,7 @@
 Package: soundgen
 Type: Package
 Title: Parametric Voice Synthesis
-Version: 1.7.0
+Version: 1.7.0.9000
 Date: 2020-05-24
 Authors@R: person("Andrey", "Anikin", email = "rty.anik@rambler.ru", role = c("aut", "cre"))
 Maintainer: Andrey Anikin <rty.anik@rambler.ru>

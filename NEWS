@@ -1,3 +1,6 @@
+          CHANGES IN SOUNDGEN VERSION 1.7.0.9000 [--date--]
+
+
           CHANGES IN SOUNDGEN VERSION 1.7.0 [24-May-2020]
 MAJOR (affects back-compatibility):
   (1) A modified way of creating subharmonics and sidebands in soundgen():
