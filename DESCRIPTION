@@ -6,6 +6,7 @@ Date: 2020-05-24
 Authors@R: person("Andrey", "Anikin", email = "rty.anik@rambler.ru", role = c("aut", "cre"))
 Maintainer: Andrey Anikin <rty.anik@rambler.ru>
 URL: http://cogsci.se/soundgen.html
+BugReports: https://github.com/tatters/soundgen/issues
 Description: Tools for sound synthesis and acoustic analysis.
     Performs parametric synthesis of sounds with harmonic and noise components
     such as animal vocalizations or human voice. Also includes tools for
