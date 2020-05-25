@@ -1,7 +1,8 @@
 ---
 title: soundgen readme
 output:
-  html_document
+  html_document:
+    variant: gfm
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
