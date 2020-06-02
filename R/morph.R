@@ -289,7 +289,7 @@ morph = function(formula1,
   # expand vectorized pars, if any, to anchors
   for (i in 1:length(f1)) {
     if (is.numeric(f1[[i]]) & is.numeric(f2[[i]])) {
-      if (length(f1[[i]]) != length(f2[[i]])) {
+      if (length(f1[[i]]) > 1 | length(f2[[i]]) > 1) {
         f1[[i]] = reformatAnchors(f1[[i]])
         f2[[i]] = reformatAnchors(f2[[i]])
       }
