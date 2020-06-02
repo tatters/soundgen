@@ -9,17 +9,9 @@ splitContour(anchors, discontThres = 0.05, jumpThres = 0.01)
 \arguments{
 \item{anchors}{a dataframe with two columns: time and value (time on any scale)}
 
-\item{discontThres}{if two anchors are closer in time than
-\code{discontThres}, the contour is broken into segments with a linear
-transition between these anchors; if anchors are closer than
-\code{jumpThres}, a new section starts with no transition at all (e.g. for
-adding pitch jumps)}
+\item{discontThres}{deprecated}
 
-\item{jumpThres}{if two anchors are closer in time than
-\code{discontThres}, the contour is broken into segments with a linear
-transition between these anchors; if anchors are closer than
-\code{jumpThres}, a new section starts with no transition at all (e.g. for
-adding pitch jumps)}
+\item{jumpThres}{deprecated}
 }
 \value{
 Returns a dataframe containing the index of anchor rows for start and

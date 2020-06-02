@@ -41,22 +41,11 @@ before smoothing and plots in both Hz and musical notation}
 
 \item{normalizeTime}{if TRUE, normalizes anchors$time values to range from 0 to 1}
 
-\item{interpol}{the method of smoothing envelopes based on provided anchors:
-'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-= polynomial local smoothing function. NB: this does not affect contours for
-"noise", "glottal", and the smoothing of formants}
+\item{interpol}{deprecated}
 
-\item{discontThres}{if two anchors are closer in time than
-\code{discontThres}, the contour is broken into segments with a linear
-transition between these anchors; if anchors are closer than
-\code{jumpThres}, a new section starts with no transition at all (e.g. for
-adding pitch jumps)}
+\item{discontThres}{deprecated}
 
-\item{jumpThres}{if two anchors are closer in time than
-\code{discontThres}, the contour is broken into segments with a linear
-transition between these anchors; if anchors are closer than
-\code{jumpThres}, a new section starts with no transition at all (e.g. for
-adding pitch jumps)}
+\item{jumpThres}{deprecated}
 
 \item{loessSpan}{parameter that controlled the amount of smoothing when
 interpolating pitch etc between anchors; passed on to
@@ -126,4 +115,14 @@ a3 = getSmoothContour(anchors = list(time = c(0, .15, .155, .7, 1),
 # compare:
 plot(a2)
 plot(a3)  # NB: the segment before the jump is upsampled to compensate
+
+# Control the amount of smoothing
+getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+  loessSpan = NULL)  # default amount of smoothing (depends on dur)
+getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+  loessSpan = .85)   # more smoothing than default
+getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+  loessSpan = .5)    # less smoothing
+getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+  interpol = 'approx')  # linear interpolation (no smoothing)
 }

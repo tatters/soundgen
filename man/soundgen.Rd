@@ -58,9 +58,11 @@ soundgen(
   mouth = list(time = c(0, 1), value = c(0.5, 0.5)),
   ampl = NA,
   amplGlobal = NA,
-  interpol = c("approx", "spline", "loess")[3],
-  discontThres = 0.05,
-  jumpThres = 0.01,
+  smoothing = list(interpol = c("approx", "spline", "loess")[3], loessSpan = NULL,
+    discontThres = 0.05, jumpThres = 0.01),
+  interpol = "deprecated",
+  discontThres = "deprecated",
+  jumpThres = "deprecated",
   samplingRate = 16000,
   windowLength = 50,
   overlap = 75,
@@ -279,16 +281,15 @@ format)}
 \item{amplGlobal}{global amplitude envelope spanning
 multiple syllables (dB, 0 = no change) (anchor format)}
 
-\item{interpol}{the method of smoothing envelopes based on provided anchors:
-'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-= polynomial local smoothing function. NB: this does not affect contours for
-"noise", "glottal", and the smoothing of formants}
+\item{smoothing}{a list of parameters that control the smoothing of pitch and
+amplitude contours: \code{interpol} (loess, spline, or approx), loessSpan
+(1 = strong, .5 = weak smoothing), discontThres, and jumpThres (if two
+anchors are closer in time than \code{discontThres}, the contour is broken
+into segments with a linear transition between these anchors; if anchors
+are closer than \code{jumpThres}, a new section starts with no transition
+at all (e.g. for adding pitch jumps). See \code{\link{getSmoothContour}}}
 
-\item{discontThres, jumpThres}{if two anchors are closer in time than
-\code{discontThres}, the contour is broken into segments with a linear
-transition between these anchors; if anchors are closer than
-\code{jumpThres}, a new section starts with no transition at all (e.g. for
-adding pitch jumps)}
+\item{interpol, discontThres, jumpThres}{deprecated}
 
 \item{samplingRate}{sampling frequency, Hz}
 

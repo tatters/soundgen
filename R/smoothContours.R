@@ -71,24 +71,35 @@
 #' # compare:
 #' plot(a2)
 #' plot(a3)  # NB: the segment before the jump is upsampled to compensate
-getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
-                            len = NULL,
-                            thisIsPitch = FALSE,
-                            normalizeTime = TRUE,
-                            interpol = c('approx', 'spline', 'loess')[3],
-                            discontThres = .05,
-                            jumpThres = .01,
-                            loessSpan = NULL,
-                            valueFloor = NULL,
-                            valueCeiling = NULL,
-                            plot = FALSE,
-                            xlim = NULL,
-                            ylim = NULL,
-                            samplingRate = 16000,
-                            voiced = NULL,
-                            contourLabel = NULL,
-                            NA_to_zero = TRUE,
-                            ...) {
+#'
+#' # Control the amount of smoothing
+#' getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+#'   loessSpan = NULL)  # default amount of smoothing (depends on dur)
+#' getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+#'   loessSpan = .85)   # more smoothing than default
+#' getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+#'   loessSpan = .5)    # less smoothing
+#' getSmoothContour(c(1, 3, 9, 10, 9, 9, 2), len = 100, plot = TRUE,
+#'   interpol = 'approx')  # linear interpolation (no smoothing)
+getSmoothContour = function(
+  anchors = data.frame(time = c(0, 1), value = c(0, 1)),
+  len = NULL,
+  thisIsPitch = FALSE,
+  normalizeTime = TRUE,
+  interpol = c('approx', 'spline', 'loess')[3],
+  discontThres = .05,
+  jumpThres = .01,
+  loessSpan = NULL,
+  valueFloor = NULL,
+  valueCeiling = NULL,
+  plot = FALSE,
+  xlim = NULL,
+  ylim = NULL,
+  samplingRate = 16000,
+  voiced = NULL,
+  contourLabel = NULL,
+  NA_to_zero = TRUE,
+  ...) {
   my_args = match.call()
   if (is.null(my_args$main)) {
     if (thisIsPitch)
@@ -333,7 +344,7 @@ drawContour = function(len,
       anchor_time_points = anchor_time_points / max(anchor_time_points) * len
       anchor_time_points[anchor_time_points == 0] = 1
       anchors_long = as.vector(rep(NA, len))
-      anchors_long[anchor_time_points] = anchors$value # plot (anchors_long)
+      anchors_long[anchor_time_points] = anchors$value # plot(anchors_long)
 
       # let's draw a smooth curve through the given anchors
       if (is.null(loessSpan)) {
@@ -348,7 +359,7 @@ drawContour = function(len,
       # span = 1 / (1 + exp(duration_ms / 500)) + 0.5
       # plot(duration_ms, span, type = 'l')
       l = suppressWarnings(loess(anchors_long ~ time, span = span))
-      # plot (time, anchors_long)
+      # plot(time, anchors_long)
       smoothContour = try(predict(l, time), silent = TRUE)
       # plot(time, smoothContour)
 

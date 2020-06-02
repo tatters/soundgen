@@ -173,10 +173,7 @@ format)}
 \item{normalize}{if TRUE, normalizes to -1...+1 prior to applying attack and
 amplitude envelope. W/o this, sounds with stronger harmonics are louder}
 
-\item{interpol}{the method of smoothing envelopes based on provided anchors:
-'approx' = linear interpolation, 'spline' = cubic spline, 'loess' (default)
-= polynomial local smoothing function. NB: this does not affect contours for
-"noise", "glottal", and the smoothing of formants}
+\item{interpol}{deprecated}
 
 \item{overlap}{FFT window overlap, \%. For allowed values, see
 \code{\link[seewave]{istft}}}
