@@ -75,6 +75,7 @@ server = function(input, output, session) {
 
     observeEvent(input$loadAudio, {
         if (myPars$print) print('Loading audio...')
+        done()  # save previous work, if any
         myPars$n = 1   # file number in queue
         myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
         myPars$fileList = paste(input$loadAudio$name, collapse = ', ')
@@ -779,9 +780,10 @@ server = function(input, output, session) {
 
     # SAVE OUTPUT
     done = function() {
-        # meaning we have finished editing pitch contour for a sound - prepares the output
+        # meaning we have finished editing pitch contour for a sound - prepares
+        # the output
         if (myPars$print) print('Running done()...')
-        session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
+        session$resetBrush("spectrogram_brush")  # doesn't reset automatically
         if (!is.null(myPars$myAudio_path) && !is.null(myPars$result)) {
             new = data.frame(
                 file = basename(myPars$myAudio_filename),
@@ -820,11 +822,14 @@ server = function(input, output, session) {
                 }
             }
         }
-        write.csv(myPars$out, 'www/temp.csv', row.names = FALSE)
+        if (!is.null(myPars$out))
+            write.csv(myPars$out, 'www/temp.csv', row.names = FALSE)
 
         # add manual corrections to the history list
-        myPars$history[[myPars$myAudio_filename]]$manual = myPars$manual
-        myPars$history[[myPars$myAudio_filename]]$manualUnv = myPars$manualUnv
+        if (!is.null(myPars$myAudio_filename)) {
+            myPars$history[[myPars$myAudio_filename]]$manual = myPars$manual
+            myPars$history[[myPars$myAudio_filename]]$manualUnv = myPars$manualUnv
+        }
     }
 
     nextFile = function() {

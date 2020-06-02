@@ -1,6 +1,8 @@
           CHANGES IN SOUNDGEN VERSION 1.7.0.9000 [--date--]
 BUGS FIXED:
   * morph() accepts vectors like "vibratoFreq = c(0, 3)" in both formulas without crashing
+  * pitch_app() saves all files propertly if multiple folders are opened consecutively without saving the output
+
 
           CHANGES IN SOUNDGEN VERSION 1.7.0 [24-May-2020]
 MAJOR (affects back-compatibility):
