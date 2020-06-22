@@ -9,7 +9,8 @@ getFormantDispersion(
   method = c("meanDispersion", "regression")[2],
   speedSound = 35400,
   plot = FALSE,
-  checkFormat = TRUE
+  checkFormat = TRUE,
+  output = c("simple", "detailed")[1]
 )
 }
 \arguments{
@@ -24,11 +25,16 @@ default presets for speaker "M1"; a vector of formant frequencies like
 \item{speedSound}{speed of sound in warm air, by default 35400 cm/s. Stevens
 (2000) "Acoustic phonetics", p. 138}
 
-\item{plot}{if TRUE, plots the regression line to illustrate the estimation
-of formant dispersion (method = "regression" only)}
+\item{plot}{if TRUE, plots the regression line whose slope gives formant
+dispersion (method = "regression" only) and Label size shows the influence
+of each observation; the second plot shows how VTL varies depending on the
+number of formants used}
 
 \item{checkFormat}{if FALSE, only a list of properly formatted formant
 frequencies is accepted}
+
+\item{output}{"simple" (default) = just the VTL; "detailed" = a list of
+additional stats (see Value below)}
 }
 \description{
 Internal soundgen function.

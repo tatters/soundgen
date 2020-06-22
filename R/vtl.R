@@ -29,20 +29,32 @@
 #'   (2000) "Acoustic phonetics", p. 138
 #' @param checkFormat if FALSE, only a list of properly formatted formant
 #'   frequencies is accepted
-#' @param plot if TRUE, plots the regression line to illustrate the estimation
-#'   of formant dispersion (method = "regression" only). Label size shows the
-#'   influence of each value on the slope (Cook's distance + 1)
-#' @return Returns the estimated vocal tract length in cm.
+#' @param output "simple" (default) = just the VTL; "detailed" = a list of
+#'   additional stats (see Value below)
+#' @param plot if TRUE, plots the regression line whose slope gives formant
+#'   dispersion (method = "regression" only) and Label size shows the influence
+#'   of each observation; the second plot shows how VTL varies depending on the
+#'   number of formants used
+#' @return If \code{output = 'simple'} (default), returns the estimated vocal
+#'   tract length in cm. If \code{output = 'detailed'} and \code{method =
+#'   'regression'}, returns a list with extra stats used for plotting. Namely,
+#'   \code{$regressionInfo$infl} gives the influence of each observation
+#'   calculated as the absolute change in VTL with vs without the observation *
+#'   10 + 1 (the size of labels on the first plot). \code{$vtlPerFormant$vtl}
+#'   gives the VTL as it would be estimated if only the first \code{nFormants}
+#'   were used.
 #' @export
 #' @examples
 #' estimateVTL(NA)
 #' estimateVTL(500)
-#' estimateVTL(c(600, 1850, 3100))
+#' estimateVTL(c(600, 1850, 2800, 3600, 5000), plot = TRUE)
+#' estimateVTL(c(600, 1850, 2800, 3600, 5000), plot = TRUE, output = 'detailed')
+#'
 #' # Multiple measurements are OK
 #' estimateVTL(
 #'   formants = list(f1 = c(540, 600, 550),
 #'   f2 = 1650, f3 = c(2400, 2550)),
-#'   plot = TRUE)
+#'   plot = TRUE, output = 'detailed')
 #' # NB: this is better than averaging formant values. Cf.:
 #' estimateVTL(
 #'   formants = list(f1 = mean(c(540, 600, 550)),
@@ -50,7 +62,7 @@
 #'   plot = TRUE)
 #'
 #' # Missing values are OK
-#' estimateVTL(c(600, 1850, 3100, NA, 5000))
+#' estimateVTL(c(600, 1850, 3100, NA, 5000), plot = TRUE)
 #' estimateVTL(list(f1 = 500, f2 = c(1650, NA, 1400), f3 = 2700), plot = TRUE)
 #'
 #' # Note that VTL estimates based on the commonly reported 'meanDispersion'
@@ -82,6 +94,7 @@ estimateVTL = function(
   method = c('meanFormant', 'meanDispersion', 'regression')[3],
   speedSound = 35400,
   checkFormat = TRUE,
+  output = c('simple', 'detailed')[1],
   plot = FALSE
 ) {
   if (!method %in% c('meanFormant', 'meanDispersion', 'regression')) {
@@ -99,14 +112,24 @@ estimateVTL = function(
     vtls = (2 * (1:length(formant_freqs)) - 1) * speedSound / 4 / formant_freqs
     vocalTract = mean(vtls, na.rm = TRUE)
   } else if (method %in% c('meanDispersion', 'regression')) {
-    formantDispersion = getFormantDispersion(formants,
-                                             speedSound = speedSound,
-                                             method = method,
-                                             plot = plot,
-                                             checkFormat = FALSE)
+    fd = getFormantDispersion(formants,
+                              speedSound = speedSound,
+                              method = method,
+                              plot = plot,
+                              checkFormat = FALSE,
+                              output = output)
+    if (is.list(fd)) {
+      formantDispersion = fd$formantDispersion
+    } else {
+      formantDispersion = fd
+    }
     vocalTract = speedSound / 2 / formantDispersion
   }
-  return(vocalTract)
+  if (output == 'detailed') {
+    return(c(list(vocalTract = vocalTract), fd))
+  } else {
+    return(vocalTract)
+  }
 }
 
 
@@ -326,8 +349,10 @@ getFormantDispersion = function(
   method = c('meanDispersion', 'regression')[2],
   speedSound = 35400,
   plot = FALSE,
-  checkFormat = TRUE
+  checkFormat = TRUE,
+  output = c('simple', 'detailed')[1]
 ) {
+  if (plot) output = 'detailed'
   if (checkFormat) {
     formants = reformatFormants(formants,
                                 output = 'freqs',
@@ -352,18 +377,48 @@ getFormantDispersion = function(
     # Reby et al. (2005) "Red deer stags use formants..."
     fdf = NULL
     for (i in 1:length(formants)) {
-      temp = data.frame(formantSpacing = (2 * i - 1) / 2,
-                        freq = formants[[i, drop = FALSE]]$freq)
+      temp = data.frame(
+        formant_idx = i,
+        formant = paste0('F', i),
+        formantSpacing = i - 0.5, # same as (2 * i - 1) / 2,
+        freq = formants[[i, drop = FALSE]]$freq,
+        infl = NA)
       if (is.null(fdf)) fdf = temp else fdf = rbind(fdf, temp)
     }
     mod = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf))
     # NB: no intercept, i.e. forced to pass through 0
     formantDispersion = suppressWarnings(summary(mod)$coef[1])
+
+    if (output == 'detailed') {
+      vtl_full = speedSound / 2 / formantDispersion
+      # calculate VTL for the first 1:f formants
+      vf = data.frame(nFormants = 1:length(unique(fdf$formant)), vtl = NA)
+      for (i in 1:nrow(vf)) {
+        fdf_i = fdf[fdf$formant_idx <= i, ]
+        if (any(!is.na(fdf_i$freq))) {
+          mod_i = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf_i))
+          vf$vtl[i] = speedSound / 2 / suppressWarnings(summary(mod_i)$coef[1])
+        }
+      }
+
+      # calculate the influence of each observation on the VTL estimate based on
+      # all formants
+      for (i in 1:nrow(fdf)) {
+        fdf_i = fdf[-i, ]
+        if (any(!is.na(fdf$freq[i])) & any(!is.na(fdf_i$freq))) {
+          mod_i = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf_i))
+          vtl_i = speedSound / 2 / suppressWarnings(summary(mod_i)$coef[1])
+          fdf$infl[i] = abs(vtl_full - vtl_i) / vtl_full * 10 + 1
+        }
+      }
+    }
     if (plot) {
+      par(mfrow = c(1, 2))
       plot(
         fdf$formantSpacing, fdf$freq,
         type = 'n',
-        xlab = 'Formant spacing', ylab = 'Frequency, Hz',
+        xlab = 'Formant number - 0.5',
+        ylab = 'Formant frequency, Hz',
         xaxs = 'i', yaxs = 'i',
         xlim = c(0, tail(fdf$formantSpacing, 1) + 1),
         ylim = c(0, max(fdf$freq, na.rm = TRUE) * 1.2),
@@ -373,10 +428,20 @@ getFormantDispersion = function(
       )
       text(
         fdf$formantSpacing, fdf$freq,
-        labels = paste0('F', 1:nrow(fdf)),
-        cex = cooks.distance(mod) + 1
+        labels = fdf$formant,
+        cex = fdf$infl # cooks.distance(mod) + 1
       )
       abline(a = 0, b = formantDispersion, lty = 3)
+      plot(vf, type = 'b',
+           xlab = 'Number of formants used',
+           ylab = 'VTL estimate, cm',
+           main = paste('VTL =', round(speedSound / 2 / formantDispersion, 1), 'cm'))
+      par(mfrow = c(1, 1))
+    }
+    if (output == 'detailed') {
+      formantDispersion = list(formantDispersion = formantDispersion,
+                               regressionInfo = fdf,
+                               vtlPerFormant = vf)
     }
   }
   return(formantDispersion)

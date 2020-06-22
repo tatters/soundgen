@@ -9,6 +9,7 @@ estimateVTL(
   method = c("meanFormant", "meanDispersion", "regression")[3],
   speedSound = 35400,
   checkFormat = TRUE,
+  output = c("simple", "detailed")[1],
   plot = FALSE
 )
 }
@@ -27,11 +28,23 @@ default presets for speaker "M1"; a vector of formant frequencies like
 \item{checkFormat}{if FALSE, only a list of properly formatted formant
 frequencies is accepted}
 
-\item{plot}{if TRUE, plots the regression line to illustrate the estimation
-of formant dispersion (method = "regression" only)}
+\item{output}{"simple" (default) = just the VTL; "detailed" = a list of
+additional stats (see Value below)}
+
+\item{plot}{if TRUE, plots the regression line whose slope gives formant
+dispersion (method = "regression" only) and Label size shows the influence
+of each observation; the second plot shows how VTL varies depending on the
+number of formants used}
 }
 \value{
-Returns the estimated vocal tract length in cm.
+If \code{output = 'simple'} (default), returns the estimated vocal
+  tract length in cm. If \code{output = 'detailed'} and \code{method =
+  'regression'}, returns a list with extra stats used for plotting. Namely,
+  \code{$regressionInfo$infl} gives the influence of each observation
+  calculated as the absolute change in VTL with vs without the observation *
+  10 + 1 (the size of labels on the first plot). \code{$vtlPerFormant$vtl}
+  gives the VTL as it would be estimated if only the first \code{nFormants}
+  were used.
 }
 \description{
 Estimates the length of vocal tract based on formant frequencies, assuming
@@ -55,12 +68,14 @@ frequencies.
 \examples{
 estimateVTL(NA)
 estimateVTL(500)
-estimateVTL(c(600, 1850, 3100))
+estimateVTL(c(600, 1850, 2800, 3600, 5000), plot = TRUE)
+estimateVTL(c(600, 1850, 2800, 3600, 5000), plot = TRUE, output = 'detailed')
+
 # Multiple measurements are OK
 estimateVTL(
   formants = list(f1 = c(540, 600, 550),
   f2 = 1650, f3 = c(2400, 2550)),
-  plot = TRUE)
+  plot = TRUE, output = 'detailed')
 # NB: this is better than averaging formant values. Cf.:
 estimateVTL(
   formants = list(f1 = mean(c(540, 600, 550)),
@@ -68,7 +83,7 @@ estimateVTL(
   plot = TRUE)
 
 # Missing values are OK
-estimateVTL(c(600, 1850, 3100, NA, 5000))
+estimateVTL(c(600, 1850, 3100, NA, 5000), plot = TRUE)
 estimateVTL(list(f1 = 500, f2 = c(1650, NA, 1400), f3 = 2700), plot = TRUE)
 
 # Note that VTL estimates based on the commonly reported 'meanDispersion'
