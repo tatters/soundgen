@@ -1,69 +1,3 @@
-#' Get formant dispersion
-#'
-#' Internal soundgen function.
-#'
-#' Estimates formant dispersion based on one or more formant frequencies.
-#' @inheritParams estimateVTL
-#' @keywords internal
-#' @examples
-#' soundgen:::getFormantDispersion(
-#'   list(f1 = c(570, 750), f2 = NA, f3 = c(2400, 2200, NA)))
-getFormantDispersion = function(
-  formants,
-  method = c('meanDispersion', 'regression')[2],
-  speedSound = 35400,
-  plot = FALSE,
-  checkFormat = TRUE
-) {
-  if (checkFormat) {
-    formants = reformatFormants(formants,
-                                output = 'freqs',
-                                keepNonInteger = FALSE)
-  }
-  if (!is.list(formants) |     # expect a preformatted list...
-      length(formants) < 1 |   # ...with at least one formant...
-      !any(!is.na(formants))) return(NA)  # ...and at least one non-NA
-  if (method == 'meanDispersion') {
-    formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
-    if (length(formant_freqs) > 1) {
-      formantDispersion = mean(diff(formant_freqs), na.rm = TRUE)
-    } else {
-      # a single formant
-      if (!is.na(formants$f1)) {
-        formantDispersion = 2 * formant_freqs
-      } else {
-        formantDispersion = NA
-      }
-    }
-  } else if (method == 'regression') {
-    # Reby et al. (2005) "Red deer stags use formants..."
-    fdf = NULL
-    for (i in 1:length(formants)) {
-      temp = data.frame(formantSpacing = (2 * i - 1) / 2,
-                        freq = formants[[i, drop = FALSE]]$freq)
-      if (is.null(fdf)) fdf = temp else fdf = rbind(fdf, temp)
-    }
-    mod = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf))
-    # NB: no intercept, i.e. forced to pass through 0
-    formantDispersion = suppressWarnings(summary(mod)$coef[1])
-    if (plot) {
-      plot(
-        fdf$formantSpacing, fdf$freq,
-        xlab = 'Formant spacing', ylab = 'Frequency, Hz',
-        xaxs = 'i', yaxs = 'i',
-        xlim = c(0, max(fdf$formantSpacing, na.rm = TRUE) * 1.04),
-        ylim = c(0, max(fdf$freq, na.rm = TRUE) * 1.04),
-        main = paste0('Formant dispersion = ',
-                      round(formantDispersion, 0),
-                      ' Hz')
-      )
-      abline(a = 0, b = formantDispersion, lty = 3)
-    }
-  }
-  return(formantDispersion)
-}
-
-
 #' Estimate vocal tract length
 #'
 #' Estimates the length of vocal tract based on formant frequencies, assuming
@@ -96,7 +30,8 @@ getFormantDispersion = function(
 #' @param checkFormat if FALSE, only a list of properly formatted formant
 #'   frequencies is accepted
 #' @param plot if TRUE, plots the regression line to illustrate the estimation
-#'   of formant dispersion (method = "regression" only)
+#'   of formant dispersion (method = "regression" only). Label size shows the
+#'   influence of each value on the slope (Cook's distance + 1)
 #' @return Returns the estimated vocal tract length in cm.
 #' @export
 #' @examples
@@ -375,3 +310,74 @@ schwa = function(formants = NULL,
   return(out)
 }
 
+
+#' Get formant dispersion
+#'
+#' Internal soundgen function.
+#'
+#' Estimates formant dispersion based on one or more formant frequencies.
+#' @inheritParams estimateVTL
+#' @keywords internal
+#' @examples
+#' soundgen:::getFormantDispersion(
+#'   list(f1 = c(570, 750), f2 = NA, f3 = c(2400, 2200, NA)))
+getFormantDispersion = function(
+  formants,
+  method = c('meanDispersion', 'regression')[2],
+  speedSound = 35400,
+  plot = FALSE,
+  checkFormat = TRUE
+) {
+  if (checkFormat) {
+    formants = reformatFormants(formants,
+                                output = 'freqs',
+                                keepNonInteger = FALSE)
+  }
+  if (!is.list(formants) |     # expect a preformatted list...
+      length(formants) < 1 |   # ...with at least one formant...
+      !any(!is.na(formants))) return(NA)  # ...and at least one non-NA
+  if (method == 'meanDispersion') {
+    formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
+    if (length(formant_freqs) > 1) {
+      formantDispersion = mean(diff(formant_freqs), na.rm = TRUE)
+    } else {
+      # a single formant
+      if (!is.na(formants$f1)) {
+        formantDispersion = 2 * formant_freqs
+      } else {
+        formantDispersion = NA
+      }
+    }
+  } else if (method == 'regression') {
+    # Reby et al. (2005) "Red deer stags use formants..."
+    fdf = NULL
+    for (i in 1:length(formants)) {
+      temp = data.frame(formantSpacing = (2 * i - 1) / 2,
+                        freq = formants[[i, drop = FALSE]]$freq)
+      if (is.null(fdf)) fdf = temp else fdf = rbind(fdf, temp)
+    }
+    mod = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf))
+    # NB: no intercept, i.e. forced to pass through 0
+    formantDispersion = suppressWarnings(summary(mod)$coef[1])
+    if (plot) {
+      plot(
+        fdf$formantSpacing, fdf$freq,
+        type = 'n',
+        xlab = 'Formant spacing', ylab = 'Frequency, Hz',
+        xaxs = 'i', yaxs = 'i',
+        xlim = c(0, tail(fdf$formantSpacing, 1) + 1),
+        ylim = c(0, max(fdf$freq, na.rm = TRUE) * 1.2),
+        main = paste0('Formant dispersion = ',
+                      round(formantDispersion, 0),
+                      ' Hz')
+      )
+      text(
+        fdf$formantSpacing, fdf$freq,
+        labels = paste0('F', 1:nrow(fdf)),
+        cex = cooks.distance(mod) + 1
+      )
+      abline(a = 0, b = formantDispersion, lty = 3)
+    }
+  }
+  return(formantDispersion)
+}

@@ -4,7 +4,8 @@ BUGS FIXED:
   * pitch_app() saves all files propertly if multiple folders are opened consecutively without saving the output
 
 MINOR:
-  * soundgen(): smothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing.
+  * soundgen(): smoothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing
+  * estimateVTL(): the plot shows Cook's distance as a measure of the influence of each formant frequency on apparent VTL
 
 
           CHANGES IN SOUNDGEN VERSION 1.7.0 [24-May-2020]
