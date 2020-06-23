@@ -20,6 +20,14 @@
 #'   jobs = (1:20) ^ 2, reportEvery = 5)
 #' }
 #' \dontrun{
+#' # Unknown number of iterations:
+#' time_start = proc.time()
+#' for (i in 1:20) {
+#'   Sys.sleep(i ^ 2 / 10000)
+#'   reportTime(i = i, time_start = time_start,
+#'   jobs = (1:20) ^ 2, reportEvery = 5)
+#' }
+#'
 #' # when analyzing a bunch of audio files, their size is a good estimate
 #' # of how long each will take to process
 #' time_start = proc.time()
@@ -32,23 +40,36 @@
 #'              time_start = time_start, jobs = filesizes)
 #' }
 #' }
-reportTime = function(i, nIter, time_start, jobs = NULL, reportEvery = 1) {
+reportTime = function(i,
+                      time_start,
+                      nIter = NULL,
+                      jobs = NULL,
+                      reportEvery = 1) {
   time_diff = as.numeric((proc.time() - time_start)[3])
-  if (i == nIter) {
-    time_total = convert_sec_to_hms(time_diff)
-    print(paste0('Completed ', i, ' iterations in ', time_total, '.'))
-  } else {
+  if (is.null(nIter)) {
+    # number of iter unknown, so we just report time elapsed
     if (i %% reportEvery == 0) {
-      if (is.null(jobs)) {
-        # simply count iterations
-        time_left = time_diff / i * (nIter - i)
-      } else {
-        # take into account the expected time for each iteration
-        speed = time_diff / sum(jobs[1:i])
-        time_left = speed * sum(jobs[min((i + 1), nIter):nIter])
+      print(paste0('Completed ', i, ' iterations in ',
+                   convert_sec_to_hms(time_diff)))
+    }
+  } else {
+    # we know how many iter, so we also report time left
+    if (i == nIter) {
+      time_total = convert_sec_to_hms(time_diff)
+      print(paste0('Completed ', i, ' iterations in ', time_total, '.'))
+    } else {
+      if (i %% reportEvery == 0) {
+        if (is.null(jobs)) {
+          # simply count iterations
+          time_left = time_diff / i * (nIter - i)
+        } else {
+          # take into account the expected time for each iteration
+          speed = time_diff / sum(jobs[1:i])
+          time_left = speed * sum(jobs[min((i + 1), nIter):nIter])
+        }
+        time_left_hms = convert_sec_to_hms(time_left)
+        print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', time_left_hms))
       }
-      time_left_hms = convert_sec_to_hms(time_left)
-      print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', time_left_hms))
     }
   }
 }
@@ -63,25 +84,36 @@ reportTime = function(i, nIter, time_start, jobs = NULL, reportEvery = 1) {
 #' @return Returns a character string like "1 h 20 min 3 s"
 #' @keywords internal
 #' @examples
-#' time_start = proc.time()
-#' Sys.sleep(1)
-#' time_diff = as.numeric((proc.time() - time_start)[3])
-#' soundgen:::convert_sec_to_hms(time_diff)
+#' time_s = c(0, .65, 180, 182, 3721, 10000, 150000,
+#'            365 * 24 * 3600,
+#'            365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
+#' soundgen:::convert_sec_to_hms(time_s)
 convert_sec_to_hms = function(time_s) {
-  hours = time_s %/% 3600
-  minutes = time_s %/% 60 - hours * 60
-  seconds = round(time_s %% 60, 0)
+  years = time_s %/% 31536000
+  years_string = ifelse(years > 0, paste(years, 'y '), '')
 
-  output = ''
-  if (hours > 0) output = paste0(output, hours, ' h ')
-  if (minutes > 0) output = paste0(output, minutes, ' min ')
-  output = paste0(output, seconds, ' s')
+  months = time_s %/% 2592000 - years * 12
+  months_string = ifelse(months > 0, paste(months, 'm '), '')
 
-  # remove the last space, if any
-  if (substr(output, nchar(output), nchar(output)) == ' ') {
-    output = substr(output, 1, nchar(output)-1)
-  }
-  return(output)
+  days = time_s %/% 86400 - years * 365 - months * 30
+  days_string = ifelse(days > 0, paste(days, 'd '), '')
+
+  hours = time_s %/% 3600 - years * 8760 - months * 720 - days * 24
+  hours_string = ifelse(hours > 0, paste(hours, 'h '), '')
+
+  minutes = time_s %/% 60 - years * 525600 - months * 43200 - days * 1440 - hours * 60
+  minutes_string = ifelse(minutes > 0, paste(minutes, 'min '), '')
+
+  seconds = round(time_s %% 60, 3)
+  idx = which(years > 0 | months > 0 | days > 0 | hours > 0 | minutes > 0)
+  seconds[idx] = round(seconds[idx])  # only keep decimals under 1 min
+  seconds_string = ifelse(seconds > 0, paste(seconds, 's '), '')
+  seconds_string[years == 0 & months == 0 & days == 0 &
+                   hours == 0 & minutes == 0 & seconds == 0] = '0 s '
+
+  return(trimws(paste0(years_string, months_string,
+                       days_string, hours_string,
+                       minutes_string, seconds_string)))
 }
 
 

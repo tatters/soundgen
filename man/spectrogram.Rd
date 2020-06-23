@@ -20,16 +20,16 @@ spectrogram(
   qTime = 0,
   percentNoise = 10,
   noiseReduction = 0,
-  contrast = 0.2,
-  brightness = 0,
   method = c("spectrum", "spectralDerivative")[1],
   output = c("original", "processed", "complex")[1],
-  ylim = NULL,
-  yScale = c("linear", "log")[1],
   plot = TRUE,
   osc = FALSE,
   osc_dB = FALSE,
   heights = c(3, 1),
+  ylim = NULL,
+  yScale = c("linear", "log")[1],
+  contrast = 0.2,
+  brightness = 0,
   padWithSilence = TRUE,
   colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
   units = c("ms", "kHz"),
@@ -87,12 +87,6 @@ noise spectrum}
 spectrum of frames with entropy exceeding the quantile set by
 \code{percentNoise}}
 
-\item{contrast}{spectrum is exponentiated by contrast (-inf to +inf,
-recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
-sharpness}
-
-\item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
-
 \item{method}{plot spectrum ('spectrum') or spectral derivative
 ('spectralDerivative')}
 
@@ -100,11 +94,6 @@ sharpness}
 spectrogram ('original'), denoised and/or smoothed spectrogram
 ('processed'), or unmodified spectrogram with the imaginary part giving
 phase ('complex')}
-
-\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
-
-\item{yScale}{scale of the frequency axis: 'linear' = linear, 'log' =
-logarithmic}
 
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
@@ -114,6 +103,17 @@ FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
 
 \item{heights}{a vector of length two specifying the relative height of the
 spectrogram and the oscillogram (including time axes labels)}
+
+\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
+
+\item{yScale}{scale of the frequency axis: 'linear' = linear, 'log' =
+logarithmic}
+
+\item{contrast}{spectrum is exponentiated by contrast (-inf to +inf,
+recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
+sharpness}
+
+\item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
 
 \item{padWithSilence}{if TRUE, pads the sound with just enough silence to
 resolve the edges properly (only the original region is plotted, so

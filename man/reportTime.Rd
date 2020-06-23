@@ -4,14 +4,14 @@
 \alias{reportTime}
 \title{Report time}
 \usage{
-reportTime(i, nIter, time_start, jobs = NULL, reportEvery = 1)
+reportTime(i, time_start, nIter = NULL, jobs = NULL, reportEvery = 1)
 }
 \arguments{
 \item{i}{current iteration}
 
-\item{nIter}{total number of iterations}
-
 \item{time_start}{time when the loop started running}
+
+\item{nIter}{total number of iterations}
 
 \item{jobs}{vector of length \code{nIter} specifying the relative difficulty
 of each iteration. If not NULL, estimated time left takes into account
@@ -31,6 +31,14 @@ for (i in 1:20) {
   jobs = (1:20) ^ 2, reportEvery = 5)
 }
 \dontrun{
+# Unknown number of iterations:
+time_start = proc.time()
+for (i in 1:20) {
+  Sys.sleep(i ^ 2 / 10000)
+  reportTime(i = i, time_start = time_start,
+  jobs = (1:20) ^ 2, reportEvery = 5)
+}
+
 # when analyzing a bunch of audio files, their size is a good estimate
 # of how long each will take to process
 time_start = proc.time()

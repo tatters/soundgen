@@ -2,19 +2,21 @@
 % Please edit documentation in R/spectrogram.R
 \name{osc_dB}
 \alias{osc_dB}
-\title{Oscillogram dB}
+\title{Oscillogram on a decibell scale}
 \usage{
 osc_dB(
   x,
   dynamicRange = 80,
+  dB = FALSE,
   maxAmpl = NULL,
   samplingRate = NULL,
   returnWave = FALSE,
   plot = TRUE,
   xlab = NULL,
-  ylab = "dB",
+  ylab = NULL,
   bty = "n",
   midline = TRUE,
+  maxPoints = NULL,
   ...
 )
 }
@@ -23,6 +25,8 @@ osc_dB(
 samplingRate}
 
 \item{dynamicRange}{dynamic range of the oscillogram, dB}
+
+\item{dB}{if TRUE, plots on a dB instead of linear scale}
 
 \item{maxAmpl}{the maximum theoretically possible value indicating on which
 scale the sound is coded: 1 if the range is -1 to +1, 2^15 for 16-bit wav
@@ -35,45 +39,24 @@ numeric vector, rather than a .wav file)}
 
 \item{plot}{if TRUE, plots the oscillogram}
 
-\item{xlab, ylab}{axis labels}
+\item{xlab}{axis labels}
+
+\item{ylab}{axis labels}
 
 \item{bty}{box type (see `?par`)}
 
 \item{midline}{if TRUE, draws a line at 0 dB}
 
+\item{maxPoints}{the maximum number of points to plot (speeds up the plotting
+of long audio files, but beware of antialiasing)}
+
 \item{...}{Other graphical parameters passed on to `plot()`}
 }
-\value{
-Returns the input waveform on a dB scale: a vector with
-  range from `-dynamicRange` to `dynamicRange`.
-}
 \description{
-Plots the oscillogram (waveform) of a sound on a logarithmic scale, in dB.
-Analogous to "Waveform (dB)" view in Audacity.
-}
-\details{
-Algorithm: centers and normalizes the sound, then takes a logarithm of the positive part
-and a flipped negative part.
+Deprecated; use \code{link{osc}} instead.
 }
 \examples{
 sound = sin(1:2000/10) *
         getSmoothContour(anchors = c(1, .01, .5), len = 2000)
-
-# Oscillogram on a linear scale
-plot(sound, type = 'l')
-# or, for fancy plotting options: seewave::oscillo(sound, f = 1000)
-
-# Oscillogram on a dB scale
 osc_dB(sound)
-
-# Time in ms if samplingRate is specified
-osc_dB(sound, samplingRate = 5000)
-
-# Assuming that the waveform can range up to 50 instead of 1
-osc_dB(sound, maxAmpl = 50)
-
-# Embellish and customize the plot
-o = osc_dB(sound, samplingRate = 1000, midline = FALSE,
-           main = 'My waveform', col = 'blue')
-abline(h = 0, col = 'orange', lty = 3)
 }

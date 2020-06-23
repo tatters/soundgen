@@ -160,16 +160,17 @@ spectrogram = function(
   qTime = 0,
   percentNoise = 10,
   noiseReduction = 0,
-  contrast = .2,
-  brightness = 0,
   method = c('spectrum', 'spectralDerivative')[1],
   output = c('original', 'processed', 'complex')[1],
-  ylim = NULL,
-  yScale = c('linear', 'log')[1],
   plot = TRUE,
   osc = FALSE,
   osc_dB = FALSE,
   heights = c(3, 1),
+  ylim = NULL,
+  yScale = c('linear', 'log')[1],
+  contrast = .2,
+  brightness = 0,
+  # maxDur = 10,
   padWithSilence = TRUE,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
   units = c('ms', 'kHz'),
@@ -730,18 +731,20 @@ filled.contour.mod = function(
 }
 
 
-#' Oscillogram dB
+#' Oscillogram
 #'
-#' Plots the oscillogram (waveform) of a sound on a logarithmic scale, in dB.
-#' Analogous to "Waveform (dB)" view in Audacity.
-#'
-#' Algorithm: centers and normalizes the sound, then takes a logarithm of the positive part
-#' and a flipped negative part.
-#' @return Returns the input waveform on a dB scale: a vector with
-#'   range from `-dynamicRange` to `dynamicRange`.
+#' Plots the oscillogram (waveform) of a sound on a linear or logarithmic scale
+#' (in dB). To get a dB scale, centers and normalizes the sound, then takes a
+#' logarithm of the positive part and a flipped negative part, which is
+#' analogous to "Waveform (dB)" view in Audacity. For more plotting options,
+#' check \code{\link[seewave]{oscillo}}.
+#' @return If \code{returnWave = TRUE}, returns the input waveform on the
+#'   original or dB scale: a vector with range from `-dynamicRange` to
+#'   `dynamicRange`.
 #' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param dynamicRange dynamic range of the oscillogram, dB
+#' @param dB if TRUE, plots on a dB instead of linear scale
 #' @param maxAmpl the maximum theoretically possible value indicating on which
 #'   scale the sound is coded: 1 if the range is -1 to +1, 2^15 for 16-bit wav
 #'   files, etc
@@ -752,40 +755,58 @@ filled.contour.mod = function(
 #' @param xlab,ylab axis labels
 #' @param bty box type (see `?par`)
 #' @param midline if TRUE, draws a line at 0 dB
+#' @param maxPoints the maximum number of points to plot (speeds up the plotting
+#'   of long audio files, but beware of antialiasing)
 #' @param ... Other graphical parameters passed on to `plot()`
 #' @export
 #' @examples
 #' sound = sin(1:2000/10) *
 #'         getSmoothContour(anchors = c(1, .01, .5), len = 2000)
 #'
-#' # Oscillogram on a linear scale
+#' # Oscillogram on a linear scale without bells and whistles, just base R
 #' plot(sound, type = 'l')
-#' # or, for fancy plotting options: seewave::oscillo(sound, f = 1000)
 #'
-#' # Oscillogram on a dB scale
-#' osc_dB(sound)
+#' # Oscillogram options with soundgen
+#' osc(sound)             # linear
+#' osc(sound, dB = TRUE)  # dB
 #'
-#' # Time in ms if samplingRate is specified
-#' osc_dB(sound, samplingRate = 5000)
-#'
-#' # Assuming that the waveform can range up to 50 instead of 1
-#' osc_dB(sound, maxAmpl = 50)
+#' # For numeric vectors, indicate max amplitude
+#' osc(sound, maxAmpl = 100, dB = TRUE)
 #'
 #' # Embellish and customize the plot
-#' o = osc_dB(sound, samplingRate = 1000, midline = FALSE,
-#'            main = 'My waveform', col = 'blue')
-#' abline(h = 0, col = 'orange', lty = 3)
-osc_dB = function(x,
-                  dynamicRange = 80,
-                  maxAmpl = NULL,
-                  samplingRate = NULL,
-                  returnWave = FALSE,
-                  plot = TRUE,
-                  xlab = NULL,
-                  ylab = 'dB',
-                  bty = 'n',
-                  midline = TRUE,
-                  ...) {
+#' o = osc(sound, dB = TRUE, samplingRate = 1000, midline = FALSE,
+#'         main = 'My waveform', col = 'blue', returnWave = TRUE)
+#' abline(h = -80, col = 'orange', lty = 3)
+#' o[1:10]  # the waveform in dB
+#'
+#' \dontrun{
+#' # audio file
+#' data(sheep, package = 'seewave')
+#' osc(sheep@left, samplingRate = sheep@samp.rate, dB = TRUE)
+#'
+#' # for long files, reduce the resolution to plot quickly (careful: if the
+#' resolution is too low, antialiasing may cause artifacts)
+#' osc(sheep@left, samplingRate = sheep@samp.rate, dB = TRUE, maxPoints = 2500)
+#' osc(sound, samplingRate = 5000, maxPoints = 100)
+#'
+#' # files several minutes long can be plotted in under a second
+#' osc('~/Downloads/temp.wav', maxPoints = 20000)
+#' }
+osc = function(
+  x,
+  dynamicRange = 80,
+  dB = FALSE,
+  maxAmpl = NULL,
+  samplingRate = NULL,
+  returnWave = FALSE,
+  plot = TRUE,
+  xlab = NULL,
+  ylab = NULL,
+  bty = 'n',
+  midline = TRUE,
+  maxPoints = NULL,
+  ...
+) {
   # import a sound
   if (class(x)[1] == 'character') {
     sound_wav = tuneR::readWave(x)
@@ -797,42 +818,110 @@ osc_dB = function(x,
   }
 
   # get original range
+  rs = range(sound)
+  d = diff(rs)
   if (!is.null(maxAmpl)) {
-    mult = diff(range(sound)) / 2 / maxAmpl
+    mult = d / 2 / maxAmpl
+    m = maxAmpl
   } else {
     mult = 1  # assume max loudness
+    m = max(abs(rs))
   }
 
-  # center and normalize to range from -1 to +1, unless it is quieter than maxAmpl
-  s1 = sound - mean(sound)
-  s1 = s1 / max(abs(s1)) * mult
+  if (dB) {
+    # center and normalize to range from -1 to +1, unless it is quieter than maxAmpl
+    ms = mean(sound)
+    s1 = sound - ms
+    rs = rs - ms
+    s1 = s1 / max(abs(rs)) * mult
 
-  # indices of values above/below midline
-  floor = 10^(-dynamicRange / 20)  # treat smaller values as 0 (beyond dynamic range)
-  zero = which(abs(s1) < floor)
-  pos = which(s1 > floor)
-  neg = which(s1 < -floor)
+    # treat smaller values as 0 (beyond dynamic range)
+    floor = 10^(-dynamicRange / 20)
+    zero = which(abs(s1) < floor)
 
-  # log-transform
-  sound[pos] = 20 * log10(s1[pos])
-  sound[neg] = -20 * log10(-s1[neg]) - 2 * dynamicRange
-  sound[zero] = -dynamicRange
+    # get indices of values above/below midline
+    pos = which(s1 > floor)
+    neg = which(s1 < -floor)
+
+    # log-transform
+    sound[pos] = 20 * log10(s1[pos])
+    sound[neg] = -20 * log10(-s1[neg]) - 2 * dynamicRange
+    sound[zero] = -dynamicRange
+    midline_pos = -dynamicRange
+  } else {
+    midline_pos = mean(rs)
+  }
 
   # plot
   if (plot) {
+    l = length(sound)
+
+    # For long files, downsample before plotting
+    if (!is.null(maxPoints)) {
+      # maxPoints = 2 ^ (round(log2(maxPoints)))
+      myseq = round(seq(1, l, by = l / maxPoints))
+      maxPoints = length(myseq)
+      sound_plot = sound[myseq]
+    } else {
+      maxPoints = l
+      sound_plot = sound
+    }
+
+    # Get time stamps
     if (!is.null(samplingRate)) {
-      time = 1:length(sound) / samplingRate * 1000
+      time = seq(1, l, length.out = maxPoints) / samplingRate * 1000
       if (is.null(xlab)) xlab = 'Time, ms'
     } else {
-      time = 1:length(sound)
+      time = seq(1, l, length.out = maxPoints)
       if (is.null(xlab)) xlab = 'Time, points'
     }
-    # plot(time, sound, type = 'l', xlab = xlab, ylab = ylab, ...)
-    plot(time, sound, type = 'l', xlab = xlab, ylab = ylab,
-         bty = bty, yaxt = 'n', ylim = c(-2 * dynamicRange, 0), ...)
-    axis(side = 2, at = seq(-dynamicRange, 0, by = 10))
-    if (midline) abline(h = -dynamicRange, lty = 2, col = 'gray70')
+    if (is.null(ylab)) if (dB) ylab = 'dB' else ylab = ''
+    if (dB) ylim = c(-2 * dynamicRange, 0) else ylim = c(-m, m)
+
+    # plot
+    plot(time, sound_plot, type = 'l', xlab = xlab, ylab = ylab,
+         bty = bty, xaxt = 'n', yaxt = 'n', ylim = ylim, ...)
+    time_location = axTicks(1)
+    time_labels = convert_sec_to_hms(time_location / 1000)
+    axis(side = 1, at = time_location, labels = time_labels)
+    if (dB) {
+      axis(side = 2, at = seq(-dynamicRange, 0, by = 10))
+    } else {
+      axis(side = 2)
+    }
+    if (midline) abline(h = midline_pos, lty = 2, col = 'gray70')
   }
 
-  if (returnWave) return(sound)
+  if (returnWave) invisible(sound)
+}
+
+#' Oscillogram on a decibell scale
+#'
+#' Deprecated; use \code{link{osc}} instead.
+#' @inheritParams osc
+#' @export
+#' @examples
+#' sound = sin(1:2000/10) *
+#'         getSmoothContour(anchors = c(1, .01, .5), len = 2000)
+#' osc_dB(sound)
+osc_dB = function(
+  x,
+  dynamicRange = 80,
+  dB = FALSE,
+  maxAmpl = NULL,
+  samplingRate = NULL,
+  returnWave = FALSE,
+  plot = TRUE,
+  xlab = NULL,
+  ylab = NULL,
+  bty = 'n',
+  midline = TRUE,
+  maxPoints = NULL,
+  ...
+) {
+  message("osc_dB is deprecated; please use osc(dB = TRUE) isntead")
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+  do.call(osc, myPars)
 }

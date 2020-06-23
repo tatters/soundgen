@@ -19,9 +19,9 @@ Internal soundgen function.
 Converts time in seconds to time in hh:mm:ss for pretty printing.
 }
 \examples{
-time_start = proc.time()
-Sys.sleep(1)
-time_diff = as.numeric((proc.time() - time_start)[3])
-soundgen:::convert_sec_to_hms(time_diff)
+time_s = c(0, .65, 180, 182, 3721, 10000, 150000,
+           365 * 24 * 3600,
+           365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
+soundgen:::convert_sec_to_hms(time_s)
 }
 \keyword{internal}
