@@ -121,8 +121,7 @@ ui = fluidPage(
                                   tabPanel("Oscillogram",
                                            selectInput('osc', 'Oscillogram type ("osc")', choices = c('none', 'linear', 'dB'), selected = 'linear', multiple = FALSE),
                                            sliderInput('osc_height', 'Oscillogram height, px ("heights")', value=100, min=25, max=500, step=25),
-                                            sliderInput('maxPoints_osc', 'Max number of pixels, 10^', value=5, min=3, max=7, step=.5),
-                                           sliderInput('osc_res', 'Oscillogram resolution', value = .5, min = 0, max = 1, step = .05)
+                                            sliderInput('maxPoints_osc', 'Max number of pixels, 10^', value=5, min=3, max=7, step=.5)
                                   )
                        )
            ),
