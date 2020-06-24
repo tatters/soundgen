@@ -6,6 +6,8 @@ BUGS FIXED:
 MINOR:
   * soundgen(): smoothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing
   * estimateVTL(): the plot shows Cook's distance as a measure of the influence of each formant frequency on apparent VTL
+  * osc() replaces osc_db()
+  * osc(), spectrogram(): fast plotting of long audio files, updated tick labels
 
 
           CHANGES IN SOUNDGEN VERSION 1.7.0 [24-May-2020]

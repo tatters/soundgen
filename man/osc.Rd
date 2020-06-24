@@ -16,7 +16,7 @@ osc(
   ylab = NULL,
   bty = "n",
   midline = TRUE,
-  maxPoints = NULL,
+  maxPoints = 10000,
   ...
 )
 }

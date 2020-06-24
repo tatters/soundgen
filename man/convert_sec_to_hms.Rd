@@ -16,12 +16,13 @@ Returns a character string like "1 h 20 min 3 s"
 Internal soundgen function.
 }
 \details{
-Converts time in seconds to time in hh:mm:ss for pretty printing.
+Converts time in seconds to time in y m d h min s for pretty printing.
 }
 \examples{
 time_s = c(0, .65, 180, 182, 3721, 10000, 150000,
            365 * 24 * 3600,
            365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
 soundgen:::convert_sec_to_hms(time_s)
+soundgen:::convert_sec_to_hms(c(.01, .33, .8))
 }
 \keyword{internal}

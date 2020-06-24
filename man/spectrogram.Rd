@@ -30,11 +30,13 @@ spectrogram(
   yScale = c("linear", "log")[1],
   contrast = 0.2,
   brightness = 0,
+  maxPoints = c(1e+05, 5e+05),
   padWithSilence = TRUE,
   colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
-  units = c("ms", "kHz"),
-  xlab = paste("Time,", units[1]),
-  ylab = paste("Frequency,", units[2]),
+  units = "deprecated",
+  xlab = NULL,
+  ylab = NULL,
+  xaxp = NULL,
   mar = c(5.1, 4.1, 4.1, 2),
   main = "",
   grid = NULL,
@@ -115,6 +117,10 @@ sharpness}
 
 \item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
 
+\item{maxPoints}{the maximum number of "pixels" in the oscillogram (if any)
+and spectrogram; good for plotting long audio files; defaults to c(1e5,
+5e5)}
+
 \item{padWithSilence}{if TRUE, pads the sound with just enough silence to
 resolve the edges properly (only the original region is plotted, so
 apparent duration doesn't change)}
@@ -123,10 +129,9 @@ apparent duration doesn't change)}
 or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
 'cm.colors', etc}
 
-\item{units}{c('ms', 'kHz') is the default, and anything else is interpreted
-as s (for time) and Hz (for frequency)}
+\item{units}{deprecated}
 
-\item{xlab, ylab, main, mar}{graphical parameters}
+\item{xlab, ylab, main, mar, xaxp}{graphical parameters}
 
 \item{grid}{if numeric, adds n = \code{grid} dotted lines per kHz}
 
@@ -173,8 +178,7 @@ spectrogram(sound, samplingRate = 16000,
   colorTheme = 'heat.colors',  # pick color theme
   cex.lab = .75, cex.axis = .75,  # text size and other base graphics pars
   grid = 5,  # lines per kHz; to customize, add manually with graphics::grid()
-  units = c('s', 'Hz'),  # plot in s or ms, Hz or kHz
-  ylim = c(0, 5000),  # in specified units (Hz)
+  ylim = c(0, 5),  # always in kHz
   main = 'My spectrogram' # title
   # + axis labels, etc
 )
@@ -214,7 +218,14 @@ spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 
 # specify location of tick marks etc - see ?par() for base graphics
 spectrogram(sound, samplingRate = 16000,
-            ylim = c(0, 3), yaxp = c(0, 3, 5), xaxp = c(0, 1400, 4))
+            ylim = c(0, 3), yaxp = c(0, 3, 5), xaxp = c(0, .8, 10))
+
+# Plot long audio files with reduced resolution
+# (# ~4 s to process + 10 s to plot a 3-min song)
+sp = spectrogram('~/Downloads/temp.wav', overlap = 0, osc = TRUE,
+  maxPoints = c(1e5, 5e5),  # limit the number of pixels in osc/spec
+  output = 'original', ylim = c(0, 6))
+nrow(sp) * ncol(sp) / 5e5  # spec downsampled by a factor of ~9
 }
 }
 \seealso{

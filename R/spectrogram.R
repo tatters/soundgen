@@ -49,6 +49,9 @@
 #'   recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
 #'   sharpness
 #' @param brightness how much to "lighten" the image (>0 = lighter, <0 = darker)
+#' @param maxPoints the maximum number of "pixels" in the oscillogram (if any)
+#'   and spectrogram; good for plotting long audio files; defaults to c(1e5,
+#'   5e5)
 #' @param method plot spectrum ('spectrum') or spectral derivative
 #'   ('spectralDerivative')
 #' @param output specifies what to return: nothing ('none'), unmodified
@@ -70,9 +73,8 @@
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
 #'   or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
 #'   'cm.colors', etc
-#' @param units c('ms', 'kHz') is the default, and anything else is interpreted
-#'   as s (for time) and Hz (for frequency)
-#' @param xlab,ylab,main,mar graphical parameters
+#' @param units deprecated
+#' @param xlab,ylab,main,mar,xaxp graphical parameters
 #' @param grid if numeric, adds n = \code{grid} dotted lines per kHz
 #' @param ... other graphical parameters
 #' @param frameBank,duration,pitch ignore (only used internally)
@@ -101,8 +103,7 @@
 #'   colorTheme = 'heat.colors',  # pick color theme
 #'   cex.lab = .75, cex.axis = .75,  # text size and other base graphics pars
 #'   grid = 5,  # lines per kHz; to customize, add manually with graphics::grid()
-#'   units = c('s', 'Hz'),  # plot in s or ms, Hz or kHz
-#'   ylim = c(0, 5000),  # in specified units (Hz)
+#'   ylim = c(0, 5),  # always in kHz
 #'   main = 'My spectrogram' # title
 #'   # + axis labels, etc
 #' )
@@ -142,7 +143,14 @@
 #'
 #' # specify location of tick marks etc - see ?par() for base graphics
 #' spectrogram(sound, samplingRate = 16000,
-#'             ylim = c(0, 3), yaxp = c(0, 3, 5), xaxp = c(0, 1400, 4))
+#'             ylim = c(0, 3), yaxp = c(0, 3, 5), xaxp = c(0, .8, 10))
+#'
+#' # Plot long audio files with reduced resolution
+#' # (# ~4 s to process + 10 s to plot a 3-min song)
+#' sp = spectrogram('~/Downloads/temp.wav', overlap = 0, osc = TRUE,
+#'   maxPoints = c(1e5, 5e5),  # limit the number of pixels in osc/spec
+#'   output = 'original', ylim = c(0, 6))
+#' nrow(sp) * ncol(sp) / 5e5  # spec downsampled by a factor of ~9
 #' }
 spectrogram = function(
   x,
@@ -170,12 +178,13 @@ spectrogram = function(
   yScale = c('linear', 'log')[1],
   contrast = .2,
   brightness = 0,
-  # maxDur = 10,
+  maxPoints = c(1e5, 5e5),
   padWithSilence = TRUE,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
-  units = c('ms', 'kHz'),
-  xlab = paste('Time,', units[1]),
-  ylab = paste('Frequency,', units[2]),
+  units = 'deprecated',
+  xlab = NULL,
+  ylab = NULL,
+  xaxp = NULL,
   mar = c(5.1, 4.1, 4.1, 2),
   main = '',
   grid = NULL,
@@ -264,13 +273,6 @@ spectrogram = function(
   }
 
   # fix default settings
-  if (is.null(ylim)) {
-    if (units[2] == 'kHz') {
-      ylim = c(0, samplingRate / 2 / 1000)
-    } else {
-      ylim = c(0, samplingRate / 2)
-    }
-  }
   contrast_exp = exp(3 * contrast)
   brightness_exp = exp(3 * brightness)
   # visualization: plot(exp(3 * seq(-1, 1, by = .01)), type = 'l')
@@ -379,27 +381,44 @@ spectrogram = function(
   }
 
   if (plot) {
-    # spectrogram of the modified fft
+    # produce a spectrogram of the modified fft
     color.palette = switchColorTheme(colorTheme)
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
+    if (is.null(xlab)) xlab = ''
+    if (!is.null(maxPoints)) {
+      if (length(maxPoints) == 1) maxPoints = c(maxPoints, maxPoints)
+    }
+    if (is.null(ylim)) ylim = c(0, samplingRate / 2 / 1000)
+
+    lx = length(X)
+    ly = length(Y)
+    x_ms = X[lx] < 1    # need to convert x-scale
+    y_Hz = ylim[2] < 1  # need to convert y-scale
+
     if (osc | osc_dB) {
+      # For long files, downsample before plotting
+      l = length(sound)
+      if (!is.null(maxPoints) && maxPoints[1] < l) {
+        myseq = round(seq(1, l, by = l / maxPoints[1]))
+        l = length(myseq)
+        sound = sound[myseq]
+      }
+
       if (osc_dB) {
-        sound = osc_dB(sound,
-                       dynamicRange = dynamicRange,
-                       maxAmpl = maxAmpl,
-                       plot = FALSE,
-                       returnWave = TRUE)
+        sound = osc(sound,
+                    dynamicRange = dynamicRange,
+                    dB = TRUE,
+                    maxAmpl = maxAmpl,
+                    plot = FALSE,
+                    returnWave = TRUE)
         ylim_osc = c(-2 * dynamicRange, 0)
       } else {
         ylim_osc = c(-maxAmpl, maxAmpl)
       }
+
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
       par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
-      if (units[1] == 'ms') {
-        time_stamps = seq(0, duration * 1000, length.out = length(sound))
-      } else {
-        time_stamps = seq(0, duration, length.out = length(sound))
-      }
+      time_stamps = seq(0, duration, length.out = length(sound))
       plot(
         time_stamps,
         sound,
@@ -408,7 +427,10 @@ spectrogram = function(
         axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
         xlab = xlab, ylab = '', main = '', ...)
       box()
-      axis(side = 1, ...)
+      time_location = axTicks(1, axp = xaxp)
+      time_labels = convert_sec_to_hms(time_location)
+      axis(side = 1, at = time_location, labels = time_labels, ...)
+
       if (osc_dB) {
         axis(side = 4, at = seq(-dynamicRange, 0, by = 10), ...)
         abline(h = -dynamicRange, lty = 2, col = 'gray70')
@@ -422,28 +444,58 @@ spectrogram = function(
       par(mar = mar)
     }
 
-    min_log_freq = ifelse(units[2] == 'kHz', .01, 10)
-    if (yScale == 'log' & ylim[1] < min_log_freq)  ylim[1] = min_log_freq
-    if (units[1] == 'ms') {
+    if (x_ms) {
       xlim = c(0, duration * 1000)
     } else {
       X = X / 1000
       xlim = c(0, duration)
     }
-    if (units[2] != 'kHz') Y = Y * 1000
+    if (y_Hz) {
+      Y = Y * 1000
+      ylim = ylim * 1000
+      min_log_freq = 10
+      if (is.null(ylab)) ylab = 'Frequency, Hz'
+    }  else {
+      min_log_freq = .01
+      if (is.null(ylab)) ylab = 'Frequency, kHz'
+    }
+    if (yScale == 'log' & ylim[1] < min_log_freq)  ylim[1] = min_log_freq
+    idx_y = which(Y >= ylim[1] & Y <= ylim[2])
+    Y = Y[idx_y]
+    ly = length(Y)
+    Z1_plot = Z1[, idx_y]
+
+    # For long files, downsample before plotting
+    lxy = lx *ly
+    if (!is.null(maxPoints) && maxPoints[2] < lxy) {
+      message(paste('Plotting with reduced resolution;',
+                    'increase maxPoints or set to NULL to override'))
+      downs = sqrt(lxy / maxPoints[2])
+      seqx = round(seq(1, lx, length.out = lx / downs))
+      seqy = round(seq(1, ly, length.out = ly / downs))
+      X = X[seqx]
+      Y = Y[seqy]
+      Z1_plot = Z1[seqx, seqy]
+    }
+
     filled.contour.mod(
-      x = X, y = Y, z = Z1,
+      x = X, y = Y, z = Z1_plot,
       levels = seq(0, 1, length = 30),
       color.palette = color.palette,
       ylim = ylim, main = main,
       xlab = xlab, ylab = ylab,
-      xlim = xlim,
+      xlim = xlim, xaxt = 'n',
       log = ifelse(yScale == 'log', 'y', ''),
       ...
     )
+    if (!(osc | osc_dB)) {
+      time_location = axTicks(1, axp = xaxp)
+      time_labels = convert_sec_to_hms(time_location)
+      axis(side = 1, at = time_location, labels = time_labels, ...)
+    }
     if (is.numeric(grid)) {
       n_grid_per_kHz = diff(range(ylim)) * grid
-      if (units[2] != 'kHz') n_grid_per_kHz = n_grid_per_kHz / 1000
+      if (Y[length(Y)] < 1) n_grid_per_kHz = n_grid_per_kHz / 1000
       grid(nx = n_grid_per_kHz, ny = n_grid_per_kHz,
            col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3)
       # grid(nx = NULL, ny = NULL,
@@ -804,7 +856,7 @@ osc = function(
   ylab = NULL,
   bty = 'n',
   midline = TRUE,
-  maxPoints = NULL,
+  maxPoints = 10000,
   ...
 ) {
   # import a sound
@@ -857,8 +909,7 @@ osc = function(
     l = length(sound)
 
     # For long files, downsample before plotting
-    if (!is.null(maxPoints)) {
-      # maxPoints = 2 ^ (round(log2(maxPoints)))
+    if (!is.null(maxPoints) && maxPoints < l) {
       myseq = round(seq(1, l, by = l / maxPoints))
       maxPoints = length(myseq)
       sound_plot = sound[myseq]
