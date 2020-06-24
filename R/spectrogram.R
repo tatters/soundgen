@@ -214,14 +214,15 @@ spectrogram = function(
     windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
     sound = sound_wav@left
     maxAmpl = 2^(sound_wav@bit - 1)
-    if (windowLength_points > (length(sound) / 2)) {
-      windowLength_points = floor(length(sound) / 4) * 2
+    ls = length(sound)
+    if (windowLength_points > (ls / 2)) {
+      windowLength_points = floor(ls / 4) * 2
       step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
     }
     if (windowLength_points == 0) {
       stop('The sound and/or the windowLength is too short for plotting a spectrogram')
     }
-    duration = length(sound) / samplingRate
+    duration = ls / samplingRate
     frameBank = getFrameBank(
       sound = sound,
       samplingRate = samplingRate,
@@ -243,10 +244,11 @@ spectrogram = function(
       } else {
         maxAmpl = scale
       }
-      duration = length(sound) / samplingRate
+      ls = length(sound)
+      duration = ls / samplingRate
       windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-      if (windowLength_points > (length(sound) / 2)) {
-        windowLength_points = floor(length(sound) / 4) * 2
+      if (windowLength_points > (ls / 2)) {
+        windowLength_points = floor(ls / 4) * 2
         step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
       }
       if (windowLength_points == 0) {
@@ -280,8 +282,8 @@ spectrogram = function(
   # FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   if (!is.null(sound)) {
-    if (windowLength_points > (length(sound) / 2)) {
-      windowLength_points = floor(length(sound) / 4) * 2
+    if (windowLength_points > (ls / 2)) {
+      windowLength_points = floor(ls / 4) * 2
       step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
     }
   }
@@ -397,11 +399,10 @@ spectrogram = function(
 
     if (osc | osc_dB) {
       # For long files, downsample before plotting
-      l = length(sound)
-      if (!is.null(maxPoints) && maxPoints[1] < l) {
-        myseq = round(seq(1, l, by = l / maxPoints[1]))
-        l = length(myseq)
+      if (!is.null(maxPoints) && maxPoints[1] < ls) {
+        myseq = round(seq(1, ls, by = ls / maxPoints[1]))
         sound = sound[myseq]
+        ls = length(myseq)
       }
 
       if (osc_dB) {
@@ -418,7 +419,7 @@ spectrogram = function(
 
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
       par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
-      time_stamps = seq(0, duration, length.out = length(sound))
+      time_stamps = seq(0, duration, length.out = ls)
       plot(
         time_stamps,
         sound,
@@ -460,7 +461,8 @@ spectrogram = function(
       if (is.null(ylab)) ylab = 'Frequency, kHz'
     }
     if (yScale == 'log' & ylim[1] < min_log_freq)  ylim[1] = min_log_freq
-    idx_y = which(Y >= ylim[1] & Y <= ylim[2])
+    idx_y = which(Y >= (ylim[1] / 1.05) & Y <= (ylim[2] * 1.05))
+    # 1.05 to avoid having a bit of white space
     Y = Y[idx_y]
     ly = length(Y)
     Z1_plot = Z1[, idx_y]
@@ -906,8 +908,6 @@ osc = function(
 
   # plot
   if (plot) {
-    l = length(sound)
-
     # For long files, downsample before plotting
     if (!is.null(maxPoints) && maxPoints < l) {
       myseq = round(seq(1, l, by = l / maxPoints))

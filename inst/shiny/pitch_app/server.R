@@ -9,7 +9,7 @@ server = function(input, output, session) {
     myPars = reactiveValues()
     myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
     myPars$zoomFactor_freq = 1.5  # same for frequency
-    myPars$print = FALSE       # if TRUE, some functions print a meassage to the console when called
+    myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
     myPars$out = NULL         # for storing the output
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
@@ -122,9 +122,12 @@ server = function(input, output, session) {
         }
 
         myPars$myAudio = as.numeric(myPars$temp_audio@left)
+        myPars$ls = length(myPars$myAudio)
         myPars$samplingRate = myPars$temp_audio@samp.rate
+        myPars$maxAmpl = 2 ^ (myPars$temp_audio@bit - 1)
         updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
+        myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
         myPars$spec_xlim = c(0, myPars$dur)
         # for the first audio only, update autocorSmooth
         # to a default that depends on samplingRate
@@ -190,11 +193,103 @@ server = function(input, output, session) {
         )
     })
 
+
+    # Updating spec / osc stuff to speed up plotting
+    observe({
+        if (!is.null(myPars$myAudio)) {
+            if (input$osc == 'dB') {
+                myPars$myAudio_scaled = osc(
+                    myPars$myAudio,
+                    dynamicRange = input$dynamicRange,
+                    dB = TRUE,
+                    maxAmpl = myPars$maxAmpl,
+                    plot = FALSE,
+                    returnWave = TRUE)
+                myPars$ylim_osc = c(-2 * input$dynamicRange, 0)
+            } else {
+                myPars$myAudio_scaled = myPars$myAudio
+                myPars$ylim_osc = c(-myPars$maxAmpl, myPars$maxAmpl)
+            }
+        }
+    })
+
+    observe({
+        # Cut just the part of spec currently needed for plotting
+        # (faster than plotting a huge matrix with xlim/ylim)
+        if (!is.null(myPars$spec)) {
+            if (myPars$print) print('Trimming the spec & osc')
+            x = as.numeric(colnames(myPars$spec))
+            idx_x = which(x >= (myPars$spec_xlim[1] / 1.05) &
+                              x <= (myPars$spec_xlim[2] * 1.05))
+            # 1.05 - a bit beyond b/c we use xlim/ylim and may get white space
+            myPars$spec_trimmed = myPars$spec[, idx_x]
+            idx_s = (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000) :
+                max(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
+            downs_spec = 10 ^ input$maxPoints_spec
+            downs_osc = 10 ^ input$maxPoints_osc
+            myPars$myAudio_trimmed = myPars$myAudio_scaled[idx_s]
+            isolate({
+                myPars$spec_trimmed = downsample_spec(myPars$spec_trimmed, downs_spec)
+                myPars$ls_trimmed = length(myPars$myAudio_trimmed)
+                myPars$time_trimmed = myPars$time[idx_s]
+                if (!is.null(myPars$myAudio_trimmed) &&
+                    myPars$ls_trimmed > downs_osc) {
+                    if (myPars$print) print('Downsampling osc')
+                    myseq = round(seq(1, myPars$ls_trimmed,
+                                      length.out = downs_osc))
+                    myPars$myAudio_trimmed = myPars$myAudio_trimmed[myseq]
+                    myPars$time_trimmed = myPars$time_trimmed[myseq]
+                    myPars$ls_trimmed = length(myseq)
+                }
+            })
+        }
+    })
+
+    observe({
+        if (!is.null(myPars$spec)) {
+            if (myPars$print) print('Trimming the spec')
+            y = as.numeric(rownames(myPars$spec))
+            idx_y = which(y >= (input$spec_ylim[1] / 1.05) &
+                              y <= (input$spec_ylim[2] * 1.05))
+            myPars$spec_trimmed = downsample_spec(
+                x = myPars$spec[idx_y, ],
+                maxPoints = 10 ^ input$maxPoints_spec)
+        }
+    })
+
+    downsample_sound = function(x, maxPoints) {
+        if (!is.null(myPars$myAudio_trimmed) &&
+            myPars$ls_trimmed > (10 ^ input$maxPoints_osc)) {
+            if (myPars$print) print('Downsampling osc')
+            myseq = round(seq(1, myPars$ls_trimmed,
+                              by = myPars$ls_trimmed / input$maxPoints_osc))
+            myPars$myAudio_trimmed = myPars$myAudio_trimmed[myseq]
+            myPars$ls_trimmed = length(myseq)
+        }
+    }
+
+    downsample_spec = function(x, maxPoints) {
+        lxy = nrow(x) * ncol(x)
+        if (lxy > maxPoints) {
+            if (myPars$print) print('Downsampling spectrogram...')
+            lx = ncol(x)  # time
+            ly = nrow(x)  # freq
+            downs = sqrt(lxy / maxPoints)
+            seqx = round(seq(1, lx, length.out = lx / downs))
+            seqy = round(seq(1, ly, length.out = ly / downs))
+            out = x[seqy, seqx]
+        } else {
+            out = x
+        }
+        return(out)
+    }
+
+    # Actuall plotting of the spec / osc
     output$spectrogram = renderPlot({
         if (myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
-            if (is.null(myPars$myAudio_path) | is.null(myPars$spec)) {
+            if (is.null(myPars$myAudio_trimmed) | is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
                 text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~10 s')
             } else {
@@ -207,9 +302,9 @@ server = function(input, output, session) {
                     color.palette = function(x) rev(colFun(x))
                 }
                 soundgen:::filled.contour.mod(
-                    x = as.numeric(colnames(myPars$spec)),
-                    y = as.numeric(rownames(myPars$spec)),
-                    z = t(myPars$spec),
+                    x = as.numeric(colnames(myPars$spec_trimmed)),
+                    y = as.numeric(rownames(myPars$spec_trimmed)),
+                    z = t(myPars$spec_trimmed),
                     levels = seq(0, 1, length = 30),
                     color.palette = color.palette,
                     xlim = myPars$spec_xlim,
@@ -217,7 +312,7 @@ server = function(input, output, session) {
                     xaxs = 'i', xlab = '',
                     ylab = 'Frequency, kHz',
                     main = '',
-                    ylim = c(input$spec_ylim[1], input$spec_ylim[2])
+                    ylim = input$spec_ylim
                 )
                 if (input$osc == 'none') {
                     axis(side = 1)
@@ -274,39 +369,16 @@ server = function(input, output, session) {
         }
     })
 
-
     observe({
         output$oscillogram = renderPlot({
-            if (!is.null(myPars$myAudio_path) & input$osc != 'none') {
+            if (!is.null(myPars$myAudio_trimmed) & input$osc != 'none') {
+                if (myPars$print) print('Drawing osc...')
                 par(mar = c(2, 2, 0, 2))
-                maxAmpl = 2 ^ (myPars$temp_audio@bit - 1) # max(abs(myPars$myAudio))
-                # to speed up plotting the osc of very long files
-                # convert osc_res [0,1] to smth that varies from 1000'ish to length(myPars$myAudio)
-                l = length(myPars$myAudio)
-                log_len_range = log(c(1000, l))
-                maxLen = exp(log_len_range[1] + input$osc_res * diff(log_len_range))
-                # demo:
-                # osc_res = seq(0, 1, length.out = 100)
-                # log_len_range = log(c(1000, length(myPars$myAudio)))
-                # maxLen = exp(log_len_range[1] + osc_res * diff(log_len_range))
-                # plot(osc_res, maxLen, type = 'p')
-                idx = seq(1, l, length.out = min(l, maxLen))
-                if (input$osc == 'dB') {
-                    sound = osc_dB(myPars$myAudio,
-                                   dynamicRange = input$dynamicRange,
-                                   maxAmpl = maxAmpl,
-                                   plot = FALSE,
-                                   returnWave = TRUE)[idx]
-                    ylim_osc = c(-2 * input$dynamicRange, 0)
-                } else {
-                    sound = myPars$myAudio[idx]
-                    ylim_osc = c(-maxAmpl, maxAmpl)
-                }
-                plot(idx / l * myPars$dur,
-                     sound,
+                plot(myPars$time_trimmed,
+                     myPars$myAudio_trimmed,
                      type = 'l',
                      xlim = myPars$spec_xlim,
-                     ylim = ylim_osc,
+                     ylim = myPars$ylim_osc,
                      axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
                      xlab = 'Time, ms',
                      ylab = '')
@@ -330,7 +402,7 @@ server = function(input, output, session) {
         # print(myPars$summaryFun)
     })
 
-    obs_anal = observe({
+    observe({
         # analyze the file (executes every time a slider with arg value is changed)
         if (!is.null(input$loadAudio$datapath)) {
             if (myPars$print) print('Calling analyze()...')

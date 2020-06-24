@@ -111,6 +111,7 @@ ui = fluidPage(
 
                                   tabPanel("Spectrogram",
                                            sliderInput('spec_ylim', 'Frequency range, kHz ("ylim")', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
+                                           sliderInput('maxPoints_spec', 'Max number of pixels, 10^', value=5.5, min=3, max=7, step=.25),
                                            numericInput('spec_cex', 'Point size ("pitchPlot=list(cex=...")', value = 1, min = .1, max = 10, step = .1),
                                            radioButtons(inputId='spec_colorTheme', label='Color scheme ("colorTheme")', choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
                                            sliderInput('specContrast', 'Contrast ("contrast")', value=defaults_analyze['specContrast','default'], min=defaults_analyze['specContrast', 'low'], max=defaults_analyze['specContrast', 'high'], step=defaults_analyze['specContrast','step']),
@@ -120,6 +121,7 @@ ui = fluidPage(
                                   tabPanel("Oscillogram",
                                            selectInput('osc', 'Oscillogram type ("osc")', choices = c('none', 'linear', 'dB'), selected = 'linear', multiple = FALSE),
                                            sliderInput('osc_height', 'Oscillogram height, px ("heights")', value=100, min=25, max=500, step=25),
+                                            sliderInput('maxPoints_osc', 'Max number of pixels, 10^', value=5, min=3, max=7, step=.5),
                                            sliderInput('osc_res', 'Oscillogram resolution', value = .5, min = 0, max = 1, step = .05)
                                   )
                        )
