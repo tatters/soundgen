@@ -2,7 +2,7 @@
 
 #' Interactive sound synthesizer
 #'
-#' Starts a shiny app, which provides an interactive wrapper to
+#' Starts a shiny app that provides an interactive wrapper to
 #' \code{\link{soundgen}}. Supported browsers: Firefox / Chrome. Note that the
 #' browser has to be able to playback WAV audio files, otherwise there will be
 #' no sound.
@@ -17,7 +17,7 @@ soundgen_app = function() {
 }
 
 
-#' Interactive pitch editor
+#' Interactive pitch tracker
 #'
 #' Starts a shiny app for manually editing pitch contours. Think of it as
 #' running \code{\link{analyze}} with manual pitch control. All pitch-dependent
@@ -114,6 +114,23 @@ soundgen_app = function() {
 #' }
 pitch_app = function() {
     appDir = system.file("shiny", "pitch_app", package = "soundgen")
+  if (appDir == "") {
+    stop("Could not find app directory. Try re-installing `soundgen`.",
+         call. = FALSE)
+  }
+  shiny::runApp(appDir, display.mode = "normal", launch.browser = TRUE)
+}
+
+
+
+#' Interactive formant tracker
+#'
+#' Starts a shiny app for manually correcting formant measurements. Supported browsers: Firefox / Chrome. Note that the
+#' browser has to be able to playback WAV audio files, otherwise there will be
+#' no sound.
+#' @export
+formant_app = function() {
+  appDir = system.file("shiny", "formant_app", package = "soundgen")
   if (appDir == "") {
     stop("Could not find app directory. Try re-installing `soundgen`.",
          call. = FALSE)
