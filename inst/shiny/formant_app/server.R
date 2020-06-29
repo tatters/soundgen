@@ -16,7 +16,7 @@ server = function(input, output, session) {
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
     myPars$myAudio = NULL
     myPars$currentAnn = NULL
-    myPars$ann = data.frame(from = NA, to = NA, label = NA)[-1, ]
+    myPars$ann = data.frame(from = NA, to = NA, label = NA, f1 = NA, f2 = NA, f3 = NA, f4 = NA, f5 = NA, f6 = NA)[-1, ]
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -367,82 +367,121 @@ server = function(input, output, session) {
         }, height = input$osc_height)
     })
 
-    observe({
-        output$ann_plot = renderPlot({
-            if (nrow(myPars$ann) > 0) {
-                par(mar = c(0, 0, 0, 0))
-                plot(myPars$time_trimmed,
-                     xlim = myPars$spec_xlim,
-                     ylim = c(0, 1),
-                     type = 'n',
-                     bty = 'n',
-                     xaxt = 'n', yaxt = 'n',
-                     xlab = '', ylab = ''
-                )
-                for (i in 1:nrow(myPars$ann)) {
-                    r = rnorm(1, 0, .05)  # random vertical shift to avoid overlap
-                    segments(x0 = myPars$ann$from[i],
-                             x1 = myPars$ann$to[i],
-                             y0 = .5 + r, y1 = .5 + r, lwd = 2)
-                    segments(x0 = myPars$ann$from[i],
-                             x1 = myPars$ann$from[i],
-                             y0 = .45 + r, y1 = .55 + r, lwd = 2)
-                    segments(x0 = myPars$ann$to[i],
-                             x1 = myPars$ann$to[i],
-                             y0 = .45 + r, y1 = .55 + r, lwd = 2)
-                    middle_i = mean(as.numeric(myPars$ann[i, c('from', 'to')]))
-                    text(x = middle_i,
-                         y = .5 + r,
-                         labels = myPars$ann$label[i],
-                         adj = c(.5, 1), cex = 1.5)
-                }
-                par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
+    output$ann_plot = renderPlot({
+        if (nrow(myPars$ann) > 0) {
+            par(mar = c(0, 0, 0, 0))
+            plot(myPars$time_trimmed,
+                 xlim = myPars$spec_xlim,
+                 ylim = c(0, 1),
+                 type = 'n',
+                 bty = 'n',
+                 xaxt = 'n', yaxt = 'n',
+                 xlab = '', ylab = ''
+            )
+            for (i in 1:nrow(myPars$ann)) {
+                r = rnorm(1, 0, .05)  # random vertical shift to avoid overlap
+                segments(x0 = myPars$ann$from[i],
+                         x1 = myPars$ann$to[i],
+                         y0 = .5 + r, y1 = .5 + r, lwd = 2)
+                segments(x0 = myPars$ann$from[i],
+                         x1 = myPars$ann$from[i],
+                         y0 = .45 + r, y1 = .55 + r, lwd = 2)
+                segments(x0 = myPars$ann$to[i],
+                         x1 = myPars$ann$to[i],
+                         y0 = .45 + r, y1 = .55 + r, lwd = 2)
+                middle_i = mean(as.numeric(myPars$ann[i, c('from', 'to')]))
+                text(x = middle_i,
+                     y = .5 + r,
+                     labels = myPars$ann$label[i],
+                     adj = c(.5, 0), cex = 1.5)
             }
-        })
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
+        }
+    })
+
+    output$spectrum = renderPlot({
+        if (!is.null(myPars$currentAnn)) {
+            if (myPars$print) print('Drawing spectrum...')
+            par(mar = c(2, 2, 0.5, 0))
+            myPars$spectrum = as.data.frame(seewave::meanspec(
+                myPars$selection,
+                f = myPars$samplingRate,
+                wl = round(input$windowLength_spectrum / 1000 * myPars$samplingRate / 2) * 2,
+                dB = 'max0',
+                flab = '', alab = ''
+            ))
+            spectrum_peaks()
+
+            # add a vertical line and freq label on hover
+            # abline(v = myPars$spectrum_hover$x, lty = 2)  # for some reason messes up the output$spectrum_cursor
+        }
     })
 
     observe({
-        # analyze the file (executes every time a slider with arg value is changed)
-        if (!is.null(myPars$myAudio)) {
-            if (myPars$print) print('Calling analyze()...')
-            withProgress(message = 'Analyzing the sound...', value = 0.5, {
-                myPars$step = input$windowLength * (1 - input$overlap / 100)
-                if (TRUE) {
-                    # just the mean value
-                    temp_anal = phonTools::findformants(
-                        sound = myPars$myAudio,  # change to selection
-                        fs = myPars$samplingRate,
-                        verify = FALSE
-                    )
-                    myPars$formants = temp_anal$formant
-                    myPars$bandwidth = temp_anal$bandwidth
-                } else {
-                    # frame-by-frame formant tracks
-                    temp_anal = analyze(
-                        myPars$myAudio_path,
-                        windowLength = input$windowLength,
-                        step = myPars$step,
-                        wn = input$wn,
-                        zp = input$zp,
-                        dynamicRange = input$dynamicRange,
-                        silence = input$silence,
-                        entropyThres = input$entropyThres,
-                        nFormants = 6,     # disable formant tracking
-                        SPL_measured = 0,  # disable loudness analysis
-                        pitchMethods = NA,
-                        # we don't want analyze to waste time on pathfinding
-                        # b/c we do it separately in obs_pitch()
-                        interpolWin = 0,
-                        pathfinding = 'none',
-                        snakeStep = 0,
-                        snakePlot = FALSE,
-                        smooth = 0,
-                        summary = FALSE,
-                        plot = FALSE
-                    )
-                }
-            })
+        if (!is.null(myPars$currentAnn)) {
+            sel_points = as.numeric(round(myPars$currentAnn[, c('from', 'to')] /
+                                              1000 * myPars$samplingRate))
+            idx_points = sel_points[1]:sel_points[2]
+            myPars$selection = myPars$myAudio[idx_points]
         }
+    })
+
+    spectrum_peaks = reactive({
+        # find peaks in the spectrum
+        if (!is.null(myPars$spectrum)) {
+            sp_zoo = zoo::as.zoo(myPars$spectrum$y)
+            temp = zoo::rollapply(sp_zoo,
+                                  width = 3,
+                                  align = 'center',
+                                  function(x) which.max(x) == 2)
+            myPars$spectrum_peaks = zoo::index(temp)[zoo::coredata(temp)]
+        }
+    })
+
+    observe({
+        # analyze selection
+        if (!is.null(myPars$selection)) {
+            if (myPars$print) print('Analyzing selection...')
+            if (TRUE) {
+                # just the mean value
+                temp_anal = phonTools::findformants(
+                    sound = myPars$selection,
+                    fs = myPars$samplingRate,
+                    verify = FALSE
+                )
+                myPars$formants = temp_anal$formant
+                myPars$bandwidth = temp_anal$bandwidth
+            } else {
+                # frame-by-frame formant tracks
+                myPars$step = input$windowLength * (1 - input$overlap / 100)
+                temp_anal = analyze(
+                    myPars$myAudio_path,
+                    windowLength = input$windowLength,
+                    step = myPars$step,
+                    wn = input$wn,
+                    zp = input$zp,
+                    dynamicRange = input$dynamicRange,
+                    silence = input$silence,
+                    entropyThres = input$entropyThres,
+                    nFormants = 6,     # disable formant tracking
+                    SPL_measured = 0,  # disable loudness analysis
+                    pitchMethods = NA,
+                    # we don't want analyze to waste time on pathfinding
+                    # b/c we do it separately in obs_pitch()
+                    interpolWin = 0,
+                    pathfinding = 'none',
+                    snakeStep = 0,
+                    snakePlot = FALSE,
+                    smooth = 0,
+                    summary = FALSE,
+                    plot = FALSE
+                )
+            }
+        }
+    })
+
+    observe({
+        output$ann_table = renderTable(myPars$ann)
     })
 
 
@@ -463,12 +502,25 @@ server = function(input, output, session) {
     })
 
     observeEvent(input$ann_click, {
-        # select the annotation whose middle is closest to the click
+        # select the annotation whose middle (label) is closest to the click
+    })
+
+    observeEvent(input$spec_click, {
+        spectrum_hover_temp = input$spectrum_hover
+        if (!is.null(spectrum_hover_temp)) {
+            myPars$spectrum_hover = data.frame(x = spectrum_hover_temp$x, y = spectrum_hover_temp$y)
+            cursor_hz = round(spectrum_hover_temp$x * 1000)
+            cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
+            myPars$spectrum_label = paste0(cursor_hz, 'Hz (',
+                                           cursor_notes, ')')
+        } else {
+            myPars$spectrum_hover$label = ''
+        }
     })
 
     dataModal = function() {
         modalDialog(
-            textInput("annotation", "Label the region if needed",
+            textInput("annotation", "New annotation:",
                       placeholder = '...some info...'
             ),
             footer = tagList(
@@ -480,7 +532,9 @@ server = function(input, output, session) {
 
     observeEvent(input$ok, {
         myPars$currentAnn$label = input$annotation
+        myPars$currentAnn[, paste0('f', 1:6)] = myPars$formants[1:6]
         myPars$ann = rbind(myPars$ann, myPars$currentAnn)
+        myPars$ann = myPars$ann[order(myPars$ann$from), ]
         removeModal()
     })
 
@@ -494,9 +548,9 @@ server = function(input, output, session) {
     ## Buttons for operations with selection
     playSel = function() {
         if (!is.null(myPars$myAudio_path)) {
-            if (!is.null(input$spectrogram_brush) & length(myPars$brush_sel_x) > 0) {
-                from = myPars$brush_sel_x[1] / length(myPars$pitch) * myPars$dur / 1000
-                to = tail(myPars$brush_sel_x, 1) / length(myPars$pitch) * myPars$dur / 1000
+            if (!is.null(input$spectrogram_brush)) {
+                from = input$spectrogram_brush$xmin / 1000
+                to = input$spectrogram_brush$xmax / 1000
             } else {
                 from = myPars$spec_xlim[1] / 1000
                 to = myPars$spec_xlim[2] / 1000
@@ -547,6 +601,37 @@ server = function(input, output, session) {
         return(label)
     })
     output$pitchAtCursor = renderUI(HTML(hover_label()))
+
+    spectrum_hover_label = reactive({
+        if (!is.null(input$spectrum_hover)) {
+            myPars$spectrum_hover = data.frame(x = input$spectrum_hover$x,
+                                               y = input$spectrum_hover$y)
+            cursor_hz = round(myPars$spectrum_hover$x * 1000)
+            cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
+            label = paste0('Cursor: ',
+                           cursor_hz, ' Hz (',
+                           cursor_notes, ')')
+        } else {
+            label = ''
+        }
+        return(label)
+    })
+    output$spectrum_cursor = renderUI(HTML(spectrum_hover_label()))
+
+    spectrum_hover_peak = reactive({
+        if (!is.null(myPars$spectrum_hover)) {
+            nearest_peak_idx = which.min(abs(myPars$spectrum_hover$x - myPars$spectrum$x[myPars$spectrum_peaks]))
+            nearest_peak_hz = round(myPars$spectrum$x[myPars$spectrum_peaks[nearest_peak_idx]] * 1000)
+            nearest_peak_notes = soundgen::notesDict$note[round(HzToSemitones(nearest_peak_hz)) + 1]
+            label = paste0('Nearest peak: ',
+                           nearest_peak_hz, ' Hz (',
+                           nearest_peak_notes, ')')
+        } else {
+            label = ''
+        }
+        return(label)
+    })
+    output$spectrum_peak = renderUI(HTML(spectrum_hover_peak()))
 
     # BRUSH
     brush = observeEvent(input$spectrogram_brush, {

@@ -609,8 +609,8 @@ server = function(input, output, session) {
     playSel = function() {
         if (!is.null(myPars$myAudio_path)) {
             if (!is.null(input$spectrogram_brush) & length(myPars$brush_sel_x) > 0) {
-                from = myPars$brush_sel_x[1] / length(myPars$pitch) * myPars$dur / 1000
-                to = tail(myPars$brush_sel_x, 1) / length(myPars$pitch) * myPars$dur / 1000
+                from = input$spectrogram_brush$xmin / 1000
+                to = input$spectrogram_brush$xmax / 1000
             } else {
                 from = myPars$spec_xlim[1] / 1000
                 to = myPars$spec_xlim[2] / 1000

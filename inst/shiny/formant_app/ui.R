@@ -131,7 +131,7 @@ ui = fluidPage(
     column(id ="Main",
            fluidRow(
              column(1,
-                    bsButton("showpanel", label = '', icon = icon("bars"), type = "toggle", value = TRUE)
+                    bsButton("showpanel", label = '', icon = icon("bars"), type = "toggle", value = FALSE)
              ),
              column(3,
                     fileInput(inputId = "loadAudio", label = NULL, multiple = TRUE, buttonLabel = 'Load audio', placeholder = '...', width = "175px")
@@ -157,34 +157,36 @@ ui = fluidPage(
                     actionButton(inputId = 'zoomOut_freq', label = HTML("<img src='icons/zoomOut.png' width = '25px'>"), style = "padding: 2px 2px; display: block")
              ),
              column(2,
-                    radioButtons('spectro_clickAct', label = 'Left click action: ', choiceNames = c('Anchor', 'Select'), choiceValues = c('addCand', 'select'), selected = 'addCand', inline = TRUE)
-             ),
-             column(2,
                     htmlOutput('pitchAtCursor', inline = TRUE)
              ),
-             column(4,
+             column(2,
                     actionButton(inputId = "selection_play", label = HTML("<img src='icons/play.png' width = '25px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = "F1", label = HTML("<button>F1</button"), style = "padding: 2px 2px; width = '250px'; height = '25px'; background-color: 'white'")
              ),
-             column(3,
+             column(2,
                     actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '25px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = 'zoomOut', label = HTML("<img src='icons/zoomOut.png' width = '25px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = "zoomToSel", label = HTML("<img src='icons/zoomSel.png' width = '25px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = 'zoomIn', label = HTML("<img src='icons/zoomIn.png' width = '25px'>"), style = "padding: 2px 2px;"),
                     actionButton(inputId = 'scrollRight', label = HTML("<img src='icons/forward.png' width = '25px'>"), style = "padding: 2px 2px;")
+             ),
+             column(5,
+                    htmlOutput('spectrum_cursor', inline = TRUE),
+                    htmlOutput('spectrum_peak', inline = TRUE)
              )
            ),
-
            fluidRow(
              column(
                plotOutput('spectrogram', height = '500px', click = "spectrogram_click", dblclick = dblclickOpts(id = "spectrogram_dblclick"), hover = hoverOpts(id = "spectrogram_hover"), brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)),  # , style = "max-width: 66vw; overflow-x: auto;"
                plotOutput('oscillogram', height = '100px'),
                plotOutput('ann_plot', height = '100px', click = "ann_click"),
-               width = 9
+               width = 7
              ),
              column(
                plotOutput('spectrum', height = '500px', click = "spectrum_click", dblclick = dblclickOpts(id = "spectrum_dblclick"), hover = hoverOpts(id = "spectrum_hover"), brush = brushOpts(id = 'spectrum_brush', resetOnNew = TRUE)),
-               width = 3
+               sliderInput('windowLength_spectrum', 'Window length for the spectral slice, ms', value=10, min=1, max=50, step=1),
+               tableOutput('ann_table'),
+               width = 5
              )
            ),
 
