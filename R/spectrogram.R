@@ -976,3 +976,47 @@ osc_dB = function(
   myPars = myPars[1:(length(myPars)-1)]
   do.call(osc, myPars)
 }
+
+#' Get smooth spectrum
+#'
+#' Internal soundgen function.
+#' @param sound the audio (numeric, any scale)
+#' @param samplingRate the sampling rate, Hz
+#' @param len the desired resolution of the output
+#' @param loessSpan passed to loess to control the amount of smoothing (.01 =
+#'   minimal smoothing, 1 = strong smoothing)
+#' @keywords internal
+#' @examples
+#' s = soundgen(sylLen = 100, pitch = 500, addSilence = FALSE)
+#' soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .01, plot = TRUE)
+#' soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .1, plot = TRUE)
+#' soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .5, plot = TRUE)
+#' soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = 1, plot = TRUE)
+getSmoothSpectrum = function(sound,
+                             samplingRate,
+                             len,
+                             loessSpan,
+                             plot = FALSE,
+                             xlab = 'Frequency, kHz',
+                             ylab = 'dB',
+                             type = 'l',
+                             ...) {
+  # Get high-res mean spectrum with seewave
+  # (faster than smoothing the raw, super-long spectrum)
+  spec = as.data.frame(seewave::meanspec(
+    sound, f = 16000, wl = min(2048, length(sound)),
+    dB = 'max0', plot = FALSE))
+  # plot(spec, type = 'l')
+
+  # Smooth this mean spectrum with loess and upsample to /len/
+  l = suppressWarnings(loess(spec$y ~ spec$x, span = loessSpan))
+  # plot(spec$x, predict(l), type = 'l')
+  freq_loess = seq(spec$x[1], spec$x[nrow(spec)], length.out = len)
+  ampl_loess = try(predict(l, freq_loess, silent = TRUE))
+  out = data.frame(freq = freq_loess, ampl = ampl_loess)
+
+  if (plot) plot(out, type = type, xlab = xlab, ylab = ylab, ...)
+
+  invisible(out)
+}
+

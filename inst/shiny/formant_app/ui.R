@@ -156,12 +156,12 @@ ui = fluidPage(
                     actionButton(inputId = 'zoomIn_freq', label = HTML("<img src='icons/zoomIn.png' width = '25px'>"), style = "padding: 2px 2px; display: block"),
                     actionButton(inputId = 'zoomOut_freq', label = HTML("<img src='icons/zoomOut.png' width = '25px'>"), style = "padding: 2px 2px; display: block")
              ),
-             column(2,
+             column(1,
                     htmlOutput('pitchAtCursor', inline = TRUE)
              ),
-             column(2,
+             column(3,
                     actionButton(inputId = "selection_play", label = HTML("<img src='icons/play.png' width = '25px'>"), style = "padding: 2px 2px;"),
-                    actionButton(inputId = "F1", label = HTML("<button>F1</button"), style = "padding: 2px 2px; width = '250px'; height = '25px'; background-color: 'white'")
+                    radioButtons('spectro_clickAct', label = 'Formant: ', choiceNames = c('F1', 'F2', 'F3', 'F4'), choiceValues = c('f1', 'f2', 'f3', 'f4'), selected = 'f1', inline = TRUE)
              ),
              column(2,
                     actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '25px'>"), style = "padding: 2px 2px;"),
@@ -184,7 +184,7 @@ ui = fluidPage(
              ),
              column(
                plotOutput('spectrum', height = '500px', click = "spectrum_click", dblclick = dblclickOpts(id = "spectrum_dblclick"), hover = hoverOpts(id = "spectrum_hover"), brush = brushOpts(id = 'spectrum_brush', resetOnNew = TRUE)),
-               sliderInput('windowLength_spectrum', 'Window length for the spectral slice, ms', value=10, min=1, max=50, step=1),
+               sliderInput('spectrum_smooth', 'Smoothing', value=-1, min=-2, max=0, step=.05),
                tableOutput('ann_table'),
                width = 5
              )

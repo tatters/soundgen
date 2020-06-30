@@ -400,25 +400,33 @@ server = function(input, output, session) {
     })
 
     output$spectrum = renderPlot({
-        if (!is.null(myPars$currentAnn)) {
+        if (!is.null(myPars$spectrum)) {
             if (myPars$print) print('Drawing spectrum...')
             par(mar = c(2, 2, 0.5, 0))
-            myPars$spectrum = as.data.frame(seewave::meanspec(
-                myPars$selection,
-                f = myPars$samplingRate,
-                wl = round(input$windowLength_spectrum / 1000 * myPars$samplingRate / 2) * 2,
-                dB = 'max0',
-                flab = '', alab = ''
-            ))
+            plot(myPars$spectrum,
+                 xlab = '', ylab = '', type = 'l')
             spectrum_peaks()
 
             # add a vertical line and freq label on hover
-            # abline(v = myPars$spectrum_hover$x, lty = 2)  # for some reason messes up the output$spectrum_cursor
+            abline(v = myPars$spectrum_hover$x, lty = 2)  # for some reason messes up the output$spectrum_cursor
+        }
+    })
+
+    observe({
+        if (!is.null(myPars$selection)) {
+            if (myPars$print) print('Extracting spectrum of selection...')
+            myPars$spectrum = getSmoothSpectrum(
+                myPars$selection,
+                samplingRate = myPars$samplingRate,
+                len = 500,
+                loessSpan = 10 ^ input$spectrum_smooth
+            )
         }
     })
 
     observe({
         if (!is.null(myPars$currentAnn)) {
+            if (myPars$print) print('Updating selection...')
             sel_points = as.numeric(round(myPars$currentAnn[, c('from', 'to')] /
                                               1000 * myPars$samplingRate))
             idx_points = sel_points[1]:sel_points[2]
@@ -429,7 +437,8 @@ server = function(input, output, session) {
     spectrum_peaks = reactive({
         # find peaks in the spectrum
         if (!is.null(myPars$spectrum)) {
-            sp_zoo = zoo::as.zoo(myPars$spectrum$y)
+            if (myPars$print) print('Looking for spectral peaks...')
+            sp_zoo = zoo::as.zoo(myPars$spectrum$ampl)
             temp = zoo::rollapply(sp_zoo,
                                   width = 3,
                                   align = 'center',
@@ -602,10 +611,16 @@ server = function(input, output, session) {
     })
     output$pitchAtCursor = renderUI(HTML(hover_label()))
 
-    spectrum_hover_label = reactive({
+    observe({
         if (!is.null(input$spectrum_hover)) {
             myPars$spectrum_hover = data.frame(x = input$spectrum_hover$x,
                                                y = input$spectrum_hover$y)
+        }
+
+    })
+
+    spectrum_hover_label = reactive({
+        if (!is.null(myPars$spectrum_hover)) {
             cursor_hz = round(myPars$spectrum_hover$x * 1000)
             cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
             label = paste0('Cursor: ',
@@ -620,8 +635,8 @@ server = function(input, output, session) {
 
     spectrum_hover_peak = reactive({
         if (!is.null(myPars$spectrum_hover)) {
-            nearest_peak_idx = which.min(abs(myPars$spectrum_hover$x - myPars$spectrum$x[myPars$spectrum_peaks]))
-            nearest_peak_hz = round(myPars$spectrum$x[myPars$spectrum_peaks[nearest_peak_idx]] * 1000)
+            nearest_peak_idx = which.min(abs(myPars$spectrum_hover$x - myPars$spectrum$freq[myPars$spectrum_peaks]))
+            nearest_peak_hz = round(myPars$spectrum$freq[myPars$spectrum_peaks[nearest_peak_idx]] * 1000)
             nearest_peak_notes = soundgen::notesDict$note[round(HzToSemitones(nearest_peak_hz)) + 1]
             label = paste0('Nearest peak: ',
                            nearest_peak_hz, ' Hz (',
