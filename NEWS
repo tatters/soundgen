@@ -9,6 +9,7 @@ MINOR:
   * osc() replaces osc_db()
   * osc(), spectrogram(): fast plotting of long audio files, updated tick labels
   * pitch_app(): caching to speed up the plotting of long files
+  * analyze(): new arguments from/to to analyze only a part of sound
 
 
           CHANGES IN SOUNDGEN VERSION 1.7.0 [24-May-2020]

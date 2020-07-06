@@ -18,6 +18,7 @@ server = function(input, output, session) {
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
+    myPars$analyzeDur = 1000         # initial duration to analyze (ms)
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -131,13 +132,8 @@ server = function(input, output, session) {
         updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
-        myPars$spec_xlim = c(0, myPars$dur)
-        # for the first audio only, update autocorSmooth
-        # to a default that depends on samplingRate
-        if (i == 1) {
-            updateSliderInput(session, inputId = 'autocorSmooth',
-                              value = 2 * ceiling(7 * myPars$samplingRate / 44100 / 2) - 1)
-        }
+        myPars$spec_xlim = c(0, min(myPars$analyzeDur, myPars$dur))
+        myPars$regionToAnalyze = myPars$spec_xlim
 
         # update info - file number ... out of ...
         file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles) # , ': ', myPars$myAudio_filename)
@@ -335,11 +331,10 @@ server = function(input, output, session) {
 
                 # Add formant tracks
                 if (!is.null(myPars$formantTracks)) {
-                    ts = seq(myPars$currentAnn$from + myPars$step / 2,
-                             myPars$currentAnn$to - myPars$step / 2,
-                             length.out = nrow(myPars$formantTracks))
-                    for (f in 1:ncol(myPars$formantTracks)) {
-                        points(ts, myPars$formantTracks[, f] / 1000, col = 'red', pch = 16)
+                    for (f in 2:ncol(myPars$formantTracks)) {
+                        points(myPars$formantTracks$time,
+                               myPars$formantTracks[, f] / 1000,
+                               col = 'red', pch = 16)
                     }
                 }
 
@@ -379,35 +374,39 @@ server = function(input, output, session) {
     })
 
     output$ann_plot = renderPlot({
-        if (nrow(myPars$ann) > 0) {
-            par(mar = c(0, 0, 0, 0))
-            plot(myPars$time_trimmed,
-                 xlim = myPars$spec_xlim,
-                 ylim = c(0, 1),
-                 type = 'n',
-                 bty = 'n',
-                 xaxt = 'n', yaxt = 'n',
-                 xlab = '', ylab = ''
-            )
-            for (i in 1:nrow(myPars$ann)) {
-                r = rnorm(1, 0, .05)  # random vertical shift to avoid overlap
-                segments(x0 = myPars$ann$from[i],
-                         x1 = myPars$ann$to[i],
-                         y0 = .5 + r, y1 = .5 + r, lwd = 2)
-                segments(x0 = myPars$ann$from[i],
-                         x1 = myPars$ann$from[i],
-                         y0 = .45 + r, y1 = .55 + r, lwd = 2)
-                segments(x0 = myPars$ann$to[i],
-                         x1 = myPars$ann$to[i],
-                         y0 = .45 + r, y1 = .55 + r, lwd = 2)
-                middle_i = mean(as.numeric(myPars$ann[i, c('from', 'to')]))
-                text(x = middle_i,
-                     y = .5 + r,
-                     labels = myPars$ann$label[i],
-                     adj = c(.5, 0), cex = 1.5)
+        if (!is.null(myPars$ann)) {
+            if (nrow(myPars$ann) > 0) {
+                if (myPars$print) print('Drawing annotations...')
+                par(mar = c(0, 0, 0, 0))
+                plot(myPars$time_trimmed,
+                     xlim = myPars$spec_xlim,
+                     ylim = c(0, 1),
+                     type = 'n',
+                     bty = 'n',
+                     xaxt = 'n', yaxt = 'n',
+                     xlab = '', ylab = ''
+                )
+                for (i in 1:nrow(myPars$ann)) {
+                    r = rnorm(1, 0, .05)  # random vertical shift to avoid overlap
+                    segments(x0 = myPars$ann$from[i],
+                             x1 = myPars$ann$to[i],
+                             y0 = .5 + r, y1 = .5 + r, lwd = 2)
+                    segments(x0 = myPars$ann$from[i],
+                             x1 = myPars$ann$from[i],
+                             y0 = .45 + r, y1 = .55 + r, lwd = 2)
+                    segments(x0 = myPars$ann$to[i],
+                             x1 = myPars$ann$to[i],
+                             y0 = .45 + r, y1 = .55 + r, lwd = 2)
+                    middle_i = mean(as.numeric(myPars$ann[i, c('from', 'to')]))
+                    text(x = middle_i,
+                         y = .5 + r,
+                         labels = myPars$ann$label[i],
+                         adj = c(.5, 0), cex = 1.5)
+                }
+                par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
             }
-            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
         }
+
     })
 
     output$spectrum = renderPlot({
@@ -458,15 +457,33 @@ server = function(input, output, session) {
         }
     })
 
+    # Analysis
     observe({
-        # analyze selection
-        if (!is.null(myPars$selection)) {
-            if (myPars$print) print('Analyzing selection...')
-            # frame-by-frame formant tracks
-            myPars$step = input$windowLength * (1 - input$overlap / 100)
+        myPars$step = input$windowLength * (1 - input$overlap / 100)
+    })
+
+    observe({
+        if (myPars$print) print('Updating regionToAnalyze...')
+        if (is.null(myPars$analyzedUpTo)) {
+            myPars$regionToAnalyze = myPars$spec_xlim
+        } else {
+            if (myPars$analyzedUpTo < myPars$spec_xlim[2]) {
+                myPars$regionToAnalyze = c(myPars$analyzedUpTo, myPars$spec_xlim[2])
+            } else {
+                myPars$regionToAnalyze = NULL
+            }
+        }
+    })
+
+    observe({
+        # analyze the visible portion of the spectrogram to get frame-by-frame formant tracks
+        if (!is.null(myPars$myAudio_trimmed) & !is.null(myPars$regionToAnalyze)) {
+            if (myPars$print) print('Extracting formants...')
             myPars$temp_anal = analyze(
-                myPars$selection,
+                myPars$myAudio,
                 samplingRate = myPars$samplingRate,
+                from = myPars$regionToAnalyze[1] / 1000,
+                to = myPars$regionToAnalyze[2] / 1000,
                 windowLength = input$windowLength,
                 step = myPars$step,
                 wn = input$wn,
@@ -479,9 +496,28 @@ server = function(input, output, session) {
                 summary = FALSE,
                 plot = FALSE
             )
-            myPars$formantTracks = round(myPars$temp_anal[, myPars$f_col_names])
-            myPars$formants = round(colMeans(myPars$formantTracks, na.rm = TRUE))
-            # myPars$bandwidth = round(temp_anal$bandwidth)
+            isolate({
+                myPars$analyzedUpTo = myPars$regionToAnalyze[2]
+                if (is.null(myPars$formantTracks)) {
+                    myPars$formantTracks = round(myPars$temp_anal[, c('time', myPars$f_col_names)])
+                } else {
+                    myPars$formantTracks = rbind(
+                        myPars$formantTracks,
+                        round(myPars$temp_anal[, c('time', myPars$f_col_names)])
+                    )
+                }
+            })
+        }
+    })
+
+    observe({
+        # analyze annotated selection
+        if (!is.null(myPars$selection)) {
+            if (myPars$print) print('Averaging formants in selection...')
+            idx = which(myPars$temp_anal$time >= myPars$currentAnn$from &
+                            myPars$temp_anal$time <= myPars$currentAnn$to)
+            myPars$formants = round(colMeans(myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)], na.rm = TRUE))
+            # myPars$bandwidth ?
         }
     })
 
