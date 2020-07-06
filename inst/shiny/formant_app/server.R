@@ -1,3 +1,7 @@
+# formant_app()
+#
+# To do: add formant tracks within selection, format the output table nicely, nFormants set by user, add menu for pars for formant tracking, maybe arbitrary number of annotation tiers
+
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
 # as.numeric(unlist(strsplit(a$pitch, ',')))
@@ -14,9 +18,6 @@ server = function(input, output, session) {
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
-    myPars$myAudio = NULL
-    myPars$currentAnn = NULL
-    myPars$ann = data.frame(from = NA, to = NA, label = NA, f1 = NA, f2 = NA, f3 = NA, f4 = NA, f5 = NA, f6 = NA)[-1, ]
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -321,7 +322,7 @@ server = function(input, output, session) {
                     title(xlab = 'Time, ms')
                 }
 
-                # add a rectangle showing the currently annotated region
+                # Add a rectangle showing the currently annotated region
                 if (!is.null(myPars$currentAnn)) {
                     rect(
                         xleft = myPars$currentAnn$from,
@@ -330,6 +331,16 @@ server = function(input, output, session) {
                         ytop = input$spec_ylim[2],
                         col = rgb(.2, .2, .2, alpha = .25)
                     )
+                }
+
+                # Add formant tracks
+                if (!is.null(myPars$formantTracks)) {
+                    ts = seq(myPars$currentAnn$from + myPars$step / 2,
+                             myPars$currentAnn$to - myPars$step / 2,
+                             length.out = nrow(myPars$formantTracks))
+                    for (f in 1:ncol(myPars$formantTracks)) {
+                        points(ts, myPars$formantTracks[, f] / 1000, col = 'red', pch = 16)
+                    }
                 }
 
                 # Add text label of file name
@@ -418,7 +429,7 @@ server = function(input, output, session) {
             myPars$spectrum = getSmoothSpectrum(
                 myPars$selection,
                 samplingRate = myPars$samplingRate,
-                len = 500,
+                len = input$spectrum_len,
                 loessSpan = 10 ^ input$spectrum_smooth
             )
         }
@@ -451,67 +462,77 @@ server = function(input, output, session) {
         # analyze selection
         if (!is.null(myPars$selection)) {
             if (myPars$print) print('Analyzing selection...')
-            if (TRUE) {
-                # just the mean value
-                temp_anal = phonTools::findformants(
-                    sound = myPars$selection,
-                    fs = myPars$samplingRate,
-                    verify = FALSE
-                )
-                myPars$formants = temp_anal$formant
-                myPars$bandwidth = temp_anal$bandwidth
-            } else {
-                # frame-by-frame formant tracks
-                myPars$step = input$windowLength * (1 - input$overlap / 100)
-                temp_anal = analyze(
-                    myPars$myAudio_path,
-                    windowLength = input$windowLength,
-                    step = myPars$step,
-                    wn = input$wn,
-                    zp = input$zp,
-                    dynamicRange = input$dynamicRange,
-                    silence = input$silence,
-                    entropyThres = input$entropyThres,
-                    nFormants = 6,     # disable formant tracking
-                    SPL_measured = 0,  # disable loudness analysis
-                    pitchMethods = NA,
-                    # we don't want analyze to waste time on pathfinding
-                    # b/c we do it separately in obs_pitch()
-                    interpolWin = 0,
-                    pathfinding = 'none',
-                    snakeStep = 0,
-                    snakePlot = FALSE,
-                    smooth = 0,
-                    summary = FALSE,
-                    plot = FALSE
-                )
-            }
+            # frame-by-frame formant tracks
+            myPars$step = input$windowLength * (1 - input$overlap / 100)
+            myPars$temp_anal = analyze(
+                myPars$selection,
+                samplingRate = myPars$samplingRate,
+                windowLength = input$windowLength,
+                step = myPars$step,
+                wn = input$wn,
+                zp = input$zp,
+                dynamicRange = input$dynamicRange,
+                silence = input$silence,
+                pitchMethods = NULL,  # disable pitch tracking
+                SPL_measured = 0,  # disable loudness analysis
+                nFormants = input$nFormants,
+                summary = FALSE,
+                plot = FALSE
+            )
+            myPars$formantTracks = round(myPars$temp_anal[, myPars$f_col_names])
+            myPars$formants = round(colMeans(myPars$formantTracks, na.rm = TRUE))
+            # myPars$bandwidth = round(temp_anal$bandwidth)
         }
     })
 
     observe({
-        output$ann_table = renderTable(myPars$ann)
+        output$ann_table = renderTable(myPars$ann, digits = 0)
+    })
+
+    observe({
+        myPars$f_col_names = paste0('f', 1:input$nFormants, '_freq')
     })
 
 
     ## Clicking events
     observeEvent(input$spectrogram_click, {
-
+        if (!is.null(myPars$currentAnn)) {
+            inside_sel = (myPars$currentAnn$from < input$spectrogram_click$x) &
+                (myPars$currentAnn$to > input$spectrogram_click$x)
+            if (inside_sel) {
+                ann_idx = which(myPars$ann$idx == myPars$currentAnn$idx)
+                myPars$ann[ann_idx, input$spectro_clickAct] = round(input$spectrogram_click$y * 1000)
+            }
+        }
     })
 
     observeEvent(input$spectrogram_dblclick, {
         if (!is.null(input$spectrogram_brush)) {
             myPars$currentAnn = data.frame(
+                idx = ifelse(is.null(myPars$ann), 1, nrow(myPars$ann) + 1),
                 from = input$spectrogram_brush$xmin,
                 to = input$spectrogram_brush$xmax)
             # clear the selection
             session$resetBrush("spectrogram_brush")
-            newAnnot()
+            showModal(dataModal_new())
         }
     })
 
     observeEvent(input$ann_click, {
         # select the annotation whose middle (label) is closest to the click
+        if (!is.null(myPars$ann)) {
+            idx = which.min(abs(input$ann_click$x - (myPars$ann$from + myPars$ann$to) / 2))
+            myPars$currentAnn = myPars$ann[idx, ]
+        }
+    })
+
+    observeEvent(input$ann_dblclick, {
+        # select and edit the double-clicked annotation
+        if (!is.null(myPars$ann)) {
+            idx = which.min(abs(input$ann_dblclick$x - (myPars$ann$from + myPars$ann$to) / 2))
+            myPars$currentAnn = myPars$ann[idx, ]
+            showModal(dataModal_edit())
+        }
     })
 
     observeEvent(input$spec_click, {
@@ -527,32 +548,49 @@ server = function(input, output, session) {
         }
     })
 
-    dataModal = function() {
+    dataModal_new = function() {
         modalDialog(
             textInput("annotation", "New annotation:",
                       placeholder = '...some info...'
             ),
             footer = tagList(
                 modalButton("Cancel"),
-                actionButton("ok", "OK")
-            )
+                actionButton("ok_new", "OK")
+            ),
+            easyClose = TRUE
         )
     }
 
-    observeEvent(input$ok, {
+    observeEvent(input$ok_new, {
         myPars$currentAnn$label = input$annotation
         myPars$currentAnn[, paste0('f', 1:6)] = myPars$formants[1:6]
-        myPars$ann = rbind(myPars$ann, myPars$currentAnn)
+        if (is.null(myPars$ann)) {
+            myPars$ann = myPars$currentAnn
+        } else {
+            myPars$ann = rbind(myPars$ann, myPars$currentAnn)
+        }
         myPars$ann = myPars$ann[order(myPars$ann$from), ]
         removeModal()
     })
 
-    newAnnot = function() {
-        myPars$currentAnn
-        showModal(dataModal())
-        # shinyjs::runjs(window.prompt("sometext","defaultText");)
-        # window.prompt("sometext","defaultText");
+    dataModal_edit = function() {
+        modalDialog(
+            textInput("annotation", "New annotation:",
+                      placeholder = '...some info...'
+            ),
+            footer = tagList(
+                modalButton("Cancel"),
+                actionButton("ok_edit", "OK")
+            ),
+            easyClose = TRUE
+        )
     }
+
+    observeEvent(input$ok_edit, {
+        myPars$currentAnn$label = input$annotation
+        myPars$ann$label[myPars$currentAnn$idx] = myPars$currentAnn$label
+        removeModal()
+    })
 
     ## Buttons for operations with selection
     playSel = function() {
@@ -560,6 +598,9 @@ server = function(input, output, session) {
             if (!is.null(input$spectrogram_brush)) {
                 from = input$spectrogram_brush$xmin / 1000
                 to = input$spectrogram_brush$xmax / 1000
+            } else if (!is.null(myPars$currentAnn)) {
+                from = myPars$currentAnn$from / 1000
+                to = myPars$currentAnn$to / 1000
             } else {
                 from = myPars$spec_xlim[1] / 1000
                 to = myPars$spec_xlim[2] / 1000
@@ -569,10 +610,22 @@ server = function(input, output, session) {
     }
     observeEvent(input$selection_play, playSel())
 
+    deleteSel = function() {
+        if (!is.null(myPars$currentAnn)) {
+            idx = which(myPars$ann$idx == myPars$currentAnn$idx)
+            myPars$ann = myPars$ann[-idx, ]
+            myPars$selection = NULL
+            myPars$currentAnn = NULL
+        }
+    }
+    observeEvent(input$selection_delete, deleteSel())
+
     observeEvent(input$userPressedSmth, {
         button_code = floor(input$userPressedSmth)
         if (button_code == 32) {                      # SPACEBAR (play)
             playSel()
+        } else if (button_code == 46) {               # DELETE (delete current annotation)
+            deleteSel()
         } else if (button_code == 37) {               # ARROW LEFT (scroll left)
             shiftFrame('left')
         } else if (button_code == 39) {               # ARROW RIGHT (scroll right)
@@ -616,7 +669,6 @@ server = function(input, output, session) {
             myPars$spectrum_hover = data.frame(x = input$spectrum_hover$x,
                                                y = input$spectrum_hover$y)
         }
-
     })
 
     spectrum_hover_label = reactive({
@@ -780,7 +832,7 @@ server = function(input, output, session) {
         filename = function() 'output.csv',
         content = function(filename) {
             done()  # finalize the last file
-            write.csv(myPars$out, filename, row.names = FALSE)
+            write.csv(myPars$ann, filename, row.names = FALSE)
             if (file.exists('www/temp.csv')) file.remove('www/temp.csv')
         }
     )
@@ -804,53 +856,7 @@ server = function(input, output, session) {
     shinyBS::addTooltip(session, id='zp', title = 'Zero padding of STFT window (improves frequency resolution): 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='wn', title = 'Type of STFT window', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
-    # voicing
-    shinyBS::addTooltip(session, id='silence', title = 'Frames with RMS below silence threshold are not analyzed', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='entropyThres', title = 'Frames with Weiner entropy above entropy threshold are ignored when searching for pitch candidates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='nCands', title = 'Maximum number of pitch candidates to use per method', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='minVoicedCands', title = 'Minimum number of pitch candidates that have to be defined to consider a frame voiced', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # priors
-    shinyBS::addTooltip(session, id='pitchFloor', title = 'No candidates below this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='pitchCeiling', title = 'No candidates above this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='priorMean', title = 'Candidates close to this value are prioritized (how close is determined by priorSD)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='priorSD', title = 'Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
     # trackers
-    shinyBS::addTooltip(session, id='domThres', title = 'Dominant frequency is defined as the lowest bin in a spectrum smoothed and normalized to range from 0 to 1 that it at least "domThres" high (1 = absolute maximum, ie peak frequency)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='domSmooth', title = 'Width of smoothing interval for finding the lowest dominant frequency band (low values = no smoothing)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='autocorThres', title = 'Voicing threshold for autocorrelation algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='autocorSmooth', title = 'Width of smoothing interval (in bins) for finding peaks in the autocorrelation function', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='autocorUpsample', title = 'Upsamples acf to this resolution (Hz) to improve accuracy in high frequencies', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='autocorBestPeak', title = 'Amplitude of the lowest best candidate relative to the absolute max of the acf', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='cepThres', title = 'Voicing threshold for cepstral algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='cepSmooth', title = 'Width of smoothing interval for finding peaks in the cepstrum', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='cepZp', title = 'Length of cepstral window after zero padding: 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specThres', title = 'Voicing threshold for Ba-Na algorithm', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specPeak', title = 'Minimum amplitude of harmonics considered pitch candidates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specHNRslope', title = '0 = same threshold regardless of HNR; positive = lower threshold in noisy sounds', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specSmooth', title = 'Width of window for detecting harmonics in the spectrum, Hz', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specMerge', title = 'Pitch candidates within specMerge semitones are merged with boosted certainty', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='specSinglePeakCert', title = 'If pitch is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its certainty is taken to be specSinglePeakCert', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='hpsNum', title = 'How many times to downsample and then multiply the spectra', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='hpsThres', title = 'How high a spectral peak has to be to be considered a pitch candidate, ~0 to 1', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='hpsNorm', title = 'Rather arbitrary normalization of certainty in hps candidates intended to make them more comparable to other pitch tracking methods (0 = no boost in certainty, 2 = default quadratic)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='hpsPenalty', title = 'HPS performs worse at low frequencies (relative to windowLength), so low-frequency pitch candidates are penalized (0 = no penalization, ~10-20 = a lot)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # pathfinder
-    shinyBS::addTooltip(session, id='summaryFun', title = "The function(s) used to summarize output", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='summaryFun_text', title = "If specified, overrides the options above. For short column names, define and name your function in R prior to starting pitch_app", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='automPathUpdate', title = "Update the optimal pitch contour automatically every time an anchor changes? Turn off to avoid delays when editing a long audio", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='pathfinding', title = "Method of finding the optimal path through pitch candidates: 'none' = best candidate per frame, 'fast' = simple heuristic, 'slow' = annealing (initial analysis only)", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='certWeight', title = 'Specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='shortestSyl', title = 'Shorter voiced segments (ms) will be treated as voiceless or merged with longer segments', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='shortestPause', title = "The smallest gap between voiced syllables (ms) that means they shouldn't be merged", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='smooth', title = 'Amount of median smoothing', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-
-    # smoothing
-    shinyBS::addTooltip(session, id='interpolWin', title = "If no pitch candidates are found within ±interpolTol of the median 'best guess' over ±interpolWin, this median is added as an interpolated candidate", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='interpolTol', title = "Tolerated deviance from 'best guess' before adding an interpolated candidate: proportion of best guess frequency", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='interpolCert', title = "Certainty assigned to interpolated pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # spectrogram
     shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -868,6 +874,7 @@ server = function(input, output, session) {
     shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file (BACKSPACE)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file (ENTER)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS:::addTooltip(session, id='selection_play', title='Play selection (SPACEBAR)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS:::addTooltip(session, id='selection_delete', title='Remove annotation (DELETE)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # navigation / zoom

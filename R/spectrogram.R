@@ -77,7 +77,7 @@
 #' @param xlab,ylab,main,mar,xaxp graphical parameters
 #' @param grid if numeric, adds n = \code{grid} dotted lines per kHz
 #' @param ... other graphical parameters
-#' @param frameBank,duration,pitch ignore (only used internally)
+#' @param internal ignore (only used internally)
 #' @export
 #' @return Returns nothing (if output = 'none'), absolute - not power! -
 #'   spectrum (if output = 'original'), denoised and/or smoothed spectrum (if
@@ -188,12 +188,11 @@ spectrogram = function(
   mar = c(5.1, 4.1, 4.1, 2),
   main = '',
   grid = NULL,
-  frameBank = NULL,
-  duration = NULL,
-  pitch = NULL,
+  internal = NULL,
   ...
 ) {
   sound = NULL
+  duration = internal$duration
   if (overlap < 0 | overlap > 100) {
     warning('overlap must be >0 and <= 100%; resetting to 70')
     overlap = 70
@@ -223,17 +222,6 @@ spectrogram = function(
       stop('The sound and/or the windowLength is too short for plotting a spectrogram')
     }
     duration = ls / samplingRate
-    frameBank = getFrameBank(
-      sound = sound,
-      samplingRate = samplingRate,
-      windowLength_points = windowLength_points,
-      step = step,
-      zp = zp,
-      normalize = normalize,
-      wn = wn,
-      filter = NULL,
-      padWithSilence = padWithSilence
-    )
   } else if (class(x)[1] == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
@@ -254,18 +242,26 @@ spectrogram = function(
       if (windowLength_points == 0) {
         stop('The sound and/or the windowLength is too short for plotting a spectrogram')
       }
-      frameBank = getFrameBank(
-        sound = sound,
-        samplingRate = samplingRate,
-        windowLength_points = windowLength_points,
-        step = step,
-        zp = zp,
-        normalize = normalize,
-        wn = wn,
-        filter = NULL,
-        padWithSilence = padWithSilence
-      )
     }
+  }
+
+  # Get a bank of windowed frames
+  if (is.null(internal$timeShift)) internal$timeShift = 0
+  if (!is.null(sound)) {
+    frameBank = getFrameBank(
+      sound = sound,
+      samplingRate = samplingRate,
+      windowLength_points = windowLength_points,
+      step = step,
+      zp = zp,
+      normalize = normalize,
+      wn = wn,
+      filter = NULL,
+      padWithSilence = padWithSilence,
+      timeShift = internal$timeShift
+    )
+  } else {
+    frameBank = internal$frameBank
   }
   if (class(frameBank)[1] != 'matrix') {
     stop(
@@ -419,7 +415,7 @@ spectrogram = function(
 
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
       par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
-      time_stamps = seq(0, duration, length.out = ls)
+      time_stamps = seq(0, duration, length.out = ls) + internal$timeShift
       plot(
         time_stamps,
         sound,
@@ -446,10 +442,10 @@ spectrogram = function(
     }
 
     if (x_ms) {
-      xlim = c(0, duration * 1000)
+      xlim = c(0, duration * 1000) + internal$timeShift * 1000
     } else {
       X = X / 1000
-      xlim = c(0, duration)
+      xlim = c(0, duration) + internal$timeShift
     }
     if (y_Hz) {
       Y = Y * 1000
@@ -504,8 +500,8 @@ spectrogram = function(
       #      col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3,
       #      equilogs = TRUE)
     }
-    if (!is.null(pitch)) {
-      do.call(addPitchCands, pitch)
+    if (!is.null(internal$pitch)) {
+      do.call(addPitchCands, internal$pitch)
     }
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
@@ -671,6 +667,7 @@ gaussian.w = function(n) {
 #' @inheritParams spectrogram
 #' @param windowLength_points length of fft window (points)
 #' @param filter fft window filter (defaults to NULL)
+#' @param timeShift time (s) added to timestamps
 #' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
 #'   depending on \code{length(sound)} and \code{step}
 #' @keywords internal
@@ -684,7 +681,8 @@ getFrameBank = function(sound,
                         zp,
                         normalize = TRUE,
                         filter = NULL,
-                        padWithSilence = FALSE) {
+                        padWithSilence = FALSE,
+                        timeShift = NULL) {
   # # normalize to range from no less than -1 to no more than +1
   if (!is.numeric(sound)) return(NA)
   sound[is.na(sound)] = 0
@@ -709,6 +707,7 @@ getFrameBank = function(sound,
     time_stamps = (myseq - 1 + windowLength_points / 2) *
       1000 / samplingRate
   }
+  if (!is.null(timeShift)) time_stamps = time_stamps + round(timeShift * 1000)
 
   if (is.null(filter)) {
     filter = ftwindow_modif(wl = windowLength_points, wn = wn)
@@ -909,6 +908,7 @@ osc = function(
   # plot
   if (plot) {
     # For long files, downsample before plotting
+    l = length(sound)
     if (!is.null(maxPoints) && maxPoints < l) {
       myseq = round(seq(1, l, by = l / maxPoints))
       maxPoints = length(myseq)
@@ -1003,8 +1003,9 @@ getSmoothSpectrum = function(sound,
                              ...) {
   # Get high-res mean spectrum with seewave
   # (faster than smoothing the raw, super-long spectrum)
+  wl = round(min(2048, length(sound) - 1) / 2) * 2  # must be even, otherwise seewave complains
   spec = as.data.frame(seewave::meanspec(
-    sound, f = 16000, wl = min(2048, length(sound)),
+    sound, f = 16000, wl = wl, ovlp = 0,
     dB = 'max0', plot = FALSE))
   # plot(spec, type = 'l')
 

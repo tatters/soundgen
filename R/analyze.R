@@ -58,6 +58,8 @@
 #'
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
+#' @param from,to if NULL (default), analyzes the whole sound, otherwise
+#'   from...to (s)
 #' @param silence (0 to 1) frames with RMS amplitude below silence threshold are
 #'   not analyzed at all. NB: this number is dynamically updated: the actual
 #'   silence threshold may be higher depending on the quietest frame, but it
@@ -227,7 +229,7 @@
 #'   value = c(300, 900, 400, 2300)), len = 1000))
 #'
 #' # the same pitch contour, but harder to analyze b/c of
-#' subharmonics and jitter
+#' # subharmonics and jitter
 #' sound2 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   noise = list(time = c(0, 900), value = c(-40, -20)),
@@ -255,6 +257,9 @@
 #' difRan = function(x) diff(range(x))
 #' a = analyze(sound2, samplingRate = 16000, summary = TRUE,
 #'             summaryFun = c('mean', 'difRan'))
+#'
+#' # Analyze a selection rather than the whole sound
+#' a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)
 #'
 #' # Save the plot
 #' a = analyze(sound1, 44100, ylim = c(0, 5),
@@ -309,6 +314,8 @@
 analyze = function(
   x,
   samplingRate = NULL,
+  from = NULL,
+  to = NULL,
   dynamicRange = 80,
   silence = 0.04,
   scale = NULL,
@@ -432,12 +439,6 @@ analyze = function(
                                        Pref = Pref)))
   }
 
-  # normalize to range from no less than -1 to no more than +1
-  if (min(sound) > 0) {
-    sound = sound - mean(sound)  # center
-  }
-  sound = sound / max(abs(sound))
-
   # Check simple numeric default pars
   simplePars = c('silence', 'entropyThres', 'domThres',
                  'autocorThres', 'autocorSmooth',
@@ -521,7 +522,23 @@ analyze = function(
                     '(27 KHz) as inaudible to humans when estimating loudness'))
     }
   }
+
+  # from...to selection
+  if (any(is.numeric(c(from, to)))) {
+    if (!is.numeric(from)) from_points = 1 else from_points = round(from * samplingRate)
+    if (!is.numeric(to)) to_points = length(sound) else to_points = round(to * samplingRate)
+    sound = sound[from_points:to_points]
+    timeShift = from_points / samplingRate
+  } else {
+    timeShift = 0
+  }
   duration = length(sound) / samplingRate
+
+  # normalize to range from no less than -1 to no more than +1
+  if (min(sound) > 0) {
+    sound = sound - mean(sound)  # center
+  }
+  sound = sound / max(abs(sound))
 
   if (!is.numeric(windowLength) | windowLength <= 0 |
       windowLength > (duration * 1000)) {
@@ -675,27 +692,25 @@ analyze = function(
     zp = zp,
     normalize = TRUE,
     filter = NULL,
-    padWithSilence = FALSE
+    padWithSilence = FALSE,
+    timeShift = timeShift
   )
+  timestamps = as.numeric(colnames(frameBank))
 
   extraSpecPars = list(...)
   extraSpecPars$osc = NULL
   s = do.call(spectrogram, c(list(
     x = NULL,
-    frameBank = frameBank,
+    internal = list(duration = duration,
+                    frameBank = frameBank),
     dynamicRange = dynamicRange,
-    duration = duration,
     samplingRate = samplingRate,
     windowLength = windowLength,
     zp = zp,
     wn = wn,
     step = step,
-    main = plotname,
     normalize = FALSE,
     output = 'original',
-    ylim = ylim,
-    xlab = xlab,
-    ylab = ylab,
     plot = FALSE
   ), extraSpecPars))
   if (is.na(s)[1]) {
@@ -707,7 +722,7 @@ analyze = function(
   freqs = as.numeric(rownames(s)) * 1000  # central bin freqs, Hz
 
   # calculate rms amplitude of each frame
-  myseq = (as.numeric(colnames(frameBank)) - windowLength / 2) * samplingRate / 1000 + 1
+  myseq = (timestamps - timeShift * 1000 - windowLength / 2) * samplingRate / 1000 + 1
   myseq[1] = 1  # just in case of rounding errors
   ampl = apply(as.matrix(1:length(myseq)), 1, function(x) {
     # perceived intensity - root mean square of amplitude
@@ -733,15 +748,15 @@ analyze = function(
   cond_silence = ampl >= silence &
     as.logical(apply(s, 2, sum) > 0)  # b/c s frames are not 100% synchronized with ampl frames
   framesToAnalyze = which(cond_silence)
-  cond_entropy = ampl > silence & entropy < entropyThres
+  cond_entropy = cond_silence & entropy < entropyThres
   cond_entropy[is.na(cond_entropy)] = FALSE
 
   # save duration of non-silent part of audio
   if (length(framesToAnalyze) > 0) {
     # the beginning of the first non-silent frame
-    time_start = step * (min(framesToAnalyze) - 1)
+    time_start = timestamps[framesToAnalyze[1]] - windowLength / 2
     # the end of the last non-silent frame
-    time_end = step * (max(framesToAnalyze))
+    time_end = timestamps[framesToAnalyze[length(framesToAnalyze)]] + windowLength / 2
     duration_noSilence = (time_end - time_start) / 1000
   } else {
     duration_noSilence = 0
@@ -752,6 +767,7 @@ analyze = function(
   # autocorrelation for each frame
   autocorBank = matrix(NA, nrow = length(autoCorrelation_filter),
                        ncol = ncol(frameBank))
+
   for (i in which(cond_entropy)) {
     autocorBank[, i] = acf(frameBank[, i],
                            windowLength_points,
@@ -781,8 +797,6 @@ analyze = function(
       }
     }
   }
-
-
 
   ## PITCH and other spectral analysis of each frame from fft
   # set up an empty nested list to save values in - this enables us to analyze
@@ -994,9 +1008,7 @@ analyze = function(
     # is messed up if spectrogram() calls layout() to add an oscillogram
     do.call(spectrogram, c(list(
       x = sound,
-      frameBank = frameBank,
       dynamicRange = dynamicRange,
-      duration = duration,
       samplingRate = samplingRate,
       windowLength = windowLength,
       zp = zp,
@@ -1012,33 +1024,38 @@ analyze = function(
       plot = TRUE,
       osc = osc,
       osc_dB = osc_dB,
-      pitch = list(
-        pitchCands = pitchCands_list$freq,
-        pitchCert = pitchCands_list$cert,
-        pitchSource = pitchCands_list$source,
-        pitch = result$pitch,
-        timestamps = result$time,
-        candPlot = list(
-          dom = pitchDom_plotPars,
-          autocor = pitchAutocor_plotPars,
-          cep = pitchCep_plotPars,
-          spec = pitchSpec_plotPars,
-          hps = pitchHps_plotPars
-        ),
-        pitchPlot = pitchPlot,
-        extraContour = result$harmHeight,
-        extraContour_pars = harmHeight_plotPars,
-        priorMean = priorMean,
-        priorSD = priorSD,
-        pitchFloor = pitchFloor,
-        pitchCeiling = pitchCeiling,
-        addToExistingPlot = TRUE,
-        showLegend = showLegend,
-        ylim = ylim,
-        xlab = xlab,
-        ylab = ylab,
-        main = plotname
-      )), extraSpecPars))
+      internal = list(
+        frameBank = frameBank,
+        duration = duration,
+        timeShift = timeShift,
+        pitch = list(
+          pitchCands = pitchCands_list$freq,
+          pitchCert = pitchCands_list$cert,
+          pitchSource = pitchCands_list$source,
+          pitch = result$pitch,
+          timestamps = result$time / 1000,  # spetcrogram always plots in s
+          candPlot = list(
+            dom = pitchDom_plotPars,
+            autocor = pitchAutocor_plotPars,
+            cep = pitchCep_plotPars,
+            spec = pitchSpec_plotPars,
+            hps = pitchHps_plotPars
+          ),
+          pitchPlot = pitchPlot,
+          extraContour = result$harmHeight,
+          extraContour_pars = harmHeight_plotPars,
+          priorMean = priorMean,
+          priorSD = priorSD,
+          pitchFloor = pitchFloor,
+          pitchCeiling = pitchCeiling,
+          addToExistingPlot = TRUE,
+          showLegend = showLegend,
+          ylim = ylim,
+          xlab = xlab,
+          ylab = ylab,
+          main = plotname,
+          timeShift = timeShift
+        ))), extraSpecPars))
   }
   if (is.character(savePath)) {
     dev.off()

@@ -40,9 +40,7 @@ spectrogram(
   mar = c(5.1, 4.1, 4.1, 2),
   main = "",
   grid = NULL,
-  frameBank = NULL,
-  duration = NULL,
-  pitch = NULL,
+  internal = NULL,
   ...
 )
 }
@@ -135,7 +133,7 @@ or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
 
 \item{grid}{if numeric, adds n = \code{grid} dotted lines per kHz}
 
-\item{frameBank, duration, pitch}{ignore (only used internally)}
+\item{internal}{ignore (only used internally)}
 
 \item{...}{other graphical parameters}
 }

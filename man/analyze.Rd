@@ -7,6 +7,8 @@
 analyze(
   x,
   samplingRate = NULL,
+  from = NULL,
+  to = NULL,
   dynamicRange = 80,
   silence = 0.04,
   scale = NULL,
@@ -73,6 +75,9 @@ samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file)}
+
+\item{from, to}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
@@ -362,7 +367,7 @@ median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
   value = c(300, 900, 400, 2300)), len = 1000))
 
 # the same pitch contour, but harder to analyze b/c of
-subharmonics and jitter
+# subharmonics and jitter
 sound2 = soundgen(sylLen = 900, pitch = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
   noise = list(time = c(0, 900), value = c(-40, -20)),
@@ -390,6 +395,9 @@ a = analyze(sound1, 44100, summary = TRUE,
 difRan = function(x) diff(range(x))
 a = analyze(sound2, samplingRate = 16000, summary = TRUE,
             summaryFun = c('mean', 'difRan'))
+
+# Analyze a selection rather than the whole sound
+a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)
 
 # Save the plot
 a = analyze(sound1, 44100, ylim = c(0, 5),

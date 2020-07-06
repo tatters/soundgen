@@ -7,7 +7,7 @@
 soundgen_app()
 }
 \description{
-Starts a shiny app, which provides an interactive wrapper to
+Starts a shiny app that provides an interactive wrapper to
 \code{\link{soundgen}}. Supported browsers: Firefox / Chrome. Note that the
 browser has to be able to playback WAV audio files, otherwise there will be
 no sound.

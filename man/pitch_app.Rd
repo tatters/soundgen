@@ -2,7 +2,7 @@
 % Please edit documentation in R/soundgenShiny.R
 \name{pitch_app}
 \alias{pitch_app}
-\title{Interactive pitch editor}
+\title{Interactive pitch tracker}
 \usage{
 pitch_app()
 }

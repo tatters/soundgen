@@ -13,7 +13,8 @@ getFrameBank(
   zp,
   normalize = TRUE,
   filter = NULL,
-  padWithSilence = FALSE
+  padWithSilence = FALSE,
+  timeShift = NULL
 )
 }
 \arguments{
@@ -38,6 +39,8 @@ blackman, flattop}
 \item{padWithSilence}{if TRUE, pads the sound with just enough silence to
 resolve the edges properly (only the original region is plotted, so
 apparent duration doesn't change)}
+
+\item{timeShift}{time (s) added to timestamps}
 }
 \value{
 A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
