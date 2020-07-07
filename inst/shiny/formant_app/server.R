@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: add formant tracks within selection, format the output table nicely, nFormants set by user, add menu for pars for formant tracking, maybe arbitrary number of annotation tiers
+# To do: edit done(); maybe arbitrary number of annotation tiers; remove or integate "manual" stuff
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -14,7 +14,6 @@ server = function(input, output, session) {
     myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
     myPars$zoomFactor_freq = 1.5  # same for frequency
     myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
-    myPars$out = NULL         # for storing the output
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
@@ -192,6 +191,14 @@ server = function(input, output, session) {
         )
     })
 
+
+    ## OUTPUTs
+    # Update the number of formants in radio buttons
+    output$fRadios = renderUI({
+        fNames = paste0('F', 1:input$nFormants)
+        fValues = paste0('f', 1:input$nFormants)
+        radioButtons('spectro_clickAct', label = '', choiceNames = fNames, choiceValues = fValues, selected = 'f1', inline = TRUE)
+    })
 
     # Updating spec / osc stuff to speed up plotting
     observe({
@@ -458,38 +465,54 @@ server = function(input, output, session) {
     })
 
     # Analysis
-    observe({
-        myPars$step = input$windowLength * (1 - input$overlap / 100)
-    })
+    # observe({
+    #     myPars$step = input$windowLength * (1 - input$overlap / 100)
+    # })
+    # observe({
+    #     myPars$step_lpc = input$windowLength_lpc * (1 - input$overlap_lpc / 100)
+    # })
 
     observe({
         if (myPars$print) print('Updating regionToAnalyze...')
         if (is.null(myPars$analyzedUpTo)) {
             myPars$regionToAnalyze = myPars$spec_xlim
+            call = TRUE
         } else {
             if (myPars$analyzedUpTo < myPars$spec_xlim[2]) {
                 myPars$regionToAnalyze = c(myPars$analyzedUpTo, myPars$spec_xlim[2])
+                call = TRUE
             } else {
-                myPars$regionToAnalyze = NULL
+                call = FALSE
             }
         }
+        if (call) extractFormants()
     })
 
-    observe({
-        # analyze the visible portion of the spectrogram to get frame-by-frame formant tracks
-        if (!is.null(myPars$myAudio_trimmed) & !is.null(myPars$regionToAnalyze)) {
+    extractFormants = reactive({
+        if (!is.null(myPars$myAudio) & !is.null(myPars$regionToAnalyze)) {
             if (myPars$print) print('Extracting formants...')
+            if (input$coeffs != '') {
+                coeffs = as.numeric(input$coeffs)
+            } else {
+                coeffs = NULL
+            }
             myPars$temp_anal = analyze(
                 myPars$myAudio,
                 samplingRate = myPars$samplingRate,
                 from = myPars$regionToAnalyze[1] / 1000,
                 to = myPars$regionToAnalyze[2] / 1000,
-                windowLength = input$windowLength,
-                step = myPars$step,
-                wn = input$wn,
-                zp = input$zp,
-                dynamicRange = input$dynamicRange,
+                windowLength = input$windowLength_lpc,
+                overlap = input$overlap_lpc,
+                wn = input$wn_lpc,
+                zp = input$zp_lpc,
+                dynamicRange = input$dynamicRange_lpc,
                 silence = input$silence,
+                formants = list(
+                    coeffs = coeffs,
+                    minformant = input$minformant,
+                    maxbw = input$maxbw,
+                    verify = FALSE
+                ),
                 pitchMethods = NULL,  # disable pitch tracking
                 SPL_measured = 0,  # disable loudness analysis
                 nFormants = input$nFormants,
@@ -501,32 +524,61 @@ server = function(input, output, session) {
                 if (is.null(myPars$formantTracks)) {
                     myPars$formantTracks = round(myPars$temp_anal[, c('time', myPars$f_col_names)])
                 } else {
+                    new_time_range = range(myPars$temp_anal$time)
+                    idx = which(myPars$formantTracks$time >= new_time_range[1] &
+                                    myPars$formantTracks$time <= new_time_range[2])
+                    if (length(idx) > 0) {
+                        myPars$formantTracks = myPars$formantTracks[-idx, ]
+                    }
                     myPars$formantTracks = rbind(
-                        myPars$formantTracks,
+                        myPars$formantTracks[, c('time', myPars$f_col_names)],
                         round(myPars$temp_anal[, c('time', myPars$f_col_names)])
                     )
+                    myPars$formantTracks = myPars$formantTracks[order(myPars$formantTracks$time), ]
                 }
             })
         }
     })
 
+    # if any of LPC settings change, we re-analyze the entire file
+    observeEvent(c(input$nFormants, input$silence, input$coeffs, input$minformant, input$maxbw, input$windowLength_lpc, input$overlap_lpc, input$wn_lpc, input$zp_lpc, input$dynamicRange_lpc), {
+        myPars$analyzedUpTo = 0
+    }, ignoreInit = TRUE)
+
     observe({
         # analyze annotated selection
         if (!is.null(myPars$selection)) {
             if (myPars$print) print('Averaging formants in selection...')
-            idx = which(myPars$temp_anal$time >= myPars$currentAnn$from &
-                            myPars$temp_anal$time <= myPars$currentAnn$to)
+            idx = which(myPars$formantTracks$time >= myPars$currentAnn$from &
+                            myPars$formantTracks$time <= myPars$currentAnn$to)
             myPars$formants = round(colMeans(myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)], na.rm = TRUE))
             # myPars$bandwidth ?
         }
     })
 
     observe({
-        output$ann_table = renderTable(myPars$ann, digits = 0)
+        output$ann_table = renderTable(myPars$ann[, -1], digits = 0)
     })
 
-    observe({
-        myPars$f_col_names = paste0('f', 1:input$nFormants, '_freq')
+    observeEvent(input$nFormants, {
+        myPars$ff = paste0('f', 1:input$nFormants)
+        myPars$f_col_names = paste0(myPars$ff, '_freq')
+        # keep track of the maximum number of formant ever analyzed
+        # to make sure the output table has enough columns
+        myPars$maxF = max(myPars$maxF, input$nFormants)
+        if (!is.null(myPars$formantTracks)) {
+            missingCols = myPars$f_col_names[which(!myPars$f_col_names %in% colnames(myPars$formantTracks))]
+            if (length(missingCols > 0)) myPars$formantTracks[, missingCols] = NA
+        }
+        if (!is.null(myPars$ann)) {
+            missingCols = myPars$ff[which(!myPars$ff %in% colnames(myPars$ann))]
+            myPars$ann[, missingCols] = NA
+        }
+        # if (!is.null(myPars$currentAnn)) {
+        #     for (f in 1:input$nFormants) {
+        #         if (is.null(myPars$currentAnn[, f])) myPars$currentAnn[, f] = NA
+        #     }
+        # }
     })
 
 
@@ -599,7 +651,14 @@ server = function(input, output, session) {
 
     observeEvent(input$ok_new, {
         myPars$currentAnn$label = input$annotation
-        myPars$currentAnn[, paste0('f', 1:6)] = myPars$formants[1:6]
+        myPars$currentAnn[, myPars$ff] = myPars$formants[myPars$f_col_names]
+        # depending on the history of changing input$nFormants,
+        # there may be more formants in myPars$ann than in myPars$currentAnn
+        if (input$nFormants < myPars$maxF) {
+            extraVars = paste0('f', ((input$nFormants + 1):myPars$maxF))
+            myPars$currentAnn[, extraVars] = NA
+        }
+        # append currentAnn to the list of annotations
         if (is.null(myPars$ann)) {
             myPars$ann = myPars$currentAnn
         } else {
@@ -785,8 +844,7 @@ server = function(input, output, session) {
 
     # SAVE OUTPUT
     done = function() {
-        # meaning we have finished editing pitch contour for a sound - prepares
-        # the output
+        # meaning we are one with a sound - prepares the output
         if (myPars$print) print('Running done()...')
         session$resetBrush("spectrogram_brush")  # doesn't reset automatically
         if (!is.null(myPars$myAudio_path) && !is.null(myPars$result)) {

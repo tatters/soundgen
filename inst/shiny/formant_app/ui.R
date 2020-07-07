@@ -23,30 +23,39 @@ ui = fluidPage(
   fluidRow(
     column(id = "Sidebar",
            tabsetPanel(id='parGroup',
-                       navbarMenu("In",
-                                  tabPanel("STFT",
-                                           actionButton('reset_to_def', label = 'Reset ALL to defaults'),
-                                           numericInput('windowLength', 'Window length, ms ("windowLength")', value=10, min=defaults_analyze['windowLength', 'low'], max=defaults_analyze['windowLength', 'high'], step=defaults_analyze['windowLength','step']),
-                                           sliderInput('overlap', 'Overlap, % ("overlap")', value=defaults_analyze['overlap','default'], min=defaults_analyze['overlap', 'low'], max=defaults_analyze['overlap', 'high'], step=defaults_analyze['overlap','step']),
-                                           sliderInput('dynamicRange', 'Dynamic range, dB ("dynamicRange")', value=defaults_analyze['dynamicRange','default'], min=defaults_analyze['dynamicRange', 'low'], max=defaults_analyze['dynamicRange', 'high'], step=defaults_analyze['dynamicRange','step']),
-                                           sliderInput('zp', 'Zero padding, points 2 ^ n ("zp")', value=defaults_analyze['zp','default'], min=defaults_analyze['zp','low'], max=defaults_analyze['zp','high'], step=defaults_analyze['zp','step']),
-                                           selectInput('wn', 'Window type ("wn")', choices = c('bartlett', 'blackman', 'flattop', 'gaussian', 'hamming', 'hanning', 'rectangle'), selected = 'gaussian', multiple = FALSE)
-                                  )
-                       ),
-
-                       navbarMenu("Trackers",
+                       navbarMenu("Analysis",
                                   tabPanel("LPC",
-                                           sliderInput('nFormants', 'Number of formants', value=4, min=1, max=10, step=1)
+                                           actionButton('reset_to_def', label = 'Reset ALL to defaults'),
+                                           sliderInput('nFormants', 'Number of formants', value=4, min=1, max=10, step=1),
+                                           numericInput('silence', 'Silence threshold (0 to 1)', value=defaults_analyze['silence', 'default'], min=defaults_analyze['silence', 'low'], max=defaults_analyze['silence', 'high'], step=defaults_analyze['silence', 'step']),
+                                           textInput('coeffs', 'Number of LPC coefficients', value=''),
+                                           sliderInput('minformant', 'Minimum formant frequency', value=200, min=10, max=5000, step=10),
+                                           sliderInput('maxbw', 'Maximum formant bandwidth', value=600, min=10, max=5000, step=10)
+                                  ),
+
+                                  tabPanel("Windowing",
+                                           numericInput('windowLength_lpc', 'Window length, ms', value=10, min=defaults_analyze['windowLength', 'low'], max=defaults_analyze['windowLength', 'high'], step=defaults_analyze['windowLength','step']),
+                                           sliderInput('overlap_lpc', 'Overlap, %', value=defaults_analyze['overlap','default'], min=defaults_analyze['overlap', 'low'], max=defaults_analyze['overlap', 'high'], step=defaults_analyze['overlap','step']),
+                                           sliderInput('dynamicRange_lpc', 'Dynamic range, dB', value=defaults_analyze['dynamicRange','default'], min=defaults_analyze['dynamicRange', 'low'], max=defaults_analyze['dynamicRange', 'high'], step=defaults_analyze['dynamicRange','step']),
+                                           sliderInput('zp_lpc', 'Zero padding, points 2 ^ n', value=defaults_analyze['zp','default'], min=defaults_analyze['zp','low'], max=defaults_analyze['zp','high'], step=defaults_analyze['zp','step']),
+                                           selectInput('wn_lpc', 'Window type', choices = c('bartlett', 'blackman', 'flattop', 'gaussian', 'hamming', 'hanning', 'rectangle'), selected = 'gaussian', multiple = FALSE),
                                   )
                        ),
 
-                       navbarMenu("Out",
+                       navbarMenu("Plotting",
                                   tabPanel("Spectrogram",
-                                           sliderInput('spec_ylim', 'Frequency range, kHz ("ylim")', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
-                                           sliderInput('maxPoints_spec', 'Max number of pixels, 10^', value=5.5, min=3, max=7, step=.25),
-                                           radioButtons(inputId='spec_colorTheme', label='Color scheme ("colorTheme")', choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
-                                           sliderInput('specContrast', 'Contrast ("contrast")', value=defaults_analyze['specContrast','default'], min=defaults_analyze['specContrast', 'low'], max=defaults_analyze['specContrast', 'high'], step=defaults_analyze['specContrast','step']),
-                                           sliderInput('specBrightness', 'Brightness ("brightness")', value=defaults_analyze['specBrightness','default'], min=defaults_analyze['specBrightness', 'low'], max=defaults_analyze['specBrightness', 'high'], step=defaults_analyze['specBrightness','step'])
+                                           sliderInput('spec_ylim', 'Frequency range, kHz', value=c(0, defaults_analyze['spec_ylim','default']), min=defaults_analyze['spec_ylim', 'low'], max=defaults_analyze['spec_ylim','high'], step=defaults_analyze['spec_ylim','step']),
+                                           numericInput('windowLength', 'Window length, ms', value=10, min=defaults_analyze['windowLength', 'low'], max=defaults_analyze['windowLength', 'high'], step=defaults_analyze['windowLength','step']),
+                                           sliderInput('overlap', 'Overlap, %', value=defaults_analyze['overlap','default'], min=defaults_analyze['overlap', 'low'], max=defaults_analyze['overlap', 'high'], step=defaults_analyze['overlap','step']),
+                                           sliderInput('dynamicRange', 'Dynamic range, dB', value=defaults_analyze['dynamicRange','default'], min=defaults_analyze['dynamicRange', 'low'], max=defaults_analyze['dynamicRange', 'high'], step=defaults_analyze['dynamicRange','step']),
+                                           radioButtons(inputId='spec_colorTheme', label='Color scheme', choices=c("Seewave"="seewave", "Heat"="heat.colors", "Black & white"="bw"), selected='bw', inline=TRUE, width=NULL),
+                                           sliderInput('specContrast', 'Contrast', value=defaults_analyze['specContrast','default'], min=defaults_analyze['specContrast', 'low'], max=defaults_analyze['specContrast', 'high'], step=defaults_analyze['specContrast','step']),
+                                           sliderInput('specBrightness', 'Brightness', value=defaults_analyze['specBrightness','default'], min=defaults_analyze['specBrightness', 'low'], max=defaults_analyze['specBrightness', 'high'], step=defaults_analyze['specBrightness','step']),
+                                           shinyBS::bsCollapsePanel("Advanced",
+                                                                    sliderInput('zp', 'Zero padding, points 2 ^ n', value=defaults_analyze['zp','default'], min=defaults_analyze['zp','low'], max=defaults_analyze['zp','high'], step=defaults_analyze['zp','step']),
+                                                                    selectInput('wn', 'Window type', choices = c('bartlett', 'blackman', 'flattop', 'gaussian', 'hamming', 'hanning', 'rectangle'), selected = 'gaussian', multiple = FALSE),
+                                                                    sliderInput('maxPoints_spec', 'Max number of pixels, 10^', value=5.5, min=3, max=7, step=.25)
+                                           )
                                   ),
 
                                   tabPanel("Oscillogram",
@@ -103,7 +112,7 @@ ui = fluidPage(
                     htmlOutput('pitchAtCursor', inline = TRUE)
              ),
              column(2,
-                    radioButtons('spectro_clickAct', label = '', choiceNames = c('F1', 'F2', 'F3', 'F4'), choiceValues = c('f1', 'f2', 'f3', 'f4'), selected = 'f1', inline = TRUE)
+                    uiOutput('fRadios')
              ),
              column(2,
                     actionButton(inputId = 'scrollLeft', label = HTML("<img src='icons/backward.png' width = '25px'>"), style = "padding: 2px 2px;"),

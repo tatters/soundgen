@@ -275,7 +275,7 @@ spectrogram = function(
   brightness_exp = exp(3 * brightness)
   # visualization: plot(exp(3 * seq(-1, 1, by = .01)), type = 'l')
 
-  # FFT
+  # Prepare for FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   if (!is.null(sound)) {
     if (windowLength_points > (ls / 2)) {
@@ -287,24 +287,27 @@ spectrogram = function(
     stop('The sound and/or the windowLength is too short for plotting a spectrogram')
   }
 
-  # fft of each frame
-  z = apply(frameBank, 2, function(x) stats::fft(x)[1:(floor(nrow(frameBank) / 2))])
-  if (!is.matrix(z)) z = matrix(z, ncol = 1)
+  # time stamps
+  X = as.numeric(colnames(frameBank))
   # adjust the timing of spectrogram to match the actual time stamps
   # in getFrameBank (~the middle of each fft frame)
-  X = as.numeric(colnames(frameBank))
   if (length(X) < 2) {
     message('The sound is too short for plotting a spectrogram')
     return(NA)
   }
-  bin_width = samplingRate / 2 / windowLength_points
-  Y = seq(bin_width / 2,
-          samplingRate / 2 - bin_width / 2,
-          length.out = nrow(z)) / 1000  # frequency stamp
+
+  # frequency stamps
+  n1 = floor(windowLength_points / 2)
+  bin_width = samplingRate / windowLength_points
+  Y = (0:(n1 - 1)) * bin_width / 1000
   if (length(Y) < 2) {
     message('The sound and/or the windowLength is too short for plotting a spectrogram')
     return(NA)
   }
+
+  # fft of each frame
+  z = apply(frameBank, 2, function(x) stats::fft(x)[1:n1])
+  if (!is.matrix(z)) z = matrix(z, ncol = 1)
   rownames(z) = Y
   colnames(z) = X
   Z = t(abs(z))

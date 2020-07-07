@@ -2,6 +2,8 @@
 BUGS FIXED:
   * morph() accepts vectors like "vibratoFreq = c(0, 3)" in both formulas without crashing
   * pitch_app() saves all files propertly if multiple folders are opened consecutively without saving the output
+  * spectrogram(): corrected frequency labels
+  * filterSoundByMS(): the argument "action = c('remove', 'preserve')" now has an effect
 
 MINOR:
   * soundgen(): smoothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing
