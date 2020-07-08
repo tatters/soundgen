@@ -285,6 +285,54 @@ for (p in c('pch', 'cex', 'lwd', 'lty')) {
 # usethis::use_data(defaults_analyze_pitchCand, overwrite = TRUE)
 
 
+#' Defaults and ranges for formant_app()
+#'
+#' Internal soundgen list of defaults.
+#'
+#' A dataset containing defaults and ranges of key variables for formant_app().
+#' Adjust as needed.
+#' @keywords internal
+#' @format A matrix with 4 columns:
+#' \describe{
+#'   \item{default}{default value}
+#'   \item{low}{lowest permitted value}
+#'   \item{high}{highest permitted value}
+#'   \item{step}{increment for adjustment}
+#'   ...
+#' }
+"def_form"
+def_form = matrix(c(
+  'nFormants', 4, 1, 10, 1,       # default, low, high, step
+  'silence', 0.04, 0, 1, .01,
+  'minformant', 200, 10, 5000, 10,
+  'maxbw', 600, 10, 5000, 10,
+
+  'windowLength_lpc', 10, 1, 100, 1,
+  'overlap_lpc', 50, 0, 99, 1,
+  'dynamicRange_lpc', 80, 10, 200, 10,
+  'zp_lpc', 0, 0, 13, 1,
+
+  'spec_ylim', 5, 0, 22, 0.1,
+  'specContrast', .2, -1, 1, .05,
+  'specBrightness', 0, -1, 1, .05,
+  'windowLength', 50, 1, 500, 1,
+  'overlap', 50, 0, 99, 1,
+  'dynamicRange', 80, 10, 200, 10,
+  'zp', 0, 0, 13, 1,
+  'spec_maxPoints', 5.5, 3, 7, .25,
+  'osc_height', 100, 25, 5000, 25,
+  'osc_maxPoints', 5, 3, 7, .5,
+  'spectrum_len', 500, 100, 5000, 25,
+  'spectrum_smooth', -1, -2, 0, .05
+), ncol=5, byrow=TRUE)
+temp = def_form[,1]
+def_form = apply(def_form[,2:5], 2, as.numeric)
+colnames(def_form) = c('default', 'low', 'high', 'step')
+rownames(def_form) = temp
+def_form = as.data.frame(def_form)
+# usethis::use_data(def_form, overwrite = TRUE)
+
+
 # -------------------------------------------------------------
 # A library of presets for easy generation of a few nice sounds
 # -------------------------------------------------------------

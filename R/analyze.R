@@ -524,18 +524,28 @@ analyze = function(
   }
 
   # from...to selection
+  ls = length(sound)
   if (any(is.numeric(c(from, to)))) {
-    if (!is.numeric(from)) from_points = 1 else from_points = round(from * samplingRate)
-    if (!is.numeric(to)) to_points = length(sound) else to_points = round(to * samplingRate)
+    if (!is.numeric(from)) {
+      from_points = 1
+    } else {
+      from_points = max(1, round(from * samplingRate))
+    }
+    if (!is.numeric(to)) {
+      to_points = ls
+    }  else {
+      to_points = min(ls, round(to * samplingRate))
+    }
     sound = sound[from_points:to_points]
     timeShift = from_points / samplingRate
+    ls = length(sound)
   } else {
     timeShift = 0
   }
-  duration = length(sound) / samplingRate
+  duration = ls / samplingRate
 
   # normalize to range from no less than -1 to no more than +1
-  if (min(sound) > 0) {
+  if (any(sound > 0)) {
     sound = sound - mean(sound)  # center
   }
   sound = sound / max(abs(sound))

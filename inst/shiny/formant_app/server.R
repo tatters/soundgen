@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: edit done(); maybe arbitrary number of annotation tiers; remove or integate "manual" stuff
+# To do: done() should handle variable input$nFormants; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; add button to use peak on spectrum as formant freq;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -18,6 +18,8 @@ server = function(input, output, session) {
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
     myPars$analyzeDur = 1000         # initial duration to analyze (ms)
+    myPars$out_fTracks = list()      # a list for storing formant tracks per file
+    myPars$out_spects = list()       # a list for storing spectrograms
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -48,29 +50,27 @@ server = function(input, output, session) {
     }
 
     reset = function() {
-        myPars$pitch = NULL       # pitch contour
-        myPars$pitchCands = NULL  # matrix of pitch candidates
+        myPars$ann = NULL         # a dataframe of annotations for the current file
+        myPars$currentAnn = NULL  # the idx of currently selected annotation
         myPars$bp = NULL          # selected points (under brush)
-        myPars$manual = data.frame(frame = NA, freq = NA)[-1, ]  # manually added pitch anchors
-        myPars$manualUnv = numeric()                             # manually unvoiced frames
-        myPars$drawSpec = FALSE   # prevent the spectrogram from being redrawn needlessly
-        # (only draw it after extracting it)
+        myPars$spec = NULL
+        myPars$formantTracks = NULL
+        myPars$formants = NULL
+        myPars$analyzedUpTo = NULL
+        myPars$selection = NULL
     }
 
     resetSliders = function() {
-        sliders_to_reset = names(input)[which(names(input) %in% rownames(defaults_analyze))]
+        sliders_to_reset = names(input)[which(names(input) %in% rownames(def_form))]
         for (v in sliders_to_reset) {
-            new_value = defaults_analyze[v, 'default']
+            new_value = def_form[v, 'default']
             try(updateSliderInput(session, v, value = new_value))
             try(updateNumericInput(session, v, value = new_value))
             updateSelectInput(session, 'wn', selected = 'gaussian')
-            updateCheckboxGroupInput(session, 'pitchMethods', selected = c('dom', 'autocor'))
-            updateCheckboxGroupInput(session, 'summaryFun', selected = c('mean', 'sd'))
-            updateTextInput(session, 'summaryFun_text', value = '')
-            updateSelectInput(session, 'pathfinding', selected = 'fast')
-            updateSliderInput(session, 'spec_ylim', value=c(0, defaults_analyze['spec_ylim','default']))
+            updateSliderInput(session, 'spec_ylim', value=c(0, def_form['spec_ylim','default']))
             updateRadioButtons(session, 'spec_colorTheme', selected='bw')
             updateSelectInput(session, 'osc', selected = 'linear')
+            updateTextInput(session, 'coeffs', value = '')
         }
     }
     observeEvent(input$reset_to_def, resetSliders())
@@ -82,13 +82,7 @@ server = function(input, output, session) {
         myPars$n = 1   # file number in queue
         myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
         myPars$fileList = paste(input$loadAudio$name, collapse = ', ')
-        # set up a list for storing manual anchors for each of uploaded files
-        myPars$history = vector('list', length = myPars$nFiles)
-        names(myPars$history) = input$loadAudio$name
-        for (i in 1:length(myPars$history)) {
-            myPars$history[[i]] = list(manual = NULL, manualUnv = NULL)
-        }
-
+        myPars$drawSpec = FALSE  # hold on plotting the spectrogram until after running analyze()
         reset()
         readAudio(1)  # read the first sound in queue
     })
@@ -139,17 +133,21 @@ server = function(input, output, session) {
         output$fileN = renderUI(HTML(file_lab))
 
         # if we've already worked with this file in current session,
-        # re-load the manual anchors
-        hist = myPars$history[[myPars$myAudio_filename]]
-        if (!is.null(hist$manual)) myPars$manual = hist$manual
-        if (!is.null(hist$manualUnv)) myPars$manualUnv = hist$manualUnv
+        # re-load the annotations and formant tracks
+        idx = which(myPars$out$file == myPars$myAudio_filename)
+        if (length(idx) > 0) myPars$ann = myPars$out[idx, ]
+        if (!is.null(myPars$out_fTracks[[myPars$myAudio_filename]])) {
+            myPars$formantTracks = myPars$out_fTracks[[myPars$myAudio_filename]]
+            myPars$spec = myPars$out_specs[[myPars$myAudio_filename]]
+            myPars$drawSpec = TRUE  # don't need to wait for analyze() to run
+        }
     }
 
     extractSpectrogram = observe({
-        if (myPars$print) print('Extracting spectrogram...')
         # Instead of re-loading the file every time, save the spectrogram matrix
         # and re-draw manually with soundgen:::filled.contour.mod
-        if (!is.null(myPars$myAudio)) {
+        if (!is.null(myPars$myAudio) & is.null(myPars$spec)) {
+            if (myPars$print) print('Extracting spectrogram...')
             myPars$spec = spectrogram(
                 myPars$myAudio,
                 samplingRate = myPars$samplingRate,
@@ -163,7 +161,7 @@ server = function(input, output, session) {
                 output = 'processed',
                 plot = FALSE
             )
-            myPars$drawSpec = TRUE
+            # myPars$drawSpec = TRUE
         }
     })
 
@@ -201,7 +199,7 @@ server = function(input, output, session) {
     })
 
     # Updating spec / osc stuff to speed up plotting
-    observe({
+    observeEvent(myPars$myAudio, {
         if (!is.null(myPars$myAudio)) {
             if (input$osc == 'dB') {
                 myPars$myAudio_scaled = osc(
@@ -222,25 +220,31 @@ server = function(input, output, session) {
     observe({
         # Cut just the part of spec currently needed for plotting
         # (faster than plotting a huge matrix with xlim/ylim)
-        if (!is.null(myPars$spec)) {
+        if (!is.null(myPars$spec) & !is.null(myPars$myAudio_scaled)) {
             if (myPars$print) print('Trimming the spec & osc')
+            # spec
             x = as.numeric(colnames(myPars$spec))
             idx_x = which(x >= (myPars$spec_xlim[1] / 1.05) &
                               x <= (myPars$spec_xlim[2] * 1.05))
             # 1.05 - a bit beyond b/c we use xlim/ylim and may get white space
-            myPars$spec_trimmed = myPars$spec[, idx_x]
-            idx_s = (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000) :
-                max(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
-            downs_spec = 10 ^ input$maxPoints_spec
-            downs_osc = 10 ^ input$maxPoints_osc
+            y = as.numeric(rownames(myPars$spec))
+            idx_y = which(y >= (input$spec_ylim[1] / 1.05) &
+                              y <= (input$spec_ylim[2] * 1.05))
+            myPars$spec_trimmed = downsample_spec(
+                myPars$spec[idx_y, idx_x],
+                maxPoints = 10 ^ input$spec_maxPoints)
+            # dim(myPars$spec_trimmed)
+
+            # osc
+            idx_s = max(1, (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000)) :
+                min(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
+            downs_osc = 10 ^ input$osc_maxPoints
             myPars$myAudio_trimmed = myPars$myAudio_scaled[idx_s]
+            myPars$time_trimmed = myPars$time[idx_s]
+            myPars$ls_trimmed = length(myPars$myAudio_trimmed)
             isolate({
-                myPars$spec_trimmed = downsample_spec(myPars$spec_trimmed, downs_spec)
-                myPars$ls_trimmed = length(myPars$myAudio_trimmed)
-                myPars$time_trimmed = myPars$time[idx_s]
                 if (!is.null(myPars$myAudio_trimmed) &&
                     myPars$ls_trimmed > downs_osc) {
-                    if (myPars$print) print('Downsampling osc')
                     myseq = round(seq(1, myPars$ls_trimmed,
                                       length.out = downs_osc))
                     myPars$myAudio_trimmed = myPars$myAudio_trimmed[myseq]
@@ -248,27 +252,16 @@ server = function(input, output, session) {
                     myPars$ls_trimmed = length(myseq)
                 }
             })
-        }
-    })
-
-    observe({
-        if (!is.null(myPars$spec)) {
-            if (myPars$print) print('Trimming the spec')
-            y = as.numeric(rownames(myPars$spec))
-            idx_y = which(y >= (input$spec_ylim[1] / 1.05) &
-                              y <= (input$spec_ylim[2] * 1.05))
-            myPars$spec_trimmed = downsample_spec(
-                x = myPars$spec[idx_y, ],
-                maxPoints = 10 ^ input$maxPoints_spec)
+            myPars$drawSpec = TRUE
         }
     })
 
     downsample_sound = function(x, maxPoints) {
         if (!is.null(myPars$myAudio_trimmed) &&
-            myPars$ls_trimmed > (10 ^ input$maxPoints_osc)) {
+            myPars$ls_trimmed > (10 ^ input$osc_maxPoints)) {
             if (myPars$print) print('Downsampling osc')
             myseq = round(seq(1, myPars$ls_trimmed,
-                              by = myPars$ls_trimmed / input$maxPoints_osc))
+                              by = myPars$ls_trimmed / input$osc_maxPoints))
             myPars$myAudio_trimmed = myPars$myAudio_trimmed[myseq]
             myPars$ls_trimmed = length(myseq)
         }
@@ -292,12 +285,13 @@ server = function(input, output, session) {
 
     # Actuall plotting of the spec / osc
     output$spectrogram = renderPlot({
-        if (myPars$drawSpec == TRUE) {
+        if (!is.null(myPars$spec) & myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$myAudio_trimmed) | is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
-                text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~10 s')
+                text(x = 5, y = 5,
+                     labels = 'Upload wav/mp3 file(s) to begin...')
             } else {
                 if (input$spec_colorTheme == 'bw') {
                     color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
@@ -328,8 +322,8 @@ server = function(input, output, session) {
                 # Add a rectangle showing the currently annotated region
                 if (!is.null(myPars$currentAnn)) {
                     rect(
-                        xleft = myPars$currentAnn$from,
-                        xright = myPars$currentAnn$to,
+                        xleft = myPars$ann$from[myPars$currentAnn],
+                        xright = myPars$ann$to[myPars$currentAnn],
                         ybottom = input$spec_ylim[1],
                         ytop = input$spec_ylim[2],
                         col = rgb(.2, .2, .2, alpha = .25)
@@ -444,7 +438,7 @@ server = function(input, output, session) {
     observe({
         if (!is.null(myPars$currentAnn)) {
             if (myPars$print) print('Updating selection...')
-            sel_points = as.numeric(round(myPars$currentAnn[, c('from', 'to')] /
+            sel_points = as.numeric(round(myPars$ann[myPars$currentAnn, c('from', 'to')] /
                                               1000 * myPars$samplingRate))
             idx_points = sel_points[1]:sel_points[2]
             myPars$selection = myPars$myAudio[idx_points]
@@ -473,7 +467,6 @@ server = function(input, output, session) {
     # })
 
     observe({
-        if (myPars$print) print('Updating regionToAnalyze...')
         if (is.null(myPars$analyzedUpTo)) {
             myPars$regionToAnalyze = myPars$spec_xlim
             call = TRUE
@@ -501,6 +494,7 @@ server = function(input, output, session) {
                 samplingRate = myPars$samplingRate,
                 from = myPars$regionToAnalyze[1] / 1000,
                 to = myPars$regionToAnalyze[2] / 1000,
+                scale = myPars$maxAmpl,
                 windowLength = input$windowLength_lpc,
                 overlap = input$overlap_lpc,
                 wn = input$wn_lpc,
@@ -547,10 +541,10 @@ server = function(input, output, session) {
 
     observe({
         # analyze annotated selection
-        if (!is.null(myPars$selection)) {
+        if (!is.null(myPars$selection) & !is.null(myPars$formantTracks)) {
             if (myPars$print) print('Averaging formants in selection...')
-            idx = which(myPars$formantTracks$time >= myPars$currentAnn$from &
-                            myPars$formantTracks$time <= myPars$currentAnn$to)
+            idx = which(myPars$formantTracks$time >= myPars$ann$from[myPars$currentAnn] &
+                            myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn])
             myPars$formants = round(colMeans(myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)], na.rm = TRUE))
             # myPars$bandwidth ?
         }
@@ -574,32 +568,47 @@ server = function(input, output, session) {
             missingCols = myPars$ff[which(!myPars$ff %in% colnames(myPars$ann))]
             myPars$ann[, missingCols] = NA
         }
-        # if (!is.null(myPars$currentAnn)) {
-        #     for (f in 1:input$nFormants) {
-        #         if (is.null(myPars$currentAnn[, f])) myPars$currentAnn[, f] = NA
-        #     }
-        # }
     })
 
 
     ## Clicking events
     observeEvent(input$spectrogram_click, {
         if (!is.null(myPars$currentAnn)) {
-            inside_sel = (myPars$currentAnn$from < input$spectrogram_click$x) &
-                (myPars$currentAnn$to > input$spectrogram_click$x)
+            inside_sel = (myPars$ann$from[myPars$currentAnn] < input$spectrogram_click$x) &
+                (myPars$ann$to[myPars$currentAnn] > input$spectrogram_click$x)
             if (inside_sel) {
-                ann_idx = which(myPars$ann$idx == myPars$currentAnn$idx)
-                myPars$ann[ann_idx, input$spectro_clickAct] = round(input$spectrogram_click$y * 1000)
+                myPars$ann[myPars$currentAnn, input$spectro_clickAct] = round(input$spectrogram_click$y * 1000)
             }
         }
     })
 
     observeEvent(input$spectrogram_dblclick, {
         if (!is.null(input$spectrogram_brush)) {
-            myPars$currentAnn = data.frame(
-                idx = ifelse(is.null(myPars$ann), 1, nrow(myPars$ann) + 1),
-                from = input$spectrogram_brush$xmin,
-                to = input$spectrogram_brush$xmax)
+            # create a new annotation
+            new = data.frame(
+                # idx = ifelse(is.null(myPars$ann), 1, nrow(myPars$ann) + 1),
+                file = myPars$myAudio_filename,
+                from = round(input$spectrogram_brush$xmin),
+                to = round(input$spectrogram_brush$xmax),
+                label = '',
+                stringsAsFactors = FALSE)
+            new[, paste0('f', 1:input$nFormants)] = NA
+            # depending on the history of changing input$nFormants,
+            # there may be more formants in myPars$ann than in the current sel
+            if (input$nFormants < myPars$maxF) {
+                new[, paste0('f', ((input$nFormants + 1):myPars$maxF))] = NA
+            }
+
+            # append to myPars$ann
+            if (is.null(myPars$ann)) {
+                myPars$ann = new
+            } else {
+                myPars$ann = rbind(myPars$ann, new)
+            }
+
+            # select the newly added annotation
+            myPars$currentAnn = nrow(myPars$ann)
+
             # clear the selection
             session$resetBrush("spectrogram_brush")
             showModal(dataModal_new())
@@ -609,16 +618,16 @@ server = function(input, output, session) {
     observeEvent(input$ann_click, {
         # select the annotation whose middle (label) is closest to the click
         if (!is.null(myPars$ann)) {
-            idx = which.min(abs(input$ann_click$x - (myPars$ann$from + myPars$ann$to) / 2))
-            myPars$currentAnn = myPars$ann[idx, ]
+            ds = abs(input$ann_click$x - (myPars$ann$from + myPars$ann$to) / 2)
+            myPars$currentAnn = which.min(ds)
         }
     })
 
     observeEvent(input$ann_dblclick, {
         # select and edit the double-clicked annotation
         if (!is.null(myPars$ann)) {
-            idx = which.min(abs(input$ann_dblclick$x - (myPars$ann$from + myPars$ann$to) / 2))
-            myPars$currentAnn = myPars$ann[idx, ]
+            ds = abs(input$ann_dblclick$x - (myPars$ann$from + myPars$ann$to) / 2)
+            myPars$currentAnn = which.min(ds)
             showModal(dataModal_edit())
         }
     })
@@ -650,20 +659,8 @@ server = function(input, output, session) {
     }
 
     observeEvent(input$ok_new, {
-        myPars$currentAnn$label = input$annotation
-        myPars$currentAnn[, myPars$ff] = myPars$formants[myPars$f_col_names]
-        # depending on the history of changing input$nFormants,
-        # there may be more formants in myPars$ann than in myPars$currentAnn
-        if (input$nFormants < myPars$maxF) {
-            extraVars = paste0('f', ((input$nFormants + 1):myPars$maxF))
-            myPars$currentAnn[, extraVars] = NA
-        }
-        # append currentAnn to the list of annotations
-        if (is.null(myPars$ann)) {
-            myPars$ann = myPars$currentAnn
-        } else {
-            myPars$ann = rbind(myPars$ann, myPars$currentAnn)
-        }
+        myPars$ann$label[myPars$currentAnn] = input$annotation
+        myPars$ann[myPars$currentAnn, myPars$ff] = myPars$formants[myPars$f_col_names]
         myPars$ann = myPars$ann[order(myPars$ann$from), ]
         removeModal()
     })
@@ -682,8 +679,7 @@ server = function(input, output, session) {
     }
 
     observeEvent(input$ok_edit, {
-        myPars$currentAnn$label = input$annotation
-        myPars$ann$label[myPars$currentAnn$idx] = myPars$currentAnn$label
+        myPars$ann$label[myPars$currentAnn] = input$annotation
         removeModal()
     })
 
@@ -694,8 +690,8 @@ server = function(input, output, session) {
                 from = input$spectrogram_brush$xmin / 1000
                 to = input$spectrogram_brush$xmax / 1000
             } else if (!is.null(myPars$currentAnn)) {
-                from = myPars$currentAnn$from / 1000
-                to = myPars$currentAnn$to / 1000
+                from = myPars$ann$from[myPars$currentAnn] / 1000
+                to = myPars$ann$to[myPars$currentAnn] / 1000
             } else {
                 from = myPars$spec_xlim[1] / 1000
                 to = myPars$spec_xlim[2] / 1000
@@ -707,8 +703,7 @@ server = function(input, output, session) {
 
     deleteSel = function() {
         if (!is.null(myPars$currentAnn)) {
-            idx = which(myPars$ann$idx == myPars$currentAnn$idx)
-            myPars$ann = myPars$ann[-idx, ]
+            myPars$ann = myPars$ann[-myPars$currentAnn, ]
             myPars$selection = NULL
             myPars$currentAnn = NULL
         }
@@ -844,54 +839,26 @@ server = function(input, output, session) {
 
     # SAVE OUTPUT
     done = function() {
-        # meaning we are one with a sound - prepares the output
+        # meaning we are done with a sound - prepares the output
         if (myPars$print) print('Running done()...')
         session$resetBrush("spectrogram_brush")  # doesn't reset automatically
-        if (!is.null(myPars$myAudio_path) && !is.null(myPars$result)) {
-            new = data.frame(
-                file = basename(myPars$myAudio_filename),
-                time = paste(round(myPars$X), collapse = ', '),
-                pitch = paste(round(myPars$pitch), collapse = ', '),
-                stringsAsFactors = FALSE
-            )
-            result_new = soundgen:::updateAnalyze(
-                result = myPars$result,
-                pitch_true = myPars$pitch,
-                spectrogram = myPars$spec_from_anal,
-                harmHeight_pars = list(
-                    harmThres = defaults_analyze['harmThres', 'default'],
-                    harmTol = defaults_analyze['harmTol', 'default'],
-                    harmPerSel = defaults_analyze['harmPerSel', 'default']),
-                smooth = input$smooth,
-                smoothing_ww = myPars$smoothing_ww,
-                smoothingThres = myPars$smoothing_ww
-            )
-            summary_new = soundgen:::summarizeAnalyze(
-                result_new,
-                summaryFun = isolate(myPars$summaryFun),)
-            new = cbind(new$file,
-                        summary_new,
-                        new[, c('time', 'pitch')])
-            colnames(new)[1] = 'file'  # otherwise misnamed
-            new$file = as.character(new$file)  # otherwise becomes a factor
+        if (!is.null(myPars$myAudio_path)) {
             if (is.null(myPars$out)) {
-                myPars$out = new
+                myPars$out = myPars$ann
             } else {
-                idx = which(myPars$out$file == new$file)
-                if (length(idx) == 1) {
-                    myPars$out[idx, ] = new
-                } else {
-                    myPars$out = rbind(myPars$out, new)
+                idx = which(myPars$out$file == myPars$ann$file[1])
+                if (length(idx) > 1) {
+                    # already have some records for this file - remove
+                    myPars$out = myPars$out[-idx, ]
                 }
+                myPars$out = rbind(myPars$out, myPars$ann)
             }
+            myPars$out_fTracks[[myPars$myAudio_filename]] = myPars$formantTracks
+            myPars$out_spects[[myPars$myAudio_filename]] = myPars$spec
         }
-        if (!is.null(myPars$out))
+        if (!is.null(myPars$out)) {
+            myPars$out = myPars$out[order(myPars$out$file, myPars$out$from), ]
             write.csv(myPars$out, 'www/temp.csv', row.names = FALSE)
-
-        # add manual corrections to the history list
-        if (!is.null(myPars$myAudio_filename)) {
-            myPars$history[[myPars$myAudio_filename]]$manual = myPars$manual
-            myPars$history[[myPars$myAudio_filename]]$manualUnv = myPars$manualUnv
         }
     }
 
@@ -915,8 +882,6 @@ server = function(input, output, session) {
                 myPars$n = myPars$n - 1
                 reset()
                 readAudio(myPars$n)
-                # todo: re-load the manual pitch contour for the previous file -
-                # remember myPars$manual and myPars$manualUnv
             }
         }
     }
@@ -926,14 +891,14 @@ server = function(input, output, session) {
         filename = function() 'output.csv',
         content = function(filename) {
             done()  # finalize the last file
-            write.csv(myPars$ann, filename, row.names = FALSE)
+            write.csv(myPars$out, filename, row.names = FALSE)
             if (file.exists('www/temp.csv')) file.remove('www/temp.csv')
         }
     )
 
     observeEvent(input$about, {
         id <<- showNotification(
-            ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Left-click to add/correct a pitch anchor, double-click to remove/unvoice the frame. More info: ?pitch_app and http://cogsci.se/soundgen.html"),
+            ui = paste0("App for measuring formants in small annotated segments: soundgen ", packageVersion('soundgen'), ". Select an area of spectrogram and double-click to add an annotation, left-click to correct a formant measure (use radio buttons to select which formant to correct). More info: ?formant_app and http://cogsci.se/soundgen.html"),
             duration = 10,
             closeButton = TRUE,
             type = 'default'
@@ -954,7 +919,7 @@ server = function(input, output, session) {
 
     # spectrogram
     shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='maxPoints_spec', title = 'The number of points to plot in the spectrogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='spec_maxPoints', title = 'The number of points to plot in the spectrogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -962,7 +927,7 @@ server = function(input, output, session) {
     # oscillogram
     shinyBS::addTooltip(session, id='osc', title = 'The type of oscillogram to show', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='osc_height', title = 'The height of oscillogram, pixels', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='maxPoints_osc', title = 'The number of points to plot in the oscillogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='osc_maxPoints', title = 'The number of points to plot in the oscillogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # action buttons
     shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file (BACKSPACE)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
