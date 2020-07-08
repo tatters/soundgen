@@ -245,7 +245,9 @@ defaults_analyze = matrix(c(
   # pitch_app() settings, which are not needed for analyze()
   'specContrast', .2, -1, 1, .05,
   'specBrightness', 0, -1, 1, .05,
-  'spec_ylim', 5, 0, 22, 0.1
+  'spec_ylim', 5, 0, 22, 0.1,
+  'spec_maxPoints', 5.5, 3, 7, .25,
+  'osc_maxPoints', 5, 3, 7, .5
 ), ncol=5, byrow=TRUE)
 temp = defaults_analyze[,1]
 defaults_analyze = apply(defaults_analyze[,2:5], 2, as.numeric)

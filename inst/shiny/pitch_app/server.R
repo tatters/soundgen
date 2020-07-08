@@ -1,5 +1,7 @@
 # pitch_app()
 #
+# To do: streamline the order of execution cutting the crap (like in formant_app); maybe analyze one bit at a time, again like in formant_app
+#
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
 # as.numeric(unlist(strsplit(a$pitch, ',')))
@@ -11,7 +13,7 @@ server = function(input, output, session) {
     myPars = reactiveValues()
     myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
     myPars$zoomFactor_freq = 1.5  # same for frequency
-    myPars$print = FALSE       # if TRUE, some functions print a meassage to the console when called
+    myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
     myPars$out = NULL         # for storing the output
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
@@ -54,6 +56,7 @@ server = function(input, output, session) {
         myPars$manualUnv = numeric()                             # manually unvoiced frames
         myPars$drawSpec = FALSE   # prevent the spectrogram from being redrawn needlessly
         # (only draw it after extracting it)
+        myPars$spec = NULL
     }
 
     resetSliders = function() {
@@ -153,7 +156,7 @@ server = function(input, output, session) {
         if (myPars$print) print('Extracting spectrogram...')
         # Instead of re-loading the file every time, save the spectrogram matrix
         # and re-draw manually with soundgen:::filled.contour.mod
-        if (!is.null(myPars$myAudio)) {
+        if (!is.null(myPars$myAudio) & is.null(myPars$spec)) {
             myPars$spec = spectrogram(
                 myPars$myAudio,
                 samplingRate = myPars$samplingRate,
@@ -167,7 +170,7 @@ server = function(input, output, session) {
                 output = 'processed',
                 plot = FALSE
             )
-            myPars$drawSpec = TRUE
+            # myPars$drawSpec = TRUE
         }
     })
 
@@ -218,25 +221,31 @@ server = function(input, output, session) {
     observe({
         # Cut just the part of spec currently needed for plotting
         # (faster than plotting a huge matrix with xlim/ylim)
-        if (!is.null(myPars$spec)) {
+        if (!is.null(myPars$spec) & !is.null(myPars$myAudio_scaled)) {
             if (myPars$print) print('Trimming the spec & osc')
+            # spec
             x = as.numeric(colnames(myPars$spec))
             idx_x = which(x >= (myPars$spec_xlim[1] / 1.05) &
                               x <= (myPars$spec_xlim[2] * 1.05))
             # 1.05 - a bit beyond b/c we use xlim/ylim and may get white space
-            myPars$spec_trimmed = myPars$spec[, idx_x]
-            idx_s = (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000) :
-                max(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
-            downs_spec = 10 ^ input$maxPoints_spec
-            downs_osc = 10 ^ input$maxPoints_osc
+            y = as.numeric(rownames(myPars$spec))
+            idx_y = which(y >= (input$spec_ylim[1] / 1.05) &
+                              y <= (input$spec_ylim[2] * 1.05))
+            myPars$spec_trimmed = downsample_spec(
+                myPars$spec[idx_y, idx_x],
+                maxPoints = 10 ^ input$spec_maxPoints)
+            # dim(myPars$spec_trimmed)
+
+            # osc
+            idx_s = max(1, (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000)) :
+                min(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
+            downs_osc = 10 ^ input$osc_maxPoints
             myPars$myAudio_trimmed = myPars$myAudio_scaled[idx_s]
+            myPars$time_trimmed = myPars$time[idx_s]
+            myPars$ls_trimmed = length(myPars$myAudio_trimmed)
             isolate({
-                myPars$spec_trimmed = downsample_spec(myPars$spec_trimmed, downs_spec)
-                myPars$ls_trimmed = length(myPars$myAudio_trimmed)
-                myPars$time_trimmed = myPars$time[idx_s]
                 if (!is.null(myPars$myAudio_trimmed) &&
                     myPars$ls_trimmed > downs_osc) {
-                    if (myPars$print) print('Downsampling osc')
                     myseq = round(seq(1, myPars$ls_trimmed,
                                       length.out = downs_osc))
                     myPars$myAudio_trimmed = myPars$myAudio_trimmed[myseq]
@@ -244,27 +253,16 @@ server = function(input, output, session) {
                     myPars$ls_trimmed = length(myseq)
                 }
             })
-        }
-    })
-
-    observe({
-        if (!is.null(myPars$spec)) {
-            if (myPars$print) print('Trimming the spec')
-            y = as.numeric(rownames(myPars$spec))
-            idx_y = which(y >= (input$spec_ylim[1] / 1.05) &
-                              y <= (input$spec_ylim[2] * 1.05))
-            myPars$spec_trimmed = downsample_spec(
-                x = myPars$spec[idx_y, ],
-                maxPoints = 10 ^ input$maxPoints_spec)
+            myPars$drawSpec = TRUE
         }
     })
 
     downsample_sound = function(x, maxPoints) {
         if (!is.null(myPars$myAudio_trimmed) &&
-            myPars$ls_trimmed > (10 ^ input$maxPoints_osc)) {
+            myPars$ls_trimmed > (10 ^ input$osc_maxPoints)) {
             if (myPars$print) print('Downsampling osc')
             myseq = round(seq(1, myPars$ls_trimmed,
-                              by = myPars$ls_trimmed / input$maxPoints_osc))
+                              by = myPars$ls_trimmed / input$osc_maxPoints))
             myPars$myAudio_trimmed = myPars$myAudio_trimmed[myseq]
             myPars$ls_trimmed = length(myseq)
         }
@@ -288,7 +286,7 @@ server = function(input, output, session) {
 
     # Actuall plotting of the spec / osc
     output$spectrogram = renderPlot({
-        if (myPars$drawSpec == TRUE) {
+        if (!is.null(myPars$spec) && myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$myAudio_trimmed) | is.null(myPars$spec)) {
@@ -493,8 +491,8 @@ server = function(input, output, session) {
     })
 
     obs_pitch = function() {
-        if (myPars$print) print('Looking for pitch contour with obs_pitch()')
         if (length(myPars$pitchCands$freq) > 0) {
+            if (myPars$print) print('Looking for pitch contour with obs_pitch()')
             myPars$voicedSegments = soundgen:::findVoicedSegments(
                 myPars$pitchCands$freq,
                 manualV = myPars$manual$frame,
@@ -1011,7 +1009,7 @@ server = function(input, output, session) {
 
     # spectrogram
     shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='maxPoints_spec', title = 'The number of points to plot in the spectrogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='spec_maxPoints', title = 'The number of points to plot in the spectrogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='specBrightness', title = 'Regulates the brightness of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
@@ -1019,7 +1017,7 @@ server = function(input, output, session) {
     # oscillogram
     shinyBS::addTooltip(session, id='osc', title = 'The type of oscillogram to show', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='osc_height', title = 'The height of oscillogram, pixels', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='maxPoints_osc', title = 'The number of points to plot in the oscillogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+    shinyBS::addTooltip(session, id='osc_maxPoints', title = 'The number of points to plot in the oscillogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # action buttons
     shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file (BACKSPACE)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

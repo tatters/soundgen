@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: done() should handle variable input$nFormants; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; add button to use peak on spectrum as formant freq;
+# To do: done() should handle variable input$nFormants; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; add button to use peak on spectrum as formant freq; load annotations from output.csv in the same folder;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -161,7 +161,6 @@ server = function(input, output, session) {
                 output = 'processed',
                 plot = FALSE
             )
-            # myPars$drawSpec = TRUE
         }
     })
 
@@ -285,7 +284,7 @@ server = function(input, output, session) {
 
     # Actuall plotting of the spec / osc
     output$spectrogram = renderPlot({
-        if (!is.null(myPars$spec) & myPars$drawSpec == TRUE) {
+        if (!is.null(myPars$spec) && myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$myAudio_trimmed) | is.null(myPars$spec)) {
