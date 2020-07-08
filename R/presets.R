@@ -81,6 +81,7 @@ permittedValues = matrix(c(
   'specWindowLength', 40, 5, 100, 2.5,
   'specContrast', .2, -1, 1, .05,
   'specBrightness', 0, -1, 1, .05,
+  'spec_ylim', 5, 0, 22, 1,
   'mouthOpening', .5, 0, 1, .05,
   'pitch', 100, 1, 3500, 1,  # set pitch range per species
   'pitchDeltas', 0, -24, 24, 1,  # pitchGlobal range
@@ -247,7 +248,9 @@ defaults_analyze = matrix(c(
   'specBrightness', 0, -1, 1, .05,
   'spec_ylim', 5, 0, 22, 0.1,
   'spec_maxPoints', 5.5, 3, 7, .25,
-  'osc_maxPoints', 5, 3, 7, .5
+  'spec_cex', 1, .1, 10, .1,
+  'osc_maxPoints', 5, 3, 7, .5,
+  'osc_height', 100, 25, 500, 25
 ), ncol=5, byrow=TRUE)
 temp = defaults_analyze[,1]
 defaults_analyze = apply(defaults_analyze[,2:5], 2, as.numeric)
