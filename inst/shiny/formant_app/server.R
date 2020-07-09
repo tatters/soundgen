@@ -287,7 +287,7 @@ server = function(input, output, session) {
         if (!is.null(myPars$spec) && myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
-            if (is.null(myPars$myAudio_trimmed) | is.null(myPars$spec)) {
+            if (is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
                 text(x = 5, y = 5,
                      labels = 'Upload wav/mp3 file(s) to begin...')
@@ -318,26 +318,6 @@ server = function(input, output, session) {
                     title(xlab = 'Time, ms')
                 }
 
-                # Add a rectangle showing the currently annotated region
-                if (!is.null(myPars$currentAnn)) {
-                    rect(
-                        xleft = myPars$ann$from[myPars$currentAnn],
-                        xright = myPars$ann$to[myPars$currentAnn],
-                        ybottom = input$spec_ylim[1],
-                        ytop = input$spec_ylim[2],
-                        col = rgb(.2, .2, .2, alpha = .25)
-                    )
-                }
-
-                # Add formant tracks
-                if (!is.null(myPars$formantTracks)) {
-                    for (f in 2:ncol(myPars$formantTracks)) {
-                        points(myPars$formantTracks$time,
-                               myPars$formantTracks[, f] / 1000,
-                               col = 'red', pch = 16)
-                    }
-                }
-
                 # Add text label of file name
                 ran_x = myPars$spec_xlim[2] - myPars$spec_xlim[1]
                 ran_y = input$spec_ylim[2] - input$spec_ylim[1]
@@ -345,6 +325,88 @@ server = function(input, output, session) {
                      y = input$spec_ylim[2] - ran_y * .01,
                      labels = myPars$myAudio_filename,
                      adj = c(0, 1))  # left, top
+            }
+        }
+    })
+
+    observe({
+        myPars$overlay_opts = list(
+            xlim = myPars$spec_xlim, ylim = input$spec_ylim,
+            xaxs = "i", yaxs = "i",
+            bty = 'n', xaxt = 'n', yaxt = 'n',
+            xlab = '', ylab = '')
+    })
+
+    output$adjaPlot = renderPlot({
+        if (!is.null(myPars$spec)) {
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 3, 0.5, 3), bg = NA)
+            # bg=NA makes the image transparent; left/right margins have to be 3
+            # instead of 2 (no clue why)
+
+            if (is.null(myPars$spectrogram_hover)) {
+                # empty plot to enable hover/click events for the spectrogram underneath
+                do.call(plot, c(list(
+                    x = myPars$spec_xlim,
+                    y = input$spec_ylim,
+                    type = 'n', lty = 3),
+                    myPars$overlay_opts))
+            } else {
+                # horizontal line
+                do.call(plot, c(list(
+                    x = myPars$spec_xlim,
+                    y = rep(myPars$spectrogram_hover$y, 2),
+                    type = 'l', lty = 3),
+                    myPars$overlay_opts))
+                # frequency label
+                do.call(text, list(
+                    x = myPars$spec_xlim[1],
+                    y = myPars$spectrogram_hover$y,
+                    labels = myPars$spectrogram_hover$freq,
+                    adj = c(0, 0)))
+                # vertical line
+                do.call(points, list(
+                    x = rep(myPars$spectrogram_hover$x, 2),
+                    y = input$spec_ylim,
+                    type = 'l', lty = 3))
+                # time label
+                do.call(text, list(
+                    x = myPars$spectrogram_hover$x,
+                    y = input$spec_ylim[1] + .025 * diff(input$spec_ylim),
+                    labels = myPars$spectrogram_hover$time,
+                    adj = .5))
+            }
+
+            # Add a rectangle showing the currently annotated region
+            if (!is.null(myPars$currentAnn)) {
+                rect(
+                    xleft = myPars$ann$from[myPars$currentAnn],
+                    xright = myPars$ann$to[myPars$currentAnn],
+                    ybottom = input$spec_ylim[1],
+                    ytop = input$spec_ylim[2],
+                    col = rgb(.2, .2, .2, alpha = .25),
+                    border = NA
+                )
+            }
+
+            # Add a rectangle showing the currently annotated region
+            if (!is.null(input$spectrogram_brush)) {
+                rect(
+                    xleft = input$spectrogram_brush$xmin,
+                    xright = input$spectrogram_brush$xmax,
+                    ybottom = input$spec_ylim[1],
+                    ytop = input$spec_ylim[2],
+                    col = rgb(.2, .2, .2, alpha = .15),
+                    border = NA
+                )
+            }
+
+            # Add formant tracks
+            if (!is.null(myPars$formantTracks)) {
+                for (f in 2:ncol(myPars$formantTracks)) {
+                    points(myPars$formantTracks$time,
+                           myPars$formantTracks[, f] / 1000,
+                           col = 'red', pch = 16)
+                }
             }
         }
     })
@@ -413,12 +475,31 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrum)) {
             if (myPars$print) print('Drawing spectrum...')
             par(mar = c(2, 2, 0.5, 0))
+            xlim = c(0, max(myPars$spectrum$freq))
+            ylim = range(myPars$spectrum$ampl)
             plot(myPars$spectrum,
-                 xlab = '', ylab = '', type = 'l')
+                 xlab = '', ylab = '',
+                 xlim = xlim, ylim = ylim,
+                 xaxs = "i",
+                 type = 'l')
             spectrum_peaks()
 
             # add a vertical line and freq label on hover
-            abline(v = myPars$spectrum_hover$x, lty = 2)  # for some reason messes up the output$spectrum_cursor
+            if (!is.null(myPars$spectrum_hover)) {
+                abline(v = myPars$spectrum_hover$x, lty = 2)
+                # for some reason messes up the output$spectrum_cursor
+                text(x = myPars$spectrum_hover$x,
+                     y = ylim[1],
+                     labels = myPars$spectrum_hover$cursor,
+                     adj = c(.5, 0))
+                text(x = myPars$spectrum_hover$pf,
+                     y = myPars$spectrum_hover$pa,
+                     labels = myPars$spectrum_hover$peak,
+                     adj = c(.5, 0))
+                points(x = myPars$spectrum_hover$pf,
+                       y = myPars$spectrum_hover$pa, pch = 16)
+            }
+
         }
     })
 
@@ -631,19 +712,6 @@ server = function(input, output, session) {
         }
     })
 
-    observeEvent(input$spec_click, {
-        spectrum_hover_temp = input$spectrum_hover
-        if (!is.null(spectrum_hover_temp)) {
-            myPars$spectrum_hover = data.frame(x = spectrum_hover_temp$x, y = spectrum_hover_temp$y)
-            cursor_hz = round(spectrum_hover_temp$x * 1000)
-            cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
-            myPars$spectrum_label = paste0(cursor_hz, 'Hz (',
-                                           cursor_notes, ')')
-        } else {
-            myPars$spectrum_hover$label = ''
-        }
-    })
-
     dataModal_new = function() {
         modalDialog(
             textInput("annotation", "New annotation:",
@@ -660,7 +728,9 @@ server = function(input, output, session) {
     observeEvent(input$ok_new, {
         myPars$ann$label[myPars$currentAnn] = input$annotation
         myPars$ann[myPars$currentAnn, myPars$ff] = myPars$formants[myPars$f_col_names]
-        myPars$ann = myPars$ann[order(myPars$ann$from), ]
+        ord = order(myPars$ann$from)
+        myPars$ann = myPars$ann[ord, ]
+        myPars$currentAnn = which(ord == nrow(myPars$ann))
         removeModal()
     })
 
@@ -738,56 +808,41 @@ server = function(input, output, session) {
 
 
     # HOVER
-    hover_label = reactive({
-        hover_temp = input$spectrogram_hover
-        if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
-            cursor_hz = hover_temp$y * 1000
+    observeEvent(input$spectrogram_hover, {
+        if (!is.null(input$spectrogram_hover) & !is.null(myPars$spec)) {
+            myPars$spectrogram_hover = input$spectrogram_hover
+            cursor_hz = myPars$spectrogram_hover$y * 1000
             cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
-            label = paste0('Cursor: ',
-                           round(hover_temp$y * 1000), 'Hz (',
-                           cursor_notes, ')')
-        } else {
-            label = ''
+            myPars$spectrogram_hover$freq = paste0(
+                round(myPars$spectrogram_hover$y * 1000), ' Hz (',
+                cursor_notes, ')')
+            myPars$spectrogram_hover$time = paste0(
+                round(myPars$spectrogram_hover$x), ' ms'
+            )
         }
-        return(label)
     })
-    output$pitchAtCursor = renderUI(HTML(hover_label()))
+    # output$pitchAtCursor = renderUI(HTML(hover_label()))
 
-    observe({
-        if (!is.null(input$spectrum_hover)) {
+    # HOVER: SPECTRUM
+    observeEvent(input$spectrum_hover, {
+        if (!is.null(myPars$spectrum) & !is.null(input$spectrum_hover)) {
             myPars$spectrum_hover = data.frame(x = input$spectrum_hover$x,
                                                y = input$spectrum_hover$y)
-        }
-    })
-
-    spectrum_hover_label = reactive({
-        if (!is.null(myPars$spectrum_hover)) {
-            cursor_hz = round(myPars$spectrum_hover$x * 1000)
+            cursor_hz = round(input$spectrum_hover$x * 1000)
             cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
-            label = paste0('Cursor: ',
-                           cursor_hz, ' Hz (',
-                           cursor_notes, ')')
-        } else {
-            label = ''
-        }
-        return(label)
-    })
-    output$spectrum_cursor = renderUI(HTML(spectrum_hover_label()))
+            myPars$spectrum_hover$cursor = paste0(cursor_hz, 'Hz (', cursor_notes, ')')
 
-    spectrum_hover_peak = reactive({
-        if (!is.null(myPars$spectrum_hover)) {
-            nearest_peak_idx = which.min(abs(myPars$spectrum_hover$x - myPars$spectrum$freq[myPars$spectrum_peaks]))
-            nearest_peak_hz = round(myPars$spectrum$freq[myPars$spectrum_peaks[nearest_peak_idx]] * 1000)
+            pf_idx = which.min(abs(myPars$spectrum_hover$x -
+                                       myPars$spectrum$freq[myPars$spectrum_peaks]))
+            myPars$spectrum_hover$pa =myPars$spectrum$ampl[myPars$spectrum_peaks[pf_idx]]
+            myPars$spectrum_hover$pf = myPars$spectrum$freq[myPars$spectrum_peaks[pf_idx]]
+            nearest_peak_hz = round(myPars$spectrum_hover$pf * 1000)
             nearest_peak_notes = soundgen::notesDict$note[round(HzToSemitones(nearest_peak_hz)) + 1]
-            label = paste0('Nearest peak: ',
-                           nearest_peak_hz, ' Hz (',
-                           nearest_peak_notes, ')')
-        } else {
-            label = ''
+            myPars$spectrum_hover$peak = paste0(nearest_peak_hz, ' Hz (',
+                                                nearest_peak_notes, ')')
         }
-        return(label)
     })
-    output$spectrum_peak = renderUI(HTML(spectrum_hover_peak()))
+
 
     # BRUSH
     brush = observeEvent(input$spectrogram_brush, {

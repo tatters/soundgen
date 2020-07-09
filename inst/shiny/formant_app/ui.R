@@ -298,7 +298,7 @@ ui = fluidPage(
         ),
         column(
           1,
-          htmlOutput('pitchAtCursor', inline = TRUE)
+          # htmlOutput('pitchAtCursor', inline = TRUE)
         ),
         column(
           2,
@@ -329,11 +329,11 @@ ui = fluidPage(
         ),
         column(
           2,
-          htmlOutput('spectrum_cursor', inline = TRUE)
+          # htmlOutput('spectrum_cursor', inline = TRUE)
         ),
         column(
           2,
-          htmlOutput('spectrum_peak', inline = TRUE)
+          # htmlOutput('spectrum_peak', inline = TRUE)
         ),
         column(
           1,
@@ -342,20 +342,25 @@ ui = fluidPage(
       ),
       fluidRow(
         column(
-          plotOutput(
-            'spectrogram', height = '500px',
+          width = 7,
+          absolutePanel(height = '500px',
+            top = 0, left = 0, right = 0,
+            plotOutput('adjaPlot', height = '500px',
             click = "spectrogram_click",
             dblclick = dblclickOpts(id = "spectrogram_dblclick"),
             hover = hoverOpts(id = "spectrogram_hover"),
-            brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)),
+            brush = brushOpts(id = 'spectrogram_brush', opacity = 0, resetOnNew = FALSE))
+          ),
+          plotOutput(
+            'spectrogram', height = '500px'),
           # , style = "max-width: 66vw; overflow-x: auto;"
+
           plotOutput(
             'oscillogram', height = '100px'),
           plotOutput(
             'ann_plot', height = '100px',
             click = "ann_click",
-            dblclick = dblclickOpts(id = "ann_dblclick")),
-          width = 7
+            dblclick = dblclickOpts(id = "ann_dblclick"))
         ),
         column(
           plotOutput(
