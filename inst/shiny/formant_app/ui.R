@@ -1,3 +1,5 @@
+# formant_app()
+#
 ui = fluidPage(
   # headerPanel('...'),
   tags$script('
@@ -144,7 +146,7 @@ ui = fluidPage(
               choices = c("Seewave" = "seewave",
                           "Heat" = "heat.colors",
                           "Black & white" = "bw"),
-              selected =' bw', inline = TRUE, width = NULL),
+              selected = 'bw', inline = TRUE, width = NULL),
             sliderInput(
               'specContrast',
               'Contrast',

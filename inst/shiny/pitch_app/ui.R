@@ -1,3 +1,5 @@
+# pitch_app()
+#
 ui = fluidPage(
   # headerPanel('...'),
   tags$script('

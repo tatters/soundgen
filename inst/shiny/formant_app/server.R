@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: done() should handle variable input$nFormants; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; add button to use peak on spectrum as formant freq; load annotations from output.csv in the same folder;
+# To do: maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; add button to use peak on spectrum as formant freq; load annotations from output.csv in the same folder;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -845,17 +845,31 @@ server = function(input, output, session) {
             if (is.null(myPars$out)) {
                 myPars$out = myPars$ann
             } else {
+                # remove previous records for this file, if any
                 idx = which(myPars$out$file == myPars$ann$file[1])
-                if (length(idx) > 1) {
-                    # already have some records for this file - remove
+                if (length(idx) > 1)
                     myPars$out = myPars$out[-idx, ]
-                }
+
+                # make sure out and ann have the same formant columns
+                # (in case nFormants changed)
+                mco = which(!colnames(myPars$ann) %in% colnames(myPars$out))
+                if (length(mco > 0))
+                    myPars$out[, colnames(myPars$ann)[mco]] = NA
+                mca = which(!colnames(myPars$out) %in% colnames(myPars$ann))
+                if (length(mca > 0))
+                    myPars$out[, colnames(myPars$out)[mca]] = NA
+
+                # append annotations from the current audio
                 myPars$out = rbind(myPars$out, myPars$ann)
             }
+            # keep track of formant tracks and spectrograms
+            # to avoid analyzing them again if the user goes
+            # back and forth between files
             myPars$out_fTracks[[myPars$myAudio_filename]] = myPars$formantTracks
             myPars$out_spects[[myPars$myAudio_filename]] = myPars$spec
         }
         if (!is.null(myPars$out)) {
+            # re-order and save a backup
             myPars$out = myPars$out[order(myPars$out$file, myPars$out$from), ]
             write.csv(myPars$out, 'www/temp.csv', row.names = FALSE)
         }
