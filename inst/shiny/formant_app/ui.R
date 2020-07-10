@@ -18,6 +18,18 @@ ui = fluidPage(
     });
   '),
 
+  # css
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "shiny.css"),
+    tags$style("input {font-size: 1em}"),
+    tags$style(".form-control {font-size: .85em; padding: 1px 4px 1px 4px;}"),
+    tags$style(".fBox {display: inline-block; width: 50px; padding: 0; margin: 0; text-align: center;}"),
+    tags$style(".selected {background-color: #33333340;}"),
+    tags$style("label {font-size: 1em;}"),
+    tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
+    tags$style(".buttonInline {padding: 2px 2px;}")
+  ),
+
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
   # see https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
   # alternative: https://rstudio.github.io/shinydashboard
@@ -232,20 +244,20 @@ ui = fluidPage(
       id ="Main",
       fluidRow(
         column(
-          1,
+          width = 1,
           bsButton(
             "showpanel", label = '', icon = icon("bars"),
             type = "toggle", value = FALSE)
         ),
         column(
-          3,
+          width = 3,
           fileInput(
             inputId = "loadAudio", label = NULL,
             multiple = TRUE, buttonLabel = 'Load audio',
             placeholder = '...', width = "175px")
         ),
         column(
-          3,
+          width = 3,
           uiOutput("fileN"),
           actionButton(
             inputId = "lastFile", label = "Last",
@@ -255,11 +267,11 @@ ui = fluidPage(
             style="background-color: lightgray;")
         ),
         column(
-          3,
+          width = 3,
           uiOutput("htmlAudio")
         ),
         column(
-          2,
+          width = 2,
           downloadButton(
             outputId = "saveRes", label = "",
             style="color: blue; background-color: orange;"),
@@ -275,7 +287,7 @@ ui = fluidPage(
 
       fluidRow(
         column(
-          1,
+          width = 1,
           actionButton(
             inputId = 'zoomIn_freq',
             label = HTML("<img src='icons/zoomIn.png' width = '25px'>"),
@@ -286,70 +298,55 @@ ui = fluidPage(
             style = "padding: 2px 2px; display: block"),
         ),
         column(
-          1,
+          width = 3,
           actionButton(
             inputId = "selection_play",
             label = HTML("<img src='icons/play.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_delete",
             label = HTML("<img src='icons/delete.png' width = '25px'>"),
-            style = "padding: 2px 2px;")
+            class = "buttonInline")
         ),
         column(
-          1,
-          # htmlOutput('pitchAtCursor', inline = TRUE)
-        ),
-        column(
-          2,
-          uiOutput('fRadios')
-        ),
-        column(
-          2,
+          width = 3,
           actionButton(
             inputId = 'scrollLeft',
             label = HTML("<img src='icons/backward.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = 'zoomOut',
             label = HTML("<img src='icons/zoomOut.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "zoomToSel",
             label = HTML("<img src='icons/zoomSel.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = 'zoomIn',
             label = HTML("<img src='icons/zoomIn.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = 'scrollRight',
             label = HTML("<img src='icons/forward.png' width = '25px'>"),
-            style = "padding: 2px 2px;")
+            class = "buttonInline")
         ),
         column(
-          2,
-          # htmlOutput('spectrum_cursor', inline = TRUE)
-        ),
-        column(
-          2,
-          # htmlOutput('spectrum_peak', inline = TRUE)
-        ),
-        column(
-          1,
-          # add smth if needed
+          width = 5,
+          uiOutput('fButtons', style = "height: 60px;")
         )
       ),
+
       fluidRow(
         column(
           width = 7,
           absolutePanel(height = '500px',
-            top = 0, left = 0, right = 0,
-            plotOutput('adjaPlot', height = '500px',
-            click = "spectrogram_click",
-            dblclick = dblclickOpts(id = "spectrogram_dblclick"),
-            hover = hoverOpts(id = "spectrogram_hover"),
-            brush = brushOpts(id = 'spectrogram_brush', opacity = 0, resetOnNew = FALSE))
+                        top = 0, left = 0, right = 0,
+                        plotOutput('specOver', height = '500px',
+                                   click = "spectrogram_click",
+                                   dblclick = dblclickOpts(id = "spectrogram_dblclick"),
+                                   hover = hoverOpts(id = "spectrogram_hover"),
+                                   brush = brushOpts(id = 'spectrogram_brush', opacity = 0, resetOnNew = FALSE))
           ),
           plotOutput(
             'spectrogram', height = '500px'),
@@ -358,7 +355,7 @@ ui = fluidPage(
           plotOutput(
             'oscillogram', height = '100px'),
           plotOutput(
-            'ann_plot', height = '100px',
+            'ann_plot', height = '60px',
             click = "ann_click",
             dblclick = dblclickOpts(id = "ann_dblclick"))
         ),

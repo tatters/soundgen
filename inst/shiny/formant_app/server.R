@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; add button to use peak on spectrum as formant freq; load annotations from output.csv in the same folder;
+# To do: an extra tier over spectrogram with moving slider during play(); maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -20,6 +20,7 @@ server = function(input, output, session) {
     myPars$analyzeDur = 1000         # initial duration to analyze (ms)
     myPars$out_fTracks = list()      # a list for storing formant tracks per file
     myPars$out_spects = list()       # a list for storing spectrograms
+    myPars$selectedF = 'f1'          # preselect F1 for correction
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -141,6 +142,7 @@ server = function(input, output, session) {
             myPars$spec = myPars$out_specs[[myPars$myAudio_filename]]
             myPars$drawSpec = TRUE  # don't need to wait for analyze() to run
         }
+        drawAnn()
     }
 
     extractSpectrogram = observe({
@@ -190,11 +192,68 @@ server = function(input, output, session) {
 
 
     ## OUTPUTs
-    # Update the number of formants in radio buttons
-    output$fRadios = renderUI({
-        fNames = paste0('F', 1:input$nFormants)
-        fValues = paste0('f', 1:input$nFormants)
-        radioButtons('spectro_clickAct', label = '', choiceNames = fNames, choiceValues = fValues, selected = 'f1', inline = TRUE)
+    # update the number of formant buttons
+    output$fButtons = renderUI({
+        c(
+            list(actionButton(
+                inputId = 'remF',
+                label = HTML("<img src='icons/minus.png' width = '25px'>"), # '-',
+                class = "buttonInline"
+            )),
+            lapply(1:input$nFormants, function(f) {  # need to return a list, hence lapply
+                tags$div(
+                    id = paste0('fDiv_', f),
+                    class = ifelse(f == 1, 'fBox selected', 'fBox'),
+                    textInput(
+                        inputId = paste0('f', f, '_text'),
+                        label = paste0('F', f),
+                        value = '')
+                )
+            }),
+            list(actionButton(
+                inputId = 'addF',
+                label = HTML("<img src='icons/plus.png' width = '25px'>"), # '+',
+                class = "buttonInline"
+            ))
+        )
+    })
+
+    observeEvent(input$addF, {
+        updateSliderInput(session, 'nFormants',
+                          value = input$nFormants + 1)
+    })
+
+    observeEvent(input$remF, {
+        updateSliderInput(session, 'nFormants',
+                          value = max(1, input$nFormants - 1))
+    })
+
+    # edit myPars$ann when formant freq is modified manually as text
+    updateF = observeEvent(input$nFormants, {
+        lapply(1:input$nFormants, function(f) {
+            fn = paste0('f', f, '_text')
+            observeEvent(input[[fn]], {
+                v = suppressWarnings(as.numeric(input[[fn]]))
+                if (is.na(v)) {
+                    myPars$ann[myPars$currentAnn, paste0('f', f)] = myPars$formants[myPars$currentAnn]
+                    updateTextInput(
+                        session, fn,
+                        value = as.character(myPars$formants[myPars$currentAnn]))
+                } else {
+                    myPars$ann[myPars$currentAnn, paste0('f', f)] = v
+                }
+            })
+            # add onclick event with shinyjs to select the formant to edit
+            this_div = paste0('fDiv_', f)
+            other_divs = paste0('fDiv_', (1:input$nFormants)[-f])
+            shinyjs::onclick(id = this_div, {
+                myPars$selectedF = paste0('f', f)
+                shinyjs::addCssClass(id = this_div, class = 'selected')
+                for (d in other_divs) {
+                    shinyjs::removeCssClass(id = d, class = 'selected')
+                }
+            })
+        })
     })
 
     # Updating spec / osc stuff to speed up plotting
@@ -330,33 +389,33 @@ server = function(input, output, session) {
     })
 
     observe({
-        myPars$overlay_opts = list(
+        myPars$specOver_opts = list(
             xlim = myPars$spec_xlim, ylim = input$spec_ylim,
             xaxs = "i", yaxs = "i",
             bty = 'n', xaxt = 'n', yaxt = 'n',
             xlab = '', ylab = '')
     })
 
-    output$adjaPlot = renderPlot({
+    output$specOver = renderPlot({
         if (!is.null(myPars$spec)) {
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 3, 0.5, 3), bg = NA)
             # bg=NA makes the image transparent; left/right margins have to be 3
-            # instead of 2 (no clue why)
+            # instead of 2 in spectrogram (no clue why)
 
             if (is.null(myPars$spectrogram_hover)) {
                 # empty plot to enable hover/click events for the spectrogram underneath
                 do.call(plot, c(list(
                     x = myPars$spec_xlim,
                     y = input$spec_ylim,
-                    type = 'n', lty = 3),
-                    myPars$overlay_opts))
+                    type = 'n'),
+                    myPars$specOver_opts))
             } else {
                 # horizontal line
                 do.call(plot, c(list(
                     x = myPars$spec_xlim,
                     y = rep(myPars$spectrogram_hover$y, 2),
                     type = 'l', lty = 3),
-                    myPars$overlay_opts))
+                    myPars$specOver_opts))
                 # frequency label
                 do.call(text, list(
                     x = myPars$spec_xlim[1],
@@ -376,7 +435,7 @@ server = function(input, output, session) {
                     adj = .5))
             }
 
-            # Add a rectangle showing the currently annotated region
+            # Add a rectangle showing the current annotation
             if (!is.null(myPars$currentAnn)) {
                 rect(
                     xleft = myPars$ann$from[myPars$currentAnn],
@@ -388,11 +447,11 @@ server = function(input, output, session) {
                 )
             }
 
-            # Add a rectangle showing the currently annotated region
-            if (!is.null(input$spectrogram_brush)) {
+            # Add a rectangle showing the selected region
+            if (!is.null(myPars$spectrogram_brush)) {
                 rect(
-                    xleft = input$spectrogram_brush$xmin,
-                    xright = input$spectrogram_brush$xmax,
+                    xleft = myPars$spectrogram_brush$xmin,
+                    xright = myPars$spectrogram_brush$xmax,
                     ybottom = input$spec_ylim[1],
                     ytop = input$spec_ylim[2],
                     col = rgb(.2, .2, .2, alpha = .15),
@@ -435,87 +494,128 @@ server = function(input, output, session) {
         }, height = input$osc_height)
     })
 
-    output$ann_plot = renderPlot({
-        if (!is.null(myPars$ann)) {
-            if (nrow(myPars$ann) > 0) {
-                if (myPars$print) print('Drawing annotations...')
-                par(mar = c(0, 0, 0, 0))
-                plot(myPars$time_trimmed,
-                     xlim = myPars$spec_xlim,
-                     ylim = c(0, 1),
-                     type = 'n',
-                     bty = 'n',
-                     xaxt = 'n', yaxt = 'n',
-                     xlab = '', ylab = ''
-                )
-                for (i in 1:nrow(myPars$ann)) {
-                    r = rnorm(1, 0, .05)  # random vertical shift to avoid overlap
-                    segments(x0 = myPars$ann$from[i],
-                             x1 = myPars$ann$to[i],
-                             y0 = .5 + r, y1 = .5 + r, lwd = 2)
-                    segments(x0 = myPars$ann$from[i],
-                             x1 = myPars$ann$from[i],
-                             y0 = .45 + r, y1 = .55 + r, lwd = 2)
-                    segments(x0 = myPars$ann$to[i],
-                             x1 = myPars$ann$to[i],
-                             y0 = .45 + r, y1 = .55 + r, lwd = 2)
-                    middle_i = mean(as.numeric(myPars$ann[i, c('from', 'to')]))
-                    text(x = middle_i,
-                         y = .5 + r,
-                         labels = myPars$ann$label[i],
-                         adj = c(.5, 0), cex = 1.5)
+    drawAnn = function() {
+        output$ann_plot = renderPlot({
+            isolate({
+                if (!is.null(myPars$ann)) {
+                    if (nrow(myPars$ann) > 0) {
+                        if (myPars$print) print('Drawing annotations...')
+                        par(mar = c(0, 2, 0, 2))
+                        plot(myPars$time_trimmed,
+                             xlim = myPars$spec_xlim,
+                             ylim = c(.2, .8),
+                             type = 'n',
+                             xaxs = "i", yaxs = "i",
+                             # bty = 'n',
+                             # axes = FALSE,
+                             xlab = '', ylab = ''
+                        )
+                        for (i in 1:nrow(myPars$ann)) {
+                            r = rnorm(1, 0, .05)  # random vertical shift to avoid overlap
+                            segments(x0 = myPars$ann$from[i],
+                                     x1 = myPars$ann$to[i],
+                                     y0 = .5 + r, y1 = .5 + r, lwd = 2)
+                            segments(x0 = myPars$ann$from[i],
+                                     x1 = myPars$ann$from[i],
+                                     y0 = .45 + r, y1 = .55 + r, lwd = 2)
+                            segments(x0 = myPars$ann$to[i],
+                                     x1 = myPars$ann$to[i],
+                                     y0 = .45 + r, y1 = .55 + r, lwd = 2)
+                            middle_i = mean(as.numeric(myPars$ann[i, c('from', 'to')]))
+                            text(x = middle_i,
+                                 y = .5 + r,
+                                 labels = myPars$ann$label[i],
+                                 adj = c(.5, 0), cex = 1.5)
+                        }
+                        par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
+                    }
+                } else if (!is.null(myPars$spec)) {
+                    par(mar = c(0, 2, 0, 2))
+                    plot(1:10,
+                         type = 'n',
+                         # bty = 'n',
+                         # axes = FALSE,
+                         xlab = '', ylab = '')
+                    text(5, 5,
+                         labels = paste('Select a region of spectrogram and double-click',
+                                        'to create an annotation'))
                 }
-                par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
-            }
-        }
-
-    })
+            })
+        })
+    }
 
     output$spectrum = renderPlot({
         if (!is.null(myPars$spectrum)) {
             if (myPars$print) print('Drawing spectrum...')
             par(mar = c(2, 2, 0.5, 0))
-            xlim = c(0, max(myPars$spectrum$freq))
-            ylim = range(myPars$spectrum$ampl)
-            plot(myPars$spectrum,
+            plot(myPars$spectrum$freq,
+                 myPars$spectrum$ampl,
                  xlab = '', ylab = '',
-                 xlim = xlim, ylim = ylim,
+                 xlim = c(0, myPars$spectrum$freq_range[2]),
+                 ylim = myPars$spectrum$ampl_range,
                  xaxs = "i",
                  type = 'l')
+            # # fill in the AUC if needed
+            # polygon(c(myPars$spectrum$freq, xlim[2], xlim[1]),
+            #         c(myPars$spectrum$ampl, ylim[1], ylim[1]),
+            #         border = NA,
+            #         col = rgb(.5, .5, .5, .15))
             spectrum_peaks()
+
+            # ? in the upper right corner for help
+            text(x = myPars$spectrum$freq_range[2] - .05 * diff(myPars$spectrum$freq_range),
+                 y = myPars$spectrum$ampl_range[2] - .05 * diff(myPars$spectrum$ampl_range),
+                 labels = "?", cex = 5,
+                 col = rgb(.5, .5, .5, .1))
 
             # add a vertical line and freq label on hover
             if (!is.null(myPars$spectrum_hover)) {
                 abline(v = myPars$spectrum_hover$x, lty = 2)
-                # for some reason messes up the output$spectrum_cursor
                 text(x = myPars$spectrum_hover$x,
-                     y = ylim[1],
+                     y = myPars$spectrum$ampl_range[1],
                      labels = myPars$spectrum_hover$cursor,
-                     adj = c(.5, 0))
+                     adj = c(0, 0))
                 text(x = myPars$spectrum_hover$pf,
                      y = myPars$spectrum_hover$pa,
                      labels = myPars$spectrum_hover$peak,
-                     adj = c(.5, 0))
+                     adj = c(0, 0))
                 points(x = myPars$spectrum_hover$pf,
                        y = myPars$spectrum_hover$pa, pch = 16)
             }
-
         }
     })
 
     observe({
-        if (!is.null(myPars$selection)) {
+        if (!is.null(myPars$spec_trimmed)) {
             if (myPars$print) print('Extracting spectrum of selection...')
-            myPars$spectrum = getSmoothSpectrum(
-                myPars$selection,
-                samplingRate = myPars$samplingRate,
-                len = input$spectrum_len,
-                loessSpan = 10 ^ input$spectrum_smooth
-            )
+            if (!is.null(myPars$selection)) {
+                # take the spectrum of selection (annotated region) from raw audio
+                myPars$spectrum = as.list(getSmoothSpectrum(
+                    myPars$selection,
+                    samplingRate = myPars$samplingRate,
+                    len = input$spectrum_len,
+                    loessSpan = 10 ^ input$spectrum_smooth
+                ))
+                # myPars$spectrum = list(
+                #     freq = as.numeric(rownames(myPars$spec)),
+                #     ampl = rowMeans(myPars$spec_trimmed)
+                # )
+            } else {
+                # just use the visible part of the spectrogram
+                myPars$spectrum = list(
+                    freq = as.numeric(rownames(myPars$spec_trimmed)),
+                    ampl = as.numeric(rowMeans(myPars$spec_trimmed))
+                )
+            }
+
+            isolate({
+                myPars$spectrum$freq_range = range(myPars$spectrum$freq)
+                myPars$spectrum$ampl_range = range(myPars$spectrum$ampl)
+            })
         }
     })
 
-    observe({
+    observeEvent(myPars$currentAnn, {
         if (!is.null(myPars$currentAnn)) {
             if (myPars$print) print('Updating selection...')
             sel_points = as.numeric(round(myPars$ann[myPars$currentAnn, c('from', 'to')] /
@@ -547,18 +647,20 @@ server = function(input, output, session) {
     # })
 
     observe({
-        if (is.null(myPars$analyzedUpTo)) {
-            myPars$regionToAnalyze = myPars$spec_xlim
-            call = TRUE
-        } else {
-            if (myPars$analyzedUpTo < myPars$spec_xlim[2]) {
-                myPars$regionToAnalyze = c(myPars$analyzedUpTo, myPars$spec_xlim[2])
+        if (!is.null(myPars$spec)) {
+            if (is.null(myPars$analyzedUpTo)) {
+                myPars$regionToAnalyze = myPars$spec_xlim
                 call = TRUE
             } else {
-                call = FALSE
+                if (myPars$analyzedUpTo < myPars$spec_xlim[2]) {
+                    myPars$regionToAnalyze = c(myPars$analyzedUpTo, myPars$spec_xlim[2])
+                    call = TRUE
+                } else {
+                    call = FALSE
+                }
             }
+            if (call) extractFormants()
         }
-        if (call) extractFormants()
     })
 
     extractFormants = reactive({
@@ -615,18 +717,32 @@ server = function(input, output, session) {
     })
 
     # if any of LPC settings change, we re-analyze the entire file
-    observeEvent(c(input$nFormants, input$silence, input$coeffs, input$minformant, input$maxbw, input$windowLength_lpc, input$overlap_lpc, input$wn_lpc, input$zp_lpc, input$dynamicRange_lpc), {
-        myPars$analyzedUpTo = 0
-    }, ignoreInit = TRUE)
+    observeEvent(
+        c(input$nFormants, input$silence, input$coeffs, input$minformant,
+          input$maxbw, input$windowLength_lpc, input$overlap_lpc,
+          input$wn_lpc, input$zp_lpc, input$dynamicRange_lpc), {
+              myPars$analyzedUpTo = 0
+          },
+        ignoreInit = TRUE
+    )
 
     observe({
         # analyze annotated selection
-        if (!is.null(myPars$selection) & !is.null(myPars$formantTracks)) {
+        if (!is.null(myPars$currentAnn) & !is.null(myPars$formantTracks)) {
             if (myPars$print) print('Averaging formants in selection...')
-            idx = which(myPars$formantTracks$time >= myPars$ann$from[myPars$currentAnn] &
-                            myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn])
+            isolate({
+                # don't want dependency on myPars$ann
+                idx = which(myPars$formantTracks$time >= myPars$ann$from[myPars$currentAnn] &
+                                myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn])
+            })
             myPars$formants = round(colMeans(myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)], na.rm = TRUE))
             # myPars$bandwidth ?
+
+            # fill in the formant boxes
+            for (f in 1:input$nFormants) {
+                updateTextInput(session, inputId = paste0('f', f, '_text'),
+                                value = as.character(myPars$formants[f]))
+            }
         }
     })
 
@@ -657,22 +773,27 @@ server = function(input, output, session) {
             inside_sel = (myPars$ann$from[myPars$currentAnn] < input$spectrogram_click$x) &
                 (myPars$ann$to[myPars$currentAnn] > input$spectrogram_click$x)
             if (inside_sel) {
-                myPars$ann[myPars$currentAnn, input$spectro_clickAct] = round(input$spectrogram_click$y * 1000)
+                # update both myPars$ann and the corresponding formant button
+                myPars$ann[myPars$currentAnn, myPars$selectedF] = round(input$spectrogram_click$y * 1000)
+                updateTextInput(
+                    session, paste0(myPars$selectedF, '_text'),
+                    value = as.character(myPars$ann[myPars$currentAnn, myPars$selectedF]))
             }
         }
     })
 
     observeEvent(input$spectrogram_dblclick, {
-        if (!is.null(input$spectrogram_brush)) {
+        if (!is.null(myPars$spectrogram_brush)) {
             # create a new annotation
             new = data.frame(
                 # idx = ifelse(is.null(myPars$ann), 1, nrow(myPars$ann) + 1),
                 file = myPars$myAudio_filename,
-                from = round(input$spectrogram_brush$xmin),
-                to = round(input$spectrogram_brush$xmax),
+                from = round(myPars$spectrogram_brush$xmin),
+                to = round(myPars$spectrogram_brush$xmax),
                 label = '',
                 stringsAsFactors = FALSE)
             new[, paste0('f', 1:input$nFormants)] = NA
+
             # depending on the history of changing input$nFormants,
             # there may be more formants in myPars$ann than in the current sel
             if (input$nFormants < myPars$maxF) {
@@ -692,6 +813,16 @@ server = function(input, output, session) {
             # clear the selection
             session$resetBrush("spectrogram_brush")
             showModal(dataModal_new())
+        }
+    })
+
+    observeEvent(input$spectrum_click, {
+        # update both myPars$ann and the corresponding formant button
+        if (!is.null(myPars$currentAnn)) {
+            myPars$ann[myPars$currentAnn, myPars$selectedF] = round(input$spectrum_click$x * 1000)
+            updateTextInput(
+                session, paste0(myPars$selectedF, '_text'),
+                value = as.character(myPars$ann[myPars$currentAnn, myPars$selectedF]))
         }
     })
 
@@ -732,6 +863,7 @@ server = function(input, output, session) {
         myPars$ann = myPars$ann[ord, ]
         myPars$currentAnn = which(ord == nrow(myPars$ann))
         removeModal()
+        drawAnn()
     })
 
     dataModal_edit = function() {
@@ -750,14 +882,15 @@ server = function(input, output, session) {
     observeEvent(input$ok_edit, {
         myPars$ann$label[myPars$currentAnn] = input$annotation
         removeModal()
+        drawAnn()
     })
 
     ## Buttons for operations with selection
     playSel = function() {
         if (!is.null(myPars$myAudio_path)) {
-            if (!is.null(input$spectrogram_brush)) {
-                from = input$spectrogram_brush$xmin / 1000
-                to = input$spectrogram_brush$xmax / 1000
+            if (!is.null(myPars$spectrogram_brush)) {
+                from = myPars$spectrogram_brush$xmin / 1000
+                to = myPars$spectrogram_brush$xmax / 1000
             } else if (!is.null(myPars$currentAnn)) {
                 from = myPars$ann$from[myPars$currentAnn] / 1000
                 to = myPars$ann$to[myPars$currentAnn] / 1000
@@ -821,13 +954,37 @@ server = function(input, output, session) {
             )
         }
     })
-    # output$pitchAtCursor = renderUI(HTML(hover_label()))
+    shinyjs::onevent('mouseout', id = 'specOver', {
+        # NB: more flexible and less mafan than juggling with the observer of
+        # input$spectrogram_hover
+        myPars$spectrogram_hover = NULL
+    } )
 
     # HOVER: SPECTRUM
     observeEvent(input$spectrum_hover, {
         if (!is.null(myPars$spectrum) & !is.null(input$spectrum_hover)) {
             myPars$spectrum_hover = data.frame(x = input$spectrum_hover$x,
                                                y = input$spectrum_hover$y)
+
+            help = myPars$spectrum_hover$x > .9 * myPars$spectrum$freq_range[2] &
+                myPars$spectrum_hover$y > (myPars$spectrum$ampl_range[1] +
+                                               .9 * diff(myPars$spectrum$ampl_range))
+            if (help) {
+                showNotification(
+                    ui = paste('Click to update the selected formant in current',
+                               'annotation (uses cursor position, not closest peak)'),
+                    duration = 10,
+                    closeButton = TRUE,
+                    type = 'default'
+                )
+                # showModal(modalDialog(
+                #     title = paste('Click to update the selected formant in current',
+                #                'annotation (uses cursor position, not closest peak)'),
+                #     size = 's',
+                #     easyClose = TRUE
+                # ))
+            }
+
             cursor_hz = round(input$spectrum_hover$x * 1000)
             cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
             myPars$spectrum_hover$cursor = paste0(cursor_hz, 'Hz (', cursor_notes, ')')
@@ -842,10 +999,16 @@ server = function(input, output, session) {
                                                 nearest_peak_notes, ')')
         }
     })
+    observeEvent(input$spectrum_smooth, {
+        myPars$spectrum_hover = NULL
+    })
 
 
     # BRUSH
     brush = observeEvent(input$spectrogram_brush, {
+        if (!is.null(input$spectrogram_brush)) {
+            myPars$spectrogram_brush = input$spectrogram_brush
+        }
     })
 
     # ZOOM
@@ -869,8 +1032,8 @@ server = function(input, output, session) {
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
     zoomToSel = function() {
-        if (!is.null(input$spectrogram_brush)) {
-            myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
+        if (!is.null(myPars$spectrogram_brush)) {
+            myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin, myPars$spectrogram_brush$xmax))
         }
     }
     observeEvent(input$zoomToSel, {
@@ -965,8 +1128,8 @@ server = function(input, output, session) {
     )
 
     observeEvent(input$about, {
-        id <<- showNotification(
-            ui = paste0("App for measuring formants in small annotated segments: soundgen ", packageVersion('soundgen'), ". Select an area of spectrogram and double-click to add an annotation, left-click to correct a formant measure (use radio buttons to select which formant to correct). More info: ?formant_app and http://cogsci.se/soundgen.html"),
+        showNotification(
+            ui = paste0("App for measuring formants in small annotated segments: soundgen ", packageVersion('soundgen'), ". Select an area of spectrogram and double-click to add an annotation, left-click to correct a formant measure. More info: ?formant_app and http://cogsci.se/soundgen.html"),
             duration = 10,
             closeButton = TRUE,
             type = 'default'
