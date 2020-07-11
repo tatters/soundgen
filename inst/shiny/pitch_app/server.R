@@ -130,6 +130,9 @@ server = function(input, output, session) {
         myPars$ls = length(myPars$myAudio)
         myPars$samplingRate = myPars$temp_audio@samp.rate
         myPars$maxAmpl = 2 ^ (myPars$temp_audio@bit - 1)
+        if (input$normalizeInput) {
+            myPars$myAudio = myPars$myAudio / max(abs(myPars$myAudio)) * myPars$maxAmpl
+        }
         updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
@@ -409,7 +412,9 @@ server = function(input, output, session) {
             withProgress(message = 'Analyzing the sound...', value = 0.5, {
                 myPars$step = input$windowLength * (1 - input$overlap / 100)
                 temp_anal = analyze(
-                    myPars$myAudio_path,
+                    myPars$myAudio,
+                    samplingRate = myPars$samplingRate,
+                    scale = myPars$maxAmpl,
                     windowLength = input$windowLength,
                     step = myPars$step,
                     wn = input$wn,

@@ -128,6 +128,9 @@ server = function(input, output, session) {
         myPars$ls = length(myPars$myAudio)
         myPars$samplingRate = myPars$temp_audio@samp.rate
         myPars$maxAmpl = 2 ^ (myPars$temp_audio@bit - 1)
+        if (input$normalizeInput) {
+            myPars$myAudio = myPars$myAudio / max(abs(myPars$myAudio)) * myPars$maxAmpl
+        }
         updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
@@ -720,10 +723,17 @@ server = function(input, output, session) {
                 summary = FALSE,
                 plot = FALSE
             )
+            myPars$temp_anal = myPars$temp_anal[, c('time', myPars$f_col_names)]
+            for (c in colnames(myPars$temp_anal)) {
+                if (any(!is.na(myPars$temp_anal[, c]))) {
+                    # in case of all NAs
+                    myPars$temp_anal[, c] = round(myPars$temp_anal[, c])
+                }
+            }
             isolate({
                 myPars$analyzedUpTo = myPars$regionToAnalyze[2]
                 if (is.null(myPars$formantTracks)) {
-                    myPars$formantTracks = round(myPars$temp_anal[, c('time', myPars$f_col_names)])
+                    myPars$formantTracks = myPars$temp_anal
                 } else {
                     new_time_range = range(myPars$temp_anal$time)
                     idx = which(myPars$formantTracks$time >= new_time_range[1] &
@@ -733,7 +743,7 @@ server = function(input, output, session) {
                     }
                     myPars$formantTracks = rbind(
                         myPars$formantTracks[, c('time', myPars$f_col_names)],
-                        round(myPars$temp_anal[, c('time', myPars$f_col_names)])
+                        myPars$temp_anal
                     )
                     myPars$formantTracks = myPars$formantTracks[order(myPars$formantTracks$time), ]
                 }

@@ -53,6 +53,10 @@ ui = fluidPage(
             actionButton(
               'reset_to_def',
               label = 'Reset ALL to defaults'),
+            checkboxInput(
+              'normalizeInput',
+              'Normalize for peak amplitude',
+              value = TRUE),
             sliderInput(
               'nFormants',
               'Number of formants',
