@@ -398,9 +398,8 @@ server = function(input, output, session) {
 
     output$specOver = renderPlot({
         if (!is.null(myPars$spec)) {
-            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 3, 0.5, 3), bg = NA)
-            # bg=NA makes the image transparent; left/right margins have to be 3
-            # instead of 2 in spectrogram (no clue why)
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
+            # bg=NA makes the image transparent
 
             if (is.null(myPars$spectrogram_hover)) {
                 # empty plot to enable hover/click events for the spectrogram underneath
@@ -470,6 +469,19 @@ server = function(input, output, session) {
         }
     })
 
+    output$specSlider = renderPlot({
+        if (!is.null(myPars$spec)) {
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
+            # bg=NA makes the image transparent
+            # horizontal line
+            do.call(plot, c(list(
+                x = rep(500, 2),
+                y = input$spec_ylim,
+                type = 'l', lty = 3),
+                myPars$specOver_opts))
+        }
+    })
+
     observe({
         output$oscillogram = renderPlot({
             if (!is.null(myPars$myAudio_trimmed) & input$osc != 'none') {
@@ -506,8 +518,8 @@ server = function(input, output, session) {
                              ylim = c(.2, .8),
                              type = 'n',
                              xaxs = "i", yaxs = "i",
-                             # bty = 'n',
-                             # axes = FALSE,
+                             bty = 'n',
+                             axes = FALSE,
                              xlab = '', ylab = ''
                         )
                         for (i in 1:nrow(myPars$ann)) {
@@ -533,8 +545,8 @@ server = function(input, output, session) {
                     par(mar = c(0, 2, 0, 2))
                     plot(1:10,
                          type = 'n',
-                         # bty = 'n',
-                         # axes = FALSE,
+                         bty = 'n',
+                         axes = FALSE,
                          xlab = '', ylab = '')
                     text(5, 5,
                          labels = paste('Select a region of spectrogram and double-click',

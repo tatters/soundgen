@@ -27,7 +27,9 @@ ui = fluidPage(
     tags$style(".selected {background-color: #33333340;}"),
     tags$style("label {font-size: 1em;}"),
     tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
-    tags$style(".buttonInline {padding: 2px 2px;}")
+    tags$style(".buttonInline {padding: 2px 2px;}"),
+    tags$style("#plotDiv {position: relative}"),  # wrapper for plots has to have position relative
+    tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0;}")
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
@@ -340,26 +342,45 @@ ui = fluidPage(
       fluidRow(
         column(
           width = 7,
-          absolutePanel(height = '500px',
-                        top = 0, left = 0, right = 0,
-                        plotOutput('specOver', height = '500px',
-                                   click = "spectrogram_click",
-                                   dblclick = dblclickOpts(id = "spectrogram_dblclick"),
-                                   hover = hoverOpts(id = "spectrogram_hover"),
-                                   brush = brushOpts(id = 'spectrogram_brush', opacity = 0, resetOnNew = FALSE))
-          ),
-          plotOutput(
-            'spectrogram', height = '500px'),
-          # , style = "max-width: 66vw; overflow-x: auto;"
+          tags$div(
+            id = 'plotDiv',
 
-          plotOutput(
-            'oscillogram', height = '100px'),
-          plotOutput(
-            'ann_plot', height = '60px',
-            click = "ann_click",
-            dblclick = dblclickOpts(id = "ann_dblclick"))
+            plotOutput(
+              'spectrogram', height = '500px'
+            ),
+
+            tags$div(
+              class = 'plotUnder',
+              plotOutput(
+                'specSlider', height = '500px'
+              )
+            ),
+
+            tags$div(
+              class = 'plotUnder',
+              plotOutput(
+                'specOver', height = '500px',
+                click = "spectrogram_click",
+                dblclick = dblclickOpts(id = "spectrogram_dblclick"),
+                hover = hoverOpts(id = "spectrogram_hover"),
+                brush = brushOpts(id = 'spectrogram_brush', opacity = 0, resetOnNew = FALSE))
+            ),
+
+            plotOutput(
+              'oscillogram', height = '100px'
+            ),
+
+            plotOutput(
+              'ann_plot', height = '60px',
+              click = "ann_click",
+              dblclick = dblclickOpts(id = "ann_dblclick")
+            )
+          )
+
         ),
         column(
+          width = 5,
+
           plotOutput(
             'spectrum',
             height = '500px',
@@ -367,6 +388,7 @@ ui = fluidPage(
             dblclick = dblclickOpts(id = "spectrum_dblclick"),
             hover = hoverOpts(id = "spectrum_hover"),
             brush = brushOpts(id = 'spectrum_brush', resetOnNew = TRUE)),
+
           sliderInput(
             'spectrum_smooth',
             'Smoothing',
@@ -374,8 +396,8 @@ ui = fluidPage(
             min = def_form['spectrum_smooth', 'low'],
             max = def_form['spectrum_smooth', 'high'],
             step = def_form['spectrum_smooth', 'step']),
-          tableOutput('ann_table'),
-          width = 5
+
+          tableOutput('ann_table')
         )
       )
 
