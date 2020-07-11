@@ -17,7 +17,7 @@ server = function(input, output, session) {
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
-    myPars$analyzeDur = 1000         # initial duration to analyze (ms)
+    myPars$initDur = 1000         # initial duration to analyze (ms)
     myPars$out_fTracks = list()      # a list for storing formant tracks per file
     myPars$out_spects = list()       # a list for storing spectrograms
     myPars$selectedF = 'f1'          # preselect F1 for correction
@@ -109,6 +109,7 @@ server = function(input, output, session) {
 
     readAudio = function(i) {
         # reads an audio file with tuneR::readWave
+        if (myPars$print) print('Reading audio...')
         temp = input$loadAudio[i, ]
         myPars$myAudio_filename = temp$name
         myPars$myAudio_path = temp$datapath
@@ -134,7 +135,7 @@ server = function(input, output, session) {
         updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
-        myPars$spec_xlim = c(0, min(myPars$analyzeDur, myPars$dur))
+        myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
         myPars$regionToAnalyze = myPars$spec_xlim
 
         # update info - file number ... out of ...
@@ -267,6 +268,7 @@ server = function(input, output, session) {
     # Updating spec / osc stuff to speed up plotting
     observeEvent(myPars$myAudio, {
         if (!is.null(myPars$myAudio)) {
+            # if (myPars$print) print('Scaling audio...')
             if (input$osc == 'dB') {
                 myPars$myAudio_scaled = osc(
                     myPars$myAudio,
@@ -305,10 +307,11 @@ server = function(input, output, session) {
             idx_s = max(1, (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000)) :
                 min(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
             downs_osc = 10 ^ input$osc_maxPoints
-            myPars$myAudio_trimmed = myPars$myAudio_scaled[idx_s]
-            myPars$time_trimmed = myPars$time[idx_s]
-            myPars$ls_trimmed = length(myPars$myAudio_trimmed)
+
             isolate({
+                myPars$myAudio_trimmed = myPars$myAudio_scaled[idx_s]
+                myPars$time_trimmed = myPars$time[idx_s]
+                myPars$ls_trimmed = length(myPars$myAudio_trimmed)
                 if (!is.null(myPars$myAudio_trimmed) &&
                     myPars$ls_trimmed > downs_osc) {
                     myseq = round(seq(1, myPars$ls_trimmed,
@@ -409,16 +412,16 @@ server = function(input, output, session) {
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
             # bg=NA makes the image transparent
 
-            if (is.null(myPars$spectrogram_hover)) {
-                # empty plot to enable hover/click events for the spectrogram underneath
-                do.call(plot, c(list(
-                    x = myPars$spec_xlim,
-                    y = input$spec_ylim,
-                    type = 'n'),
-                    myPars$specOver_opts))
-            } else {
+            # empty plot to enable hover/click events for the spectrogram underneath
+            do.call(plot, c(list(
+                x = myPars$spec_xlim,
+                y = input$spec_ylim,
+                type = 'n'),
+                myPars$specOver_opts))
+
+            if (!is.null(myPars$spectrogram_hover)) {
                 # horizontal line
-                do.call(plot, c(list(
+                do.call(points, c(list(
                     x = myPars$spec_xlim,
                     y = rep(myPars$spectrogram_hover$y, 2),
                     type = 'l', lty = 3),

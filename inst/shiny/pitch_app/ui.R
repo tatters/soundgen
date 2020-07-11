@@ -18,9 +18,20 @@ ui = fluidPage(
     });
   '),
 
+  tags$head(
+    tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
+    tags$style(".buttonInline {padding: 2px 2px;}"),
+    tags$style("#plotDiv {position: relative}"),  # wrapper for plots has to have position relative
+    tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0; height: 500px;}")
+  ),
+
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
   # see https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
   # alternative: https://rstudio.github.io/shinydashboard
+
+  # use an external javascript with any function I need to write myself
+  # (eg for playing the audio)
+  shinyjs::extendShinyjs(script = 'www/jsFun.js', functions = c('playme_js', 'stopAudio_js')),
 
   fluidRow(
     column(
@@ -511,7 +522,7 @@ ui = fluidPage(
 
       fluidRow(
         column(
-          1,
+          width = 1,
           actionButton(
             inputId = 'zoomIn_freq',
             label = HTML("<img src='icons/zoomIn.png' width = '25px'>"),
@@ -522,7 +533,7 @@ ui = fluidPage(
             style = "padding: 2px 2px; display: block")
         ),
         column(
-          2,
+          width = 3,
           radioButtons(
             'spectro_clickAct',
             label = 'Left click action: ',
@@ -531,75 +542,92 @@ ui = fluidPage(
             selected = 'addCand', inline = TRUE)
         ),
         column(
-          2,
-          htmlOutput('pitchAtCursor', inline = TRUE)
-        ),
-        column(
-          4,
+          width = 5,
+          actionButton(
+            inputId = "selection_stop",
+            label = HTML("<img src='icons/stop.png' width = '25px'>"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_play",
             label = HTML("<img src='icons/play.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_unvoice",
             label = HTML("<img src='icons/unvoice.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_voice",
             label = HTML("<img src='icons/voice.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_octaveUp",
             label = HTML("<img src='icons/octaveUp.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_octaveDown",
             label = HTML("<img src='icons/octaveDown.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_setPrior",
             label = HTML("<img src='icons/prior.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "button_pathUpdate",
             label = HTML("<img src='icons/update.png' width = '25px'>"),
-            style = "padding: 2px 2px;")
+            class = "buttonInline")
         ),
         column(
-          3,
+          width = 3,
           actionButton(
             inputId = 'scrollLeft',
             label = HTML("<img src='icons/backward.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = 'zoomOut',
             label = HTML("<img src='icons/zoomOut.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = "zoomToSel",
             label = HTML("<img src='icons/zoomSel.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = 'zoomIn',
             label = HTML("<img src='icons/zoomIn.png' width = '25px'>"),
-            style = "padding: 2px 2px;"),
+            class = "buttonInline"),
           actionButton(
             inputId = 'scrollRight',
             label = HTML("<img src='icons/forward.png' width = '25px'>"),
-            style = "padding: 2px 2px;")
+            class = "buttonInline")
         )
       ),
 
       fluidRow(
-        plotOutput(
-          'spectrogram',
-          height = '500px',
-          click = "spectrogram_click",
-          dblclick = dblclickOpts(id = "spectrogram_dblclick"),
-          hover = hoverOpts(id = "spectrogram_hover"),
-          brush = brushOpts(id = 'spectrogram_brush', resetOnNew = TRUE)),
-        # , style = "max-width: 66vw; overflow-x: auto;"
-        plotOutput('oscillogram')
+        tags$div(
+          id = 'plotDiv',
+
+          plotOutput(
+            'spectrogram', height = '500px'
+          ),
+
+          tags$div(
+            class = 'plotUnder',
+            plotOutput(
+              'specSlider', height = '500px'
+            )
+          ),
+
+          tags$div(
+            class = 'plotUnder',
+            plotOutput(
+              'specOver', height = '500px',
+              click = "spectrogram_click",
+              dblclick = dblclickOpts(id = "spectrogram_dblclick"),
+              hover = hoverOpts(id = "spectrogram_hover"),
+              brush = brushOpts(id = 'spectrogram_brush', opacity = 0, resetOnNew = FALSE))
+          ),
+
+          plotOutput('oscillogram')
+        )
       )
 
       #fluidRow(

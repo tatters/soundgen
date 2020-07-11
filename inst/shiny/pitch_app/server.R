@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: streamline the order of execution cutting the crap (like in formant_app); maybe analyze one bit at a time, again like in formant_app
+# To do: check why brush becomes invisible; probably remove rect selection - use brush instead; streamline the order of execution cutting the crap (like in formant_app); maybe analyze one bit at a time, again like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -19,6 +19,9 @@ server = function(input, output, session) {
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
     myPars$myAudio = NULL
+    myPars$slider_ms = 50            # how often to update play slider
+    myPars$cursor = 0
+    myPars$initDur = 1000         # initial duration to plot (ms)
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -57,6 +60,8 @@ server = function(input, output, session) {
         myPars$drawSpec = FALSE   # prevent the spectrogram from being redrawn needlessly
         # (only draw it after extracting it)
         myPars$spec = NULL
+        myPars$selection = NULL
+        myPars$cursor = 0
     }
 
     resetSliders = function() {
@@ -111,6 +116,7 @@ server = function(input, output, session) {
 
     readAudio = function(i) {
         # reads an audio file with tuneR::readWave
+        if (myPars$print) print('Reading audio...')
         temp = input$loadAudio[i, ]
         myPars$myAudio_filename = temp$name
         myPars$myAudio_path = temp$datapath
@@ -136,7 +142,7 @@ server = function(input, output, session) {
         updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
-        myPars$spec_xlim = c(0, myPars$dur)
+        myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
         # for the first audio only, update autocorSmooth
         # to a default that depends on samplingRate
         if (i == 1) {
@@ -173,7 +179,6 @@ server = function(input, output, session) {
                 output = 'processed',
                 plot = FALSE
             )
-            # myPars$drawSpec = TRUE
         }
     })
 
@@ -196,15 +201,16 @@ server = function(input, output, session) {
                          filename = paste0('www/', myPars$myfile))
         output$htmlAudio = renderUI(
             tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
-                       autoplay = NA, controls = NA,
+                       autoplay = NA, controls = NA, id = 'myAudio',
                        style="transform: scale(0.75); transform-origin: 0 0;")
         )
     })
 
 
     # Updating spec / osc stuff to speed up plotting
-    observe({
+    observeEvent(myPars$myAudio, {
         if (!is.null(myPars$myAudio)) {
+            # if (myPars$print) print('Scaling audio...')
             if (input$osc == 'dB') {
                 myPars$myAudio_scaled = osc(
                     myPars$myAudio,
@@ -243,10 +249,11 @@ server = function(input, output, session) {
             idx_s = max(1, (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000)) :
                 min(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
             downs_osc = 10 ^ input$osc_maxPoints
-            myPars$myAudio_trimmed = myPars$myAudio_scaled[idx_s]
-            myPars$time_trimmed = myPars$time[idx_s]
-            myPars$ls_trimmed = length(myPars$myAudio_trimmed)
+
             isolate({
+                myPars$myAudio_trimmed = myPars$myAudio_scaled[idx_s]
+                myPars$time_trimmed = myPars$time[idx_s]
+                myPars$ls_trimmed = length(myPars$myAudio_trimmed)
                 if (!is.null(myPars$myAudio_trimmed) &&
                     myPars$ls_trimmed > downs_osc) {
                     myseq = round(seq(1, myPars$ls_trimmed,
@@ -322,45 +329,6 @@ server = function(input, output, session) {
                     title(xlab = 'Time, ms')
                 }
 
-                # show prior
-                ran_x_5 = diff(range(myPars$spec_xlim)) * .05   # 5% of plot width
-                points(myPars$spec_xlim[1] + myPars$prior$prob * ran_x_5,
-                       myPars$prior$freq / 1000, type = 'l', lty = 2)
-                text(x = myPars$spec_xlim[1] + ran_x_5,
-                     y = input$priorMean / 1000,
-                     pos = 2, labels = 'Prior', offset = 0.25)
-                text(x = myPars$spec_xlim[1],
-                     y = input$pitchFloor / 1000,
-                     pos = 4, labels = 'floor', offset = 0)
-                text(x = myPars$spec_xlim[1],
-                     y = input$pitchCeiling / 1000,
-                     pos = 4, labels = 'ceiling', offset = 0)
-
-                # add manual values to the list of pitch candidates for seamless plotting
-                n = ncol(myPars$pitchCands$freq)
-                # if (length(n>0) == 0 | length(nrow(myPars$manual)>0) == 0) browser()
-                if (!is.null(myPars$pitchCands) &&
-                    (n > 0 & nrow(myPars$manual) > 0)) {
-                    temp_freq = rep(NA, n)
-                    temp_freq[myPars$manual$frame] = myPars$manual$freq
-                    temp_freq = rbind(myPars$pitchCands$freq, temp_freq)
-                    temp_cert = rbind(myPars$pitchCands$cert, rep(1, n))  # change 1 to input$manualCert
-                    temp_source = rbind(myPars$pitchCands$source, rep('manual', n))
-                } else {
-                    temp_freq = myPars$pitchCands$freq
-                    temp_cert = myPars$pitchCands$cert
-                    temp_source = myPars$pitchCands$source
-                }
-                soundgen:::addPitchCands(
-                    pitchCands = temp_freq,
-                    pitchCert = temp_cert,
-                    pitchSource = temp_source,
-                    pitch = myPars$pitch,
-                    addToExistingPlot = TRUE,
-                    showLegend = TRUE,
-                    ylim = c(input$spec_ylim[1], input$spec_ylim[2]),
-                    pitchPlot = list(cex = input$spec_cex)
-                )
                 # Add text label of file name
                 ran_x = myPars$spec_xlim[2] - myPars$spec_xlim[1]
                 ran_y = input$spec_ylim[2] - input$spec_ylim[1]
@@ -368,6 +336,127 @@ server = function(input, output, session) {
                      y = input$spec_ylim[2] - ran_y * .01,
                      labels = myPars$myAudio_filename,
                      adj = c(0, 1))  # left, top
+            }
+        }
+    })
+
+    observe({
+        myPars$specOver_opts = list(
+            xlim = myPars$spec_xlim, ylim = input$spec_ylim,
+            xaxs = "i", yaxs = "i",
+            bty = 'n', xaxt = 'n', yaxt = 'n',
+            xlab = '', ylab = '')
+    })
+
+    output$specOver = renderPlot({
+        if (!is.null(myPars$spec)) {
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
+            # bg=NA makes the image transparent
+
+            # empty plot to enable hover/click events for the spectrogram underneath
+            do.call(plot, c(list(
+                x = myPars$spec_xlim,
+                y = input$spec_ylim,
+                type = 'n'),
+                myPars$specOver_opts))
+
+            if (!is.null(myPars$spectrogram_hover)) {
+                # horizontal line
+                do.call(points, c(list(
+                    x = myPars$spec_xlim,
+                    y = rep(myPars$spectrogram_hover$y, 2),
+                    type = 'l', lty = 3),
+                    myPars$specOver_opts))
+                # frequency label
+                do.call(text, list(
+                    x = myPars$spec_xlim[1],
+                    y = myPars$spectrogram_hover$y,
+                    labels = myPars$spectrogram_hover$freq,
+                    adj = c(0, 0)))
+                # vertical line
+                do.call(points, list(
+                    x = rep(myPars$spectrogram_hover$x, 2),
+                    y = input$spec_ylim,
+                    type = 'l', lty = 3))
+                # time label
+                do.call(text, list(
+                    x = myPars$spectrogram_hover$x,
+                    y = input$spec_ylim[1] + .025 * diff(input$spec_ylim),
+                    labels = myPars$spectrogram_hover$time,
+                    adj = .5))
+            }
+
+            # Add a rectangle showing the selected region
+            if (!is.null(myPars$spectrogram_brush) & input$spectro_clickAct == 'select') {
+                rect(
+                    xleft = myPars$spectrogram_brush$xmin,
+                    xright = myPars$spectrogram_brush$xmax,
+                    ybottom = input$spec_ylim[1],
+                    ytop = input$spec_ylim[2],
+                    col = rgb(.2, .2, .2, alpha = .15),
+                    border = NA
+                )
+            }
+
+            # show prior
+            ran_x_5 = diff(range(myPars$spec_xlim)) * .05   # 5% of plot width
+            points(myPars$spec_xlim[1] + myPars$prior$prob * ran_x_5,
+                   myPars$prior$freq / 1000, type = 'l', lty = 2)
+            text(x = myPars$spec_xlim[1] + ran_x_5,
+                 y = input$priorMean / 1000,
+                 pos = 2, labels = 'Prior', offset = 0.25)
+            text(x = myPars$spec_xlim[1],
+                 y = input$pitchFloor / 1000,
+                 pos = 4, labels = 'floor', offset = 0)
+            text(x = myPars$spec_xlim[1],
+                 y = input$pitchCeiling / 1000,
+                 pos = 4, labels = 'ceiling', offset = 0)
+
+            # add manual values to the list of pitch candidates for seamless plotting
+            n = ncol(myPars$pitchCands$freq)
+            # if (length(n>0) == 0 | length(nrow(myPars$manual)>0) == 0) browser()
+            if (!is.null(myPars$pitchCands) &&
+                (n > 0 & nrow(myPars$manual) > 0)) {
+                temp_freq = rep(NA, n)
+                temp_freq[myPars$manual$frame] = myPars$manual$freq
+                temp_freq = rbind(myPars$pitchCands$freq, temp_freq)
+                temp_cert = rbind(myPars$pitchCands$cert, rep(1, n))  # change 1 to input$manualCert
+                temp_source = rbind(myPars$pitchCands$source, rep('manual', n))
+            } else {
+                temp_freq = myPars$pitchCands$freq
+                temp_cert = myPars$pitchCands$cert
+                temp_source = myPars$pitchCands$source
+            }
+            soundgen:::addPitchCands(
+                pitchCands = temp_freq,
+                pitchCert = temp_cert,
+                pitchSource = temp_source,
+                pitch = myPars$pitch,
+                addToExistingPlot = TRUE,
+                showLegend = TRUE,
+                ylim = c(input$spec_ylim[1], input$spec_ylim[2]),
+                pitchPlot = list(cex = input$spec_cex)
+            )
+        }
+    })
+
+    output$specSlider = renderPlot({
+        if (!is.null(myPars$spec)) {
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
+            # bg=NA makes the image transparent
+
+            if (myPars$cursor == 0) {
+                # just a transparent plot
+                do.call(plot, c(list(
+                    x = 1, type = 'n'),
+                    myPars$specOver_opts))
+            } else {
+                # horizontal line at current play time
+                do.call(plot, c(list(
+                    x = rep(myPars$cursor, 2),
+                    y = input$spec_ylim,
+                    type = 'l'),
+                    myPars$specOver_opts))
             }
         }
     })
@@ -588,6 +677,9 @@ server = function(input, output, session) {
             } else {
                 myPars$pitch[closest_frame] = new_freq
             }
+        } else if (input$spectro_clickAct == 'select') {
+            myPars$cursor = input$spectrogram_click$x
+            myPars$spectrogram_brush = NULL
         }
     })
 
@@ -612,18 +704,54 @@ server = function(input, output, session) {
 
     ## Buttons for operations with selection
     playSel = function() {
-        if (!is.null(myPars$myAudio_path)) {
-            if (!is.null(input$spectrogram_brush) & length(myPars$brush_sel_x) > 0) {
-                from = input$spectrogram_brush$xmin / 1000
-                to = input$spectrogram_brush$xmax / 1000
+        if (!is.null(myPars$myAudio)) {
+            if (!is.null(myPars$spectrogram_brush)) {
+                myPars$play$from = myPars$spectrogram_brush$xmin / 1000
+                myPars$play$to = myPars$spectrogram_brush$xmax / 1000
+            } else if (!is.null(myPars$currentAnn)) {
+                myPars$play$from = myPars$ann$from[myPars$currentAnn] / 1000
+                myPars$play$to = myPars$ann$to[myPars$currentAnn] / 1000
             } else {
-                from = myPars$spec_xlim[1] / 1000
-                to = myPars$spec_xlim[2] / 1000
+                myPars$play$from = myPars$cursor / 1000 # myPars$spec_xlim[1] / 1000
+                myPars$play$to = myPars$spec_xlim[2] / 1000
             }
-            playme(myPars$myAudio_path, from = from, to = to)
+            myPars$play$dur = myPars$play$to - myPars$play$from
+            myPars$play$timeOn = Sys.time()
+            myPars$play$timeOff = myPars$play$timeOn + myPars$play$dur
+            myPars$cursor_temp = myPars$cursor
+            myPars$play$on = TRUE
+            if (myPars$print) print('Playing selection...')
+
+            # play selection with javascript
+            shinyjs::js$playme_js(  # need an external js script for this
+                audio_id = 'myAudio',  # defined in UI
+                from = myPars$play$from,
+                to = myPars$play$to)
+            # or play with R:
+            # playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
         }
     }
-    observeEvent(input$selection_play, playSel())
+    observeEvent(c(input$selection_play), playSel())  # add , myPars$myAudio for autoplay
+    observeEvent(input$selection_stop, {
+        myPars$play$on = FALSE
+        myPars$cursor = myPars$cursor_temp
+        shinyjs::js$stopAudio_js(audio_id = 'myAudio')
+    })
+
+    observe({
+        if (!is.null(myPars$play$on) && myPars$play$on) {
+            time = Sys.time()
+            if (!is.null(myPars$slider_ms)) invalidateLater(myPars$slider_ms)
+            if (time > myPars$play$timeOff) {
+                myPars$play$on = FALSE
+                myPars$cursor = myPars$cursor_temp  # reset to original cursor
+            } else {
+                myPars$cursor = as.numeric(
+                    myPars$play$from + time - myPars$play$timeOn
+                ) * 1000
+            }
+        }
+    })
 
     observeEvent(input$userPressedSmth, {
         button_code = floor(input$userPressedSmth)
@@ -779,24 +907,31 @@ server = function(input, output, session) {
     })
 
     # HOVER
-    hover_label = reactive({
-        hover_temp = input$spectrogram_hover
-        if (!is.null(hover_temp) & !is.null(myPars$myAudio_path)) {
-            cursor_hz = hover_temp$y * 1000
+    observeEvent(input$spectrogram_hover, {
+        if (!is.null(input$spectrogram_hover) & !is.null(myPars$spec)) {
+            myPars$spectrogram_hover = input$spectrogram_hover
+            cursor_hz = myPars$spectrogram_hover$y * 1000
             cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
-            label = paste0('Cursor: ',
-                           round(hover_temp$y * 1000), 'Hz (',
-                           cursor_notes, ')')
-        } else {
-            label = ''
+            myPars$spectrogram_hover$freq = paste0(
+                round(myPars$spectrogram_hover$y * 1000), ' Hz (',
+                cursor_notes, ')')
+            myPars$spectrogram_hover$time = paste0(
+                round(myPars$spectrogram_hover$x), ' ms'
+            )
         }
-        return(label)
     })
-    output$pitchAtCursor = renderUI(HTML(hover_label()))
+    shinyjs::onevent('mouseout', id = 'specOver', {
+        # NB: more flexible and less mafan than juggling with the observer of
+        # input$spectrogram_hover
+        myPars$spectrogram_hover = NULL
+    } )
 
     # BRUSH
     brush = observeEvent(input$spectrogram_brush, {
         if (myPars$print) print('Running brush()...')
+        if (!is.null(input$spectrogram_brush)) {
+            myPars$spectrogram_brush = input$spectrogram_brush
+        }
         myPars$pitch_df = data.frame(
             time = as.numeric(colnames(myPars$pitchCands$freq)),
             freq = myPars$pitch / 1000
