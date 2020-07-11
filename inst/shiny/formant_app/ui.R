@@ -29,12 +29,16 @@ ui = fluidPage(
     tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
     tags$style(".buttonInline {padding: 2px 2px;}"),
     tags$style("#plotDiv {position: relative}"),  # wrapper for plots has to have position relative
-    tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0;}")
+    tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0; height: 500px;}")
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
   # see https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
   # alternative: https://rstudio.github.io/shinydashboard
+
+  # use an external javascript with any function I need to write myself
+  # (eg for playing the audio)
+  shinyjs::extendShinyjs(script = 'www/jsFun.js', functions = c('playme_js', 'stopAudio_js')),
 
   fluidRow(
     column(
@@ -301,6 +305,10 @@ ui = fluidPage(
         ),
         column(
           width = 3,
+          actionButton(
+            inputId = "selection_stop",
+            label = HTML("<img src='icons/stop.png' width = '25px'>"),
+            class = "buttonInline"),
           actionButton(
             inputId = "selection_play",
             label = HTML("<img src='icons/play.png' width = '25px'>"),

@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: an extra tier over spectrogram with moving slider during play(); maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
+# To do: finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -21,6 +21,10 @@ server = function(input, output, session) {
     myPars$out_fTracks = list()      # a list for storing formant tracks per file
     myPars$out_spects = list()       # a list for storing spectrograms
     myPars$selectedF = 'f1'          # preselect F1 for correction
+    myPars$slider_ms = 50            # how often to update play slider
+    myPars$cursor = 0
+    # NB: using myPars$play$cursor for some reason invalidates the observer,
+    # so it keeps executing as fast as it can - no idea why!
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -59,6 +63,7 @@ server = function(input, output, session) {
         myPars$formants = NULL
         myPars$analyzedUpTo = NULL
         myPars$selection = NULL
+        myPars$cursor = 0
     }
 
     resetSliders = function() {
@@ -76,8 +81,7 @@ server = function(input, output, session) {
     }
     observeEvent(input$reset_to_def, resetSliders())
 
-
-    observeEvent(input$loadAudio, {
+    loadAudio = function() {
         if (myPars$print) print('Loading audio...')
         done()  # save previous work, if any
         myPars$n = 1   # file number in queue
@@ -86,7 +90,8 @@ server = function(input, output, session) {
         myPars$drawSpec = FALSE  # hold on plotting the spectrogram until after running analyze()
         reset()
         readAudio(1)  # read the first sound in queue
-    })
+    }
+    observeEvent(input$loadAudio, loadAudio())
 
     observeEvent(input$showpanel, {
         if(input$showpanel == TRUE) {
@@ -185,8 +190,8 @@ server = function(input, output, session) {
                          filename = paste0('www/', myPars$myfile))
         output$htmlAudio = renderUI(
             tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
-                       autoplay = NA, controls = NA,
-                       style="transform: scale(0.75); transform-origin: 0 0;")
+                       id = 'myAudio',
+                       style="display: none; transform: scale(0.75); transform-origin: 0 0;")
         )
     })
 
@@ -473,12 +478,20 @@ server = function(input, output, session) {
         if (!is.null(myPars$spec)) {
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
             # bg=NA makes the image transparent
-            # horizontal line
-            do.call(plot, c(list(
-                x = rep(500, 2),
-                y = input$spec_ylim,
-                type = 'l', lty = 3),
-                myPars$specOver_opts))
+
+            if (myPars$cursor == 0) {
+                # just a transparent plot
+                do.call(plot, c(list(
+                    x = 1, type = 'n'),
+                    myPars$specOver_opts))
+            } else {
+                # horizontal line at current play time
+                do.call(plot, c(list(
+                    x = rep(myPars$cursor, 2),
+                    y = input$spec_ylim,
+                    type = 'l'),
+                    myPars$specOver_opts))
+            }
         }
     })
 
@@ -781,6 +794,8 @@ server = function(input, output, session) {
 
     ## Clicking events
     observeEvent(input$spectrogram_click, {
+        myPars$spectrogram_brush = NULL
+        myPars$cursor = input$spectrogram_click$x
         if (!is.null(myPars$currentAnn)) {
             inside_sel = (myPars$ann$from[myPars$currentAnn] < input$spectrogram_click$x) &
                 (myPars$ann$to[myPars$currentAnn] > input$spectrogram_click$x)
@@ -899,21 +914,54 @@ server = function(input, output, session) {
 
     ## Buttons for operations with selection
     playSel = function() {
-        if (!is.null(myPars$myAudio_path)) {
+        if (!is.null(myPars$myAudio)) {
             if (!is.null(myPars$spectrogram_brush)) {
-                from = myPars$spectrogram_brush$xmin / 1000
-                to = myPars$spectrogram_brush$xmax / 1000
+                myPars$play$from = myPars$spectrogram_brush$xmin / 1000
+                myPars$play$to = myPars$spectrogram_brush$xmax / 1000
             } else if (!is.null(myPars$currentAnn)) {
-                from = myPars$ann$from[myPars$currentAnn] / 1000
-                to = myPars$ann$to[myPars$currentAnn] / 1000
+                myPars$play$from = myPars$ann$from[myPars$currentAnn] / 1000
+                myPars$play$to = myPars$ann$to[myPars$currentAnn] / 1000
             } else {
-                from = myPars$spec_xlim[1] / 1000
-                to = myPars$spec_xlim[2] / 1000
+                myPars$play$from = myPars$cursor / 1000 # myPars$spec_xlim[1] / 1000
+                myPars$play$to = myPars$spec_xlim[2] / 1000
             }
-            playme(myPars$myAudio_path, from = from, to = to)
+            myPars$play$dur = myPars$play$to - myPars$play$from
+            myPars$play$timeOn = Sys.time()
+            myPars$play$timeOff = myPars$play$timeOn + myPars$play$dur
+            myPars$cursor_temp = myPars$cursor
+            myPars$play$on = TRUE
+            if (myPars$print) print('Playing selection...')
+
+            # play selection with javascript
+            shinyjs::js$playme_js(  # need an external js script for this
+                audio_id = 'myAudio',  # defined in UI
+                from = myPars$play$from,
+                to = myPars$play$to)
+            # or play with R:
+            # playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
         }
     }
-    observeEvent(input$selection_play, playSel())
+    observeEvent(c(input$selection_play), playSel())  # add , myPars$myAudio for autoplay
+    observeEvent(input$selection_stop, {
+        myPars$play$on = FALSE
+        myPars$cursor = myPars$cursor_temp
+        shinyjs::js$stopAudio_js(audio_id = 'myAudio')
+    })
+
+    observe({
+        if (!is.null(myPars$play$on) && myPars$play$on) {
+            time = Sys.time()
+            if (!is.null(myPars$slider_ms)) invalidateLater(myPars$slider_ms)
+            if (time > myPars$play$timeOff) {
+                myPars$play$on = FALSE
+                myPars$cursor = myPars$cursor_temp  # reset to original cursor
+            } else {
+                myPars$cursor = as.numeric(
+                    myPars$play$from + time - myPars$play$timeOn
+                ) * 1000
+            }
+        }
+    })
 
     deleteSel = function() {
         if (!is.null(myPars$currentAnn)) {
