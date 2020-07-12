@@ -64,6 +64,8 @@ server = function(input, output, session) {
         myPars$analyzedUpTo = NULL
         myPars$selection = NULL
         myPars$cursor = 0
+        session$resetBrush("spectrogram_brush")
+        myPars$spectrogram_brush = NULL
     }
 
     resetSliders = function() {
@@ -360,7 +362,7 @@ server = function(input, output, session) {
             if (is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
                 text(x = 5, y = 5,
-                     labels = 'Upload wav/mp3 file(s) to begin...')
+                     labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~30 s')
             } else {
                 if (input$spec_colorTheme == 'bw') {
                     color.palette = function(x) gray(seq(from = 1, to = 0, length = x))

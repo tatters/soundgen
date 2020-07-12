@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: check why brush becomes invisible; probably remove rect selection - use brush instead; streamline the order of execution cutting the crap (like in formant_app); maybe analyze one bit at a time, again like in formant_app
+# To do: streamline the order of execution cutting the crap (trimming seems to be called twice); maybe analyze one bit at a time like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -62,6 +62,8 @@ server = function(input, output, session) {
         myPars$spec = NULL
         myPars$selection = NULL
         myPars$cursor = 0
+        session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
+        myPars$spectrogram_brush = NULL
     }
 
     resetSliders = function() {
@@ -301,7 +303,7 @@ server = function(input, output, session) {
             par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$myAudio_trimmed) | is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
-                text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~10 s')
+                text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~30 s')
             } else {
                 if (input$spec_colorTheme == 'bw') {
                     color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
@@ -656,8 +658,9 @@ server = function(input, output, session) {
 
     ## Clicking events
     observeEvent(input$spectrogram_click, {
+        myPars$spectrogram_brush = NULL
+        # session$resetBrush("spectrogram_brush")
         if (length(myPars$pitchCands$freq) > 0 & input$spectro_clickAct == 'addCand') {
-            session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
             closest_frame = which.min(abs(
                 as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
             # create a manual pitch estimate for the closest frame with the clicked value
@@ -679,7 +682,6 @@ server = function(input, output, session) {
             }
         } else if (input$spectro_clickAct == 'select') {
             myPars$cursor = input$spectrogram_click$x
-            myPars$spectrogram_brush = NULL
         }
     })
 
@@ -995,7 +997,6 @@ server = function(input, output, session) {
         # meaning we have finished editing pitch contour for a sound - prepares
         # the output
         if (myPars$print) print('Running done()...')
-        session$resetBrush("spectrogram_brush")  # doesn't reset automatically
         if (!is.null(myPars$myAudio_path) && !is.null(myPars$result)) {
             new = data.frame(
                 file = basename(myPars$myAudio_filename),

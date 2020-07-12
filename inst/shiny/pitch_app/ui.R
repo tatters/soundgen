@@ -623,7 +623,7 @@ ui = fluidPage(
               click = "spectrogram_click",
               dblclick = dblclickOpts(id = "spectrogram_dblclick"),
               hover = hoverOpts(id = "spectrogram_hover"),
-              brush = brushOpts(id = 'spectrogram_brush', opacity = 0, resetOnNew = FALSE))
+              brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
           ),
 
           plotOutput('oscillogram')
