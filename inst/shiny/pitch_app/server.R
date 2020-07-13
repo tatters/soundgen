@@ -663,20 +663,26 @@ server = function(input, output, session) {
                 as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
             # create a manual pitch estimate for the closest frame with the clicked value
             new_freq = round(input$spectrogram_click$y * 1000, 3)
-            if (closest_frame %in% myPars$manual$frame) {
-                myPars$manual$freq[myPars$manual$frame == closest_frame] = new_freq
-            } else {
-                myPars$manual = rbind(myPars$manual,
-                                      data.frame(frame = closest_frame, freq = new_freq))
-            }
-            myPars$manual = myPars$manual[order(myPars$manual$frame), ]  # just to keep things tidy
-            # if this frame was manually flagged as unvoiced, remove this flag
-            idx_rem = which(myPars$manualUnv == closest_frame)
-            if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
-            if(input$automPathUpdate) {
-                obs_pitch()
-            } else {
-                myPars$pitch[closest_frame] = new_freq
+            # don't accept values beyond [pitchFloor, pitchCeiling]
+            if (new_freq >= input$pitchFloor &
+                new_freq <= input$pitchCeiling) {
+                if (closest_frame %in% myPars$manual$frame) {
+                    myPars$manual$freq[myPars$manual$frame == closest_frame] = new_freq
+                } else {
+                    myPars$manual = rbind(
+                        myPars$manual,
+                        data.frame(frame = closest_frame, freq = new_freq))
+                }
+                # just to keep things tidy
+                myPars$manual = myPars$manual[order(myPars$manual$frame), ]
+                # if this frame was manually flagged as unvoiced, remove this flag
+                idx_rem = which(myPars$manualUnv == closest_frame)
+                if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
+                if(input$automPathUpdate) {
+                    obs_pitch()
+                } else {
+                    myPars$pitch[closest_frame] = new_freq
+                }
             }
         } else if (input$spectro_clickAct == 'select') {
             myPars$cursor = input$spectrogram_click$x
@@ -959,18 +965,30 @@ server = function(input, output, session) {
     observeEvent(input$zoomIn_freq, changeZoom_freq(1 / myPars$zoomFactor_freq))
     observeEvent(input$zoomOut_freq, changeZoom_freq(myPars$zoomFactor_freq))
 
-    changeZoom = function(coef) {
-        midpoint = mean(myPars$spec_xlim)
+    changeZoom = function(coef, toCursor = FALSE) {
+        # intelligent zoom-in a la Audacity: midpoint moves closer to seletion/cursor
+        if (!is.null(myPars$cursor) & toCursor) {
+            if (!is.null(myPars$spectrogram_brush)) {
+                midpoint = 3/4 * mean(c(myPars$spectrogram_brush$xmin,
+                                        myPars$spectrogram_brush$xmax)) +
+                    1/4 * mean(myPars$spec_xlim)
+            } else {
+                midpoint = 3/4 * myPars$cursor + 1/4 * mean(myPars$spec_xlim)
+            }
+        } else {
+            midpoint = mean(myPars$spec_xlim)
+        }
         halfRan = diff(myPars$spec_xlim) / 2 / coef
         newLeft = max(0, midpoint - halfRan)
         newRight = min(myPars$dur, midpoint + halfRan)
         myPars$spec_xlim = c(newLeft, newRight)
     }
-    observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
+    observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
     zoomToSel = function() {
-        if (!is.null(input$spectrogram_brush)) {
-            myPars$spec_xlim = round(c(input$spectrogram_brush$xmin, input$spectrogram_brush$xmax))
+        if (!is.null(myPars$spectrogram_brush)) {
+            myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin,
+                                       myPars$spectrogram_brush$xmax))
         }
     }
     observeEvent(input$zoomToSel, {

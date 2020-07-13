@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: spectrum of very short annotations; finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
+# To do: finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -846,6 +846,9 @@ server = function(input, output, session) {
         if (!is.null(myPars$ann)) {
             ds = abs(input$ann_click$x - (myPars$ann$from + myPars$ann$to) / 2)
             myPars$currentAnn = which.min(ds)
+            myPars$spectrogram_brush = list(xmin = myPars$ann$from[currentAnn],
+                                            xmax = myPars$ann$to[currentAnn])
+            myPars$cursor = myPars$ann$from[currentAnn]
         }
     })
 
@@ -1097,18 +1100,30 @@ server = function(input, output, session) {
     observeEvent(input$zoomIn_freq, changeZoom_freq(1 / myPars$zoomFactor_freq))
     observeEvent(input$zoomOut_freq, changeZoom_freq(myPars$zoomFactor_freq))
 
-    changeZoom = function(coef) {
-        midpoint = mean(myPars$spec_xlim)
+    changeZoom = function(coef, toCursor = FALSE) {
+        # intelligent zoom-in a la Audacity: midpoint moves closer to seletion/cursor
+        if (!is.null(myPars$cursor) & toCursor) {
+            if (!is.null(myPars$spectrogram_brush)) {
+                midpoint = 3/4 * mean(c(myPars$spectrogram_brush$xmin,
+                                        myPars$spectrogram_brush$xmax)) +
+                    1/4 * mean(myPars$spec_xlim)
+            } else {
+                midpoint = 3/4 * myPars$cursor + 1/4 * mean(myPars$spec_xlim)
+            }
+        } else {
+            midpoint = mean(myPars$spec_xlim)
+        }
         halfRan = diff(myPars$spec_xlim) / 2 / coef
         newLeft = max(0, midpoint - halfRan)
         newRight = min(myPars$dur, midpoint + halfRan)
         myPars$spec_xlim = c(newLeft, newRight)
     }
-    observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor))
+    observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
     zoomToSel = function() {
         if (!is.null(myPars$spectrogram_brush)) {
-            myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin, myPars$spectrogram_brush$xmax))
+            myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin,
+                                       myPars$spectrogram_brush$xmax))
         }
     }
     observeEvent(input$zoomToSel, {
