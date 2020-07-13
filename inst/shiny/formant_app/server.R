@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: two tabs - view annotations in current file or view a list of files (and switch b/w them); finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
+# To do: load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -101,7 +101,11 @@ server = function(input, output, session) {
         myPars$n = 1   # file number in queue
         myPars$nFiles = nrow(myPars$fileList)  # number of uploaded files in queue
         myPars$drawSpec = FALSE  # hold on plotting the spectrogram until after running analyze()
-        readAudio(1)  # read the first sound in queue
+        choices = as.list(myPars$fileList$name)
+        names(choices) = myPars$fileList$name
+        updateSelectInput(session, 'fileList',
+                          choices = as.list(myPars$fileList$name))
+        # readAudio(1)  # read the first sound in queue
     }
     observeEvent(input$loadAudio, loadAudio())
 
@@ -151,13 +155,19 @@ server = function(input, output, session) {
         myPars$regionToAnalyze = myPars$spec_xlim
 
         # update info - file number ... out of ...
-        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles) # , ': ', myPars$myAudio_filename)
-        output$fileN = renderUI(HTML(file_lab))
+        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles)
+        updateSelectInput(session, 'fileList',
+                          label = file_lab,
+                          selected = myPars$fileList$name[myPars$n])
 
-        # if we've already worked with this file in current session,
-        # re-load the annotations and formant tracks
+        # if we've already worked with this file,
+        # re-load the annotations and (if in current session) formant tracks + spec
         idx = which(myPars$out$file == myPars$myAudio_filename)
-        if (length(idx) > 0) myPars$ann = myPars$out[idx, ]
+        if (length(idx) > 0) {
+            myPars$ann = myPars$out[idx, ]
+        } else {
+            myPars$ann = NULL
+        }
         if (!is.null(myPars$out_fTracks[[myPars$myAudio_filename]])) {
             myPars$formantTracks = myPars$out_fTracks[[myPars$myAudio_filename]]
             myPars$spec = myPars$out_specs[[myPars$myAudio_filename]]
@@ -165,6 +175,12 @@ server = function(input, output, session) {
         }
         drawAnn()
     }
+    observeEvent(input$fileList, {
+        done()
+        myPars$n = which(myPars$fileList$name == input$fileList)
+        reset()
+        readAudio(myPars$n)
+    }, ignoreInit = TRUE)
 
     extractSpectrogram = observe({
         # Instead of re-loading the file every time, save the spectrogram matrix
@@ -539,10 +555,10 @@ server = function(input, output, session) {
 
     drawAnn = function() {
         output$ann_plot = renderPlot({
+            if (myPars$print) print('Drawing annotations...')
             isolate({
                 if (!is.null(myPars$ann)) {
                     if (nrow(myPars$ann) > 0) {
-                        if (myPars$print) print('Drawing annotations...')
                         par(mar = c(0, 2, 0, 2))
                         plot(myPars$time_trimmed,
                              xlim = myPars$spec_xlim,
@@ -592,11 +608,13 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrum)) {
             if (myPars$print) print('Drawing spectrum...')
             par(mar = c(2, 2, 0.5, 0))
+            xlim = c(0, myPars$spectrum$freq_range[2])
+            ylim = c(myPars$spectrum$ampl_range[1],
+                          max(0, myPars$spectrum$ampl_range[2] + 20))
             plot(myPars$spectrum$freq,
                  myPars$spectrum$ampl,
                  xlab = '', ylab = '',
-                 xlim = c(0, myPars$spectrum$freq_range[2]),
-                 ylim = myPars$spectrum$ampl_range,
+                 xlim = xlim, ylim = ylim,
                  xaxs = "i",
                  type = 'l')
             # # fill in the AUC if needed
@@ -607,9 +625,10 @@ server = function(input, output, session) {
             spectrum_peaks()
 
             # ? in the upper right corner for help
-            text(x = myPars$spectrum$freq_range[2] - .05 * diff(myPars$spectrum$freq_range),
-                 y = myPars$spectrum$ampl_range[2] - .05 * diff(myPars$spectrum$ampl_range),
-                 labels = "?", cex = 5,
+            text(x = xlim[2],
+                 y = ylim[2],
+                 labels = "?",
+                 cex = 5, adj = c(1, 1),
                  col = rgb(.5, .5, .5, .1))
 
             # add a vertical line and freq label on hover
@@ -648,7 +667,7 @@ server = function(input, output, session) {
                 # just use the visible part of the spectrogram
                 myPars$spectrum = list(
                     freq = as.numeric(rownames(myPars$spec_trimmed)),
-                    ampl = as.numeric(rowMeans(myPars$spec_trimmed))
+                    ampl = 20 * log10(as.numeric(rowMeans(myPars$spec_trimmed)))
                 )
             }
 
@@ -798,7 +817,9 @@ server = function(input, output, session) {
     })
 
     observe({
-        output$ann_table = renderTable(myPars$ann[, -1], digits = 0)
+        output$ann_table = renderTable(myPars$ann[, -1], digits = 0,
+                                       align = 'c', striped = TRUE,
+                                       bordered = TRUE, width = '100%')
     })
 
     observeEvent(input$nFormants, {
@@ -896,11 +917,11 @@ server = function(input, output, session) {
             stringsAsFactors = FALSE)
         new[, myPars$ff] = myPars$formants[myPars$f_col_names]
 
-        # depending on the history of changing input$nFormants,
+        # depending on the history of changing input$nFormants / output.csv,
         # there may be more formants in myPars$ann than in the current sel
-        if (input$nFormants < myPars$maxF) {
-            new[, paste0('f', ((input$nFormants + 1):myPars$maxF))] = NA
-        }
+        all_cols = paste0('f', 1:myPars$maxF)
+        missing_cols = all_cols[which(!all_cols %in% colnames(new))]
+        new[, missing_cols] = NA
 
         # append to myPars$ann
         if (is.null(myPars$ann)) {

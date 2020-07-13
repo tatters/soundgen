@@ -262,19 +262,25 @@ ui = fluidPage(
             "showpanel", label = '', icon = icon("bars"),
             type = "toggle", value = FALSE)
         ),
+
         column(
-          width = 3,
+          width = 2,
           fileInput(
             inputId = "loadAudio", label = NULL,
             # accept = c('audio/wav', 'audio/wave', 'audio/x-wave', 'audio/vnd.wave',
             #            'audio/mpeg', 'audio/mpeg4-generic', 'audio/mpeg3', 'audio/x-mpeg-3',
             #            'video/mpeg', 'video/x-mpeg'),
             multiple = TRUE, buttonLabel = 'Load audio',
-            placeholder = '...', width = "175px")
+            placeholder = '...')
         ),
+
         column(
-          width = 3,
-          uiOutput("fileN"),
+          width = 4,
+          selectInput('fileList', label = '', choices = list())
+        ),
+
+        column(
+          width = 2,
           actionButton(
             inputId = "lastFile", label = "Last",
             style="background-color: lightgray;"),
@@ -282,12 +288,10 @@ ui = fluidPage(
             inputId = "nextFile", label = "Next",
             style="background-color: lightgray;")
         ),
+
         column(
           width = 3,
-          uiOutput("htmlAudio")
-        ),
-        column(
-          width = 2,
+          uiOutput("htmlAudio"),
           downloadButton(
             outputId = "saveRes", label = "",
             style="color: blue; background-color: orange;"),
@@ -399,22 +403,31 @@ ui = fluidPage(
         column(
           width = 5,
 
-          plotOutput(
-            'spectrum',
-            height = '500px',
-            click = "spectrum_click",
-            dblclick = dblclickOpts(id = "spectrum_dblclick"),
-            hover = hoverOpts(id = "spectrum_hover")),
+          tags$div(
+            style = 'position: relative',
+            plotOutput(
+              'spectrum',
+              height = '500px',
+              click = "spectrum_click",
+              dblclick = dblclickOpts(id = "spectrum_dblclick"),
+              hover = hoverOpts(id = "spectrum_hover")),
+            tags$div(
+              style = 'position: absolute; left: 40%; top: 15px; right: 10%;',
+              sliderInput(
+                'spectrum_smooth',
+                'Smoothing',
+                value = def_form['spectrum_smooth', 'default'],
+                min = def_form['spectrum_smooth', 'low'],
+                max = def_form['spectrum_smooth', 'high'],
+                step = def_form['spectrum_smooth', 'step'],
+                width = '200px')
+            )
+          ),
 
-          sliderInput(
-            'spectrum_smooth',
-            'Smoothing',
-            value = def_form['spectrum_smooth', 'default'],
-            min = def_form['spectrum_smooth', 'low'],
-            max = def_form['spectrum_smooth', 'high'],
-            step = def_form['spectrum_smooth', 'step']),
-
-          tableOutput('ann_table')
+          tags$div(
+            style = 'height: 160px; resize: vertical; overflow: auto; margin: auto;',
+            tableOutput('ann_table')
+          )
         )
       )
 
