@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
+# To do: spectrum of very short annotations; finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -64,7 +64,6 @@ server = function(input, output, session) {
         myPars$analyzedUpTo = NULL
         myPars$selection = NULL
         myPars$cursor = 0
-        session$resetBrush("spectrogram_brush")
         myPars$spectrogram_brush = NULL
     }
 
@@ -268,7 +267,7 @@ server = function(input, output, session) {
     })
 
     # Updating spec / osc stuff to speed up plotting
-    observeEvent(myPars$myAudio, {
+    observe({
         if (!is.null(myPars$myAudio)) {
             # if (myPars$print) print('Scaling audio...')
             if (input$osc == 'dB') {
@@ -576,6 +575,7 @@ server = function(input, output, session) {
             })
         })
     }
+    observeEvent(myPars$spec_xlim, drawAnn())
 
     output$spectrum = renderPlot({
         if (!is.null(myPars$spectrum)) {
@@ -810,6 +810,7 @@ server = function(input, output, session) {
     ## Clicking events
     observeEvent(input$spectrogram_click, {
         myPars$spectrogram_brush = NULL
+        # shinyjs::js$clearBrush(s = '_brush')
         myPars$cursor = input$spectrogram_click$x
         if (!is.null(myPars$currentAnn)) {
             inside_sel = (myPars$ann$from[myPars$currentAnn] < input$spectrogram_click$x) &
@@ -826,34 +827,6 @@ server = function(input, output, session) {
 
     observeEvent(input$spectrogram_dblclick, {
         if (!is.null(myPars$spectrogram_brush)) {
-            # create a new annotation
-            new = data.frame(
-                # idx = ifelse(is.null(myPars$ann), 1, nrow(myPars$ann) + 1),
-                file = myPars$myAudio_filename,
-                from = round(myPars$spectrogram_brush$xmin),
-                to = round(myPars$spectrogram_brush$xmax),
-                label = '',
-                stringsAsFactors = FALSE)
-            new[, paste0('f', 1:input$nFormants)] = NA
-
-            # depending on the history of changing input$nFormants,
-            # there may be more formants in myPars$ann than in the current sel
-            if (input$nFormants < myPars$maxF) {
-                new[, paste0('f', ((input$nFormants + 1):myPars$maxF))] = NA
-            }
-
-            # append to myPars$ann
-            if (is.null(myPars$ann)) {
-                myPars$ann = new
-            } else {
-                myPars$ann = rbind(myPars$ann, new)
-            }
-
-            # select the newly added annotation
-            myPars$currentAnn = nrow(myPars$ann)
-
-            # clear the selection
-            session$resetBrush("spectrogram_brush")
             showModal(dataModal_new())
         }
     })
@@ -899,11 +872,36 @@ server = function(input, output, session) {
     }
 
     observeEvent(input$ok_new, {
-        myPars$ann$label[myPars$currentAnn] = input$annotation
-        myPars$ann[myPars$currentAnn, myPars$ff] = myPars$formants[myPars$f_col_names]
+        # create a new annotation
+        new = data.frame(
+            # idx = ifelse(is.null(myPars$ann), 1, nrow(myPars$ann) + 1),
+            file = myPars$myAudio_filename,
+            from = round(myPars$spectrogram_brush$xmin),
+            to = round(myPars$spectrogram_brush$xmax),
+            label = input$annotation,
+            stringsAsFactors = FALSE)
+        new[, myPars$ff] = myPars$formants[myPars$f_col_names]
+
+        # depending on the history of changing input$nFormants,
+        # there may be more formants in myPars$ann than in the current sel
+        if (input$nFormants < myPars$maxF) {
+            new[, paste0('f', ((input$nFormants + 1):myPars$maxF))] = NA
+        }
+
+        # append to myPars$ann
+        if (is.null(myPars$ann)) {
+            myPars$ann = new
+        } else {
+            if (ncol(myPars$ann) != ncol(new)) browser()
+            myPars$ann = rbind(myPars$ann, new)
+        }
+
+        # reorder and select the newly added annotation
         ord = order(myPars$ann$from)
         myPars$ann = myPars$ann[ord, ]
         myPars$currentAnn = which(ord == nrow(myPars$ann))
+
+        # clear the selection, close the modal
         removeModal()
         drawAnn()
     })
@@ -958,6 +956,7 @@ server = function(input, output, session) {
     }
     observeEvent(c(input$selection_play), playSel())  # add , myPars$myAudio for autoplay
     observeEvent(input$selection_stop, {
+        # browser()  # for debugging
         myPars$play$on = FALSE
         myPars$cursor = myPars$cursor_temp
         shinyjs::js$stopAudio_js(audio_id = 'myAudio')
@@ -1008,7 +1007,7 @@ server = function(input, output, session) {
         } else if (button_code %in% c(173, 109)) {    # - (vertical zoom-out)
             changeZoom_freq(myPars$zoomFactor_freq)
         } else if (button_code == 13) {               # ENTER (next file)
-            nextFile()
+            # nextFile()   # disable b/c it's natural to press ENTER to close a modal win
         } else if (button_code == 8) {                # BACKSPACE (previous file)
             lastFile()
         }
@@ -1033,6 +1032,7 @@ server = function(input, output, session) {
         # NB: more flexible and less mafan than juggling with the observer of
         # input$spectrogram_hover
         myPars$spectrogram_hover = NULL
+        shinyjs::js$clearBrush(s = '_brush')
     } )
 
     # HOVER: SPECTRUM
@@ -1133,7 +1133,6 @@ server = function(input, output, session) {
     done = function() {
         # meaning we are done with a sound - prepares the output
         if (myPars$print) print('Running done()...')
-        session$resetBrush("spectrogram_brush")  # doesn't reset automatically
         if (!is.null(myPars$myAudio_path)) {
             if (is.null(myPars$out)) {
                 myPars$out = myPars$ann

@@ -62,7 +62,6 @@ server = function(input, output, session) {
         myPars$spec = NULL
         myPars$selection = NULL
         myPars$cursor = 0
-        session$resetBrush("spectrogram_brush")  # doesn't reset automatically for some reason
         myPars$spectrogram_brush = NULL
     }
 
@@ -210,7 +209,7 @@ server = function(input, output, session) {
 
 
     # Updating spec / osc stuff to speed up plotting
-    observeEvent(myPars$myAudio, {
+    observe({
         if (!is.null(myPars$myAudio)) {
             # if (myPars$print) print('Scaling audio...')
             if (input$osc == 'dB') {
@@ -659,7 +658,6 @@ server = function(input, output, session) {
     ## Clicking events
     observeEvent(input$spectrogram_click, {
         myPars$spectrogram_brush = NULL
-        # session$resetBrush("spectrogram_brush")
         if (length(myPars$pitchCands$freq) > 0 & input$spectro_clickAct == 'addCand') {
             closest_frame = which.min(abs(
                 as.numeric(colnames(myPars$pitchCands$freq)) - input$spectrogram_click$x))
@@ -926,6 +924,7 @@ server = function(input, output, session) {
         # NB: more flexible and less mafan than juggling with the observer of
         # input$spectrogram_hover
         myPars$spectrogram_hover = NULL
+        shinyjs::js$clearBrush(s = '_brush')
     } )
 
     # BRUSH

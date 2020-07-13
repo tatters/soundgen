@@ -38,7 +38,10 @@ ui = fluidPage(
 
   # use an external javascript with any function I need to write myself
   # (eg for playing the audio)
-  shinyjs::extendShinyjs(script = 'www/jsFun.js', functions = c('playme_js', 'stopAudio_js')),
+  shinyjs::extendShinyjs(
+    script = 'www/jsFun.js',
+    functions = c('playme_js', 'stopAudio_js', 'clearBrush')
+  ),
 
   fluidRow(
     column(
@@ -375,7 +378,7 @@ ui = fluidPage(
                 click = "spectrogram_click",
                 dblclick = dblclickOpts(id = "spectrogram_dblclick"),
                 hover = hoverOpts(id = "spectrogram_hover"),
-                brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = TRUE))
+                brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
             ),
 
             plotOutput(
@@ -398,8 +401,7 @@ ui = fluidPage(
             height = '500px',
             click = "spectrum_click",
             dblclick = dblclickOpts(id = "spectrum_dblclick"),
-            hover = hoverOpts(id = "spectrum_hover"),
-            brush = brushOpts(id = 'spectrum_brush', resetOnNew = TRUE)),
+            hover = hoverOpts(id = "spectrum_hover")),
 
           sliderInput(
             'spectrum_smooth',

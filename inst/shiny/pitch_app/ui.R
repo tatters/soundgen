@@ -31,7 +31,10 @@ ui = fluidPage(
 
   # use an external javascript with any function I need to write myself
   # (eg for playing the audio)
-  shinyjs::extendShinyjs(script = 'www/jsFun.js', functions = c('playme_js', 'stopAudio_js')),
+  shinyjs::extendShinyjs(
+    script = 'www/jsFun.js',
+    functions = c('playme_js', 'stopAudio_js', 'clearBrush')
+  ),
 
   fluidRow(
     column(
@@ -626,7 +629,7 @@ ui = fluidPage(
               brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
           ),
 
-          plotOutput('oscillogram')
+          plotOutput('oscillogram', height = 'auto')
         )
       )
 
