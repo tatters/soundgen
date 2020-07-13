@@ -21,7 +21,7 @@ server = function(input, output, session) {
     myPars$myAudio = NULL
     myPars$slider_ms = 50            # how often to update play slider
     myPars$cursor = 0
-    myPars$initDur = 1000         # initial duration to plot (ms)
+    myPars$initDur = 2000            # initial duration to plot (ms)
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -87,17 +87,22 @@ server = function(input, output, session) {
     observeEvent(input$loadAudio, {
         if (myPars$print) print('Loading audio...')
         done()  # save previous work, if any
+        reset()
+
+        # work only with audio files
+        idx_audio = apply(matrix(input$loadAudio$type), 1, function(x) {
+            grepl('audio', x, fixed = TRUE)
+        })
+        myPars$fileList = input$loadAudio[idx_audio, ]
         myPars$n = 1   # file number in queue
-        myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
-        myPars$fileList = paste(input$loadAudio$name, collapse = ', ')
+        myPars$nFiles = nrow(myPars$fileList)  # number of uploaded files in queue
         # set up a list for storing manual anchors for each of uploaded files
         myPars$history = vector('list', length = myPars$nFiles)
-        names(myPars$history) = input$loadAudio$name
+        names(myPars$history) = myPars$fileList$name
         for (i in 1:length(myPars$history)) {
             myPars$history[[i]] = list(manual = NULL, manualUnv = NULL)
         }
 
-        reset()
         readAudio(1)  # read the first sound in queue
     })
 
@@ -118,7 +123,7 @@ server = function(input, output, session) {
     readAudio = function(i) {
         # reads an audio file with tuneR::readWave
         if (myPars$print) print('Reading audio...')
-        temp = input$loadAudio[i, ]
+        temp = myPars$fileList[i, ]
         myPars$myAudio_filename = temp$name
         myPars$myAudio_path = temp$datapath
         myPars$myAudio_type = temp$type

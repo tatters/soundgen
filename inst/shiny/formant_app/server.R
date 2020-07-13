@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
+# To do: two tabs - view annotations in current file or view a list of files (and switch b/w them); finalize layout; load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum; load annotations from output.csv in the same folder;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -17,7 +17,7 @@ server = function(input, output, session) {
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
-    myPars$initDur = 1000         # initial duration to analyze (ms)
+    myPars$initDur = 2000            # initial duration to analyze (ms)
     myPars$out_fTracks = list()      # a list for storing formant tracks per file
     myPars$out_spects = list()       # a list for storing spectrograms
     myPars$selectedF = 'f1'          # preselect F1 for correction
@@ -85,11 +85,22 @@ server = function(input, output, session) {
     loadAudio = function() {
         if (myPars$print) print('Loading audio...')
         done()  # save previous work, if any
-        myPars$n = 1   # file number in queue
-        myPars$nFiles = nrow(input$loadAudio)  # number of uploaded files in queue
-        myPars$fileList = paste(input$loadAudio$name, collapse = ', ')
-        myPars$drawSpec = FALSE  # hold on plotting the spectrogram until after running analyze()
         reset()
+
+        # if output.csv is among the uploaded files, use the annotations in it
+        old_out_idx = which(input$loadAudio$name == 'output.csv')
+        if (length(old_out_idx) == 1) {
+            myPars$out = read.csv(input$loadAudio$datapath[old_out_idx])
+        }
+
+        # work only with audio files
+        idx_audio = apply(matrix(input$loadAudio$type), 1, function(x) {
+            grepl('audio', x, fixed = TRUE)
+        })
+        myPars$fileList = input$loadAudio[idx_audio, ]
+        myPars$n = 1   # file number in queue
+        myPars$nFiles = nrow(myPars$fileList)  # number of uploaded files in queue
+        myPars$drawSpec = FALSE  # hold on plotting the spectrogram until after running analyze()
         readAudio(1)  # read the first sound in queue
     }
     observeEvent(input$loadAudio, loadAudio())
@@ -111,7 +122,7 @@ server = function(input, output, session) {
     readAudio = function(i) {
         # reads an audio file with tuneR::readWave
         if (myPars$print) print('Reading audio...')
-        temp = input$loadAudio[i, ]
+        temp = myPars$fileList[i, ]
         myPars$myAudio_filename = temp$name
         myPars$myAudio_path = temp$datapath
         myPars$myAudio_type = temp$type
@@ -846,9 +857,9 @@ server = function(input, output, session) {
         if (!is.null(myPars$ann)) {
             ds = abs(input$ann_click$x - (myPars$ann$from + myPars$ann$to) / 2)
             myPars$currentAnn = which.min(ds)
-            myPars$spectrogram_brush = list(xmin = myPars$ann$from[currentAnn],
-                                            xmax = myPars$ann$to[currentAnn])
-            myPars$cursor = myPars$ann$from[currentAnn]
+            myPars$spectrogram_brush = list(xmin = myPars$ann$from[myPars$currentAnn],
+                                            xmax = myPars$ann$to[myPars$currentAnn])
+            myPars$cursor = myPars$ann$from[myPars$currentAnn]
         }
     })
 
@@ -934,9 +945,6 @@ server = function(input, output, session) {
             if (!is.null(myPars$spectrogram_brush)) {
                 myPars$play$from = myPars$spectrogram_brush$xmin / 1000
                 myPars$play$to = myPars$spectrogram_brush$xmax / 1000
-            } else if (!is.null(myPars$currentAnn)) {
-                myPars$play$from = myPars$ann$from[myPars$currentAnn] / 1000
-                myPars$play$to = myPars$ann$to[myPars$currentAnn] / 1000
             } else {
                 myPars$play$from = myPars$cursor / 1000 # myPars$spec_xlim[1] / 1000
                 myPars$play$to = myPars$spec_xlim[2] / 1000
@@ -985,6 +993,7 @@ server = function(input, output, session) {
             myPars$ann = myPars$ann[-myPars$currentAnn, ]
             myPars$selection = NULL
             myPars$currentAnn = NULL
+            drawAnn()
         }
     }
     observeEvent(input$selection_delete, deleteSel())
@@ -1002,7 +1011,7 @@ server = function(input, output, session) {
         } else if (button_code == 38) {               # ARROW UP (horizontal zoom-in)
             changeZoom(myPars$zoomFactor)
         } else if (button_code == 83) {               # S (horizontal zoom to selection)
-            zoomToSel()
+            #  zoomToSel()  # reserve alphanumeric for annotations
         } else if (button_code == 40) {               # ARROW DOWN (horizontal zoom-out)
             changeZoom(1 / myPars$zoomFactor)
         } else if (button_code %in% c(61, 107)) {     # + (vertical zoom-in)
@@ -1012,7 +1021,7 @@ server = function(input, output, session) {
         } else if (button_code == 13) {               # ENTER (next file)
             # nextFile()   # disable b/c it's natural to press ENTER to close a modal win
         } else if (button_code == 8) {                # BACKSPACE (previous file)
-            lastFile()
+            # lastFile()
         }
     })
 
@@ -1148,13 +1157,13 @@ server = function(input, output, session) {
     done = function() {
         # meaning we are done with a sound - prepares the output
         if (myPars$print) print('Running done()...')
-        if (!is.null(myPars$myAudio_path)) {
+        if (!is.null(myPars$ann)) {
             if (is.null(myPars$out)) {
                 myPars$out = myPars$ann
             } else {
                 # remove previous records for this file, if any
                 idx = which(myPars$out$file == myPars$ann$file[1])
-                if (length(idx) > 1)
+                if (length(idx) > 0)
                     myPars$out = myPars$out[-idx, ]
 
                 # make sure out and ann have the same formant columns

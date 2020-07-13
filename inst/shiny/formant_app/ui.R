@@ -266,6 +266,9 @@ ui = fluidPage(
           width = 3,
           fileInput(
             inputId = "loadAudio", label = NULL,
+            # accept = c('audio/wav', 'audio/wave', 'audio/x-wave', 'audio/vnd.wave',
+            #            'audio/mpeg', 'audio/mpeg4-generic', 'audio/mpeg3', 'audio/x-mpeg-3',
+            #            'video/mpeg', 'video/x-mpeg'),
             multiple = TRUE, buttonLabel = 'Load audio',
             placeholder = '...', width = "175px")
         ),
