@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: streamline the order of execution cutting the crap (trimming seems to be called twice); maybe analyze one bit at a time like in formant_app
+# To do: maybe analyze one bit at a time like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -18,7 +18,6 @@ server = function(input, output, session) {
     myPars$drawSpec = TRUE
     myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
     myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
-    myPars$myAudio = NULL
     myPars$slider_ms = 50            # how often to update play slider
     myPars$cursor = 0
     myPars$initDur = 2000            # initial duration to plot (ms)
@@ -52,6 +51,7 @@ server = function(input, output, session) {
     }
 
     reset = function() {
+        if (myPars$print) print('Resetting...')
         myPars$pitch = NULL       # pitch contour
         myPars$pitchCands = NULL  # matrix of pitch candidates
         myPars$bp = NULL          # selected points (under brush)
@@ -66,6 +66,7 @@ server = function(input, output, session) {
     }
 
     resetSliders = function() {
+        if (myPars$print) print('Resetting sliders...')
         sliders_to_reset = names(input)[which(names(input) %in% rownames(defaults_analyze))]
         for (v in sliders_to_reset) {
             new_value = defaults_analyze[v, 'default']
@@ -86,8 +87,7 @@ server = function(input, output, session) {
 
     observeEvent(input$loadAudio, {
         if (myPars$print) print('Loading audio...')
-        done()  # save previous work, if any
-        reset()
+        reset()  # also triggers done()
 
         # work only with audio files
         idx_audio = apply(matrix(input$loadAudio$type), 1, function(x) {
@@ -153,12 +153,6 @@ server = function(input, output, session) {
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
         myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
-        # for the first audio only, update autocorSmooth
-        # to a default that depends on samplingRate
-        if (i == 1) {
-            updateSliderInput(session, inputId = 'autocorSmooth',
-                              value = 2 * ceiling(7 * myPars$samplingRate / 44100 / 2) - 1)
-        }
 
         # update info - file number ... out of ...
         updateSelectInput(session, 'fileList',
@@ -175,10 +169,10 @@ server = function(input, output, session) {
     }
 
     extractSpectrogram = observe({
-        if (myPars$print) print('Extracting spectrogram...')
         # Instead of re-loading the file every time, save the spectrogram matrix
         # and re-draw manually with soundgen:::filled.contour.mod
         if (!is.null(myPars$myAudio) & is.null(myPars$spec)) {
+            if (myPars$print) print('Extracting spectrogram...')
             myPars$spec = spectrogram(
                 myPars$myAudio,
                 samplingRate = myPars$samplingRate,
@@ -214,8 +208,8 @@ server = function(input, output, session) {
                          filename = paste0('www/', myPars$myfile))
         output$htmlAudio = renderUI(
             tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
-                       autoplay = NA, controls = NA, id = 'myAudio',
-                       style="transform: scale(0.75); transform-origin: 0 0;")
+                       id = 'myAudio',
+                       style="display: none; transform: scale(0.75); transform-origin: 0 0;")
         )
     })
 
@@ -223,7 +217,7 @@ server = function(input, output, session) {
     # Updating spec / osc stuff to speed up plotting
     observe({
         if (!is.null(myPars$myAudio)) {
-            # if (myPars$print) print('Scaling audio...')
+            if (myPars$print) print('Scaling audio...')
             if (input$osc == 'dB') {
                 myPars$myAudio_scaled = osc(
                     myPars$myAudio,
@@ -311,10 +305,13 @@ server = function(input, output, session) {
     output$spectrogram = renderPlot({
         if (!is.null(myPars$spec) && myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
-            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
+            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
+            # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$myAudio_trimmed) | is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
-                text(x = 5, y = 5, labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~30 s')
+                text(
+                    x = 5, y = 5,
+                    labels = 'Upload wav/mp3 file(s) to begin...\nSuggested max duration ~30 s')
             } else {
                 if (input$spec_colorTheme == 'bw') {
                     color.palette = function(x) gray(seq(from = 1, to = 0, length = x))
@@ -509,8 +506,9 @@ server = function(input, output, session) {
 
     observe({
         # analyze the file (executes every time a slider with arg value is changed)
-        if (!is.null(myPars$myAudio_path)) {
+        if (!is.null(myPars$myAudio)) {
             if (myPars$print) print('Calling analyze()...')
+
             withProgress(message = 'Analyzing the sound...', value = 0.5, {
                 myPars$step = input$windowLength * (1 - input$overlap / 100)
                 temp_anal = analyze(
@@ -539,7 +537,7 @@ server = function(input, output, session) {
                     ),
                     pitchAutocor = list(
                         autocorThres = input$autocorThres,
-                        autocorSmooth = input$autocorSmooth,
+                        # autocorSmooth = input$autocorSmooth,
                         autocorUpsample = input$autocorUpsample,
                         autocorBestPeak = input$autocorBestPeak
                     ),
@@ -576,7 +574,6 @@ server = function(input, output, session) {
                 myPars$result = temp_anal$result
                 myPars$pitchCands = temp_anal$pitchCands
                 myPars$spec_from_anal = temp_anal$spectrogram
-                windowLength_points = floor(input$windowLength / 1000 * myPars$samplingRate / 2) * 2
                 myPars$X = as.numeric(colnames(myPars$spec_from_anal))
                 # add: update defaults that depend on samplingRate, eg cepSmooth
 
@@ -609,7 +606,7 @@ server = function(input, output, session) {
                 minVoicedCands = input$minVoicedCands,
                 pitchMethods = input$pitchMethods,
                 step = myPars$step,
-                samplingRate = input$samplingRate
+                samplingRate = myPars$samplingRate
             )
 
             # for each syllable, impute NA's and find a nice path through pitch candidates
@@ -1117,7 +1114,7 @@ server = function(input, output, session) {
     )
 
     observeEvent(input$about, {
-        id <<- showNotification(
+        showNotification(
             ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Left-click to add/correct a pitch anchor, double-click to remove/unvoice the frame. More info: ?pitch_app and http://cogsci.se/soundgen.html"),
             duration = 10,
             closeButton = TRUE,

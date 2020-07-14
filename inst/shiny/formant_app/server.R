@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: load audio upon session start; maybe arbitrary number of annotation tiers; feed selected part of spectrogram instead of raw audio from myPars$selection to get smooth spectrum;
+# To do: check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -55,6 +55,7 @@ server = function(input, output, session) {
     }
 
     reset = function() {
+        if (myPars$print) print('Resetting...')
         myPars$ann = NULL         # a dataframe of annotations for the current file
         myPars$currentAnn = NULL  # the idx of currently selected annotation
         myPars$bp = NULL          # selected points (under brush)
@@ -68,6 +69,7 @@ server = function(input, output, session) {
     }
 
     resetSliders = function() {
+        if (myPars$print) print('Resetting sliders...')
         sliders_to_reset = names(input)[which(names(input) %in% rownames(def_form))]
         for (v in sliders_to_reset) {
             new_value = def_form[v, 'default']
@@ -84,8 +86,7 @@ server = function(input, output, session) {
 
     loadAudio = function() {
         if (myPars$print) print('Loading audio...')
-        done()  # save previous work, if any
-        reset()
+        reset()  # also triggers done()
 
         # if output.csv is among the uploaded files, use the annotations in it
         old_out_idx = which(input$loadAudio$name == 'output.csv')
