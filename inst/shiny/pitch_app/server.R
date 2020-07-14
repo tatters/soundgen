@@ -103,7 +103,11 @@ server = function(input, output, session) {
             myPars$history[[i]] = list(manual = NULL, manualUnv = NULL)
         }
 
-        readAudio(1)  # read the first sound in queue
+        choices = as.list(myPars$fileList$name)
+        names(choices) = myPars$fileList$name
+        updateSelectInput(session, 'fileList',
+                          choices = as.list(myPars$fileList$name))
+        # readAudio(1)  # read the first sound in queue
     })
 
     observeEvent(input$showpanel, {
@@ -157,7 +161,10 @@ server = function(input, output, session) {
         }
 
         # update info - file number ... out of ...
-        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles) # , ': ', myPars$myAudio_filename)
+        updateSelectInput(session, 'fileList',
+                          label = NULL,
+                          selected = myPars$fileList$name[myPars$n])
+        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles)
         output$fileN = renderUI(HTML(file_lab))
 
         # if we've already worked with this file in current session,
@@ -1067,13 +1074,21 @@ server = function(input, output, session) {
         }
     }
 
+    observeEvent(input$fileList, {
+        done()
+        myPars$n = which(myPars$fileList$name == input$fileList)
+        reset()
+        readAudio(myPars$n)
+    }, ignoreInit = TRUE)
+
     nextFile = function() {
         if (!is.null(myPars$myAudio_path)) {
             done()
             if (myPars$n < myPars$nFiles) {
                 myPars$n = myPars$n + 1
-                reset()
-                readAudio(myPars$n)
+                updateSelectInput(session, 'fileList',
+                                  selected = myPars$fileList$name[myPars$n])
+                # ...which triggers observeEvent(input$fileList)
             }
         }
 
@@ -1085,10 +1100,8 @@ server = function(input, output, session) {
             done()
             if (myPars$n > 1) {
                 myPars$n = myPars$n - 1
-                reset()
-                readAudio(myPars$n)
-                # todo: re-load the manual pitch contour for the previous file -
-                # remember myPars$manual and myPars$manualUnv
+                updateSelectInput(session, 'fileList',
+                                  selected = myPars$fileList$name[myPars$n])
             }
         }
     }

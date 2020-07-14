@@ -28,6 +28,7 @@ ui = fluidPage(
     tags$style("label {font-size: 1em;}"),
     tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
     tags$style(".buttonInline {padding: 2px 2px;}"),
+    tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
     tags$style("#plotDiv {position: relative}"),  # wrapper for plots has to have position relative
     tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0; height: 500px;}")
   ),
@@ -275,18 +276,17 @@ ui = fluidPage(
         ),
 
         column(
-          width = 4,
-          selectInput('fileList', label = '', choices = list())
-        ),
-
-        column(
-          width = 2,
-          actionButton(
-            inputId = "lastFile", label = "Last",
-            style="background-color: lightgray;"),
-          actionButton(
-            inputId = "nextFile", label = "Next",
-            style="background-color: lightgray;")
+          width = 6,
+          tags$div(
+            tags$strong(uiOutput("fileN", inline = TRUE)),
+            actionButton(
+              inputId = "lastFile", label = "<<",
+              class = "buttonFile"),
+            actionButton(
+              inputId = "nextFile", label = ">>",
+              class = "buttonFile")
+          ),
+          selectInput('fileList', label = NULL, choices = list())
         ),
 
         column(

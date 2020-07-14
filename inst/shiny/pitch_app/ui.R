@@ -21,6 +21,7 @@ ui = fluidPage(
   tags$head(
     tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
     tags$style(".buttonInline {padding: 2px 2px;}"),
+    tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
     tags$style("#plotDiv {position: relative}"),  # wrapper for plots has to have position relative
     tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0; height: 500px;}")
   ),
@@ -484,30 +485,34 @@ ui = fluidPage(
       id = "Main",
       fluidRow(
         column(
-          1,
+          width = 1,
           bsButton("showpanel", label = '', icon = icon("bars"),
                    type = "toggle", value = TRUE)
         ),
+
         column(
-          3,
+          width = 3,
           fileInput(
             inputId = "loadAudio",
             label = NULL, multiple = TRUE,
             buttonLabel = 'Load audio',
             placeholder = '...', width = "175px")
         ),
+
         column(
-          3,
-          uiOutput("fileN"),
-          actionButton(inputId = "lastFile", label = "Last",
-                       style="background-color: lightgray;"),
-          actionButton(inputId = "nextFile", label = "Next",
-                       style="background-color: lightgray;")
+          width = 6,
+          tags$div(
+            tags$strong(uiOutput("fileN", inline = TRUE)),
+            actionButton(
+              inputId = "lastFile", label = "<<",
+              class = "buttonFile"),
+            actionButton(
+              inputId = "nextFile", label = ">>",
+              class = "buttonFile")
+          ),
+          selectInput('fileList', label = NULL, choices = list())
         ),
-        column(
-          3,
-          uiOutput("htmlAudio")
-        ),
+
         column(
           2,
           downloadButton(
@@ -535,6 +540,7 @@ ui = fluidPage(
             label = HTML("<img src='icons/zoomOut.png' width = '25px'>"),
             style = "padding: 2px 2px; display: block")
         ),
+
         column(
           width = 3,
           radioButtons(
@@ -544,6 +550,7 @@ ui = fluidPage(
             choiceValues = c('addCand', 'select'),
             selected = 'addCand', inline = TRUE)
         ),
+
         column(
           width = 5,
           actionButton(
@@ -579,6 +586,7 @@ ui = fluidPage(
             label = HTML("<img src='icons/update.png' width = '25px'>"),
             class = "buttonInline")
         ),
+
         column(
           width = 3,
           actionButton(

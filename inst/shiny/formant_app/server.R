@@ -155,10 +155,11 @@ server = function(input, output, session) {
         myPars$regionToAnalyze = myPars$spec_xlim
 
         # update info - file number ... out of ...
-        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles)
         updateSelectInput(session, 'fileList',
-                          label = file_lab,
+                          label = NULL,
                           selected = myPars$fileList$name[myPars$n])
+        file_lab = paste0('File ', myPars$n, ' of ', myPars$nFiles)
+        output$fileN = renderUI(HTML(file_lab))
 
         # if we've already worked with this file,
         # re-load the annotations and (if in current session) formant tracks + spec
@@ -175,12 +176,6 @@ server = function(input, output, session) {
         }
         drawAnn()
     }
-    observeEvent(input$fileList, {
-        done()
-        myPars$n = which(myPars$fileList$name == input$fileList)
-        reset()
-        readAudio(myPars$n)
-    }, ignoreInit = TRUE)
 
     extractSpectrogram = observe({
         # Instead of re-loading the file every time, save the spectrogram matrix
@@ -609,8 +604,11 @@ server = function(input, output, session) {
             if (myPars$print) print('Drawing spectrum...')
             par(mar = c(2, 2, 0.5, 0))
             xlim = c(0, myPars$spectrum$freq_range[2])
-            ylim = c(myPars$spectrum$ampl_range[1],
-                          max(0, myPars$spectrum$ampl_range[2] + 20))
+            ylim = c(
+                myPars$spectrum$ampl_range[1],
+                # leave extra room for "smoothing" slider
+                myPars$spectrum$ampl_range[2] + 1/4 * diff(myPars$spectrum$ampl_range)
+            )
             plot(myPars$spectrum$freq,
                  myPars$spectrum$ampl,
                  xlab = '', ylab = '',
@@ -654,7 +652,7 @@ server = function(input, output, session) {
             if (!is.null(myPars$selection)) {
                 # take the spectrum of selection (annotated region) from raw audio
                 myPars$spectrum = as.list(getSmoothSpectrum(
-                    myPars$selection,
+                    sound = myPars$selection,
                     samplingRate = myPars$samplingRate,
                     len = input$spectrum_len,
                     loessSpan = 10 ^ input$spectrum_smooth
@@ -665,10 +663,15 @@ server = function(input, output, session) {
                 # )
             } else {
                 # just use the visible part of the spectrogram
-                myPars$spectrum = list(
+                spec_temp = list(
                     freq = as.numeric(rownames(myPars$spec_trimmed)),
                     ampl = 20 * log10(as.numeric(rowMeans(myPars$spec_trimmed)))
                 )
+                myPars$spectrum = as.list(getSmoothSpectrum(
+                    spectrum = spec_temp,
+                    len = input$spectrum_len,
+                    loessSpan = 10 ^ input$spectrum_smooth
+                ))
             }
 
             isolate({
@@ -1212,13 +1215,21 @@ server = function(input, output, session) {
         }
     }
 
+    observeEvent(input$fileList, {
+        done()
+        myPars$n = which(myPars$fileList$name == input$fileList)
+        reset()
+        readAudio(myPars$n)
+    }, ignoreInit = TRUE)
+
     nextFile = function() {
         if (!is.null(myPars$myAudio_path)) {
             done()
             if (myPars$n < myPars$nFiles) {
                 myPars$n = myPars$n + 1
-                reset()
-                readAudio(myPars$n)
+                updateSelectInput(session, 'fileList',
+                                  selected = myPars$fileList$name[myPars$n])
+                # ...which triggers observeEvent(input$fileList)
             }
         }
 
@@ -1230,8 +1241,8 @@ server = function(input, output, session) {
             done()
             if (myPars$n > 1) {
                 myPars$n = myPars$n - 1
-                reset()
-                readAudio(myPars$n)
+                updateSelectInput(session, 'fileList',
+                                  selected = myPars$fileList$name[myPars$n])
             }
         }
     }

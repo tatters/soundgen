@@ -984,7 +984,8 @@ osc_dB = function(
 #'
 #' Internal soundgen function.
 #' @param sound the audio (numeric, any scale)
-#' @param samplingRate the sampling rate, Hz
+#' @inheritParams spectrogram
+#' @param a pre-extracted spectrum in dB with columns "freq" and "ampl"
 #' @param len the desired resolution of the output
 #' @param loessSpan passed to loess to control the amount of smoothing (.01 =
 #'   minimal smoothing, 1 = strong smoothing)
@@ -995,27 +996,42 @@ osc_dB = function(
 #' soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .1, plot = TRUE)
 #' soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .5, plot = TRUE)
 #' soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = 1, plot = TRUE)
+#'
+#' sp = seewave::meanspec(s, f = 16000, dB = 'max0')
+#' colnames(sp) = c('freq', 'ampl')
+#' soundgen:::getSmoothSpectrum(spectrum = sp, len = 500, loessSpan = .1, plot = TRUE)
 getSmoothSpectrum = function(sound,
-                             samplingRate,
+                             samplingRate = NULL,
+                             spectrum = NULL,
                              len,
                              loessSpan,
+                             windowLength = 100,
+                             overlap = 0,
                              plot = FALSE,
                              xlab = 'Frequency, kHz',
                              ylab = 'dB',
                              type = 'l',
                              ...) {
-  # Get high-res mean spectrum with seewave
-  # (faster than smoothing the raw, super-long spectrum)
-  wl = round(min(2048, length(sound) - 1) / 2) * 2  # must be even, otherwise seewave complains
-  spec = as.data.frame(seewave::meanspec(
-    sound, f = 16000, wl = wl, ovlp = 0,
-    dB = 'max0', plot = FALSE))
-  # plot(spec, type = 'l')
+  if (is.null(spectrum)) {
+    # assume that input is a sound
+    # Get high-res mean spectrum with seewave
+    # (faster than smoothing the raw, super-long spectrum)
+    if (is.null(samplingRate)) stop('Please provide samplingRate')
+    wl = round(min(windowLength / 1000 * samplingRate, length(sound) - 1) / 2) * 2
+    # must be even, otherwise seewave complains
+    spectrum = as.data.frame(seewave::meanspec(
+      sound, f = samplingRate, wl = wl, ovlp = overlap,
+      dB = 'max0', plot = FALSE))
+    colnames(spectrum) = c('freq', 'ampl')
+    # plot(spectrum, type = 'l')
+  } else {
+    spectrum = as.data.frame(spectrum)
+  }
 
   # Smooth this mean spectrum with loess and upsample to /len/
-  l = suppressWarnings(loess(spec$y ~ spec$x, span = loessSpan))
-  # plot(spec$x, predict(l), type = 'l')
-  freq_loess = seq(spec$x[1], spec$x[nrow(spec)], length.out = len)
+  l = suppressWarnings(loess(spectrum$ampl ~ spectrum$freq, span = loessSpan))
+  # plot(spectrum$freq, predict(l), type = 'l')
+  freq_loess = seq(spectrum$freq[1], spectrum$freq[nrow(spectrum)], length.out = len)
   ampl_loess = try(predict(l, freq_loess, silent = TRUE))
   out = data.frame(freq = freq_loess, ampl = ampl_loess)
 

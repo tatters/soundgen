@@ -6,9 +6,12 @@
 \usage{
 getSmoothSpectrum(
   sound,
-  samplingRate,
+  samplingRate = NULL,
+  spectrum = NULL,
   len,
   loessSpan,
+  windowLength = 100,
+  overlap = 0,
   plot = FALSE,
   xlab = "Frequency, kHz",
   ylab = "dB",
@@ -19,12 +22,27 @@ getSmoothSpectrum(
 \arguments{
 \item{sound}{the audio (numeric, any scale)}
 
-\item{samplingRate}{the sampling rate, Hz}
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector, rather than an audio file)}
 
 \item{len}{the desired resolution of the output}
 
 \item{loessSpan}{passed to loess to control the amount of smoothing (.01 =
 minimal smoothing, 1 = strong smoothing)}
+
+\item{windowLength}{length of FFT window, ms}
+
+\item{overlap}{overlap between successive FFT frames, \%}
+
+\item{plot}{should a spectrogram be plotted? TRUE / FALSE}
+
+\item{xlab}{graphical parameters}
+
+\item{ylab}{graphical parameters}
+
+\item{...}{other graphical parameters}
+
+\item{a}{pre-extracted spectrum in dB with columns "freq" and "ampl"}
 }
 \description{
 Internal soundgen function.
@@ -35,5 +53,9 @@ soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .01, plot = TRUE)
 soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .1, plot = TRUE)
 soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = .5, plot = TRUE)
 soundgen:::getSmoothSpectrum(s, 16000, len = 500, loessSpan = 1, plot = TRUE)
+
+sp = seewave::meanspec(s, f = 16000, dB = 'max0')
+colnames(sp) = c('freq', 'ampl')
+soundgen:::getSmoothSpectrum(spectrum = sp, len = 500, loessSpan = .1, plot = TRUE)
 }
 \keyword{internal}
