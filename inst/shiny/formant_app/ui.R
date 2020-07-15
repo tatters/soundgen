@@ -278,10 +278,10 @@ ui = fluidPage(
         column(
           width = 6,
           tags$div(
-            tags$strong(uiOutput("fileN", inline = TRUE)),
             actionButton(
               inputId = "lastFile", label = "<<",
               class = "buttonFile"),
+            tags$strong(uiOutput("fileN", inline = TRUE)),
             actionButton(
               inputId = "nextFile", label = ">>",
               class = "buttonFile")
