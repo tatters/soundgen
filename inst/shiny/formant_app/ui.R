@@ -30,7 +30,8 @@ ui = fluidPage(
     tags$style(".buttonInline {padding: 2px 2px;}"),
     tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
     tags$style("#plotDiv {position: relative}"),  # wrapper for plots has to have position relative
-    tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0; height: 500px;}")
+    tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0; height: 500px;}"),
+    tags$style(".resizeVert {resize: vertical; overflow: hidden;}")
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
@@ -130,7 +131,7 @@ ui = fluidPage(
               'Window type',
               choices = c('bartlett', 'blackman', 'flattop', 'gaussian',
                           'hamming', 'hanning', 'rectangle'),
-              selected = 'gaussian', multiple = FALSE),
+              selected = 'gaussian', multiple = FALSE)
           )
         ),
 
@@ -220,13 +221,6 @@ ui = fluidPage(
               choices = c('none', 'linear', 'dB'),
               selected = 'linear', multiple = FALSE),
             sliderInput(
-              'osc_height',
-              'Oscillogram height, px',
-              value = def_form['osc_height', 'default'],
-              min = def_form['osc_height', 'low'],
-              max = def_form['osc_height', 'high'],
-              step = def_form['osc_height', 'step']),
-            sliderInput(
               'osc_maxPoints',
               'Max number of pixels, 10^',
               value = def_form['osc_maxPoints', 'default'],
@@ -237,6 +231,13 @@ ui = fluidPage(
 
           tabPanel(
             "Spectrum",
+            sliderInput(
+              'spectrum_xlim',
+              'Frequency range, kHz',
+              value = c(0, def_form['spectrum_xlim', 'default']),
+              min = def_form['spectrum_xlim', 'low'],
+              max = def_form['spectrum_xlim', 'high'],
+              step = def_form['spectrum_xlim', 'step']),
             sliderInput(
               'spectrum_len',
               'Resolution, points',
@@ -398,7 +399,6 @@ ui = fluidPage(
               dblclick = dblclickOpts(id = "ann_dblclick")
             )
           )
-
         ),
         column(
           width = 5,
@@ -425,7 +425,8 @@ ui = fluidPage(
           ),
 
           tags$div(
-            style = 'height: 160px; resize: vertical; overflow: auto; margin: auto;',
+            class = 'resizeVert',
+            style = 'height: 160px; overflow: auto; margin: auto;',
             tableOutput('ann_table')
           )
         )

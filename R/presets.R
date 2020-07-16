@@ -317,7 +317,7 @@ def_form = matrix(c(
   'dynamicRange_lpc', 80, 10, 200, 10,
   'zp_lpc', 0, 0, 13, 1,
 
-  'spec_ylim', 5, 0, 22, 0.1,
+  'spec_ylim', 5, 0, 96, 0.1,
   'specContrast', .2, -1, 1, .05,
   'specBrightness', 0, -1, 1, .05,
   'windowLength', 50, 1, 500, 1,
@@ -325,10 +325,13 @@ def_form = matrix(c(
   'dynamicRange', 80, 10, 200, 10,
   'zp', 0, 0, 13, 1,
   'spec_maxPoints', 5.5, 3, 7, .25,
+
   'osc_height', 100, 25, 5000, 25,
   'osc_maxPoints', 5, 3, 7, .5,
+
   'spectrum_len', 500, 100, 5000, 25,
-  'spectrum_smooth', -1, -2, 0, .05
+  'spectrum_smooth', -1, -2, 0, .05,
+  'spectrum_xlim', 5, 0, 96, .1
 ), ncol=5, byrow=TRUE)
 temp = def_form[,1]
 def_form = apply(def_form[,2:5], 2, as.numeric)

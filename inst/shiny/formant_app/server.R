@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: add spec zoom; resizable plot areas; check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: resizable plot areas (tricky - just wrapping in a resizable div doesn't work); check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -77,6 +77,7 @@ server = function(input, output, session) {
             try(updateNumericInput(session, v, value = new_value))
             updateSelectInput(session, 'wn', selected = 'gaussian')
             updateSliderInput(session, 'spec_ylim', value=c(0, def_form['spec_ylim','default']))
+            updateSliderInput(session, 'spectrum_xlim', value=c(0, def_form['spectrum_xlim','default']))
             updateRadioButtons(session, 'spec_colorTheme', selected='bw')
             updateSelectInput(session, 'osc', selected = 'linear')
             updateTextInput(session, 'coeffs', value = '')
@@ -149,7 +150,13 @@ server = function(input, output, session) {
         if (input$normalizeInput) {
             myPars$myAudio = myPars$myAudio / max(abs(myPars$myAudio)) * myPars$maxAmpl
         }
-        updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
+        myPars$nyquist = myPars$samplingRate / 2 / 1000
+        updateSliderInput(session, 'spec_ylim',
+                          value = c(0, min(def_form['spec_ylim', 'default'], myPars$nyquist)),
+                          max = myPars$nyquist)
+        updateSliderInput(session, 'spectrum_xlim',
+                          value = c(0, min(def_form['spectrum_xlim', 'default'], myPars$nyquist)),
+                          max = myPars$nyquist)
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
         myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
@@ -636,7 +643,7 @@ server = function(input, output, session) {
                 }
                 abline(h = 0, lty = 2)
             }
-        }, height = input$osc_height)
+        }, execOnResize = TRUE)
     })
 
 
@@ -645,7 +652,7 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrum)) {
             if (myPars$print) print('Drawing spectrum...')
             par(mar = c(2, 2, 0.5, 0))
-            xlim = c(0, myPars$spectrum$freq_range[2])
+            xlim = input$spectrum_xlim # xlim = c(0, myPars$spectrum$freq_range[2])
             ylim = c(
                 myPars$spectrum$ampl_range[1],
                 # leave extra room for "smoothing" slider
@@ -704,10 +711,14 @@ server = function(input, output, session) {
                 #     ampl = rowMeans(myPars$spec_trimmed)
                 # )
             } else {
-                # just use the visible part of the spectrogram
+                # just use the visible part of the spectrogram, but all freq bins
+                # (so not the same as myPars$spec_trimmed)
+                time_stamps = as.numeric(colnames(myPars$spec))
+                idx = which(time_stamps >= myPars$spec_xlim[1] &
+                                time_stamps <= myPars$spec_xlim[2])
                 spec_temp = list(
-                    freq = as.numeric(rownames(myPars$spec_trimmed)),
-                    ampl = 20 * log10(as.numeric(rowMeans(myPars$spec_trimmed)))
+                    freq = as.numeric(rownames(myPars$spec[, idx])),
+                    ampl = 20 * log10(as.numeric(rowMeans(myPars$spec[, idx])))
                 )
                 myPars$spectrum = as.list(getSmoothSpectrum(
                     spectrum = spec_temp,
@@ -1304,7 +1315,6 @@ server = function(input, output, session) {
 
     # oscillogram
     shinyBS::addTooltip(session, id='osc', title = 'The type of oscillogram to show', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-    shinyBS::addTooltip(session, id='osc_height', title = 'The height of oscillogram, pixels', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
     shinyBS::addTooltip(session, id='osc_maxPoints', title = 'The number of points to plot in the oscillogram (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
     # action buttons
