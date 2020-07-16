@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: resizable plot areas (tricky - just wrapping in a resizable div doesn't work); check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -10,6 +10,9 @@
 # see https://stackoverflow.com/questions/52649138/including-shinybs-in-a-package
 
 server = function(input, output, session) {
+    # make overlaid plots resizable (js fix)
+    shinyjs::js$inheritSize(parentDiv = 'specDiv')
+
     myPars = reactiveValues()
     myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
     myPars$zoomFactor_freq = 1.5  # same for frequency
@@ -86,6 +89,7 @@ server = function(input, output, session) {
     observeEvent(input$reset_to_def, resetSliders())
 
     loadAudio = function() {
+        # shinyjs::js$inheritSize(parentDiv = 'specDiv')
         if (myPars$print) print('Loading audio...')
         reset()  # also triggers done()
 
@@ -716,9 +720,11 @@ server = function(input, output, session) {
                 time_stamps = as.numeric(colnames(myPars$spec))
                 idx = which(time_stamps >= myPars$spec_xlim[1] &
                                 time_stamps <= myPars$spec_xlim[2])
+                ampl = as.numeric(rowMeans(myPars$spec[, idx]))
+                ampl[ampl == 0] = 1e-16  # avoid -Inf in log-spectrum
                 spec_temp = list(
                     freq = as.numeric(rownames(myPars$spec[, idx])),
-                    ampl = 20 * log10(as.numeric(rowMeans(myPars$spec[, idx])))
+                    ampl = 20 * log10(ampl)
                 )
                 myPars$spectrum = as.list(getSmoothSpectrum(
                     spectrum = spec_temp,
