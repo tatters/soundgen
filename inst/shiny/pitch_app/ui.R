@@ -22,8 +22,16 @@ ui = fluidPage(
     tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
     tags$style(".buttonInline {padding: 2px 2px;}"),
     tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
-    tags$style("#plotDiv {position: relative}"),  # wrapper for plots has to have position relative
-    tags$style(".plotUnder {position: absolute; top: 0; bottom: 0; right: 0; left: 0; height: 500px;}")
+
+    ## resizable plots
+    # spectrogram (extra mafan b/c it consists of three layers)
+    tags$style('#specDiv {position: relative; resize: vertical; overflow: hidden; height: 500px;}'),
+    tags$style('#specDiv div {position: absolute; left: 0; right: 0; top: 0; bottom: 0; width: 100%; height: inherit;}'),
+    tags$style('#specDiv img {width: 100%; height: inherit;}'),
+
+    # oscillogram
+    tags$style('#oscillogram {resize: vertical; overflow: hidden;}'),
+    tags$style('#oscillogram img {width: 100%; height: 100%;}')
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
@@ -34,7 +42,7 @@ ui = fluidPage(
   # (eg for playing the audio)
   shinyjs::extendShinyjs(
     script = 'www/jsFun.js',
-    functions = c('playme_js', 'stopAudio_js', 'clearBrush')
+    functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize')
   ),
 
   fluidRow(
@@ -459,7 +467,7 @@ ui = fluidPage(
             selectInput(
               'osc',
               'Oscillogram type ("osc")',
-              choices = c('none', 'linear', 'dB'),
+              choices = c('linear', 'dB'),
               selected = 'linear', multiple = FALSE),
             sliderInput(
               'osc_height',
@@ -514,7 +522,8 @@ ui = fluidPage(
         ),
 
         column(
-          2,
+          width = 2,
+          uiOutput("htmlAudio"),  # not actually shown
           downloadButton(
             outputId = "saveRes",
             label = "",
@@ -614,31 +623,18 @@ ui = fluidPage(
 
       fluidRow(
         tags$div(
-          id = 'plotDiv',
-
+          id = 'specDiv',
+          plotOutput('spectrogram'),
+          plotOutput('specSlider'),
           plotOutput(
-            'spectrogram', height = '500px'
-          ),
+            'specOver',
+            click = "spectrogram_click",
+            dblclick = dblclickOpts(id = "spectrogram_dblclick"),
+            hover = hoverOpts(id = "spectrogram_hover"),
+            brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
+        ),
 
-          tags$div(
-            class = 'plotUnder',
-            plotOutput(
-              'specSlider', height = '500px'
-            )
-          ),
-
-          tags$div(
-            class = 'plotUnder',
-            plotOutput(
-              'specOver', height = '500px',
-              click = "spectrogram_click",
-              dblclick = dblclickOpts(id = "spectrogram_dblclick"),
-              hover = hoverOpts(id = "spectrogram_hover"),
-              brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
-          ),
-
-          plotOutput('oscillogram', height = 'auto')
-        )
+        plotOutput('oscillogram', height = '100px')  # default size
       )
 
       #fluidRow(

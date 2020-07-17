@@ -37,11 +37,11 @@ ui = fluidPage(
     tags$style('#specDiv img {width: 100%; height: inherit;}'),
 
     # oscillogram
-    tags$style('#oscillogram {resize: vertical; overflow: hidden; height: 100px;}'),
+    tags$style('#oscillogram {resize: vertical; overflow: hidden;}'),
     tags$style('#oscillogram img {width: 100%; height: 100%;}'),
 
     # annotations
-    tags$style('#ann_plot {resize: vertical; overflow: hidden; height: 60px;}'),
+    tags$style('#ann_plot {resize: vertical; overflow: hidden;}'),
     tags$style('#ann_plot img {width: 100%; height: 100%;}'),
 
     # spectrum
@@ -236,7 +236,7 @@ ui = fluidPage(
             selectInput(
               'osc',
               'Oscillogram type',
-              choices = c('none', 'linear', 'dB'),
+              choices = c('linear', 'dB'),
               selected = 'linear', multiple = FALSE),
             sliderInput(
               'osc_maxPoints',
@@ -310,7 +310,7 @@ ui = fluidPage(
 
         column(
           width = 3,
-          uiOutput("htmlAudio"),
+          uiOutput("htmlAudio"),  # not actually shown
           downloadButton(
             outputId = "saveRes", label = "",
             style="color: blue; background-color: orange;"),
@@ -396,7 +396,7 @@ ui = fluidPage(
           ),
 
           plotOutput(
-            'oscillogram', height = '100px'
+            'oscillogram', height = '100px'  # auto to inherit from css in the header
           ),
 
           plotOutput(

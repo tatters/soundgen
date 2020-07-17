@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: add dF and VTL; check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -230,7 +230,7 @@ server = function(input, output, session) {
         output$htmlAudio = renderUI(
             tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
                        id = 'myAudio',
-                       style="display: none; transform: scale(0.75); transform-origin: 0 0;")
+                       style = "display: none; transform: scale(0.75); transform-origin: 0 0;")
         )
     })
 
@@ -429,7 +429,7 @@ server = function(input, output, session) {
     output$spectrogram = renderPlot({
         if (!is.null(myPars$spec) && myPars$drawSpec == TRUE) {
             if (myPars$print) print('Drawing spectrogram...')
-            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
+            par(mar = c(0.2, 2, 0.5, 2))  # no need to save user's graphical par-s - revert to orig on exit
             if (is.null(myPars$spec)) {
                 plot(1:10, type = 'n', bty = 'n', axes = FALSE, xlab = '', ylab = '')
                 text(x = 5, y = 5,
@@ -456,10 +456,6 @@ server = function(input, output, session) {
                     main = '',
                     ylim = input$spec_ylim
                 )
-                if (input$osc == 'none') {
-                    axis(side = 1)
-                    title(xlab = 'Time, ms')
-                }
 
                 # Add text label of file name
                 ran_x = myPars$spec_xlim[2] - myPars$spec_xlim[1]
@@ -482,7 +478,7 @@ server = function(input, output, session) {
 
     output$specOver = renderPlot({
         if (!is.null(myPars$spec)) {
-            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
+            par(mar = c(0.2, 2, 0.5, 2), bg = NA)
             # bg=NA makes the image transparent
 
             # empty plot to enable hover/click events for the spectrogram underneath
@@ -555,7 +551,7 @@ server = function(input, output, session) {
 
     output$specSlider = renderPlot({
         if (!is.null(myPars$spec)) {
-            par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2), bg = NA)
+            par(mar = c(0.2, 2, 0.5, 2), bg = NA)
             # bg=NA makes the image transparent
 
             if (myPars$cursor == 0) {
@@ -628,7 +624,7 @@ server = function(input, output, session) {
     ## OSCILLOGRAM
     observe({
         output$oscillogram = renderPlot({
-            if (!is.null(myPars$myAudio_trimmed) & input$osc != 'none') {
+            if (!is.null(myPars$myAudio_trimmed)) {
                 if (myPars$print) print('Drawing osc...')
                 par(mar = c(2, 2, 0, 2))
                 plot(myPars$time_trimmed,
@@ -854,7 +850,7 @@ server = function(input, output, session) {
                                  labels = myPars$ann$label[i],
                                  adj = c(.5, 0), cex = 1.5)
                         }
-                        par(mar = c(ifelse(input$osc == 'none', 2, 0.2), 2, 0.5, 2))
+                        par(mar = c(0.2, 2, 0.5, 2))
                     }
                 } else if (!is.null(myPars$spec)) {
                     par(mar = c(0, 2, 0, 2))

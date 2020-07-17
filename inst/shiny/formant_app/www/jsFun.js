@@ -7,7 +7,7 @@ shinyjs.playme_js = function(params) {
     a.pause();
     a.currentTime = params.from;
   }, dur_ms);
-  alert('playing audio');
+  // alert('playing audio');
 };
 
 shinyjs.stopAudio_js = function(params) {

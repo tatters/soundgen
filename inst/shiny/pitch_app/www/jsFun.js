@@ -7,6 +7,7 @@ shinyjs.playme_js = function(params) {
     a.pause();
     a.currentTime = params.from;
   }, dur_ms);
+  // alert('playing audio');
 };
 
 shinyjs.stopAudio_js = function(params) {
@@ -26,3 +27,14 @@ shinyjs.clearBrush = function(params) {
     myId[i].parentNode.removeChild(myId[i]);
   }
 };
+
+// Override Shiny's default assignment of height = '400px' to plot divisions
+// (otherwise I can't find a way to make overlaid plots resizable)
+shinyjs.inheritSize = function(params) {
+  // alert('inheritSize');
+  var plotDiv = document.getElementById(params.parentDiv).children;
+  for (var i = 0; i < plotDiv.length; i++) {
+    plotDiv[i].style.height = 'inherit';
+  }
+};
+
