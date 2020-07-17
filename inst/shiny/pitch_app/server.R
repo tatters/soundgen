@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: fix play audio; maybe analyze one bit at a time like in formant_app
+# To do: maybe analyze one bit at a time like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)

@@ -29,6 +29,7 @@ ui = fluidPage(
     tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
     tags$style(".buttonInline {padding: 2px 2px;}"),
     tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
+    tags$style("#fileList div.item {font-size: .75em;}"),
 
     ## resizable plots
     # spectrogram (extra mafan b/c it consists of three layers)
@@ -49,7 +50,7 @@ ui = fluidPage(
     tags$style('#spectrum img {width: 100%; height: inherit;}'),
 
     # output table
-    tags$style('#ann_table {resize: vertical; overflow: auto; margin: auto; height: 160px;}'),
+    tags$style('#ann_table {resize: vertical; overflow: auto; margin: auto; height: 160px;}')
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
@@ -284,9 +285,7 @@ ui = fluidPage(
               step = def_form['spectrum_len', 'step'])
           ),
 
-          tabPanel("Annotations",
-
-          )
+          tabPanel("Annotations")
         )
       )
     ),  # end of column "sidebar"
@@ -314,7 +313,7 @@ ui = fluidPage(
         ),
 
         column(
-          width = 6,
+          width = 3,
           tags$div(
             actionButton(
               inputId = "lastFile", label = "<<",
@@ -328,7 +327,7 @@ ui = fluidPage(
         ),
 
         column(
-          width = 3,
+          width = 1,
           uiOutput("htmlAudio"),  # not actually shown
           downloadButton(
             outputId = "saveRes", label = "",
@@ -340,6 +339,11 @@ ui = fluidPage(
             placement = "right", trigger = "hover")
           # shinyBS has to be mentioned somewhere in ui,
           # otherwise addTooltip doesn't work in server
+        ),
+
+        column(
+          width = 5,
+          uiOutput('fButtons', style = "height: 60px;")
         )
       ),
 
@@ -347,55 +351,57 @@ ui = fluidPage(
         column(
           width = 1,
           actionButton(
-            inputId = 'zoomIn_freq',
-            label = HTML("<img src='icons/zoomIn.png' width = '25px'>"),
-            style = "padding: 2px 2px; display: block"),
-          actionButton(
             inputId = 'zoomOut_freq',
-            label = HTML("<img src='icons/zoomOut.png' width = '25px'>"),
-            style = "padding: 2px 2px; display: block"),
+            label = HTML("<img src='icons/zoomOut.png' width = '20px'>"),
+            class = "buttonInline"),
+          actionButton(
+            inputId = 'zoomIn_freq',
+            label = HTML("<img src='icons/zoomIn.png' width = '20px'>"),
+            class = "buttonInline")
         ),
+
         column(
           width = 3,
           actionButton(
             inputId = "selection_stop",
-            label = HTML("<img src='icons/stop.png' width = '25px'>"),
+            label = HTML("<img src='icons/stop.png' width = '20px'>"),
             class = "buttonInline"),
           actionButton(
             inputId = "selection_play",
-            label = HTML("<img src='icons/play.png' width = '25px'>"),
+            label = HTML("<img src='icons/play.png' width = '20px'>"),
             class = "buttonInline"),
           actionButton(
             inputId = "selection_delete",
-            label = HTML("<img src='icons/delete.png' width = '25px'>"),
+            label = HTML("<img src='icons/delete.png' width = '20px'>"),
             class = "buttonInline")
         ),
+
         column(
           width = 3,
           actionButton(
             inputId = 'scrollLeft',
-            label = HTML("<img src='icons/backward.png' width = '25px'>"),
+            label = HTML("<img src='icons/backward.png' width = '20px'>"),
             class = "buttonInline"),
           actionButton(
             inputId = 'zoomOut',
-            label = HTML("<img src='icons/zoomOut.png' width = '25px'>"),
+            label = HTML("<img src='icons/zoomOut.png' width = '20px'>"),
             class = "buttonInline"),
           actionButton(
             inputId = "zoomToSel",
-            label = HTML("<img src='icons/zoomSel.png' width = '25px'>"),
+            label = HTML("<img src='icons/zoomSel.png' width = '20px'>"),
             class = "buttonInline"),
           actionButton(
             inputId = 'zoomIn',
-            label = HTML("<img src='icons/zoomIn.png' width = '25px'>"),
+            label = HTML("<img src='icons/zoomIn.png' width = '20px'>"),
             class = "buttonInline"),
           actionButton(
             inputId = 'scrollRight',
-            label = HTML("<img src='icons/forward.png' width = '25px'>"),
+            label = HTML("<img src='icons/forward.png' width = '20px'>"),
             class = "buttonInline")
         ),
+
         column(
-          width = 5,
-          uiOutput('fButtons', style = "height: 60px;")
+          width = 5
         )
       ),
 
@@ -436,7 +442,7 @@ ui = fluidPage(
               dblclick = dblclickOpts(id = "spectrum_dblclick"),
               hover = hoverOpts(id = "spectrum_hover")),
             tags$div(
-              style = 'position: absolute; left: 40%; top: 15px; right: 10%;',
+              style = 'position: absolute; top: 5px; right: 20px;',
               sliderInput(
                 'spectrum_smooth',
                 'Smoothing',
@@ -448,7 +454,7 @@ ui = fluidPage(
             )
           ),
 
-          tableOutput('ann_table')
+          tableOutput('ann_table')  # dataTableOutput('ann_table')
         )
       )
 

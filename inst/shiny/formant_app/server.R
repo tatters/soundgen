@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: always 2 digits in ann_table$vtl / maybe try dataTable instead; fix ? in spectrum; check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -675,13 +675,6 @@ server = function(input, output, session) {
             #         col = rgb(.5, .5, .5, .15))
             spectrum_peaks()
 
-            # ? in the upper right corner for help
-            text(x = xlim[2],
-                 y = ylim[2],
-                 labels = "?",
-                 cex = 5, adj = c(1, 1),
-                 col = rgb(.5, .5, .5, .1))
-
             # add a vertical line and freq label on hover
             if (!is.null(myPars$spectrum_hover)) {
                 abline(v = myPars$spectrum_hover$x, lty = 2)
@@ -780,27 +773,6 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrum) & !is.null(input$spectrum_hover)) {
             myPars$spectrum_hover = data.frame(x = input$spectrum_hover$x,
                                                y = input$spectrum_hover$y)
-
-            help = myPars$spectrum_hover$x > .9 * myPars$spectrum$freq_range[2] &
-                myPars$spectrum_hover$y > (myPars$spectrum$ampl_range[1] +
-                                               .9 * diff(myPars$spectrum$ampl_range))
-            if (help) {
-                showNotification(
-                    ui = paste('Click to update the selected formant in current',
-                               'annotation: single click = use cursor position, ',
-                               'double click = use closest peak'),
-                    duration = 10,
-                    closeButton = TRUE,
-                    type = 'default'
-                )
-                # showModal(modalDialog(
-                #     title = paste('Click to update the selected formant in current',
-                #                'annotation (uses cursor position, not closest peak)'),
-                #     size = 's',
-                #     easyClose = TRUE
-                # ))
-            }
-
             cursor_hz = round(input$spectrum_hover$x * 1000)
             cursor_notes = soundgen::notesDict$note[round(HzToSemitones(cursor_hz)) + 1]
             myPars$spectrum_hover$cursor = paste0(cursor_hz, 'Hz (', cursor_notes, ')')
@@ -1195,6 +1167,9 @@ server = function(input, output, session) {
     }
     observeEvent(input$zoomIn_freq, changeZoom_freq(1 / myPars$zoomFactor_freq))
     observeEvent(input$zoomOut_freq, changeZoom_freq(myPars$zoomFactor_freq))
+    observeEvent(input$spec_ylim, {
+        updateSliderInput(session, 'spectrum_xlim', value = input$spec_ylim)
+    })
 
     changeZoom = function(coef, toCursor = FALSE) {
         # intelligent zoom-in a la Audacity: midpoint moves closer to seletion/cursor
@@ -1322,8 +1297,14 @@ server = function(input, output, session) {
 
     observeEvent(input$about, {
         showNotification(
-            ui = paste0("App for measuring formants in small annotated segments: soundgen ", packageVersion('soundgen'), ". Select an area of spectrogram and double-click to add an annotation, left-click to correct a formant measure. More info: ?formant_app and http://cogsci.se/soundgen.html"),
-            duration = 10,
+            ui = paste0(
+                "App for measuring formants in small annotated segments: soundgen ",
+                packageVersion('soundgen'), ". Spectrogram: select an area and ",
+                "double-click to add an annotation, left-click to correct a formant ",
+                "measure. Spectrum: single-click to update a formant to cursor ",
+                "position, double click to update to the closest spectral peak. More ",
+                "info: ?formant_app and http://cogsci.se/soundgen.html"),
+            duration = 20,
             closeButton = TRUE,
             type = 'default'
         )

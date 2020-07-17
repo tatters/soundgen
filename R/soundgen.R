@@ -2,7 +2,7 @@
 
 # pitch_app: optional argument to load and open files in a folder; see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
 
-# formant_app: selecting a sound segment, measuring formants automatically, then verifying and adjusting their frequencies as needed (using eg an interactive spectral slice + LPC plots), and saving the output (time stamps, annotations like vowel type, and the corrected formant measurements); interactive spectral slice where manual adjustments can be made, perhaps by dragging and dropping formant markers (?) and adjusted mean values can be saved along with annotations, all to a single excel file. Maybe it would even be possible to automatically compute, form the adjusted F1-F4 values, amalgamated formant measures such as deltaF (spacing) and apparent VTL and feed these into the same output excel file
+# formant_app: drag border to adjust the size of two main columns (spec / spectrum) - ~possible with css grid, but better with js (see https://stackoverflow.com/questions/46931103/making-a-dragbar-to-resize-divs-inside-css-grids/46934825)
 
 #' @import stats graphics utils grDevices shinyBS
 #' @encoding UTF-8
