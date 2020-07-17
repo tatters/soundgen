@@ -65,7 +65,7 @@ ui = fluidPage(
 
   fluidRow(
     column(
-      width = 3,
+      width = 2,
       id = "Sidebar",
       tabsetPanel(
         id = 'parGroup',
@@ -150,6 +150,25 @@ ui = fluidPage(
               choices = c('bartlett', 'blackman', 'flattop', 'gaussian',
                           'hamming', 'hanning', 'rectangle'),
               selected = 'gaussian', multiple = FALSE)
+          ),
+
+          tabPanel(
+            "Vocal tract",
+            selectInput(
+              'vtl_method',
+              'Method for estimating VTL',
+              choices = list('Regression' = 'regression',
+                             'Mean formant dispersion' = 'meanDispersion',
+                             'Mean formant' = 'meanFormant'),
+              selected = 'regression'
+            ),
+
+            numericInput(
+              'speedSound',
+              'Speed of sound, cm/s',
+              value = '35400',
+              min = 1, max = 100000, step = 1
+            )
           )
         ),
 
@@ -273,7 +292,7 @@ ui = fluidPage(
     ),  # end of column "sidebar"
 
     column(
-      width = 9,
+      width = 10,
       id ="Main",
       fluidRow(
         column(

@@ -91,7 +91,7 @@
 #' }
 estimateVTL = function(
   formants,
-  method = c('meanFormant', 'meanDispersion', 'regression')[3],
+  method = c('regression', 'meanDispersion', 'meanFormant')[1],
   speedSound = 35400,
   checkFormat = TRUE,
   output = c('simple', 'detailed')[1],

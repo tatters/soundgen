@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: add dF and VTL; check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: always 2 digits in ann_table$vtl / maybe try dataTable instead; fix ? in spectrum; check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -79,10 +79,14 @@ server = function(input, output, session) {
             try(updateSliderInput(session, v, value = new_value))
             try(updateNumericInput(session, v, value = new_value))
             updateSelectInput(session, 'wn', selected = 'gaussian')
-            updateSliderInput(session, 'spec_ylim', value=c(0, def_form['spec_ylim','default']))
-            updateSliderInput(session, 'spectrum_xlim', value=c(0, def_form['spectrum_xlim','default']))
+            updateSliderInput(session, 'spec_ylim',
+                              value = c(0, def_form['spec_ylim','default']))
+            updateSliderInput(session, 'spectrum_xlim',
+                              value = c(0, def_form['spectrum_xlim','default']))
             updateRadioButtons(session, 'spec_colorTheme', selected='bw')
             updateSelectInput(session, 'osc', selected = 'linear')
+            updateSelectInput(session, 'vtl_method', selected = 'regression')
+            updateSliderInput(session, 'speedSound', value = '35400')
             updateTextInput(session, 'coeffs', value = '')
         }
     }
@@ -118,12 +122,12 @@ server = function(input, output, session) {
     observeEvent(input$showpanel, {
         if(input$showpanel == TRUE) {
             shinyjs::removeCssClass("Main", "col-sm-12")
-            shinyjs::addCssClass("Main", "col-sm-9")
+            shinyjs::addCssClass("Main", "col-sm-10")
             shinyjs::show(id = "Sidebar")
             shinyjs::enable(id = "Sidebar")
         }
         else {
-            shinyjs::removeCssClass("Main", "col-sm-9")
+            shinyjs::removeCssClass("Main", "col-sm-10")
             shinyjs::addCssClass("Main", "col-sm-12")
             shinyjs::hide(id = "Sidebar")
         }
@@ -927,6 +931,7 @@ server = function(input, output, session) {
         all_cols = paste0('f', 1:myPars$maxF)
         missing_cols = all_cols[which(!all_cols %in% colnames(new))]
         new[, missing_cols] = NA
+        new[, c('dF', 'vtl')] = NA
 
         # append to myPars$ann
         if (is.null(myPars$ann)) {
@@ -1047,7 +1052,9 @@ server = function(input, output, session) {
                 idx = which(myPars$formantTracks$time >= myPars$ann$from[myPars$currentAnn] &
                                 myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn])
             })
-            myPars$formants = round(colMeans(myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)], na.rm = TRUE))
+            myPars$formants = round(colMeans(
+                myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)],
+                na.rm = TRUE))
             # myPars$bandwidth ?
 
             # fill in the formant boxes
@@ -1059,11 +1066,37 @@ server = function(input, output, session) {
     })
 
     observe({
-        output$ann_table = renderTable(myPars$ann[, -1], digits = 0,
-                                       align = 'c', striped = TRUE,
-                                       bordered = TRUE, width = '100%')
+        if (!is.null(myPars$ann)) {
+            output$ann_table = renderTable(
+                format(myPars$ann[, -1]),
+                align = 'c', striped = TRUE,
+                bordered = TRUE, hover = TRUE, width = '100%'
+            )
+        }
     })
 
+    observeEvent(myPars$ann[myPars$currentAnn, ], {
+        if (!is.null(myPars$ann[myPars$currentAnn, ]) &&
+            any(!is.na(myPars$ann[myPars$currentAnn, myPars$ff]))) {
+            fmts_ann = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff])
+            vtl_ann = estimateVTL(
+                formants = fmts_ann,
+                method = input$vtl_method,
+                speedSound = input$speedSound,
+                output = 'detailed'
+            )
+            # method = c('regression', 'meanDispersion', 'meanFormant')[1],
+            # speedSound = 35400,
+            try({
+                vtl_ann$formantDispersion = round(vtl_ann$formantDispersion)
+            }, silent = TRUE)
+            try({
+                vtl_ann$vocalTract = round(vtl_ann$vocalTract, 2)
+            }, silent = TRUE)
+            myPars$ann$dF[myPars$currentAnn] = vtl_ann$formantDispersion
+            myPars$ann$vtl[myPars$currentAnn] = vtl_ann$vocalTract
+        }
+    })
 
     ## Buttons for operations with selection
     playSel = function() {
