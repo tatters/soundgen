@@ -122,12 +122,12 @@ server = function(input, output, session) {
     observeEvent(input$showpanel, {
         if(input$showpanel == TRUE) {
             shinyjs::removeCssClass("Main", "col-sm-12")
-            shinyjs::addCssClass("Main", "col-sm-10")
+            shinyjs::addCssClass("Main", "col-sm-8")
             shinyjs::show(id = "Sidebar")
             shinyjs::enable(id = "Sidebar")
         }
         else {
-            shinyjs::removeCssClass("Main", "col-sm-10")
+            shinyjs::removeCssClass("Main", "col-sm-8")
             shinyjs::addCssClass("Main", "col-sm-12")
             shinyjs::hide(id = "Sidebar")
         }

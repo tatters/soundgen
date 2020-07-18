@@ -20,16 +20,12 @@ ui = fluidPage(
 
   # css
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "shiny.css"),
-    tags$style("input {font-size: 1em}"),
-    tags$style(".form-control {font-size: .85em; padding: 1px 4px 1px 4px;}"),
-    tags$style(".fBox {display: inline-block; width: 50px; padding: 0; margin: 0; text-align: center;}"),
-    tags$style(".selected {background-color: #33333340;}"),
-    tags$style("label {font-size: 1em;}"),
-    tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
-    tags$style(".buttonInline {padding: 2px 2px;}"),
-    tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
-    tags$style("#fileList div.item {font-size: .75em;}"),
+    # grid
+    tags$style(".container-fluid {margin: 0; padding: 0;}"),
+    tags$style(".row {margin-left: 0; margin-right: 0;}"),
+    tags$style("#gridCont {display: grid; padding: 3px; grid-gap: 0; grid-template-columns: min-content 1fr; grid-template-areas: 'left right';}"),
+    tags$style("#left {grid-area: left; border: 2px solid lightgray; overflow: auto; resize: horizontal; width: 60vw; min-width: 25vw; max-width: 75vw;}"),
+    tags$style("#right {grid-area: right; border: 2px solid lightgray;}"),
 
     ## resizable plots
     # spectrogram (extra mafan b/c it consists of three layers)
@@ -46,11 +42,24 @@ ui = fluidPage(
     tags$style('#ann_plot img {width: 100%; height: 100%;}'),
 
     # spectrum
-    tags$style('#spectrum {position: relative; resize: vertical; overflow: hidden; height: 500px;}'),
+    tags$style('#spectrumDiv {position: relative;}'),
+    tags$style('#spectrum {resize: vertical; overflow: hidden; height: 500px;}'),
     tags$style('#spectrum img {width: 100%; height: inherit;}'),
+    tags$style('#spectrum_smoothDiv {position: absolute; top: 5px; right: 20px;}'),
 
     # output table
-    tags$style('#ann_table {resize: vertical; overflow: auto; margin: auto; height: 160px;}')
+    tags$style('#ann_table {resize: vertical; overflow: auto; margin-left: auto; margin-right: auto; margin-top: 10px; height: 160px;}'),
+
+    # misc
+    tags$style("input {font-size: 1em}"),
+    tags$style(".form-control {font-size: .85em; padding: 1px 4px 1px 4px;}"),
+    tags$style(".fBox {display: inline-block; width: 50px; padding: 0; margin: 0; text-align: center;}"),
+    tags$style(".selected {background-color: #33333340;}"),
+    tags$style("label {font-size: 1em;}"),
+    tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
+    tags$style(".buttonInline {padding: 2px 2px;}"),
+    tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
+    tags$style("#fileList div.item {font-size: .75em;}"),
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
@@ -64,403 +73,402 @@ ui = fluidPage(
     functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize')
   ),
 
-  fluidRow(
-    column(
-      width = 2,
-      id = "Sidebar",
-      tabsetPanel(
-        id = 'parGroup',
-        navbarMenu(
-          "Analysis",
-          tabPanel(
-            "LPC",
-            actionButton(
-              'reset_to_def',
-              label = 'Reset ALL to defaults'),
-            checkboxInput(
-              'normalizeInput',
-              'Normalize for peak amplitude',
-              value = TRUE),
-            sliderInput(
-              'nFormants',
-              'Number of formants',
-              value = def_form['nFormant', 'default'],
-              min = def_form['nFormant', 'low'],
-              max = def_form['nFormant', 'high'],
-              step = def_form['nFormant', 'step']),
-            numericInput(
-              'silence',
-              'Silence threshold (0 to 1)',
-              value = def_form['silence', 'default'],
-              min = def_form['silence', 'low'],
-              max = def_form['silence', 'high'],
-              step = def_form['silence', 'step']),
-            textInput(
-              'coeffs',
-              'Number of LPC coefficients',
-              value = ''),
-            sliderInput(
-              'minformant',
-              'Minimum formant frequency',
-              value = def_form['minformant', 'default'],
-              min = def_form['minformant', 'low'],
-              max = def_form['minformant', 'high'],
-              step = def_form['minformant', 'step']),
-            sliderInput(
-              'maxbw',
-              'Maximum formant bandwidth',
-              value = def_form['maxbw', 'default'],
-              min = def_form['maxbw', 'low'],
-              max = def_form['maxbw', 'high'],
-              step = def_form['maxbw', 'step'])
-          ),
+  tags$div(
+    id = 'gridCont',
 
-          tabPanel(
-            "Windowing",
-            numericInput(
-              'windowLength_lpc',
-              'Window length, ms',
-              value = def_form['windowLength_lpc', 'default'],
-              min = def_form['windowLength_lpc', 'low'],
-              max = def_form['windowLength_lpc', 'high'],
-              step = def_form['windowLength_lpc', 'step']),
-            sliderInput(
-              'overlap_lpc',
-              'Overlap, %',
-              value = def_form['overlap_lpc', 'default'],
-              min = def_form['overlap_lpc', 'low'],
-              max = def_form['overlap_lpc', 'high'],
-              step = def_form['overlap_lpc', 'step']),
-            sliderInput(
-              'dynamicRange_lpc',
-              'Dynamic range, dB',
-              value = def_form['dynamicRange_lpc', 'default'],
-              min = def_form['dynamicRange_lpc', 'low'],
-              max = def_form['dynamicRange_lpc', 'high'],
-              step = def_form['dynamicRange_lpc', 'step']),
-            sliderInput(
-              'zp_lpc',
-              'Zero padding, points 2 ^ n',
-              value = def_form['zp_lpc', 'default'],
-              min = def_form['zp', 'low'],
-              max = def_form['zp_lpc', 'high'],
-              step = def_form['zp_lpc', 'step']),
-            selectInput(
-              'wn_lpc',
-              'Window type',
-              choices = c('bartlett', 'blackman', 'flattop', 'gaussian',
-                          'hamming', 'hanning', 'rectangle'),
-              selected = 'gaussian', multiple = FALSE)
-          ),
+    tags$div(
+      id = 'left',
 
-          tabPanel(
-            "Vocal tract",
-            selectInput(
-              'vtl_method',
-              'Method for estimating VTL',
-              choices = list('Regression' = 'regression',
-                             'Mean formant dispersion' = 'meanDispersion',
-                             'Mean formant' = 'meanFormant'),
-              selected = 'regression'
+      fluidRow(
+        column(
+          width = 4,
+          id = "Sidebar",
+          tabsetPanel(
+            id = 'parGroup',
+            navbarMenu(
+              "Analysis",
+              tabPanel(
+                "LPC",
+                actionButton(
+                  'reset_to_def',
+                  label = 'Reset ALL to defaults'),
+                checkboxInput(
+                  'normalizeInput',
+                  'Normalize for peak amplitude',
+                  value = TRUE),
+                sliderInput(
+                  'nFormants',
+                  'Number of formants',
+                  value = def_form['nFormant', 'default'],
+                  min = def_form['nFormant', 'low'],
+                  max = def_form['nFormant', 'high'],
+                  step = def_form['nFormant', 'step']),
+                numericInput(
+                  'silence',
+                  'Silence threshold (0 to 1)',
+                  value = def_form['silence', 'default'],
+                  min = def_form['silence', 'low'],
+                  max = def_form['silence', 'high'],
+                  step = def_form['silence', 'step']),
+                textInput(
+                  'coeffs',
+                  'Number of LPC coefficients',
+                  value = ''),
+                sliderInput(
+                  'minformant',
+                  'Minimum formant frequency',
+                  value = def_form['minformant', 'default'],
+                  min = def_form['minformant', 'low'],
+                  max = def_form['minformant', 'high'],
+                  step = def_form['minformant', 'step']),
+                sliderInput(
+                  'maxbw',
+                  'Maximum formant bandwidth',
+                  value = def_form['maxbw', 'default'],
+                  min = def_form['maxbw', 'low'],
+                  max = def_form['maxbw', 'high'],
+                  step = def_form['maxbw', 'step'])
+              ),
+
+              tabPanel(
+                "Windowing",
+                numericInput(
+                  'windowLength_lpc',
+                  'Window length, ms',
+                  value = def_form['windowLength_lpc', 'default'],
+                  min = def_form['windowLength_lpc', 'low'],
+                  max = def_form['windowLength_lpc', 'high'],
+                  step = def_form['windowLength_lpc', 'step']),
+                sliderInput(
+                  'overlap_lpc',
+                  'Overlap, %',
+                  value = def_form['overlap_lpc', 'default'],
+                  min = def_form['overlap_lpc', 'low'],
+                  max = def_form['overlap_lpc', 'high'],
+                  step = def_form['overlap_lpc', 'step']),
+                sliderInput(
+                  'dynamicRange_lpc',
+                  'Dynamic range, dB',
+                  value = def_form['dynamicRange_lpc', 'default'],
+                  min = def_form['dynamicRange_lpc', 'low'],
+                  max = def_form['dynamicRange_lpc', 'high'],
+                  step = def_form['dynamicRange_lpc', 'step']),
+                sliderInput(
+                  'zp_lpc',
+                  'Zero padding, points 2 ^ n',
+                  value = def_form['zp_lpc', 'default'],
+                  min = def_form['zp', 'low'],
+                  max = def_form['zp_lpc', 'high'],
+                  step = def_form['zp_lpc', 'step']),
+                selectInput(
+                  'wn_lpc',
+                  'Window type',
+                  choices = c('bartlett', 'blackman', 'flattop', 'gaussian',
+                              'hamming', 'hanning', 'rectangle'),
+                  selected = 'gaussian', multiple = FALSE)
+              ),
+
+              tabPanel(
+                "Vocal tract",
+                selectInput(
+                  'vtl_method',
+                  'Method for estimating VTL',
+                  choices = list('Regression' = 'regression',
+                                 'Mean formant dispersion' = 'meanDispersion',
+                                 'Mean formant' = 'meanFormant'),
+                  selected = 'regression'
+                ),
+
+                numericInput(
+                  'speedSound',
+                  'Speed of sound, cm/s',
+                  value = '35400',
+                  min = 1, max = 100000, step = 1
+                )
+              )
             ),
 
-            numericInput(
-              'speedSound',
-              'Speed of sound, cm/s',
-              value = '35400',
-              min = 1, max = 100000, step = 1
+            navbarMenu(
+              "Plotting",
+              tabPanel(
+                "Spectrogram",
+                sliderInput(
+                  'spec_ylim',
+                  'Frequency range, kHz',
+                  value = c(0, def_form['spec_ylim', 'default']),
+                  min = def_form['spec_ylim', 'low'],
+                  max = def_form['spec_ylim', 'high'],
+                  step = def_form['spec_ylim', 'step']),
+                numericInput(
+                  'windowLength',
+                  'Window length, ms',
+                  value = def_form['windowLength', 'default'],
+                  min = def_form['windowLength', 'low'],
+                  max = def_form['windowLength', 'high'],
+                  step = def_form['windowLength', 'step']),
+                sliderInput(
+                  'overlap',
+                  'Overlap, %',
+                  value = def_form['overlap', 'default'],
+                  min = def_form['overlap', 'low'],
+                  max = def_form['overlap', 'high'],
+                  step = def_form['overlap', 'step']),
+                sliderInput(
+                  'dynamicRange',
+                  'Dynamic range, dB',
+                  value = def_form['dynamicRange', 'default'],
+                  min = def_form['dynamicRange', 'low'],
+                  max = def_form['dynamicRange', 'high'],
+                  step = def_form['dynamicRange', 'step']),
+                radioButtons(
+                  inputId = 'spec_colorTheme',
+                  label = 'Color scheme',
+                  choices = c("Seewave" = "seewave",
+                              "Heat" = "heat.colors",
+                              "Black & white" = "bw"),
+                  selected = 'bw', inline = TRUE, width = NULL),
+                sliderInput(
+                  'specContrast',
+                  'Contrast',
+                  value = def_form['specContrast', 'default'],
+                  min = def_form['specContrast', 'low'],
+                  max = def_form['specContrast', 'high'],
+                  step = def_form['specContrast', 'step']),
+                sliderInput(
+                  'specBrightness',
+                  'Brightness',
+                  value = def_form['specBrightness', 'default'],
+                  min = def_form['specBrightness', 'low'],
+                  max = def_form['specBrightness', 'high'],
+                  step = def_form['specBrightness', 'step']),
+                shinyBS::bsCollapsePanel(
+                  "Advanced",
+                  sliderInput(
+                    'zp',
+                    'Zero padding, points 2 ^ n',
+                    value = def_form['zp', 'default'],
+                    min = def_form['zp', 'low'],
+                    max = def_form['zp', 'high'],
+                    step = def_form['zp', 'step']),
+                  selectInput(
+                    'wn',
+                    'Window type',
+                    choices = c('bartlett', 'blackman', 'flattop', 'gaussian',
+                                'hamming', 'hanning', 'rectangle'),
+                    selected = 'gaussian', multiple = FALSE),
+                  sliderInput(
+                    'spec_maxPoints',
+                    'Max number of pixels, 10^',
+                    value = def_form['spec_maxPoints', 'default'],
+                    min = def_form['spec_maxPoints', 'low'],
+                    max = def_form['spec_maxPoints', 'high'],
+                    step = def_form['spec_maxPoints', 'step'])
+                )
+              ),
+
+              tabPanel(
+                "Oscillogram",
+                selectInput(
+                  'osc',
+                  'Oscillogram type',
+                  choices = c('linear', 'dB'),
+                  selected = 'linear', multiple = FALSE),
+                sliderInput(
+                  'osc_maxPoints',
+                  'Max number of pixels, 10^',
+                  value = def_form['osc_maxPoints', 'default'],
+                  min = def_form['osc_maxPoints', 'low'],
+                  max = def_form['osc_maxPoints', 'high'],
+                  step = def_form['osc_maxPoints', 'step'])
+              ),
+
+              tabPanel(
+                "Spectrum",
+                sliderInput(
+                  'spectrum_xlim',
+                  'Frequency range, kHz',
+                  value = c(0, def_form['spectrum_xlim', 'default']),
+                  min = def_form['spectrum_xlim', 'low'],
+                  max = def_form['spectrum_xlim', 'high'],
+                  step = def_form['spectrum_xlim', 'step']),
+                sliderInput(
+                  'spectrum_len',
+                  'Resolution, points',
+                  value = def_form['spectrum_len', 'default'],
+                  min = def_form['spectrum_len', 'low'],
+                  max = def_form['spectrum_len', 'high'],
+                  step = def_form['spectrum_len', 'step'])
+              ),
+
+              tabPanel("Annotations")
             )
           )
-        ),
+        ),  # end of column "sidebar"
 
-        navbarMenu(
-          "Plotting",
-          tabPanel(
-            "Spectrogram",
-            sliderInput(
-              'spec_ylim',
-              'Frequency range, kHz',
-              value = c(0, def_form['spec_ylim', 'default']),
-              min = def_form['spec_ylim', 'low'],
-              max = def_form['spec_ylim', 'high'],
-              step = def_form['spec_ylim', 'step']),
-            numericInput(
-              'windowLength',
-              'Window length, ms',
-              value = def_form['windowLength', 'default'],
-              min = def_form['windowLength', 'low'],
-              max = def_form['windowLength', 'high'],
-              step = def_form['windowLength', 'step']),
-            sliderInput(
-              'overlap',
-              'Overlap, %',
-              value = def_form['overlap', 'default'],
-              min = def_form['overlap', 'low'],
-              max = def_form['overlap', 'high'],
-              step = def_form['overlap', 'step']),
-            sliderInput(
-              'dynamicRange',
-              'Dynamic range, dB',
-              value = def_form['dynamicRange', 'default'],
-              min = def_form['dynamicRange', 'low'],
-              max = def_form['dynamicRange', 'high'],
-              step = def_form['dynamicRange', 'step']),
-            radioButtons(
-              inputId = 'spec_colorTheme',
-              label = 'Color scheme',
-              choices = c("Seewave" = "seewave",
-                          "Heat" = "heat.colors",
-                          "Black & white" = "bw"),
-              selected = 'bw', inline = TRUE, width = NULL),
-            sliderInput(
-              'specContrast',
-              'Contrast',
-              value = def_form['specContrast', 'default'],
-              min = def_form['specContrast', 'low'],
-              max = def_form['specContrast', 'high'],
-              step = def_form['specContrast', 'step']),
-            sliderInput(
-              'specBrightness',
-              'Brightness',
-              value = def_form['specBrightness', 'default'],
-              min = def_form['specBrightness', 'low'],
-              max = def_form['specBrightness', 'high'],
-              step = def_form['specBrightness', 'step']),
-            shinyBS::bsCollapsePanel(
-              "Advanced",
-              sliderInput(
-                'zp',
-                'Zero padding, points 2 ^ n',
-                value = def_form['zp', 'default'],
-                min = def_form['zp', 'low'],
-                max = def_form['zp', 'high'],
-                step = def_form['zp', 'step']),
-              selectInput(
-                'wn',
-                'Window type',
-                choices = c('bartlett', 'blackman', 'flattop', 'gaussian',
-                            'hamming', 'hanning', 'rectangle'),
-                selected = 'gaussian', multiple = FALSE),
-              sliderInput(
-                'spec_maxPoints',
-                'Max number of pixels, 10^',
-                value = def_form['spec_maxPoints', 'default'],
-                min = def_form['spec_maxPoints', 'low'],
-                max = def_form['spec_maxPoints', 'high'],
-                step = def_form['spec_maxPoints', 'step'])
+        column(
+          width = 8,
+          id ="Main",
+          fluidRow(
+            column(
+              width = 1,
+              bsButton(
+                "showpanel", label = '', icon = icon("bars"),
+                type = "toggle", value = FALSE)
+            ),
+
+            column(
+              width = 3,
+              fileInput(
+                inputId = "loadAudio", label = NULL,
+                # accept = c('audio/wav', 'audio/wave', 'audio/x-wave', 'audio/vnd.wave',
+                #            'audio/mpeg', 'audio/mpeg4-generic', 'audio/mpeg3', 'audio/x-mpeg-3',
+                #            'video/mpeg', 'video/x-mpeg'),
+                multiple = TRUE, buttonLabel = 'Load audio',
+                placeholder = '...')
+            ),
+
+            column(
+              width = 6,
+              tags$div(
+                actionButton(
+                  inputId = "lastFile", label = "<<",
+                  class = "buttonFile"),
+                tags$strong(uiOutput("fileN", inline = TRUE)),
+                actionButton(
+                  inputId = "nextFile", label = ">>",
+                  class = "buttonFile")
+              ),
+              selectInput('fileList', label = NULL, choices = list())
+            ),
+
+            column(
+              width = 2,
+              uiOutput("htmlAudio"),  # not actually shown
+              downloadButton(
+                outputId = "saveRes", label = "",
+                style="color: blue; background-color: orange;"),
+              actionButton(
+                'about', label = '?'),
+              shinyBS:::bsPopover
+              (id = 'about', title = NULL, content = 'Help',
+                placement = "right", trigger = "hover")
+              # shinyBS has to be mentioned somewhere in ui,
+              # otherwise addTooltip doesn't work in server
             )
           ),
 
-          tabPanel(
-            "Oscillogram",
-            selectInput(
-              'osc',
-              'Oscillogram type',
-              choices = c('linear', 'dB'),
-              selected = 'linear', multiple = FALSE),
-            sliderInput(
-              'osc_maxPoints',
-              'Max number of pixels, 10^',
-              value = def_form['osc_maxPoints', 'default'],
-              min = def_form['osc_maxPoints', 'low'],
-              max = def_form['osc_maxPoints', 'high'],
-              step = def_form['osc_maxPoints', 'step'])
+          fluidRow(
+            column(
+              width = 2,
+              actionButton(
+                inputId = 'zoomOut_freq',
+                label = HTML("<img src='icons/zoomOut.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
+                inputId = 'zoomIn_freq',
+                label = HTML("<img src='icons/zoomIn.png' width = '20px'>"),
+                class = "buttonInline")
+            ),
+
+            column(
+              width = 4,
+              actionButton(
+                inputId = "selection_stop",
+                label = HTML("<img src='icons/stop.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
+                inputId = "selection_play",
+                label = HTML("<img src='icons/play.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
+                inputId = "selection_delete",
+                label = HTML("<img src='icons/delete.png' width = '20px'>"),
+                class = "buttonInline")
+            ),
+
+            column(
+              width = 6,
+              actionButton(
+                inputId = 'scrollLeft',
+                label = HTML("<img src='icons/backward.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
+                inputId = 'zoomOut',
+                label = HTML("<img src='icons/zoomOut.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
+                inputId = "zoomToSel",
+                label = HTML("<img src='icons/zoomSel.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
+                inputId = 'zoomIn',
+                label = HTML("<img src='icons/zoomIn.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
+                inputId = 'scrollRight',
+                label = HTML("<img src='icons/forward.png' width = '20px'>"),
+                class = "buttonInline")
+            )
           ),
 
-          tabPanel(
-            "Spectrum",
-            sliderInput(
-              'spectrum_xlim',
-              'Frequency range, kHz',
-              value = c(0, def_form['spectrum_xlim', 'default']),
-              min = def_form['spectrum_xlim', 'low'],
-              max = def_form['spectrum_xlim', 'high'],
-              step = def_form['spectrum_xlim', 'step']),
-            sliderInput(
-              'spectrum_len',
-              'Resolution, points',
-              value = def_form['spectrum_len', 'default'],
-              min = def_form['spectrum_len', 'low'],
-              max = def_form['spectrum_len', 'high'],
-              step = def_form['spectrum_len', 'step'])
-          ),
-
-          tabPanel("Annotations")
-        )
-      )
-    ),  # end of column "sidebar"
-
-    column(
-      width = 10,
-      id ="Main",
-      fluidRow(
-        column(
-          width = 1,
-          bsButton(
-            "showpanel", label = '', icon = icon("bars"),
-            type = "toggle", value = FALSE)
-        ),
-
-        column(
-          width = 2,
-          fileInput(
-            inputId = "loadAudio", label = NULL,
-            # accept = c('audio/wav', 'audio/wave', 'audio/x-wave', 'audio/vnd.wave',
-            #            'audio/mpeg', 'audio/mpeg4-generic', 'audio/mpeg3', 'audio/x-mpeg-3',
-            #            'video/mpeg', 'video/x-mpeg'),
-            multiple = TRUE, buttonLabel = 'Load audio',
-            placeholder = '...')
-        ),
-
-        column(
-          width = 3,
-          tags$div(
-            actionButton(
-              inputId = "lastFile", label = "<<",
-              class = "buttonFile"),
-            tags$strong(uiOutput("fileN", inline = TRUE)),
-            actionButton(
-              inputId = "nextFile", label = ">>",
-              class = "buttonFile")
-          ),
-          selectInput('fileList', label = NULL, choices = list())
-        ),
-
-        column(
-          width = 1,
-          uiOutput("htmlAudio"),  # not actually shown
-          downloadButton(
-            outputId = "saveRes", label = "",
-            style="color: blue; background-color: orange;"),
-          actionButton(
-            'about', label = '?'),
-          shinyBS:::bsPopover
-          (id = 'about', title = NULL, content = 'Help',
-            placement = "right", trigger = "hover")
-          # shinyBS has to be mentioned somewhere in ui,
-          # otherwise addTooltip doesn't work in server
-        ),
-
-        column(
-          width = 5,
-          uiOutput('fButtons', style = "height: 60px;")
-        )
-      ),
-
-      fluidRow(
-        column(
-          width = 1,
-          actionButton(
-            inputId = 'zoomOut_freq',
-            label = HTML("<img src='icons/zoomOut.png' width = '20px'>"),
-            class = "buttonInline"),
-          actionButton(
-            inputId = 'zoomIn_freq',
-            label = HTML("<img src='icons/zoomIn.png' width = '20px'>"),
-            class = "buttonInline")
-        ),
-
-        column(
-          width = 3,
-          actionButton(
-            inputId = "selection_stop",
-            label = HTML("<img src='icons/stop.png' width = '20px'>"),
-            class = "buttonInline"),
-          actionButton(
-            inputId = "selection_play",
-            label = HTML("<img src='icons/play.png' width = '20px'>"),
-            class = "buttonInline"),
-          actionButton(
-            inputId = "selection_delete",
-            label = HTML("<img src='icons/delete.png' width = '20px'>"),
-            class = "buttonInline")
-        ),
-
-        column(
-          width = 3,
-          actionButton(
-            inputId = 'scrollLeft',
-            label = HTML("<img src='icons/backward.png' width = '20px'>"),
-            class = "buttonInline"),
-          actionButton(
-            inputId = 'zoomOut',
-            label = HTML("<img src='icons/zoomOut.png' width = '20px'>"),
-            class = "buttonInline"),
-          actionButton(
-            inputId = "zoomToSel",
-            label = HTML("<img src='icons/zoomSel.png' width = '20px'>"),
-            class = "buttonInline"),
-          actionButton(
-            inputId = 'zoomIn',
-            label = HTML("<img src='icons/zoomIn.png' width = '20px'>"),
-            class = "buttonInline"),
-          actionButton(
-            inputId = 'scrollRight',
-            label = HTML("<img src='icons/forward.png' width = '20px'>"),
-            class = "buttonInline")
-        ),
-
-        column(
-          width = 5
-        )
-      ),
-
-      fluidRow(
-        column(
-          width = 7,
-          tags$div(
-            id = 'specDiv',
-            plotOutput('spectrogram'),
-            plotOutput('specSlider'),
-            plotOutput(
-              'specOver',
-              click = "spectrogram_click",
-              dblclick = dblclickOpts(id = "spectrogram_dblclick"),
-              hover = hoverOpts(id = "spectrogram_hover"),
-              brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
-          ),
-
-          plotOutput(
-            'oscillogram', height = '100px'  # auto to inherit from css in the header
-          ),
-
-          plotOutput(
-            'ann_plot', height = '60px',
-            click = "ann_click",
-            dblclick = dblclickOpts(id = "ann_dblclick")
-          )
-
-        ),
-        column(
-          width = 5,
-
-          tags$div(
-            id = 'spectrumDiv',
-            plotOutput(
-              'spectrum',
-              click = "spectrum_click",
-              dblclick = dblclickOpts(id = "spectrum_dblclick"),
-              hover = hoverOpts(id = "spectrum_hover")),
+          fluidRow(
             tags$div(
-              style = 'position: absolute; top: 5px; right: 20px;',
-              sliderInput(
-                'spectrum_smooth',
-                'Smoothing',
-                value = def_form['spectrum_smooth', 'default'],
-                min = def_form['spectrum_smooth', 'low'],
-                max = def_form['spectrum_smooth', 'high'],
-                step = def_form['spectrum_smooth', 'step'],
-                width = '200px')
-            )
-          ),
+              id = 'specDiv',
+              plotOutput('spectrogram'),
+              plotOutput('specSlider'),
+              plotOutput(
+                'specOver',
+                click = "spectrogram_click",
+                dblclick = dblclickOpts(id = "spectrogram_dblclick"),
+                hover = hoverOpts(id = "spectrogram_hover"),
+                brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
+            ),
 
-          tableOutput('ann_table')  # dataTableOutput('ann_table')
+            plotOutput(
+              'oscillogram', height = '100px'  # auto to inherit from css in the header
+            ),
+
+            plotOutput(
+              'ann_plot', height = '60px',
+              click = "ann_click",
+              dblclick = dblclickOpts(id = "ann_dblclick")
+            )
+          )
         )
       )
+    ),
 
-      #fluidRow(
-      # htmlOutput('statusBar')  # status bar here
-      #)
-    )  # end of column "main"
+    tags$div(
+      id = 'right',
+      fluidRow(
+        uiOutput('fButtons', style = "height: 60px;")
+      ),
+
+      fluidRow(
+        tags$div(
+          id = 'spectrumDiv',
+          plotOutput(
+            'spectrum',
+            click = "spectrum_click",
+            dblclick = dblclickOpts(id = "spectrum_dblclick"),
+            hover = hoverOpts(id = "spectrum_hover")),
+          tags$div(
+            id = 'spectrum_smoothDiv',
+            sliderInput(
+              'spectrum_smooth',
+              'Smoothing',
+              value = def_form['spectrum_smooth', 'default'],
+              min = def_form['spectrum_smooth', 'low'],
+              max = def_form['spectrum_smooth', 'high'],
+              step = def_form['spectrum_smooth', 'step'],
+              width = '200px')
+          )
+        )
+      ),
+
+      fluidRow(
+        tableOutput('ann_table')  # dataTableOutput('ann_table')
+      )
+    )
   )
 )
