@@ -38,3 +38,11 @@ shinyjs.inheritSize = function(params) {
   }
 };
 
+// Navigation slider
+shinyjs.navSlider = function(params) {
+  // params: id, width, left
+  var sl = document.getElementById(params.id);
+  sl.style.width = params.width;
+  sl.style.left = params.left;
+};
+

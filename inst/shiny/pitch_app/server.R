@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: show navigation bar-like rectangle (which part of sound is displayed); maybe analyze one bit at a time like in formant_app
+# To do: show navigation bar-like rectangle (which part of sound is displayed - see https://codepen.io/thenutz/pen/VwYeYEE for inspiration - could have a draggable div as a slider, the rest is js, so server.R wouldn't need to change much); maybe analyze one bit at a time like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -1023,6 +1023,15 @@ server = function(input, output, session) {
     }
     observeEvent(input$scrollLeft, shiftFrame('left'))
     observeEvent(input$scrollRight, shiftFrame('right'))
+
+    observeEvent(c(myPars$myAudio, myPars$spec_xlim), {
+        width = round(diff(myPars$spec_xlim) / myPars$dur * 100, 2)
+        left = round(myPars$spec_xlim[1] / myPars$dur * 100, 2)
+        shinyjs::js$navSlider(  # need an external js script for this
+            id = 'navSlider',  # defined in UI
+            width = paste0(width, '%'),
+            left = paste0(left, '%'))
+    })
 
     # SAVE OUTPUT
     done = function() {
