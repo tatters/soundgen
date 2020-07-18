@@ -320,7 +320,7 @@ def_form = matrix(c(
   'spec_ylim', 5, 0, 96, 0.1,
   'specContrast', .2, -1, 1, .05,
   'specBrightness', 0, -1, 1, .05,
-  'windowLength', 50, 1, 500, 1,
+  'windowLength', 40, 1, 500, 1,
   'overlap', 50, 0, 99, 1,
   'dynamicRange', 80, 10, 200, 10,
   'zp', 0, 0, 13, 1,

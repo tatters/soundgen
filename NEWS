@@ -1,4 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.7.0.9000 [--date--]
+NEW FUNCTIONS:
+  * formant_app(): a Shiny web app for manually correcting formant measurements
+
 BUGS FIXED:
   * morph() accepts vectors like "vibratoFreq = c(0, 3)" in both formulas without crashing
   * pitch_app() saves all files propertly if multiple folders are opened consecutively without saving the output
@@ -6,6 +9,7 @@ BUGS FIXED:
   * filterSoundByMS(): the argument "action = c('remove', 'preserve')" now has an effect
 
 MINOR:
+  * pitch_app(): a new layout and many small changes
   * soundgen(): smoothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing
   * estimateVTL(): the plot shows Cook's distance as a measure of the influence of each formant frequency on apparent VTL
   * osc() replaces osc_db()

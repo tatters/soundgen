@@ -60,6 +60,7 @@ ui = fluidPage(
     tags$style(".buttonInline {padding: 2px 2px;}"),
     tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
     tags$style("#fileList div.item {font-size: .75em;}"),
+    tags$style("#ann_table {font-size: .8em;}")
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible

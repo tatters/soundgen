@@ -7,7 +7,25 @@
 formant_app()
 }
 \description{
-Starts a shiny app for manually correcting formant measurements. Supported browsers: Firefox / Chrome. Note that the
-browser has to be able to playback WAV audio files, otherwise there will be
-no sound.
+Starts a shiny app for manually correcting formant measurements. Supported
+browsers: Firefox / Chrome. For more tips, see \code{\link{pitch_app}} and
+http://cogsci.se/soundgen.html.
+}
+\details{
+Suggested workflow: load one or several audio files (wav/mp3), preferably not
+longer than a minute or so. Select a region of interest in the spectrogram -
+for example, a sustained vowel with clear and relatively steady formants.
+Double-click within the selection to create a new annotation (you may add a
+text label if needed). If you are satisfied with the automatically calculated
+formant frequencies, proceed to the next region of interest. If not, there
+are 4 ways to adjust them: (1) type in the correct number in one of the
+formant boxes in the top right corner; (2) click a spectrogram within
+selection (pick the formant number to adjust by clicking the formant boxes);
+(3) single-click the spectrum to use the cursor's position, or (4)
+double-click the spectrum to use the nearest spectral peak. When done with a
+file, move on to the next one in the queue. Use the orange button to download
+the results.
+}
+\seealso{
+\code{\link{pitch_app}}
 }

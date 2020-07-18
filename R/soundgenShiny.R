@@ -68,13 +68,6 @@ soundgen_app = function() {
 #' the file. You can also select a region to voice/unvoice or shift it as a
 #' whole or to set a prior based on selected frequency range.
 #'
-#' \bold{Audio playback}
-#'
-#' The "Play" button / spacebar plays the currently plotted region, but it uses
-#' R for playback, which may or may not work - see \code{\link{playme}} for
-#' troubleshooting. As a fallback option, the html audio tag at the top plays
-#' the entire file.
-#'
 #' \bold{Recovering lost data}
 #'
 #' Every time you click "next" or "last" to move in between files in the queue,
@@ -85,6 +78,9 @@ soundgen_app = function() {
 #' wank to append the old data to the new one. Path to backup file:
 #' "[R_installation_folder]/soundgen/shiny/pitch_app/www/temp.csv", for example,
 #' "/home/allgoodguys/R/x86_64-pc-linux-gnu-library/3.6/soundgen/shiny/pitch_app/www/temp.csv"
+#'
+#' @seealso \code{\link{formant_app}}
+#'
 #' @export
 #' @examples
 #' \dontrun{
@@ -125,9 +121,26 @@ pitch_app = function() {
 
 #' Interactive formant tracker
 #'
-#' Starts a shiny app for manually correcting formant measurements. Supported browsers: Firefox / Chrome. Note that the
-#' browser has to be able to playback WAV audio files, otherwise there will be
-#' no sound.
+#' Starts a shiny app for manually correcting formant measurements. Supported
+#' browsers: Firefox / Chrome. For more tips, see \code{\link{pitch_app}} and
+#' http://cogsci.se/soundgen.html.
+#'
+#' Suggested workflow: load one or several audio files (wav/mp3), preferably not
+#' longer than a minute or so. Select a region of interest in the spectrogram -
+#' for example, a sustained vowel with clear and relatively steady formants.
+#' Double-click within the selection to create a new annotation (you may add a
+#' text label if needed). If you are satisfied with the automatically calculated
+#' formant frequencies, proceed to the next region of interest. If not, there
+#' are 4 ways to adjust them: (1) type in the correct number in one of the
+#' formant boxes in the top right corner; (2) click a spectrogram within
+#' selection (pick the formant number to adjust by clicking the formant boxes);
+#' (3) single-click the spectrum to use the cursor's position, or (4)
+#' double-click the spectrum to use the nearest spectral peak. When done with a
+#' file, move on to the next one in the queue. Use the orange button to download
+#' the results.
+#'
+#' @seealso \code{\link{pitch_app}}
+#'
 #' @export
 formant_app = function() {
   appDir = system.file("shiny", "formant_app", package = "soundgen")

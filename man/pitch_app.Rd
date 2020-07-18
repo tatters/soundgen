@@ -43,13 +43,6 @@ every single frame. For longer files, you can zoom in/out and navigate within
 the file. You can also select a region to voice/unvoice or shift it as a
 whole or to set a prior based on selected frequency range.
 
-\bold{Audio playback}
-
-The "Play" button / spacebar plays the currently plotted region, but it uses
-R for playback, which may or may not work - see \code{\link{playme}} for
-troubleshooting. As a fallback option, the html audio tag at the top plays
-the entire file.
-
 \bold{Recovering lost data}
 
 Every time you click "next" or "last" to move in between files in the queue,
@@ -101,4 +94,7 @@ df4 = modulationSpectrumFolder(path_to_audio)
 # STEP 4: merge df2, df3, df4, ... in R or a spreadsheet editor to have all
 acoustic descriptives together
 }
+}
+\seealso{
+\code{\link{formant_app}}
 }
