@@ -64,6 +64,7 @@ server = function(input, output, session) {
         myPars$currentAnn = NULL  # the idx of currently selected annotation
         myPars$bp = NULL          # selected points (under brush)
         myPars$spec = NULL
+        myPars$spec_trimmed = NULL
         myPars$formantTracks = NULL
         myPars$formants = NULL
         myPars$analyzedUpTo = NULL
@@ -410,12 +411,17 @@ server = function(input, output, session) {
         }
     })
 
+    observe({
+        # keep track of the maximum number of formant ever analyzed
+        # to make sure the output table has enough columns
+        myPars$maxF = max(myPars$maxF,
+                          input$nFormants,
+                          length(colnames(myPars$ann)) - 6)  # just the formant columns
+    })
+
     observeEvent(input$nFormants, {
         myPars$ff = paste0('f', 1:input$nFormants)
         myPars$f_col_names = paste0(myPars$ff, '_freq')
-        # keep track of the maximum number of formant ever analyzed
-        # to make sure the output table has enough columns
-        myPars$maxF = max(myPars$maxF, input$nFormants)
         if (!is.null(myPars$formantTracks)) {
             missingCols = myPars$f_col_names[which(!myPars$f_col_names %in% colnames(myPars$formantTracks))]
             if (length(missingCols > 0)) myPars$formantTracks[, missingCols] = NA
