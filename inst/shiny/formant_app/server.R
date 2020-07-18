@@ -1188,7 +1188,12 @@ server = function(input, output, session) {
                                         myPars$spectrogram_brush$xmax)) +
                     1/4 * mean(myPars$spec_xlim)
             } else {
-                midpoint = 3/4 * myPars$cursor + 1/4 * mean(myPars$spec_xlim)
+                if (myPars$cursor > 0) {
+                    midpoint = 3/4 * myPars$cursor + 1/4 * mean(myPars$spec_xlim)
+                } else {
+                    # when first opening a file, zoom in to the beginning
+                    midpoint = mean(myPars$spec_xlim) / coef
+                }
             }
         } else {
             midpoint = mean(myPars$spec_xlim)
@@ -1220,6 +1225,8 @@ server = function(input, output, session) {
             newLeft = newRight - ran
         }
         myPars$spec_xlim = c(newLeft, newRight)
+        # update cursor when shifting frame, but not when zooming
+        myPars$cursor = myPars$spec_xlim[1]
     }
     observeEvent(input$scrollLeft, shiftFrame('left'))
     observeEvent(input$scrollRight, shiftFrame('right'))
