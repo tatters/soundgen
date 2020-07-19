@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: make the navSlider draggable (see https://codepen.io/thenutz/pen/VwYeYEE for inspiration); maybe analyze one bit at a time like in formant_app
+# To do: maybe analyze one bit at a time like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -1034,8 +1034,8 @@ server = function(input, output, session) {
         if (myPars$print) print('Moving slider')
         width = round(diff(myPars$spec_xlim) / myPars$dur * 100, 2)
         left = round(myPars$spec_xlim[1] / myPars$dur * 100, 2)
-        shinyjs::js$navSlider(  # need an external js script for this
-            id = 'navSlider',  # defined in UI
+        shinyjs::js$scrollBar(  # need an external js script for this
+            id = 'scrollBar',  # defined in UI
             width = paste0(width, '%'),
             left = paste0(left, '%'))
     }

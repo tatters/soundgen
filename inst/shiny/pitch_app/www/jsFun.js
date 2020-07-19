@@ -38,8 +38,8 @@ shinyjs.inheritSize = function(params) {
   }
 };
 
-// Navigation slider
-shinyjs.navSlider = function(params) {
+// Move the scrollbar as ordered from R
+shinyjs.scrollBar = function(params) {
   // params: id, width, left
   var sl = document.getElementById(params.id);
   sl.style.width = params.width;

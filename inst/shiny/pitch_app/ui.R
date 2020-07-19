@@ -1,55 +1,26 @@
 # pitch_app()
 #
 ui = fluidPage(
-  # headerPanel('...'),
-  tags$script('
-    $(document).on("keydown", function (e) {
-       Shiny.onInputChange("userPressedSmth", e.which + Math.random() / 3);
-       // w/o Math.random() only the first of a series of identical
-       // keydown events is sent to server()
-    });
-
-    // prevent spacebar from activating the last pressed button
-    // see https://stackoverflow.com/questions/22280139/prevent-space-button-from-triggering-any-other-button-click-in-jquery
-    $(document).keyup(function(event) {
-      if(event.which === 32) {
-  	    event.preventDefault();
-      }
-    });
-  '),
-  includeScript("www/pitch_app.js"),
-
+  # css
   tags$head(
-    tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
-    tags$style(".buttonInline {padding: 2px 2px;}"),
-    tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
-
-    ## resizable plots
-    # spectrogram (extra mafan b/c it consists of three layers)
-    tags$style('#specDiv {position: relative; resize: vertical; overflow: hidden; height: 500px;}'),
-    tags$style('#specDiv div {position: absolute; left: 0; right: 0; top: 0; bottom: 0; width: 100%; height: inherit;}'),
-    tags$style('#specDiv img {width: 100%; height: inherit;}'),
-
-    # oscillogram
-    tags$style('#oscillogram {resize: vertical; overflow: hidden;}'),
-    tags$style('#oscillogram img {width: 100%; height: 100%;}'),
-
-    # navSlider
-    tags$style('#navSliderCont {width: 95%; height: 12px; box-sizing: border-box; position: relative; margin: auto; padding: 0; background-color: #e7e3e3; border-radius: 2px;}'),
-    tags$style('#navSlider {width: 100%; height: 10px; position: absolute; padding: 0; top: 1px; left: 10%; background-color: #bdb5b5; border-radius: 5px;}')
+    shiny::includeCSS("www/pitch_app.css")
   ),
 
-  shinyjs::useShinyjs(),  # needed to make the side panel collapsible
-  # see https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
+  # js
+  includeScript("www/pitch_app.js"),
+  shinyjs::useShinyjs(),
+  # handy for calling js functions from R, eg for a collapsible side panel - see
+  # https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
   # alternative: https://rstudio.github.io/shinydashboard
 
-  # use an external javascript with any function I need to write myself
+  # import some js functions to be invoked from R with shinyjs
   # (eg for playing the audio)
   shinyjs::extendShinyjs(
-    script = 'www/jsFun.js',
-    functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize', 'navSlider')
+    script = 'www/pitch_app.js',
+    functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize', 'scrollBar')
   ),
 
+  # html
   fluidRow(
     column(
       width = 3,
@@ -640,9 +611,9 @@ ui = fluidPage(
         ),
 
         tags$div(
-          id = 'navSliderCont',
+          id = 'scrollBarCont',
           tags$div(
-            id = 'navSlider',
+            id = 'scrollBar',
 
           )
         ),
