@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: show navigation bar-like rectangle (which part of sound is displayed - see https://codepen.io/thenutz/pen/VwYeYEE for inspiration - could have a draggable div as a slider, the rest is js, so server.R wouldn't need to change much); maybe analyze one bit at a time like in formant_app
+# To do: make the navSlider draggable (see https://codepen.io/thenutz/pen/VwYeYEE for inspiration); maybe analyze one bit at a time like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -156,6 +156,7 @@ server = function(input, output, session) {
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
         myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
+        moveSlider()
 
         # update info - file number ... out of ...
         updateSelectInput(session, 'fileList',
@@ -974,6 +975,7 @@ server = function(input, output, session) {
     observeEvent(input$zoomOut_freq, changeZoom_freq(myPars$zoomFactor_freq))
 
     changeZoom = function(coef, toCursor = FALSE) {
+        if (myPars$print) print('Zooming')
         # intelligent zoom-in a la Audacity: midpoint moves closer to seletion/cursor
         if (!is.null(myPars$cursor) & toCursor) {
             if (!is.null(myPars$spectrogram_brush)) {
@@ -995,6 +997,7 @@ server = function(input, output, session) {
         newLeft = max(0, midpoint - halfRan)
         newRight = min(myPars$dur, midpoint + halfRan)
         myPars$spec_xlim = c(newLeft, newRight)
+        moveSlider()
     }
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
@@ -1002,6 +1005,7 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrogram_brush)) {
             myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin,
                                        myPars$spectrogram_brush$xmax))
+            moveSlider()
         }
     }
     observeEvent(input$zoomToSel, {
@@ -1009,6 +1013,7 @@ server = function(input, output, session) {
     })
 
     shiftFrame = function(direction) {
+        if (myPars$print) print('Shifting frame')
         ran = diff(myPars$spec_xlim)
         if (direction == 'left') {
             newLeft = max(0, myPars$spec_xlim[1] - ran)
@@ -1020,25 +1025,38 @@ server = function(input, output, session) {
         myPars$spec_xlim = c(newLeft, newRight)
         # update cursor when shifting frame, but not when zooming
         myPars$cursor = myPars$spec_xlim[1]
+        moveSlider()
     }
     observeEvent(input$scrollLeft, shiftFrame('left'))
     observeEvent(input$scrollRight, shiftFrame('right'))
 
-    observeEvent(c(myPars$myAudio, myPars$spec_xlim), {
+    moveSlider = function() {
+        if (myPars$print) print('Moving slider')
         width = round(diff(myPars$spec_xlim) / myPars$dur * 100, 2)
         left = round(myPars$spec_xlim[1] / myPars$dur * 100, 2)
         shinyjs::js$navSlider(  # need an external js script for this
             id = 'navSlider',  # defined in UI
             width = paste0(width, '%'),
             left = paste0(left, '%'))
-    })
+    }
+
+    observeEvent(input$scrollBarLeft, {
+        if (!is.null(myPars$spec)) {
+            spec_span = diff(myPars$spec_xlim)
+            scrollBarLeft_ms = input$scrollBarLeft * myPars$dur
+            myPars$spec_xlim = c(max(0, scrollBarLeft_ms),
+                                 min(myPars$dur, scrollBarLeft_ms + spec_span))
+        }
+    }, ignoreInit = TRUE)
 
     # SAVE OUTPUT
     done = function() {
         # meaning we have finished editing pitch contour for a sound - prepares
         # the output
         if (myPars$print) print('Running done()...')
-        if (!is.null(myPars$myAudio_path) && !is.null(myPars$result)) {
+        if (!is.null(myPars$myAudio_path) &&
+            !is.null(myPars$result) && !
+            is.null(myPars$pitch)) {
             new = data.frame(
                 file = basename(myPars$myAudio_filename),
                 time = paste(round(myPars$X), collapse = ', '),

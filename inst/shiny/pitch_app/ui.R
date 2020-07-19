@@ -17,6 +17,7 @@ ui = fluidPage(
       }
     });
   '),
+  includeScript("www/pitch_app.js"),
 
   tags$head(
     tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
@@ -34,8 +35,8 @@ ui = fluidPage(
     tags$style('#oscillogram img {width: 100%; height: 100%;}'),
 
     # navSlider
-    tags$style('#navSliderCont {width: 100%; height: 12px; box-sizing: border-box; position: relative; margin: 1px 20px 1px 20px; padding: 0; background-color: #e7e3e3; border-radius: 2px;}'),
-    tags$style('#navSlider {width: 40%; height: 10px; position: absolute; padding: 0; top: 1px; left: 10%; background-color: #bdb5b5; border-radius: 5px;}')
+    tags$style('#navSliderCont {width: 95%; height: 12px; box-sizing: border-box; position: relative; margin: auto; padding: 0; background-color: #e7e3e3; border-radius: 2px;}'),
+    tags$style('#navSlider {width: 100%; height: 10px; position: absolute; padding: 0; top: 1px; left: 10%; background-color: #bdb5b5; border-radius: 5px;}')
   ),
 
   shinyjs::useShinyjs(),  # needed to make the side panel collapsible
