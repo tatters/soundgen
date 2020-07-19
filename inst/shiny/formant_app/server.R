@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; spacebar play/stop; show formants on spectrum (maybe as text labels next to the ampl corresponding to each formant freq); load audio upon session start; maybe arbitrary number of annotation tiers;
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 
 # # tip: to read the output, do smth like:
@@ -13,6 +13,9 @@
 server = function(input, output, session) {
     # make overlaid plots resizable (js fix)
     shinyjs::js$inheritSize(parentDiv = 'specDiv')
+
+    # set max upload file size to 30 MB
+    options(shiny.maxRequestSize = 30 * 1024 ^ 2)
 
     myPars = reactiveValues()
     myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
@@ -666,11 +669,11 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrum)) {
             if (myPars$print) print('Drawing spectrum...')
             par(mar = c(2, 2, 0.5, 0))
-            xlim = input$spectrum_xlim # xlim = c(0, myPars$spectrum$freq_range[2])
+            xlim = input$spectrum_xlim # xlim = c(0, myPars$spectrum_freq_range[2])
             ylim = c(
-                myPars$spectrum$ampl_range[1],
+                myPars$spectrum_ampl_range[1],
                 # leave extra room for "smoothing" slider
-                myPars$spectrum$ampl_range[2] + 1/4 * diff(myPars$spectrum$ampl_range)
+                myPars$spectrum_ampl_range[2] + 1/4 * diff(myPars$spectrum_ampl_range)
             )
             plot(myPars$spectrum$freq,
                  myPars$spectrum$ampl,
@@ -689,7 +692,7 @@ server = function(input, output, session) {
             if (!is.null(myPars$spectrum_hover)) {
                 abline(v = myPars$spectrum_hover$x, lty = 2)
                 text(x = myPars$spectrum_hover$x,
-                     y = myPars$spectrum$ampl_range[1],
+                     y = myPars$spectrum_ampl_range[1],
                      labels = myPars$spectrum_hover$cursor,
                      adj = c(0, 0))
                 text(x = myPars$spectrum_hover$pf,
@@ -707,12 +710,13 @@ server = function(input, output, session) {
             if (myPars$print) print('Extracting spectrum of selection...')
             if (!is.null(myPars$selection)) {
                 # take the spectrum of selection (annotated region) from raw audio
-                myPars$spectrum = as.list(getSmoothSpectrum(
+                myPars$spectrum = try(as.list(getSmoothSpectrum(
                     sound = myPars$selection,
                     samplingRate = myPars$samplingRate,
                     len = input$spectrum_len,
                     loessSpan = 10 ^ input$spectrum_smooth
-                ))
+                )))
+                if (class(myPars$spectrum) == 'try-error') browser()
                 # myPars$spectrum = list(
                 #     freq = as.numeric(rownames(myPars$spec)),
                 #     ampl = rowMeans(myPars$spec_trimmed)
@@ -737,8 +741,8 @@ server = function(input, output, session) {
             }
 
             isolate({
-                myPars$spectrum$freq_range = range(myPars$spectrum$freq)
-                myPars$spectrum$ampl_range = range(myPars$spectrum$ampl)
+                myPars$spectrum_freq_range = range(myPars$spectrum$freq)
+                myPars$spectrum_ampl_range = range(myPars$spectrum$ampl)
             })
         }
     })
