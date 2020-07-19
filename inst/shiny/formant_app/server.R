@@ -172,6 +172,7 @@ server = function(input, output, session) {
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
         myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
         myPars$regionToAnalyze = myPars$spec_xlim
+        moveSlider()
 
         # update info - file number ... out of ...
         updateSelectInput(session, 'fileList',
@@ -1202,6 +1203,7 @@ server = function(input, output, session) {
         newLeft = max(0, midpoint - halfRan)
         newRight = min(myPars$dur, midpoint + halfRan)
         myPars$spec_xlim = c(newLeft, newRight)
+        moveSlider()
     }
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
@@ -1209,6 +1211,7 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrogram_brush)) {
             myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin,
                                        myPars$spectrogram_brush$xmax))
+            moveSlider()
         }
     }
     observeEvent(input$zoomToSel, {
@@ -1227,9 +1230,29 @@ server = function(input, output, session) {
         myPars$spec_xlim = c(newLeft, newRight)
         # update cursor when shifting frame, but not when zooming
         myPars$cursor = myPars$spec_xlim[1]
+        moveSlider()
     }
     observeEvent(input$scrollLeft, shiftFrame('left'))
     observeEvent(input$scrollRight, shiftFrame('right'))
+
+    moveSlider = function() {
+        if (myPars$print) print('Moving slider')
+        width = round(diff(myPars$spec_xlim) / myPars$dur * 100, 2)
+        left = round(myPars$spec_xlim[1] / myPars$dur * 100, 2)
+        shinyjs::js$scrollBar(  # need an external js script for this
+            id = 'scrollBar',  # defined in UI
+            width = paste0(width, '%'),
+            left = paste0(left, '%'))
+    }
+
+    observeEvent(input$scrollBarLeft, {
+        if (!is.null(myPars$spec)) {
+            spec_span = diff(myPars$spec_xlim)
+            scrollBarLeft_ms = input$scrollBarLeft * myPars$dur
+            myPars$spec_xlim = c(max(0, scrollBarLeft_ms),
+                                 min(myPars$dur, scrollBarLeft_ms + spec_span))
+        }
+    }, ignoreInit = TRUE)
 
     # SAVE OUTPUT
     done = function() {

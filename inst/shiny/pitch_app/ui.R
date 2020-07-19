@@ -613,8 +613,7 @@ ui = fluidPage(
         tags$div(
           id = 'scrollBarCont',
           tags$div(
-            id = 'scrollBar',
-
+            id = 'scrollBar'
           )
         ),
 

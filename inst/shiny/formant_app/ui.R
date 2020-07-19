@@ -1,79 +1,26 @@
 # formant_app()
 #
 ui = fluidPage(
-  # headerPanel('...'),
-  tags$script('
-    $(document).on("keydown", function (e) {
-       Shiny.onInputChange("userPressedSmth", e.which + Math.random() / 3);
-       // w/o Math.random() only the first of a series of identical
-       // keydown events is sent to server()
-    });
-
-    // prevent spacebar from activating the last pressed button
-    // see https://stackoverflow.com/questions/22280139/prevent-space-button-from-triggering-any-other-button-click-in-jquery
-    $(document).keyup(function(event) {
-      if(event.which === 32) {
-  	    event.preventDefault();
-      }
-    });
-  '),
-
   # css
   tags$head(
-    # grid
-    tags$style(".container-fluid {margin: 0; padding: 0;}"),
-    tags$style(".row {margin-left: 0; margin-right: 0;}"),
-    tags$style("#gridCont {display: grid; padding: 3px; grid-gap: 0; grid-template-columns: min-content 1fr; grid-template-areas: 'left right';}"),
-    tags$style("#left {grid-area: left; border: 2px solid lightgray; overflow: auto; resize: horizontal; width: 60vw; min-width: 25vw; max-width: 75vw;}"),
-    tags$style("#right {grid-area: right; border: 2px solid lightgray;}"),
-
-    ## resizable plots
-    # spectrogram (extra mafan b/c it consists of three layers)
-    tags$style('#specDiv {position: relative; resize: vertical; overflow: hidden; height: 500px;}'),
-    tags$style('#specDiv div {position: absolute; left: 0; right: 0; top: 0; bottom: 0; width: 100%; height: inherit;}'),
-    tags$style('#specDiv img {width: 100%; height: inherit;}'),
-
-    # oscillogram
-    tags$style('#oscillogram {resize: vertical; overflow: hidden;}'),
-    tags$style('#oscillogram img {width: 100%; height: 100%;}'),
-
-    # annotations
-    tags$style('#ann_plot {resize: vertical; overflow: hidden;}'),
-    tags$style('#ann_plot img {width: 100%; height: 100%;}'),
-
-    # spectrum
-    tags$style('#spectrumDiv {position: relative;}'),
-    tags$style('#spectrum {resize: vertical; overflow: hidden; height: 500px;}'),
-    tags$style('#spectrum img {width: 100%; height: inherit;}'),
-    tags$style('#spectrum_smoothDiv {position: absolute; top: 5px; right: 20px;}'),
-
-    # output table
-    tags$style('#ann_table {resize: vertical; overflow: auto; margin-left: auto; margin-right: auto; margin-top: 10px; height: 160px;}'),
-
-    # misc
-    tags$style("input {font-size: 1em}"),
-    tags$style(".form-control {font-size: .85em; padding: 1px 4px 1px 4px;}"),
-    tags$style(".fBox {display: inline-block; width: 50px; padding: 0; margin: 0; text-align: center;}"),
-    tags$style(".selected {background-color: #33333340;}"),
-    tags$style("label {font-size: 1em;}"),
-    tags$style(".buttonBlock {padding: 2px 2px; display: block}"),
-    tags$style(".buttonInline {padding: 2px 2px;}"),
-    tags$style(".buttonFile {background-color: lightgray; padding: 4px 10px; margin: 0; font-weight: bold;}"),
-    tags$style("#fileList div.item {font-size: .75em;}"),
-    tags$style("#ann_table {font-size: .8em;}")
+    shiny::includeCSS("www/formant_app.css")
   ),
 
-  shinyjs::useShinyjs(),  # needed to make the side panel collapsible
-  # see https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
+  # js
+  includeScript("www/formant_app.js"),
+  shinyjs::useShinyjs(),
+  # handy for calling js functions from R, eg for a collapsible side panel - see
+  # https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
   # alternative: https://rstudio.github.io/shinydashboard
 
-  # use an external javascript with any function I need to write myself
+  # import some js functions to be invoked from R with shinyjs
   # (eg for playing the audio)
   shinyjs::extendShinyjs(
-    script = 'www/jsFun.js',
-    functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize')
+    script = 'www/formant_app.js',
+    functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize', 'scrollBar')
   ),
 
+  # html
   tags$div(
     id = 'gridCont',
 
@@ -423,6 +370,13 @@ ui = fluidPage(
                 dblclick = dblclickOpts(id = "spectrogram_dblclick"),
                 hover = hoverOpts(id = "spectrogram_hover"),
                 brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
+            ),
+
+            tags$div(
+              id = 'scrollBarCont',
+              tags$div(
+                id = 'scrollBar'
+              )
             ),
 
             plotOutput(
