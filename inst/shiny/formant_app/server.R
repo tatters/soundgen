@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; add LPC option median/mean (median should be more robust); load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 
 # # tip: to read the output, do smth like:
@@ -715,7 +715,7 @@ server = function(input, output, session) {
                         idx_f = which.min(abs(myPars$spectrum$freq - f))
                         text(
                             x = f,
-                            y = myPars$spectrum$ampl[idx_f],
+                            y = myPars$spectrum$ampl[idx_f] + 5,  # +5 to avoid overlap with cross
                             labels = paste0('F', i),
                             adj = c(.5, 0)
                         )
@@ -1063,9 +1063,9 @@ server = function(input, output, session) {
                 idx = which(myPars$formantTracks$time >= myPars$ann$from[myPars$currentAnn] &
                                 myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn])
             })
-            myPars$formants = round(colMeans(
-                myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)],
-                na.rm = TRUE))
+            fMat = myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)]
+            myPars$formants = apply(fMat, 2, function(x)
+                round(do.call(input$summaryFun, list(x, na.rm = TRUE))))
             # myPars$bandwidth ?
 
             # fill in the formant boxes

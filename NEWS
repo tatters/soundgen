@@ -9,12 +9,11 @@ BUGS FIXED:
   * filterSoundByMS(): the argument "action = c('remove', 'preserve')" now has an effect
 
 MINOR:
-  * pitch_app(): a new layout and many small changes
+  * pitch_app(): a new layout and many small changes, e.g. caching to speed up the plotting of long files
   * soundgen(): smoothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing
   * estimateVTL(): the plot shows Cook's distance as a measure of the influence of each formant frequency on apparent VTL
   * osc() replaces osc_db()
   * osc(), spectrogram(): fast plotting of long audio files, updated tick labels
-  * pitch_app(): caching to speed up the plotting of long files
   * analyze(): new arguments from/to to analyze only a part of sound
 
 

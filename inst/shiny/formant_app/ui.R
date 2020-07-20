@@ -58,6 +58,13 @@ ui = fluidPage(
                   min = def_form['silence', 'low'],
                   max = def_form['silence', 'high'],
                   step = def_form['silence', 'step']),
+                selectInput(
+                  'summaryFun',
+                  'Average measure per annotated region',
+                  choices = list('Median' = 'median',
+                                 'Mean' = 'mean'),
+                  selected = 'median'
+                ),
                 textInput(
                   'coeffs',
                   'Number of LPC coefficients',
