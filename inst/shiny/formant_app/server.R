@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; spacebar play/stop; show formants on spectrum (maybe as text labels next to the ampl corresponding to each formant freq); load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; add LPC option median/mean (median should be more robust); load audio upon session start; maybe arbitrary number of annotation tiers;
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 
 # # tip: to read the output, do smth like:
@@ -17,19 +17,22 @@ server = function(input, output, session) {
     # set max upload file size to 30 MB
     options(shiny.maxRequestSize = 30 * 1024 ^ 2)
 
-    myPars = reactiveValues()
-    myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
-    myPars$zoomFactor_freq = 1.5  # same for frequency
-    myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
-    myPars$drawSpec = TRUE
-    myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
-    myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
-    myPars$initDur = 2000            # initial duration to analyze (ms)
-    myPars$out_fTracks = list()      # a list for storing formant tracks per file
-    myPars$out_spects = list()       # a list for storing spectrograms
-    myPars$selectedF = 'f1'          # preselect F1 for correction
-    myPars$slider_ms = 50            # how often to update play slider
-    myPars$cursor = 0
+    myPars = reactiveValues(
+        zoomFactor = 2,     # zoom buttons change time zoom by this factor
+        zoomFactor_freq = 1.5,  # same for frequency
+        print = TRUE,       # if TRUE, some functions print a meassage to the console when called
+        drawSpec = TRUE,
+        shinyTip_show = 1000,      # delay until showing a tip (ms)
+        shinyTip_hide = 0,         # delay until hiding a tip (ms)
+        initDur = 2000,            # initial duration to analyze (ms)
+        out_fTracks = list(),      # a list for storing formant tracks per file
+        out_spects = list(),       # a list for storing spectrograms
+        selectedF = 'f1',          # preselect F1 for correction
+        slider_ms = 50,            # how often to update play slider
+        cursor = 0,
+        play = list(on = FALSE)
+    )
+
     # NB: using myPars$play$cursor for some reason invalidates the observer,
     # so it keeps executing as fast as it can - no idea why!
 
@@ -695,12 +698,34 @@ server = function(input, output, session) {
                      y = myPars$spectrum_ampl_range[1],
                      labels = myPars$spectrum_hover$cursor,
                      adj = c(0, 0))
+                # show the nearest spectral peak
                 text(x = myPars$spectrum_hover$pf,
                      y = myPars$spectrum_hover$pa,
                      labels = myPars$spectrum_hover$peak,
                      adj = c(0, 0))
                 points(x = myPars$spectrum_hover$pf,
                        y = myPars$spectrum_hover$pa, pch = 16)
+            }
+
+            # plot formant frequencies, if any
+            if (!is.null(myPars$formants) && any(is.numeric(myPars$formants))) {
+                for (i in 1:length(myPars$formants)) {
+                    f = myPars$formants[i] / 1000
+                    if (is.numeric(f)) {
+                        idx_f = which.min(abs(myPars$spectrum$freq - f))
+                        text(
+                            x = f,
+                            y = myPars$spectrum$ampl[idx_f],
+                            labels = paste0('F', i),
+                            adj = c(.5, 0)
+                        )
+                        segments(
+                            x0 = f, y0 = ylim[1] - .04 * diff(ylim),
+                            x1 = f, y1 = myPars$spectrum$ampl[idx_f],
+                            lty = 3, col = 'lightgreen'
+                        )
+                    }
+                }
             }
         }
     })
@@ -1085,7 +1110,7 @@ server = function(input, output, session) {
     })
 
     ## Buttons for operations with selection
-    playSel = function() {
+    startPlay = function() {
         if (!is.null(myPars$myAudio)) {
             if (!is.null(myPars$spectrogram_brush)) {
                 myPars$play$from = myPars$spectrogram_brush$xmin / 1000
@@ -1110,13 +1135,15 @@ server = function(input, output, session) {
             # playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
         }
     }
-    observeEvent(c(input$selection_play), playSel())  # add , myPars$myAudio for autoplay
-    observeEvent(input$selection_stop, {
+    observeEvent(c(input$selection_play), startPlay())  # add , myPars$myAudio for autoplay
+
+    stopPlay = function() {
         # browser()  # for debugging
         myPars$play$on = FALSE
         myPars$cursor = myPars$cursor_temp
         shinyjs::js$stopAudio_js(audio_id = 'myAudio')
-    })
+    }
+    observeEvent(input$selection_stop, stopPlay())
 
     observe({
         if (!is.null(myPars$play$on) && myPars$play$on) {
@@ -1145,8 +1172,8 @@ server = function(input, output, session) {
 
     observeEvent(input$userPressedSmth, {
         button_code = floor(input$userPressedSmth)
-        if (button_code == 32) {                      # SPACEBAR (play)
-            playSel()
+        if (button_code == 32) {                      # SPACEBAR (play / stop)
+            if (myPars$play$on) stopPlay() else startPlay()
         } else if (button_code == 46) {               # DELETE (delete current annotation)
             deleteSel()
         } else if (button_code == 37) {               # ARROW LEFT (scroll left)

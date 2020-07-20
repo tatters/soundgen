@@ -13,17 +13,20 @@ server = function(input, output, session) {
     # make overlaid plots resizable (js fix)
     shinyjs::js$inheritSize(parentDiv = 'specDiv')
 
-    myPars = reactiveValues()
-    myPars$zoomFactor = 2     # zoom buttons change time zoom by this factor
-    myPars$zoomFactor_freq = 1.5  # same for frequency
-    myPars$print = TRUE       # if TRUE, some functions print a meassage to the console when called
-    myPars$out = NULL         # for storing the output
-    myPars$drawSpec = TRUE
-    myPars$shinyTip_show = 1000      # delay until showing a tip (ms)
-    myPars$shinyTip_hide = 0         # delay until hiding a tip (ms)
-    myPars$slider_ms = 50            # how often to update play slider
-    myPars$cursor = 0
-    myPars$initDur = 1500            # initial duration to plot (ms)
+    myPars = reactiveValues(
+        zoomFactor = 2,     # zoom buttons change time zoom by this factor
+        zoomFactor_freq = 1.5,  # same for frequency
+        print = TRUE,       # if TRUE, some functions print a meassage to the console when called
+        out = NULL,         # for storing the output
+        drawSpec = TRUE,
+        shinyTip_show = 1000,      # delay until showing a tip (ms)
+        shinyTip_hide = 0,         # delay until hiding a tip (ms)
+        slider_ms = 50,            # how often to update play slider
+        cursor = 0,
+        initDur = 1500,            # initial duration to plot (ms)
+        play = list(on = FALSE)
+    )
+
 
     # clean-up of www/ folder: remove all files except temp.wav
     # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -718,7 +721,7 @@ server = function(input, output, session) {
     })
 
     ## Buttons for operations with selection
-    playSel = function() {
+    startPlay = function() {
         if (!is.null(myPars$myAudio)) {
             if (!is.null(myPars$spectrogram_brush)) {
                 myPars$play$from = myPars$spectrogram_brush$xmin / 1000
@@ -746,12 +749,15 @@ server = function(input, output, session) {
             # playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
         }
     }
-    observeEvent(c(input$selection_play), playSel())  # add , myPars$myAudio for autoplay
-    observeEvent(input$selection_stop, {
+    observeEvent(c(input$selection_play), startPlay())  # add , myPars$myAudio for autoplay
+
+    stopPlay = function() {
+        # browser()  # for debugging
         myPars$play$on = FALSE
         myPars$cursor = myPars$cursor_temp
         shinyjs::js$stopAudio_js(audio_id = 'myAudio')
-    })
+    }
+    observeEvent(input$selection_stop, stopPlay())
 
     observe({
         if (!is.null(myPars$play$on) && myPars$play$on) {
@@ -770,8 +776,8 @@ server = function(input, output, session) {
 
     observeEvent(input$userPressedSmth, {
         button_code = floor(input$userPressedSmth)
-        if (button_code == 32) {                      # SPACEBAR (play)
-            playSel()
+        if (button_code == 32) {                      # SPACEBAR (play / stop)
+            if (myPars$play$on) stopPlay() else startPlay()
         } else if (button_code == 37) {               # ARROW LEFT (scroll left)
             shiftFrame('left')
         } else if (button_code == 39) {               # ARROW RIGHT (scroll right)
