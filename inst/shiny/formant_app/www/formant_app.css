@@ -192,3 +192,7 @@ label {
   font-size: .8em;
 }
 
+.selected {
+  background-color: #72ea9b;
+}
+

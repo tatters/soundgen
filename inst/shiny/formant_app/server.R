@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; prevent highlight in ann_table from disappearing upon formant change; move sel when myPars$currentAnn changes; add plotting options for formant tracks (col/pch/cex); spectrum - plot formants from myPars$ann instead of myPars$formants; pretty time labels on spec; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbark jumps to 0; load audio upon session start; maybe arbitrary number of annotation tiers;
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 
 # # tip: to read the output, do smth like:
@@ -30,7 +30,8 @@ server = function(input, output, session) {
         selectedF = 'f1',          # preselect F1 for correction
         slider_ms = 50,            # how often to update play slider
         cursor = 0,
-        play = list(on = FALSE)
+        play = list(on = FALSE),
+        debugQn = TRUE             # for debugging - click "?" to step into the code
     )
 
     # NB: using myPars$play$cursor for some reason invalidates the observer,
@@ -292,13 +293,14 @@ server = function(input, output, session) {
             observeEvent(input[[fn]], {
                 v = suppressWarnings(as.numeric(input[[fn]]))
                 if (is.na(v)) {
-                    myPars$ann[myPars$currentAnn, paste0('f', f)] = myPars$formants[myPars$currentAnn]
+                    myPars$ann[myPars$currentAnn, paste0('f', f)] = myPars$formants[f]
                     updateTextInput(
                         session, fn,
-                        value = as.character(myPars$formants[myPars$currentAnn]))
+                        value = as.character(myPars$formants[f]))
                 } else {
                     myPars$ann[myPars$currentAnn, paste0('f', f)] = v
                 }
+                updateCurAnn()
             })
 
             # add onclick event with shinyjs to select the formant to edit
@@ -536,14 +538,16 @@ server = function(input, output, session) {
 
             # Add a rectangle showing the current annotation
             if (!is.null(myPars$currentAnn)) {
-                rect(
-                    xleft = myPars$ann$from[myPars$currentAnn],
-                    xright = myPars$ann$to[myPars$currentAnn],
-                    ybottom = input$spec_ylim[1],
-                    ytop = input$spec_ylim[2],
-                    col = rgb(.2, .2, .2, alpha = .25),
-                    border = NA
-                )
+                isolate({  # from myPars$ann
+                    rect(
+                        xleft = myPars$ann$from[myPars$currentAnn],
+                        xright = myPars$ann$to[myPars$currentAnn],
+                        ybottom = input$spec_ylim[1],
+                        ytop = input$spec_ylim[2],
+                        col = rgb(.2, .2, .2, alpha = .25),
+                        border = NA
+                    )
+                })
             }
 
             # Add a rectangle showing the selected region
@@ -621,6 +625,7 @@ server = function(input, output, session) {
             if (inside_sel) {
                 # update both myPars$ann and the corresponding formant button
                 myPars$ann[myPars$currentAnn, myPars$selectedF] = round(input$spectrogram_click$y * 1000)
+                updateCurAnn()
                 updateTextInput(
                     session, paste0(myPars$selectedF, '_text'),
                     value = as.character(myPars$ann[myPars$currentAnn, myPars$selectedF]))
@@ -715,7 +720,7 @@ server = function(input, output, session) {
                         idx_f = which.min(abs(myPars$spectrum$freq - f))
                         text(
                             x = f,
-                            y = myPars$spectrum$ampl[idx_f] + 5,  # +5 to avoid overlap with cross
+                            y = myPars$spectrum$ampl[idx_f] + 2,  # +2 to avoid overlap with cross
                             labels = paste0('F', i),
                             adj = c(.5, 0)
                         )
@@ -789,6 +794,7 @@ server = function(input, output, session) {
         # update both myPars$ann and the corresponding formant button
         if (!is.null(myPars$currentAnn)) {
             myPars$ann[myPars$currentAnn, myPars$selectedF] = round(input$spectrum_click$x * 1000)
+            updateCurAnn()
             updateTextInput(
                 session, paste0(myPars$selectedF, '_text'),
                 value = as.character(myPars$ann[myPars$currentAnn, myPars$selectedF]))
@@ -1071,22 +1077,31 @@ server = function(input, output, session) {
             # fill in the formant boxes
             for (f in 1:input$nFormants) {
                 updateTextInput(session, inputId = paste0('f', f, '_text'),
-                                value = as.character(myPars$formants[f]))
+                                value = as.character(myPars$ann[myPars$currentAnn, myPars$ff[f]]))
             }
         }
     })
 
-    observe({
+    observeEvent(myPars$ann, {
         if (!is.null(myPars$ann)) {
             output$ann_table = renderTable(
                 format(myPars$ann[, -1]),
-                align = 'c', striped = TRUE,
-                bordered = TRUE, hover = TRUE, width = '100%'
+                align = 'c', striped = FALSE,
+                bordered = TRUE, hover = FALSE, width = '100%'
             )
+            isolate({
+                if (!is.null(myPars$currentAnn))
+                    session$sendCustomMessage('highlightRow', myPars$currentAnn)
+            })
         }
     })
 
-    observeEvent(myPars$ann[myPars$currentAnn, ], {
+    observeEvent(myPars$currentAnn, {
+        if (!is.null(myPars$ann) && !is.null(myPars$currentAnn))
+            session$sendCustomMessage('highlightRow', myPars$currentAnn)
+    })
+
+    updateCurAnn = function() {
         if (!is.null(myPars$ann[myPars$currentAnn, ]) &&
             any(!is.na(myPars$ann[myPars$currentAnn, myPars$ff]))) {
             fmts_ann = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff])
@@ -1107,7 +1122,13 @@ server = function(input, output, session) {
             myPars$ann$dF[myPars$currentAnn] = vtl_ann$formantDispersion
             myPars$ann$vtl[myPars$currentAnn] = vtl_ann$vocalTract
         }
-    })
+    }
+
+    observeEvent(input$tableRow, {
+        if (!is.null(myPars$ann) && input$tableRow > 0)
+            myPars$currentAnn = input$tableRow
+    }, ignoreInit = TRUE)
+
 
     ## Buttons for operations with selection
     startPlay = function() {
@@ -1138,7 +1159,6 @@ server = function(input, output, session) {
     observeEvent(c(input$selection_play), startPlay())  # add , myPars$myAudio for autoplay
 
     stopPlay = function() {
-        # browser()  # for debugging
         myPars$play$on = FALSE
         myPars$cursor = myPars$cursor_temp
         shinyjs::js$stopAudio_js(audio_id = 'myAudio')
@@ -1366,18 +1386,22 @@ server = function(input, output, session) {
     )
 
     observeEvent(input$about, {
-        showNotification(
-            ui = paste0(
-                "App for measuring formants in small annotated segments: soundgen ",
-                packageVersion('soundgen'), ". Spectrogram: select an area and ",
-                "double-click to add an annotation, left-click to correct a formant ",
-                "measure. Spectrum: single-click to update a formant to cursor ",
-                "position, double click to update to the closest spectral peak. More ",
-                "info: ?formant_app and http://cogsci.se/soundgen.html"),
-            duration = 20,
-            closeButton = TRUE,
-            type = 'default'
-        )
+        if (myPars$debugQn) {
+            browser()  # back door for debugging)
+        } else {
+            showNotification(
+                ui = paste0(
+                    "App for measuring formants in small annotated segments: soundgen ",
+                    packageVersion('soundgen'), ". Spectrogram: select an area and ",
+                    "double-click to add an annotation, left-click to correct a formant ",
+                    "measure. Spectrum: single-click to update a formant to cursor ",
+                    "position, double click to update to the closest spectral peak. More ",
+                    "info: ?formant_app and http://cogsci.se/soundgen.html"),
+                duration = 20,
+                closeButton = TRUE,
+                type = 'default'
+            )
+        }
     })
 
     ### TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay

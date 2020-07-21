@@ -85,6 +85,7 @@ $(document).ready(function() {
     mouseDown = false;
     slider.classList.remove('active');
     // send to R: scrollBarLeft as proportion of track width
+    // https://shiny.rstudio.com/articles/communicating-with-js.html
     Shiny.setInputValue('scrollBarLeft', scrollBarLeft_new / track.clientWidth);
   });
 
@@ -125,4 +126,63 @@ $(document).ready(function() {
   	    event.preventDefault();
       }
     });
+
+
+
+  // Event listener for clicking on a row of the annotation table
+  // https://stackoverflow.com/questions/4524661/how-to-tell-which-row-number-is-clicked-in-a-table/37331546
+  document.querySelector('#ann_table').onclick = function(ev) {
+    // ev.target <== td element
+    // ev.target.parentElement <== tr
+    // debugger;
+    let tn = ev.target.constructor.name;
+    if (tn == 'HTMLTableCellElement') {
+      // click inside a table row
+      let r = ev.target.parentElement.rowIndex;
+      if (r > 0) {
+        // not the header: send word to R
+    		Shiny.setInputValue('tableRow', r);
+    		// reset all rows to default color
+        document.querySelectorAll('#ann_table table tr').classList.remove('selected');
+        // highlight the active annotation
+    		ev.target.parentElement.classList.add('selected');
+      }
+    }
+  };
+
+  // Highlight the row with currentAnn
+  function highlightRow(r) {
+    var annTbl_rows = document.querySelectorAll('#ann_table table tbody tr');
+    for (var i = 0; i < annTbl_rows.length; i++) {
+      if (i == (r-1)) {
+        // highlight the active annotation
+        annTbl_rows[r-1].classList.add('selected');
+      } else {
+        // reset all other rows to default color
+        annTbl_rows[i].classList.remove('selected');
+      }
+    }
+  }
+
+  document.querySelector('#ann_table').onclick = function(ev) {
+    // ev.target <== td element
+    // ev.target.parentElement <== tr
+    // debugger;
+    var tn = ev.target.constructor.name;
+    if (tn == 'HTMLTableCellElement') {
+      // click inside a table row
+      let r = ev.target.parentElement.rowIndex;
+      if (r > 0) {
+        // not the header: send word to R
+    		Shiny.setInputValue('tableRow', r);
+        highlightRow(r);
+      }
+    }
+  };
+
+  Shiny.addCustomMessageHandler('highlightRow', function(message) {
+    highlightRow(Number(message));
+  });
+
+
 });
