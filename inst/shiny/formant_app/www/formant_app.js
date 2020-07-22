@@ -129,28 +129,9 @@ $(document).ready(function() {
 
 
 
-  // Event listener for clicking on a row of the annotation table
-  // https://stackoverflow.com/questions/4524661/how-to-tell-which-row-number-is-clicked-in-a-table/37331546
-  document.querySelector('#ann_table').onclick = function(ev) {
-    // ev.target <== td element
-    // ev.target.parentElement <== tr
-    // debugger;
-    let tn = ev.target.constructor.name;
-    if (tn == 'HTMLTableCellElement') {
-      // click inside a table row
-      let r = ev.target.parentElement.rowIndex;
-      if (r > 0) {
-        // not the header: send word to R
-    		Shiny.setInputValue('tableRow', r);
-    		// reset all rows to default color
-        document.querySelectorAll('#ann_table table tr').classList.remove('selected');
-        // highlight the active annotation
-    		ev.target.parentElement.classList.add('selected');
-      }
-    }
-  };
-
+  // Working with the annotation table
   // Highlight the row with currentAnn
+  // https://stackoverflow.com/questions/4524661/how-to-tell-which-row-number-is-clicked-in-a-table/37331546
   function highlightRow(r) {
     var annTbl_rows = document.querySelectorAll('#ann_table table tbody tr');
     for (var i = 0; i < annTbl_rows.length; i++) {
@@ -175,7 +156,7 @@ $(document).ready(function() {
       if (r > 0) {
         // not the header: send word to R
     		Shiny.setInputValue('tableRow', r);
-        highlightRow(r);
+        highlightRow(r);  // done from R anyway b/c currentAnn can change in different ways
       }
     }
   };

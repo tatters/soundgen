@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; prevent highlight in ann_table from disappearing upon formant change; move sel when myPars$currentAnn changes; add plotting options for formant tracks (col/pch/cex); spectrum - plot formants from myPars$ann instead of myPars$formants; pretty time labels on spec; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbark jumps to 0; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; add plotting options for formant tracks (col/pch/cex); pretty time labels on spec; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0; prevent row highlight from disappearing if possible (super hard!); vtl update shouldn't fire for each formant button when switching to a new ann; load audio upon session start; maybe arbitrary number of annotation tiers;
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 
 # # tip: to read the output, do smth like:
@@ -30,6 +30,7 @@ server = function(input, output, session) {
         selectedF = 'f1',          # preselect F1 for correction
         slider_ms = 50,            # how often to update play slider
         cursor = 0,
+        listenToFbtn = TRUE,      # buggy
         play = list(on = FALSE),
         debugQn = TRUE             # for debugging - click "?" to step into the code
     )
@@ -55,7 +56,7 @@ server = function(input, output, session) {
         removeModal()
     })
     observeEvent(input$append, {
-        myPars$out = read.csv('www/temp.csv')
+        myPars$out = read.csv('www/temp.csv', stringsAsFactors = FALSE)
         removeModal()
     })
 
@@ -110,7 +111,7 @@ server = function(input, output, session) {
         # if output.csv is among the uploaded files, use the annotations in it
         old_out_idx = which(input$loadAudio$name == 'output.csv')
         if (length(old_out_idx) == 1) {
-            myPars$out = read.csv(input$loadAudio$datapath[old_out_idx])
+            myPars$out = read.csv(input$loadAudio$datapath[old_out_idx], stringsAsFactors = FALSE)
         }
 
         # work only with audio files
@@ -202,6 +203,7 @@ server = function(input, output, session) {
             myPars$drawSpec = TRUE  # don't need to wait for analyze() to run
         }
         drawAnn()
+        # drawAnnTbl()
     }
 
     extractSpectrogram = observe({
@@ -287,20 +289,23 @@ server = function(input, output, session) {
     })
 
     # edit myPars$ann when formant freq is modified manually as text
-    updateF = observeEvent(input$nFormants, {
+    observeEvent(input$nFormants, {
         lapply(1:input$nFormants, function(f) {
             fn = paste0('f', f, '_text')
             observeEvent(input[[fn]], {
-                v = suppressWarnings(as.numeric(input[[fn]]))
-                if (is.na(v)) {
-                    myPars$ann[myPars$currentAnn, paste0('f', f)] = myPars$formants[f]
-                    updateTextInput(
-                        session, fn,
-                        value = as.character(myPars$formants[f]))
-                } else {
-                    myPars$ann[myPars$currentAnn, paste0('f', f)] = v
+                if (isolate(myPars$listenToFbtn)) {
+                    v = suppressWarnings(as.numeric(input[[fn]]))
+                    if (is.na(v)) {
+                        myPars$ann[myPars$currentAnn, paste0('f', f)] = myPars$formants[f]
+                        updateTextInput(
+                            session, fn,
+                            value = as.character(myPars$formants[f]))
+                    } else {
+                        myPars$ann[myPars$currentAnn, paste0('f', f)] = v
+                    }
+                    updateVTL()
+                    hr()  # otherwise row highlight disappears, no idea why!
                 }
-                updateCurAnn()
             })
 
             # add onclick event with shinyjs to select the formant to edit
@@ -625,10 +630,10 @@ server = function(input, output, session) {
             if (inside_sel) {
                 # update both myPars$ann and the corresponding formant button
                 myPars$ann[myPars$currentAnn, myPars$selectedF] = round(input$spectrogram_click$y * 1000)
-                updateCurAnn()
                 updateTextInput(
                     session, paste0(myPars$selectedF, '_text'),
                     value = as.character(myPars$ann[myPars$currentAnn, myPars$selectedF]))
+                updateVTL()
             }
         }
     })
@@ -713,10 +718,20 @@ server = function(input, output, session) {
             }
 
             # plot formant frequencies, if any
-            if (!is.null(myPars$formants) && any(is.numeric(myPars$formants))) {
-                for (i in 1:length(myPars$formants)) {
-                    f = myPars$formants[i] / 1000
-                    if (is.numeric(f)) {
+            if (!is.null(myPars$ann) &&
+                any(is.numeric(myPars$currentAnn))) {
+                ff = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff])
+            } else if (!is.null(myPars$formants) &&
+                       any(!is.na(as.numeric(myPars$formants)))) {
+                ff = as.numeric(myPars$formants)
+            } else {
+                ff = numeric(0)
+            }
+
+            if (length(ff) > 0) {
+                for (i in 1:length(ff)) {
+                    f = ff[i] / 1000
+                    if (is.numeric(f) & any(!is.na(f))) {
                         idx_f = which.min(abs(myPars$spectrum$freq - f))
                         text(
                             x = f,
@@ -738,7 +753,7 @@ server = function(input, output, session) {
     observe({
         if (!is.null(myPars$spec_trimmed)) {
             if (myPars$print) print('Extracting spectrum of selection...')
-            if (!is.null(myPars$selection)) {
+            if (!is.null(myPars$selection) && length(myPars$selection) > 0) {
                 # take the spectrum of selection (annotated region) from raw audio
                 myPars$spectrum = try(as.list(getSmoothSpectrum(
                     sound = myPars$selection,
@@ -794,10 +809,10 @@ server = function(input, output, session) {
         # update both myPars$ann and the corresponding formant button
         if (!is.null(myPars$currentAnn)) {
             myPars$ann[myPars$currentAnn, myPars$selectedF] = round(input$spectrum_click$x * 1000)
-            updateCurAnn()
             updateTextInput(
                 session, paste0(myPars$selectedF, '_text'),
                 value = as.character(myPars$ann[myPars$currentAnn, myPars$selectedF]))
+            updateVTL()
         }
     })
 
@@ -892,10 +907,30 @@ server = function(input, output, session) {
     observeEvent(myPars$currentAnn, {
         if (!is.null(myPars$currentAnn)) {
             if (myPars$print) print('Updating selection...')
+            hr()
             sel_points = as.numeric(round(myPars$ann[myPars$currentAnn, c('from', 'to')] /
                                               1000 * myPars$samplingRate))
             idx_points = sel_points[1]:sel_points[2]
             myPars$selection = myPars$myAudio[idx_points]
+            # move the spec view to show the selected ann
+            ann_dur = myPars$ann$to[myPars$currentAnn] -
+                myPars$ann$from[myPars$currentAnn]
+            mid_view = mean(myPars$spec_xlim)
+            mid_ann = mean(as.numeric(myPars$ann[myPars$currentAnn, c('from', 'to')]))
+            shift = mid_ann - mid_view
+            if (myPars$ann$from[myPars$currentAnn] < myPars$spec_xlim[1] |
+                myPars$ann$to[myPars$currentAnn] > myPars$spec_xlim[2]) {
+                if (diff(myPars$spec_xlim) > ann_dur) {
+                    # the ann fits based on current zoom level
+                    myPars$spec_xlim[1] = max(0, myPars$spec_xlim[1] + shift)
+                    myPars$spec_xlim[2] = min(myPars$dur, myPars$spec_xlim[2] + shift)
+                } else {
+                    # zoom out enough to show the whole ann
+                    half_span = ann_dur * 1.5 / 2
+                    myPars$spec_xlim[1] = max(0, mid_ann - half_span)
+                    myPars$spec_xlim[2] = min(myPars$dur, mid_ann + half_span)
+                }
+            }
         }
     })
 
@@ -907,6 +942,7 @@ server = function(input, output, session) {
             myPars$spectrogram_brush = list(xmin = myPars$ann$from[myPars$currentAnn],
                                             xmax = myPars$ann$to[myPars$currentAnn])
             myPars$cursor = myPars$ann$from[myPars$currentAnn]
+            avF()
         }
     })
 
@@ -933,7 +969,7 @@ server = function(input, output, session) {
     }
 
     observeEvent(input$ok_new, {
-        # create a new annotation
+        if (myPars$print) print('Creating a new annotation...')
         new = data.frame(
             # idx = ifelse(is.null(myPars$ann), 1, nrow(myPars$ann) + 1),
             file = myPars$myAudio_filename,
@@ -942,13 +978,10 @@ server = function(input, output, session) {
             label = input$annotation,
             dF = NA, vtl = NA,
             stringsAsFactors = FALSE)
-        new[, myPars$ff] = myPars$formants[myPars$f_col_names]
 
         # depending on the history of changing input$nFormants / output.csv,
         # there may be more formants in myPars$ann than in the current sel
-        all_cols = paste0('f', 1:myPars$maxF)
-        missing_cols = all_cols[which(!all_cols %in% colnames(new))]
-        new[, missing_cols] = NA
+        new[, paste0('f', 1:myPars$maxF)] = NA
 
         # append to myPars$ann
         if (is.null(myPars$ann)) {
@@ -963,10 +996,26 @@ server = function(input, output, session) {
         myPars$ann = myPars$ann[ord, ]
         myPars$currentAnn = which(ord == nrow(myPars$ann))
 
+        # paste in formant frequencies
+        avF()
+        myPars$ann[myPars$currentAnn, myPars$ff] = myPars$formants[myPars$f_col_names]
+        updateFBtn(myPars$formants[myPars$f_col_names])
+        updateVTL()
+
         # clear the selection, close the modal
         removeModal()
         drawAnn()
+        # drawAnnTbl()
+        # hr()
     })
+
+    updateFBtn = function(ff) {
+        if (myPars$print) print('Updating formant buttons...')
+        for (f in 1:input$nFormants) {
+            updateTextInput(session, inputId = paste0('f', f, '_text'),
+                            value = ff[f])
+        }
+    }
 
     dataModal_edit = function() {
         modalDialog(
@@ -985,6 +1034,7 @@ server = function(input, output, session) {
         myPars$ann$label[myPars$currentAnn] = input$annotation
         removeModal()
         drawAnn()
+        # drawAnnTbl()
     })
 
 
@@ -1060,50 +1110,52 @@ server = function(input, output, session) {
         ignoreInit = TRUE
     )
 
-    observe({
+    avF = function() {
         # analyze annotated selection
         if (!is.null(myPars$currentAnn) & !is.null(myPars$formantTracks)) {
             if (myPars$print) print('Averaging formants in selection...')
             isolate({
                 # don't want dependency on myPars$ann
-                idx = which(myPars$formantTracks$time >= myPars$ann$from[myPars$currentAnn] &
-                                myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn])
+                idx = which(
+                    myPars$formantTracks$time >= myPars$ann$from[myPars$currentAnn] &
+                        myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn]
+                )
             })
             fMat = myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)]
             myPars$formants = apply(fMat, 2, function(x)
                 round(do.call(input$summaryFun, list(x, na.rm = TRUE))))
             # myPars$bandwidth ?
 
-            # fill in the formant boxes
-            for (f in 1:input$nFormants) {
-                updateTextInput(session, inputId = paste0('f', f, '_text'),
-                                value = as.character(myPars$ann[myPars$currentAnn, myPars$ff[f]]))
-            }
+            # fill in the formant boxes - note that we use the (possible
+            # user-modified) myPars$ann instead of myPars$formants
+            updateFBtn(as.character(myPars$ann[myPars$currentAnn, myPars$ff]))
         }
-    })
+    }
+    observeEvent(myPars$formantTracks, avF())
 
-    observeEvent(myPars$ann, {
+    observe({
         if (!is.null(myPars$ann)) {
+            if (myPars$print) print('Drawing ann_table...')
             output$ann_table = renderTable(
                 format(myPars$ann[, -1]),
                 align = 'c', striped = FALSE,
                 bordered = TRUE, hover = FALSE, width = '100%'
             )
-            isolate({
-                if (!is.null(myPars$currentAnn))
-                    session$sendCustomMessage('highlightRow', myPars$currentAnn)
-            })
+            hr()
         }
     })
 
-    observeEvent(myPars$currentAnn, {
-        if (!is.null(myPars$ann) && !is.null(myPars$currentAnn))
+    hr = function() {
+        if (!is.null(myPars$currentAnn)) {
+            # Sys.sleep(.5)
             session$sendCustomMessage('highlightRow', myPars$currentAnn)
-    })
+        }
+    }
 
-    updateCurAnn = function() {
+    updateVTL = function() {
         if (!is.null(myPars$ann[myPars$currentAnn, ]) &&
             any(!is.na(myPars$ann[myPars$currentAnn, myPars$ff]))) {
+            if (myPars$print) print('Updating VTL...')
             fmts_ann = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff])
             vtl_ann = estimateVTL(
                 formants = fmts_ann,
@@ -1121,12 +1173,16 @@ server = function(input, output, session) {
             }, silent = TRUE)
             myPars$ann$dF[myPars$currentAnn] = vtl_ann$formantDispersion
             myPars$ann$vtl[myPars$currentAnn] = vtl_ann$vocalTract
+            # drawAnnTbl()
+            # hr()
         }
     }
 
     observeEvent(input$tableRow, {
-        if (!is.null(myPars$ann) && input$tableRow > 0)
+        if (!is.null(myPars$ann) && input$tableRow > 0) {
             myPars$currentAnn = input$tableRow
+            avF()
+        }
     }, ignoreInit = TRUE)
 
 
@@ -1186,6 +1242,7 @@ server = function(input, output, session) {
             myPars$selection = NULL
             myPars$currentAnn = NULL
             drawAnn()
+            # drawAnnTbl()
         }
     }
     observeEvent(input$selection_delete, deleteSel())
