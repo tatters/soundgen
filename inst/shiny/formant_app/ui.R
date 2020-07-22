@@ -199,6 +199,19 @@ ui = fluidPage(
                 shinyBS::bsCollapsePanel(
                   "Advanced",
                   sliderInput(
+                    'spec_cex',
+                    'Point size of formant tracks',
+                    value = 1,
+                    min = 0,
+                    max = 3,
+                    step = .1),
+                  textInput(
+                    'spec_col',
+                    'Color of formant tracks',
+                    value = '#FF0000FF', # red
+                    placeholder = '#FF0000FF'
+                  ),
+                  sliderInput(
                     'zp',
                     'Zero padding, points 2 ^ n',
                     value = def_form['zp', 'default'],

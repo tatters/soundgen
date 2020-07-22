@@ -137,7 +137,10 @@ pitch_app = function() {
 #' (3) single-click the spectrum to use the cursor's position, or (4)
 #' double-click the spectrum to use the nearest spectral peak. When done with a
 #' file, move on to the next one in the queue. Use the orange button to download
-#' the results.
+#' the results. To continue work, upload the output file from the previous
+#' session together with the audio files (you can rename it, but keep the .csv
+#' extension). Use hotkeys (eg spacebar to play/stop) and avoid working with
+#' very large files.
 #'
 #' @seealso \code{\link{pitch_app}}
 #'

@@ -1,7 +1,12 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; add plotting options for formant tracks (col/pch/cex); pretty time labels on spec; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0; prevent row highlight from disappearing if possible (super hard!); vtl update shouldn't fire for each formant button when switching to a new ann; load audio upon session start; maybe arbitrary number of annotation tiers;
+# To do: check & debug with real tasks; pretty time labels on spec; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0; vtl update shouldn't fire for each formant button when switching to a new ann; load audio upon session start; maybe arbitrary number of annotation tiers
+
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
+  # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
+  # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
+  # At any time you can hit Ctrl+F3 (or for Mac users, Command+F3) in your web browser to launch the reactive log visualization.
+
 
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -109,8 +114,11 @@ server = function(input, output, session) {
         reset()  # also triggers done()
 
         # if output.csv is among the uploaded files, use the annotations in it
-        old_out_idx = which(input$loadAudio$name == 'output.csv')
-        if (length(old_out_idx) == 1) {
+        ext = substr(input$loadAudio$name,
+                     (nchar(input$loadAudio$name) - 2),
+                     nchar(input$loadAudio$name))
+        old_out_idx = which(ext == 'csv')[1]  # grab the first csv, if any
+        if (!is.na(old_out_idx)) {
             myPars$out = read.csv(input$loadAudio$datapath[old_out_idx], stringsAsFactors = FALSE)
         }
 
@@ -153,7 +161,8 @@ server = function(input, output, session) {
         myPars$myAudio_type = temp$type
 
         extension = substr(myPars$myAudio_filename,
-                           nchar(myPars$myAudio_filename) - 2, nchar(myPars$myAudio_filename))
+                           nchar(myPars$myAudio_filename) - 2,
+                           nchar(myPars$myAudio_filename))
         if (extension == 'wav' | extension == 'WAV') {
             myPars$temp_audio = tuneR::readWave(temp$datapath)
         } else if (extension == 'mp3' | extension == 'MP3') {
@@ -537,7 +546,7 @@ server = function(input, output, session) {
                 do.call(text, list(
                     x = myPars$spectrogram_hover$x,
                     y = input$spec_ylim[1] + .025 * diff(input$spec_ylim),
-                    labels = myPars$spectrogram_hover$time,
+                    labels = convert_sec_to_hms(myPars$spectrogram_hover$x / 1000),
                     adj = .5))
             }
 
@@ -572,7 +581,9 @@ server = function(input, output, session) {
                 for (f in 2:ncol(myPars$formantTracks)) {
                     points(myPars$formantTracks$time,
                            myPars$formantTracks[, f] / 1000,
-                           col = 'red', pch = 16)
+                           pch = 16,
+                           col = input$spec_col,
+                           cex = input$spec_cex)
                 }
             }
         }
@@ -607,9 +618,6 @@ server = function(input, output, session) {
             myPars$spectrogram_hover$freq = paste0(
                 round(myPars$spectrogram_hover$y * 1000), ' Hz (',
                 cursor_notes, ')')
-            myPars$spectrogram_hover$time = paste0(
-                round(myPars$spectrogram_hover$x), ' ms'
-            )
         }
     })
 
@@ -666,7 +674,10 @@ server = function(input, output, session) {
                      xlab = 'Time, ms',
                      ylab = '')
                 box()
-                axis(side = 1)
+                # axis(side = 1)
+                time_location = axTicks(1)
+                time_labels = convert_sec_to_hms(time_location / 1000)
+                axis(side = 1, at = time_location, labels = time_labels)
                 if (input$osc == 'dB') {
                     axis(side = 4, at = seq(0, input$dynamicRange, by = 10))
                     mtext("dB", side = 2, line = 3)
@@ -1361,6 +1372,16 @@ server = function(input, output, session) {
                                  min(myPars$dur, scrollBarLeft_ms + spec_span))
         }
     }, ignoreInit = TRUE)
+
+    observeEvent(input$scrollBarMove, {
+      direction = substr(input$scrollBarMove, 1, 1)
+      if (direction == 'l') {
+        shiftFrame('left')
+      } else if (direction == 'r') {
+        shiftFrame('right')
+      }
+    }, ignoreNULL = TRUE)
+
 
     # SAVE OUTPUT
     done = function() {

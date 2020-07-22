@@ -1,7 +1,7 @@
 // js functions needed for formant_app
 // NB: ui.R should include "includeScript("www/formant_app.js")"
 
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', () => {
   // execute when the page is loaded
 
   // Functions imported by shinyjs - must begin with "shinyjs." and have "params"
@@ -110,6 +110,17 @@ $(document).ready(function() {
   });
   // Shiny.onInputChange(scrollBarLeft_new, scrollBarLeft_new);
 
+  // scroll by clicking the track left/right of the scrollbar
+  track.addEventListener('mousedown', (e) => {
+    var sl_rect = slider.getBoundingClientRect();
+    if (e.clientX < sl_rect.left) {
+      Shiny.setInputValue('scrollBarMove', 'l' + Math.random());
+      // see https://shiny.rstudio.com/articles/communicating-with-js.html
+      // with priority: event" it fires twice
+    } else if (e.clientX > sl_rect.right) {
+      Shiny.setInputValue('scrollBarMove', 'r' + Math.random());
+    }
+  });
 
 
   // Event listeners for hotkeys

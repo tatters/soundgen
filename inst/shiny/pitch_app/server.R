@@ -488,7 +488,9 @@ server = function(input, output, session) {
                      xlab = 'Time, ms',
                      ylab = '')
                 box()
-                axis(side = 1)
+                time_location = axTicks(1)
+                time_labels = convert_sec_to_hms(time_location / 1000)
+                axis(side = 1, at = time_location, labels = time_labels)
                 if (input$osc == 'dB') {
                     axis(side = 4, at = seq(0, input$dynamicRange, by = 10))
                     mtext("dB", side = 2, line = 3)
@@ -1054,6 +1056,16 @@ server = function(input, output, session) {
                                  min(myPars$dur, scrollBarLeft_ms + spec_span))
         }
     }, ignoreInit = TRUE)
+
+    observeEvent(input$scrollBarMove, {
+        direction = substr(input$scrollBarMove, 1, 1)
+        if (direction == 'l') {
+            shiftFrame('left')
+        } else if (direction == 'r') {
+            shiftFrame('right')
+        }
+    }, ignoreNULL = TRUE)
+
 
     # SAVE OUTPUT
     done = function() {
