@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; can't turn off F5 box; enter NA in formant box; save LPC with all formants returned by findformants so LPC is not rerun when nFormants changes; Input to asJSON(keep_vec_names=TRUE) is a named vector; bckp myPars$ann when adding a new ann; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); vtl update shouldn't fire for each formant button when switching to a new ann; load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: check & debug with real tasks; save LPC with all formants returned by findformants so LPC is not rerun when nFormants changes; bckp myPars$ann when adding a new ann; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
@@ -347,8 +347,12 @@ server = function(input, output, session) {
     })
   })
   # focusout fires when it shouldn't, so we stop listening if the mouse is over
-  # the main panel instead
+  # the main panel or the spectrum instead (ie basically anywhere else)
   shinyjs::onevent('hover', id = 'left', {
+    myPars$listenToFbtn = FALSE
+    # print('STOP LISTENING')
+  })
+  shinyjs::onevent('hover', id = 'spectrum', {
     myPars$listenToFbtn = FALSE
     # print('STOP LISTENING')
   })
@@ -1215,6 +1219,8 @@ server = function(input, output, session) {
   observeEvent(input$tableRow, {
     if (!is.null(myPars$ann) && input$tableRow > 0) {
       myPars$currentAnn = input$tableRow
+      myPars$spectrogram_brush = list(xmin = myPars$ann$from[myPars$currentAnn],
+                                      xmax = myPars$ann$to[myPars$currentAnn])
       avF()
     }
   }, ignoreInit = TRUE)
@@ -1259,7 +1265,7 @@ server = function(input, output, session) {
     if (!is.null(myPars$play$on) && myPars$play$on) {
       time = proc.time()
       if (!is.null(myPars$slider_ms)) invalidateLater(myPars$slider_ms)
-      if (time > myPars$play$timeOff) {
+      if ((time - myPars$play$timeOff)[3] < 0) {
         myPars$play$on = FALSE
         myPars$cursor = myPars$cursor_temp  # reset to original cursor
       } else {

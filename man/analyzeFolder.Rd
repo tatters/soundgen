@@ -111,7 +111,7 @@ which frames will not be analyzed with pitchAutocor.}
 perform LPC analysis}
 
 \item{nFormants}{the number of formants to extract per STFT frame (0 = no
-formant analysis)}
+formant analysis, NULL = as many as possible)}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,

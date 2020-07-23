@@ -76,7 +76,7 @@
 #'   \code{\link[phonTools]{findformants}} - an external function called to
 #'   perform LPC analysis
 #' @param nFormants the number of formants to extract per STFT frame (0 = no
-#'   formant analysis)
+#'   formant analysis, NULL = as many as possible)
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
@@ -762,11 +762,12 @@ analyze = function(
   cond_entropy[is.na(cond_entropy)] = FALSE
 
   # save duration of non-silent part of audio
-  if (length(framesToAnalyze) > 0) {
+  nf = length(framesToAnalyze)
+  if (nf > 0) {
     # the beginning of the first non-silent frame
     time_start = timestamps[framesToAnalyze[1]] - windowLength / 2
     # the end of the last non-silent frame
-    time_end = timestamps[framesToAnalyze[length(framesToAnalyze)]] + windowLength / 2
+    time_end = timestamps[framesToAnalyze[nf]] + windowLength / 2
     duration_noSilence = (time_end - time_start) / 1000
   } else {
     duration_noSilence = 0
@@ -789,21 +790,37 @@ analyze = function(
 
   ## FORMANTS
   fmts = NULL
+  if (is.null(nFormants)) nFormants = 1000
+  # try one frame to see how many formants are returned
+  fmts_list = vector('list', length = nf)
   if (nFormants > 0) {
+    # we don't really know how many formants will be returned by phonTools, so
+    # we save everything at first, and then trim to nFormants
+    for (i in 1:nf) {
+      fmts_list[[i]] = try(do.call(
+        phonTools::findformants,
+        c(formants,
+          list(frameBank[, framesToAnalyze[i]],
+               fs = samplingRate))),
+        silent = TRUE)
+    }
+    # check how many formants we will/can save
+    nFormants = min(nFormants, max(unlist(lapply(fmts_list, nrow))))
+    availableRows = 1:nFormants
     fmts = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
-    colnames(fmts) = paste0('f', rep(1:nFormants, each = 2),
+    colnames(fmts) = paste0('f', rep(availableRows, each = 2),
                             rep(c('_freq', '_width'), nFormants))
-    for (i in framesToAnalyze) {
-      ff = try(do.call(phonTools::findformants,
-                       c(formants,
-                         list(frameBank[, i],
-                              fs = samplingRate))),
-               silent = TRUE)
+    # iterate through the full formant list and save what's needed
+    for (i in 1:nf) {
+      ff = fmts_list[[i]]
       if (is.list(ff)) {
+        nr = nrow(ff)
+        if (nr < nFormants) {
+          ff[(nr + 1):nFormants, ] = NA
+        }
         temp = matrix(NA, nrow = nFormants, ncol = 2)
-        availableRows = 1:min(nFormants, nrow(ff))
         temp[availableRows, ] = as.matrix(ff[availableRows, ])
-        fmts[i, ] = matrix(t(temp), nrow = 1)
+        fmts[framesToAnalyze[i], ] = matrix(t(temp), nrow = 1)
       }
     }
   }
