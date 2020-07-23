@@ -161,7 +161,7 @@ input {
 }
 
 .selected {
-  background-color: #33333340;
+  background-color: #72ea9b;
 }
 
 label {
@@ -192,7 +192,4 @@ label {
   font-size: .8em;
 }
 
-.selected {
-  background-color: #72ea9b;
-}
 

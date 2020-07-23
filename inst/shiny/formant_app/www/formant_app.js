@@ -100,9 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // prevent the slider from going into negative or beyond audio dur
     if (scrollBarLeft_new < 0) {
       scrollBarLeft_new = 0;
-    }
-    if (scrollBarLeft_new > max_right) {
-        scrollBarLeft_new = max_right;
+    } else if (scrollBarLeft_new > max_right) {
+      scrollBarLeft_new = max_right;
     }
 
     // move the slider to the next pos
