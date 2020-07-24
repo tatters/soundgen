@@ -1,7 +1,7 @@
 // js functions needed for pitch_app
 // NB: ui.R should include "includeScript("www/pitch_app.js")"
 
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', () => {
   // execute when the page is loaded
 
   // Functions imported by shinyjs - must begin with "shinyjs." and have "params"
@@ -136,4 +136,6 @@ $(document).ready(function() {
   	    event.preventDefault();
       }
     });
+
+
 });

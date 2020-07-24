@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; save LPC with all formants returned by findformants so LPC is not rerun when nFormants changes; bckp myPars$ann when adding a new ann; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: check & debug with real tasks; load audio repeatedly; LPC saves all avail formants - check beh when changing nFormants across annotations & files; bckp myPars$ann when adding a new ann; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
@@ -345,6 +345,7 @@ server = function(input, output, session) {
         # print('LISTENING')
       })
     })
+    avF()
   })
   # focusout fires when it shouldn't, so we stop listening if the mouse is over
   # the main panel or the spectrum instead (ie basically anywhere else)
@@ -605,7 +606,7 @@ server = function(input, output, session) {
 
       # Add formant tracks
       if (!is.null(myPars$formantTracks)) {
-        for (f in 2:ncol(myPars$formantTracks)) {
+        for (f in 2:(input$nFormants + 1)) {
           points(myPars$formantTracks$time,
                  myPars$formantTracks[, f] / 1000,
                  pch = 16,
@@ -1106,11 +1107,13 @@ server = function(input, output, session) {
         ),
         pitchMethods = NULL,  # disable pitch tracking
         SPL_measured = 0,  # disable loudness analysis
-        nFormants = input$nFormants,
+        nFormants = NULL,  # save all available formants
         summary = FALSE,
         plot = FALSE
       )
-      myPars$temp_anal = myPars$temp_anal[, c('time', myPars$f_col_names)]
+      myPars$nMeasuredFmts = length(grep('_freq', colnames(myPars$temp_anal)))
+      myPars$allF_colnames = paste0('f', 1:myPars$nMeasuredFmts, '_freq')
+      myPars$temp_anal = myPars$temp_anal[, c('time', myPars$allF_colnames)]
       for (c in colnames(myPars$temp_anal)) {
         if (any(!is.na(myPars$temp_anal[, c]))) {
           # in case of all NAs
@@ -1159,7 +1162,7 @@ server = function(input, output, session) {
             myPars$formantTracks$time <= myPars$ann$to[myPars$currentAnn]
         )
       })
-      fMat = myPars$formantTracks[idx, 2:ncol(myPars$formantTracks)]
+      fMat = myPars$formantTracks[idx, 2:(input$nFormants + 1)]
       myPars$formants = apply(fMat, 2, function(x)
         round(do.call(input$summaryFun, list(x, na.rm = TRUE))))
       # myPars$bandwidth ?
@@ -1265,14 +1268,13 @@ server = function(input, output, session) {
     if (!is.null(myPars$play$on) && myPars$play$on) {
       time = proc.time()
       if (!is.null(myPars$slider_ms)) invalidateLater(myPars$slider_ms)
-      if ((time - myPars$play$timeOff)[3] < 0) {
+      if ((time - myPars$play$timeOff)[3] > 0) {
         myPars$play$on = FALSE
         myPars$cursor = myPars$cursor_temp  # reset to original cursor
       } else {
-        el =
-          myPars$cursor = as.numeric(
-            myPars$play$from + time - myPars$play$timeOn
-          )[3] * 1000  # [3] for "elapsed", ie "real" time
+        myPars$cursor = as.numeric(
+          myPars$play$from + time - myPars$play$timeOn
+        )[3] * 1000  # [3] for "elapsed", ie "real" time
       }
     }
   })

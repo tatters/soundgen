@@ -736,7 +736,7 @@ server = function(input, output, session) {
                 myPars$play$to = myPars$spec_xlim[2] / 1000
             }
             myPars$play$dur = myPars$play$to - myPars$play$from
-            myPars$play$timeOn = Sys.time()
+            myPars$play$timeOn = proc.time()
             myPars$play$timeOff = myPars$play$timeOn + myPars$play$dur
             myPars$cursor_temp = myPars$cursor
             myPars$play$on = TRUE
@@ -763,15 +763,15 @@ server = function(input, output, session) {
 
     observe({
         if (!is.null(myPars$play$on) && myPars$play$on) {
-            time = Sys.time()
+            time = proc.time()
             if (!is.null(myPars$slider_ms)) invalidateLater(myPars$slider_ms)
-            if (time > myPars$play$timeOff) {
+            if ((time - myPars$play$timeOff)[3] > 0) {
                 myPars$play$on = FALSE
                 myPars$cursor = myPars$cursor_temp  # reset to original cursor
             } else {
                 myPars$cursor = as.numeric(
                     myPars$play$from + time - myPars$play$timeOn
-                ) * 1000
+                )[3] * 1000  # [3] for "elapsed", ie "real" time
             }
         }
     })

@@ -8,6 +8,7 @@ ui = fluidPage(
 
   # js
   includeScript("www/pitch_app.js"),
+  includeScript("www/pitch_app_shinyjs.js"),
   shinyjs::useShinyjs(),
   # handy for calling js functions from R, eg for a collapsible side panel - see
   # https://stackoverflow.com/questions/46352156/r-shiny-resizing-the-mainpanel-window-when-i-minimize-the-sidebarpanel?rq=1
@@ -16,7 +17,7 @@ ui = fluidPage(
   # import some js functions to be invoked from R with shinyjs
   # (eg for playing the audio)
   shinyjs::extendShinyjs(
-    script = 'www/pitch_app.js',
+    script = 'www/pitch_app_shinyjs.js',
     functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize', 'scrollBar')
   ),
 
