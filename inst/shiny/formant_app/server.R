@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; load audio repeatedly; LPC saves all avail formants - check beh when changing nFormants across annotations & files; bckp myPars$ann when adding a new ann; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: check & debug with real tasks; delete bckp csv upon clicking download; LPC saves all avail formants - check beh when changing nFormants across annotations & files; bckp myPars$ann when adding a new ann; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
@@ -108,10 +108,19 @@ server = function(input, output, session) {
   }
   observeEvent(input$reset_to_def, resetSliders())
 
+  rbind_fill = function(df1, df2) {
+    # fill missing columns with NAs, then rbind - handy in case nFormants changes
+    df1[setdiff(names(df2), names(df1))] = NA
+    df2[setdiff(names(df1), names(df2))] = NA
+    return(rbind(df1, df2))
+  }
+
   loadAudio = function() {
     # shinyjs::js$inheritSize(parentDiv = 'specDiv')
     if (myPars$print) print('Loading audio...')
-    reset()  # also triggers done()
+    done()
+    reset()  # also triggers done(), but done() needs to run first in case loadAudio
+    # is re-executed (need to save myPars$ann --> myPars$out)
 
     # if output.csv is among the uploaded files, use the annotations in it
     ext = substr(input$loadAudio$name,
@@ -119,22 +128,48 @@ server = function(input, output, session) {
                  nchar(input$loadAudio$name))
     old_out_idx = which(ext == 'csv')[1]  # grab the first csv, if any
     if (!is.na(old_out_idx)) {
-      myPars$out = read.csv(input$loadAudio$datapath[old_out_idx], stringsAsFactors = FALSE)
+      user_ann = read.csv(input$loadAudio$datapath[old_out_idx], stringsAsFactors = FALSE)
+      if (is.null(myPars$out)) {
+        myPars$out = user_ann
+      } else {
+        myPars$out = rbind_fill(myPars$out, user_ann)
+      }
     }
 
     # work only with audio files
-    idx_audio = apply(matrix(input$loadAudio$type), 1, function(x) {
+    idx_audio = which(apply(matrix(input$loadAudio$type), 1, function(x) {
       grepl('audio', x, fixed = TRUE)
-    })
-    myPars$fileList = input$loadAudio[idx_audio, ]
-    myPars$n = 1   # file number in queue
-    myPars$nFiles = nrow(myPars$fileList)  # number of uploaded files in queue
-    myPars$drawSpec = FALSE  # hold on plotting the spectrogram until after running analyze()
-    choices = as.list(myPars$fileList$name)
-    names(choices) = myPars$fileList$name
-    updateSelectInput(session, 'fileList',
-                      choices = as.list(myPars$fileList$name))
-    # readAudio(1)  # read the first sound in queue
+    }))
+    if (length(idx_audio) > 0) {
+      if (is.null(myPars$fileList)) {
+        myPars$fileList = input$loadAudio[idx_audio, ]
+        myPars$n = 1   # file number in queue
+      } else {
+        sameFiles = which(myPars$fileList$name %in% input$loadAudio$name)
+        if (length(sameFiles) > 0) {
+          message('Note: uploading the same audio file twice overwrites previous annotations')
+          if (!is.null(myPars$out)) {
+            myPars$out = myPars$out[!myPars$out$file %in% myPars$fileList$name[sameFiles]]
+            if (length(myPars$out) == 0) myPars$out = NULL
+          }
+          myPars$fileList = myPars$fileList[-sameFiles, ]
+        }
+        myPars$n = nrow(myPars$fileList) + 1
+        myPars$fileList = rbind(myPars$fileList, input$loadAudio[idx_audio, ])
+      }
+      myPars$nFiles = nrow(myPars$fileList)  # number of uploaded files in queue
+      myPars$drawSpec = FALSE  # hold on plotting the spectrogram until after running analyze()
+      choices = as.list(myPars$fileList$name)
+      names(choices) = myPars$fileList$name
+      if (input$fileList == myPars$fileList$name[myPars$n])
+        readAudio(myPars$n)  # doesn't fire automatically if the same as before
+      updateSelectInput(session, 'fileList',
+                        choices = as.list(myPars$fileList$name),
+                        selected = myPars$fileList$name[myPars$n])
+    } else if(!is.na(old_out_idx)) {
+      # only a new csv uploaded - just refresh the current file
+      readAudio(myPars$n)
+    }
   }
   observeEvent(input$loadAudio, loadAudio())
 
@@ -345,7 +380,7 @@ server = function(input, output, session) {
         # print('LISTENING')
       })
     })
-    avF()
+    avFmPerSel()
   })
   # focusout fires when it shouldn't, so we stop listening if the mouse is over
   # the main panel or the spectrum instead (ie basically anywhere else)
@@ -981,7 +1016,7 @@ server = function(input, output, session) {
       myPars$spectrogram_brush = list(xmin = myPars$ann$from[myPars$currentAnn],
                                       xmax = myPars$ann$to[myPars$currentAnn])
       myPars$cursor = myPars$ann$from[myPars$currentAnn]
-      avF()
+      avFmPerSel()
     }
   })
 
@@ -1017,17 +1052,14 @@ server = function(input, output, session) {
       label = input$annotation,
       dF = NA, vtl = NA,
       stringsAsFactors = FALSE)
+    new[, myPars$ff] = NA
 
     # depending on the history of changing input$nFormants / output.csv,
     # there may be more formants in myPars$ann than in the current sel
-    new[, paste0('f', 1:myPars$maxF)] = NA
-
-    # append to myPars$ann
     if (is.null(myPars$ann)) {
       myPars$ann = new
     } else {
-      # if (ncol(myPars$ann) != ncol(new)) browser()
-      myPars$ann = rbind(myPars$ann, new)
+      myPars$ann = rbind_fill(myPars$ann, new)
     }
 
     # reorder and select the newly added annotation
@@ -1036,7 +1068,7 @@ server = function(input, output, session) {
     myPars$currentAnn = which(ord == nrow(myPars$ann))
 
     # paste in formant frequencies
-    avF()
+    avFmPerSel()
     myPars$ann[myPars$currentAnn, myPars$ff] = myPars$formants[myPars$f_col_names]
     updateFBtn(myPars$formants[myPars$f_col_names])
     updateVTL()
@@ -1044,7 +1076,7 @@ server = function(input, output, session) {
     # clear the selection, close the modal
     removeModal()
     drawAnn()
-    avF()
+    avFmPerSel()
     # hr()
   })
 
@@ -1131,11 +1163,8 @@ server = function(input, output, session) {
           if (length(idx) > 0) {
             myPars$formantTracks = myPars$formantTracks[-idx, ]
           }
-          myPars$formantTracks = rbind(
-            myPars$formantTracks[, c('time', myPars$f_col_names)],
-            myPars$temp_anal
-          )
-          myPars$formantTracks = myPars$formantTracks[order(myPars$formantTracks$time), ]
+          myPars$formantTracks = rbind_fill(myPars$formantTracks, myPars$temp_anal)
+          # myPars$formantTracks = myPars$formantTracks[order(myPars$formantTracks$time), ]
         }
       })
     }
@@ -1151,7 +1180,7 @@ server = function(input, output, session) {
     ignoreInit = TRUE
   )
 
-  avF = function() {
+  avFmPerSel = function() {
     # analyze annotated selection
     if (!is.null(myPars$currentAnn) & !is.null(myPars$formantTracks)) {
       if (myPars$print) print('Averaging formants in selection...')
@@ -1172,7 +1201,7 @@ server = function(input, output, session) {
       updateFBtn(as.character(myPars$ann[myPars$currentAnn, myPars$ff]))
     }
   }
-  observeEvent(myPars$formantTracks, avF())
+  observeEvent(myPars$formantTracks, avFmPerSel())
 
   observe({
     if (!is.null(myPars$ann)) {
@@ -1224,7 +1253,7 @@ server = function(input, output, session) {
       myPars$currentAnn = input$tableRow
       myPars$spectrogram_brush = list(xmin = myPars$ann$from[myPars$currentAnn],
                                       xmax = myPars$ann$to[myPars$currentAnn])
-      avF()
+      avFmPerSel()
     }
   }, ignoreInit = TRUE)
 
@@ -1428,17 +1457,8 @@ server = function(input, output, session) {
         if (length(idx) > 0)
           myPars$out = myPars$out[-idx, ]
 
-        # make sure out and ann have the same formant columns
-        # (in case nFormants changed)
-        mco = which(!colnames(myPars$ann) %in% colnames(myPars$out))
-        if (length(mco > 0))
-          myPars$out[, colnames(myPars$ann)[mco]] = NA
-        mca = which(!colnames(myPars$out) %in% colnames(myPars$ann))
-        if (length(mca > 0))
-          myPars$out[, colnames(myPars$out)[mca]] = NA
-
         # append annotations from the current audio
-        myPars$out = rbind(myPars$out, myPars$ann)
+        myPars$out = rbind_fill(myPars$out, myPars$ann)
       }
       # keep track of formant tracks and spectrograms
       # to avoid analyzing them again if the user goes
@@ -1457,7 +1477,7 @@ server = function(input, output, session) {
     done()
     myPars$n = which(myPars$fileList$name == input$fileList)
     reset()
-    readAudio(myPars$n)
+    if (length(myPars$n) == 1 && myPars$n > 0) readAudio(myPars$n)
   }, ignoreInit = TRUE)
 
   nextFile = function() {
