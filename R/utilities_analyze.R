@@ -302,7 +302,12 @@ summarizeAnalyze = function(
   # apply the specified summary function to each column of result
   for (v in vars) {
     for (s in 1:length(summaryFun)) {
-      var_values = na.omit(result[, v])
+      # remove NAs for the most common summary functions
+      if (summaryFun[s] %in% c('mean', 'median', 'sd', 'min', 'max', 'range', 'sum')) {
+        var_values = na.omit(result[, v])
+      } else {
+        var_values = result[, v]
+      }
       var_f_name = paste0(v, '_', summaryFun[s])
       if (any(is.finite(var_values))) {
         mySummary = do.call(functions[[s]], list(var_values))  # NAs already removed

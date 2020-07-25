@@ -1,17 +1,17 @@
 Package: soundgen
 Type: Package
-Title: Parametric Voice Synthesis
+Title: Sound Synthesis and Acoustic Analysis
 Version: 1.7.0.9000
 Date: 2020-05-24
 Authors@R: person("Andrey", "Anikin", email = "rty.anik@rambler.ru", role = c("aut", "cre"))
 Maintainer: Andrey Anikin <rty.anik@rambler.ru>
 URL: http://cogsci.se/soundgen.html
 BugReports: https://github.com/tatters/soundgen/issues
-Description: Tools for sound synthesis and acoustic analysis.
-    Performs parametric synthesis of sounds with harmonic and noise components
-    such as animal vocalizations or human voice. Also includes tools for
-    spectral analysis, pitch tracking, audio segmentation, self-similarity
-    matrices, morphing, etc.
+Description: Performs parametric synthesis of sounds with harmonic and noise 
+    components such as animal vocalizations or human voice. Also offers tools 
+    for spectral analysis, audio segmentation, self-similarity matrices, 
+    modulation spectra, morphing, etc., as well as interactive web apps for 
+    manually corrected pitch tracking and formant measurement.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
@@ -28,7 +28,7 @@ Imports: stats,
     shiny,
     shinyjs
 Depends: R (>= 3.4), shinyBS
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

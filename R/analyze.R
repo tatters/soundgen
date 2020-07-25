@@ -140,10 +140,12 @@
 #'   \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 #'   deviation of ~4 semitones. To disable, set \code{smooth = 0}
 #' @param summary if TRUE, returns only a summary of the measured acoustic
-#'   variables (mean, median and SD). If FALSE, returns a list containing
-#'   frame-by-frame values
-#' @param summaryFun a vector of names of functions used to summarize each
-#'   acoustic characteristic
+#'   variables (defaults to mean, median and SD). If FALSE, returns a list
+#'   containing frame-by-frame values
+#' @param summaryFun functions used to summarize each acoustic characteristic;
+#'   user-defined functions are fine (see examples); NAs are omitted
+#'   automatically for mean/median/sd/min/max/range/sum, otherwise take care of
+#'   NAs yourself
 #' @param invalidArgAction what to do if an argument is invalid or outside the
 #'   range in \code{defaults_analyze}: 'adjust' = reset to default value,
 #'   'abort' = stop execution, 'ignore' = throw a warning and continue (may
@@ -218,7 +220,7 @@
 #' sound1 = soundgen(sylLen = 900, pitch = list(
 #'   time = c(0, .3, .9, 1), value = c(300, 900, 400, 2300)),
 #'   noise = list(time = c(0, 300), value = c(-40, 0)),
-#'   temperature = 0.001, samplingRate = 44100)
+#'   temperature = 0.001, samplingRate = 44100, pitchSamplingRate = 44100)
 #' # improve the quality of postprocessing:
 #' a1 = analyze(sound1, samplingRate = 44100, priorSD = 24,
 #'              plot = TRUE, pathfinding = 'slow', ylim = c(0, 5))
@@ -234,7 +236,7 @@
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   noise = list(time = c(0, 900), value = c(-40, -20)),
 #'   subDep = 10, jitterDep = 0.5,
-#'   temperature = 0.001, samplingRate = 44100)
+#'   temperature = 0.001, samplingRate = 44100, pitchSamplingRate = 44100)
 #' # playme(sound2, 44100)
 #' a2 = analyze(sound2, samplingRate = 44100, priorSD = 24,
 #'              pathfinding = 'slow', ylim = c(0, 5))
@@ -249,14 +251,14 @@
 #'   pitchPlot = list(col = 'black', lty = 3, lwd = 3),
 #'   osc_dB = TRUE, heights = c(2, 1))
 #'
-#' # Different formatting options for output
+#' # Different options for summarizing the output
 #' a = analyze(sound1, 44100, summary = FALSE)  # frame-by-frame
 #' a = analyze(sound1, 44100, summary = TRUE,
 #'             summaryFun = c('mean', 'range'))  # one row per sound
-#' # ...with custom summaryFun
-#' difRan = function(x) diff(range(x))
+#' # ...with custom summaryFun, eg time of peak relative to duration (0 to 1)
+#' timePeak = function(x) which.max(x) / length(x)  # without omitting NAs
 #' a = analyze(sound2, samplingRate = 16000, summary = TRUE,
-#'             summaryFun = c('mean', 'difRan'))
+#'             summaryFun = c('mean', 'timePeak'))
 #'
 #' # Analyze a selection rather than the whole sound
 #' a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)
