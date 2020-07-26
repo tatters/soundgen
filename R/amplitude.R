@@ -269,17 +269,17 @@ getRMS = function(x,
 #'
 #' A wrapper around \code{\link{getRMS}} that goes through all wav/mp3 files in
 #' a folder and returns either a list with RMS values per frame from each file
-#' or, if \code{summary = TRUE}, a dataframe with a single summary value of RMS
-#' per file. This summary value can be mean, max and so on, as per
+#' or, if \code{summaryFun} is not NULL, a dataframe with a single summary value
+#' of RMS per file. This summary value can be mean, max and so on, as per
 #' \code{summaryFun}.
 #'
 #' @seealso \code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
 #'
 #' @param myfolder path to folder containing wav/mp3 files
 #' @inheritParams getRMS
-#' @param summary if TRUE, returns only a single value of RMS per file
+#' @param summary deprecated
 #' @param summaryFun the function used to summarize RMS values across all frames
-#'   (if \code{summary = TRUE})
+#'   (NULL = no summary); see ?analyze for details
 #' @param verbose if TRUE, reports estimated time left
 #' @export
 #' @examples
@@ -291,8 +291,8 @@ getRMS = function(x,
 #' # (per STFT frame, but should be very similar)
 #'
 #' User-defined summary functions:
-#' difRan = function(x) diff(range(x))
-#' getRMSFolder('~/Downloads/temp', summaryFun = c('mean', 'difRan'))
+#' ran = function(x) diff(range(x))
+#' getRMSFolder('~/Downloads/temp', summaryFun = c('mean', 'ran'))
 #'
 #' meanSD = function(x) {
 #'   paste0('mean = ', round(mean(x), 2), '; sd = ', round(sd(x), 2))
@@ -306,7 +306,7 @@ getRMSFolder = function(myfolder,
                         normalize = TRUE,
                         killDC = FALSE,
                         windowDC = 200,
-                        summary = TRUE,
+                        summary = NULL,
                         summaryFun = 'mean',
                         verbose = TRUE) {
   time_start = proc.time()  # timing
@@ -334,25 +334,40 @@ getRMSFolder = function(myfolder,
   }
 
   # prepare output
-  if (summary == TRUE) {
-    output = data.frame(file = basename(filenames))
-    for (s in 1:length(summaryFun)) {
-      # for each summary function...
-      f = eval(parse(text = summaryFun[s]))
-      for (i in 1:length(result)) {
-        # for each sound file...
-        mySummary = do.call(f, list(na.omit(result[[i]])))
-        # for smth like range, collapse and convert to character
-        if (length(mySummary) > 1) {
-          mySummary = paste0(mySummary, collapse = ', ')
-        }
-        output[i, summaryFun[s]] = mySummary
-      }
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    temp = vector('list', length = length(result))
+    for (i in 1:length(result)) {
+      temp[[i]] = summarizeAnalyze(
+        data.frame(ampl = result[[i]]),
+        summaryFun = summaryFun,
+        var_noSummary = NULL)
     }
+    output = cbind(data.frame(file = basename(filenames)),
+                   do.call('rbind', temp))
   } else {
     output = result
     names(output) = basename(filenames)
   }
+
+  # if (summary == TRUE) {
+  #   output = data.frame(file = basename(filenames))
+  #   for (s in 1:length(summaryFun)) {
+  #     # for each summary function...
+  #     f = eval(parse(text = summaryFun[s]))
+  #     for (i in 1:length(result)) {
+  #       # for each sound file...
+  #       mySummary = do.call(f, list(na.omit(result[[i]])))
+  #       # for smth like range, collapse and convert to character
+  #       if (length(mySummary) > 1) {
+  #         mySummary = paste0(mySummary, collapse = ', ')
+  #       }
+  #       output[i, summaryFun[s]] = mySummary
+  #     }
+  #   }
+  # } else {
+  #   output = result
+  #   names(output) = basename(filenames)
+  # }
   return(output)
 }
 

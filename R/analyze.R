@@ -139,13 +139,12 @@
 #'   the variables in \code{smoothVars} are adjusted with median smoothing.
 #'   \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 #'   deviation of ~4 semitones. To disable, set \code{smooth = 0}
-#' @param summary if TRUE, returns only a summary of the measured acoustic
-#'   variables (defaults to mean, median and SD). If FALSE, returns a list
-#'   containing frame-by-frame values
-#' @param summaryFun functions used to summarize each acoustic characteristic;
-#'   user-defined functions are fine (see examples); NAs are omitted
-#'   automatically for mean/median/sd/min/max/range/sum, otherwise take care of
-#'   NAs yourself
+#' @param summary deprecated
+#' @param summaryFun functions used to summarize each acoustic characteristic,
+#'   eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+#'   are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+#'   take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+#'   list containing frame-by-frame values
 #' @param invalidArgAction what to do if an argument is invalid or outside the
 #'   range in \code{defaults_analyze}: 'adjust' = reset to default value,
 #'   'abort' = stop execution, 'ignore' = throw a warning and continue (may
@@ -252,13 +251,15 @@
 #'   osc_dB = TRUE, heights = c(2, 1))
 #'
 #' # Different options for summarizing the output
-#' a = analyze(sound1, 44100, summary = FALSE)  # frame-by-frame
-#' a = analyze(sound1, 44100, summary = TRUE,
+#' a = analyze(sound1, 44100,
+#'             summaryFun = NULL)  # frame-by-frame
+#' a = analyze(sound1, 44100,
 #'             summaryFun = c('mean', 'range'))  # one row per sound
 #' # ...with custom summaryFun, eg time of peak relative to duration (0 to 1)
 #' timePeak = function(x) which.max(x) / length(x)  # without omitting NAs
-#' a = analyze(sound2, samplingRate = 16000, summary = TRUE,
-#'             summaryFun = c('mean', 'timePeak'))
+#' timeTrough = function(x) which.min(x) / length(x)
+#' a = analyze(sound2, samplingRate = 16000,
+#'             summaryFun = c('mean', 'timePeak', 'timeTrough'))
 #'
 #' # Analyze a selection rather than the whole sound
 #' a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)
@@ -358,8 +359,8 @@ analyze = function(
   snakePlot = FALSE,
   smooth = 1,
   smoothVars = c('pitch', 'dom'),
-  summary = FALSE,
-  summaryFun = c('mean', 'median', 'sd'),
+  summary = NULL,
+  summaryFun = NULL,
   invalidArgAction = c('adjust', 'abort', 'ignore')[1],
   plot = TRUE,
   showLegend = TRUE,
@@ -378,9 +379,9 @@ analyze = function(
   ...
 ) {
   ## preliminaries - deprecated pars
-  # if (!missing(p)) {
-  #   message(paste0(p, ' is deprecated, use ... instead'))
-  # }
+  if (!is.null(summary)) {
+    message(paste0('summary', ' is deprecated, set "summaryFun = NULL" instead'))
+  }
 
 
   # import a sound
@@ -795,15 +796,15 @@ analyze = function(
   if (is.null(nFormants)) nFormants = 1000
   # try one frame to see how many formants are returned
   fmts_list = vector('list', length = nf)
-  if (nFormants > 0) {
+  if (nFormants > 0 & nf > 0) {
     # we don't really know how many formants will be returned by phonTools, so
     # we save everything at first, and then trim to nFormants
     for (i in 1:nf) {
-      fmts_list[[i]] = try(do.call(
+      fmts_list[[i]] = try(suppressWarnings(do.call(
         phonTools::findformants,
         c(formants,
           list(frameBank[, framesToAnalyze[i]],
-               fs = samplingRate))),
+               fs = samplingRate)))),
         silent = TRUE)
     }
     # check how many formants we will/can save
@@ -825,6 +826,12 @@ analyze = function(
         fmts[framesToAnalyze[i], ] = matrix(t(temp), nrow = 1)
       }
     }
+  } else if (nFormants > 0 && nf == 0) {
+    # no formant analysis
+    availableRows = 1:nFormants
+    fmts = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
+    colnames(fmts) = paste0('f', rep(availableRows, each = 2),
+                            rep(c('_freq', '_width'), nFormants))
   }
 
   ## PITCH and other spectral analysis of each frame from fft
@@ -1091,12 +1098,13 @@ analyze = function(
   }
 
   # prepare the output
-  if (summary == TRUE | summary == 'extended') {
-    out = summarizeAnalyze(result, summaryFun)
+  sf = summaryFun[which(summaryFun != 'extended')]
+  if (!is.null(sf) && any(!is.na(sf))) {
+    out = summarizeAnalyze(result, sf)
   } else {
     out = result
   }
-  if (summary == 'extended') {
+  if ('extended' %in% summaryFun) {
     return(list(summary = out,
                 result = result,
                 pitchCands = pitchCands_list,
@@ -1210,7 +1218,7 @@ analyzeFolder = function(
   snakePlot = FALSE,
   smooth = 1,
   smoothVars = c('pitch', 'dom'),
-  summary = TRUE,
+  summary = NULL,
   summaryFun = c('mean', 'median', 'sd'),
   plot = FALSE,
   showLegend = TRUE,
@@ -1226,6 +1234,11 @@ analyzeFolder = function(
   res = NA,
   ...
 ) {
+  ## preliminaries - deprecated pars
+  if (!missing('summary')) {
+    message(paste0('summary', ' is deprecated, set "summaryFun = NULL" instead'))
+  }
+
   warnAboutResetSummary = FALSE
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
@@ -1284,7 +1297,7 @@ analyzeFolder = function(
   if (warnAboutResetSummary) {
     message('Cannot summarize the results when some files are missing in pitchManual')
   }
-  if (summary == TRUE) {
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
     # if some sounds are too short, analyze() returns only duration, so we pad
     # those with NA to the right length in order to run rbind afterwards
     nc = max(unlist(lapply(result, ncol)), na.rm = TRUE) - 1
@@ -1293,9 +1306,11 @@ analyzeFolder = function(
         result[[i]] = c(as.numeric(result[[i]]), rep(NA, nc))
       }
     }
-    output = as.data.frame(t(sapply(result, function(x) unlist(rbind(x)))))
-    output$file = filenames_base
-    output = output[, c('file', colnames(output)[1:(ncol(output) - 1)])]
+    output = cbind(data.frame(file = filenames_base),
+                   do.call(rbind, result))
+    # output = as.data.frame(t(sapply(result, function(x) unlist(rbind(x)))))
+    # output$file = filenames_base
+    # output = output[, c('file', colnames(output)[1:(ncol(output) - 1)])]
   } else {
     output = result
     names(output) = filenames_base

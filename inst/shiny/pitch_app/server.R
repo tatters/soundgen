@@ -572,7 +572,7 @@ server = function(input, output, session) {
                     snakeStep = 0,
                     snakePlot = FALSE,
                     smooth = 0,
-                    summary = 'extended',
+                    summaryFun = 'extended',
                     plot = FALSE
                 )
                 myPars$summary = temp_anal$summary

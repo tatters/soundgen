@@ -37,9 +37,7 @@ modulationSpectrumFolder(
 \arguments{
 \item{myfolder}{full path to target folder}
 
-\item{summary}{if TRUE, returns only a summary of the measured acoustic
-variables (defaults to mean, median and SD). If FALSE, returns a list
-containing frame-by-frame values}
+\item{summary}{deprecated}
 
 \item{htmlPlots}{if TRUE, saves an html file with clickable plots}
 

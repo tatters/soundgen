@@ -15,6 +15,7 @@ MINOR:
   * osc() replaces osc_db()
   * osc(), spectrogram(): fast plotting of long audio files, updated tick labels
   * analyze(): new arguments from/to to analyze only a part of sound, NAs not omitted when running custom summaryFun
+  * analyze(), analyzeFolder(), segment(), segmentFolder(), getLoudnessFolder(), getRMSFolder(): argument "summary" is deprecated and replaced with "summaryFun = NULL"
 
 
           CHANGES IN SOUNDGEN VERSION 1.7.0 [24-May-2020]

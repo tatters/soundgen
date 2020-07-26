@@ -48,7 +48,7 @@ analyzeFolder(
   snakePlot = FALSE,
   smooth = 1,
   smoothVars = c("pitch", "dom"),
-  summary = TRUE,
+  summary = NULL,
   summaryFun = c("mean", "median", "sd"),
   plot = FALSE,
   showLegend = TRUE,
@@ -221,14 +221,13 @@ the variables in \code{smoothVars} are adjusted with median smoothing.
 \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 
-\item{summary}{if TRUE, returns only a summary of the measured acoustic
-variables (defaults to mean, median and SD). If FALSE, returns a list
-containing frame-by-frame values}
+\item{summary}{deprecated}
 
-\item{summaryFun}{functions used to summarize each acoustic characteristic;
-user-defined functions are fine (see examples); NAs are omitted
-automatically for mean/median/sd/min/max/range/sum, otherwise take care of
-NAs yourself}
+\item{summaryFun}{functions used to summarize each acoustic characteristic,
+eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+list containing frame-by-frame values}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 

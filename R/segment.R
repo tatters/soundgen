@@ -19,10 +19,7 @@
 #'
 #' @seealso \code{\link{segmentFolder}} \code{\link{analyze}}  \code{\link{ssm}}
 #'
-#' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
-#'   samplingRate
-#' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
-#'   numeric vector, rather than an audio file)
+#' @inheritParams analyze
 #' @param windowLength,overlap length (ms) and overlap (%) of the smoothing
 #'   window used to produce the amplitude envelope, see
 #'   \code{\link[seewave]{env}}
@@ -79,8 +76,8 @@
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
 #'   shortestSyl = 25, shortestPause = 25, sylThres = .2, burstThres = .05)
 #'
-#' # just a summary
-#' segment(sound, samplingRate = 16000, summary = TRUE)
+#' # just a summary (see examples in ?analyze for custom summaryFun)
+#' segment(sound, samplingRate = 16000, summaryFun = c('mean', 'sd'))
 #' # Note that syllables are slightly longer and pauses shorter than they should
 #' # be (b/c of the smoothing of amplitude envelope), while interburst intervals
 #' # are right on target (~120 ms)
@@ -112,7 +109,8 @@ segment = function(x,
                    peakToTrough = 3,
                    troughLeft = TRUE,
                    troughRight = FALSE,
-                   summary = FALSE,
+                   summary = 'deprecated',
+                   summaryFun = NULL,
                    plot = FALSE,
                    savePath = NA,
                    col = 'green',
@@ -134,6 +132,11 @@ segment = function(x,
                      col = 'red'
                    ),
                    ...) {
+  ## preliminaries - deprecated pars
+  if (!missing('summary')) {
+    message(paste0('summary', ' is deprecated, set "summaryFun = NULL" instead'))
+  }
+
   mergeSyl = ifelse(is.numeric(shortestPause), TRUE, FALSE)
   if (windowLength < 10) {
     warning('windowLength < 10 ms is slow and usually not very useful')
@@ -270,27 +273,19 @@ segment = function(x,
     }
   }
 
-  if (summary) {
-    ## prepare a dataframe containing descriptives for syllables and bursts
-    result = data.frame(
-      nSyl = nrow(syllables),
-      sylLen_mean = suppressWarnings(mean(syllables$sylLen)),
-      sylLen_median = ifelse(nrow(syllables) > 0,
-                             median(syllables$sylLen),
-                             NA),  # otherwise returns NULL
-      sylLen_sd = sd(syllables$sylLen, na.rm = TRUE),
-      pauseLen_mean = suppressWarnings(mean(syllables$pauseLen, na.rm = TRUE)),
-      pauseLen_median = ifelse(nrow(syllables) > 1,
-                               median(syllables$pauseLen, na.rm = TRUE),
-                               NA),  # otherwise returns NULL
-      pauseLen_sd = sd(syllables$pauseLen, na.rm = TRUE),
-      nBursts = nrow(bursts),
-      interburst_mean = suppressWarnings(mean(bursts$interburstInt, na.rm = TRUE)),
-      interburst_median = ifelse(nrow(bursts) > 0,
-                                 median(bursts$interburstInt, na.rm = TRUE),
-                                 NA),  # otherwise returns NULL
-      interburst_sd = sd(bursts$interburstInt, na.rm = TRUE)
-    )
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    sum_syl = summarizeAnalyze(s$syllables[, c('sylLen', 'pauseLen')],
+                               summaryFun = summaryFun,
+                               var_noSummary = NULL)
+    sum_bursts = summarizeAnalyze(s$bursts[, 'interburst', drop = FALSE],
+                                  summaryFun = summaryFun,
+                                  var_noSummary = NULL)
+    result = as.data.frame(c(
+      list(nSyl = nrow(syllables)),
+      sum_syl,
+      list(nBursts = nrow(bursts)),
+      sum_bursts
+    ))
     result[apply(result, c(1, 2), is.nan)] = NA
   } else {
     result = list(syllables = syllables, bursts = bursts)
@@ -349,7 +344,8 @@ segmentFolder = function(
   troughRight = FALSE,
   windowLength = 40,
   overlap = 80,
-  summary = TRUE,
+  summary = 'deprecated',
+  summaryFun = c('mean', 'median', 'sd'),
   plot = FALSE,
   savePlots = FALSE,
   savePath = NA,

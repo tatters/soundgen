@@ -12,7 +12,7 @@ getRMSFolder(
   normalize = TRUE,
   killDC = FALSE,
   windowDC = 200,
-  summary = TRUE,
+  summary = NULL,
   summaryFun = "mean",
   verbose = TRUE
 )
@@ -32,18 +32,18 @@ getRMSFolder(
 
 \item{windowDC}{the window for calculating DC offset, ms}
 
-\item{summary}{if TRUE, returns only a single value of RMS per file}
+\item{summary}{deprecated}
 
 \item{summaryFun}{the function used to summarize RMS values across all frames
-(if \code{summary = TRUE})}
+(NULL = no summary); see ?analyze for details}
 
 \item{verbose}{if TRUE, reports estimated time left}
 }
 \description{
 A wrapper around \code{\link{getRMS}} that goes through all wav/mp3 files in
 a folder and returns either a list with RMS values per frame from each file
-or, if \code{summary = TRUE}, a dataframe with a single summary value of RMS
-per file. This summary value can be mean, max and so on, as per
+or, if \code{summaryFun} is not NULL, a dataframe with a single summary value
+of RMS per file. This summary value can be mean, max and so on, as per
 \code{summaryFun}.
 }
 \examples{
@@ -55,8 +55,8 @@ analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
 # (per STFT frame, but should be very similar)
 
 User-defined summary functions:
-difRan = function(x) diff(range(x))
-getRMSFolder('~/Downloads/temp', summaryFun = c('mean', 'difRan'))
+ran = function(x) diff(range(x))
+getRMSFolder('~/Downloads/temp', summaryFun = c('mean', 'ran'))
 
 meanSD = function(x) {
   paste0('mean = ', round(mean(x), 2), '; sd = ', round(sd(x), 2))

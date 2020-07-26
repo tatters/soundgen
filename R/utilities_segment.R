@@ -172,9 +172,9 @@ findBursts = function(envelope,
   # prepare output
   bursts = bursts[-1, ]  # remove the first empty row
   if (nrow(bursts) > 0) {
-    bursts$interburstInt = NA
+    bursts$interburst = NA
     if (nrow(bursts) > 1) {
-      bursts$interburstInt[1:(nrow(bursts)-1)] = diff(bursts$time)
+      bursts$interburst[1:(nrow(bursts)-1)] = diff(bursts$time)
     }
   }
 

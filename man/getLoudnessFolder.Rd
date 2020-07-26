@@ -12,7 +12,7 @@ getLoudnessFolder(
   SPL_measured = 70,
   Pref = 2e-05,
   spreadSpectrum = TRUE,
-  summary = TRUE,
+  summary = NULL,
   summaryFun = "mean",
   verbose = TRUE
 )
@@ -33,23 +33,26 @@ getLoudnessFolder(
 \item{spreadSpectrum}{if TRUE, applies a spreading function to account for
 frequency masking}
 
-\item{summary}{if TRUE, returns only a single value of loudness per file}
+\item{summary}{deprecated}
 
-\item{summaryFun}{the function used to summarize loudness values across all STFT frames (if
-\code{summary = TRUE})}
+\item{summaryFun}{the function used to summarize loudness values across all STFT frames,
+eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+list containing frame-by-frame values}
 
 \item{verbose}{if TRUE, reports estimated time left}
 }
 \description{
-A wrapper around \code{\link{getLoudness}} that goes through all wav/mp3 files in
-a folder and returns either a list with loudness values per STFT frame from each file
-or, if \code{summary = TRUE}, a dataframe with a single summary value of loudness
-per file. This summary value can be mean, max and so on, as per
-\code{summaryFun}.
+A wrapper around \code{\link{getLoudness}} that goes through all wav/mp3
+files in a folder and returns either a list with loudness values per STFT
+frame from each file or, if \code{summaryFun} is not NULL, a dataframe with a
+single summary value of loudness per file. This summary value can be mean,
+max and so on, as per \code{summaryFun}.
 }
 \examples{
 \dontrun{
-getLoudnessFolder('~/Downloads/temp1')
+getLoudnessFolder('~/Downloads/temp')
 # Compare:
 analyzeFolder('~/Downloads/temp1', pitchMethods = NULL,
               plot = FALSE)$loudness_mean
@@ -57,11 +60,11 @@ analyzeFolder('~/Downloads/temp1', pitchMethods = NULL,
 0, because # analyze() discards frames considered silent)
 
 # custom summaryFun
-difRan = function(x) diff(range(x))
-getLoudnessFolder('~/Downloads/temp', summaryFun = c('mean', 'difRan'))
+ran = function(x) diff(range(x))
+getLoudnessFolder('~/Downloads/temp', summaryFun = c('mean', 'ran'))
 
 # save loudness values per frame without summarizing
-l = getLoudnessFolder('~/Downloads/temp', summary = FALSE)
+l = getLoudnessFolder('~/Downloads/temp', summaryFun = NULL)
 }
 }
 \seealso{

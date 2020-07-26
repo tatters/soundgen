@@ -18,7 +18,8 @@ segmentFolder(
   troughRight = FALSE,
   windowLength = 40,
   overlap = 80,
-  summary = TRUE,
+  summary = "deprecated",
+  summaryFun = c("mean", "median", "sd"),
   plot = FALSE,
   savePlots = FALSE,
   savePath = NA,
@@ -86,6 +87,12 @@ window used to produce the amplitude envelope, see
 \item{summary}{if TRUE, returns only a summary of the number and spacing of
 syllables and vocal bursts. If FALSE, returns a list containing full stats
 on each syllable and bursts (location, duration, amplitude, ...)}
+
+\item{summaryFun}{functions used to summarize each acoustic characteristic,
+eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+list containing frame-by-frame values}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 

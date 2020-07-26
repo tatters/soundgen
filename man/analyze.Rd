@@ -49,8 +49,8 @@ analyze(
   snakePlot = FALSE,
   smooth = 1,
   smoothVars = c("pitch", "dom"),
-  summary = FALSE,
-  summaryFun = c("mean", "median", "sd"),
+  summary = NULL,
+  summaryFun = NULL,
   invalidArgAction = c("adjust", "abort", "ignore")[1],
   plot = TRUE,
   showLegend = TRUE,
@@ -204,14 +204,13 @@ the variables in \code{smoothVars} are adjusted with median smoothing.
 \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 
-\item{summary}{if TRUE, returns only a summary of the measured acoustic
-variables (defaults to mean, median and SD). If FALSE, returns a list
-containing frame-by-frame values}
+\item{summary}{deprecated}
 
-\item{summaryFun}{functions used to summarize each acoustic characteristic;
-user-defined functions are fine (see examples); NAs are omitted
-automatically for mean/median/sd/min/max/range/sum, otherwise take care of
-NAs yourself}
+\item{summaryFun}{functions used to summarize each acoustic characteristic,
+eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+list containing frame-by-frame values}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the
 range in \code{defaults_analyze}: 'adjust' = reset to default value,
@@ -390,13 +389,15 @@ a = analyze(sound1, samplingRate = 44100,
   osc_dB = TRUE, heights = c(2, 1))
 
 # Different options for summarizing the output
-a = analyze(sound1, 44100, summary = FALSE)  # frame-by-frame
-a = analyze(sound1, 44100, summary = TRUE,
+a = analyze(sound1, 44100,
+            summaryFun = NULL)  # frame-by-frame
+a = analyze(sound1, 44100,
             summaryFun = c('mean', 'range'))  # one row per sound
 # ...with custom summaryFun, eg time of peak relative to duration (0 to 1)
 timePeak = function(x) which.max(x) / length(x)  # without omitting NAs
-a = analyze(sound2, samplingRate = 16000, summary = TRUE,
-            summaryFun = c('mean', 'timePeak'))
+timeTrough = function(x) which.min(x) / length(x)
+a = analyze(sound2, samplingRate = 16000,
+            summaryFun = c('mean', 'timePeak', 'timeTrough'))
 
 # Analyze a selection rather than the whole sound
 a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)

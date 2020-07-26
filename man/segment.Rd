@@ -18,7 +18,8 @@ segment(
   peakToTrough = 3,
   troughLeft = TRUE,
   troughRight = FALSE,
-  summary = FALSE,
+  summary = "deprecated",
+  summaryFun = NULL,
   plot = FALSE,
   savePath = NA,
   col = "green",
@@ -79,6 +80,12 @@ on the left and/or right of it? Default to TRUE and FALSE, respectively}
 syllables and vocal bursts. If FALSE, returns a list containing full stats
 on each syllable and bursts (location, duration, amplitude, ...)}
 
+\item{summaryFun}{functions used to summarize each acoustic characteristic,
+eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+list containing frame-by-frame values}
+
 \item{plot}{if TRUE, produces a segmentation plot}
 
 \item{savePath}{full path to the folder in which to save the plot. Defaults
@@ -132,8 +139,8 @@ s = segment(sound, samplingRate = 16000, plot = TRUE)
 s = segment(sound, samplingRate = 16000, plot = TRUE,
   shortestSyl = 25, shortestPause = 25, sylThres = .2, burstThres = .05)
 
-# just a summary
-segment(sound, samplingRate = 16000, summary = TRUE)
+# just a summary (see examples in ?analyze for custom summaryFun)
+segment(sound, samplingRate = 16000, summaryFun = c('mean', 'sd'))
 # Note that syllables are slightly longer and pauses shorter than they should
 # be (b/c of the smoothing of amplitude envelope), while interburst intervals
 # are right on target (~120 ms)

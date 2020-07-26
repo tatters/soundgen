@@ -49,6 +49,7 @@ analyzeFrame = function(frame, bin, freqs,
   }
 
   ## DESCRIPTIVES
+  # plot(absSpec_cut$freq, absSpec_cut$amp, type = 'l')
   amplitude = sum(absSpec_cut$amp)
   absSpec_cut$w = absSpec_cut$amp / amplitude
   specCentroid = sum(absSpec_cut$freq * absSpec_cut$w)
@@ -276,22 +277,14 @@ summarizeAnalyze = function(
   summaryFun = c('mean', 'sd'),
   var_noSummary = c('duration', 'duration_noSilence', 'voiced', 'time')
 ) {
-  ls = length(summaryFun)
-  vars = colnames(result)[!colnames(result) %in% var_noSummary]
-  vars_f = paste0(rep(vars, each = ls), '_', rep(summaryFun, ls))
-
-  # specify how to summarize pitch etc values for each frame within each file
-  # - for ex., save mean, median, sd, ...
-  out = result[1, c('duration', 'duration_noSilence')]
-  out$voiced = mean(!is.na(result$pitch))
-  out_sum = as.data.frame(matrix(ncol = length(vars_f)))
-  colnames(out_sum) = vars_f
-  out = cbind(out, out_sum)
-
-  # remove non-summarizable vars from result
-  for (v in var_noSummary) {
-    result[, v] = NULL
+  if (is.character(var_noSummary)) {
+    vars = colnames(result)[!colnames(result) %in% var_noSummary]
+  } else {
+    vars = colnames(result)
   }
+  ls = length(summaryFun)
+  lv = length(vars)
+  vars_f = paste0(rep(vars, each = ls), '_', rep(summaryFun, each = lv))
 
   # pre-parse summary function names to speed things up
   functions = vector('list', length(summaryFun))
@@ -300,8 +293,9 @@ summarizeAnalyze = function(
   }
 
   # apply the specified summary function to each column of result
+  out = list()
   for (v in vars) {
-    for (s in 1:length(summaryFun)) {
+    for (s in 1:ls) {
       # remove NAs for the most common summary functions
       if (summaryFun[s] %in% c('mean', 'median', 'sd', 'min', 'max', 'range', 'sum')) {
         var_values = na.omit(result[, v])
@@ -310,18 +304,27 @@ summarizeAnalyze = function(
       }
       var_f_name = paste0(v, '_', summaryFun[s])
       if (any(is.finite(var_values))) {
+        # not finite, eg NA or -Inf - don't bother to calculate
         mySummary = do.call(functions[[s]], list(var_values))  # NAs already removed
         # for smth like range, collapse and convert to character
         if (length(mySummary) > 1) {
           mySummary = paste0(mySummary, collapse = ', ')
         }
-        out[1, var_f_name] = mySummary
-      } else {  # not finite, eg NA or -Inf - don't bother to calculate
-        out[1, var_f_name] = NA
+        out[[var_f_name]] = mySummary
+      } else {
+        out[[var_f_name]] = NA
       }
     }
   }
-  return(out)
+
+  if (is.character(var_noSummary)) {
+    # called from analyze()
+    temp = result[1, c('duration', 'duration_noSilence')]
+    temp$voiced = mean(!is.na(result$pitch))
+    out = c(temp, out)
+  }
+
+  return(as.data.frame(out))
 }
 
 #' Update analyze
