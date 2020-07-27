@@ -428,7 +428,7 @@ spectrogram = function(
         xlab = xlab, ylab = '', main = '', ...)
       box()
       time_location = axTicks(1, axp = xaxp)
-      time_labels = convert_sec_to_hms(time_location)
+      time_labels = convert_sec_to_hms(time_location, 3)
       axis(side = 1, at = time_location, labels = time_labels, ...)
 
       if (osc_dB) {
@@ -491,7 +491,7 @@ spectrogram = function(
     )
     if (!(osc | osc_dB)) {
       time_location = axTicks(1, axp = xaxp)
-      time_labels = convert_sec_to_hms(time_location)
+      time_labels = convert_sec_to_hms(time_location, 3)
       axis(side = 1, at = time_location, labels = time_labels, ...)
     }
     if (is.numeric(grid)) {
@@ -936,7 +936,11 @@ osc = function(
     plot(time, sound_plot, type = 'l', xlab = xlab, ylab = ylab,
          bty = bty, xaxt = 'n', yaxt = 'n', ylim = ylim, ...)
     time_location = axTicks(1)
-    time_labels = convert_sec_to_hms(time_location / 1000)
+    if (!is.null(samplingRate)) {
+      time_labels = convert_sec_to_hms(time_location / 1000, 3)
+    } else {
+      time_labels = time_location
+    }
     axis(side = 1, at = time_location, labels = time_labels)
     if (dB) {
       axis(side = 2, at = seq(-dynamicRange, 0, by = 10))

@@ -4,10 +4,12 @@
 \alias{convert_sec_to_hms}
 \title{Print time}
 \usage{
-convert_sec_to_hms(time_s)
+convert_sec_to_hms(time_s, digits = 0)
 }
 \arguments{
 \item{time_s}{time (s)}
+
+\item{digits}{number of digits to preserve for s (1-60 s)}
 }
 \value{
 Returns a character string like "1 h 20 min 3 s"
@@ -19,10 +21,9 @@ Internal soundgen function.
 Converts time in seconds to time in y m d h min s for pretty printing.
 }
 \examples{
-time_s = c(0, .65, 180, 182, 3721, 10000, 150000,
-           365 * 24 * 3600,
-           365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
+time_s = c(.0001, .01, .33, .8, 2.135, 5.4, 12, 250, 3721, 10000,
+           150000, 365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
 soundgen:::convert_sec_to_hms(time_s)
-soundgen:::convert_sec_to_hms(c(.01, .33, .8))
+soundgen:::convert_sec_to_hms(time_s, 1)
 }
 \keyword{internal}

@@ -81,41 +81,43 @@ reportTime = function(i,
 #'
 #' Converts time in seconds to time in y m d h min s for pretty printing.
 #' @param time_s time (s)
+#' @param digits number of digits to preserve for s (1-60 s)
 #' @return Returns a character string like "1 h 20 min 3 s"
 #' @keywords internal
 #' @examples
-#' time_s = c(0, .65, 180, 182, 3721, 10000, 150000,
-#'            365 * 24 * 3600,
-#'            365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
+#' time_s = c(.0001, .01, .33, .8, 2.135, 5.4, 12, 250, 3721, 10000,
+#'            150000, 365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
 #' soundgen:::convert_sec_to_hms(time_s)
-#' soundgen:::convert_sec_to_hms(c(.01, .33, .8))
-convert_sec_to_hms = function(time_s) {
+#' soundgen:::convert_sec_to_hms(time_s, 1)
+convert_sec_to_hms = function(time_s, digits = 0) {
   if (any(time_s > 1)) {
-    years = time_s %/% 31536000
-    years_string = ifelse(years > 0, paste(years, 'y '), '')
+    # years = time_s %/% 31536000
+    # years_string = ifelse(years > 0, paste(years, 'y '), '')
+    #
+    # months = time_s %/% 2592000 - years * 12
+    # months_string = ifelse(months > 0, paste(months, 'm '), '')
 
-    months = time_s %/% 2592000 - years * 12
-    months_string = ifelse(months > 0, paste(months, 'm '), '')
-
-    days = time_s %/% 86400 - years * 365 - months * 30
+    days = time_s %/% 86400
     days_string = ifelse(days > 0, paste(days, 'd '), '')
 
-    hours = time_s %/% 3600 - years * 8760 - months * 720 - days * 24
+    hours = time_s %/% 3600 - days * 24
     hours_string = ifelse(hours > 0, paste(hours, 'h '), '')
 
-    minutes = time_s %/% 60 - years * 525600 - months * 43200 - days * 1440 - hours * 60
+    minutes = time_s %/% 60 - days * 1440 - hours * 60
     minutes_string = ifelse(minutes > 0, paste(minutes, 'min '), '')
 
-    seconds = round(time_s %% 60, 3)
-    idx = which(years > 0 | months > 0 | days > 0 | hours > 0 | minutes > 0)
-    seconds[idx] = round(seconds[idx])  # only keep decimals under 1 min
-    seconds_string = ifelse(seconds > 0, paste(seconds, 's '), '')
-    seconds_string[years == 0 & months == 0 & days == 0 &
-                     hours == 0 & minutes == 0 & seconds == 0] = '0 s '
+    seconds = time_s - days * 86400 - hours * 3600 - minutes * 60
+    seconds_floor = floor(seconds)
+    idx_s = time_s > 1 & time_s < 60
+    seconds_round = ifelse(idx_s, round(seconds, digits = digits), seconds_floor)
+    seconds_string = ifelse(seconds_round > 0, paste(seconds_round, 's '), '')
 
-    output = paste0(years_string, months_string,
-                    days_string, hours_string,
-                    minutes_string, seconds_string)
+    idx_ms = time_s < 1
+    ms_string = ifelse(idx_ms, paste(round((seconds - seconds_floor) * 1000), 'ms'), '')
+    # ms_string[days == 0 & hours == 0 & minutes == 0 & seconds == 0 & ms == 0] = '0 ms '
+
+    output = paste0(days_string, hours_string,
+                    minutes_string, seconds_string, ms_string)
   } else {
     output = paste(round(time_s * 1000), 'ms')
   }
