@@ -114,7 +114,7 @@ convert_sec_to_hms = function(time_s, digits = 0) {
 
     idx_ms = time_s < 1
     ms_string = ifelse(idx_ms, paste(round((seconds - seconds_floor) * 1000), 'ms'), '')
-    # ms_string[days == 0 & hours == 0 & minutes == 0 & seconds == 0 & ms == 0] = '0 ms '
+    ms_string[ms_string == '0 ms'] = '0'
 
     output = paste0(days_string, hours_string,
                     minutes_string, seconds_string, ms_string)

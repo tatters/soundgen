@@ -1,8 +1,6 @@
-# TODO: check imported packages - can exclude base stuff?; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check vignettes; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
-# pitch_app: optional argument to load and open files in a folder; see a list of all uploaded files (add button - doing it with tooltips doesn't work); load audio + results to double-check old work
-
-# formant_app: drag border to adjust the size of two main columns (spec / spectrum) - ~possible with css grid, but better with js (see https://stackoverflow.com/questions/46931103/making-a-dragbar-to-resize-divs-inside-css-grids/46934825)
+# pitch_app: optional argument to load and open files in a folder; load audio + results to double-check old work
 
 #' @import stats graphics utils grDevices shinyBS
 #' @encoding UTF-8

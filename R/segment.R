@@ -89,7 +89,7 @@
 #'             col = 'black', lwd = .5,
 #'             sylPlot = list(lty = 2, col = 'gray20'),
 #'             burstPlot = list(pch = 16, col = 'gray80'),
-#'             xlab = 'ms', cex.lab = 1.2, main = 'My awesome plot')
+#'             xlab = 'Some custom label', cex.lab = 1.2, main = 'My awesome plot')
 #'
 #' \dontrun{
 #' # customize the resolution of saved plot
@@ -109,12 +109,12 @@ segment = function(x,
                    peakToTrough = 3,
                    troughLeft = TRUE,
                    troughRight = FALSE,
-                   summary = 'deprecated',
+                   summary = NULL,
                    summaryFun = NULL,
                    plot = FALSE,
                    savePath = NA,
                    col = 'green',
-                   xlab = 'Time, ms',
+                   xlab = '',
                    ylab = 'Amplitude',
                    main = NULL,
                    width = 900,
@@ -226,7 +226,25 @@ segment = function(x,
                       troughRight = troughRight
   )
 
-  ## plotting (optional)
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    sum_syl = summarizeAnalyze(syllables[, c('sylLen', 'pauseLen')],
+                               summaryFun = summaryFun,
+                               var_noSummary = NULL)
+    sum_bursts = summarizeAnalyze(bursts[, 'interburst', drop = FALSE],
+                                  summaryFun = summaryFun,
+                                  var_noSummary = NULL)
+    result = as.data.frame(c(
+      list(nSyl = nrow(syllables)),
+      sum_syl,
+      list(nBursts = nrow(bursts)),
+      sum_bursts
+    ))
+    result[apply(result, c(1, 2), is.nan)] = NA
+  } else {
+    result = list(syllables = syllables, bursts = bursts)
+  }
+
+  ## plotting
   if (is.character(savePath)) plot = TRUE
   if (plot) {
     # defaults
@@ -254,7 +272,9 @@ segment = function(x,
          axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
          xlab = xlab, ylab = '', main = '', ...)
     box()
-    axis(side = 1, ...)
+    time_location = axTicks(1)
+    time_labels = convert_sec_to_hms(time_location / 1000, 3)
+    axis(side = 1, at = time_location, labels = time_labels, ...)
     abline(h = 0, lty = 2)
     par(mar = c(0, op$mar[2:4]), xaxt = 'n', yaxt = 's')
     plot(x = envelope$time, y = envelope$value, type = 'l',
@@ -271,24 +291,6 @@ segment = function(x,
     if (is.character(savePath)){
       dev.off()
     }
-  }
-
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    sum_syl = summarizeAnalyze(s$syllables[, c('sylLen', 'pauseLen')],
-                               summaryFun = summaryFun,
-                               var_noSummary = NULL)
-    sum_bursts = summarizeAnalyze(s$bursts[, 'interburst', drop = FALSE],
-                                  summaryFun = summaryFun,
-                                  var_noSummary = NULL)
-    result = as.data.frame(c(
-      list(nSyl = nrow(syllables)),
-      sum_syl,
-      list(nBursts = nrow(bursts)),
-      sum_bursts
-    ))
-    result[apply(result, c(1, 2), is.nan)] = NA
-  } else {
-    result = list(syllables = syllables, bursts = bursts)
   }
 
   return(result)
@@ -344,7 +346,7 @@ segmentFolder = function(
   troughRight = FALSE,
   windowLength = 40,
   overlap = 80,
-  summary = 'deprecated',
+  summary = NULL,
   summaryFun = c('mean', 'median', 'sd'),
   plot = FALSE,
   savePlots = FALSE,
@@ -352,7 +354,7 @@ segmentFolder = function(
   verbose = TRUE,
   reportEvery = 10,
   col = 'green',
-  xlab = 'Time, ms',
+  xlab = '',
   ylab = 'Amplitude',
   main = NULL,
   width = 900,
@@ -378,11 +380,12 @@ segmentFolder = function(
     stop(paste('No wav/mp3 files found in', myfolder))
   }
   filesizes = file.info(filenames)$size
+  filenames_base = basename(filenames)
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
     'myfolder', 'htmlPlots', 'verbose', 'savePlots',
-    'reportEvery', 'sylPlot', 'burstPlot')]  # otherwise flattens lists
+    'reportEvery', 'sylPlot', 'burstPlot', 'summary')]  # otherwise flattens lists
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
   # add back sylPlot and burstPlot
@@ -402,13 +405,9 @@ segmentFolder = function(
   }
 
   # prepare output
-  if (summary == TRUE) {
-    output = as.data.frame(t(sapply(result, rbind)))
-    output$file = apply(matrix(1:length(filenames)), 1, function(x) {
-      tail(unlist(strsplit(filenames[x], '/')), 1)
-    })
-    output = output[, c('file', colnames(output)[1:(ncol(output) - 1)])]
-    output = as.data.frame(apply(output, 2, unlist))
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    output = cbind(data.frame(file = filenames_base),
+                   do.call(rbind, result))
   } else {
     output = result
     names(output) = filenames

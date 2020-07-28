@@ -18,12 +18,12 @@ segment(
   peakToTrough = 3,
   troughLeft = TRUE,
   troughRight = FALSE,
-  summary = "deprecated",
+  summary = NULL,
   summaryFun = NULL,
   plot = FALSE,
   savePath = NA,
   col = "green",
-  xlab = "Time, ms",
+  xlab = "",
   ylab = "Amplitude",
   main = NULL,
   width = 900,
@@ -152,7 +152,7 @@ s = segment(sound, samplingRate = 16000, plot = TRUE,
             col = 'black', lwd = .5,
             sylPlot = list(lty = 2, col = 'gray20'),
             burstPlot = list(pch = 16, col = 'gray80'),
-            xlab = 'ms', cex.lab = 1.2, main = 'My awesome plot')
+            xlab = 'Some custom label', cex.lab = 1.2, main = 'My awesome plot')
 
 \dontrun{
 # customize the resolution of saved plot

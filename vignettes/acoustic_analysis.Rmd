@@ -34,17 +34,19 @@ To summarize, you might want to look at soundgen's tools for acoustic analysis i
 * using machine learning for acoustic classification,
 * comparing different classes of sounds in terms of specific acoustic predictors.
   
-The most relevant functions are:
+The most relevant soundgen functions for acoustic analysis are:
   
-* `analyze`, `analyzeFolder`: extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per STFT frame.
-* `pitch_app`: opens a shiny app in a web browser for manually correcting and exporting the pitch contours extracted by `analyze`.
+* `analyze`, `analyzeFolder`: extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per STFT frame
+* `pitch_app`: opens a shiny app in a web browser for manually correcting and exporting the pitch contours extracted by `analyze`
+* `formant_app`: another web app, for annotating and manually correcting formant measurements provided by phonTools::findformants()
 * `segment`, `segmentFolder`: finds syllables and bursts of energy using the amplitude envelope
-* `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
 * `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
 * `getLoudness`, `getLoudnessFolder`: estimates the subjective loudness per STFT frame, in sone
 *  `modulationSpectrum`, `modulationSpectrumFolder`: calculates a joint temporal-spectral modulation spectrum and a measure of acoustic roughness
+* `getRMS`, `getRMSFolder`: measure the root mean square amplitude of audio files
+* `spectrogram`, `osc`: basic plots
   
-*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use an interactive program like PRAAT and check everything manually. A good approach may be to start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages, software, or manual measurements.*
+*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use formant_app or another interactive program like PRAAT and check everything manually. A good approach may be to start with pitch_app to ensure accurate pitch tracking, then run `soundgen::analyze` with these manual pitch values to get a table of many common acoustic predictors, and finally add other descriptives such as roughness (from `modulationSpectrumFolder`), novelty (from `ssm`), etc.*
   
 This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics.
 
@@ -119,7 +121,7 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `voiced`: is the current STFT frame voiced? TRUE / FALSE
 
 ## Custom spectral descriptives
-The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame()` and to `soundgen::analyze()`. If you want deltas, they can be extracted directly from the output of `analyze(..., summary = FALSE)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze()`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
+The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame()` and to `soundgen::analyze()`. If you want deltas, they can be extracted directly from the output of `analyze(..., summaryFun = NULL)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze()`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
 
 For the average spectrum of an entire sound, go no further than `seewave::spec` or `seewave::meanspec`:
 ```{r}
@@ -407,13 +409,13 @@ a1 = analyze(s1, samplingRate = 16000, priorMean = NA,
              snakeStep = 0, smooth = 0,
              interpolWin = 0,   # disable interpolation
              pathfinding = 'none',  
-             summary = FALSE,
+             summaryFun = NULL,
              plot = FALSE)
 a2 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', pitchCep = list(cepThres = .4), step = 25,
              pathfinding = 'none',
              snakeStep = 0, smooth = 0, 
-             summary = FALSE,
+             summaryFun = NULL,
              plot = FALSE)  
 plot(a1$time, a1$pitch, type = 'l', xlab = 'Time, ms', ylab = 'Pitch, Hz')
 points(a2$time, a2$pitch, type = 'l', col = 'red', lty = 3)
@@ -466,12 +468,12 @@ a1 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', pitchCep = list(cepThres = .2), nCands = 2,
              pathfinding = 'none', snakeStep = 0, interpolTol = Inf,
              smooth = 0,  # no smoothing
-             summary = FALSE, plot = FALSE)
+             summaryFun = NULL, plot = FALSE)
 a2 = analyze(s1, samplingRate = 16000, priorMean = NA,
              pitchMethods = 'cep', pitchCep = list(cepThres = .2), nCands = 2,
              pathfinding = 'none', snakeStep = 0, interpolTol = Inf,
              smooth = 1,  # default smoothing
-             summary = FALSE, plot = FALSE)
+             summaryFun = NULL, plot = FALSE)
 plot(a1$time, a1$pitch, type = 'l', xlab = 'Time, ms', ylab = 'Pitch, Hz')
 points(a2$time, a2$pitch, type = 'l', col = 'red', lty = 3, lwd = 2)
 ```
@@ -523,7 +525,7 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, savePath = '~/Downloads',
 This creates a file called 'sound.png' 900 x 500 pixels in size in the indicated folder. This is mostly useful when you do batch processing of multiple files with `analyzeFolder` and want to save the plots for manual checking of extracted plot contours (see below).
 
 ## Batch processing with `analyzeFolder`
-You may not feel too excited to learn that soundgen contains a wrapper around `analyze` that is meant for analyzing all .wav files in a folder. Indeed, calling `analyze` in a loop will achieve the same result. However, `analyzedFolder` can save you a bit of manual coding. If you want to preserve frame-by-frame information for each file in a folder, you can either loop through the files manually or call `analyzeFolder(myfolder, summary = FALSE)`, which returns a list of dataframes. In contrast, `analyzeFolder(myfolder, summary = TRUE)` returns a single dataframe, in which each acoustic predictor is summarized as the mean, median, and SD of frame-by-frame measurements. Since this is the kind of data you would normally use as input for things like classification of sounds or cluster analysis, this is a convenient shortcut for generating an acoustic dataset for further statistical modeling. In addition, `analyzeFolder` allows you to simultaneously save the plots and prints out estimated time to completion. 
+You may not feel too excited to learn that soundgen contains a wrapper around `analyze` that is meant for analyzing all .wav files in a folder. Indeed, calling `analyze` in a loop will achieve the same result. However, `analyzedFolder` can save you a bit of manual coding. If you want to preserve frame-by-frame information for each file in a folder, you can either loop through the files manually or call `analyzeFolder(myfolder, summaryFun = NULL)`, which returns a list of dataframes. In contrast, `analyzeFolder(myfolder, summaryFun = c('mean', 'median', 'sd'))` returns a single dataframe, in which each acoustic predictor is summarized as the mean, median, and SD of frame-by-frame measurements. User-defined summary functions also work fine (beware of NAs, though). Since this is the kind of data you would normally use as input for things like classification of sounds or cluster analysis, this is a convenient shortcut for generating an acoustic dataset for further statistical modeling. In addition, `analyzeFolder` allows you to simultaneously save the plots and prints out estimated time to completion. 
 
 *TIP Processing time varies a lot depending on the exact settings and input, but expect up to a few seconds of machine time per second of audio. The surest way to speed things up is to reduce `step` and to avoid `pathfinding = 'slow'` (other types of postprocessing have very little effect on processing time)*
 
@@ -532,6 +534,10 @@ You may not feel too excited to learn that soundgen contains a wrapper around `a
 Just like `soundgen_app()` is an interactive shiny app for sound synthesis, `pitch_app()` provides a wrapper around `analyze()` with an option to step in and manually correct the intonation contour. The app runs in a browser; you can load one or more wav or mp3 files, adjust the settings, verify and correct the pitch contours, and save the output as a .csv file. Please see `?pitch_app` for more information.
 
 *TIP `pitch_app()` is meant for extracting pitch contours. Although its output is similar to that of `analyze()` it doesn't offer options for measuring formants, loudness, etc. Suggested workflow: extract manually corrected pitch contours first, and then run `analyzeFolder(..., pitchManual = output.csv)`, where output.csv is the dataset produced by `pitch_app`*
+
+
+# Formant analysis with formant_app()
+Formants are the natural resonances of the vocal tract - that is, frequency bands that are amplified as the sound passes through the vocal tract. In speech, formants are responsible for differences between vowel sounds such as /a/, /i/, /u/, etc., but formants are also present in many animal calls. The most common way to estimate formant frequencies and bandwidth is by using Linear Predictive Coding (LPC), which is implemented in `phonTools::findformants()`. Because formant measurement is quite error-prone, however, any serious analysis should include manual verification of LPC measurements. Soundgen offers a web app for this task: `formant_app()`. Just like `pitch_app()`, it runs in the system-default web browser; you can add annotations to audio files and manually verify and, if needed, correct the formant measurements for each annotated segment.
 
 
 # Audio segmentation 
@@ -594,7 +600,7 @@ a2 = segment(s2, samplingRate = 16000, plot = TRUE,
 ```
 
 ### Batch processing: `segmentFolder`
-Just as `analyzeFolder` is a wrapper around `analyze` that simplifies looping through a whole folder of .wav files, `segmentFolder` provides a convenient wrapper around `segment`. It accepts the same arguments as `segment` and can optionally save segmentation plots in the designated folder (e.g., `savePath = ~/Downloads/`). It also reports estimated time left (`verbose = TRUE`). You can save either detailed stats on individual syllables and bursts (`summary = FALSE`) or produce a summary table with means, medians, and SDs (`summary = TRUE`).
+Just as `analyzeFolder` is a wrapper around `analyze` that simplifies looping through a whole folder of .wav files, `segmentFolder` provides a convenient wrapper around `segment`. It accepts the same arguments as `segment` and can optionally save segmentation plots in the designated folder (e.g., `savePath = ~/Downloads/`). It also reports estimated time left (`verbose = TRUE`). You can save either detailed stats on individual syllables and bursts (`summaryFun = NULL`) or produce a summary table with means, medians, and SDs (`summary = TRUE`).
 
 *TIP If you are analyzing a single sound and are willing to adjust the settings manually, you can measure both syllables and bursts accurately. For batch processing without manual adjustments, bursts are more robust*
 
