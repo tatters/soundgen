@@ -297,7 +297,9 @@ spectrogram = function(
   }
 
   # frequency stamps
-  n1 = floor(windowLength_points / 2)
+  zpExtra = max(0, floor((zp - windowLength_points) / 2) * 2)
+  windowLength_points = windowLength_points + zpExtra
+  n1 = floor(windowLength_points / 2)  # zpExtra
   bin_width = samplingRate / windowLength_points
   Y = (0:(n1 - 1)) * bin_width / 1000
   if (length(Y) < 2) {
@@ -620,7 +622,7 @@ spectrogramFolder = function(myfolder,
 #' @keywords internal
 #' @examples
 #' wns = c('bartlett', 'blackman', 'flattop', 'hamming', 'hanning', 'rectangle', 'gaussian')
-#' l = 200
+#' l = 16
 #' par(mfrow = c(4, 2))
 #' for (w in wns) {
 #'   plot(1:l, soundgen:::ftwindow_modif(wl = l, wn = w), type = 'b', main = w)
@@ -652,9 +654,11 @@ ftwindow_modif = function (wl, wn = "gaussian") {
 #' @param n window length, in points
 #' @keywords internal
 gaussian.w = function(n) {
-  if (n == 0)
-    stop("'n' must be a positive integer")
-  w = (exp(-12 * (((1:n) / n) - 0.5) ^ 2) - exp(-12)) / (1 - exp(-12))
+  if (n < 2)
+    stop("'n' must be a positive integer >1")
+  n1 = n - 1
+  e12 = exp(-12)
+  w = (exp(-12 * (((0:n1) / n1) - 0.5) ^ 2) - e12) / (1 - e12)
   # Boersma (PRAAT)
   return(w)
 }
@@ -715,8 +719,9 @@ getFrameBank = function(sound,
   if (is.null(filter)) {
     filter = ftwindow_modif(wl = windowLength_points, wn = wn)
   }
-  zpExtra = floor((zp - windowLength_points) / 2) * 2 # how many extra zeroes
-  # we pad with. Made even
+
+  # zero padding
+  zpExtra = max(0, floor((zp - windowLength_points) / 2) * 2)
   if (zpExtra > 0) {
     frameBank = apply(as.matrix(myseq), 1, function(x) {
       c(rep(0, zpExtra / 2),

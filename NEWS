@@ -5,7 +5,7 @@ NEW FUNCTIONS:
 BUGS FIXED:
   * morph() accepts vectors like "vibratoFreq = c(0, 3)" in both formulas without crashing
   * pitch_app() saves all files propertly if multiple folders are opened consecutively without saving the output
-  * spectrogram(): corrected frequency labels
+  * spectrogram(): corrected frequency labels, zero padding
   * filterSoundByMS(): the argument "action = c('remove', 'preserve')" now has an effect
 
 MINOR:
