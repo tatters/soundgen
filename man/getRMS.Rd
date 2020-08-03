@@ -15,10 +15,10 @@ getRMS(
   normalize = TRUE,
   windowDC = 200,
   plot = TRUE,
-  xlab = "Time, ms",
+  xlab = "",
   ylab = "",
   type = "b",
-  col = "blue",
+  col = "green",
   lwd = 2,
   ...
 )
@@ -78,11 +78,11 @@ s = soundgen() + .1  # with added DC offset
 plot(s, type = 'l')
 r = getRMS(s, samplingRate = 16000,
   windowLength = 40, overlap = 50, killDC = TRUE,
-  col = 'green', lty = 2, main = 'RMS envelope')
+  type = 'l', lty = 2, main = 'RMS envelope')
 # short window = jagged envelope
 r = getRMS(s, samplingRate = 16000,
   windowLength = 5, overlap = 0, killDC = TRUE,
-  col = 'green', lty = 2, main = 'RMS envelope')
+  col = 'blue', pch = 13, main = 'RMS envelope')
 \dontrun{
 r = getRMS('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
 }

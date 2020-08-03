@@ -55,8 +55,8 @@ analyze(
   plot = TRUE,
   showLegend = TRUE,
   savePath = NA,
-  osc = TRUE,
-  osc_dB = FALSE,
+  osc = "linear",
+  osc_dB = NULL,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3, showPrior = TRUE),
   ylim = NULL,
   xlab = "Time, ms",
@@ -129,9 +129,9 @@ NULL = no pitch analysis)}
 length, but ideally as returned by \code{\link{pitch_app}} with the same
 windowLength and step as in current call to analyze}
 
-\item{entropyThres}{pitch tracking is not performed for frames with Weiner
-entropy above \code{entropyThres}, but other spectral descriptives are
-still calculated}
+\item{entropyThres}{pitch tracking is only performed for frames with Weiner
+entropy below \code{entropyThres}, but other spectral descriptives are
+still calculated (NULL = analyze everything)}
 
 \item{pitchFloor, pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
@@ -224,13 +224,10 @@ crash)}
 \item{savePath}{if a valid path is specified, a plot is saved in this folder
 (defaults to NA)}
 
-\item{osc}{should an oscillogram be shown under the spectrogram? TRUE/
-FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
-\code{\link{osc_dB}} for details}
+\item{osc}{should an oscillogram be shown under the spectrogram? none = no
+osc; linear = on the original scale; dB = in decibels}
 
-\item{osc_dB}{should an oscillogram be shown under the spectrogram? TRUE/
-FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
-\code{\link{osc_dB}} for details}
+\item{osc_dB}{deprecated}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{list(type = 'n')} to suppress}
@@ -386,7 +383,7 @@ a = analyze(sound1, samplingRate = 44100,
   priorMean = NA,  # no prior info at all
   pitchDom = list(col = 'red', domThres = .25),
   pitchPlot = list(col = 'black', lty = 3, lwd = 3),
-  osc_dB = TRUE, heights = c(2, 1))
+  osc = 'dB', heights = c(2, 1))
 
 # Different options for summarizing the output
 a = analyze(sound1, 44100,

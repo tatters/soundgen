@@ -14,8 +14,7 @@
 #' "units") or may produce unexpected results. If in doubt, omit extra graphical
 #' parameters.
 #'
-#' @seealso \code{\link{modulationSpectrum}} \code{\link{ssm}}
-#'   \code{\link{osc_dB}}
+#' @seealso \code{\link{osc}} \code{\link{modulationSpectrum}} \code{\link{ssm}}
 #'
 #' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
 #'   samplingRate
@@ -62,9 +61,9 @@
 #' @param yScale scale of the frequency axis: 'linear' = linear, 'log' =
 #'   logarithmic
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
-#' @param osc,osc_dB should an oscillogram be shown under the spectrogram? TRUE/
-#'   FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
-#'   \code{\link{osc_dB}} for details
+#' @param osc should an oscillogram be shown under the spectrogram? none = no
+#'   osc; linear = on the original scale; dB = in decibels
+#' @param osc_dB deprecated
 #' @param heights a vector of length two specifying the relative height of the
 #'   spectrogram and the oscillogram (including time axes labels)
 #' @param padWithSilence if TRUE, pads the sound with just enough silence to
@@ -97,7 +96,8 @@
 #' \dontrun{
 #' # add bells and whistles
 #' spectrogram(sound, samplingRate = 16000,
-#'   osc = TRUE,  # plot oscillogram under the spectrogram
+#'   osc = 'dB',  # plot oscillogram in dB
+#'   heights = c(2, 1),  # spectro/osc height ratio
 #'   noiseReduction = 1.1,  # subtract the spectrum of noisy parts
 #'   brightness = -1,  # reduce brightness
 #'   colorTheme = 'heat.colors',  # pick color theme
@@ -112,8 +112,8 @@
 #' spectrogram(sound, samplingRate = 16000, dynamicRange = 40)
 #' spectrogram(sound, samplingRate = 16000, dynamicRange = 120)
 #'
-#' # add an oscillogram
-#' spectrogram(sound, samplingRate = 16000, osc = TRUE)
+#' # remove the oscillogram
+#' spectrogram(sound, samplingRate = 16000, osc = 'none')  # or NULL etc
 #'
 #' # oscillogram on a dB scale, same height as spectrogram
 #' spectrogram(sound, samplingRate = 16000,
@@ -171,8 +171,8 @@ spectrogram = function(
   method = c('spectrum', 'spectralDerivative')[1],
   output = c('original', 'processed', 'complex')[1],
   plot = TRUE,
-  osc = FALSE,
-  osc_dB = FALSE,
+  osc = c('none', 'linear', 'dB')[2],
+  osc_dB = NULL,
   heights = c(3, 1),
   ylim = NULL,
   yScale = c('linear', 'log')[1],
@@ -386,6 +386,7 @@ spectrogram = function(
   if (plot) {
     # produce a spectrogram of the modified fft
     color.palette = switchColorTheme(colorTheme)
+    if (!is.character(osc)) osc = 'none'
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     if (is.null(xlab)) xlab = ''
     if (!is.null(maxPoints)) {
@@ -398,7 +399,7 @@ spectrogram = function(
     x_ms = X[lx] < 1    # need to convert x-scale
     y_Hz = ylim[2] < 1  # need to convert y-scale
 
-    if (osc | osc_dB) {
+    if (osc %in% c('linear', 'dB')) {
       # For long files, downsample before plotting
       if (!is.null(maxPoints) && maxPoints[1] < ls) {
         myseq = round(seq(1, ls, by = ls / maxPoints[1]))
@@ -406,7 +407,7 @@ spectrogram = function(
         ls = length(myseq)
       }
 
-      if (osc_dB) {
+      if (osc == 'dB') {
         sound = osc(sound,
                     dynamicRange = dynamicRange,
                     dB = TRUE,
@@ -433,10 +434,10 @@ spectrogram = function(
       time_labels = convert_sec_to_hms(time_location, 3)
       axis(side = 1, at = time_location, labels = time_labels, ...)
 
-      if (osc_dB) {
+      if (osc == 'dB') {
         axis(side = 4, at = seq(-dynamicRange, 0, by = 10), ...)
         abline(h = -dynamicRange, lty = 2, col = 'gray70')
-        mtext("dB", side = 2, line = 3, ...)
+        # mtext("dB", side = 2, line = 3, ...)
       } else {
         abline(h = 0, lty = 2, col = 'gray70')
       }
@@ -491,7 +492,7 @@ spectrogram = function(
       log = ifelse(yScale == 'log', 'y', ''),
       ...
     )
-    if (!(osc | osc_dB)) {
+    if (!(osc %in% c('linear', 'dB'))) {
       time_location = axTicks(1, axp = xaxp)
       time_labels = convert_sec_to_hms(time_location, 3)
       axis(side = 1, at = time_location, labels = time_labels, ...)
@@ -550,27 +551,27 @@ spectrogram = function(
 #'   '~/Downloads/temp',
 #'   windowLength = 40, overlap = 75,  # spectrogram pars
 #'   width = 1500, height = 900,        # passed to png()
-#'   osc = TRUE, osc_dB = TRUE, heights = c(1, 1)
+#'   osc = 'dB', heights = c(1, 1)
 #' )
 #' # note that the folder now also contains an html file with clickable plots
 #' }
-spectrogramFolder = function(myfolder,
-                             htmlPlots = TRUE,
-                             verbose = TRUE,
-                             windowLength = 50,
-                             step = NULL,
-                             overlap = 50,
-                             wn = 'gaussian',
-                             zp = 0,
-                             ylim = NULL,
-                             osc = TRUE,
-                             xlab = 'Time, ms',
-                             ylab = 'kHz',
-                             width = 900,
-                             height = 500,
-                             units = 'px',
-                             res = NA,
-                             ...) {
+spectrogramFolder = function(
+  myfolder,
+  htmlPlots = TRUE,
+  verbose = TRUE,
+  windowLength = 50,
+  step = NULL,
+  overlap = 50,
+  wn = 'gaussian',
+  zp = 0,
+  ylim = NULL,
+  xlab = 'Time, ms',
+  ylab = 'kHz',
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  ...) {
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
   if (length(filenames) < 1) {
@@ -594,7 +595,6 @@ spectrogramFolder = function(myfolder,
       wn = wn,
       zp = zp,
       ylim = ylim,
-      osc = osc,
       xlab = xlab,
       ylab = ylab,
       main = basename(f),

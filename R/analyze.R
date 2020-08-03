@@ -84,9 +84,9 @@
 #' @param pitchManual manually corrected pitch contour - a numeric vector of any
 #'   length, but ideally as returned by \code{\link{pitch_app}} with the same
 #'   windowLength and step as in current call to analyze
-#' @param entropyThres pitch tracking is not performed for frames with Weiner
-#'   entropy above \code{entropyThres}, but other spectral descriptives are
-#'   still calculated
+#' @param entropyThres pitch tracking is only performed for frames with Weiner
+#'   entropy below \code{entropyThres}, but other spectral descriptives are
+#'   still calculated (NULL = analyze everything)
 #' @param pitchFloor,pitchCeiling absolute bounds for pitch candidates (Hz)
 #' @param priorMean,priorSD specifies the mean (Hz) and standard deviation
 #'   (semitones) of gamma distribution describing our prior knowledge about the
@@ -248,7 +248,7 @@
 #'   priorMean = NA,  # no prior info at all
 #'   pitchDom = list(col = 'red', domThres = .25),
 #'   pitchPlot = list(col = 'black', lty = 3, lwd = 3),
-#'   osc_dB = TRUE, heights = c(2, 1))
+#'   osc = 'dB', heights = c(2, 1))
 #'
 #' # Different options for summarizing the output
 #' a = analyze(sound1, 44100,
@@ -365,8 +365,8 @@ analyze = function(
   plot = TRUE,
   showLegend = TRUE,
   savePath = NA,
-  osc = TRUE,
-  osc_dB = FALSE,
+  osc = 'linear',
+  osc_dB = NULL,
   pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),
   ylim = NULL,
   xlab = 'Time, ms',
@@ -761,6 +761,7 @@ analyze = function(
   cond_silence = ampl >= silence &
     as.logical(apply(s, 2, sum) > 0)  # b/c s frames are not 100% synchronized with ampl frames
   framesToAnalyze = which(cond_silence)
+  if (!is.numeric(entropyThres)) entropyThres = Inf
   cond_entropy = cond_silence & entropy < entropyThres
   cond_entropy[is.na(cond_entropy)] = FALSE
 
@@ -1004,9 +1005,15 @@ analyze = function(
     # threshold before values are replaced by median over smoothing window).
     # smooth of 1 gives smoothingThres of 4 semitones
     smoothingThres = 4 / smooth
-    result[, smoothVars] = medianSmoother(result[, smoothVars],
-                                          smoothing_ww = smoothing_ww,
-                                          smoothingThres = smoothingThres)
+    keep = apply(result[, smoothVars], 2, function(x) any(!is.na(x)))
+    smoothVars = smoothVars[keep]
+    if (length(smoothVars) > 0) {
+      result[, smoothVars] = medianSmoother(
+        result[, smoothVars, drop = FALSE],
+        smoothing_ww = smoothing_ww,
+        smoothingThres = smoothingThres
+      )
+    }
   }
 
   # Convert HNR to dB
@@ -1059,7 +1066,6 @@ analyze = function(
       ylab = ylab,
       plot = TRUE,
       osc = osc,
-      osc_dB = osc_dB,
       internal = list(
         frameBank = frameBank,
         duration = duration,
@@ -1221,6 +1227,7 @@ analyzeFolder = function(
   summary = NULL,
   summaryFun = c('mean', 'median', 'sd'),
   plot = FALSE,
+  osc = 'linear',
   showLegend = TRUE,
   savePlots = FALSE,
   pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),

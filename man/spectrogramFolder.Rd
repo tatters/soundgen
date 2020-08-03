@@ -14,7 +14,6 @@ spectrogramFolder(
   wn = "gaussian",
   zp = 0,
   ylim = NULL,
-  osc = TRUE,
   xlab = "Time, ms",
   ylab = "kHz",
   width = 900,
@@ -43,10 +42,6 @@ blackman, flattop}
 \item{zp}{window length after zero padding, points}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
-
-\item{osc}{should an oscillogram be shown under the spectrogram? TRUE/
-FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
-\code{\link{osc_dB}} for details}
 
 \item{xlab}{graphical parameters}
 
@@ -84,7 +79,7 @@ spectrogramFolder(
   '~/Downloads/temp',
   windowLength = 40, overlap = 75,  # spectrogram pars
   width = 1500, height = 900,        # passed to png()
-  osc = TRUE, osc_dB = TRUE, heights = c(1, 1)
+  osc = 'dB', heights = c(1, 1)
 )
 # note that the folder now also contains an html file with clickable plots
 }

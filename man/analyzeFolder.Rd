@@ -51,6 +51,7 @@ analyzeFolder(
   summary = NULL,
   summaryFun = c("mean", "median", "sd"),
   plot = FALSE,
+  osc = "linear",
   showLegend = TRUE,
   savePlots = FALSE,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3, showPrior = TRUE),
@@ -123,9 +124,9 @@ a manually corrected pitch contour, ideally with the same windowLength and
 step as current call to analyzeFolder; a dataframe with at least two
 columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")}
 
-\item{entropyThres}{pitch tracking is not performed for frames with Weiner
-entropy above \code{entropyThres}, but other spectral descriptives are
-still calculated}
+\item{entropyThres}{pitch tracking is only performed for frames with Weiner
+entropy below \code{entropyThres}, but other spectral descriptives are
+still calculated (NULL = analyze everything)}
 
 \item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
@@ -230,6 +231,9 @@ take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
 list containing frame-by-frame values}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
+
+\item{osc}{should an oscillogram be shown under the spectrogram? none = no
+osc; linear = on the original scale; dB = in decibels}
 
 \item{showLegend}{if TRUE, adds a legend with pitch tracking methods}
 

@@ -96,7 +96,6 @@ getLoudness = function(x,
                        spreadSpectrum = TRUE,
                        plot = TRUE,
                        mar = c(5.1, 4.1, 4.1, 4.1),
-                       osc = TRUE,
                        ...) {
   # import sound
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
@@ -146,7 +145,7 @@ getLoudness = function(x,
     windowLength = windowLength, step = step,
     output = 'original', normalize = FALSE,
     padWithSilence = FALSE,
-    plot = plot, mar = mar, osc = osc, ...) ^ 2
+    plot = plot, mar = mar, ...) ^ 2
   # range(log10(powerSpec) * 10)
 
   # normalize power spectrum by the size of STFT frame

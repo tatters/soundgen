@@ -16,7 +16,6 @@ getLoudness(
   spreadSpectrum = TRUE,
   plot = TRUE,
   mar = c(5.1, 4.1, 4.1, 4.1),
-  osc = TRUE,
   ...
 )
 }
@@ -47,10 +46,6 @@ frequency masking}
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
 \item{mar}{margins of the spectrogram}
-
-\item{osc}{should an oscillogram be shown under the spectrogram? TRUE/
-FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
-\code{\link{osc_dB}} for details}
 
 \item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }

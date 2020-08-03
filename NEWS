@@ -14,7 +14,8 @@ MINOR:
   * estimateVTL(): the plot shows Cook's distance as a measure of the influence of each formant frequency on apparent VTL
   * osc() replaces osc_db()
   * osc(), spectrogram(): fast plotting of long audio files, updated tick labels
-  * analyze(): new arguments from/to to analyze only a part of sound, NAs not omitted when running custom summaryFun
+  * spectrogram() and functions that call it (eg analyze, analyzeFolder, getLoudness): argument osc_dB is deprecated, use osc = 'dB' instead
+  * analyze(): new arguments from/to to analyze only a part of sound, NAs not omitted when running custom summaryFun, median smoothing ignores NAs
   * analyze(), analyzeFolder(), segment(), segmentFolder(), getLoudnessFolder(), getRMSFolder(): argument "summary" is deprecated and replaced with "summaryFun = NULL"
   * reportTime() and many plots: smarter time labels
 

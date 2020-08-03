@@ -703,7 +703,13 @@ medianSmoother = function(df,
   hw = floor(smoothing_ww / 2) # smooth over plus-minus half the smoothing_ww
   for (i in 1:nrow(df)) {
     window = c(max(i - hw, 1), min(i + hw, nrow(df))) # smoothing window
-    median_over_window = apply(as.matrix(temp[(window[1]:window[2]), ]), 2, function(x) {
+    # to be conservative, treat NAs as repetitions of value i
+    winVal = as.matrix(temp[(window[1]:window[2]), ])
+    for (c in 1:ncol(winVal)) {
+      idx_na = which(is.na(winVal[, c]))
+      winVal[idx_na, c] = df[i, c]
+    }
+    median_over_window = apply(winVal, 2, function(x) {
       median(unlist(x), na.rm = TRUE)  # w/o unlist returns NULL for NA vectors (weird...)
       # NB: use either temp or df, for original or smoothed values to be used
       # for calculating median_over_window
@@ -715,7 +721,7 @@ medianSmoother = function(df,
       df[i, cond] = median_over_window[cond]
     }
   }
-  return (df)
+  return(df)
 }
 
 

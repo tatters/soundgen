@@ -23,8 +23,8 @@ spectrogram(
   method = c("spectrum", "spectralDerivative")[1],
   output = c("original", "processed", "complex")[1],
   plot = TRUE,
-  osc = FALSE,
-  osc_dB = FALSE,
+  osc = c("none", "linear", "dB")[2],
+  osc_dB = NULL,
   heights = c(3, 1),
   ylim = NULL,
   yScale = c("linear", "log")[1],
@@ -97,9 +97,10 @@ phase ('complex')}
 
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
-\item{osc, osc_dB}{should an oscillogram be shown under the spectrogram? TRUE/
-FALSE. If `osc_dB`, the oscillogram is displayed on a dB scale. See
-\code{\link{osc_dB}} for details}
+\item{osc}{should an oscillogram be shown under the spectrogram? none = no
+osc; linear = on the original scale; dB = in decibels}
+
+\item{osc_dB}{deprecated}
 
 \item{heights}{a vector of length two specifying the relative height of the
 spectrogram and the oscillogram (including time axes labels)}
@@ -170,7 +171,8 @@ spectrogram(sound, samplingRate = 16000)
 \dontrun{
 # add bells and whistles
 spectrogram(sound, samplingRate = 16000,
-  osc = TRUE,  # plot oscillogram under the spectrogram
+  osc = 'dB',  # plot oscillogram in dB
+  heights = c(2, 1),  # spectro/osc height ratio
   noiseReduction = 1.1,  # subtract the spectrum of noisy parts
   brightness = -1,  # reduce brightness
   colorTheme = 'heat.colors',  # pick color theme
@@ -185,8 +187,8 @@ spectrogram(sound, samplingRate = 16000,
 spectrogram(sound, samplingRate = 16000, dynamicRange = 40)
 spectrogram(sound, samplingRate = 16000, dynamicRange = 120)
 
-# add an oscillogram
-spectrogram(sound, samplingRate = 16000, osc = TRUE)
+# remove the oscillogram
+spectrogram(sound, samplingRate = 16000, osc = 'none')  # or NULL etc
 
 # oscillogram on a dB scale, same height as spectrogram
 spectrogram(sound, samplingRate = 16000,
@@ -227,8 +229,7 @@ nrow(sp) * ncol(sp) / 5e5  # spec downsampled by a factor of ~9
 }
 }
 \seealso{
-\code{\link{modulationSpectrum}} \code{\link{ssm}}
-  \code{\link{osc_dB}}
+\code{\link{osc}} \code{\link{modulationSpectrum}} \code{\link{ssm}}
 
 \code{\link{modulationSpectrum}} \code{\link{ssm}}
 }
