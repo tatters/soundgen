@@ -350,6 +350,10 @@ ui = fluidPage(
                 label = HTML("<img src='icons/play.png' width = '20px'>"),
                 class = "buttonInline"),
               actionButton(
+                inputId = "selection_annotate",
+                label = HTML("<img src='icons/annotate.png' width = '20px'>"),
+                class = "buttonInline"),
+              actionButton(
                 inputId = "selection_delete",
                 label = HTML("<img src='icons/delete.png' width = '20px'>"),
                 class = "buttonInline")

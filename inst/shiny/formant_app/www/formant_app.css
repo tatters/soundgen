@@ -1,4 +1,4 @@
-/* css for pitch_app */
+/* css for formant_app */
 
 /* grid */
 .container-fluid {
@@ -32,6 +32,8 @@
 #right {
   grid-area: right;
   border: 2px solid lightgray;
+  min-width: 25vw;
+  max-width: 75vw;
 }
 
 
@@ -106,13 +108,18 @@
 /* output table */
 #ann_table {
   resize: vertical;
-  overflow: auto;
+  overflow-y: auto;
   margin-left: auto;
   margin-right: auto;
   margin-top: 10px;
   height: 160px;
 }
 
+/* prevent overflowing of the table - probably better to keep it
+.shiny-table {
+  table-layout: fixed;
+}
+*/
 
 /* scrollbar */
 #scrollBarCont {

@@ -703,7 +703,7 @@ reformatFormants = function(formants,
       stop('If defined, formants must be either a list or a string of characters
          from dictionary presets: a, o, i, e, u, 0 (schwa)')
     } else {
-    return(NA)
+      return(NA)
     }
   }
 
@@ -1411,10 +1411,12 @@ lockToFormants = function(pitch,
   }
   n = length(pitch)
   if (is.list(lockProb)) {
-    lockProb = getSmoothContour(anchors = lockProb,
-                                len = n,
-                                valueFloor = permittedValues['formantLocking', 'low'],
-                                valueCeiling = permittedValues['formantLocking', 'high'])
+    lockProb = getSmoothContour(
+      anchors = lockProb,
+      len = n,
+      valueFloor = permittedValues['formantLocking', 'low'],
+      valueCeiling = permittedValues['formantLocking', 'high']
+    )
   }
   freqs = as.numeric(rownames(specEnv)) * 1000
   specEnv = interpolMatrix(

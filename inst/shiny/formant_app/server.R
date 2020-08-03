@@ -1080,7 +1080,7 @@ server = function(input, output, session) {
     # hr()
 
     # save a backup in case the app crashes before done() fires
-    write.csv(rbind_fill(myPars$out, myPars$ann), 'www/temp.csv')
+    write.csv(rbind_fill(myPars$out, myPars$ann), 'www/temp.csv', row.names = FALSE)
   })
 
   updateFBtn = function(ff) {
@@ -1143,7 +1143,7 @@ server = function(input, output, session) {
         pitchMethods = NULL,  # disable pitch tracking
         SPL_measured = 0,  # disable loudness analysis
         nFormants = NULL,  # save all available formants
-        summary = FALSE,
+        summaryFun = NULL,
         plot = FALSE
       )
       myPars$nMeasuredFmts = length(grep('_freq', colnames(myPars$temp_anal)))
@@ -1199,24 +1199,31 @@ server = function(input, output, session) {
         round(do.call(input$summaryFun, list(x, na.rm = TRUE))))
       # myPars$bandwidth ?
 
-      # fill in the formant boxes - note that we use the (possible
+      idx_f_na = which(is.na(myPars$ann[myPars$currentAnn, myPars$ff]))
+      if (length(idx_f_na) > 0)
+        myPars$ann[myPars$currentAnn, myPars$ff[idx_f_na]] = myPars$formants[idx_f_na]
+
+      # fill in the formant boxes - note that we use the (possibly
       # user-modified) myPars$ann instead of myPars$formants
       updateFBtn(as.character(myPars$ann[myPars$currentAnn, myPars$ff]))
     }
   }
   observeEvent(myPars$formantTracks, avFmPerSel())
 
-  observe({
+  observeEvent(myPars$ann, {
+    if (myPars$print) print('Drawing ann_table...')
     if (!is.null(myPars$ann)) {
-      if (myPars$print) print('Drawing ann_table...')
-      output$ann_table = renderTable(
-        format(myPars$ann[, -1]),
-        align = 'c', striped = FALSE,
-        bordered = TRUE, hover = FALSE, width = '100%'
-      )
-      hr()
+      ann_for_print = myPars$ann[, which(!colnames(myPars$ann) %in% c('X', 'file'))]
+    } else {
+      ann_for_print = '...waiting for some annotations...'
     }
-  })
+    output$ann_table = renderTable(
+      format(ann_for_print),
+      align = 'c', striped = FALSE,
+      bordered = TRUE, hover = FALSE, width = '100%'
+    )
+    hr()
+  }, ignoreNULL = FALSE)
 
   hr = function() {
     if (!is.null(myPars$currentAnn)) {
@@ -1321,6 +1328,12 @@ server = function(input, output, session) {
     }
   }
   observeEvent(input$selection_delete, deleteSel())
+
+  observeEvent(input$selection_annotate, {
+    if (!is.null(myPars$spectrogram_brush)) {
+      showModal(dataModal_new())
+    }
+  })
 
   observeEvent(input$userPressedSmth, {
     button_code = floor(input$userPressedSmth)
@@ -1583,7 +1596,9 @@ server = function(input, output, session) {
   # action buttons
   shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file (BACKSPACE)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file (ENTER)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS:::addTooltip(session, id='selection_stop', title='Stop playback', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS:::addTooltip(session, id='selection_play', title='Play selection (SPACEBAR)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS:::addTooltip(session, id='selection_annotate', title='Create a new annotation (DOUBLE-CLICK)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS:::addTooltip(session, id='selection_delete', title='Remove annotation (DELETE)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
 

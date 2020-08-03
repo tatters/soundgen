@@ -20,7 +20,7 @@ Generates different Fourier Transform windows. Just like
 }
 \examples{
 wns = c('bartlett', 'blackman', 'flattop', 'hamming', 'hanning', 'rectangle', 'gaussian')
-l = 200
+l = 16
 par(mfrow = c(4, 2))
 for (w in wns) {
   plot(1:l, soundgen:::ftwindow_modif(wl = l, wn = w), type = 'b', main = w)
