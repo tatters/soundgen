@@ -110,8 +110,9 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `HNR`: harmonics-to-noise ratio (dB), a measure of harmonicity returned by `soundgen:::getPitchAutocor()` (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as in noise
 * `loudness`: subjective loudness in sone, assuming a certain sound pressure level (takes into account the energy in different frequency bands as well as the sensitivity of human ears to different frequencies); see `getLoudness()` and section on Loudness below for details
 * `peakFreq`: the frequency with maximum spectral energy below `cutFreq` (Hz)
-* `peakFreqCut`: the frequency with maximum spectral energy below `cutFreq` (Hz)
-* `quartile25`, `quartile50`, `quartile75`: the 25th, 50th, and 75th quantiles of the spectrum below `cutFreq` (Hz) for voiced frames
+* `roughness`: the amount of spectrotemporal modulation in the "roughness" zone of frequencies (estimated by `modulatinSpectrum`, the arguments to which are passed in `roughness = list()`)
+* `roughnessVoiced`: same, but only for voiced frames, otherwise `NA`
+* `quartile25`, `quartile50`, `quartile75`: the 25th, 50th, and 75th quantiles of the spectrum below `cutFreq` (Hz) for VOICED frames
 * `specCentroid`: the center of gravity of the frame’s spectrum below `cutFreq`, first spectral moment (Hz)
 * `specSlope`: the slope of linear regression fit to the spectrum below `cutFreq`
 * `voiced`: is the current STFT frame voiced? TRUE / FALSE

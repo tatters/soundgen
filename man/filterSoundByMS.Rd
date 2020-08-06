@@ -142,7 +142,7 @@ spectrogram(s_rev, samplingRate, osc = TRUE)
 
 # Get modulation spectrum starting from the sound...
 ms = modulationSpectrum(s, samplingRate = samplingRate, windowLength = 25,
-  overlap = 80, wn = 'hanning', maxDur = Inf, logSpec = FALSE,
+  overlap = 80, wn = 'hanning', amRes = NULL, maxDur = Inf, logSpec = FALSE,
   power = NA, returnComplex = TRUE, plot = FALSE)$complex
 # ... or starting from the spectrogram:
 # ms = specToMS(spec)
@@ -184,7 +184,7 @@ image(x = as.numeric(colnames(ms_new)), y = as.numeric(rownames(ms_new)),
 plot(as.numeric(colnames(ms)), log(abs(ms[nrow(ms) / 2, ])), type = 'l')
 points(as.numeric(colnames(ms_new)), log(ms_new[nrow(ms_new) / 2, ]), type = 'l',
   col = 'red', lty = 3)
-# AM peaks at 25 Hz are removed, but inverting the spectrogram adds a bit of noise
+# AM peaks at 25 Hz are removed, but inverting the spectrogram adds a lot of noise
 }
 }
 \seealso{

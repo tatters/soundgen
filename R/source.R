@@ -594,6 +594,7 @@ generateHarmonics = function(pitch,
       nc = nGC,                 # interpolate over time
       interpol = 'approx'
     )
+    rownames(rolloff_source) = 1:nrow(rolloff_source)
   }
   # NB: rolloff_source at this stage should be a matrix WITH NUMBERED ROWS
 

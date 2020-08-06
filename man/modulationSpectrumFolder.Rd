@@ -6,9 +6,10 @@
 \usage{
 modulationSpectrumFolder(
   myfolder,
-  summary = TRUE,
+  summaryFun = c("mean", "sd"),
   htmlPlots = TRUE,
   verbose = TRUE,
+  amRes = 5,
   maxDur = 5,
   logSpec = FALSE,
   windowLength = 25,
@@ -37,14 +38,24 @@ modulationSpectrumFolder(
 \arguments{
 \item{myfolder}{full path to target folder}
 
-\item{summary}{deprecated}
+\item{summaryFun}{functions used to summarize each acoustic characteristic,
+eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+list containing frame-by-frame values}
 
 \item{htmlPlots}{if TRUE, saves an html file with clickable plots}
 
 \item{verbose}{if TRUE, reports progress and estimated time left}
 
+\item{amRes}{target resolution of amplitude modulation, Hz. If \code{NULL},
+the entire sound is analyzed at once (or in chunks \code{maxDur} s long),
+resulting in a single roughness value. Otherwise, roughness is calculated
+per frame, each selected to contain enough STFT windows to calculate
+roughness with precision given by \code{amRes}}
+
 \item{maxDur}{maximum allowed duration of a single sound, s (longer sounds
-are split)}
+are split, and their modulation spectra averaged)}
 
 \item{logSpec}{if TRUE, the spectrogram is log-transformed prior to taking 2D
 FFT}
@@ -105,9 +116,9 @@ or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
 \item{...}{other graphical parameters passed to \code{\link{spectrogram}}}
 }
 \value{
-If \code{summary} is TRUE, returns a dataframe with just the
-  roughness measure per audio file. If \code{summary} is FALSE, returns a
-  list with the actual modulation spectra.
+If \code{summaryFun} is defined, returns a dataframe with just
+  roughness per audio file, otherwise returns a list with the actual
+  modulation spectra.
 }
 \description{
 Extracts modulation spectra of all wav/mp3 files in a folder - separately for
@@ -119,6 +130,7 @@ and/or measuring the roughness of multiple files. See
 \dontrun{
 ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE,
                               kernelSize = 15)
+ms
 }
 }
 \seealso{

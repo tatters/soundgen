@@ -820,6 +820,7 @@ interpolMatrix = function(m,
   }
   if (is.null(nr)) nr = nrow(m)
   if (is.null(nc)) nc = ncol(m)
+  if (nr == nrow(m) & nc == ncol(m)) return(m)
   # if (nr < 2) stop('nr must be >1')
   # if (nc < 2) stop('nc must be >1')
   isComplex = is.complex(m[1, 1])
@@ -852,8 +853,13 @@ interpolMatrix = function(m,
         }
       }
     }
+    if (!is.null(rownames(m))) {
+      rnms = as.numeric(rownames(m))
+      rownames(temp) = do.call(interpol, list(x = rnms, n = nr))$y
+    }
   } else {
     temp = m
+    rownames(temp) = rownames(m)
   }
 
   # Interpolate columns if necessary
@@ -872,10 +878,15 @@ interpolMatrix = function(m,
         }
       }
     }
+    if (!is.null(colnames(m))) {
+      cnms = as.numeric(colnames(m))
+      colnames(out) = do.call(interpol, list(x = cnms, n = nc))$y
+    }
   } else {
     out = temp
+    colnames(out) = colnames(temp)
   }
-  rownames(out) = 1:nrow(out)  # number rows for generateHarmonics()
+  rownames(out) = rownames(temp)
   return(out)
 }
 
@@ -930,6 +941,7 @@ gaussianSmooth2D = function(m,
     kernelSize = ceiling(nc / 2) - 1
   }
   if (kernelSize %% 2 == 0) kernelSize = kernelSize - 1  # make uneven
+  if (kernelSize < 2) return(m)
 
   # set up 2D Gaussian filter
   kernel = getCheckerboardKernel(

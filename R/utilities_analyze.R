@@ -338,15 +338,18 @@ summarizeAnalyze = function(
 #' @param harmHeight_pars same as argument "harmHeight" to analyze() - a list of
 #'   settings passed to soundgen:::harmHeight()
 #' @keywords internal
-updateAnalyze = function(result,
-                         pitch_true,
-                         spectrogram,
-                         freqs = NULL,
-                         bin = NULL,
-                         harmHeight_pars,
-                         smooth,
-                         smoothing_ww,
-                         smoothingThres) {
+updateAnalyze = function(
+  result,
+  pitch_true,
+  spectrogram,
+  freqs = NULL,
+  bin = NULL,
+  harmHeight_pars,
+  smooth,
+  smoothing_ww,
+  smoothingThres,
+  varsToUnv = c('amplVoiced', 'roughnessVoiced', 'quartile25', 'quartile50', 'quartile75')
+) {
   # remove all pitch-related columns except dom
   result = result[-which(grepl('pitch', colnames(result)))]
   result$pitch = pitch_true
@@ -354,9 +357,7 @@ updateAnalyze = function(result,
   # Finalize voicing (some measures are only reported for voiced frames)
   result$voiced = !is.na(pitch_true)
   unvoiced_idx = which(!result$voiced)
-  result$amplVoiced = result$ampl
-  result$amplVoiced[unvoiced_idx] = NA
-  result[unvoiced_idx, c('quartile25', 'quartile50', 'quartile75')] = NA
+  result[unvoiced_idx, varsToUnv] = NA
 
   # Calculate how far harmonics reach in the spectrum and how strong they are
   # relative to f0
@@ -421,6 +422,7 @@ updateAnalyze = function(result,
 #' soundgen:::upsamplePitchContour(c(NA, NA), len = 5)
 upsamplePitchContour = function(pitch, len, plot = FALSE) {
   if (!any(!is.na(pitch))) return(rep(NA, len))
+  if (length(pitch) == 1) return(rep(pitch, len))
   len_orig = length(pitch)
   time_stamps1 = seq(0, 1, length.out = len_orig)
 

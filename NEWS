@@ -5,18 +5,23 @@ NEW FUNCTIONS:
 BUGS FIXED:
   * morph() accepts vectors like "vibratoFreq = c(0, 3)" in both formulas without crashing
   * pitch_app() saves all files propertly if multiple folders are opened consecutively without saving the output
-  * spectrogram(): corrected frequency labels, zero padding
+  * spectrogram(): more precise frequency labels, fixed zero padding
   * filterSoundByMS(): the argument "action = c('remove', 'preserve')" now has an effect
+  * modulationSpectrum(): more precise alignment of amplitude modulation
+
+MAJOR:
+  * pitch_app(): a new layout and numerous changes, e.g. caching to speed up the plotting of long files
+  * modulationSpectrum(), modulationSpectrumFolder(): the default is now to measure roughness for multiple frames rather than the whole sound, thus returning a vector of roughness values over time (controlled by a new argument "amRes")
+  * soundgen(): smoothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing
+  * osc() replaces osc_db()
 
 MINOR:
-  * pitch_app(): a new layout and many small changes, e.g. caching to speed up the plotting of long files
-  * soundgen(): smoothing(list = ...) regulates interpolation of pitch and amplitude contours. Arguments "interpol", "discontThres", and "jumpThres" are thus deprecated (moved to "smoothing"), and an extra argument "loessSpan" is added to regulate the amount of smoothing
   * estimateVTL(): the plot shows Cook's distance as a measure of the influence of each formant frequency on apparent VTL
-  * osc() replaces osc_db()
   * osc(), spectrogram(): fast plotting of long audio files, updated tick labels
   * spectrogram() and functions that call it (eg analyze, analyzeFolder, getLoudness): argument osc_dB is deprecated, use osc = 'dB' instead
   * analyze(): new arguments from/to to analyze only a part of sound, NAs not omitted when running custom summaryFun, median smoothing ignores NAs
-  * analyze(), analyzeFolder(), segment(), segmentFolder(), getLoudnessFolder(), getRMSFolder(): argument "summary" is deprecated and replaced with "summaryFun = NULL"
+  * analyze(), analyzeFolder(), segment(), segmentFolder(), getLoudnessFolder(), getRMSFolder(), modulationSpectrumFolder(): argument "summary" is deprecated and replaced with "summaryFun = NULL"
+  * analyze() and analyzeFolder() now also return roughness and roughnessVoiced
   * reportTime() and many plots: smarter time labels
 
 

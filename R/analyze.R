@@ -77,6 +77,8 @@
 #'   perform LPC analysis
 #' @param nFormants the number of formants to extract per STFT frame (0 = no
 #'   formant analysis, NULL = as many as possible)
+#' @param roughness a list of parameters passed to
+#'   \code{\link{modulationSpectrum}} for measuring roughness
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
@@ -270,7 +272,7 @@
 #'             width = 20, height = 15, units = 'cm', res = 300)
 #'
 #' ## Amplitude and loudness: analyze() should give the same results as
-#' dedicated functions getRMS() / getLoudness()
+#' # dedicated functions getRMS() / getLoudness()
 #' # Create 1 kHz tone
 #' samplingRate = 16000; dur_ms = 50
 #' sound3 = sin(2*pi*1000/samplingRate*(1:(dur_ms/1000*samplingRate)))
@@ -283,7 +285,7 @@
 #' a1$ampl  # RMS amplitude per STFT frame
 #' getRMS(sound3, samplingRate = samplingRate, windowLength = 25,
 #'        overlap = 50, scale = 1)
-#' # or even simply: sqrt(mean(sound1 ^ 2))
+#' # or even simply: sqrt(mean(sound3 ^ 2))
 #'
 #' # The same sound as above, but with half the amplitude
 #' a_half = analyze(sound3 / 2, samplingRate = samplingRate, windowLength = 25,
@@ -332,6 +334,7 @@ analyze = function(
   cutFreq = NULL,
   formants = list(verify = FALSE),
   nFormants = 3,
+  roughness = list(plot = FALSE),
   pitchMethods = c('dom', 'autocor'),
   pitchManual = NULL,
   entropyThres = 0.6,
@@ -382,7 +385,6 @@ analyze = function(
   if (!is.null(summary)) {
     message(paste0('summary', ' is deprecated, set "summaryFun = NULL" instead'))
   }
-
 
   # import a sound
   if (class(x)[1] == 'character') {
@@ -581,11 +583,23 @@ analyze = function(
     warning('"step" must be between 0 and sound_duration ms;
             defaulting to windowLength / 2')
   }
-  if (step > windowLength) {
+  if (step > windowLength)
     warning(paste('"step" should normally not be larger than "windowLength" ms:',
                   'you are skipping parts of the sound!'))
+  if (shortestPause < step) {
+    warning(paste0('shortestPause (', shortestPause,
+                   ' ms) is shorter than one STFT step (', step, ' ms)',
+                   '; setting shortestPause = ', 1.5 * step, ' ms'))
+    shortestPause = 1.5 * step
   }
-
+  if (shortestPause < 1000 / pitchFloor) {
+    warning(paste0(
+      'shortestPause (', shortestPause,
+      ' ms) is shorter than one glottal cycle = 1000 / pitchFloor (',
+      round(1000 / pitchFloor), ' ms); setting shortestPause = ',
+      round(1.5 * 1000 / pitchFloor), ' ms'))
+    shortestPause = round(1.5 * 1000 / pitchFloor)
+  }
   if (!is.numeric(zp)) {
     zp = 0
   } else if (zp < 0) {
@@ -595,7 +609,8 @@ analyze = function(
   if (!is.null(cutFreq) &&
       (!is.numeric(cutFreq) | cutFreq <= 0 | cutFreq > (samplingRate / 2))) {
     cutFreq = NULL
-    warning(paste('"cutFreq" must be between 0 and samplingRate / 2; ignoring'))
+    warning(paste('"cutFreq" must be between 0 and samplingRate / 2;',
+                  'setting cutFreq = NULL'))
   }
   if (!is.numeric(pitchFloor) | pitchFloor <= 0 |
       pitchFloor > samplingRate / 2) {
@@ -794,6 +809,7 @@ analyze = function(
 
   ## FORMANTS
   fmts = NULL
+  no_formants = FALSE
   if (is.null(nFormants)) nFormants = 1000
   # try one frame to see how many formants are returned
   fmts_list = vector('list', length = nf)
@@ -807,27 +823,38 @@ analyze = function(
           list(frameBank[, framesToAnalyze[i]],
                fs = samplingRate)))),
         silent = TRUE)
-    }
-    # check how many formants we will/can save
-    nFormants = min(nFormants, max(unlist(lapply(fmts_list, nrow))))
-    availableRows = 1:nFormants
-    fmts = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
-    colnames(fmts) = paste0('f', rep(availableRows, each = 2),
-                            rep(c('_freq', '_width'), nFormants))
-    # iterate through the full formant list and save what's needed
-    for (i in 1:nf) {
-      ff = fmts_list[[i]]
-      if (is.list(ff)) {
-        nr = nrow(ff)
-        if (nr < nFormants) {
-          ff[(nr + 1):nFormants, ] = NA
-        }
-        temp = matrix(NA, nrow = nFormants, ncol = 2)
-        temp[availableRows, ] = as.matrix(ff[availableRows, ])
-        fmts[framesToAnalyze[i], ] = matrix(t(temp), nrow = 1)
+      if (class(fmts_list[[i]]) == 'try-error') {
+        fmts_list[[i]] = data.frame(formant = NA, bandwidth = NA)[-1, ]
       }
     }
+    # check how many formants we will/can save
+    nFormants_avail = min(nFormants, max(unlist(lapply(fmts_list, nrow))))
+    if (nFormants_avail > 0) {
+      nFormants = nFormants_avail
+      availableRows = 1:nFormants
+      fmts = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
+      colnames(fmts) = paste0('f', rep(availableRows, each = 2),
+                              rep(c('_freq', '_width'), nFormants))
+      # iterate through the full formant list and save what's needed
+      for (i in 1:nf) {
+        ff = fmts_list[[i]]
+        if (is.list(ff)) {
+          nr = nrow(ff)
+          if (nr < nFormants) {
+            ff[(nr + 1):nFormants, ] = NA
+          }
+          temp = matrix(NA, nrow = nFormants, ncol = 2)
+          temp[availableRows, ] = as.matrix(ff[availableRows, ])
+          fmts[framesToAnalyze[i], ] = matrix(t(temp), nrow = 1)
+        }
+      }
+    } else {
+      no_formants = TRUE
+    }
   } else if (nFormants > 0 && nf == 0) {
+    no_formants = TRUE
+  }
+  if (no_formants) {
     # no formant analysis
     availableRows = 1:nFormants
     fmts = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
@@ -890,7 +917,7 @@ analyze = function(
   colnames(result) = names(frameInfo[[1]]$summaries)
   if (!is.null(fmts)) result = cbind(result, fmts)
   result$entropy = entropy
-  result$ampl = ampl
+  result$ampl = result$amplVoiced = ampl
   result$time = as.numeric(colnames(frameBank))
   result$duration_noSilence = duration_noSilence
   result$duration = duration
@@ -1031,6 +1058,16 @@ analyze = function(
   } else {
     pitch_true = result$pitch
   }
+
+  ## Roughness calculation
+  rough = do.call(modulationSpectrum, c(
+    list(x = sound,
+         samplingRate = samplingRate),
+    roughness))$roughness
+  result$roughness = result$roughnessVoiced =
+    upsamplePitchContour(rough, len = nrow(result), plot = FALSE)
+  result$roughness[!cond_silence] = NA
+
   result = updateAnalyze(
     result = result,
     pitch_true = pitch_true,
@@ -1040,15 +1077,18 @@ analyze = function(
     harmHeight_pars = harmHeight,
     smooth = smooth,
     smoothing_ww = smoothing_ww,
-    smoothingThres = smoothing_ww
+    smoothingThres = smoothing_ww,
+    # NB: peakFreq & specCentroid are defined for unvoiced frames, but not quartiles
+    varsToUnv = c('amplVoiced', 'roughnessVoiced',
+                  'quartile25', 'quartile50', 'quartile75')
   )
 
   ## Add pitch contours to the spectrogram
   if (plot) {
     # we call spectrogram() a second time to get nice silence padding and to add
-    # pitch contours internally in spectrogram() - a hassle, but it only take
-    # a few ms, and otherwise it's hard to add pitch contours b/c the y-axis
-    # is messed up if spectrogram() calls layout() to add an oscillogram
+    # pitch contours internally in spectrogram() - a hassle, but it only take a
+    # few ms, and otherwise it's hard to add pitch contours b/c the y-axis is
+    # messed up if spectrogram() calls layout() to add an oscillogram
     do.call(spectrogram, c(list(
       x = sound,
       dynamicRange = dynamicRange,

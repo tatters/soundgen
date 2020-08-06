@@ -13,7 +13,9 @@ updateAnalyze(
   harmHeight_pars,
   smooth,
   smoothing_ww,
-  smoothingThres
+  smoothingThres,
+  varsToUnv = c("amplVoiced", "roughnessVoiced", "quartile25", "quartile50",
+    "quartile75")
 )
 }
 \arguments{

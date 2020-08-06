@@ -22,6 +22,7 @@ analyze(
   cutFreq = NULL,
   formants = list(verify = FALSE),
   nFormants = 3,
+  roughness = list(plot = FALSE),
   pitchMethods = c("dom", "autocor"),
   pitchManual = NULL,
   entropyThres = 0.6,
@@ -119,6 +120,9 @@ perform LPC analysis}
 
 \item{nFormants}{the number of formants to extract per STFT frame (0 = no
 formant analysis, NULL = as many as possible)}
+
+\item{roughness}{a list of parameters passed to
+\code{\link{modulationSpectrum}} for measuring roughness}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
@@ -405,7 +409,7 @@ a = analyze(sound1, 44100, ylim = c(0, 5),
             width = 20, height = 15, units = 'cm', res = 300)
 
 ## Amplitude and loudness: analyze() should give the same results as
-dedicated functions getRMS() / getLoudness()
+# dedicated functions getRMS() / getLoudness()
 # Create 1 kHz tone
 samplingRate = 16000; dur_ms = 50
 sound3 = sin(2*pi*1000/samplingRate*(1:(dur_ms/1000*samplingRate)))
@@ -418,7 +422,7 @@ getLoudness(sound3, samplingRate = samplingRate, windowLength = 25,
 a1$ampl  # RMS amplitude per STFT frame
 getRMS(sound3, samplingRate = samplingRate, windowLength = 25,
        overlap = 50, scale = 1)
-# or even simply: sqrt(mean(sound1 ^ 2))
+# or even simply: sqrt(mean(sound3 ^ 2))
 
 # The same sound as above, but with half the amplitude
 a_half = analyze(sound3 / 2, samplingRate = samplingRate, windowLength = 25,

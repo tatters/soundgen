@@ -4,7 +4,7 @@
 \alias{getRough}
 \title{Get roughness}
 \usage{
-getRough(m, roughRange)
+getRough(m, roughRange, colNames = NULL)
 }
 \arguments{
 \item{m}{numeric matrix of non-negative values with colnames giving temporal
