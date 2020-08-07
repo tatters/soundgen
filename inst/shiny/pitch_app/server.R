@@ -529,6 +529,7 @@ server = function(input, output, session) {
                     entropyThres = input$entropyThres,
                     nFormants = 0,     # disable formant tracking
                     SPL_measured = 0,  # disable loudness analysis
+                    roughness = list(amRes = 0),  # no roughness analysis
                     pitchMethods = input$pitchMethods,
                     pitchFloor = input$pitchFloor,
                     pitchCeiling = input$pitchCeiling,

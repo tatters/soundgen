@@ -1,6 +1,7 @@
 // js functions needed for formant_app
 // NB: ui.R should include "includeScript("www/formant_app.js")"
 
+
 document.addEventListener('DOMContentLoaded', () => {
   // execute when the page is loaded
 
@@ -10,30 +11,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const track = document.getElementById('scrollBarCont');
   var max_right = track.clientWidth - slider.clientWidth;
   var mouseDown = false;
-  var startX;
-  var scrollBarLeft = 0, scrollBarLeft_new = 0;
-  slider.style.left = scrollBarLeft + 'px';
+  var startX = 0, scrollBarLeft = 0, scrollBarLeft_new = 0;
+  slider.style.left = '0%';
 
-  rmPx = function(x) {
-    return(Number(x.slice(0, -2)));
+  rmPcnt = function(x) {
+    return(Number(x.slice(0, -1)));
   };
-  // rmPx('200px');  // returns "200" as a number
+  // rmPcnt('200%');  // returns "200" as a number
 
   slider.addEventListener('mousedown', (e) => {
     mouseDown = true;
     slider.classList.add('active');
-    scrollBarLeft = rmPx(slider.style.left);
-    startX = e.pageX;
+    scrollBarLeft = rmPcnt(slider.style.left);
+    // NB: operate with % not px b/c R doesn't know track.clientWidth
+    startX = e.pageX / track.clientWidth * 100;
     // prevent the slider from going beyond its track
-    max_right = track.clientWidth - slider.clientWidth;
-  });
-
-  document.addEventListener('mouseup', () => {
-    mouseDown = false;
-    slider.classList.remove('active');
-    // send to R: scrollBarLeft as proportion of track width
-    // https://shiny.rstudio.com/articles/communicating-with-js.html
-    Shiny.setInputValue('scrollBarLeft', scrollBarLeft_new / track.clientWidth);
+    max_right = 100 - rmPcnt(slider.style.width);
   });
 
   document.addEventListener('mousemove', (e) => {
@@ -42,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // position of the mouse - handy, ~Audacity
     if(!mouseDown) return;
     e.preventDefault();
-    scrollBarLeft_new = scrollBarLeft + e.pageX - startX;
+    scrollBarLeft_new = scrollBarLeft + e.pageX / track.clientWidth * 100 - startX;
 
     // prevent the slider from going into negative or beyond audio dur
     if (scrollBarLeft_new < 0) {
@@ -52,9 +45,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // move the slider to the next pos
-    slider.style.left = scrollBarLeft_new + 'px';
+    slider.style.left = scrollBarLeft_new + '%';
   });
   // Shiny.onInputChange(scrollBarLeft_new, scrollBarLeft_new);
+
+  document.addEventListener('mouseup', () => {
+    // debugger;
+    mouseDown = false;
+    slider.classList.remove('active');
+    // send to R: scrollBarLeft as proportion of track width
+    // https://shiny.rstudio.com/articles/communicating-with-js.html
+    Shiny.setInputValue('scrollBarLeft', scrollBarLeft_new / 100);
+  });
 
   // scroll by clicking the track left/right of the scrollbar
   track.addEventListener('mousedown', (e) => {
@@ -68,12 +70,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // mouse wheel events
+  var spec = document.getElementById('plotRow');  // ideally the whole row instead of spec
+  spec.addEventListener("wheel", event => {
+    const delta = Math.sign(event.deltaY);
+    if (delta < 0) {
+      dir = 'r';
+    } else {
+      dir = 'l';
+    }
+    if (cntrlIsPressed) {
+      // zoom
+      event.preventDefault();
+      Shiny.setInputValue('zoomWheel', dir + Math.random());
+    } else {
+      // scroll
+      Shiny.setInputValue('scrollBarWheel', dir + Math.random());
+    }
+  });
+
 
   // Event listeners for hotkeys
+  var cntrlIsPressed = false;
   $(document).on("keydown", function (e) {
     Shiny.onInputChange("userPressedSmth", e.which + Math.random() / 3);
     // w/o Math.random() only the first of a series of identical
     // keydown events is sent to server()
+    if(event.key=="Control")
+        cntrlIsPressed = true;
+  });
+
+  $(document).keyup(function(){
+    cntrlIsPressed = false;
   });
 
   // prevent spacebar from activating the last pressed button
@@ -124,3 +152,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 });
+

@@ -7,7 +7,7 @@
 osc_dB(
   x,
   dynamicRange = 80,
-  dB = FALSE,
+  dB = TRUE,
   maxAmpl = NULL,
   samplingRate = NULL,
   returnWave = FALSE,

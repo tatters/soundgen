@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: scrollbar is not updated when clicking a new ann; check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
@@ -34,6 +34,7 @@ server = function(input, output, session) {
     out_spects = list(),       # a list for storing spectrograms
     selectedF = 'f1',          # preselect F1 for correction
     slider_ms = 50,            # how often to update play slider
+    wheelScrollFactor = .1,    # how far to scroll on mouse wheel (prop of xlim)
     cursor = 0,
     listenToFbtn = FALSE,      # buggy
     play = list(on = FALSE),
@@ -224,7 +225,6 @@ server = function(input, output, session) {
     myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
     myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
     myPars$regionToAnalyze = myPars$spec_xlim
-    moveSlider()
 
     # update info - file number ... out of ...
     updateSelectInput(session, 'fileList',
@@ -1143,6 +1143,7 @@ server = function(input, output, session) {
         pitchMethods = NULL,  # disable pitch tracking
         SPL_measured = 0,  # disable loudness analysis
         nFormants = NULL,  # save all available formants
+        roughness = list(amRes = 0),  # no roughness analysis
         summaryFun = NULL,
         plot = FALSE
       )
@@ -1399,7 +1400,6 @@ server = function(input, output, session) {
     newLeft = max(0, midpoint - halfRan)
     newRight = min(myPars$dur, midpoint + halfRan)
     myPars$spec_xlim = c(newLeft, newRight)
-    moveSlider()
   }
   observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
   observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
@@ -1407,31 +1407,30 @@ server = function(input, output, session) {
     if (!is.null(myPars$spectrogram_brush)) {
       myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin,
                                  myPars$spectrogram_brush$xmax))
-      moveSlider()
     }
   }
   observeEvent(input$zoomToSel, {
     zoomToSel()
   })
 
-  shiftFrame = function(direction) {
+  shiftFrame = function(direction, step = 1) {
     ran = diff(myPars$spec_xlim)
+    shift = ran * step
     if (direction == 'left') {
-      newLeft = max(0, myPars$spec_xlim[1] - ran)
+      newLeft = max(0, myPars$spec_xlim[1] - shift)
       newRight = newLeft + ran
     } else if (direction == 'right') {
-      newRight = min(myPars$dur, myPars$spec_xlim[2] + ran)
+      newRight = min(myPars$dur, myPars$spec_xlim[2] + shift)
       newLeft = newRight - ran
     }
     myPars$spec_xlim = c(newLeft, newRight)
     # update cursor when shifting frame, but not when zooming
     myPars$cursor = myPars$spec_xlim[1]
-    moveSlider()
   }
   observeEvent(input$scrollLeft, shiftFrame('left'))
   observeEvent(input$scrollRight, shiftFrame('right'))
 
-  moveSlider = function() {
+  moveSlider = observe({
     if (myPars$print) print('Moving slider')
     width = round(diff(myPars$spec_xlim) / myPars$dur * 100, 2)
     left = round(myPars$spec_xlim[1] / myPars$dur * 100, 2)
@@ -1439,7 +1438,7 @@ server = function(input, output, session) {
       id = 'scrollBar',  # defined in UI
       width = paste0(width, '%'),
       left = paste0(left, '%'))
-  }
+  })
 
   observeEvent(input$scrollBarLeft, {
     if (!is.null(myPars$spec)) {
@@ -1459,6 +1458,23 @@ server = function(input, output, session) {
     }
   }, ignoreNULL = TRUE)
 
+  observeEvent(input$scrollBarWheel, {
+    direction = substr(input$scrollBarWheel, 1, 1)
+    if (direction == 'l') {
+      shiftFrame('left', step = myPars$wheelScrollFactor)
+    } else if (direction == 'r') {
+      shiftFrame('right', step = myPars$wheelScrollFactor)
+    }
+  }, ignoreNULL = TRUE)
+
+  observeEvent(input$zoomWheel, {
+    direction = substr(input$zoomWheel, 1, 1)
+    if (direction == 'l') {
+      changeZoom(1 / myPars$zoomFactor)
+    } else if (direction == 'r') {
+      changeZoom(myPars$zoomFactor, toCursor = TRUE)
+    }
+  }, ignoreNULL = TRUE)
 
   # SAVE OUTPUT
   done = function() {
@@ -1594,8 +1610,8 @@ server = function(input, output, session) {
   shinyBS::addTooltip(session, id='spectrum_len', title = 'The number of points to plot in the spectrum (smaller = faster, but low resolution)', placement="below", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
 
   # action buttons
-  shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file (BACKSPACE)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
-  shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file (ENTER)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS:::addTooltip(session, id='selection_stop', title='Stop playback', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS:::addTooltip(session, id='selection_play', title='Play selection (SPACEBAR)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS:::addTooltip(session, id='selection_annotate', title='Create a new annotation (DOUBLE-CLICK)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))

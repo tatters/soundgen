@@ -846,12 +846,12 @@ filled.contour.mod = function(
 #' osc(sheep@left, samplingRate = sheep@samp.rate, dB = TRUE)
 #'
 #' # for long files, reduce the resolution to plot quickly (careful: if the
-#' resolution is too low, antialiasing may cause artifacts)
+#' # resolution is too low, antialiasing may cause artifacts)
 #' osc(sheep@left, samplingRate = sheep@samp.rate, dB = TRUE, maxPoints = 2500)
 #' osc(sound, samplingRate = 5000, maxPoints = 100)
 #'
 #' # files several minutes long can be plotted in under a second
-#' osc('~/Downloads/temp.wav', maxPoints = 20000)
+#' osc('~/Downloads/speechEx.wav', maxPoints = 20000)
 #' }
 osc = function(
   x,
@@ -970,7 +970,7 @@ osc = function(
 osc_dB = function(
   x,
   dynamicRange = 80,
-  dB = FALSE,
+  dB = TRUE,
   maxAmpl = NULL,
   samplingRate = NULL,
   returnWave = FALSE,
