@@ -536,6 +536,8 @@ Just like `soundgen_app()` is an interactive shiny app for sound synthesis, `pit
 # Formant analysis with formant_app()
 Formants are the natural resonances of the vocal tract - that is, frequency bands that are amplified as the sound passes through the vocal tract. In speech, formants are responsible for differences between vowel sounds such as /a/, /i/, /u/, etc., but formants are also present in many animal calls. The most common way to estimate formant frequencies and bandwidth is by using Linear Predictive Coding (LPC), which is implemented in `phonTools::findformants()`. Because formant measurement is quite error-prone, however, any serious analysis should include manual verification of LPC measurements. Soundgen offers a web app for this task: `formant_app()`. Just like `pitch_app()`, it runs in the system-default web browser; you can add annotations to audio files and manually verify and, if needed, correct the formant measurements for each annotated segment.
 
+*TIP: pitch_app and formant_app are meant to work in the Firefox browser. A bug in Chrome interferes with correct audio playback; Safari and IE may or may not work.*
+
 
 # Audio segmentation 
 ## Bursts and syllables 

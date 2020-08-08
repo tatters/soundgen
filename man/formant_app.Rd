@@ -7,8 +7,9 @@
 formant_app()
 }
 \description{
-Starts a shiny app for manually correcting formant measurements. Supported
-browsers: Firefox / Chrome. For more tips, see \code{\link{pitch_app}} and
+Starts a shiny app for manually correcting formant measurements. IMPORTANT:
+please use Firefox! A bug in Chrome interferes with correct audio playback;
+Safari may or may not work. For more tips, see \code{\link{pitch_app}} and
 http://cogsci.se/soundgen.html.
 }
 \details{
@@ -28,6 +29,14 @@ the results. To continue work, upload the output file from the previous
 session together with the audio files (you can rename it, but keep the .csv
 extension). Use hotkeys (eg spacebar to play/stop) and avoid working with
 very large files.
+}
+\examples{
+\dontrun{
+# Set up Firefox as default browser either system-wide, or in R only.
+# For ex., on Linux, run:
+options('browser' = '/usr/bin/firefox')  # path to the executable
+formant_app()  # runs in Firefox
+}
 }
 \seealso{
 \code{\link{pitch_app}}

@@ -55,26 +55,24 @@ wank to append the old data to the new one. Path to backup file:
 "/home/allgoodguys/R/x86_64-pc-linux-gnu-library/3.6/soundgen/shiny/pitch_app/www/temp.csv"
 }
 \description{
-Starts a shiny app for manually editing pitch contours. Think of it as
-running \code{\link{analyze}} with manual pitch control. All pitch-dependent
-descriptives (percentage of voiced frames, energy in harmonics, amplVoiced,
-etc.) are calculated from the manually corrected pitch contour. Supported
-browsers: Firefox / Chrome. Note that the browser has to be able to play back
-WAV audio files, otherwise there will be no sound. The settings in the panels
-on the left correspond to arguments to \code{\link{analyze}} - see `?analyze`
-and the vignette on acoustic analysis for help and examples. Loudness and
-formants are not analyzed to avoid delays; run \code{\link{analyzeFolder}}
-separately with no pitch tracking (`pitchMethods = NULL`) and merge the two
-datasets. Same for syllable segmentation: run \code{\link{segmentFolder}}
-separately since it doesn't depend on accurate pitch tracking.
+Starts a shiny app for manually editing pitch contours. IMPORTANT: please use
+Firefox! A bug in Chrome interferes with correct audio playback; Safari may
+or may not work. The settings in the panels on the left correspond to
+arguments to \code{\link{analyze}} - see `?analyze` and the vignette on
+acoustic analysis for help and examples. You can verify the pitch contours
+first, and then feed them back into \code{analyze} (see examples).
 }
 \examples{
 \dontrun{
 # Recommended workflow for analyzing a lot of short audio files
 path_to_audio = '~/Downloads/temp'  # our audio lives here
 
+# STEP 0: set up Firefox as default browser either system-wide, or in R only.
+# For ex., on Linux, run:
+options('browser' = '/usr/bin/firefox')  # path to the executable
+
 # STEP 1: extract manually corrected pitch contours
-pitch_app()  # runs in a browser
+pitch_app()  # runs in Firefox
 df1 = read.csv('~/Downloads/output.csv')  # saved output from pitch_app()
 
 # STEP 2: run analyzeFolder() with manually corrected pitch contours to
