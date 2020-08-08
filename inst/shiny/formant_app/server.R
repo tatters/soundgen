@@ -34,6 +34,7 @@ server = function(input, output, session) {
     out_spects = list(),       # a list for storing spectrograms
     selectedF = 'f1',          # preselect F1 for correction
     slider_ms = 50,            # how often to update play slider
+    scrollFactor = .75,        # how far to scroll on arrow press/click
     wheelScrollFactor = .1,    # how far to scroll on mouse wheel (prop of xlim)
     cursor = 0,
     listenToFbtn = FALSE,      # buggy
@@ -1345,9 +1346,9 @@ server = function(input, output, session) {
     } else if (button_code == 46) {               # DELETE (delete current annotation)
       deleteSel()
     } else if (button_code == 37) {               # ARROW LEFT (scroll left)
-      shiftFrame('left')
+      shiftFrame('left', step = myPars$scrollFactor)
     } else if (button_code == 39) {               # ARROW RIGHT (scroll right)
-      shiftFrame('right')
+      shiftFrame('right', step = myPars$scrollFactor)
     } else if (button_code == 38) {               # ARROW UP (horizontal zoom-in)
       changeZoom(myPars$zoomFactor)
     } else if (button_code == 83) {               # S (horizontal zoom to selection)
@@ -1429,8 +1430,8 @@ server = function(input, output, session) {
     # update cursor when shifting frame, but not when zooming
     myPars$cursor = myPars$spec_xlim[1]
   }
-  observeEvent(input$scrollLeft, shiftFrame('left'))
-  observeEvent(input$scrollRight, shiftFrame('right'))
+  observeEvent(input$scrollLeft, shiftFrame('left', step = myPars$scrollFactor))
+  observeEvent(input$scrollRight, shiftFrame('right', step = myPars$scrollFactor))
 
   moveSlider = observe({
     if (myPars$print) print('Moving slider')
@@ -1454,9 +1455,9 @@ server = function(input, output, session) {
   observeEvent(input$scrollBarMove, {
     direction = substr(input$scrollBarMove, 1, 1)
     if (direction == 'l') {
-      shiftFrame('left')
+      shiftFrame('left', step = myPars$scrollFactor)
     } else if (direction == 'r') {
-      shiftFrame('right')
+      shiftFrame('right', step = myPars$scrollFactor)
     }
   }, ignoreNULL = TRUE)
 
