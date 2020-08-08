@@ -31,6 +31,23 @@ ui = fluidPage(
         navbarMenu(
           "In",
           tabPanel(
+            "General",
+            actionButton(
+              'reset_to_def',
+              label = 'Reset ALL to defaults'),
+            radioButtons(
+              'audioMethod',
+              label = "Play audio with",
+              choices = list('Browser' = 'Browser', 'R' = 'R'),
+              selected = 'Browser', inline = TRUE, width = NULL
+            ),
+            checkboxInput(
+              'normalizeInput',
+              'Normalize for peak amplitude',
+              value = TRUE),
+          ),
+
+          tabPanel(
             "STFT",
             actionButton(
               'reset_to_def',

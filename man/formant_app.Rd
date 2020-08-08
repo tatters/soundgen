@@ -32,7 +32,7 @@ very large files.
 }
 \examples{
 \dontrun{
-# Set up Firefox as default browser either system-wide, or in R only.
+# Set up Firefox as default browser either system-wide or just in R.
 # For ex., on Linux, run:
 options('browser' = '/usr/bin/firefox')  # path to the executable
 formant_app()  # runs in Firefox

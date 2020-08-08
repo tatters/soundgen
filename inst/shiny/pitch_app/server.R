@@ -744,13 +744,17 @@ server = function(input, output, session) {
       myPars$play$on = TRUE
       if (myPars$print) print('Playing selection...')
 
-      # play selection with javascript
-      shinyjs::js$playme_js(  # need an external js script for this
-        audio_id = 'myAudio',  # defined in UI
-        from = myPars$play$from,
-        to = myPars$play$to)
-      # or play with R:
-      # playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
+      # play selection
+      if (input$audioMethod == 'Browser') {
+        # play with javascript
+        shinyjs::js$playme_js(  # need an external js script for this
+          audio_id = 'myAudio',  # defined in UI
+          from = myPars$play$from,
+          to = myPars$play$to)
+      } else {
+        # or play with R:
+        playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
+      }
     }
   }
   observeEvent(c(input$selection_play), startPlay())  # add , myPars$myAudio for autoplay
@@ -1194,6 +1198,7 @@ server = function(input, output, session) {
   # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
   # STFT
   shinyBS::addTooltip(session, id='reset_to_def', title = 'Reset all settings to default values', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='audioMethod', title = "Play audio with javascript (recommended in Firefox, doesn't work in Chrome) or with R (browser-independent, but then the cursor doesn't move, and you can't stop playback)", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range of spectrogram, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

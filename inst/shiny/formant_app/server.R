@@ -1288,16 +1288,20 @@ server = function(input, output, session) {
       myPars$play$on = TRUE
       if (myPars$print) print('Playing selection...')
 
-      # play selection with javascript
-      shinyjs::js$playme_js(  # need an external js script for this
-        audio_id = 'myAudio',  # defined in UI
-        from = myPars$play$from,
-        to = myPars$play$to)
-      # or play with R:
-      # playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
+      # play selection
+      if (input$audioMethod == 'Browser') {
+        # play with javascript
+        shinyjs::js$playme_js(  # need an external js script for this
+          audio_id = 'myAudio',  # defined in UI
+          from = myPars$play$from,
+          to = myPars$play$to)
+      } else {
+        # or play with R:
+        playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
+      }
     }
   }
-  observeEvent(c(input$selection_play), startPlay())  # add , myPars$myAudio for autoplay
+  observeEvent(c(input$selection_play), startPlay())  # add myPars$myAudio for autoplay
 
   stopPlay = function() {
     myPars$play$on = FALSE
@@ -1573,6 +1577,7 @@ server = function(input, output, session) {
   ## Analysis
   # LPC
   shinyBS::addTooltip(session, id='reset_to_def', title = 'Reset all settings to default values', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS::addTooltip(session, id='audioMethod', title = "Play audio with javascript (recommended in Firefox, doesn't work in Chrome) or with R (browser-independent, but then the cursor doesn't move, and you can't stop playback)", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='nFormants', title = 'Number of formants to analyze', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='silence', title = 'Frames below this threshold are not analyzed', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='coeffs', title = 'The number of LPC coefficients (see ?phonTools::findformants)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))

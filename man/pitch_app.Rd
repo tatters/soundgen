@@ -67,7 +67,7 @@ first, and then feed them back into \code{analyze} (see examples).
 # Recommended workflow for analyzing a lot of short audio files
 path_to_audio = '~/Downloads/temp'  # our audio lives here
 
-# STEP 0: set up Firefox as default browser either system-wide, or in R only.
+# STEP 0: set up Firefox as default browser either system-wide or just in R.
 # For ex., on Linux, run:
 options('browser' = '/usr/bin/firefox')  # path to the executable
 
