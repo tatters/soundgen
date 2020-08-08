@@ -115,10 +115,6 @@
 #' # remove the oscillogram
 #' spectrogram(sound, samplingRate = 16000, osc = 'none')  # or NULL etc
 #'
-#' # oscillogram on a dB scale, same height as spectrogram
-#' spectrogram(sound, samplingRate = 16000,
-#'             osc_dB = TRUE, heights = c(1, 1))
-#'
 #' # frequencies on a logarithmic scale
 #' spectrogram(sound, samplingRate = 16000,
 #'             yScale = 'log', ylim = c(.05, 8))
@@ -147,7 +143,7 @@
 #'
 #' # Plot long audio files with reduced resolution
 #' # (# ~4 s to process + 10 s to plot a 3-min song)
-#' sp = spectrogram('~/Downloads/temp.wav', overlap = 0, osc = TRUE,
+#' sp = spectrogram('~/Downloads/temp.wav', overlap = 0,
 #'   maxPoints = c(1e5, 5e5),  # limit the number of pixels in osc/spec
 #'   output = 'original', ylim = c(0, 6))
 #' nrow(sp) * ncol(sp) / 5e5  # spec downsampled by a factor of ~9
@@ -386,7 +382,7 @@ spectrogram = function(
   if (plot) {
     # produce a spectrogram of the modified fft
     color.palette = switchColorTheme(colorTheme)
-    if (!is.character(osc)) osc = 'none'
+    if (osc == TRUE) osc = 'linear' else if (!is.character(osc)) osc = 'none'
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     if (is.null(xlab)) xlab = ''
     if (!is.null(maxPoints)) {

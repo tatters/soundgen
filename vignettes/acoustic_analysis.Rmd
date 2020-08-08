@@ -22,7 +22,7 @@ Reasons to use `soundgen` for acoustic analysis might be:
   
   1. User-friendly approach: a single call to the `analyzeFolder` function will give you a dataframe containing dozens of commonly used acoustic descriptors for each file in an entire folder. So if you'd rather get started with model-building without delving too deeply into acoustics, you are one line of code away from your dataset.
   1. Flexible pitch tracking: soundgen uses several popular methods of pitch detection in parallel, followed by their integration and postprocessing. While the abundance of control parameters may initially seem daunting, for those who do wish to delve deeply this makes soundgen's pitch tracker very versatile and offers a lot of power for high-precision analysis.
-  1. Interactive apps for manual correction of pitch contours (`pitch_app()`) and formants (`formant_app`).
+  1. Interactive apps for manual correction of pitch contours (`pitch_app`) and formants (`formant_app`).
   1. Audio segmentation with in-built optimization: the tools for syllable segmentation and detection of energy bursts are fast and simple (based on smoothed intensity contours) but quite flexible. Control parameters can also be optimized automatically as long as you have a manually segmented training sample.
   1. Additional specialized tools for acoustic analysis such as modulation spectra and self-similarity matrices.
   
@@ -374,7 +374,7 @@ Pitch postprocessing in soundgen includes a whole battery of distinct operations
 a = analyze(
   s1, 
   samplingRate = 16000, plot = TRUE, ylim = c(0, 4), priorMean = NA,
-  shortestSyl = 0, shortestPause = 0,  # any length of voiced fragments
+  shortestSyl = 0,        # any length of voiced fragments
   interpolWin = 0,        # don't interpolate missing f0 values
   pathfinding = 'none',   # don't look for optimal path through candidates
   snakeStep = 0,          # don't run the snake
@@ -673,6 +673,7 @@ ms = modulationSpectrum(
 ms$roughness  # percent of energy in the roughness range
 ```
 
+*TIP Roughness can be calculated for the entire sound (set `amRes = NULL`) or for as many frames as possible given the duration of audio and the desired resolution for the analysis of temporal modulation (one frame for the analysis of roughness comprises several STFT frames, so the higher `amRes`, the fewer roughness values per second)*
 
 # Optimization
 The results of acoustic analysis are sensitive to the chosen settings: the size and overlap of Fourier windows, the method(s) of pitch tracking and their parameters, etc. The default settings of the two main functions presented in this vignette, `analyze` and `segment`, have been optimized for human non-linguistic vocalizations. If you analyze other types of sounds, such as human speech or whale songs, you can probably improve the accuracy by changing some settings. In many cases the required changes are obvious: for example, to analyze f0 in ultrasonic whistles of dolphins or rodents you will obviously want to record at a much higher sampling rate, use shorter FFT windows, raise `pitch_ceiling` and / or `prior_mean`, etc. Other settings are not so obvious or even downright opaque, inviting some form of automatic optimization. 

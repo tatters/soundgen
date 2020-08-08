@@ -122,7 +122,8 @@ perform LPC analysis}
 formant analysis, NULL = as many as possible)}
 
 \item{roughness}{a list of parameters passed to
-\code{\link{modulationSpectrum}} for measuring roughness}
+\code{\link{modulationSpectrum}} for measuring roughness. Set
+\code{roughness = list(amRes = 0)} to skip roughness analysis}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
@@ -177,7 +178,9 @@ harmonics reach in the spectrum; see details and \code{?soundgen:::harmHeight}}
 constitutes a voiced syllable (shorter segments will be replaced by NA, as
 if unvoiced)}
 
-\item{shortestPause}{the smallest gap between voiced syllables (ms) that
+\item{shortestPause}{the smallest gap between voiced syllables (ms): large
+value = interpolate and merge, small value = treat as separate syllables
+separated by an unvoiced gap
 means they shouldn't be merged into one voiced syllable}
 
 \item{interpolWin, interpolTol, interpolCert}{control the behavior of

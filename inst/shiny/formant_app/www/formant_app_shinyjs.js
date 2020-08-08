@@ -12,14 +12,13 @@
       a.pause();
       a.currentTime = params.from;
     }, dur_ms);
-    // alert('playing audio');
+    // console.log('from = ' + params.from + '; to = ', params.to)
   };
 
   shinyjs.stopAudio_js = function(params) {
     // named params: audio_id
     var a = document.getElementById(params.audio_id);
     a.pause();
-    a.currentTime = 0;
   };
 
   // Manually remove all brush div's in case the brush is not properly cleared

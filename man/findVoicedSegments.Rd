@@ -24,7 +24,9 @@ one fft frame, one row is one pitch candidate}
 constitutes a voiced syllable (shorter segments will be replaced by NA, as
 if unvoiced)}
 
-\item{shortestPause}{the smallest gap between voiced syllables (ms) that
+\item{shortestPause}{the smallest gap between voiced syllables (ms): large
+value = interpolate and merge, small value = treat as separate syllables
+separated by an unvoiced gap
 means they shouldn't be merged into one voiced syllable}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms}

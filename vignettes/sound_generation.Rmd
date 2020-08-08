@@ -111,7 +111,7 @@ Like most arguments to soundgen, `sylLen` and `pauseLen` can also be vectors. Fo
 s = soundgen(nSyl = 5, 
              sylLen = c(300, 100),   # linearly decreasing from 300 to 100 ms
              pauseLen = c(50, 150),  # increasing from 50 to 150 ms
-             plot = TRUE, osc = TRUE,
+             plot = TRUE,
              play = playback)
 # playme(s)
 ```
@@ -122,7 +122,7 @@ s = soundgen(
   nSyl = 10, 
   sylLen = c(60, 200, 90, 50, 50),  # quickly up to 200 and down to 50
   pauseLen = c(50, 60, 80, 150),    # growing ~exponentially
-  plot = TRUE, osc = TRUE,
+  plot = TRUE,
   play = playback
 )
 ```
@@ -133,7 +133,7 @@ s = soundgen(
   nSyl = 5, 
   sylLen = c(300, 100, 400, 50, 100),  # 5 syllables, 5 values
   pauseLen = c(50, 150, 50, 100),      # 4 pauses, 4 values
-  plot = TRUE, osc = TRUE,
+  plot = TRUE,
   play = playback
 )
 ```
@@ -145,7 +145,7 @@ s = soundgen(
   nSyl = 3, 
   sylLen = c(300, 100), 
   pauseLen = c(100, 50),     
-  plot = TRUE, osc = TRUE,
+  plot = TRUE,
   play = playback
 )
 ```
@@ -156,7 +156,7 @@ s = soundgen(
   repeatBout = 2,
   sylLen = c(300, 100), 
   pauseLen = -50,     
-  plot = TRUE, osc = TRUE,
+  plot = TRUE,
   play = playback,
   invalidArgAction = 'ignore'
 )
@@ -347,7 +347,7 @@ s = soundgen(nSyl = 4,
                                value = c(0, -10, 0)),
              amplGlobal = c(0, -20),  # this fade-out applies to noise as well
              noise = -10,
-             plot = TRUE, osc = TRUE, heights = c(1, 1), play = playback)
+             plot = TRUE, heights = c(1, 1), play = playback)
 ```
 
 The dynamic amplitude range is determined by `dynamicRange`. This parameter sets the minimum level of loudness, below which components are discarded as essentially silence. For maximum sound quality, set a high dynamicRange, like 120 dB. This helps to avoid artifacts like audibly clicking harmonics, but it also slows down sound generation. The default is 80 dB.
@@ -363,7 +363,7 @@ s = soundgen(sylLen = 1000, formants = NA,
              amShape = 0,  
              # asymmetrical attack: 20 ms at the beginning and 140 ms at the end
              attackLen = c(20, 140),
-             plot = TRUE, osc = TRUE, heights = c(1, 1), play = playback)
+             plot = TRUE, heights = c(1, 1), play = playback)
 ```
 
 A common special case of modifying the amplitude envelope of a synthesized or recorded sound is to flatten it, making sure the amplitude remains relatively stable throughout the duration of the signal. There is a separate function for achieving this, namely `flatEnv()`:
@@ -539,7 +539,7 @@ s = soundgen(sylLen = 1200, play = playback, pitch = 140,
 spectrogram(s, samplingRate = 16000, 
             ylim = c(0, 4), contrast = .5, 
             windowLength = 10, step = 5, 
-            colorTheme = 'seewave', osc = TRUE)
+            colorTheme = 'seewave')
 ```
 
 *TIP Here and elsewhere, I talk about applying soundgen to the task of synthesizing non-human sounds. It does work, but be aware that many computational routines are based on human phonetic research, simply because there is vastly more data available on human vocal production. For example, formant bandwidths and spectral consequences of nasalization are estimated based on human phonetics, but it is far from clear to what extent these equations are applicable to sounds produced by non-human mammals. Bird calls are again a whole new ball game. And once you move on to insects or non-biological sounds, just forget about hyperparameters like `mouth` and code everything at the lowest possible level.*
@@ -558,7 +558,7 @@ s = soundgen(
   noise = -20,  # just to make formants visible in this example
   temperature = .1,
   samplingRate = 22000, pitchSamplingRate = 22000,
-  play = playback, plot = TRUE, ylim = c(0, 8), osc = TRUE
+  play = playback, plot = TRUE, ylim = c(0, 8)
 )
 ```
 
@@ -626,7 +626,7 @@ s3 = soundgen(sylLen = 1500, pitch = c(110, 90), rolloff = -12,
               jitterDep = 1, shimmerDep = 20,
               # subharmonics not implemented with "glottis" 
               play = playback)
-spectrogram(s3, samplingRate = 16000, osc = TRUE, heights = c(1, 1))
+spectrogram(s3, samplingRate = 16000, heights = c(1, 1))
 ```
 
 
@@ -686,7 +686,7 @@ s = soundgen(sylLen = 800,
              vocalTract = 12, mouth = c(.1, .8, .1),
              temperature = .001,
              pitchSamplingRate = 22050, samplingRate = 22050,
-             play = playback, plot = TRUE, ylim = c(0, 5), osc = TRUE)
+             play = playback, plot = TRUE, ylim = c(0, 5))
 ```
 
 Another way to create sidebands is to add amplitude modulation (AM). Perfectly sinusoidal AM creates a simple pair of extra harmonics, while non-sinusoidal AM creates sidebands:
@@ -702,7 +702,7 @@ s = soundgen(sylLen = 800,
              vocalTract = 12, mouth = c(.1, .8, .1),
              temperature = .001,
              pitchSamplingRate = 22050, samplingRate = 22050,
-             play = playback, plot = TRUE, ylim = c(0, 5), osc = TRUE)
+             play = playback, plot = TRUE, ylim = c(0, 5))
 ```
 
 *TIP The parameters regulating nonlinear effects are vectorized, so you can write `subDep = c(0, 130), jitterDep = c(0, 1)`, etc., or use the "anchor format" as above (console only, not available in the app)*
@@ -740,7 +740,7 @@ s = soundgen(sylLen = 1200,
                                     value = c(0, 0,  1.7, 1.2, 0,   0)),
              formants = c(900, 1300, 3300, 4300),
              attackLen = c(10, 200),
-             samplingRate = 22000, play = playback, plot = TRUE, osc = TRUE)
+             samplingRate = 22000, play = playback, plot = TRUE)
 ```
 
 Another method is to encode very rapid pitch jumps, say f0 and a formant or between harmonically related values, like this:
@@ -760,7 +760,7 @@ s = soundgen(sylLen = 1200,
              tempEffects = list(pitchDep = 0),
              jitterDep = .3,
              rolloffKHz = 0, rolloff = 0, formants = c(900, 1300, 3300, 4300),
-             samplingRate = 22000, play = playback, plot = TRUE, osc = TRUE)
+             samplingRate = 22000, play = playback, plot = TRUE)
 ```
 
 Incidentally, you can use similar tricks for introducing variation in any soundgen parameter. For example, you can use `runif()` or `rnorm()` to randomly vary things like mouth opening, pitch, amplitude. That's the best part of working in R!
@@ -788,7 +788,7 @@ s = soundgen(
                      value = c(-60, -45, -60, -80) + 10),
   rolloffNoise = 0,
   mouth = c(.55, .5, .45, .6),
-  play = playback, plot = TRUE, osc = TRUE, ylim = c(0, 4)
+  play = playback, plot = TRUE, ylim = c(0, 4)
 )
 ```
 
@@ -818,7 +818,7 @@ s = soundgen(
                      value = c(-60, -45, -60, -80) + 30),
   rolloffNoise = -8,
   mouth = c(.55, .5, .45, .6),
-  play = playback, plot = TRUE, osc = TRUE, ylim = c(0, 4)
+  play = playback, plot = TRUE, ylim = c(0, 4)
 )
 ```
 
@@ -865,7 +865,7 @@ The perceptual quality of turbulent noise depends on its spectral composition, w
 soundgen(sylLen = 500, 
          noise = data.frame(time = c(0, 800), value = c(-20, -10)),
          formantsNoise = NA,  # breathing - same formants as for voiced
-         play = playback, plot = TRUE, osc = TRUE)
+         play = playback, plot = TRUE)
 # observe that the voiced and unvoiced components have exactly the same formants
 ```
 
@@ -881,7 +881,7 @@ s = soundgen(sylLen = 200, pitch = c(150, 120),
                                width = 1500)
              ), 
              rolloffNoise = 0,
-             play = playback, plot = TRUE, osc = TRUE)
+             play = playback, plot = TRUE)
 # observe that the voiced and unvoiced components have different formants
 ```
 
@@ -926,7 +926,7 @@ The excitation source for the unvoiced component can be synthesized as white noi
 s1 = soundgen(sylLen = 1500, vocalTract = 17.5, 
               noise = 40, rolloffNoise = c(5, -20),
               formants = NULL, attackLen = 200, 
-              play = playback, plot = TRUE, osc = TRUE)
+              play = playback, plot = TRUE)
 # NB: noise amplitude may change as rolloffNoise changes
 ```
 
@@ -980,7 +980,7 @@ If you want noise to be time-locked to the voiced component, make the argument `
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(nSyl = 2,
              noise = c(-10, 0),
-             plot = TRUE, osc = TRUE, ylim = c(0, 4), play = playback)
+             plot = TRUE, ylim = c(0, 4), play = playback)
 ```
 
 Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
@@ -991,7 +991,7 @@ s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120,
                                 value = c(-40, 0, -20)),
              formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
              formantsNoise = list(f1 = c(420, 1200)),
-             plot = TRUE, osc = TRUE, ylim = c(0, 4), play = playback)
+             plot = TRUE, ylim = c(0, 4), play = playback)
 ```
 
 Note that in the previous example `formantsNoise` defines the change of filter for the unvoiced components over the entire bout, i.e. across multiple syllables. This is similar to the way `formants` define the global change in formants across syllables. In contrast, if you have multiple bouts with one syllable in each, the change of unvoiced filter plays out within each bout, and the pause between the bouts is counted from the end of the unvoiced component, without any overlap between bouts. Compare the example above to the following (the only change is to use `repeatBout` instead of `nSyl`). Observe the behavior of `formantsNoise` (moving within each bout) and the duration of the pause between the syllables (~30 ms) and between the bouts (120 ms):
@@ -1003,7 +1003,7 @@ s = soundgen(repeatBout = 2, nSyl = 2,
                                 value = c(-40, 0, -20)),
              formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
              formantsNoise = list(f1 = c(420, 1200)),
-             plot = TRUE, osc = TRUE, ylim = c(0, 4), play = playback)
+             plot = TRUE, ylim = c(0, 4), play = playback)
 ```
 
 Both the timing and the amplitude of noise anchors are defined relative to the voiced component. Because noise can extend beyond voiced fragmets, however, time anchors for noise MUST be specified in ms (unlike all the other contours, which also accept time anchors on any arbitrary scale, say 0 to 1). If the noise starts before the voiced part, the first time anchor will be negative. This is easier to visualize in the app, which provides a preview. From R console, you can also preview the noise amplitude contour implied by your anchors by calling `getSmoothContour`, for example:
@@ -1068,7 +1068,7 @@ cow2 = soundgen(sylLen = 310, pitch = c(359, 359),
 s = crossFade(cow1 * 3, cow2,  # adjust the relative volume by scaling
               samplingRate = 16000, crossLen = 150)
 # playme(s, 16000)
-spectrogram(s, 16000, osc=T, ylim = c(0, 4))
+spectrogram(s, 16000, ylim = c(0, 4))
 ```
 
 If you want the two sounds to overlap without a cross-fade, you can use `addVectors()`, which simply makes sure two waveforms are padded with zeros to the same length and overlapped intelligently. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add some chirping of birds in the background:
@@ -1148,7 +1148,7 @@ There is a separate vignette on manually matching an existing sound. Since it co
 1.  Match the amplitude envelope with `ampl`, attack with `attackLen`, and/or amplitude modulation with `amDep = ..., amFreq = ...`. This is best done once you are happy with other settings, since amplitude envelope is affected by the chosen values of f0, formants, noise, and rolloff.
 1.  Adjust the amount of stochasticity by generating the sound repeatedly and varying `temperature` and `tempEffects = list(...)`. 
 
-*TIP Every time you change something, call `soundgen(...your-pars..., play = TRUE, plot = TRUE, osc = TRUE)` to get immediate visual and auditory feedback*
+*TIP Every time you change something, call `soundgen(...your-pars..., play = TRUE, plot = TRUE)` to get immediate visual and auditory feedback*
 
 
 ## Matching by acoustic analysis

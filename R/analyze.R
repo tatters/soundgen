@@ -119,7 +119,9 @@
 #' @param shortestSyl the smallest length of a voiced segment (ms) that
 #'   constitutes a voiced syllable (shorter segments will be replaced by NA, as
 #'   if unvoiced)
-#' @param shortestPause the smallest gap between voiced syllables (ms) that
+#' @param shortestPause the smallest gap between voiced syllables (ms): large
+#'   value = interpolate and merge, small value = treat as separate syllables
+#'   separated by an unvoiced gap
 #'   means they shouldn't be merged into one voiced syllable
 #' @param interpolWin,interpolTol,interpolCert control the behavior of
 #'   interpolation algorithm when postprocessing pitch candidates. To turn off
