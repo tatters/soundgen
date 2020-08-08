@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: scrollbar is not updated when clicking a new ann; check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); scrollbar jumps to 0 (can't find out why); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser')  to check in a non-default browser
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
@@ -835,7 +835,7 @@ server = function(input, output, session) {
           len = input$spectrum_len,
           loessSpan = 10 ^ input$spectrum_smooth
         )))
-        if (class(myPars$spectrum) == 'try-error') browser()
+        # if (class(myPars$spectrum) == 'try-error') browser()
         # myPars$spectrum = list(
         #     freq = as.numeric(rownames(myPars$spec)),
         #     ampl = rowMeans(myPars$spec_trimmed)
@@ -846,17 +846,19 @@ server = function(input, output, session) {
         time_stamps = as.numeric(colnames(myPars$spec))
         idx = which(time_stamps >= myPars$spec_xlim[1] &
                       time_stamps <= myPars$spec_xlim[2])
-        ampl = as.numeric(rowMeans(myPars$spec[, idx]))
-        ampl[ampl == 0] = 1e-16  # avoid -Inf in log-spectrum
-        spec_temp = list(
-          freq = as.numeric(rownames(myPars$spec[, idx])),
-          ampl = 20 * log10(ampl)
-        )
-        myPars$spectrum = as.list(getSmoothSpectrum(
-          spectrum = spec_temp,
-          len = input$spectrum_len,
-          loessSpan = 10 ^ input$spectrum_smooth
-        ))
+        if (length(idx) > 1) {
+          ampl = as.numeric(rowMeans(myPars$spec[, idx, drop = FALSE]))
+          ampl[ampl == 0] = 1e-16  # avoid -Inf in log-spectrum
+          spec_temp = list(
+            freq = as.numeric(rownames(myPars$spec[, idx])),
+            ampl = 20 * log10(ampl)
+          )
+          myPars$spectrum = as.list(getSmoothSpectrum(
+            spectrum = spec_temp,
+            len = input$spectrum_len,
+            loessSpan = 10 ^ input$spectrum_smooth
+          ))
+        }
       }
 
       isolate({

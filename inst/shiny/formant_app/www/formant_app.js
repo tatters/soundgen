@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // mouse wheel events
   var spec = document.getElementById('plotRow');  // ideally the whole row instead of spec
   spec.addEventListener("wheel", event => {
+    event.preventDefault();
     const delta = Math.sign(event.deltaY);
     if (delta < 0) {
       dir = 'r';
@@ -81,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (cntrlIsPressed) {
       // zoom
-      event.preventDefault();
       Shiny.setInputValue('zoomWheel', dir + Math.random());
     } else {
       // scroll

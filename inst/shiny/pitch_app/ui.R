@@ -600,25 +600,28 @@ ui = fluidPage(
 
       fluidRow(
         tags$div(
-          id = 'specDiv',
-          plotOutput('spectrogram'),
-          plotOutput('specSlider'),
-          plotOutput(
-            'specOver',
-            click = "spectrogram_click",
-            dblclick = dblclickOpts(id = "spectrogram_dblclick"),
-            hover = hoverOpts(id = "spectrogram_hover"),
-            brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
-        ),
-
-        tags$div(
-          id = 'scrollBarCont',
+          id = 'plotRow',
           tags$div(
-            id = 'scrollBar'
-          )
-        ),
+            id = 'specDiv',
+            plotOutput('spectrogram'),
+            plotOutput('specSlider'),
+            plotOutput(
+              'specOver',
+              click = "spectrogram_click",
+              dblclick = dblclickOpts(id = "spectrogram_dblclick"),
+              hover = hoverOpts(id = "spectrogram_hover"),
+              brush = brushOpts(id = 'spectrogram_brush', opacity = 0.25, resetOnNew = FALSE))
+          ),
 
-        plotOutput('oscillogram', height = '100px')  # default size
+          tags$div(
+            id = 'scrollBarCont',
+            tags$div(
+              id = 'scrollBar'
+            )
+          ),
+
+          plotOutput('oscillogram', height = '100px')  # default size
+        )
       )
 
       #fluidRow(

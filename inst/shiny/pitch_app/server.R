@@ -22,6 +22,7 @@ server = function(input, output, session) {
         shinyTip_show = 1000,      # delay until showing a tip (ms)
         shinyTip_hide = 0,         # delay until hiding a tip (ms)
         slider_ms = 50,            # how often to update play slider
+        wheelScrollFactor = .1,    # how far to scroll on mouse wheel (prop of xlim)
         cursor = 0,
         initDur = 1500,            # initial duration to plot (ms)
         play = list(on = FALSE)
@@ -159,7 +160,6 @@ server = function(input, output, session) {
         myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
         myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
         myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
-        moveSlider()
 
         # update info - file number ... out of ...
         updateSelectInput(session, 'fileList',
@@ -1006,7 +1006,6 @@ server = function(input, output, session) {
         newLeft = max(0, midpoint - halfRan)
         newRight = min(myPars$dur, midpoint + halfRan)
         myPars$spec_xlim = c(newLeft, newRight)
-        moveSlider()
     }
     observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
     observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
@@ -1014,32 +1013,30 @@ server = function(input, output, session) {
         if (!is.null(myPars$spectrogram_brush)) {
             myPars$spec_xlim = round(c(myPars$spectrogram_brush$xmin,
                                        myPars$spectrogram_brush$xmax))
-            moveSlider()
         }
     }
     observeEvent(input$zoomToSel, {
         zoomToSel()
     })
 
-    shiftFrame = function(direction) {
-        if (myPars$print) print('Shifting frame')
+    shiftFrame = function(direction, step = 1) {
         ran = diff(myPars$spec_xlim)
+        shift = ran * step
         if (direction == 'left') {
-            newLeft = max(0, myPars$spec_xlim[1] - ran)
+            newLeft = max(0, myPars$spec_xlim[1] - shift)
             newRight = newLeft + ran
         } else if (direction == 'right') {
-            newRight = min(myPars$dur, myPars$spec_xlim[2] + ran)
+            newRight = min(myPars$dur, myPars$spec_xlim[2] + shift)
             newLeft = newRight - ran
         }
         myPars$spec_xlim = c(newLeft, newRight)
         # update cursor when shifting frame, but not when zooming
         myPars$cursor = myPars$spec_xlim[1]
-        moveSlider()
     }
     observeEvent(input$scrollLeft, shiftFrame('left'))
     observeEvent(input$scrollRight, shiftFrame('right'))
 
-    moveSlider = function() {
+    moveSlider = observe({
         if (myPars$print) print('Moving slider')
         width = round(diff(myPars$spec_xlim) / myPars$dur * 100, 2)
         left = round(myPars$spec_xlim[1] / myPars$dur * 100, 2)
@@ -1047,7 +1044,7 @@ server = function(input, output, session) {
             id = 'scrollBar',  # defined in UI
             width = paste0(width, '%'),
             left = paste0(left, '%'))
-    }
+    })
 
     observeEvent(input$scrollBarLeft, {
         if (!is.null(myPars$spec)) {
@@ -1064,6 +1061,24 @@ server = function(input, output, session) {
             shiftFrame('left')
         } else if (direction == 'r') {
             shiftFrame('right')
+        }
+    }, ignoreNULL = TRUE)
+
+    observeEvent(input$scrollBarWheel, {
+        direction = substr(input$scrollBarWheel, 1, 1)
+        if (direction == 'l') {
+            shiftFrame('left', step = myPars$wheelScrollFactor)
+        } else if (direction == 'r') {
+            shiftFrame('right', step = myPars$wheelScrollFactor)
+        }
+    }, ignoreNULL = TRUE)
+
+    observeEvent(input$zoomWheel, {
+        direction = substr(input$zoomWheel, 1, 1)
+        if (direction == 'l') {
+            changeZoom(1 / myPars$zoomFactor)
+        } else if (direction == 'r') {
+            changeZoom(myPars$zoomFactor, toCursor = TRUE)
         }
     }, ignoreNULL = TRUE)
 
