@@ -609,7 +609,7 @@ server = function(input, output, session) {
         do.call(text, list(
           x = myPars$spectrogram_hover$x,
           y = input$spec_ylim[1] + .025 * diff(input$spec_ylim),
-          labels = convert_sec_to_hms(myPars$spectrogram_hover$x / 1000, 3),
+          labels = soundgen:::convert_sec_to_hms(myPars$spectrogram_hover$x / 1000, 3),
           adj = .5))
       }
 
@@ -739,7 +739,7 @@ server = function(input, output, session) {
         box()
         # axis(side = 1)
         time_location = axTicks(1)
-        time_labels = convert_sec_to_hms(time_location / 1000, 3)
+        time_labels = soundgen:::convert_sec_to_hms(time_location / 1000, 3)
         axis(side = 1, at = time_location, labels = time_labels)
         if (input$osc == 'dB') {
           axis(side = 4, at = seq(0, input$dynamicRange, by = 10))
@@ -829,7 +829,7 @@ server = function(input, output, session) {
       if (myPars$print) print('Extracting spectrum of selection...')
       if (!is.null(myPars$selection) && length(myPars$selection) > 0) {
         # take the spectrum of selection (annotated region) from raw audio
-        myPars$spectrum = try(as.list(getSmoothSpectrum(
+        myPars$spectrum = try(as.list(soundgen:::getSmoothSpectrum(
           sound = myPars$selection,
           samplingRate = myPars$samplingRate,
           len = input$spectrum_len,
@@ -853,7 +853,7 @@ server = function(input, output, session) {
             freq = as.numeric(rownames(myPars$spec[, idx])),
             ampl = 20 * log10(ampl)
           )
-          myPars$spectrum = as.list(getSmoothSpectrum(
+          myPars$spectrum = as.list(soundgen:::getSmoothSpectrum(
             spectrum = spec_temp,
             len = input$spectrum_len,
             loessSpan = 10 ^ input$spectrum_smooth

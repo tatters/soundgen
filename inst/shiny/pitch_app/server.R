@@ -490,7 +490,7 @@ server = function(input, output, session) {
              ylab = '')
         box()
         time_location = axTicks(1)
-        time_labels = convert_sec_to_hms(time_location / 1000, 3)
+        time_labels = soundgen:::convert_sec_to_hms(time_location / 1000, 3)
         axis(side = 1, at = time_location, labels = time_labels)
         if (input$osc == 'dB') {
           axis(side = 4, at = seq(0, input$dynamicRange, by = 10))
