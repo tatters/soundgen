@@ -100,7 +100,7 @@ to NA}
 
 \item{burstPlot}{a list of graphical parameters for displaying the bursts}
 
-\item{...}{other graphical parameters passed to \code{\link[graphics]{plot}}}
+\item{...}{other graphical parameters passed to graphics::plot}
 }
 \value{
 If \code{summary = TRUE}, returns only a summary of the number and

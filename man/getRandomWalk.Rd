@@ -24,8 +24,8 @@ is set to 0)}
 to 1 (maximum smoothing to a straight line)}
 
 \item{method}{specifies the method of smoothing: either linear interpolation
-('linear', see \code{\link[stats]{approx}}) or cubic splines ('spline', see
-\code{\link[stats]{spline}})}
+('linear', see stats::approx) or cubic splines ('spline', see
+stats::spline)}
 
 \item{trend}{mean of generated normal distribution (vectors are also
 acceptable, as long as their length is an integer multiple of len). If
@@ -39,9 +39,9 @@ Returns a numeric vector of length len and range from 0 to rw_range.
 }
 \description{
 Generates a random walk with flexible control over its range, trend, and
-smoothness. It works by calling \code{\link[stats]{rnorm}} at each step and
-taking a cumulative sum of the generated values. Smoothness is controlled by
-initially generating a shorter random walk and upsampling.
+smoothness. It works by calling stats::rnorm at each step and taking a
+cumulative sum of the generated values. Smoothness is controlled by initially
+generating a shorter random walk and upsampling.
 }
 \examples{
 plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .2))

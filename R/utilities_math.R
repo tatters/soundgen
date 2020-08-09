@@ -287,9 +287,9 @@ Mode = function(x) {
 #' Random walk
 #'
 #' Generates a random walk with flexible control over its range, trend, and
-#' smoothness. It works by calling \code{\link[stats]{rnorm}} at each step and
-#' taking a cumulative sum of the generated values. Smoothness is controlled by
-#' initially generating a shorter random walk and upsampling.
+#' smoothness. It works by calling stats::rnorm at each step and taking a
+#' cumulative sum of the generated values. Smoothness is controlled by initially
+#' generating a shorter random walk and upsampling.
 #' @param len an integer specifying the required length of random walk. If len
 #'   is 1, returns a single draw from a gamma distribution with mean=1 and
 #'   sd=rw_range
@@ -298,8 +298,8 @@ Mode = function(x) {
 #' @param rw_smoothing specifies the amount of smoothing, from 0 (no smoothing)
 #'   to 1 (maximum smoothing to a straight line)
 #' @param method specifies the method of smoothing: either linear interpolation
-#'   ('linear', see \code{\link[stats]{approx}}) or cubic splines ('spline', see
-#'   \code{\link[stats]{spline}})
+#'   ('linear', see stats::approx) or cubic splines ('spline', see
+#'   stats::spline)
 #' @param trend mean of generated normal distribution (vectors are also
 #'   acceptable, as long as their length is an integer multiple of len). If
 #'   positive, the random walk has an overall upwards trend (good values are

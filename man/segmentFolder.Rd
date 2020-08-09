@@ -128,7 +128,7 @@ files and estimated time left}
 
 \item{burstPlot}{a list of graphical parameters for displaying the bursts}
 
-\item{...}{other graphical parameters passed to \code{\link[graphics]{plot}}}
+\item{...}{other graphical parameters passed to graphics::plot}
 }
 \value{
 If \code{summary} is TRUE, returns a dataframe with one row per audio

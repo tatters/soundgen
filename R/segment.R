@@ -56,7 +56,7 @@
 #' @param col,xlab,ylab,main main plotting parameters
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
-#' @param ... other graphical parameters passed to \code{\link[graphics]{plot}}
+#' @param ... other graphical parameters passed to graphics::plot
 #' @return If \code{summary = TRUE}, returns only a summary of the number and
 #'   spacing of syllables and vocal bursts. If \code{summary = FALSE}, returns a
 #'   list containing full stats on each syllable and bursts (location, duration,
