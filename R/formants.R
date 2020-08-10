@@ -359,7 +359,7 @@ getSpectralEnvelope = function(nr,
         # we add half that value as the mouth goes from neutral to max open. NB:
         # so "closed" is actually "half-closed", and we assume that nostrils are
         # always open (so not really a closed-closed tube)
-        adjustment_bins = (adjustment_hz - bin_width / 2) / bin_width + 1
+        adjustment_bins = adjustment_hz / bin_width # (adjustment_hz - bin_width / 2) / bin_width + 1
       }
     }
     for (f in 1:length(formants_upsampled)) {
