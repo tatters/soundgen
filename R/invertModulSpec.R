@@ -432,7 +432,7 @@ specToMS = function(spec, windowLength = NULL, step = NULL) {
 #' @inheritParams spectrogram
 #' @export
 #' @examples
-#' s = soundgen(sylLen = 500, amFreq = 25, amDep = 50,
+#' s = soundgen(sylLen = 250, amFreq = 25, amDep = 50,
 #'              pitch = 250, samplingRate = 16000)
 #' spec = spectrogram(s, samplingRate = 16000, windowLength = 25, step = 5)
 #' ms = specToMS(spec)

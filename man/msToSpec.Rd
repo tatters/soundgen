@@ -22,7 +22,7 @@ Takes a complex MS and transforms it to a complex spectrogram with proper row
 (frequency) and column (time) labels.
 }
 \examples{
-s = soundgen(sylLen = 500, amFreq = 25, amDep = 50,
+s = soundgen(sylLen = 250, amFreq = 25, amDep = 50,
              pitch = 250, samplingRate = 16000)
 spec = spectrogram(s, samplingRate = 16000, windowLength = 25, step = 5)
 ms = specToMS(spec)

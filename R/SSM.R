@@ -53,10 +53,11 @@
 #' @export
 #' @seealso \code{\link{spectrogram}} \code{\link{modulationSpectrum}}
 #' @examples
-#' sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
+#' sound = c(soundgen(),
+#'           soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
 #'           formants = NA, pitch = c(500, 330)))
 #' # playme(sound)
-#' ssm(sound, samplingRate = 16000,
+#' ssm(sound, samplingRate = 16000, overlap = 50,
 #'          input = 'audiogram', simil = 'cor', norm = FALSE,
 #'          ssmWin = 10, kernelLen = 150)  # detailed, local features
 #' \dontrun{

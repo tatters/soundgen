@@ -63,7 +63,7 @@
 #'   amplitude, ...).
 #' @export
 #' @examples
-#' sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
+#' sound = soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
 #'   pitch = c(368, 284), temperature = 0.1,
 #'   noise = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
 #'   rolloff_noise = -8, amplGlobal = c(0, -20),
