@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 1.8.0 [10-August-2020]
+          CHANGES IN SOUNDGEN VERSION 1.8.0 [11-August-2020]
 NEW FUNCTIONS:
   * formant_app(): a Shiny web app for manually correcting formant measurements
 
