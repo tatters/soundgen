@@ -722,17 +722,40 @@ generateHarmonics = function(pitch,
   ## WAVEFORM GENERATION
   if (synthesize_per_gc) {
     # synthesize one glottal cycle at a time
-    r = rolloff_source
+    rolSrc = rolloff_source
     for (e in 1:length(rolloff_source)) {
-      r[[e]] = rolloff_source[[e]]
-      r[[e]] = as.list(as.data.frame(r[[e]]))
-      for (i in 1:length(r[[e]])) {
-        r[[e]][[i]] = matrix(r[[e]][[i]],
+      rolSrc[[e]] = rolloff_source[[e]]
+      rolSrc[[e]] = as.list(as.data.frame(rolSrc[[e]]))
+      for (i in 1:length(rolSrc[[e]])) {
+        rolSrc[[e]][[i]] = matrix(rolSrc[[e]][[i]],
                              ncol = 1,
                              dimnames = list(rownames(rolloff_source[[e]])))
       }
     }
-    r = unlist(r, recursive = FALSE)  # get rid of epochs
+    rolSrc = unlist(rolSrc, recursive = FALSE)  # get rid of epochs
+    glottisClosed_per_gc = getSmoothContour(
+      anchors = glottis,
+      interpol = interpol,
+      len = nGC,
+      valueFloor = 0
+    )
+    # warp glottis anchors to ensure that their timing is not affected by the delay
+    # of adding extra silence between glottal cycles when glottis > 0
+    warpRows = (1:nrow(glottis))[-c(1, nrow(glottis))]
+    # except for first and last row (time = 0 or 1 - nowhere to move)
+    if (length(warpRows) > 0) {
+      # calculate the dur of each glottal cylce + pause, in ms
+      gc_dur = 1000 / pitch_per_gc * (1 + glottisClosed_per_gc / 100)
+      dur = sum(gc_dur)  # nominal dur with these gc's
+      cs = cumsum(gc_dur)
+      for (r in warpRows) {
+        # where it should be (time of glottis anchor, ms)
+        target_dur = glottis$time[r] * dur
+        # move the time anchor to where it will coincide with target_dur, given
+        # the modified dur of glottal cycles with pauses
+        glottis$time[r] = which(cs > target_dur)[1] / nGC
+      }
+    }
     glottisClosed_per_gc = getSmoothContour(
       anchors = glottis,
       interpol = interpol,
@@ -741,7 +764,7 @@ generateHarmonics = function(pitch,
     )
     waveform = generateGC(pitch_per_gc = pitch_per_gc,
                           glottisClosed_per_gc = glottisClosed_per_gc,
-                          rolloff_per_gc = r,
+                          rolloff_per_gc = rolSrc,
                           samplingRate = samplingRate)
   } else {
     # synthesize continuously

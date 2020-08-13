@@ -4,7 +4,8 @@ MINOR
   * soundgen(), getSpectralEnvelope(): formantDepStochastic is now treated as a multiplication factor instead of dB (0 = no formant, 1 = default amplitude)
 
 BUGS FIXED:
-  * soundgen_app(): correct parsing of long formant lists and other objects
+  * soundgen(): correct timing of glottis anchors
+  * soundgen_app(): correct parsing of long formant lists
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.0 [11-August-2020]
