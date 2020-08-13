@@ -20,7 +20,7 @@ getSpectralEnvelope(
   temperature = 0.05,
   formDrift = 0.3,
   formDisp = 0.2,
-  formantDepStoch = 20,
+  formantDepStoch = 1,
   smoothLinearFactor = 1,
   formantCeiling = 2,
   samplingRate = 16000,
@@ -90,8 +90,8 @@ higher, the more formants drift at a given temperature}
 irregularity of the dispersion of stochastic formants: the higher, the more
 unevenly stochastic formants are spaced at a given temperature}
 
-\item{formantDepStoch}{the amplitude of additional formants added above
-the highest specified formant (only if temperature > 0)}
+\item{formantDepStoch}{multiplication factor for the amplitude of additional
+formants added above the highest specified formant (0 = none, 1 = default)}
 
 \item{smoothLinearFactor}{regulates smoothing of formant anchors (0 to +Inf)
 as they are upsampled to the number of fft steps \code{nc}. This is
@@ -140,7 +140,7 @@ values for each formant (see examples). See vignette('sound_generation',
 package = 'soundgen') for more information.
 }
 \examples{
-# [a] with F1-F3 visible
+# [a] with only F1-F3 visible, with no stochasticity
 e = getSpectralEnvelope(nr = 512, nc = 50, duration = 300,
   formants = soundgen:::convertStringToFormants('a'),
   temperature = 0, plot = TRUE)
@@ -148,8 +148,8 @@ e = getSpectralEnvelope(nr = 512, nc = 50, duration = 300,
 
 # some "wiggling" of specified formants plus extra formants on top
 e = getSpectralEnvelope(nr = 512, nc = 50,
-  formants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, formantDepStoch = 20, plot = TRUE)
+  formants = c(860, 1430, 2900),
+  temperature = 0.1, formantDepStoch = 1, plot = TRUE)
 
 # a schwa based on variable length of vocal tract
 e = getSpectralEnvelope(nr = 512, nc = 100, formants = NA,
@@ -174,15 +174,32 @@ e1 = getSpectralEnvelope(nr = 512, nc = 50,
 e2 = getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
   formantWidth = 1.5, formantDep = 1.5)
-plot(20 * log10(e2[, 1]), type = 'l', col = 'red', lty = 2)
-points(20 * log10(e1[, 1]), type = 'l')
+plot(as.numeric(rownames(e2)), 20 * log10(e2[, 1]),
+     type = 'l', xlab = 'KHz', ylab = 'dB', col = 'red', lty = 2)
+points(as.numeric(rownames(e1)), 20 * log10(e1[, 1]), type = 'l')
 
 # manual specification of formants
-e = getSpectralEnvelope(nr = 512, nc = 50, plot = TRUE, samplingRate = 16000,
-  formants = list(f1 = data.frame(time = c(0, 1), freq = c(900, 500),
-                                  amp = c(30, 35), width = c(80, 50)),
-                  f2 = data.frame(time = c(0, 1), freq = c(1200, 2500),
-                                  amp = c(25, 30), width = 100),
-                  f3 = data.frame(time = 0, freq = 2900,
-                                  amp = 30, width = 120)))
+e3 = getSpectralEnvelope(
+  nr = 512, nc = 50, samplingRate = 16000, plot = TRUE,
+  formants = list(
+    f1 = list(freq = c(900, 500), amp = c(30, 35), width = c(80, 50)),
+    f2 = list(freq = c(1900, 2500), amp = c(25, 30), width = 100),
+    f3 = list(freq = 3400, amp = 30, width = 120)
+))
+
+# extra zero-pole pair (doesn't affect estimated VTL and thus the extra
+# formants added on top)
+e4 = getSpectralEnvelope(
+  nr = 512, nc = 50, samplingRate = 16000, plot = TRUE,
+  formants = list(
+    f1 = list(freq = c(900, 500), amp = c(30, 35), width = c(80, 50)),
+    f1.5 = list(freq = 1300, amp = -15),
+    f1.7 = list(freq = 1500, amp = 15),
+    f2 = list(freq = c(1900, 2500), amp = c(25, 30), width = 100),
+    f3 = list(freq = 3400, amp = 30, width = 120)
+))
+plot(as.numeric(rownames(e4)), 20 * log10(e3[, ncol(e3)]),
+     type = 'l', xlab = 'KHz', ylab = 'dB')
+points(as.numeric(rownames(e4)), 20 * log10(e4[, ncol(e4)]),
+       type = 'l', col = 'red', lty = 2)
 }

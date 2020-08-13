@@ -639,11 +639,13 @@ flatEnv = function(sound,
   }
 
   if (plot) {
+    env_m = env * m
+    ylim = range(c(sound, env_m))
     op = par('mfrow')
     par(mfrow = c(1, 2))
-    plot(sound, type = 'l', main = 'Original')
-    points(env * m, type = 'l', lty = 1, col = 'blue')
-    plot(soundFlat, type = 'l', main = 'Flattened')
+    plot(sound, type = 'l', main = 'Original', ylim = ylim)
+    points(env_m, type = 'l', lty = 1, col = 'blue')
+    plot(soundFlat, type = 'l', main = 'Flattened', ylim = ylim)
     par(mfrow = op)
   }
   return(soundFlat)

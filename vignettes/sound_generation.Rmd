@@ -263,7 +263,14 @@ s = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, plot = TRUE, play = playbac
 ### Vibrato
 Vibrato adds frequency modulation (FM) to f0 contour by modifying f0 per glottal cycle. In contrast to irregular jitter and temperature-related random drift, this FM is regular, namely sinusoidal:
 ```{r fig.width = 5, fig.height = 5}
+# variable, but deterministic vibrato
 s1 = soundgen(vibratoDep = 0:3, vibratoFreq = 7:5, 
+              sylLen = 2000, pitch = c(300, 280), 
+              play = playback, plot = TRUE)
+
+# stochastic vibrato
+s2 = soundgen(vibratoDep = rnorm(n = 10, mean = .5, sd = .1), 
+              vibratoFreq = rnorm(n = 10, mean = 5, sd = .5), 
               sylLen = 2000, pitch = c(300, 280), 
               play = playback, plot = TRUE)
 ```
@@ -422,23 +429,22 @@ formants = list(f1 = c(300, 900), f2 = c(2500, 1500))
 
 # full specification with two moving formants and non-default amplitude and bandwidth
 formants = list(
-  f1 = data.frame(time = c(0, 1), 
-                  freq = c(300, 900), 
-                  amp = c(30, 10), 
-                  width = 120),
-  f2 = data.frame(time = c(0, 1), 
-                  freq = c(2500, 1500), 
-                  amp = 30, 
-                  width = c(0, 240)))
+  f1 = list(freq = c(300, 900), 
+            amp = c(30, 10), 
+            width = 120),
+  f2 = list(time = c(0, .2, 1),  # "time" is only needed for non-equidistant anchors
+            freq = c(2500, 2400, 1500), 
+            amp = 30, 
+            width = c(0, 220, 240)))
 ```
 
 Feed these lists into soundgen() to hear what they sound like.
 
 ### Vocal tract length
 In addition to user-specified formants, higher formants are added automatically based on the length of vocal tract length estimated from the user-specified formant frequency values. The function that estimates vocal tract length is imaginatively called `estimateVTL`:
-```{r results = "hide"}
-estimateVTL(formants = c(500, 1500, 2550))  # 17.5 cm
-estimateVTL(formants = c(300, 1100, 2000))  # 22.8 cm
+```{r fig.width = 7, fig.height = 3}
+estimateVTL(formants = c(500, 1500, 2550), plot = TRUE)  
+# 17.5 cm
 ```
 
 *TIP A more general function called `schwa()` both estimates VTL and allows you to compare measured formant frequencies with those expected for a neutral schwa sound and perform more sophisticated operations with formants. See `?schwa` for more details if you are working with vowels*
@@ -459,7 +465,7 @@ soundgen(sylLen = 800, formants = NULL, rolloff = -6,
          play = playback, plot = TRUE)
 ```
 
-For very long vocal tracts, it is advisable to increase `formantCeiling` to maximum ~5-10 times the Nyquist frequency, otherwise the filter dampens high frequencies too much. The default setting is `formantCeiling = 2`, which is much faster and not too inaccurate for human-length vocal tracts. Note that vocal tract length can be variable, providing an easy way to create parallel formant transitions. 
+For very long vocal tracts, it is advisable to increase `formantCeiling` to ~5-10 (i.e., 5 times the Nyquist frequency), otherwise the filter dampens high frequencies too much. The default setting is `formantCeiling = 2`, which is much faster and not too inaccurate for human-length vocal tracts. Note that vocal tract length can be variable, providing an easy way to create parallel formant transitions. 
 
 Unlike the argument "mouth", variable "vocalTract" parameter recalculates formant bandwidths (unless these are specified manually) and is thus more accurate, but it requires you to specify a reasonable vocal tract length, in cm. If you provide both a few formant frequencies and a variable `vocalTract`, formants are synthesized as specified at the initial value of `vocalTract` (that is, at the very beginning of the sound) and can deviate afterwards as VTL changes. Careful with such combinations: make sure the *initial* value of the VTL is reasonable for these formant frequencies (any VTL is fine towards the end of the sound - the user-specified formants will move accordingly). Examples:
 ```{r fig.width = 7, fig.height = 5}
@@ -499,31 +505,32 @@ Note that, in addition to formants, lip and nose radiation are also handled by t
 ### Antiformants
 For even more advanced spectral filters, you can specify both formants (poles) and antiformants (zeros). This may be useful if you want to create a nasalized sound. The numbering of formants is arbitrary, as long as they are arranged in the right order. For example, if you want to insert a new formant between F1 and F2 without renaming all higher formants, call it "f1.5" or something like that. It is important to use a non-integer number, since otherwise these additional formants will be inappropriately used to estimate the length of vocal tract and adding stochastic formants above the ones you specify (that is, if temperature > 0 and vocalTract = NA). 
 
-If you want antiformants, you might want to specify the ampitude of all formants, not only zeros, since there is no simple way for soundgen() to "guess" the most appropriate amplitudes for zero-pole models. For example, a slow transition from [a] to [a nasalized] might be coded as follows (note that formant f1.7 has negative amplitude, so f1.5 and f1.7 form a pole-zero pair):
+For example, a slow transition from [a] to [a nasalized] might be coded as follows (note that formant f1.7 has negative amplitude, so f1.5 and f1.7 form a pole-zero pair):
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 formants = list(
-  f1   = data.frame(time = c(0, 1), freq = c(880, 900), 
-                    amp = c(30, 20), width = c(80, 120)), 
-  f1.5 = data.frame(time = c(0, 1), freq = 600, 
-                    amp = c(0, 30), width = 80),   # additional pole
-  f1.7 = data.frame(time=c(0, 1), freq = 750, 
-                    amp = c(0, -30), width = 80),  # zero
-  f2   = data.frame(time = c(0, 1), freq = c(1480, 1250), 
-                    amp = c(30, 20), width = c(120, 200)), 
-  f3   = data.frame(time=c(0, 1), freq = c(2900, 3100), 
-                    amp = 25, width = 200))
+  f1   = list(time = c(0, 1), freq = c(880, 900), 
+              amp = c(25, 15), width = c(80, 120)), 
+  f1.5 = list(time = c(0, 1), freq = 600,
+              amp = c(0, 15), width = 80),   # additional pole
+  f1.7 = list(time=c(0, 1), freq = 750,
+              amp = c(0, -15), width = 80),  # zero
+  f2   = list(time = c(0, 1), freq = c(1480, 1250), 
+              amp = c(30, 20), width = c(120, 200)), 
+  f3   = list(time=c(0, 1), freq = c(2900, 3100), 
+              amp = 25, width = 200))
 s = soundgen(sylLen = 1500, play = playback, pitch = 140, formants = formants)
 spectrogram(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5, 
             windowLength = 10, step = 5, colorTheme = 'seewave')
 # long-term average spectrum (less helpful for moving formants but very good for stationary):
-# seewave::meanspectrogram(s, f = 16000, wl = 256)  
+# seewave::meanspec(s, f = 16000, wl = 256)  
 ```
 
 If you look at the filter towards the end of the sound, you can observe the additional zero-pole pair between the first and second formant:
 ```{r fig.show = "hold", fig.width = 5, fig.height = 4}
 se = getSpectralEnvelope(nr = 512, nc = 100, formants = formants)
-plot(20 * log10(se[, ncol(se)]), type = 'l', xlab = '', ylab = 'dB')
+plot(as.numeric(rownames(se)), 20 * log10(se[, ncol(se)]), 
+     type = 'l', xlab = 'KHz', ylab = 'dB')
 ```
 
 
@@ -724,7 +731,7 @@ Jitter + shimmer + subharmonics work well together. For example, barks of a smal
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, 
              vocalTract = 8, formants = NULL, rolloff = 0,
-             pitch = c(559, 785, 557), mouth =  c(0, 0.5, 0),
+             pitch = c(1100, 1600, 1100), mouth =  c(0, 0.5, 0),
              jitterDep = 1, subDep = 60, play = playback) 
 ```
 
@@ -923,7 +930,7 @@ s4 = soundgen(vocalTract = 15.5,
 
 The excitation source for the unvoiced component can be synthesized as white noise (if `rolloffNoise = 0`) or as turbulent noise with a spectrum that linearly (not exponentially!) loses power above `noiseFlatSpec` (the default is 1200 Hz). The parameter `rolloffNoise` thus controls the source spectrum of the unvoiced component:
 ```{r fig.width = 6, fig.height = 6}
-s1 = soundgen(sylLen = 1500, vocalTract = 17.5, 
+s1 = soundgen(vocalTract = 17.5, 
               noise = 40, rolloffNoise = c(5, -20),
               formants = NULL, attackLen = 200, 
               play = playback, plot = TRUE)
@@ -975,7 +982,7 @@ s8 = soundgen(noiseAmpRef = 'filtered', formants = 'u',
 *TIP If you need a very precise balance of harmonics and noise based on another normalization (RMS amplitude, minimum or median instead of maximum amplitude, etc.), you can always synthesize the harmonic and noise components separately and then simply add them up at whatever amplitudes you like*
 
 ### Noise timing
-If you want noise to be time-locked to the voiced component, make the argument `noise` a numeric vector. Anchor format with `time = c(), value = c()` is more flexible, but note that it may cause the noise and voiced components to be slightly desynchronized.
+If you want noise to be time-locked to the voiced component, make the argument `noise` a numeric vector. Anchor format with `time = c(), value = c()` is more flexible, but note that it may cause the noise and voiced components to be slightly out of sync (which may be useful if you want noise to extend beyond the voiced segment).
  
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(nSyl = 2,

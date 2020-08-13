@@ -1,4 +1,4 @@
-# TODO: check the timing of glottis - longer than should be; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check the timing of glottis - longer than should be; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser') or options('browser' = '/usr/bin/google-chrome') to check a Shiny app in a non-default browser
 
@@ -304,7 +304,7 @@ soundgen = function(
   mouthOpenThres = 0,
   formants = c(860, 1430, 2900),
   formantDep = 1,
-  formantDepStoch = 20,
+  formantDepStoch = 1,
   formantWidth = 1,
   formantCeiling = 2,
   formantLocking = 0,
@@ -503,13 +503,21 @@ soundgen = function(
       tempEffects[[e]] = defaults[[e]] * tempEffects[[e]]
     }
   }
+  for (s in 1:length(es)) {
+    name_s = names(tempEffects)[s]
+    if (!name_s %in% es) {
+      message(paste0('"', name_s, '" is not among valid temEffects parameters (',
+                     paste(es, collapse = ', '),
+                    '). See ?soundgen'))
+    }
+  }
 
   # Validate smoothing par-s
   sm = c('discontThres', 'jumpThres', 'loessSpan', 'interpol')
   for (s in 1:length(smoothing)) {
     name_s = names(smoothing)[s]
     if (!name_s %in% sm) {
-      message(paste0(name_s, ' is not among valid smoothing parameters (',
+      message(paste0('"', name_s, '" is not among valid smoothing parameters (',
                      paste(sm, collapse = ', '),
                     '). See ?getSmoothContour'))
     }

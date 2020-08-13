@@ -761,3 +761,30 @@ validatePars = function(p, gp, def,
   }
   return(gp)
 }
+
+#' Object to string
+#'
+#' Internal soundgen function. Converts any object to a string that preserves all internal structure and names.
+#' @param x any R object (unquoted)
+#' @keywords internal
+#' @examples
+#' soundgen:::objectToString('adja')
+#' soundgen:::objectToString(500)
+#' soundgen:::objectToString(c(870, 1250, 1900))
+#' soundgen:::objectToString(list(f1 = c(870, 1250), f2 = list(freq = 500, amp = 30)))
+#' soundgen:::objectToString(list(
+#'   pitch = list(time = c(0, 1), value = c(160, 150)),
+#'   noise = list(time = c(-1, 170, 362), value = c(-14, 0, -26)),
+#'   mouth = list(time = c(0, 0.07, 1), value = c(0, 0.48, 0.32))))
+#' # NB: no matter how long, the object is still returned as an unbroken string
+objectToString = function(x) {
+  if (is.character(x)) {
+    cp = x
+  } else {
+    # tried and failed: toString, capture.output(call('print', x)), etc.
+    cp = deparse(x, width.cutoff = 500, control = c('keepNA', 'niceNames'))
+    if (length(cp) > 1) cp = paste(cp, collapse = '')
+    # deparse1 comes close, but it require R 4.0 and mishandles strings
+  }
+  return(cp)
+}

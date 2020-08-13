@@ -1,4 +1,11 @@
           CHANGES IN SOUNDGEN VERSION 1.8.0.9000 [...date...]
+MINOR
+  * soundgen(), getSpectralEnvelope(): a more consisent implementation of zero-pole models, which affects manually specified formant amplitudes
+  * soundgen(), getSpectralEnvelope(): formantDepStochastic is now treated as a multiplication factor instead of dB (0 = no formant, 1 = default amplitude)
+
+BUGS FIXED:
+  * soundgen_app(): correct parsing of long formant lists and other objects
+
 
           CHANGES IN SOUNDGEN VERSION 1.8.0 [11-August-2020]
 NEW FUNCTIONS:

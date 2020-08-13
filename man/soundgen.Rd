@@ -41,7 +41,7 @@ soundgen(
   mouthOpenThres = 0,
   formants = c(860, 1430, 2900),
   formantDep = 1,
-  formantDepStoch = 20,
+  formantDepStoch = 1,
   formantWidth = 1,
   formantCeiling = 2,
   formantLocking = 0,
