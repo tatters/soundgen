@@ -9,7 +9,8 @@ generateGC(
   glottisClosed_per_gc,
   rolloff_per_gc,
   samplingRate,
-  wn = "none"
+  wn = "none",
+  interpol = "approx"
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ first harmonic)}
 \item{samplingRate}{the sampling rate of generated sound, Hz}
 
 \item{wn}{windowing function applied to each glottal cycle (see ftwindow_modif)}
+
+\item{interpol}{method used to adjust the number of gc to target duration}
 }
 \value{
 Returns a waveform as a non-normalized numeric vector centered at zero.

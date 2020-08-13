@@ -728,8 +728,8 @@ generateHarmonics = function(pitch,
       rolSrc[[e]] = as.list(as.data.frame(rolSrc[[e]]))
       for (i in 1:length(rolSrc[[e]])) {
         rolSrc[[e]][[i]] = matrix(rolSrc[[e]][[i]],
-                             ncol = 1,
-                             dimnames = list(rownames(rolloff_source[[e]])))
+                                  ncol = 1,
+                                  dimnames = list(rownames(rolloff_source[[e]])))
       }
     }
     rolSrc = unlist(rolSrc, recursive = FALSE)  # get rid of epochs
@@ -851,6 +851,7 @@ generateHarmonics = function(pitch,
 #'   first harmonic)
 #' @param samplingRate the sampling rate of generated sound, Hz
 #' @param wn windowing function applied to each glottal cycle (see ftwindow_modif)
+#' @param interpol method used to adjust the number of gc to target duration
 #' @return Returns a waveform as a non-normalized numeric vector centered at zero.
 #' @keywords internal
 #' @examples
@@ -867,7 +868,8 @@ generateGC = function(pitch_per_gc,
                       glottisClosed_per_gc,
                       rolloff_per_gc,
                       samplingRate,
-                      wn = 'none') {
+                      wn = 'none',
+                      interpol = 'approx') {
   gc_len = round(samplingRate / pitch_per_gc)  # length of each gc, points
   gc_closed = round(gc_len * glottisClosed_per_gc / 100)  # length of each pause, points
 
@@ -876,10 +878,20 @@ generateGC = function(pitch_per_gc,
   dur_target = sum(gc_len)
   dur_with_closed = dur_target + sum(gc_closed)
   nGC = round(dur_target / dur_with_closed * length(pitch_per_gc))
-  idx = round(seq(1, nGC_orig, length.out = nGC))
-  pitch_per_gc_adj = pitch_per_gc[idx]
-  glottisClosed_per_gc_adj = glottisClosed_per_gc[idx]
-  rolloff_per_gc_adj = rolloff_per_gc[idx]
+  if (interpol == 'approx') {
+    # use splines to reduce the number of gc's in a smart way
+    idx_orig = 1:nGC_orig
+    idx = seq(1, nGC_orig, length.out = nGC)
+    pitch_per_gc_adj = spline(x = idx_orig, y = pitch_per_gc, xout = idx)$y
+    glottisClosed_per_gc_adj = approx(x = idx_orig, y = glottisClosed_per_gc, xout = idx)$y
+    rolloff_per_gc_adj = rolloff_per_gc[round(idx)]  # too big for spline
+  } else {
+    # just pick enough gc's
+    idx = round(seq(1, nGC_orig, length.out = nGC))
+    pitch_per_gc_adj = pitch_per_gc[idx]
+    glottisClosed_per_gc_adj = glottisClosed_per_gc[idx]
+    rolloff_per_gc_adj = rolloff_per_gc[idx]
+  }
   gc_len_adj = round(samplingRate / pitch_per_gc_adj)
   gc_closed_adj = round(gc_len_adj * glottisClosed_per_gc_adj / 100)
   # gc_closed_adj[nGC] = 1  # don't add silence after the last gc
