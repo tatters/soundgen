@@ -169,7 +169,7 @@ server = function(input, output, session) {
       } else if (is.null(preset$vowelString) & !is.null(preset$formants)) {
         updateTextInput(session, inputId = 'vowelString', value = '')
         updateTextInput(session, inputId = 'formants',
-                        value = objectToString(preset$formants))
+                        value = soundgen:::objectToString(preset$formants))
         myPars$formants = preset$formants
       } else { # if both are NULL
         updateTextInput(session, inputId = 'vowelString', value = '')
@@ -184,7 +184,7 @@ server = function(input, output, session) {
                  !is.null(preset$formantsNoise)) {
         updateTextInput(session, inputId = 'noiseType', value = '')
         updateTextInput(session, inputId = 'formantsNoise',
-                        value = objectToString(preset$formantsNoise))
+                        value = soundgen:::objectToString(preset$formantsNoise))
         myPars$formantsNoise = preset$formantsNoise
       } else { # if both are NULL
         updateTextInput(session, inputId = 'noiseType', value = 'b')
@@ -279,7 +279,7 @@ server = function(input, output, session) {
           }
         }
         updateTextInput(session, inputId = 'formants',
-                        value = objectToString(converted))
+                        value = soundgen:::objectToString(converted))
       })
     }
   })
@@ -1243,7 +1243,7 @@ server = function(input, output, session) {
 
   # show simplified function call as string to user for copy-pasting
   observeEvent(mycall(), {
-    call_string = objectToString(mycall())
+    call_string = soundgen:::objectToString(mycall())
     call_string  = paste0('soundgen', substr(call_string, 5, nchar(call_string)))
     updateTextInput(session, inputId = 'mycall', value = call_string)
   })
