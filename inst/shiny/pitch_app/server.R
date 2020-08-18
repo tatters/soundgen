@@ -177,9 +177,9 @@ server = function(input, output, session) {
   }
 
   extractSpectrogram = observe({
-    # Instead of re-loading the file every time, save the spectrogram matrix
-    # and re-draw manually with soundgen:::filled.contour.mod
-    if (!is.null(myPars$myAudio) & is.null(myPars$spec)) {
+    # Instead of re-loading the file every time, could save the spectrogram
+    # matrix and re-draw manually with soundgen:::filled.contour.mod
+    if (!is.null(myPars$myAudio)) {
       if (myPars$print) print('Extracting spectrogram...')
       myPars$spec = spectrogram(
         myPars$myAudio,
@@ -295,7 +295,7 @@ server = function(input, output, session) {
 
   downsample_spec = function(x, maxPoints) {
     lxy = nrow(x) * ncol(x)
-    if (lxy > maxPoints) {
+    if (length(lxy) > 0 && lxy > maxPoints) {
       if (myPars$print) print('Downsampling spectrogram...')
       lx = ncol(x)  # time
       ly = nrow(x)  # freq
