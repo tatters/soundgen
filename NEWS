@@ -5,7 +5,9 @@ MINOR
 
 BUGS FIXED:
   * soundgen(): correct timing of glottis anchors
+  * soundgen(): invalidArgAction = 'ignore' overrides inbuilt limits of AM parameters
   * soundgen_app(): correct parsing of long formant lists
+  * pitch_app(): spectrogram plot responds to change in input settings
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.0 [11-August-2020]

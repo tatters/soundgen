@@ -508,7 +508,7 @@ soundgen = function(
     if (!name_s %in% es) {
       message(paste0('"', name_s, '" is not among valid temEffects parameters (',
                      paste(es, collapse = ', '),
-                    '). See ?soundgen'))
+                     '). See ?soundgen'))
     }
   }
 
@@ -519,7 +519,7 @@ soundgen = function(
     if (!name_s %in% sm) {
       message(paste0('"', name_s, '" is not among valid smoothing parameters (',
                      paste(sm, collapse = ', '),
-                    '). See ?getSmoothContour'))
+                     '). See ?getSmoothContour'))
     }
   }
   for (s in c('discontThres', 'jumpThres')) {
@@ -1184,12 +1184,18 @@ soundgen = function(
         for (p in amPar_vect) {
           p_unique_value = unique(get(p)$value)
           if (length(p_unique_value) > 1) {
+            if (invalidArgAction == 'ignore') {
+              valueFloor_p = valueCeiling_p = NULL
+            } else {
+              valueFloor_p = permittedValues[p, 'low']
+              valueCeiling_p = permittedValues[p, 'high']
+            }
             p_vectorized = getSmoothContour(
               anchors = get(p),
               len = length(soundFiltered),
               interpol = 'approx',
-              valueFloor = permittedValues[p, 'low'],
-              valueCeiling = permittedValues[p, 'high']
+              valueFloor = valueFloor_p,
+              valueCeiling = valueCeiling_p
             )
             # plot(p_vectorized, type = 'l')
             assign(paste0(p, '_vector'), p_vectorized)
