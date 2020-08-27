@@ -10,7 +10,7 @@ crossFade(
   crossLenPoints = 240,
   crossLen = NULL,
   samplingRate = NULL,
-  shape = c("lin", "exp", "log", "cos", "logistic")[1],
+  shape = c("lin", "exp", "log", "cos", "logistic", "gaussian")[1],
   steepness = 1
 )
 }
@@ -28,9 +28,8 @@ crossLen is given in ms rather than points)}
 exponential, 'log' = logarithmic, 'cos' = cosine, 'logistic' = logistic
 S-curve}
 
-\item{steepness}{scaling factor regulating the steepness of fading curves if
-the shape is 'exp', 'log', or 'logistic' (0 = linear, >1 = steeper than
-default)}
+\item{steepness}{scaling factor regulating the steepness of fading curves
+(except for shapes 'lin' and 'cos'): 0 = linear, >1 = steeper than default}
 }
 \value{
 Returns a numeric vector.

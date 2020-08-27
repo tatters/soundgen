@@ -73,7 +73,7 @@ playme = function(sound,
     if (os == 'Linux' | os == 'linux') {
       p = tuneR::play(soundWave, 'play')
     } else if (os == 'Darwin' | os == 'darwin') {
-       p = tuneR::play(soundWave, 'afplay')
+      p = tuneR::play(soundWave, 'afplay')
     } else {  # a good default on windows?
       p = tuneR::play(soundWave)
     }
@@ -102,9 +102,8 @@ playme = function(sound,
 #' @param shape controls the type of fade function: 'lin' = linear, 'exp' =
 #'   exponential, 'log' = logarithmic, 'cos' = cosine, 'logistic' = logistic
 #'   S-curve
-#' @param steepness scaling factor regulating the steepness of fading curves if
-#'   the shape is 'exp', 'log', or 'logistic' (0 = linear, >1 = steeper than
-#'   default)
+#' @param steepness scaling factor regulating the steepness of fading curves
+#'   (except for shapes 'lin' and 'cos'): 0 = linear, >1 = steeper than default
 #' @param plot if TRUE, produces an oscillogram of the waveform after fading
 #' @return Returns a numeric vector of the same length as input
 #' @export
@@ -121,43 +120,40 @@ playme = function(sound,
 #' x = runif(5000, min = -1, max = 1)  # make sure to zero-center input!!!
 #' # plot(x, type = 'l')
 #' y = fade(x, fadeIn = 1000, fadeOut = 0, plot = TRUE)
-#' y = fade(x,
-#'          fadeIn = 1000,
-#'          fadeOut = 1500,
-#'          shape = 'exp',
-#'          plot = TRUE)
-#' y = fade(x,
-#'          fadeIn = 1500,
-#'          fadeOut = 500,
-#'          shape = 'log',
-#'          plot = TRUE)
-#' y = fade(x,
-#'          fadeIn = 1500,
-#'          fadeOut = 500,
-#'          shape = 'log',
-#'          steepness = 8,
-#'          plot = TRUE)
-#' y = fade(x,
-#'          fadeIn = 1000,
-#'          fadeOut = 1500,
-#'          shape = 'cos',
-#'          plot = TRUE)
-#' y = fade(x,
-#'          fadeIn = 1500,
-#'          fadeOut = 500,
-#'          shape = 'logistic',
-#'          steepness = 4,
-#'          plot = TRUE)
-fade = function(x,
-                fadeIn = 1000,
-                fadeOut = 1000,
-                samplingRate = NULL,
-                shape = c('lin', 'exp', 'log', 'cos', 'logistic')[1],
-                steepness = 1,
-                plot = FALSE) {
+#' y = fade(x, fadeIn = 1000, fadeOut = 1500,
+#'          shape = 'exp', steepness = 1, plot = TRUE)
+#' y = fade(x, fadeIn = 1500, fadeOut = 500,
+#'          shape = 'log', steepness = 1, plot = TRUE)
+#' y = fade(x, fadeIn = 1500, fadeOut = 500,
+#'          shape = 'log', steepness = 3, plot = TRUE)
+#' y = fade(x, fadeIn = 1500, fadeOut = 1500,
+#'          shape = 'cos', plot = TRUE)
+#' y = fade(x, fadeIn = 1500, fadeOut = 1500,
+#'          shape = 'logistic', steepness = 1, plot = TRUE)
+#' y = fade(x, fadeIn = 1500, fadeOut = 1500,
+#'          shape = 'logistic', steepness = 3, plot = TRUE)
+#' y = fade(x, fadeIn = 1500, fadeOut = 1500,
+#'          shape = 'gaussian', steepness = 1.5, plot = TRUE)
+fade = function(
+  x,
+  fadeIn = 1000,
+  fadeOut = 1000,
+  samplingRate = NULL,
+  shape = c('lin', 'exp', 'log', 'cos', 'logistic', 'gaussian')[1],
+  steepness = 1,
+  plot = FALSE) {
   if ((!is.numeric(fadeIn) | fadeIn < 1) &
       (!is.numeric(fadeOut) | fadeOut < 1)) {
     return(x)
+  }
+
+  valid_shapes = c('lin', 'exp', 'log', 'cos', 'logistic', 'gaussian')
+  if (!shape %in% valid_shapes) {
+    warning(paste(
+      shape, 'is not a valid shape, defaulting to "lin".',
+      'Implemented shapes: "', paste(valid_shapes, collapse = ", "), '"'
+    ))
+    shape = 'lin'
   }
 
   if (steepness < 0) {
@@ -182,20 +178,23 @@ fade = function(x,
     fi = time_in
     fo = time_out
   } else if (shape == 'exp') {
-    fi = zeroOne(exp(time_in * steepness / 3))
-    fo = zeroOne(exp(time_out * steepness / 3))
+    fi = zeroOne(exp(time_in * steepness * 3))
+    fo = zeroOne(exp(time_out * steepness * 3))
   } else if (shape == 'log') {
-    fi = 1 - rev(zeroOne(exp(time_in * steepness / 3)))
-    fo = 1 - rev(zeroOne(exp(time_out * steepness / 3)))
+    fi = 1 - rev(zeroOne(exp(time_in * steepness * 3)))
+    fo = 1 - rev(zeroOne(exp(time_out * steepness * 3)))
   } else if (shape == 'cos') {
     fi = (1 - cos(time_in * pi)) / 2
     fo = (1 - cos(time_out * pi)) / 2
   } else if (shape == 'logistic') {
-    fi = zeroOne(1 - 1 / (1 + exp(steepness * (time_in - .5))))
-    fo = zeroOne(1 - 1 / (1 + exp(steepness * (time_out - .5))))
+    fi = zeroOne(1 - 1 / (1 + exp(6 * steepness * (time_in - .5))))
+    fo = zeroOne(1 - 1 / (1 + exp(6 * steepness * (time_out - .5))))
+  } else if (shape == 'gaussian') {
+    fi = zeroOne(dnorm(x = -rev(time_in), mean = 0, sd = .4/steepness))
+    fo = rev(zeroOne(dnorm(x = time_out, mean = 0, sd = .4/steepness)))
   }
   # plot(fi, type = 'l')
-  # plot(fo, type = 'l')
+  # points(fo, type = 'l', col = 'red')
 
   if (fadeIn > 0) {
     x[1:fadeIn] = x[1:fadeIn] * fi
@@ -210,7 +209,7 @@ fade = function(x,
     abline(v = fadeIn, col = 'blue')
     abline(v = length(x) - fadeOut, col = 'blue')
   }
-  return(x)
+  invisible(x)
 }
 
 
@@ -268,13 +267,14 @@ fade = function(x,
 #' playme(crossFade(sound3, sound4, samplingRate = 16000,
 #'                  crossLen = 300, shape = 'cos'), 16000)
 #' }
-crossFade = function(ampl1,
-                     ampl2,
-                     crossLenPoints = 240,
-                     crossLen = NULL,
-                     samplingRate = NULL,
-                     shape = c('lin', 'exp', 'log', 'cos', 'logistic')[1],
-                     steepness = 1) {
+crossFade = function(
+  ampl1,
+  ampl2,
+  crossLenPoints = 240,
+  crossLen = NULL,
+  samplingRate = NULL,
+  shape = c('lin', 'exp', 'log', 'cos', 'logistic', 'gaussian')[1],
+  steepness = 1) {
   # cut to the nearest zero crossings
   zc1 = findZeroCrossing(ampl1, location = length(ampl1))
   if (!is.na(zc1)) {

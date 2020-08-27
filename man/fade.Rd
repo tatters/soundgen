@@ -9,7 +9,7 @@ fade(
   fadeIn = 1000,
   fadeOut = 1000,
   samplingRate = NULL,
-  shape = c("lin", "exp", "log", "cos", "logistic")[1],
+  shape = c("lin", "exp", "log", "cos", "logistic", "gaussian")[1],
   steepness = 1,
   plot = FALSE
 )
@@ -26,9 +26,8 @@ as points if \code{samplingRate = NULL} and as ms otherwise (0 = no fade)}
 exponential, 'log' = logarithmic, 'cos' = cosine, 'logistic' = logistic
 S-curve}
 
-\item{steepness}{scaling factor regulating the steepness of fading curves if
-the shape is 'exp', 'log', or 'logistic' (0 = linear, >1 = steeper than
-default)}
+\item{steepness}{scaling factor regulating the steepness of fading curves
+(except for shapes 'lin' and 'cos'): 0 = linear, >1 = steeper than default}
 
 \item{plot}{if TRUE, produces an oscillogram of the waveform after fading}
 }
@@ -52,33 +51,20 @@ s1 = fade(s, fadeIn = 40, fadeOut = 350,
 x = runif(5000, min = -1, max = 1)  # make sure to zero-center input!!!
 # plot(x, type = 'l')
 y = fade(x, fadeIn = 1000, fadeOut = 0, plot = TRUE)
-y = fade(x,
-         fadeIn = 1000,
-         fadeOut = 1500,
-         shape = 'exp',
-         plot = TRUE)
-y = fade(x,
-         fadeIn = 1500,
-         fadeOut = 500,
-         shape = 'log',
-         plot = TRUE)
-y = fade(x,
-         fadeIn = 1500,
-         fadeOut = 500,
-         shape = 'log',
-         steepness = 8,
-         plot = TRUE)
-y = fade(x,
-         fadeIn = 1000,
-         fadeOut = 1500,
-         shape = 'cos',
-         plot = TRUE)
-y = fade(x,
-         fadeIn = 1500,
-         fadeOut = 500,
-         shape = 'logistic',
-         steepness = 4,
-         plot = TRUE)
+y = fade(x, fadeIn = 1000, fadeOut = 1500,
+         shape = 'exp', steepness = 1, plot = TRUE)
+y = fade(x, fadeIn = 1500, fadeOut = 500,
+         shape = 'log', steepness = 1, plot = TRUE)
+y = fade(x, fadeIn = 1500, fadeOut = 500,
+         shape = 'log', steepness = 3, plot = TRUE)
+y = fade(x, fadeIn = 1500, fadeOut = 1500,
+         shape = 'cos', plot = TRUE)
+y = fade(x, fadeIn = 1500, fadeOut = 1500,
+         shape = 'logistic', steepness = 1, plot = TRUE)
+y = fade(x, fadeIn = 1500, fadeOut = 1500,
+         shape = 'logistic', steepness = 3, plot = TRUE)
+y = fade(x, fadeIn = 1500, fadeOut = 1500,
+         shape = 'gaussian', steepness = 1.5, plot = TRUE)
 }
 \seealso{
 \code{\link{crossFade}}

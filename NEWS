@@ -2,6 +2,7 @@
 MINOR
   * soundgen(), getSpectralEnvelope(): a more consisent implementation of zero-pole models, which affects manually specified formant amplitudes
   * soundgen(), getSpectralEnvelope(): formantDepStochastic is now treated as a multiplication factor instead of dB (0 = no formant, 1 = default amplitude)
+  * fade(), crossFade(): new defaults of steepness values, added gaussian shape
 
 BUGS FIXED:
   * soundgen(): correct timing of glottis anchors
