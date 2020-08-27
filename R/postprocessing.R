@@ -174,26 +174,37 @@ fade = function(
 
   time_in = seq(0, 1, length.out = fadeIn)
   time_out = seq(1, 0, length.out = fadeOut)
+
   if (shape == 'lin') {
     fi = time_in
     fo = time_out
   } else if (shape == 'exp') {
-    fi = zeroOne(exp(time_in * steepness * 3))
-    fo = zeroOne(exp(time_out * steepness * 3))
+    m = exp(steepness * 3)  # to avoid taking min/max within zeroOne
+    fi = zeroOne(exp(time_in * steepness * 3), xmin = 1, xmax = m)
+    fo = zeroOne(exp(time_out * steepness * 3), xmin = 1, xmax = m)
   } else if (shape == 'log') {
-    fi = 1 - rev(zeroOne(exp(time_in * steepness * 3)))
-    fo = 1 - rev(zeroOne(exp(time_out * steepness * 3)))
+    m = exp(steepness * 3)
+    fi = 1 - rev(zeroOne(exp(time_in * steepness * 3), xmin = 1, xmax = m))
+    fo = 1 - rev(zeroOne(exp(time_out * steepness * 3), xmin = 1, xmax = m))
   } else if (shape == 'cos') {
     fi = (1 - cos(time_in * pi)) / 2
     fo = (1 - cos(time_out * pi)) / 2
   } else if (shape == 'logistic') {
-    fi = zeroOne(1 - 1 / (1 + exp(6 * steepness * (time_in - .5))))
-    fo = zeroOne(1 - 1 / (1 + exp(6 * steepness * (time_out - .5))))
+    xmin = 1 - 1 / (1 + exp(6 * steepness * (0 - .5)))
+    xmax = 1 - 1 / (1 + exp(6 * steepness * (1 - .5)))
+    fi = zeroOne(1 - 1 / (1 + exp(6 * steepness * (time_in - .5))),
+                 xmin = xmin, xmax = xmax)
+    fo = zeroOne(1 - 1 / (1 + exp(6 * steepness * (time_out - .5))),
+                 xmin = xmin, xmax = xmax)
   } else if (shape == 'gaussian') {
-    fi = zeroOne(dnorm(x = -rev(time_in), mean = 0, sd = .4/steepness))
-    fo = rev(zeroOne(dnorm(x = time_out, mean = 0, sd = .4/steepness)))
+    xmin = dnorm(x = -1, mean = 0, sd = .4 / steepness)
+    xmax = dnorm(x = 0, mean = 0, sd = .4 / steepness)
+    fi = zeroOne(dnorm(x = -rev(time_in), mean = 0, sd = .4 / steepness),
+                 xmin = xmin, xmax = xmax)
+    fo = rev(zeroOne(dnorm(x = time_out, mean = 0, sd = .4 / steepness),
+                     xmin = xmin, xmax = xmax))
   }
-  # plot(fi, type = 'l')
+  # plot(fi, type = 'l', xlim = c(1, max(fadeIn, fadeOut)))
   # points(fo, type = 'l', col = 'red')
 
   if (fadeIn > 0) {

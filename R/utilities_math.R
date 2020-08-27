@@ -64,10 +64,13 @@ listDepth = function(x) ifelse(is.list(x), 1L + max(sapply(x, listDepth)), 0L)
 #' Normalized input vector to range from 0 to 1
 #' @param x numeric vector or matrix
 #' @param na.rm if TRUE, removed NA's when calculating min/max for normalization
+#' @param xmin,xmax min and max (to save time if already known)
 #' @keywords internal
-zeroOne = function(x, na.rm = FALSE) {
-  x = x - min(x, na.rm = na.rm)
-  x = x / max(x, na.rm = na.rm)
+zeroOne = function(x, na.rm = FALSE, xmin = NULL, xmax = NULL) {
+  if (is.null(xmin)) xmin = min(x, na.rm = na.rm)
+  if (is.null(xmax)) xmax = max(x, na.rm = na.rm)
+  x = x - xmin
+  x = x / (xmax - xmin)
   return(x)
 }
 
