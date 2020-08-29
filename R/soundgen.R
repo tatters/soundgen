@@ -1,4 +1,4 @@
-# TODO:check presets / demos to make sure formants are fine; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: check rw_smoothing in source, document and check if satisfied; check presets / demos to make sure formants are fine; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser') or options('browser' = '/usr/bin/google-chrome') to check a Shiny app in a non-default browser
 
@@ -44,17 +44,17 @@ NULL
 #'   in sound generation
 #' @param tempEffects a list of scaling coefficients regulating the effect of
 #'   temperature on particular parameters. To change, specify just those pars
-#'   that you want to modify (default is 1 for all of them). \code{sylLenDep}:
-#'   duration of syllables and pauses; \code{formDrift}: formant frequencies;
-#'   \code{formDisp}: dispersion of stochastic formants; \code{pitchDriftDep}:
-#'   amount of slow random drift of f0; \code{pitchDriftFreq}: frequency of slow
-#'   random drift of f0; \code{amplDriftDep}: drift of amplitude mirroring pitch
-#'   drift; \code{subDriftDep}: drift of subharmonic frequency and bandwidth
-#'   mirroring pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring
-#'   pitch drift; \code{pitchDep, noiseDep, amplDep}:
-#'   random fluctuations of user-specified pitch / noise / amplitude anchors;
-#'   \code{glottisDep}: proportion of glottal cycle with closed glottis;
-#'   \code{specDep}: rolloff, rolloffNoise, nonlinear effects, attack
+#'   that you want to modify (1 = default, 0 = no stochastic behavior).
+#'   \code{amplDep, pitchDep, noiseDep}: random fluctuations of user-specified
+#'   amplitude / pitch / noise anchors; \code{amplDriftDep}: drift of amplitude
+#'   mirroring pitch drift; \code{formDisp}: dispersion of stochastic formants;
+#'   \code{formDrift}: formant frequencies; \code{glottisDep}: proportion of
+#'   glottal cycle with closed glottis; \code{pitchDriftDep}: amount of slow
+#'   random drift of f0; \code{pitchDriftFreq}: frequency of slow random drift
+#'   of f0; \code{rolloffDriftDep}: drift of rolloff mirroring pitch drift;
+#'   \code{specDep}: rolloff, rolloffNoise, nonlinear effects, attack;
+#'   \code{subDriftDep}: drift of subharmonic frequency and bandwidth mirroring
+#'   pitch drift; \code{sylLenDep}: duration of syllables and pauses
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
 #'   vocalTract to make the speaker appear more male (-1...0) or more female
 #'   (0...+1); 0 = no change
@@ -492,10 +492,11 @@ soundgen = function(
   #   pitch$value = pitch$value * (mean_closed + 1)
   # }
 
-  # tempEffects are either left at default levels or multiplied by user-supplied values
-  es = c('sylLenDep', 'formDrift', 'formDisp', 'pitchDriftDep',
-         'amplDriftDep', 'subDriftDep', 'rolloffDriftDep', 'pitchDep',
-         'noiseDep', 'amplDep', 'glottisDep', 'specDep')
+  # tempEffects are either left at default levels or multiplied by user-supplied
+  # scaling coefficients (1 = no change)
+  es = c('amplDep', 'amplDriftDep', 'formDisp', 'formDrift', 'glottisDep',
+         'noiseDep', 'pitchDep', 'pitchDriftDep', 'pitchDriftFreq',
+         'rolloffDriftDep', 'specDep', 'subDriftDep', 'sylLenDep')
   for (e in es) {
     if (!is.numeric(tempEffects[[e]])) {
       tempEffects[[e]] = defaults[[e]]
@@ -646,6 +647,7 @@ soundgen = function(
   anchors_to_wiggle = c(
     'pitch', 'ampl', 'glottis',
     'vibratoFreq', 'vibratoDep',
+    'subRatio', 'subDep', 'subWidth',  # no subFreq - overrides subRatio
     'jitterLen', 'jitterDep',
     'shimmerLen', 'shimmerDep',
     'rolloff', 'rolloffKHz', 'rolloffOct',
@@ -659,7 +661,6 @@ soundgen = function(
     'vibratoDep' = vibratoDep,
     'shimmerDep' = shimmerDep,
     'shimmerLen' = shimmerLen,
-    'creakyBreathy' = creakyBreathy,
     'rolloff' = rolloff,
     'rolloffOct' = rolloffOct,
     'rolloffKHz' = rolloffKHz,
@@ -903,6 +904,7 @@ soundgen = function(
             high = c(1, h),
             temp_coef = tempEffects$specDep,
             sd_values = (h - l) * temperature * tempEffects$specDep,
+            roundToInteger = (anchor %in% pars_to_round),
             invalidArgAction = invalidArgAction
           )
           # assign(anchor_per_syl, anchor_new)

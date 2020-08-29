@@ -110,17 +110,17 @@ in sound generation}
 
 \item{tempEffects}{a list of scaling coefficients regulating the effect of
 temperature on particular parameters. To change, specify just those pars
-that you want to modify (default is 1 for all of them). \code{sylLenDep}:
-duration of syllables and pauses; \code{formDrift}: formant frequencies;
-\code{formDisp}: dispersion of stochastic formants; \code{pitchDriftDep}:
-amount of slow random drift of f0; \code{pitchDriftFreq}: frequency of slow
-random drift of f0; \code{amplDriftDep}: drift of amplitude mirroring pitch
-drift; \code{subDriftDep}: drift of subharmonic frequency and bandwidth
-mirroring pitch drift; \code{rolloffDriftDep}: drift of rolloff mirroring
-pitch drift; \code{pitchDep, noiseDep, amplDep}:
-random fluctuations of user-specified pitch / noise / amplitude anchors;
-\code{glottisDep}: proportion of glottal cycle with closed glottis;
-\code{specDep}: rolloff, rolloffNoise, nonlinear effects, attack}
+that you want to modify (1 = default, 0 = no stochastic behavior).
+\code{amplDep, pitchDep, noiseDep}: random fluctuations of user-specified
+amplitude / pitch / noise anchors; \code{amplDriftDep}: drift of amplitude
+mirroring pitch drift; \code{formDisp}: dispersion of stochastic formants;
+\code{formDrift}: formant frequencies; \code{glottisDep}: proportion of
+glottal cycle with closed glottis; \code{pitchDriftDep}: amount of slow
+random drift of f0; \code{pitchDriftFreq}: frequency of slow random drift
+of f0; \code{rolloffDriftDep}: drift of rolloff mirroring pitch drift;
+\code{specDep}: rolloff, rolloffNoise, nonlinear effects, attack;
+\code{subDriftDep}: drift of subharmonic frequency and bandwidth mirroring
+pitch drift; \code{sylLenDep}: duration of syllables and pauses}
 
 \item{maleFemale}{hyperparameter for shifting f0 contour, formants, and
 vocalTract to make the speaker appear more male (-1...0) or more female

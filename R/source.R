@@ -394,6 +394,10 @@ generateNoise = function(len,
 #' @param pitchDriftFreq scale factor regulating the effect of temperature on
 #'   the frequency of random drift of f0 (like jitter, but slower): the higher,
 #'   the faster f0 "wiggles" at a given temperature
+#' @param amplDriftDep drift of amplitude mirroring pitch drift
+#' @param subDriftDep drift of subharmonic frequency and bandwidth mirroring
+#'   pitch drift
+#' @param rolloffDriftDep drift of rolloff mirroring pitch drift
 #' @param randomWalk_trendStrength try 0 to 1 - the higher, the more likely rw
 #'   is to get high in the middle and low at the beginning and end (i.e. max
 #'   effect amplitude in the middle of a sound)
@@ -429,7 +433,6 @@ generateHarmonics = function(pitch,
                              vibratoDep = 0,
                              shimmerDep = 0,
                              shimmerLen = 1,
-                             creakyBreathy = 0,
                              rolloff = -9,
                              rolloffOct = 0,
                              rolloffKHz = 0,
@@ -626,21 +629,24 @@ generateHarmonics = function(pitch,
     # plot(pitch_per_gc, type = 'l')
   }
 
-  # calculate random drift of F0 (essentially the same as jitter but slow)
+  # calculate random drift of F0 (unlike jitter, this is a random walk rather
+  # than random variation around a target value, and normally slower than
+  # jitter)
   if (temperature > 0) {
-    # # illustration of the effects of temperature and number of gc's
-    # #   on the amount of smoothing applied to the random drift of f0
-    # library(reshape2)
-    # library(plot3D)
-    # df = expand.grid(temperature = seq(0, 1, length.out = 30), n_gc = seq(1, 1000, length.out = 30))
-    # df$rw_smoothing = .9 - df$temperature / 8 - 1.2 / (1 + exp(-.008 * (df$n_gc - 10))) + .6 # 10 gc is "neutral"
-    # out_pred = as.matrix(dcast(df, temperature~n_gc, value.var = "rw_smoothing"))
-    # rownames(out_pred) = seq(0, 1, length.out = 30)
-    # out_pred = out_pred[, -1]
-    # persp3D (as.numeric(rownames(out_pred)), as.numeric(colnames(out_pred)), out_pred, theta=40, phi=50, zlab='rw_smoothing', xlab='Temperature', ylab='# of glottal cycles', colkey=FALSE, ticktype='detailed', cex.axis=0.75)
-    rw_smoothing = .9 - temperature * pitchDriftFreq -
-      1.2 / (1 + exp(-.008 * (length(pitch_per_gc) - 10))) + .6
-    # rw_range is 1 semitone per second at temp = .05 and pitchDriftDep = .5 (defaults)
+    # calculate the amount of smoothing to apply to the random walk
+    rw_smoothing = 2 / (1 + exp(100 * temperature * pitchDriftFreq))
+    # print(rw_smoothing)
+    # temp = seq(0, 1, .01)
+    # plot(temp, 2 / (1 + exp(100 * temp * .05)))
+
+    # rw_smoothing depends on mean pitch - a trick to specify rw wiggling freq
+    # per s rather than per gc (see getRandomWalk())
+    rw_smoothing = 1 - (1 - rw_smoothing) / (mean(pitch_per_gc) / 100)
+    # rw_smoothing is n_anchors / nGC (proportion), with default at 100 Hz
+    # print(paste('rw_smoothing =', rw_smoothing, 'n =', nGC * (1 - rw_smoothing)))
+
+    # rw_range is 1 semitone per second when temp = .05 and
+    # pitchDriftDep = .5 (defaults)
     rw_range = temperature * 40 *  # 40 * .05 * .5 = 1
       length(pitch) / pitchSamplingRate / 12
     drift = getRandomWalk(
@@ -650,17 +656,15 @@ generateHarmonics = function(pitch,
       method = 'spline'
     )
     drift_centered = drift - mean(drift)
-    drift = 2 ^ drift_centered # plot (drift, type = 'l')
+    drift = 2 ^ drift_centered
+    # plot (drift, type = 'l')
     drift_pitch = 2 ^ (drift_centered * pitchDriftDep)
-    # we get a separate random walk for this slow drift of intonation.
-    #   Its smoothness vs wiggleness depends on temperature and duration
-    #   (in glottal cycles). For ex., temperature * 2 means that pitch will
-    #   vary within one octave if temperature == 1
-    pitch_per_gc = pitch_per_gc * drift_pitch  # plot(pitch_per_gc, type = 'l')
+    pitch_per_gc = pitch_per_gc * drift_pitch
+    # plot(pitch_per_gc, type = 'l')
   }
 
   # as a result of adding pitch effects, F0 might have dropped to indecent
-  #   values, so we double-check and flatten
+  #   values, so we double-check and flatten if necessary
   pitch_per_gc[pitch_per_gc > pitchCeiling] = pitchCeiling
   pitch_per_gc[pitch_per_gc < pitchFloor] = pitchFloor
   # make sure we don't have harmonics above Nyquist with the changed pitch
@@ -684,8 +688,8 @@ generateHarmonics = function(pitch,
                               pitch_per_gc = pitch_per_gc,
                               rw = rw,
                               effect_on = shimmer_on)
-    rolloff_source = t(t(rolloff_source) * shimmer_per_gc)  # multiplies the first
-    # column of rolloff_source by shimmer_per_gc[1],
+    rolloff_source = t(t(rolloff_source) * shimmer_per_gc)
+    # multiplies the first column of rolloff_source by shimmer_per_gc[1],
     # the second column by shimmer_per_gc[2], etc
   }
 

@@ -476,6 +476,7 @@ divideIntoSyllables = function (nSyl,
 #'   for breathing, FALSE for other anchors)
 #' @param sd_values (optional) the exact value of sd used by rnorm_truncated in
 #'   columns 2 and beyond
+#' @param roundToInteger if TRUE, rounds the values (not time points)
 #' @inheritParams soundgen
 #' @return Modified original dataframe.
 #' @keywords internal
@@ -518,6 +519,7 @@ wiggleAnchors = function(df,
                          high = c(1, Inf),
                          wiggleAllRows = FALSE,
                          sd_values = NULL,
+                         roundToInteger = FALSE,
                          invalidArgAction = c('adjust', 'abort', 'ignore')[1]) {
   if (temperature == 0 | temp_coef == 0) return(df)
   if (any(is.na(df))) return(NA)
@@ -545,6 +547,7 @@ wiggleAnchors = function(df,
                     as.numeric(df[1, idx] * temperature * temp_coef)),
         low = low[idx],
         high = high[idx],
+        roundToInteger = roundToInteger,
         invalidArgAction = invalidArgAction))
       if (class(newAnchor)[1] == 'try-error') {
         stop(paste('Failed to add an anchor to df:', paste(df, collapse = ', ')))
@@ -606,7 +609,7 @@ wiggleAnchors = function(df,
                   as.numeric(ranges[i] * temperature * temp_coef)),
       low = low[i],
       high = high[i],
-      roundToInteger = FALSE,
+      roundToInteger = roundToInteger,
       invalidArgAction = invalidArgAction
     ))
     if (class(w)[1] == 'try-error') {

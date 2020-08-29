@@ -17,7 +17,6 @@ generateHarmonics(
   vibratoDep = 0,
   shimmerDep = 0,
   shimmerLen = 1,
-  creakyBreathy = 0,
   rolloff = -9,
   rolloffOct = 0,
   rolloffKHz = 0,
@@ -92,9 +91,6 @@ cycles (0 to 100\% of original amplitude of each cycle) (anchor format)}
 \item{shimmerLen}{duration of stable periods between amplitude jumps, ms. Use
 a low value for harsh noise, a high value for shaky voice (anchor format)}
 
-\item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
-from creaky (-1) to breathy (+1); 0 = no change}
-
 \item{rolloff}{basic rolloff from lower to upper harmonics, db/octave
 (exponential decay). All rolloff parameters are in anchor format. See
 \code{\link{getRolloff}} for more details}
@@ -141,6 +137,13 @@ the more f0 "wiggles" at a given temperature}
 \item{pitchDriftFreq}{scale factor regulating the effect of temperature on
 the frequency of random drift of f0 (like jitter, but slower): the higher,
 the faster f0 "wiggles" at a given temperature}
+
+\item{amplDriftDep}{drift of amplitude mirroring pitch drift}
+
+\item{subDriftDep}{drift of subharmonic frequency and bandwidth mirroring
+pitch drift}
+
+\item{rolloffDriftDep}{drift of rolloff mirroring pitch drift}
 
 \item{randomWalk_trendStrength}{try 0 to 1 - the higher, the more likely rw
 is to get high in the middle and low at the beginning and end (i.e. max

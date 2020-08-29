@@ -20,8 +20,9 @@ sd=rw_range}
 \item{rw_range}{the upper bound of the generated random walk (the lower bound
 is set to 0)}
 
-\item{rw_smoothing}{specifies the amount of smoothing, from 0 (no smoothing)
-to 1 (maximum smoothing to a straight line)}
+\item{rw_smoothing}{specifies the amount of smoothing, basically the number
+of points used to construct the rw as a proportion of len, from 0 (no
+smoothing) to 1 (maximum smoothing to a straight line)}
 
 \item{method}{specifies the method of smoothing: either linear interpolation
 ('linear', see stats::approx) or cubic splines ('spline', see
@@ -44,8 +45,11 @@ cumulative sum of the generated values. Smoothness is controlled by initially
 generating a shorter random walk and upsampling.
 }
 \examples{
+plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = 0))
 plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .2))
 plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .5))
+plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .7))
+plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = 1))
 plot(getRandomWalk(len = 1000, rw_range = 15,
   rw_smoothing = .2, trend = c(.5, -.5)))
 plot(getRandomWalk(len = 1000, rw_range = 15,

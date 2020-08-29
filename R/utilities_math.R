@@ -298,8 +298,9 @@ Mode = function(x) {
 #'   sd=rw_range
 #' @param rw_range the upper bound of the generated random walk (the lower bound
 #'   is set to 0)
-#' @param rw_smoothing specifies the amount of smoothing, from 0 (no smoothing)
-#'   to 1 (maximum smoothing to a straight line)
+#' @param rw_smoothing specifies the amount of smoothing, basically the number
+#'   of points used to construct the rw as a proportion of len, from 0 (no
+#'   smoothing) to 1 (maximum smoothing to a straight line)
 #' @param method specifies the method of smoothing: either linear interpolation
 #'   ('linear', see stats::approx) or cubic splines ('spline', see
 #'   stats::spline)
@@ -312,8 +313,11 @@ Mode = function(x) {
 #' @return Returns a numeric vector of length len and range from 0 to rw_range.
 #' @export
 #' @examples
+#' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = 0))
 #' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .2))
 #' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .5))
+#' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .7))
+#' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = 1))
 #' plot(getRandomWalk(len = 1000, rw_range = 15,
 #'   rw_smoothing = .2, trend = c(.5, -.5)))
 #' plot(getRandomWalk(len = 1000, rw_range = 15,
@@ -328,7 +332,9 @@ getRandomWalk = function(len,
 
   # generate a random walk (rw) of length depending on rw_smoothing,
   # then linear extrapolation to len
-  n = floor(max(2, 2 ^ (1 / rw_smoothing)))
+  # n = floor(max(2, 2 ^ (1 / rw_smoothing)))
+  # n = 2 + (len - 1) / (1 + exp(10 * (rw_smoothing - .1)))
+  n = max(2, len * (1 - rw_smoothing))
   if (length(trend) > 1) {
     n = round(n / 2, 0) * 2 # force to be even
     trend_short = rep(trend, each = n / length(trend))

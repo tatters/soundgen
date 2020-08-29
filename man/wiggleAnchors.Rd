@@ -12,6 +12,7 @@ wiggleAnchors(
   high = c(1, Inf),
   wiggleAllRows = FALSE,
   sd_values = NULL,
+  roundToInteger = FALSE,
   invalidArgAction = c("adjust", "abort", "ignore")[1]
 )
 }
@@ -36,6 +37,8 @@ for breathing, FALSE for other anchors)}
 
 \item{sd_values}{(optional) the exact value of sd used by rnorm_truncated in
 columns 2 and beyond}
+
+\item{roundToInteger}{if TRUE, rounds the values (not time points)}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the
 range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'

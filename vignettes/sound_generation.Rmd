@@ -312,6 +312,20 @@ s = soundgen(repeatBout = 3, nSyl = 2, temperature = .3, play = playback,
              tempEffects = list(sylLenDep = 0, formDrift = 3))
 ```
 
+Random pitch drift is added whenever temperature > 0. Use `tempEffects` to regulate its amount and frequency:
+```{r fig.width = 5, fig.height = 5}
+# slight and slow (slightly unsteady voice)
+soundgen(sylLen = 1500, pitch = 300,
+         tempEffects = list(pitchDriftDep = 1, pitchDriftFreq = .5),
+         play = playback, plot = TRUE, ylim = c(0, 2))
+# strong and rapid (trembling voice, similar to jitter)
+soundgen(sylLen = 1500, pitch = 300,
+         tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
+         play = playback, plot = TRUE, ylim = c(0, 2))
+```
+
+Note that rapid pitch drift may sound like jitter (see the section on nonlinear effects), but jitter is random variation around a target value, whereas pitch drift is implemented as a random walk, which can wander into values quite far removed from the target. Both pitch drift and jitter can also be combined.
+
 ### Other hypers
 To simplify usage, there are a few other hyper-parameters. They are redundant in the sense that they are not strictly necessary to produce the full range of sounds, but they provide convenient shortcuts by making it possible to control several low-level parameters at once in a coordinated manner. Hyper-parameters are marked "hyper" in the Shiny app. 
 
@@ -682,18 +696,19 @@ soundgen(subFreq = 400, subDep = c(5, 20),
 
 Sidebands are best demonstrated with high-pitched sounds and low subharmonic frequencies. For example, chimpanzees emit piercing screams with narrow subharmonic bands. If we set `subFreq` to 75 Hz and `subWidth` to 130 Hz, subharmonics literally form a band around each harmonic of the main stack, creating a very distinct, immediately recognizable sound quality:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(sylLen = 800, 
-             pitch = data.frame(time=c(0, .3, .9, 1), 
-                                value = c(1200, 1547, 1487, 1154)),
-             rolloff = -3, rolloffKHz = 0,
-             # gradually increasing width of sidebands at 0-600 ms
-             subFreq = 75, subDep = 25,
-             subWidth = data.frame(time = c(0, 600, 650, 800), 
-                                   value = c(0, 130, 0, 0)),  
-             vocalTract = 12, mouth = c(.1, .8, .1),
-             temperature = .001,
-             pitchSamplingRate = 22050, samplingRate = 22050,
-             play = playback, plot = TRUE, ylim = c(0, 5))
+s = soundgen(
+  sylLen = 800, 
+  pitch = list(time=c(0, .3, .9, 1), 
+               value = c(1200, 1547, 1487, 1154)),
+  rolloff = -3, rolloffKHz = 0,
+  # gradually increasing width of sidebands at 0-600 ms
+  subFreq = 75, subDep = 25,
+  subWidth = data.frame(time = c(0, 600, 650, 800), 
+                        value = c(0, 130, 0, 0)),  
+  vocalTract = 12, mouth = c(.1, .8, .1),
+  temperature = .001,
+  pitchSamplingRate = 22050, samplingRate = 22050,
+  play = playback, plot = TRUE, ylim = c(0, 5))
 ```
 
 Another way to create sidebands is to add amplitude modulation (AM). Perfectly sinusoidal AM creates a simple pair of extra harmonics, while non-sinusoidal AM creates sidebands:
