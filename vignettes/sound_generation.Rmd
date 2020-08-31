@@ -290,18 +290,19 @@ s = soundgen(repeatBout = 3, temperature = 0.3, play = playback)
 
 If you don't want stochastic behavior, set temperature to zero. But note that some effects, notably jitter and subharmonics, will then be added in an all-or-nothing manner: either to the entire sound or not at all. Also note that additional formants will not be added above the user-specified ones if temperature is exactly 0. In practice it may be better to set temperature to a very small positive value like 0.01. You can also change the extent to which temperature affects different parameters (e.g., if you want more variation in intonation and less variation in syllable structure). To do so, use `tempEffects`, which is a list of scaling coefficients that determine how much different parameters vary at a given temperature. `tempEffects` includes the following scaling coefficients:
 
-* `sylLenDep`: random fluctuations of the duration of syllables and pauses between syllables
-* `formDrift`: the amount of random drift of formants
+* `amplDep`: random fluctuations of user-specified amplitude anchors across syllables (if nSyl > 1)
+* `amplDriftDep`: drift of amplitude mirroring pitch drift
 * `formDisp`: irregularity of the dispersion of stochastic formants that are added above user-specified formants (if any) at distances consistent with the specified length of the vocal tract `vocalTract`
+* `formDrift`: the amount of random drift of formants
+* `glottisDep`: proportion of glottal cycle with closed glottis
+* `noiseDep`: random fluctuations of user-specified noise anchors across syllables (if nSyl > 1)
+* `pitchDep`: random fluctuations of user-specified pitch anchors across syllables (if nSyl > 1)
 * `pitchDriftDep`: amount of slow random drift of f0 (the higher, the more f0 changes)
 * `pitchDriftFreq`: frequency of slow random drift of f0 (the higher, the faster f0 changes)
-* `amplDriftDep`: drift of amplitude mirroring pitch drift
-* `subDriftDep`: drift of subharmonic frequency and bandwidth mirroring pitch drift
 * `rolloffDriftDep`: drift of rolloff mirroring pitch drift
-* `pitchDep`: random fluctuations of user-specified pitch anchors across syllables (if nSyl > 1)
-* `noiseDep`: random fluctuations of user-specified noise anchors across syllables (if nSyl > 1)
-* `amplDep`: random fluctuations of user-specified amplitude anchors across syllables (if nSyl > 1)
 * `specDep`: random fluctuations of rolloff, nonlinear effects, attack
+* `subDriftDep`: drift of subharmonic frequency and bandwidth mirroring pitch drift
+* `sylLenDep`: random fluctuations of the duration of syllables and pauses between syllables
 
 The default value of each scaling parameter is 1. To enhance a particular component of stochastic behavior, set the corresponding coefficient to a value >1; to remove it completely, set its scaling coefficient to zero. 
 
@@ -312,19 +313,6 @@ s = soundgen(repeatBout = 3, nSyl = 2, temperature = .3, play = playback,
              tempEffects = list(sylLenDep = 0, formDrift = 3))
 ```
 
-Random pitch drift is added whenever temperature > 0. Use `tempEffects` to regulate its amount and frequency:
-```{r fig.width = 5, fig.height = 5}
-# slight and slow (slightly unsteady voice)
-soundgen(sylLen = 1500, pitch = 300,
-         tempEffects = list(pitchDriftDep = 1, pitchDriftFreq = .5),
-         play = playback, plot = TRUE, ylim = c(0, 2))
-# strong and rapid (trembling voice, similar to jitter)
-soundgen(sylLen = 1500, pitch = 300,
-         tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
-         play = playback, plot = TRUE, ylim = c(0, 2))
-```
-
-Note that rapid pitch drift may sound like jitter (see the section on nonlinear effects), but jitter is random variation around a target value, whereas pitch drift is implemented as a random walk, which can wander into values quite far removed from the target. Both pitch drift and jitter can also be combined.
 
 ### Other hypers
 To simplify usage, there are a few other hyper-parameters. They are redundant in the sense that they are not strictly necessary to produce the full range of sounds, but they provide convenient shortcuts by making it possible to control several low-level parameters at once in a coordinated manner. Hyper-parameters are marked "hyper" in the Shiny app. 
@@ -749,6 +737,24 @@ s = soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100,
              pitch = c(1100, 1600, 1100), mouth =  c(0, 0.5, 0),
              jitterDep = 1, subDep = 60, play = playback) 
 ```
+
+Note that jitter is random variation around a target value, but soundgen also has relatively slow random pitch drift, which is implemented as a random walk and can thus wander into values quite far removed from the target. Random pitch drift is added whenever temperature > 0. Use `tempEffects` to regulate its amount and frequency:
+```{r fig.width = 5, fig.height = 5}
+# slight and slow (slightly unsteady voice)
+soundgen(sylLen = 1500, pitch = 300,
+         tempEffects = list(pitchDriftDep = 1, pitchDriftFreq = .5),
+         play = playback, plot = TRUE, ylim = c(0, 2))
+# strong and rapid (trembling voice, similar to jitter)
+soundgen(sylLen = 1500, pitch = 300,
+         tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
+         play = playback, plot = TRUE, ylim = c(0, 2))
+# both drift and jitter (trembling voice ending with some "chaos")
+soundgen(sylLen = 1500, pitch = 300,
+         tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
+         jitterDep = c(0, 0, 0, 2),
+         play = playback, plot = TRUE, ylim = c(0, 2))
+```
+
 
 ### Chaos
 There is no way to synthesize true deterministic chaos with residual harmonic structure in soundgen. However, there are several roundabout ways to achieve a comparable effect. As already mentioned, strong jitter and shimmer create harsh sounds that are perceptually similar to deterministic chaos, especially for higher f0 values:

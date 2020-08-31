@@ -35,7 +35,7 @@ permittedValues = matrix(c(
   'subDep', 0, 0, 100, 1,
   'subWidth', 10000, 0, 10000, 10,
   'shortestEpoch', 300, 50, 500, 25,
-  'jitterDep', 0, 0, 24, 0.1,
+  'jitterDep', 0, 0, 12, 0.1,
   'jitterLen', 1, 1, 100, 1,
   'vibratoFreq', 5, 1, 20, .5,
   'vibratoDep', 0, 0, 12, 0.125,
@@ -94,6 +94,7 @@ permittedValues = apply(permittedValues[,2:5], 2, as.numeric)
 colnames(permittedValues) = c('default', 'low', 'high', 'step')
 rownames(permittedValues) = temp
 permittedValues = as.data.frame(permittedValues)
+rm(temp)
 # usethis::use_data(permittedValues, overwrite = TRUE)
 
 # a list of default values for Shiny app - mostly the same as for
@@ -257,7 +258,9 @@ defaults_analyze = apply(defaults_analyze[,2:5], 2, as.numeric)
 colnames(defaults_analyze) = c('default', 'low', 'high', 'step')
 rownames(defaults_analyze) = temp
 defaults_analyze = as.data.frame(defaults_analyze)
+rm(temp)
 # usethis::use_data(defaults_analyze, overwrite = TRUE)
+
 
 #' Defaults for plotting with analyze()
 #'
@@ -338,6 +341,7 @@ def_form = apply(def_form[,2:5], 2, as.numeric)
 colnames(def_form) = c('default', 'low', 'high', 'step')
 rownames(def_form) = temp
 def_form = as.data.frame(def_form)
+rm(temp)
 # usethis::use_data(def_form, overwrite = TRUE)
 
 

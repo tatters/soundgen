@@ -639,10 +639,10 @@ generateHarmonics = function(pitch,
     # temp = seq(0, 1, .01)
     # plot(temp, 2 / (1 + exp(100 * temp * .05)))
 
-    # rw_smoothing depends on mean pitch - a trick to specify rw wiggling freq
-    # per s rather than per gc (see getRandomWalk())
+    # rw_smoothing is ~n_points in getRandomWalk() as proportion of nGC, but
+    # gc's are shorter at higher pitch; to ensure that smoothing is consistent
+    # per s, we do * mean(pitch_per_gc) / 100 (ie default at 100 Hz)
     rw_smoothing = 1 - (1 - rw_smoothing) / (mean(pitch_per_gc) / 100)
-    # rw_smoothing is n_anchors / nGC (proportion), with default at 100 Hz
     # print(paste('rw_smoothing =', rw_smoothing, 'n =', nGC * (1 - rw_smoothing)))
 
     # rw_range is 1 semitone per second when temp = .05 and
