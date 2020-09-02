@@ -246,7 +246,7 @@ defaults_analyze = matrix(c(
 
   # pitch_app() settings, which are not needed for analyze()
   'specContrast', .2, -1, 1, .05,
-  'specBrightness', 0, -1, 1, .05,
+  'specBrightness', -.1, -1, 1, .05,
   'spec_ylim', 5, 0, 22, 0.1,
   'spec_maxPoints', 5.5, 3, 7, .25,
   'spec_cex', 1, .1, 10, .1,
@@ -322,7 +322,7 @@ def_form = matrix(c(
 
   'spec_ylim', 5, 0, 96, 0.1,
   'specContrast', .2, -1, 1, .05,
-  'specBrightness', 0, -1, 1, .05,
+  'specBrightness', -.1, -1, 1, .05,
   'windowLength', 40, 1, 500, 1,
   'overlap', 50, 0, 99, 1,
   'dynamicRange', 80, 10, 200, 10,
