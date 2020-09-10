@@ -7,6 +7,7 @@
 getFormantDispersion(
   formants,
   method = c("meanDispersion", "regression")[2],
+  interceptZero = TRUE,
   speedSound = 35400,
   plot = FALSE,
   checkFormat = TRUE,
@@ -21,6 +22,9 @@ default presets for speaker "M1"; a vector of formant frequencies like
 \code{list(f1 = c(500, 550), f2 = 1200))}}
 
 \item{method}{the method of estimating vocal tract length (see details)}
+
+\item{interceptZero}{if TRUE, forces the regression curve to pass through the
+origin, which corresponds to a closed-open tube (method = "regression" only)}
 
 \item{speedSound}{speed of sound in warm air, by default 35400 cm/s. Stevens
 (2000) "Acoustic phonetics", p. 138}

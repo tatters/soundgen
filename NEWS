@@ -4,6 +4,7 @@ MINOR
   * soundgen(), getSpectralEnvelope(): formantDepStoch is now treated as a multiplication factor instead of dB (0 = no formant, 1 = default amplitude). Check your old code!
   * soundgen(): updated list of tempEffects
   * fade(), crossFade(): new defaults of steepness values, added gaussian shape
+  * estimateVTL(), schwa(): a new argument "interceptZero" for controlling whether the regression line is forced to pass through the origin
 
 BUGS FIXED:
   * soundgen(): correct timing of glottis anchors

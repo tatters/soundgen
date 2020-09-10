@@ -25,6 +25,8 @@
 #'   \code{c(550, 1600, 3200)}; or a list with multiple values per formant like
 #'   \code{list(f1 = c(500, 550), f2 = 1200))}
 #' @param method the method of estimating vocal tract length (see details)
+#' @param interceptZero if TRUE, forces the regression curve to pass through the
+#'   origin, which corresponds to a closed-open tube (method = "regression" only)
 #' @param speedSound speed of sound in warm air, by default 35400 cm/s. Stevens
 #'   (2000) "Acoustic phonetics", p. 138
 #' @param checkFormat if FALSE, only a list of properly formatted formant
@@ -65,6 +67,10 @@
 #' estimateVTL(c(600, 1850, 3100, NA, 5000), plot = TRUE)
 #' estimateVTL(list(f1 = 500, f2 = c(1650, NA, 1400), f3 = 2700), plot = TRUE)
 #'
+#' # Normally it makes sense to assume that the vocal tract is a closed-open
+#' # tube, forcing the intercept to be zero. To relax this assumption:
+#' estimateVTL(c(600, 1850, 3100, NA, 5000), interceptZero = FALSE, plot = TRUE)
+#'
 #' # Note that VTL estimates based on the commonly reported 'meanDispersion'
 #' # depend only on the first and last formant
 #' estimateVTL(c(500, 1400, 2800, 4100), method = 'meanDispersion')
@@ -92,6 +98,7 @@
 estimateVTL = function(
   formants,
   method = c('regression', 'meanDispersion', 'meanFormant')[1],
+  interceptZero = TRUE,
   speedSound = 35400,
   checkFormat = TRUE,
   output = c('simple', 'detailed')[1],
@@ -115,6 +122,7 @@ estimateVTL = function(
     fd = getFormantDispersion(formants,
                               speedSound = speedSound,
                               method = method,
+                              interceptZero = interceptZero,
                               plot = plot,
                               checkFormat = FALSE,
                               output = output)
@@ -185,6 +193,7 @@ estimateVTL = function(
 #'   frequencies, \% deviation from schwa (see examples)
 #' @param nForm the number of formants to estimate (integer)
 #' @inheritParams getSpectralEnvelope
+#' @inheritParams estimateVTL
 #' @export
 #' @examples
 #' ## CASE 1: known VTL
@@ -242,6 +251,7 @@ schwa = function(formants = NULL,
                  vocalTract = NULL,
                  formants_relative = NULL,
                  nForm = 8,
+                 interceptZero = TRUE,
                  speedSound = 35400) {
   # check input
   if (is.null(formants) & is.null(vocalTract)) {
@@ -274,16 +284,19 @@ schwa = function(formants = NULL,
       # we know formants
       if (is.null(vocalTract)) {
         # we don't know VTL
-        formantDispersion = getFormantDispersion(formants,
-                                                 speedSound = speedSound,
-                                                 method = 'regression')
+        formantDispersion = getFormantDispersion(
+          formants,
+          speedSound = speedSound,
+          method = 'regression',
+          interceptZero = interceptZero)
         vocalTract_apparent = speedSound / (2 * formantDispersion)
       } else {
         # we know VTL
         formantDispersion_apparent = getFormantDispersion(
           formants,
           speedSound = speedSound,
-          method = 'regression'
+          method = 'regression',
+          interceptZero = interceptZero
         )
         formantDispersion = speedSound / (2 * vocalTract)
         vocalTract_apparent = speedSound / (2 * formantDispersion_apparent)
@@ -347,6 +360,7 @@ schwa = function(formants = NULL,
 getFormantDispersion = function(
   formants,
   method = c('meanDispersion', 'regression')[2],
+  interceptZero = TRUE,
   speedSound = 35400,
   plot = FALSE,
   checkFormat = TRUE,
@@ -385,9 +399,14 @@ getFormantDispersion = function(
         infl = NA)
       if (is.null(fdf)) fdf = temp else fdf = rbind(fdf, temp)
     }
-    mod = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf))
-    # NB: no intercept, i.e. forced to pass through 0
-    formantDispersion = suppressWarnings(summary(mod)$coef[1])
+    if (interceptZero) {
+      # no intercept, i.e. forced to pass through 0 (closed-open tube)
+      mod = suppressWarnings(lm(freq ~ -1 + formantSpacing, fdf))
+      formantDispersion = suppressWarnings(summary(mod)$coef[1])
+    } else {
+      mod = suppressWarnings(lm(freq ~ 1 + formantSpacing, fdf))
+      formantDispersion = suppressWarnings(summary(mod)$coef[2])
+    }
 
     if (output == 'detailed') {
       vtl_full = speedSound / 2 / formantDispersion

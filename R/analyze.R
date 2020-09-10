@@ -509,6 +509,7 @@ analyze = function(
     }
     assign(noquote(names(parsToValidate)[i]), parGroup_user)
   }
+  if (is.null(roughness$plot)) roughness$plot = FALSE
 
   # Check defaults that depend on other pars or require customized warnings
   if (is.character(pitchMethods) && pitchMethods[1] != '') {

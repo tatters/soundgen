@@ -9,6 +9,7 @@ schwa(
   vocalTract = NULL,
   formants_relative = NULL,
   nForm = 8,
+  interceptZero = TRUE,
   speedSound = 35400
 )
 }
@@ -22,6 +23,9 @@ Hz}
 frequencies, \% deviation from schwa (see examples)}
 
 \item{nForm}{the number of formants to estimate (integer)}
+
+\item{interceptZero}{if TRUE, forces the regression curve to pass through the
+origin, which corresponds to a closed-open tube (method = "regression" only)}
 
 \item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
 phonetics", p. 138}
