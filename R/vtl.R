@@ -118,6 +118,7 @@ estimateVTL = function(
     formant_freqs = unlist(sapply(formants, function(f) mean(f$freq)))
     vtls = (2 * (1:length(formant_freqs)) - 1) * speedSound / 4 / formant_freqs
     vocalTract = mean(vtls, na.rm = TRUE)
+    formantDispersion = NA
   } else if (method %in% c('meanDispersion', 'regression')) {
     fd = getFormantDispersion(formants,
                               speedSound = speedSound,
@@ -134,7 +135,7 @@ estimateVTL = function(
     vocalTract = speedSound / 2 / formantDispersion
   }
   if (output == 'detailed') {
-    return(c(list(vocalTract = vocalTract), fd))
+    return(c(list(vocalTract = vocalTract, formantDispersion = formantDispersion)))
   } else {
     return(vocalTract)
   }

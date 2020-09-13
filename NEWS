@@ -4,13 +4,14 @@ MINOR
   * soundgen(), getSpectralEnvelope(): formantDepStoch is now treated as a multiplication factor instead of dB (0 = no formant, 1 = default amplitude). Check your old code!
   * soundgen(): updated list of tempEffects
   * fade(), crossFade(): new defaults of steepness values, added gaussian shape
-  * estimateVTL(), schwa(): a new argument "interceptZero" for controlling whether the regression line is forced to pass through the origin
+  * estimateVTL(), schwa(), formant_app(): a new argument "interceptZero" for controlling whether the regression line is forced to pass through the origin
 
 BUGS FIXED:
   * soundgen(): correct timing of glottis anchors
   * soundgen(): invalidArgAction = 'ignore' overrides inbuilt limits of AM parameters
   * soundgen_app(): correct parsing of long formant lists
   * pitch_app(): spectrogram plot responds to change in input settings
+  * formant_app(): doesn't crash when changing VTL settings
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.0 [11-August-2020]

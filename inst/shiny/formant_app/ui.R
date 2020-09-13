@@ -150,7 +150,12 @@ ui = fluidPage(
                   'Speed of sound, cm/s',
                   value = '35400',
                   min = 1, max = 100000, step = 1
-                )
+                ),
+
+                checkboxInput(
+                  'interceptZero',
+                  'Set intercept to zero',
+                  value = TRUE),
               )
             ),
 

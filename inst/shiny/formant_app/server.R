@@ -105,6 +105,7 @@ server = function(input, output, session) {
       updateSelectInput(session, 'vtl_method', selected = 'regression')
       updateSliderInput(session, 'speedSound', value = '35400')
       updateTextInput(session, 'coeffs', value = '')
+      updateCheckboxInput(session, 'interceptZero', value = TRUE)
     }
   }
   observeEvent(input$reset_to_def, resetSliders())
@@ -1246,6 +1247,7 @@ server = function(input, output, session) {
         formants = fmts_ann,
         method = input$vtl_method,
         speedSound = input$speedSound,
+        interceptZero = input$interceptZero,
         output = 'detailed'
       )
       # method = c('regression', 'meanDispersion', 'meanFormant')[1],
@@ -1262,6 +1264,7 @@ server = function(input, output, session) {
       # hr()
     }
   }
+  observeEvent(c(input$vtl_method, input$speedSound, input$interceptZero), updateVTL())
 
   observeEvent(input$tableRow, {
     if (!is.null(myPars$ann) && input$tableRow > 0) {
@@ -1596,6 +1599,7 @@ server = function(input, output, session) {
   # Vocal tract
   shinyBS::addTooltip(session, id='vtl_method', title = 'Method of calculating vocal tract length (VTL). See ?estimateVTL', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='speedSound', title = 'VTL estimate depends on the assumed speed of sound inside the vocal tract', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS::addTooltip(session, id='interceptZero', title = 'Set the regression intercept to zero (i.e., assume a closed-open vocal tube model)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
 
   ## Plotting
   # spectrogram
