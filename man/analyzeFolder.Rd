@@ -19,6 +19,7 @@ analyzeFolder(
   wn = "gaussian",
   zp = 0,
   cutFreq = NULL,
+  voicedSeparate = TRUE,
   formants = list(verify = FALSE),
   nFormants = 3,
   pitchMethods = c("dom", "autocor"),
@@ -101,11 +102,16 @@ blackman, flattop}
 \item{zp}{window length after zero padding, points}
 
 \item{cutFreq}{if specified, spectral descriptives (peakFreq, specCentroid,
-specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
-when analyzing recordings with varying sampling rates: set to half the
-lowest sampling rate to make the spectra more comparable. Note that
-"entropyThres" applies only to this frequency range, which also affects
-which frames will not be analyzed with pitchAutocor.}
+specSlope, and quartiles) are calculated only between \code{cutFreq[1]} and
+\code{cutFreq[2]}. If a single number is given, analyzes frequencies from 0
+to \code{cutFreq}. For ex., when analyzing recordings with varying sampling
+rates, set to half the lowest sampling rate to make the spectra more
+comparable. Note that "entropyThres" applies only to this frequency range,
+which also affects which frames will not be analyzed with pitchAutocor.}
+
+\item{voicedSeparate}{if TRUE, descriptives are calculated separately for the
+entire sound and for the voiced frames, creating extra variables in the
+output}
 
 \item{formants}{a list of arguments passed to
 \code{\link[phonTools]{findformants}} - an external function called to

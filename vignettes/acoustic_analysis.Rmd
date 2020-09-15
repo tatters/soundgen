@@ -101,7 +101,6 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `duration`: total duration (s)
 * `duration_noSilence`: duration from the beginning of the first non-silent STFT frame to the end of the last non-silent STFT frame, s (NB: depends strongly on `windowLength` and `silence` settings)
 * `ampl`: root mean square of amplitude per frame, calculated as `sqrt(mean(frame ^ 2))`
-* `amplVoiced`: the same as `ampl` for voiced frames and `NA` for unvoiced frames
 * `dom`: lowest dominant frequency band (Hz) (see "Pitch tracking methods / Dominant frequency")
 * `entropy`: Weiner entropy of the spectrum of the current frame. Close to 0: pure tone or tonal sound with nearly all energy in harmonics; close to 1: white noise
 * `f1_freq`, `f1_width`, ...: the frequency and bandwidth of the first `nFormants` formants per STFT frame, as calculated by `phonTools::findformants` with default settings
@@ -111,11 +110,13 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `loudness`: subjective loudness in sone, assuming a certain sound pressure level (takes into account the energy in different frequency bands as well as the sensitivity of human ears to different frequencies); see `getLoudness()` and section on Loudness below for details
 * `peakFreq`: the frequency with maximum spectral energy below `cutFreq` (Hz)
 * `roughness`: the amount of spectrotemporal modulation in the "roughness" zone of frequencies (estimated by `modulatinSpectrum`, the arguments to which are passed in `roughness = list()`)
-* `roughnessVoiced`: same, but only for voiced frames, otherwise `NA`
 * `quartile25`, `quartile50`, `quartile75`: the 25th, 50th, and 75th quantiles of the spectrum below `cutFreq` (Hz) for VOICED frames
 * `specCentroid`: the center of gravity of the frame’s spectrum below `cutFreq`, first spectral moment (Hz)
 * `specSlope`: the slope of linear regression fit to the spectrum below `cutFreq`
 * `voiced`: is the current STFT frame voiced? TRUE / FALSE
+
+*TIP: if `voicedSeparate = TRUE`, these descriptors are calculated separately for the entire sound and only for the voiced frames, resulting in extra output variables like "amplVoiced".*
+
 
 ## Custom spectral descriptives
 The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame()` and to `soundgen::analyze()`. If you want deltas, they can be extracted directly from the output of `analyze(..., summaryFun = NULL)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze()`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
@@ -189,7 +190,7 @@ seewave::env(sweep, f = samplingRate, envt = 'abs', msmooth=c(50, 0))
 RMS amplitude per STFT frame, as returned by `analyze()`, column "ampl":
 ```{r fig.height = 4, fig.width = 7}
 a = analyze(sweep, samplingRate = samplingRate, pitchMethods = NULL, plot = FALSE)
-plot(seq(0, dur, length.out = length(a$ampl)), a$ampl, type = 'b', xlab= 'Time, s')
+plot(seq(0, dur, length.out = length(a$ampl)), a$ampl, type = 'b', xlab = 'Time, s')
 ```
 
 An estimate of subjectively experienced loudness in sone, column "loudness":

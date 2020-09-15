@@ -5,6 +5,8 @@ MINOR
   * soundgen(): updated list of tempEffects
   * fade(), crossFade(): new defaults of steepness values, added gaussian shape
   * estimateVTL(), schwa(), formant_app(): a new argument "interceptZero" for controlling whether the regression line is forced to pass through the origin
+  * analyze(): cutFreq can be a vector of length 2 - eg cutFreq = c(100, 8000) - to produce spectral descriptives from a particular range of frequencies
+  * analyze(): a new argument "voicedSeparate" - if TRUE (default), most descriptors are returned separately for the entire sound and only for voiced frames. This removes ambiguities in earlier versions, where some variables were silently set to NA for unvoiced frames.
 
 BUGS FIXED:
   * soundgen(): correct timing of glottis anchors

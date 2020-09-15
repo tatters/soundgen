@@ -47,8 +47,8 @@ generating a shorter random walk and upsampling.
 \examples{
 plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = 0))
 plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .2))
-plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .5))
-plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .7))
+plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .95))
+plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .99))
 plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = 1))
 plot(getRandomWalk(len = 1000, rw_range = 15,
   rw_smoothing = .2, trend = c(.5, -.5)))

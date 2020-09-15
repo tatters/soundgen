@@ -20,6 +20,7 @@ analyze(
   wn = "gaussian",
   zp = 0,
   cutFreq = NULL,
+  voicedSeparate = TRUE,
   formants = list(verify = FALSE),
   nFormants = 3,
   roughness = list(plot = FALSE),
@@ -108,11 +109,16 @@ blackman, flattop}
 \item{zp}{window length after zero padding, points}
 
 \item{cutFreq}{if specified, spectral descriptives (peakFreq, specCentroid,
-specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
-when analyzing recordings with varying sampling rates: set to half the
-lowest sampling rate to make the spectra more comparable. Note that
-"entropyThres" applies only to this frequency range, which also affects
-which frames will not be analyzed with pitchAutocor.}
+specSlope, and quartiles) are calculated only between \code{cutFreq[1]} and
+\code{cutFreq[2]}. If a single number is given, analyzes frequencies from 0
+to \code{cutFreq}. For ex., when analyzing recordings with varying sampling
+rates, set to half the lowest sampling rate to make the spectra more
+comparable. Note that "entropyThres" applies only to this frequency range,
+which also affects which frames will not be analyzed with pitchAutocor.}
+
+\item{voicedSeparate}{if TRUE, descriptives are calculated separately for the
+entire sound and for the voiced frames, creating extra variables in the
+output}
 
 \item{formants}{a list of arguments passed to
 \code{\link[phonTools]{findformants}} - an external function called to
@@ -252,18 +258,19 @@ pitch contour. Set to \code{list(type = 'n')} to suppress}
 If \code{summary = TRUE}, returns a dataframe with one row and three
   columns per acoustic variable (mean / median / SD). If \code{summary =
   FALSE}, returns a dataframe with one row per STFT frame and one column per
-  acoustic variable. The best guess at the pitch contour considering all
-  available information is stored in the variable called "pitch". In
-  addition, the output contains pitch estimates by separate algorithms
-  included in \code{pitchMethods} and a number of other acoustic descriptors:
+  acoustic variable. If \code{voicedSeparate = TRUE}, descriptives are
+  calculated separately for the entire sound and for the voiced frames. The
+  best guess at the pitch contour considering all available information is
+  stored in the variable called "pitch". In addition, the output contains
+  pitch estimates by separate algorithms included in \code{pitchMethods} and
+  a number of other acoustic descriptors:
   \describe{\item{duration}{total duration, s}
   \item{duration_noSilence}{duration from the beginning of the first
   non-silent STFT frame to the end of the last non-silent STFT frame, s (NB:
   depends strongly on \code{windowLength} and \code{silence} settings)}
   \item{time}{time of the middle of each frame (ms)} \item{ampl}{root mean
   square of amplitude per frame, calculated as sqrt(mean(frame ^ 2))}
-  \item{amplVoiced}{the same as ampl for voiced frames and NA for unvoiced
-  frames} \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking
+  \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking
   methods / Dominant frequency" in the vignette)} \item{entropy}{Weiner
   entropy of the spectrum of the current frame. Close to 0: pure tone or
   tonal sound with nearly all energy in harmonics; close to 1: white noise}
@@ -283,10 +290,12 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   F0 estimates} \item{pitchAutocor}{autocorrelation estimate of F0}
   \item{pitchCep}{cepstral estimate of F0} \item{pitchSpec}{BaNa estimate of
   F0} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and 75th
-  quantiles of the spectrum of voiced frames (Hz)} \item{specCentroid}{the
-  center of gravity of the frame’s spectrum, first spectral moment (Hz)}
-  \item{specSlope}{the slope of linear regression fit to the spectrum below
-  cutFreq} \item{voiced}{is the current STFT frame voiced? TRUE / FALSE}
+  quantiles of the spectrum of voiced frames (Hz)} \item{roughness}{the
+  amount of amplitude modulation, see modulationSpectrum}
+  \item{specCentroid}{the center of gravity of the frame’s spectrum, first
+  spectral moment (Hz)} \item{specSlope}{the slope of linear regression fit
+  to the spectrum below cutFreq} \item{voiced}{is the current STFT frame
+  voiced? TRUE / FALSE}
 }
 }
 \description{
@@ -366,7 +375,7 @@ sound1 = soundgen(sylLen = 900, pitch = list(
 a1 = analyze(sound1, samplingRate = 44100, priorSD = 24,
              plot = TRUE, pathfinding = 'slow', ylim = c(0, 5))
 median(a1$pitch, na.rm = TRUE)
-# (can vary, since postprocessing is stochastic)
+# (can vary because postprocessing is stochastic)
 # compare to the true value:
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
   value = c(300, 900, 400, 2300)), len = 1000))
@@ -405,6 +414,10 @@ a = analyze(sound2, samplingRate = 16000,
 
 # Analyze a selection rather than the whole sound
 a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)
+
+# Use only a range of frequencies when calculating spectral descriptives
+# (ignore everything below 100 Hz and above 8000 Hz as irrelevant noise)
+a = analyze(sound1, samplingRate = 16000, cutFreq = c(100, 8000))
 
 # Save the plot
 a = analyze(sound1, 44100, ylim = c(0, 5),

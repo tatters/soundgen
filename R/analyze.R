@@ -67,11 +67,15 @@
 #' @param SPL_measured sound pressure level at which the sound is presented, dB
 #'   (set to 0 to skip analyzing subjective loudness)
 #' @param cutFreq if specified, spectral descriptives (peakFreq, specCentroid,
-#'   specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
-#'   when analyzing recordings with varying sampling rates: set to half the
-#'   lowest sampling rate to make the spectra more comparable. Note that
-#'   "entropyThres" applies only to this frequency range, which also affects
-#'   which frames will not be analyzed with pitchAutocor.
+#'   specSlope, and quartiles) are calculated only between \code{cutFreq[1]} and
+#'   \code{cutFreq[2]}. If a single number is given, analyzes frequencies from 0
+#'   to \code{cutFreq}. For ex., when analyzing recordings with varying sampling
+#'   rates, set to half the lowest sampling rate to make the spectra more
+#'   comparable. Note that "entropyThres" applies only to this frequency range,
+#'   which also affects which frames will not be analyzed with pitchAutocor.
+#' @param voicedSeparate if TRUE, descriptives are calculated separately for the
+#'   entire sound and for the voiced frames, creating extra variables in the
+#'   output
 #' @param formants a list of arguments passed to
 #'   \code{\link[phonTools]{findformants}} - an external function called to
 #'   perform LPC analysis
@@ -167,18 +171,19 @@
 #' @return If \code{summary = TRUE}, returns a dataframe with one row and three
 #'   columns per acoustic variable (mean / median / SD). If \code{summary =
 #'   FALSE}, returns a dataframe with one row per STFT frame and one column per
-#'   acoustic variable. The best guess at the pitch contour considering all
-#'   available information is stored in the variable called "pitch". In
-#'   addition, the output contains pitch estimates by separate algorithms
-#'   included in \code{pitchMethods} and a number of other acoustic descriptors:
+#'   acoustic variable. If \code{voicedSeparate = TRUE}, descriptives are
+#'   calculated separately for the entire sound and for the voiced frames. The
+#'   best guess at the pitch contour considering all available information is
+#'   stored in the variable called "pitch". In addition, the output contains
+#'   pitch estimates by separate algorithms included in \code{pitchMethods} and
+#'   a number of other acoustic descriptors:
 #'   \describe{\item{duration}{total duration, s}
 #'   \item{duration_noSilence}{duration from the beginning of the first
 #'   non-silent STFT frame to the end of the last non-silent STFT frame, s (NB:
 #'   depends strongly on \code{windowLength} and \code{silence} settings)}
 #'   \item{time}{time of the middle of each frame (ms)} \item{ampl}{root mean
 #'   square of amplitude per frame, calculated as sqrt(mean(frame ^ 2))}
-#'   \item{amplVoiced}{the same as ampl for voiced frames and NA for unvoiced
-#'   frames} \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking
+#'   \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking
 #'   methods / Dominant frequency" in the vignette)} \item{entropy}{Weiner
 #'   entropy of the spectrum of the current frame. Close to 0: pure tone or
 #'   tonal sound with nearly all energy in harmonics; close to 1: white noise}
@@ -198,10 +203,12 @@
 #'   F0 estimates} \item{pitchAutocor}{autocorrelation estimate of F0}
 #'   \item{pitchCep}{cepstral estimate of F0} \item{pitchSpec}{BaNa estimate of
 #'   F0} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and 75th
-#'   quantiles of the spectrum of voiced frames (Hz)} \item{specCentroid}{the
-#'   center of gravity of the frame’s spectrum, first spectral moment (Hz)}
-#'   \item{specSlope}{the slope of linear regression fit to the spectrum below
-#'   cutFreq} \item{voiced}{is the current STFT frame voiced? TRUE / FALSE}
+#'   quantiles of the spectrum of voiced frames (Hz)} \item{roughness}{the
+#'   amount of amplitude modulation, see modulationSpectrum}
+#'   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
+#'   spectral moment (Hz)} \item{specSlope}{the slope of linear regression fit
+#'   to the spectrum below cutFreq} \item{voiced}{is the current STFT frame
+#'   voiced? TRUE / FALSE}
 #' }
 #' @export
 #' @examples
@@ -229,7 +236,7 @@
 #' a1 = analyze(sound1, samplingRate = 44100, priorSD = 24,
 #'              plot = TRUE, pathfinding = 'slow', ylim = c(0, 5))
 #' median(a1$pitch, na.rm = TRUE)
-#' # (can vary, since postprocessing is stochastic)
+#' # (can vary because postprocessing is stochastic)
 #' # compare to the true value:
 #' median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
 #'   value = c(300, 900, 400, 2300)), len = 1000))
@@ -268,6 +275,10 @@
 #'
 #' # Analyze a selection rather than the whole sound
 #' a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)
+#'
+#' # Use only a range of frequencies when calculating spectral descriptives
+#' # (ignore everything below 100 Hz and above 8000 Hz as irrelevant noise)
+#' a = analyze(sound1, samplingRate = 16000, cutFreq = c(100, 8000))
 #'
 #' # Save the plot
 #' a = analyze(sound1, 44100, ylim = c(0, 5),
@@ -335,6 +346,7 @@ analyze = function(
   wn = 'gaussian',
   zp = 0,
   cutFreq = NULL,
+  voicedSeparate = TRUE,
   formants = list(verify = FALSE),
   nFormants = 3,
   roughness = list(plot = FALSE),
@@ -610,11 +622,15 @@ analyze = function(
     zp = 0
     warning('"zp" must be non-negative; defaulting to 0')
   }
-  if (!is.null(cutFreq) &&
-      (!is.numeric(cutFreq) | cutFreq <= 0 | cutFreq > (samplingRate / 2))) {
-    cutFreq = NULL
-    warning(paste('"cutFreq" must be between 0 and samplingRate / 2;',
-                  'setting cutFreq = NULL'))
+  if (!is.null(cutFreq) && !any(is.na(cutFreq))) {
+    # a single value refers to upper end of the analyzed frequency range
+    if (length(cutFreq) == 1) cutFreq = c(0, cutFreq)
+    if (is.na(cutFreq[1]) || cutFreq[1] <= 0) cutFreq[1] = 0
+    if (is.na(cutFreq[2]) || cutFreq[2] > (samplingRate / 2)) {
+      cutFreq[2] = samplingRate / 2
+      warning(paste('"cutFreq" should not be above Nyquist (samplingRate / 2);',
+                    'setting cutFreq = NULL'))
+    }
   }
   if (!is.numeric(pitchFloor) | pitchFloor <= 0 |
       pitchFloor > samplingRate / 2) {
@@ -768,7 +784,7 @@ analyze = function(
   # vocal range only (up to to cutFreq Hz)
   rowLow = 1 # which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
   if (!is.null(cutFreq)) {
-    rowHigh = tail(which(freqs <= cutFreq), 1) # 6000 Hz etc
+    rowHigh = tail(which(freqs <= cutFreq[2]), 1) # 6000 Hz etc
   } else {
     rowHigh = nrow(s)
   }
@@ -921,7 +937,7 @@ analyze = function(
   colnames(result) = names(frameInfo[[1]]$summaries)
   if (!is.null(fmts)) result = cbind(result, fmts)
   result$entropy = entropy
-  result$ampl = result$amplVoiced = ampl
+  result$ampl = ampl
   result$time = as.numeric(colnames(frameBank))
   result$duration_noSilence = duration_noSilence
   result$duration = duration
@@ -1066,15 +1082,25 @@ analyze = function(
   ## Roughness calculation
   if (!is.null(roughness$amRes) && roughness$amRes == 0) {
     # don't analyze the modulation spectrum
-    result$roughness = result$roughnessVoiced = NA
+    result$roughness = NA
   } else {
     rough = do.call(modulationSpectrum, c(
       list(x = sound,
            samplingRate = samplingRate),
       roughness))$roughness
-    result$roughness = result$roughnessVoiced =
-      upsamplePitchContour(rough, len = nrow(result), plot = FALSE)
+    result$roughness = upsamplePitchContour(rough, len = nrow(result),
+                                            plot = FALSE)
     result$roughness[!cond_silence] = NA
+  }
+
+  varsToUnv = c('ampl', 'roughness', 'entropy', 'dom', 'HNR', 'loudness',
+                'peakFreq', 'quartile25', 'quartile50', 'quartile75',
+                'specCentroid', 'specSlope')
+  if (voicedSeparate) {
+    # save spectral descriptives separately for voiced and unvoiced frames
+    for (v in varsToUnv) {
+      result[, paste0(v, 'Voiced')] = result[, v]
+    }
   }
 
   result = updateAnalyze(
@@ -1088,8 +1114,7 @@ analyze = function(
     smoothing_ww = smoothing_ww,
     smoothingThres = smoothing_ww,
     # NB: peakFreq & specCentroid are defined for unvoiced frames, but not quartiles
-    varsToUnv = c('amplVoiced', 'roughnessVoiced',
-                  'quartile25', 'quartile50', 'quartile75')
+    varsToUnv = paste0(varsToUnv, 'Voiced')
   )
 
   ## Add pitch contours to the spectrogram
@@ -1244,6 +1269,7 @@ analyzeFolder = function(
   wn = 'gaussian',
   zp = 0,
   cutFreq = NULL,
+  voicedSeparate = TRUE,
   formants = list(verify = FALSE),
   nFormants = 3,
   pitchMethods = c('dom', 'autocor'),

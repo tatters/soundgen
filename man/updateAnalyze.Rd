@@ -14,8 +14,7 @@ updateAnalyze(
   smooth,
   smoothing_ww,
   smoothingThres,
-  varsToUnv = c("amplVoiced", "roughnessVoiced", "quartile25", "quartile50",
-    "quartile75")
+  varsToUnv = NULL
 )
 }
 \arguments{
@@ -25,8 +24,16 @@ updateAnalyze(
 
 \item{spectrogram}{spectrogram with ncol = nrow(result)}
 
+\item{freqs}{frequency labels of spectrogram bins}
+
+\item{bin}{spectrogram bin width}
+
 \item{harmHeight_pars}{same as argument "harmHeight" to analyze() - a list of
 settings passed to soundgen:::harmHeight()}
+
+\item{smooth, smoothing_ww, smoothingThres}{smoothing parameters}
+
+\item{varsToUnv}{set these variables to NA in unvoiced frames}
 }
 \description{
 Internal soundgen function

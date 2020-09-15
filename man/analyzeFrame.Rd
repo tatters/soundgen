@@ -34,11 +34,12 @@ analyzeFrame(
 \item{samplingRate}{sampling rate (Hz)}
 
 \item{cutFreq}{if specified, spectral descriptives (peakFreq, specCentroid,
-specSlope, and quartiles) are calculated under \code{cutFreq}. Recommended
-when analyzing recordings with varying sampling rates: set to half the
-lowest sampling rate to make the spectra more comparable. Note that
-"entropyThres" applies only to this frequency range, which also affects
-which frames will not be analyzed with pitchAutocor.}
+specSlope, and quartiles) are calculated only between \code{cutFreq[1]} and
+\code{cutFreq[2]}. If a single number is given, analyzes frequencies from 0
+to \code{cutFreq}. For ex., when analyzing recordings with varying sampling
+rates, set to half the lowest sampling rate to make the spectra more
+comparable. Note that "entropyThres" applies only to this frequency range,
+which also affects which frames will not be analyzed with pitchAutocor.}
 
 \item{trackPitch}{if TRUE, attempt to find F0 in this frame (FALSE if entropy
 is above some threshold - specified in \code{\link{analyze}})}
