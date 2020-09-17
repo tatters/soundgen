@@ -20,6 +20,7 @@ addPitchCands(
   pitchCeiling = NULL,
   addToExistingPlot = TRUE,
   showLegend = TRUE,
+  y_Hz = FALSE,
   ...
 )
 }
@@ -39,6 +40,8 @@ and pitch contour, respectively}
 plotted; if FALSE, sets up a new plot}
 
 \item{showLegend}{if TRUE, shows a legend}
+
+\item{y_Hz}{if TRUE, plot in Hz, otherwise in kHz}
 
 \item{...}{other graphical parameters used for creating a new plot if
 addToExistingPlot = FALSE}

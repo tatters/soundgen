@@ -840,6 +840,7 @@ findVoicedSegments = function(pitchCands,
 #' @param addToExistingPlot if TRUE, assumes that a spectrogram is already
 #'   plotted; if FALSE, sets up a new plot
 #' @param showLegend if TRUE, shows a legend
+#' @param y_Hz if TRUE, plot in Hz, otherwise in kHz
 #' @param ... other graphical parameters used for creating a new plot if
 #'   addToExistingPlot = FALSE
 #' @keywords internal
@@ -869,6 +870,7 @@ addPitchCands = function(pitchCands,
                          pitchCeiling = NULL,
                          addToExistingPlot = TRUE,
                          showLegend = TRUE,
+                         y_Hz = FALSE,
                          ...) {
   if (is.null(pitchCands) & is.null(pitch)) invisible()
   if (length(pitchCands) < 1 & length(pitch) < 1) invisible()
@@ -893,12 +895,13 @@ addPitchCands = function(pitchCands,
     prior = NULL
   }
   pitchPlot = pitchPlot[names(pitchPlot) != 'showPrior']
+  yScaleCoef = ifelse(y_Hz, 1, 1/1000)
 
   # If addToExistingPlot is FALSE, we first have to set up an empty plot
   if (addToExistingPlot == FALSE) {
     arguments = list(...)  # save ... arguments as a list
-    m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
-    if (is.na(m)) m = 5  # samplingRate / 2 / 1000
+    m = max(pitchCands, na.rm = TRUE) * yScaleCoef  # for ylim on the empty plot
+    if (is.na(m)) m = 5  # samplingRate / 2 * yScaleCoef
     arguments$ylim = c(0, m)
     do.call(plot,   # need do.call, otherwise can't pass the modified ylim
             args = c(list(x = timestamps,
@@ -951,7 +954,7 @@ addPitchCands = function(pitchCands,
       # pars_method$cex[is.na(pars_method$cex)] = 0
       do.call(points, c(pars_method,
                         list(x = timestamps,
-                             y = pitchCands[r, ] / 1000)))
+                             y = pitchCands[r, ] * yScaleCoef)))
     }
   } else {
     showLegend = FALSE
@@ -963,7 +966,7 @@ addPitchCands = function(pitchCands,
                                          2:ncol(plotPars)])
     do.call('lines', c(list(
       x = timestamps,
-      y = pitch / 1000
+      y = pitch * yScaleCoef
     ), pars_pitchContour))
   }
 
@@ -975,7 +978,7 @@ addPitchCands = function(pitchCands,
         if (is.null(extraContour_pars$lty)) extraContour_pars$lty = 2
         if (is.null(extraContour_pars$lwd)) extraContour_pars$lwd = 2
         if (is.null(extraContour_pars$col)) extraContour_pars$col = 'pink'
-        do.call(lines, c(list(x = timestamps, y = extraContour / 1000),
+        do.call(lines, c(list(x = timestamps, y = extraContour * yScaleCoef),
                          extraContour_pars))
       }
     }
@@ -985,16 +988,16 @@ addPitchCands = function(pitchCands,
   if (!is.null(prior)) {
     ran_x_5 = (tail(timestamps, 1) - timestamps[1]) * .075   # 7.5% of plot width
     points(x = prior$prob * ran_x_5,
-           y = prior$freq / 1000, type = 'l', lty = 2)
+           y = prior$freq * yScaleCoef, type = 'l', lty = 2)
     text(x = ran_x_5,
-         y = priorMean / 1000,
+         y = priorMean * yScaleCoef,
          pos = 2, labels = 'Prior', cex = 0.65, offset = 0.25)
   }
   text(x = 0,
-       y = pitchFloor / 1000,
+       y = pitchFloor * yScaleCoef,
        pos = 4, labels = 'floor', cex = 0.65, offset = 0)
   text(x = 0,
-       y = pitchCeiling / 1000,
+       y = pitchCeiling * yScaleCoef,
        pos = 4, labels = 'ceiling', cex = 0.65, offset = 0)
 
   # Add a legend

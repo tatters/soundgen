@@ -503,7 +503,7 @@ spectrogram = function(
       #      equilogs = TRUE)
     }
     if (!is.null(internal$pitch)) {
-      do.call(addPitchCands, internal$pitch)
+      do.call(addPitchCands, c(internal$pitch, list(y_Hz = y_Hz)))
     }
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)

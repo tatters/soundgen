@@ -45,13 +45,15 @@ getDom = function(frame,
   pitchCeiling_idx = which(freqs > pitchCeiling)[1]
   idx_peak = idx[which(idx > pitchFloor_idx & idx < pitchCeiling_idx)[1]]
   # parabolic interpolation to get closer to the true peak
-  applyCorrecton = length(idx_peak) > 1 &&
+  applyCorrection = !is.na(idx_peak) &&
+    length(idx_peak) == 1 &&
     (idx_peak > 1 & idx_peak < length(frame))
-  if (applyCorrecton) {
+  if (applyCorrection) {
     threePoints = log10(frame[(idx_peak - 1) : (idx_peak + 1)])
     parabCor = parabPeakInterpol(threePoints)
     dom = freqs[idx_peak] + bin * parabCor$p
     dom_ampl = 10 ^ parabCor$ampl_p
+    if (dom_ampl > 2) browser()
   } else {
     dom = freqs[idx_peak]
     dom_ampl = frame[idx_peak]

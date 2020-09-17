@@ -16,12 +16,14 @@ self-similarity matrices, morphing, etc.
 # Key functions
 
   - Sound synthesis from R console: `soundgen()`
-  - Shiny app for sound synthesis (opens in a browser): `soungen_app()`
-  - Acoustic analysis of a wav/mp3 file: `analyze()`
+  - Shiny app for sound synthesis (opens in a browser): `soundgen_app()`
+  - Acoustic analysis of a wav/mp3 file / folder: `analyze()` / `analyzeFolder()`
   - Shiny app for editing intonation contours (opens in a browser):
     `pitch_app()`
-  - Measuring syllables, pauses, and bursts in a wav/mp3 file:
-    `segment()`
+  - Shiny app for measuring formants (opens in a browser):
+    `formant_app()`
+  - Measuring syllables, pauses, and bursts in a wav/mp3 file / folder:
+    `segment()` / `segmentFolder`
 
 For more information, please see the vignettes on sound synthesis and
 acoustic analysis:
@@ -61,13 +63,6 @@ s = soundgen(
 <img src="man/figures/README-synthsesis-1.png" width="80%" style="display: block; margin: auto;" />
 
 <p>
-
-<audio controls style = "display: block">
-
-<source src="man/figures/s.mp3" type="audio/mp3">
-
-</audio>
-
 </p>
 
 # Example of acoustic analysis

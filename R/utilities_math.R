@@ -1107,6 +1107,11 @@ parabPeakInterpol = function(threePoints, plot = FALSE) {
   if (any(is.na(threePoints)) | length(threePoints) < 3) {
     stop(paste('invalid input:', threePoints))
   }
+  if (threePoints[2] < threePoints[1] |
+      threePoints[2] < threePoints[3]) {
+    # the central point is not a peak
+    return(list(p = 0, ampl_p = 0))
+  }
   alpha = threePoints[1]
   beta = threePoints[2]
   gamma = threePoints[3]

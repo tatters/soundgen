@@ -15,6 +15,7 @@ BUGS FIXED:
   * soundgen_app(): correct parsing of long formant lists
   * pitch_app(): spectrogram plot responds to change in input settings
   * formant_app(): doesn't crash when changing VTL settings
+  * analyze(), analyzeFolder(): correct plotting with ylim under 1 kHz
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.0 [11-August-2020]
