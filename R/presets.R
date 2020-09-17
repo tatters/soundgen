@@ -430,7 +430,7 @@ presets = list(
 
     Laugh = 'soundgen(nSyl = 3, sylLen = 60, pauseLen = 90, pitch = c(368, 284), temperature = 0.075, attackLen = 10, formants = c(900, 1300, 3300, 4340), noise = list(time = c(0, 67, 86, 186), value = c(-15, -17, -59, -80)), rolloffNoise = -8, ampl = c(0, -10))',
 
-    Cry = 'soundgen(sylLen = 1600, pitch = c(610, 511), temperature = 0.2, nonlinBalance = 40, formants = NULL, vocalTract = 13.5, subFreq = 125, subDep = 100, subWidth = 70, mouth = 0, ampl = c(0, -20))',
+    Cry = 'soundgen(sylLen = 1600, pitch = c(610, 511), temperature = 0.2, nonlinBalance = 40, formants = NULL, vocalTract = 13.5, subFreq = 125, subDep = 10, subWidth = 25, jitterDep = 1.5, mouth = 0, ampl = c(0, -20))',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       vowels = list(
@@ -484,7 +484,7 @@ presets = list(
   Chimpanzee = list(
     Bark_alarm = 'soundgen(sylLen = 160, pitch = c(232, 185), jitterDep = 2.8, attackLen = 61, rolloff = -19, formants = c(400, 1000), vocalTract = 14, subFreq = 125, subDep = 100, subWidth = 60, noise = list(time = c(0, 63, 344), value = c(-80, -5, -80)), rolloffNoise = -6)',
 
-    Scream_conflict = 'soundgen(sylLen = 740, pitch = list(time = c(0, 0.3, 0.9, 1), value = c(1200, 1547, 1487, 1154)), formants = NULL, vocalTract = 14, temperature = 0.05, jitterDep = 0.3, rolloff = -6, subFreq = 75, subDep = 100, subWidth = 130)',
+    Scream_conflict = 'soundgen(sylLen = 740, pitch = list(time = c(0, 0.3, 0.9, 1), value = c(1200, 1547, 1487, 1154)), formants = NULL, vocalTract = 14, temperature = 0.05, jitterDep = 0.3, rolloff = -6, subFreq = 75, subDep = 60, subWidth = 100)',
 
     Grunt_excited = 'soundgen(nSyl = 6, sylLen = 100, pauseLen = 220, pitch = c(216, 164), pitchGlobal = list(time = c(0, 0.4, 1), value = c(0, 1, -8.4)), temperature = 0.15, jitterDep = 3.1, attackLen = 10, formants = list(f1 = c(410, 250), f2 = c(990, 650)), vocalTract = 20.5, noise = list(time = c(-8, 22, 298), value = c(-80, -25, -80)), rolloffNoise = -7, ampl = c(0, -30), amplGlobal = list(time = c(0, 0.35, 1), value = c(-10, 0, -20)))',
 
@@ -528,9 +528,9 @@ presets = list(
 
     Duck = 'soundgen(repeatBout = 5, sylLen = 110, pauseLen = 170, pitch = c(119, 110), temperature = 0.1, rolloff = -3, rolloffOct = -1, formants = c(1600, 2700, 5600, 6400), noise = -13, mouth = c(0.34, 0.57, 0.35))',
 
-    Elephant = 'soundgen(sylLen = 510, pitch = list(time = c(0, 0.36, 1), value = c(450, 485, 328)), nonlinBalance = 50, jitterDep = 0.3, rolloff = -3, rolloffOct = -2, rolloffKHz = 0, formants = NULL, formantDepStoch = 0, subFreq = 75, subDep = 100, subWidth = 40, shortestEpoch = 50, noise = list(time = c(0, 510), value = c(-19, -19)), ampl = list(time = c(0, 0.5, 1), value = c(0, 0, -10)))',
+    Elephant = 'soundgen(sylLen = 510, pitch = list(time = c(0, 0.36, 1), value = c(450, 485, 328)), nonlinBalance = 50, jitterDep = 0.3, rolloff = -3, rolloffOct = -2, rolloffKHz = 0, formants = NULL, formantDepStoch = 0, subFreq = 75, subDep = 30, subWidth = 40, shortestEpoch = 50, noise = list(time = c(0, 510), value = c(-19, -19)), ampl = list(time = c(0, 0.5, 1), value = c(0, 0, -10)))',
 
-    Seagull = 'soundgen(nSyl = 8, sylLen = 200, pauseLen = 140, pitch = list(time = c(0, 0.71, 1), value = c(977, 1530, 826)), jitterDep = 0, rolloff = -6, rolloffParabHarm = 6, rolloffKHz = 0, formants = c(2500, 4500), subFreq = 525, subDep = 100, subWidth = 220, noise = list(time = c(0, 44, 141, 201), value = c(-21, -22, -80, -22)), samplingRate = 24000)',
+    Seagull = 'soundgen(nSyl = 8, sylLen = 200, pauseLen = 140, pitch = list(time = c(0, 0.71, 1), value = c(977, 1530, 826)), jitterDep = 0, rolloff = -6, rolloffParabHarm = 6, rolloffKHz = 0, formants = c(2500, 4500), subRatio = 2, subDep = 100, subWidth = 220, noise = list(time = c(0, 44, 141, 201), value = c(-21, -22, -80, -22)), samplingRate = 24000)',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...
