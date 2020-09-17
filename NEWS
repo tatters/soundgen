@@ -3,6 +3,7 @@ MINOR
   * soundgen(), getSpectralEnvelope(): a more consisent implementation of zero-pole models, which affects manually specified formant amplitudes. Check your old code!
   * soundgen(), getSpectralEnvelope(): formantDepStoch is now treated as a multiplication factor instead of dB (0 = no formant, 1 = default amplitude). Check your old code!
   * soundgen(): updated list of tempEffects
+  * soundgen(): modified smoothing and trend of random walks, eg when generating nonlinear effects stochastically
   * fade(), crossFade(): new defaults of steepness values, added gaussian shape
   * estimateVTL(), schwa(), formant_app(): a new argument "interceptZero" for controlling whether the regression line is forced to pass through the origin
   * analyze(): cutFreq can be a vector of length 2 - eg cutFreq = c(100, 8000) - to produce spectral descriptives from a particular range of frequencies

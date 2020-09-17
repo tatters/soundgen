@@ -449,7 +449,7 @@ generateHarmonics = function(pitch,
                              amplDriftDep = 1,
                              subDriftDep = 4,
                              rolloffDriftDep = 3,
-                             randomWalk_trendStrength = .5,
+                             randomWalk_trendStrength = .1,
                              shortestEpoch = 300,
                              subRatio = 1,
                              subFreq = 100,
@@ -541,7 +541,7 @@ generateHarmonics = function(pitch,
       len = nGC,
       rw_range = temperature,
       trend = c(randomWalk_trendStrength, -randomWalk_trendStrength),
-      rw_smoothing = .3
+      rw_smoothing = .95
     ) # plot(rw, type = 'l')
     rw = rw - mean(rw) + 1 # change mean(rw) to 1
     if (is.null(nonlinRandomWalk)) {
@@ -1105,7 +1105,7 @@ fart = function(glottis = c(50, 200),
     drift = getRandomWalk(
       len = 100,
       rw_range = temperature * 10,
-      rw_smoothing = .2,
+      rw_smoothing = .95,
       method = 'spline'
     ) + 1
     # plot(drift, type = 'l')

@@ -319,7 +319,7 @@ Mode = function(x) {
 #' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = .99))
 #' plot(getRandomWalk(len = 1000, rw_range = 5, rw_smoothing = 1))
 #' plot(getRandomWalk(len = 1000, rw_range = 15,
-#'   rw_smoothing = .2, trend = c(.5, -.5)))
+#'   rw_smoothing = .2, trend = c(.1, -.1)))
 #' plot(getRandomWalk(len = 1000, rw_range = 15,
 #'   rw_smoothing = .2, trend = c(15, -1)))
 getRandomWalk = function(len,

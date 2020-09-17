@@ -384,16 +384,15 @@ s1 = flatEnv(s, plot = TRUE, killDC = TRUE, windowLength_points = 50)
 Another common modification is to fade the sound in and/or out. One way to do this is to change the attack (which affects both the beginning and the end) or to use amplitude anchors. On other occasions, or if your sound already exists and you want to change it, the way to go about it is to use a separate function, `fade()`. This also gives you more options, e.g. different attack shapes, while soundgen() defaults to linear fade-in/out for attack.
 ```{r fig.show = "hold", fig.width = 7, fig.height = 3}
 # Create a sound with sharp attack
-s = soundgen(sylLen = 1000, addSilence = 0, 
-             attackLen = 10)  
+s = soundgen(sylLen = 300, pitch = 800, addSilence = 0, attackLen = 10)  
 # playme(s)
-s1 = fade(s, fadeIn = 200, fadeOut = 300, samplingRate = 16000,
-          shape = 'logistic', steepness = 8, plot = TRUE)
+s1 = fade(s, fadeIn = 50, fadeOut = 100, samplingRate = 16000,
+          shape = 'logistic', steepness = 1, plot = TRUE)
 # playme(s1)
 # different fades are available: linear, logarithmic, etc
 ```
 
-*TIP: attackLen in soundgen is applied only to voiced source, and before it is filtered (i.e., before formants are added). Artifacts are possible, such as audible clicks because the sound terminates too abruptly. In that case, please increase attackLen or fade in-out manually in post-production.*
+*TIP: attackLen in soundgen is applied only to voiced source, and before it is filtered (i.e., before formants are added). Artifacts are possible, such as audible clicks because the sound terminates too abruptly. In that case, please increase attackLen or apply fade() after synthesizing the sound.*
 
 ## Spectral filter (formants)
 ### Vowel presets
@@ -444,8 +443,8 @@ Feed these lists into soundgen() to hear what they sound like.
 
 ### Vocal tract length
 In addition to user-specified formants, higher formants are added automatically based on the length of vocal tract length estimated from the user-specified formant frequency values. The function that estimates vocal tract length is imaginatively called `estimateVTL`:
-```{r fig.width = 7, fig.height = 3}
-estimateVTL(formants = c(500, 1500, 2550), plot = TRUE)  
+```{r fig.width = 7, fig.height = 4}
+estimateVTL(formants = c(400, 1800, 2550, 4100), plot = TRUE)  
 # 17.5 cm
 ```
 
@@ -867,7 +866,7 @@ You can also generate an actual random walk and then use it in several sounds to
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 # set up a random walk (repeat until satisfied with the contour)
 rw = getRandomWalk(len = 1000, rw_range = 100, 
-                   trend = c(0.5, -0.5), rw_smoothing = .3)
+                   trend = c(0.5, -0.5), rw_smoothing = .95)
 rw_bin = getIntegerRandomWalk(rw, minLength = 100, plot = TRUE)
 # synthesize two sounds with identical nonlinear effects but different f0
 s1 = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,

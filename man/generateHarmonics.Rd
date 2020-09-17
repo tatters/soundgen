@@ -33,7 +33,7 @@ generateHarmonics(
   amplDriftDep = 1,
   subDriftDep = 4,
   rolloffDriftDep = 3,
-  randomWalk_trendStrength = 0.5,
+  randomWalk_trendStrength = 0.1,
   shortestEpoch = 300,
   subRatio = 1,
   subFreq = 100,

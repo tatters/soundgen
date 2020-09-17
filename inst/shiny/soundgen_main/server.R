@@ -1076,16 +1076,17 @@ server = function(input, output, session) {
 
   output$plotNonlin = renderPlot({
     # see source.R, "get a random walk for intra-syllable variation"
+    p = myPitchContour()
     rw = soundgen:::zeroOne(soundgen:::getRandomWalk(
-      len = 100,
+      len = length(p),
       rw_range = input$temperature,
-      trend = c(.5, -.5), # randomWalk_trendStrength
-      rw_smoothing = .3
+      trend = c(.1, -.1), # randomWalk_trendStrength
+      rw_smoothing = .95
     )) * 100
     rw_bin = soundgen:::getIntegerRandomWalk(
       rw,
       nonlinBalance = input$nonlinBalance,
-      minLength = ceiling(input$shortestEpoch / 1000 * myPitchContour()),
+      minLength = ceiling(input$shortestEpoch / 1000 * p),
       plot = TRUE
     )
   })
