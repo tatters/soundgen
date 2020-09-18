@@ -16,7 +16,7 @@ vignette: >
   
 # Purpose
   
-There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat <a href="https://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is Sound Analysis Pro. In R, the most general-purpose acoustic toolkit is the <a href="https://CRAN.R-project.org/package=seewave">seewave</a> package. Soundgen builds upon the functionality of seewave, adding high-level functions for sound synthesis (see the vignette on sound synthesis), manipulation, and analysis.
+There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat PRAAT (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is Sound Analysis Pro. In R, the most general-purpose acoustic toolkit is the <a href="https://CRAN.R-project.org/package=seewave">seewave</a> package. Soundgen builds upon the functionality of seewave, adding high-level functions for sound synthesis (see the vignette on sound synthesis), manipulation, and analysis.
   
 Reasons to use `soundgen` for acoustic analysis might be: 
   
