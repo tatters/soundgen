@@ -1,3 +1,6 @@
+          CHANGES IN SOUNDGEN VERSION 1.8.1.9000 [...date...]
+
+
           CHANGES IN SOUNDGEN VERSION 1.8.1 [18-September-2020]
 MINOR
   * soundgen(), getSpectralEnvelope(): a more consisent implementation of zero-pole models, which affects manually specified formant amplitudes. Check your old code!
