@@ -1,4 +1,6 @@
           CHANGES IN SOUNDGEN VERSION 1.8.1.9000 [...date...]
+BUGS FIXED:
+  * formant_app(): doesn't crash when appending annotations
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.1 [18-September-2020]
