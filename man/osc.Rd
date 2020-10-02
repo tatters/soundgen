@@ -14,6 +14,7 @@ osc(
   plot = TRUE,
   xlab = NULL,
   ylab = NULL,
+  ylim = NULL,
   bty = "n",
   midline = TRUE,
   maxPoints = 10000,
@@ -40,6 +41,8 @@ numeric vector, rather than a .wav file)}
 \item{plot}{if TRUE, plots the oscillogram}
 
 \item{xlab, ylab}{axis labels}
+
+\item{ylim}{override default amplitude scale for non-centered sounds}
 
 \item{bty}{box type (see `?par`)}
 

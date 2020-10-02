@@ -690,14 +690,13 @@ isCentral.localMax = function(x, threshold) {
 #' @param freq the frequency of amplitude modulation, Hz (numeric vector)
 #' @param shape 0 = ~sine, -1 = clicks, +1 = notches (NB: vice versa in
 #'   soundgen!); numeric vector of length 1 or the same length as \code{freq}
-#' @param spikiness the larger, the more quickly the shape of filter leaves;
+#' @param spikiness amplifies the effect of the "shape" parameter;
 #'   numeric vector of length 1 or the same length as \code{freq}
-#'   sine-like approximation as shape deviates from 0
 #' @keywords internal
 #' @examples
 #' for (shape in c(0, -.1, .1, -1, 1)) {
-#'   s = soundgen:::getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2)
-#'   plot(s, type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
+#'   s = soundgen:::getSigmoid(shape = shape, len = 1000, samplingRate = 500, freq = 2)
+#'   plot(s, type = 'l', main = paste('shape =', shape), xlab = '', ylab = '')
 #' }
 getSigmoid = function(len,
                       samplingRate = 16000,

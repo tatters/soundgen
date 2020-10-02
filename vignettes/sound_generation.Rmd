@@ -361,7 +361,7 @@ s = soundgen(nSyl = 4,
 
 The dynamic amplitude range is determined by `dynamicRange`. This parameter sets the minimum level of loudness, below which components are discarded as essentially silence. For maximum sound quality, set a high dynamicRange, like 120 dB. This helps to avoid artifacts like audibly clicking harmonics, but it also slows down sound generation. The default is 80 dB.
 
-Rapid amplitude modulation imitating a trill is implemented by multiplying the synthesized waveform by a wave with adjustable shape `amShape` (defaults to approximately sine), frequency `amFreq`, and amplitude `amDep`:
+Rapid amplitude modulation imitating a trill is implemented by multiplying the synthesized waveform by a wave with adjustable `amType` ("sine" or "logistic"), shape `amShape` (logistic only), frequency `amFreq`, and amplitude `amDep`:
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 1000, formants = NA,
              # set the depth of AM (0% = none, 100% = max)

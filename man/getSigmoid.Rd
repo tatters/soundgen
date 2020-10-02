@@ -16,9 +16,8 @@ getSigmoid(len, samplingRate = 16000, freq = 5, shape = 0, spikiness = 1)
 \item{shape}{0 = ~sine, -1 = clicks, +1 = notches (NB: vice versa in
 soundgen!); numeric vector of length 1 or the same length as \code{freq}}
 
-\item{spikiness}{the larger, the more quickly the shape of filter leaves;
-numeric vector of length 1 or the same length as \code{freq}
-sine-like approximation as shape deviates from 0}
+\item{spikiness}{amplifies the effect of the "shape" parameter;
+numeric vector of length 1 or the same length as \code{freq}}
 }
 \value{
 Returns a vector of length \code{len} and range from 0 to 1
@@ -33,8 +32,8 @@ filter is made from concatenated sigmoids and their mirror reflections.
 }
 \examples{
 for (shape in c(0, -.1, .1, -1, 1)) {
-  s = soundgen:::getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2)
-  plot(s, type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
+  s = soundgen:::getSigmoid(shape = shape, len = 1000, samplingRate = 500, freq = 2)
+  plot(s, type = 'l', main = paste('shape =', shape), xlab = '', ylab = '')
 }
 }
 \keyword{internal}

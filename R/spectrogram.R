@@ -810,6 +810,7 @@ filled.contour.mod = function(
 #' @param returnWave if TRUE, returns a log-transformed waveform as a numeric vector
 #' @param plot if TRUE, plots the oscillogram
 #' @param xlab,ylab axis labels
+#' @param ylim override default amplitude scale for non-centered sounds
 #' @param bty box type (see `?par`)
 #' @param midline if TRUE, draws a line at 0 dB
 #' @param maxPoints the maximum number of points to plot (speeds up the plotting
@@ -859,6 +860,7 @@ osc = function(
   plot = TRUE,
   xlab = NULL,
   ylab = NULL,
+  ylim = NULL,
   bty = 'n',
   midline = TRUE,
   maxPoints = 10000,
@@ -931,7 +933,7 @@ osc = function(
       if (is.null(xlab)) xlab = 'Time, points'
     }
     if (is.null(ylab)) if (dB) ylab = 'dB' else ylab = ''
-    if (dB) ylim = c(-2 * dynamicRange, 0) else ylim = c(-m, m)
+    if (is.null(ylim)) if (dB) ylim = c(-2 * dynamicRange, 0) else ylim = c(-m, m)
 
     # plot
     plot(time, sound_plot, type = 'l', xlab = xlab, ylab = ylab,

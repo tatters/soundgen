@@ -1,4 +1,10 @@
           CHANGES IN SOUNDGEN VERSION 1.8.1.9000 [...date...]
+NEW FUNCTIONS:
+  * addAM(): adds amplitude modulation to a sound
+
+MINOR:
+  * soundgen(): new argument "amType" for sinusoidal or logistic amplitude modulation
+
 BUGS FIXED:
   * formant_app(): doesn't crash when appending annotations
 

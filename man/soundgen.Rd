@@ -48,6 +48,7 @@ soundgen(
   vocalTract = NA,
   amDep = 0,
   amFreq = 30,
+  amType = c("logistic", "sine")[1],
   amShape = 0,
   noise = NULL,
   formantsNoise = NA,
@@ -242,14 +243,15 @@ dispersion (for adding extra formants) and formant transitions as the mouth
 opens and closes. If \code{NULL} or \code{NA}, the length is estimated
 based on specified formant frequencies, if any (anchor format)}
 
-\item{amDep}{amplitude modulation depth, \%. 0: no change; 100: amplitude
-modulation with amplitude range equal to the dynamic range of the sound
-(anchor format)}
+\item{amDep}{amplitude modulation (AM) depth, \%. 0: no change; 100: AM with
+amplitude range equal to the dynamic range of the sound (anchor format)}
 
-\item{amFreq}{amplitude modulation frequency, Hz (anchor format)}
+\item{amFreq}{AM frequency, Hz (anchor format)}
 
-\item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0) (anchor
-format)}
+\item{amType}{"sine" = sinusoidal, "logistic" = logistic (default)}
+
+\item{amShape}{ignore if amType = "sine", otherwise determines the shape of
+non-sinusoidal AM: 0 = ~sine, -1 = notches, +1 = clicks (anchor format)}
 
 \item{noise}{loudness of turbulent noise (0 dB = as loud as
 voiced component, negative values = quieter) such as aspiration, hissing,
