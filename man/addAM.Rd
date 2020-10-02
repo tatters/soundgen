@@ -65,36 +65,38 @@ s2 = addAM(sound1, 16000,
                       value = c(0, 0, 35, 25, 0, 0)),
          plot = TRUE, play = TRUE)
 
-# If am_freq is f0 / integer, we can get subharmonics (in this case at 300 /
-2 = 150 Hz)
-sound2 = soundgen(sylLen = 800, pitch = 300, addSilence = 0)
-s3 = addAM(sound2, 16000, amDep = 30, amFreq = 150,
-           plot = TRUE, play = TRUE)
-spectrogram(s3, 16000, ylim = c(0, 2))
-
 # Sinusoidal AM produces exactly 2 extra harmonics at ±am_freq around each f0
 harmonic:
-s4 = addAM(sound2, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
+s3 = addAM(sound2, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
            plot = TRUE, play = TRUE)
-spectrogram(s4, 16000, windowLength = 150, ylim = c(0, 2))
+spectrogram(s3, 16000, windowLength = 150, ylim = c(0, 2))
 
 # Non-sinusoidal AM produces multiple new harmonics, which can resemble
 subharmonics...
-s5 = addAM(sound2, 16000, amDep = 70, amFreq = 50, amShape = -1,
+s4 = addAM(sound2, 16000, amDep = 70, amFreq = 50, amShape = -1,
            plot = TRUE, play = TRUE)
-spectrogram(s5, 16000, windowLength = 150, ylim = c(0, 2))
+spectrogram(s4, 16000, windowLength = 150, ylim = c(0, 2))
 
 # ...but more often look like sidebands
 sound3 = soundgen(sylLen = 600, pitch = c(800, 1300, 1100), addSilence = 0)
-s6 = addAM(sound3, 16000, amDep = c(0, 30, 100, 40, 0),
+s5 = addAM(sound3, 16000, amDep = c(0, 30, 100, 40, 0),
            amFreq = 105, amShape = -.3,
            plot = TRUE, play = TRUE)
-spectrogram(s6, 16000, ylim = c(0, 5))
+spectrogram(s5, 16000, ylim = c(0, 5))
 
 # Feel free to add AM stochastically:
-s7 = addAM(sound2, 16000,
+s6 = addAM(sound2, 16000,
            amDep = rnorm(10, 40, 20), amFreq = rnorm(20, 70, 20),
            plot = TRUE, play = TRUE)
-spectrogram(s7, 16000, windowLength = 150, ylim = c(0, 2))
+spectrogram(s6, 16000, windowLength = 150, ylim = c(0, 2))
+
+# If am_freq is locked to an integer ratio of f0, we can get subharmonics
+# For ex., here is with pitch 400-600-400 Hz (soundgen interpolates pitch
+# on a log scale and am_freq on a linear scale, so we align them by extracting
+# a long contour on a log scale for both)
+con = getSmoothContour(anchors = c(400, 600, 400),
+                       len = 20, thisIsPitch = TRUE)
+s = soundgen(sylLen = 1500, pitch = con, amFreq = con/3, amDep = 30,
+             plot = TRUE, play = TRUE, ylim = c(0, 3))
 }
 }

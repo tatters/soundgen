@@ -57,7 +57,7 @@ permittedValues = matrix(c(
   'formantCeiling', 2, 1, 20, .1,
   'formantLocking', 0, 0, 1, .1,
   'amDep', 0, 0, 100, 5,
-  'amFreq', 30, 1, 100, 1,
+  'amFreq', 30, 1, 1000, 1,
   'amShape', 0, -1, 1, .025,
   'samplingRate', 16000, 8000, 200000, 100,
   'windowLength', 40, 5, 100, 2.5, # default, low, high, step
