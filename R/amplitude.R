@@ -762,7 +762,8 @@ transplantEnv = function(
 #' perception of roughness is ~70 Hz (Fastl & Zwicker "Psychoacoustics").
 #' Sinusoidal AM creates a single pair of new harmonics, while non-sinusoidal AM
 #' creates more extra harmonics (see examples).
-#' @param sound numeric vector on any scale
+#' @param x path to a .wav file or a vector of amplitudes with specified
+#'   samplingRate
 #' @inheritParams soundgen
 #' @param checkFormat only FALSE when called internally by soundgen()
 #' @param plot if TRUE, plots the amplitude modulation
@@ -810,8 +811,8 @@ transplantEnv = function(
 #'            plot = TRUE, play = TRUE)
 #' spectrogram(s7, 16000, windowLength = 150, ylim = c(0, 2))
 #' }
-addAM = function(sound,
-                 samplingRate,
+addAM = function(x,
+                 samplingRate = NULL,
                  amDep = 25,
                  amFreq = 30,
                  amType = c('logistic', 'sine')[1],
@@ -820,11 +821,26 @@ addAM = function(sound,
                  plot = FALSE,
                  play = FALSE,
                  checkFormat = TRUE) {
-  len = length(sound)
-  if (!is.numeric(sound) | length(sound) < 1) {
-    warning('Invalid input: numeric vector expected')
-    return(NA)
+  # import audio
+  if (class(x)[1] == 'character') {
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    samplingRate = sound_wav@samp.rate
+    sound = as.numeric(sound_wav@left)
+  } else if (class(x)[1] == 'numeric') {
+    if (is.null(samplingRate)) {
+      stop ('Please specify samplingRate, eg 44100')
+    } else {
+      sound = x
+    }
   }
+  len = length(sound)
 
   # check the format
   if (checkFormat) {
@@ -863,7 +879,12 @@ addAM = function(sound,
 
   # prepare am vector
   if (amType == 'sine') {
-    sig = .5 + .5 * cos(2 * pi * cumsum(amFreq_vector) / samplingRate)
+    if (length(amFreq_vector) == 1) {
+      int = amFreq_vector * (1:len)
+    } else {
+      int = cumsum(amFreq_vector)
+    }
+    sig = .5 + .5 * cos(2 * pi * int / samplingRate)
   } else {
     sig = getSigmoid(len = len,
                      samplingRate = samplingRate,

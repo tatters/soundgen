@@ -1180,7 +1180,7 @@ soundgen = function(
     if (is.list(amDep)) {
       if (any(amDep$value > 0)) {
         soundFiltered = addAM(
-          sound = soundFiltered,
+          x = soundFiltered,
           samplingRate = samplingRate,
           amDep = amDep,
           amFreq = amFreq,

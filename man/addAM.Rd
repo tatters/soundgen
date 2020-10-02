@@ -5,8 +5,8 @@
 \title{Add amplitude modulation}
 \usage{
 addAM(
-  sound,
-  samplingRate,
+  x,
+  samplingRate = NULL,
   amDep = 25,
   amFreq = 30,
   amType = c("logistic", "sine")[1],
@@ -18,7 +18,8 @@ addAM(
 )
 }
 \arguments{
-\item{sound}{numeric vector on any scale}
+\item{x}{path to a .wav file or a vector of amplitudes with specified
+samplingRate}
 
 \item{samplingRate}{sampling frequency, Hz}
 

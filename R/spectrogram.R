@@ -207,7 +207,7 @@ spectrogram = function(
     }
     samplingRate = sound_wav@samp.rate
     windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-    sound = sound_wav@left
+    sound = as.numeric(sound_wav@left)
     maxAmpl = 2^(sound_wav@bit - 1)
     ls = length(sound)
     if (windowLength_points > (ls / 2)) {
