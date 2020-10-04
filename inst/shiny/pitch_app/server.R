@@ -26,7 +26,8 @@ server = function(input, output, session) {
     wheelScrollFactor = .1,    # how far to scroll on mouse wheel (prop of xlim)
     cursor = 0,
     initDur = 1500,            # initial duration to plot (ms)
-    play = list(on = FALSE)
+    play = list(on = FALSE),
+    debugQn = TRUE             # for debugging - click "?" to step into the code
   )
 
 
@@ -262,7 +263,7 @@ server = function(input, output, session) {
 
       # osc
       idx_s = max(1, (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000)) :
-        min(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
+        min(myPars$ls, (myPars$spec_xlim[2] * 1.05 * myPars$samplingRate / 1000))
       downs_osc = 10 ^ input$osc_maxPoints
 
       isolate({
@@ -480,6 +481,7 @@ server = function(input, output, session) {
       if (!is.null(myPars$myAudio_trimmed)) {
         if (myPars$print) print('Drawing osc...')
         par(mar = c(2, 2, 0, 2))
+        # plot(myPars$myAudio_trimmed, type = 'l')
         plot(myPars$time_trimmed,
              myPars$myAudio_trimmed,
              type = 'l',
@@ -1186,12 +1188,16 @@ server = function(input, output, session) {
   )
 
   observeEvent(input$about, {
-    showNotification(
-      ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Left-click to add/correct a pitch anchor, double-click to remove/unvoice the frame. More info: ?pitch_app and http://cogsci.se/soundgen.html"),
-      duration = 10,
-      closeButton = TRUE,
-      type = 'default'
-    )
+    if (myPars$debugQn) {
+      browser()  # back door for debugging)
+    } else {
+      showNotification(
+        ui = paste0("Manual pitch editor: soundgen ", packageVersion('soundgen'), ". Left-click to add/correct a pitch anchor, double-click to remove/unvoice the frame. More info: ?pitch_app and http://cogsci.se/soundgen.html"),
+        duration = 10,
+        closeButton = TRUE,
+        type = 'default'
+      )
+    }
   })
 
   ## TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay

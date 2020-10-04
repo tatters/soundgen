@@ -436,7 +436,7 @@ server = function(input, output, session) {
 
       # osc
       idx_s = max(1, (myPars$spec_xlim[1] / 1.05 * myPars$samplingRate / 1000)) :
-        min(myPars$ls, (myPars$spec_xlim[2] / 1.05 * myPars$samplingRate / 1000))
+        min(myPars$ls, (myPars$spec_xlim[2] * 1.05 * myPars$samplingRate / 1000))
       downs_osc = 10 ^ input$osc_maxPoints
 
       isolate({
