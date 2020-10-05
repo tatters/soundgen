@@ -608,7 +608,7 @@ server = function(input, output, session) {
       if (myPars$print) print('Looking for pitch contour with obs_pitch()')
       myPars$voicedSegments = soundgen:::findVoicedSegments(
         myPars$pitchCands$freq,
-        manualV = myPars$manual$frame,
+        manualV = c(myPars$manualV, myPars$manual$frame),
         manualUnv = myPars$manualUnv,
         shortestSyl = input$shortestSyl,
         shortestPause = input$shortestPause,
@@ -840,10 +840,16 @@ server = function(input, output, session) {
   voiceSel = function() {
     if (myPars$print) print('Voicing selection...')
     if (!is.null(myPars$bp) &
-        length(myPars$brush_sel_x) > 0 &
-        length(myPars$manualUnv) > 0) {
-      idx_rem = which(myPars$manualUnv %in% myPars$brush_sel_x)
-      if (length(idx_rem) > 0) myPars$manualUnv = myPars$manualUnv[-idx_rem]
+        length(myPars$brush_sel_x) > 0) {
+      # manually voice the selected frames
+      myPars$manualV = c(myPars$manualV, myPars$brush_sel_x)
+      # remove them from the list of manually unvoiced frames
+      if (length(myPars$manualUnv) > 0) {
+        idx_rem = which(myPars$manualUnv %in% myPars$brush_sel_x)
+        if (length(idx_rem) > 0) {
+          myPars$manualUnv = myPars$manualUnv[-idx_rem]
+        }
+      }
       obs_pitch()
     }
   }
@@ -1275,8 +1281,8 @@ server = function(input, output, session) {
   shinyBS:::addTooltip(session, id='lastFile', title='Save and return to the previous file (BACKSPACE)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS:::addTooltip(session, id='nextFile', title='Save and proceed to the next file (ENTER)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS:::addTooltip(session, id='selection_play', title='Play selection (SPACEBAR)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='selection_unvoice', title = 'Treat selection as unvoiced (U)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='selection_voice', title = 'Undo treating selection as unvoiced (V)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='selection_unvoice', title = 'Unvoice selection (U)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='selection_voice', title = 'Voice selection - obviouslly, pitch estimates may be totally incorrect (V)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='selection_octaveUp', title = 'Raise pitch for selection by an octave (R)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='selection_octaveDown', title = 'Lower pitch for selection by an octave (L)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='selection_setPrior', title = 'Set a prior on expected pitch values corresponding to the selected frequency range (P)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

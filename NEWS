@@ -4,6 +4,7 @@ NEW FUNCTIONS:
 
 MINOR:
   * soundgen(): new argument "amType" for sinusoidal or logistic amplitude modulation
+  * pitch_app(): the "voice" button forces selection to be treated as voiced (before its function was merely to undo "unvoice")
 
 BUGS FIXED:
   * formant_app(): doesn't crash when appending annotations
