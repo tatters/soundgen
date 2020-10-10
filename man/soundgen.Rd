@@ -300,7 +300,8 @@ at all (e.g. for adding pitch jumps). See \code{\link{getSmoothContour}}}
 \item{overlap}{FFT window overlap, \%. For allowed values, see
 \code{\link[seewave]{istft}}}
 
-\item{addSilence}{silence before and after the bout, ms}
+\item{addSilence}{silence before and after the bout, ms: a vector of length 1
+(symmetric) or 2 (different duration of silence before/after the sound)}
 
 \item{pitchFloor, pitchCeiling}{lower & upper bounds of f0}
 

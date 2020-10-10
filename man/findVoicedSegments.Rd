@@ -13,6 +13,7 @@ findVoicedSegments(
   minVoicedCands,
   pitchMethods,
   manualV = NULL,
+  manualTryToV = NULL,
   manualUnv = NULL
 )
 }
@@ -39,6 +40,14 @@ defined, in practice this means that we also want at least one other pitch
 candidate (autocor, cep or BaNa)}
 
 \item{pitchMethods}{methods of pitch tracking in analyze()}
+
+\item{manualV}{index of frames that should definitely be voiced (manual
+candidates)}
+
+\item{manualTryToV}{index of frames that should be treated as voiced as long
+as they have any candidates at all (even <minVoicedCands)}
+
+\item{manualUnv}{index of frames forced to be unvoiced}
 }
 \value{
 Returns a dataframe specifying where each voiced segment starts and

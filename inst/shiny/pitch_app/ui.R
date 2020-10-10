@@ -63,6 +63,13 @@ ui = fluidPage(
               min = defaults_analyze['windowLength', 'low'],
               max = defaults_analyze['windowLength', 'high'],
               step = defaults_analyze['windowLength', 'step']),
+            numericInput(
+              'step',
+              'Step, ms',
+              value = defaults_analyze['step', 'default'],
+              min = defaults_analyze['step', 'low'],
+              max = defaults_analyze['step', 'high'],
+              step = defaults_analyze['step', 'step']),
             sliderInput(
               'overlap',
               'Overlap, % ("overlap")',

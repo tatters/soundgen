@@ -1,4 +1,4 @@
-# TODO: pitch_app button "voice" should really voice - pick the best candidate, if any, or repeat the median of the last voiced segment; analyze() - use loess instead of / in addition to median smoothing; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: pitch_app, analyze - check the new voicing/interpol routines, document, maybe increase interpolWin default to ~200 ms; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser') or options('browser' = '/usr/bin/google-chrome') to check a Shiny app in a non-default browser
 
@@ -183,7 +183,8 @@ NULL
 #' @param windowLength length of FFT window, ms
 #' @param overlap FFT window overlap, \%. For allowed values, see
 #'   \code{\link[seewave]{istft}}
-#' @param addSilence silence before and after the bout, ms
+#' @param addSilence silence before and after the bout, ms: a vector of length 1
+#'   (symmetric) or 2 (different duration of silence before/after the sound)
 #' @param pitchFloor,pitchCeiling lower & upper bounds of f0
 #' @param pitchSamplingRate sampling frequency of the pitch contour only, Hz.
 #'   Low values reduce processing time. Set to \code{pitchCeiling} for optimal
@@ -1215,7 +1216,8 @@ soundgen = function(
   # add some silence before and after the entire bout
   if (is.numeric(addSilence)) {
     n = round(samplingRate / 1000 * addSilence)
-    bout = c(rep(0, n), bout, rep(0, n))
+    if (length(n) == 1) n = rep(n, 2)
+    bout = c(rep(0, n[1]), bout, rep(0, n[2]))
   }
 
   if (play == TRUE) {

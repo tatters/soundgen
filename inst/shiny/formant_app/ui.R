@@ -105,6 +105,13 @@ ui = fluidPage(
                   min = def_form['windowLength_lpc', 'low'],
                   max = def_form['windowLength_lpc', 'high'],
                   step = def_form['windowLength_lpc', 'step']),
+                numericInput(
+                  'step_lpc',
+                  'Step, ms',
+                  value = def_form['step_lpc', 'default'],
+                  min = def_form['step_lpc', 'low'],
+                  max = def_form['step_lpc', 'high'],
+                  step = def_form['step_lpc', 'step']),
                 sliderInput(
                   'overlap_lpc',
                   'Overlap, %',
@@ -177,6 +184,13 @@ ui = fluidPage(
                   min = def_form['windowLength', 'low'],
                   max = def_form['windowLength', 'high'],
                   step = def_form['windowLength', 'step']),
+                numericInput(
+                  'step',
+                  'Step, ms',
+                  value = def_form['step', 'default'],
+                  min = def_form['step', 'low'],
+                  max = def_form['step', 'high'],
+                  step = def_form['step', 'step']),
                 sliderInput(
                   'overlap',
                   'Overlap, %',

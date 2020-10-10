@@ -4,7 +4,11 @@ NEW FUNCTIONS:
 
 MINOR:
   * soundgen(): new argument "amType" for sinusoidal or logistic amplitude modulation
+  * soundgen(): "addSilence" can be of length 2 to add different amounts of silence before/after the synthesized sound
   * pitch_app(): the "voice" button forces selection to be treated as voiced (before its function was merely to undo "unvoice")
+  * pitch_app(): faster updates when adding/removing anchors (path updated only for current syllable) and when setting a new prior (analyze() is not re-run)
+  * analyze(), pitch_app(): interpolation uses loess instead of medians
+  * pitch_app(), formant_app(): either "step" or "overlap" can be used to control windowing
 
 BUGS FIXED:
   * formant_app(): doesn't crash when appending annotations

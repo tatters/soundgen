@@ -198,6 +198,7 @@ interpolate = function(pitchCands,
                        interpolTol = 0.3,
                        interpolCert = 0.3) {
   # ... add an empty row for new, interpolated pitch candidates
+  nr = nrow(pitchCands)
   nc = ncol(pitchCands)
   pitchCands = rbind(rep(NA, nc), pitchCands)
   pitchCert = rbind(rep(NA, nc), pitchCert)
@@ -205,29 +206,54 @@ interpolate = function(pitchCands,
   for (f in 1:nc) {
     left = max(1, f - interpolWin_bin)
     right = min(ncol(pitchCands), f + interpolWin_bin)
-    # median over interpolation window (by default plus-minus 2 points)
-    idx_man = which(pitchSource[, left:right] == 'manual' &
-                      !is.na(pitchCert[, left:right]))
-    if (length(idx_man) > 0) {
-      # special case: if any manual cand-s over interpolWin_bin, only consider them
-      med = median(pitchCands[, left:right] [idx_man], na.rm = TRUE)
-    } else {
-      med = median(pitchCenterGravity[left:right], na.rm = TRUE)
-    }
-    sum_pitchCands = sum(
-      pitchCands[, f] > (1 - interpolTol) * med &
-        pitchCands[, f] < (1 + interpolTol) * med,
-      na.rm = TRUE
-    )
-    if (sum_pitchCands == 0 & !is.na(med)) {
-      # if there are no pitch candidates in the frequency range
-      # expected based on pitch candidates in the adjacent frames...
-      # use median of adjacent frames for the new pitch cand
-      pitchCands[1, f] = med
-      # certainty assigned to interpolated frames
-      pitchCert[1, f] = interpolCert
-      # update pitchCenterGravity for the interpolated frame
+    win = left:right
+    med = NA
+    noLocalCands = FALSE
+    if (length(win) > 1) {
+      # median over interpolation window (by default plus-minus 2 points)
+      idx_man = which(pitchSource[, win] == 'manual' &
+                        !is.na(pitchCert[, win]))
       if (length(idx_man) > 0) {
+        # special case: if any manual cand-s over interpolWin_bin, only consider them
+        # med = median(pitchCands[, win] [idx_man], na.rm = TRUE)
+        idx_man_rc = which(pitchSource[, win] == 'manual' &
+                             !is.na(pitchCert[, win]), arr.ind = TRUE)
+        curve = rep(NA, length(win))
+        curve[idx_man_rc[, 'col']] = pitchCands[, win] [idx_man]
+      } else {
+        # no manual cand's over interpolWin_bin --> use any cand-s for
+        # interpolation
+        curve = pitchCenterGravity[win]
+        curve[f + 1 - left] = NA
+      }
+      curve_df = na.omit(data.frame(x = 1:length(curve),
+                                    y = curve))
+      if (nrow(curve_df) > 2) {
+        # >2 points - use loess
+        l = try(suppressWarnings(loess(y ~ x, data = curve_df, span = 1)))
+        if (class(med) != 'try-error') {
+          p = predict(l, newdata = 1:tail(curve_df$x, n = 1))
+          med = p[f + 1 - left]
+          # print(c(f, 'loess'))
+        }
+      } else {
+        # a single point - just take the middle
+        med = mean(curve_df$y)
+        # print(c(f, 'mean'))
+      }
+      noLocalCands = sum(
+        pitchCands[, f] > (1 - interpolTol) * med &
+          pitchCands[, f] < (1 + interpolTol) * med,
+        na.rm = TRUE
+      ) == 0
+      if (noLocalCands & !is.na(med)) {
+        # if there are no pitch candidates in the frequency range
+        # expected based on pitch candidates in the adjacent frames...
+        # use median of adjacent frames for the new pitch cand
+        pitchCands[1, f] = med
+        # certainty assigned to interpolated frames
+        pitchCert[1, f] = interpolCert
+        # update pitchCenterGravity for the interpolated frame
         pitchCenterGravity[f] = med
       } else {
         pitchCenterGravity[f] = weighted.mean(x = pitchCands[, f],
@@ -278,6 +304,7 @@ pathfinding_fast = function(pitchCands,
     p = median(pitchCenterGravity[1:min(5, nc)], na.rm = TRUE)
     c = pitchCert[, 1] / abs(pitchCands[, 1] - p)
     point_current = pitchCands[which.max(c), 1]
+    if (length(point_current) < 1) point_current = NA
   }
   path = point_current
   costPathForward = 0
@@ -292,7 +319,7 @@ pathfinding_fast = function(pitchCands,
       cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
         costJumps(point_current, cands[x])
       })
-      if (length(cost_pitchJump) == 0) cost_pitchJump = 0
+      if (length(cost_pitchJump) == 0 || !any(!is.na(cost_pitchJump))) cost_pitchJump = 0
       # get a weighted average of transition costs associated with the certainty
       # of each estimate vs. the magnitude of pitch jumps
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
@@ -323,6 +350,7 @@ pathfinding_fast = function(pitchCands,
     p = median(pitchCenterGravity_rev[1:min(5, nc)], na.rm = TRUE)
     c = pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)
     point_current = pitchCands_rev[which.max(c), 1]
+    if (length(point_current) < 1) point_current = NA
   }
   path_rev = point_current
   costPathBackward = 0
@@ -334,7 +362,7 @@ pathfinding_fast = function(pitchCands,
       cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
         costJumps(point_current, cands[x])
       })
-      if (length(cost_pitchJump) == 0) cost_pitchJump = 0
+      if (length(cost_pitchJump) == 0 || !any(!is.na(cost_pitchJump))) cost_pitchJump = 0
       costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
       if (i %in% manual_rev$frame) {
         idx = which(pitchSource_rev[, i] == 'manual')
@@ -357,6 +385,8 @@ pathfinding_fast = function(pitchCands,
   } else {
     bestPath = rev(path_rev)
   }
+  if (length(bestPath) != nc) browser()
+
   return(bestPath)
 }
 
@@ -742,6 +772,11 @@ medianSmoother = function(df,
 #'   defined, in practice this means that we also want at least one other pitch
 #'   candidate (autocor, cep or BaNa)
 #' @param pitchMethods methods of pitch tracking in analyze()
+#' @param manualV index of frames that should definitely be voiced (manual
+#'   candidates)
+#' @param manualTryToV index of frames that should be treated as voiced as long
+#'   as they have any candidates at all (even <minVoicedCands)
+#' @param manualUnv index of frames forced to be unvoiced
 #' @return Returns a dataframe specifying where each voiced segment starts and
 #'   ends (in fft frames, not ms!)
 #' @keywords internal
@@ -753,6 +788,7 @@ findVoicedSegments = function(pitchCands,
                               minVoicedCands,
                               pitchMethods,
                               manualV = NULL,
+                              manualTryToV = NULL,
                               manualUnv = NULL) {
   resetMVC = FALSE
   messageMVC = FALSE
@@ -778,8 +814,14 @@ findVoicedSegments = function(pitchCands,
                      ' resetting to ', minVoicedCands))
     }
   }
-  putativelyVoiced = apply(pitchCands, 2, function(x) sum(!is.na(x)) >= minVoicedCands)
-  if (length(manualV) > 0)   putativelyVoiced[manualV]   = TRUE
+  putativelyVoiced = apply(pitchCands, 2, function(x)
+    sum(!is.na(x)) >= minVoicedCands)
+  if (length(manualV) > 0) putativelyVoiced[manualV] = TRUE
+  if (length(manualTryToV)) {
+    # voice as forced by manualTryToV, as long as those frames have some cand-s
+    anyCands = which(apply(pitchCands, 2, function(x) any(!is.na(x))))
+    putativelyVoiced[manualTryToV[manualTryToV %in% anyCands]] = TRUE
+  }
   if (length(manualUnv) > 0) putativelyVoiced[manualUnv] = FALSE
 
   # the smallest number of consecutive non-NA pitch values that constitute a

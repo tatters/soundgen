@@ -38,7 +38,7 @@ server = function(input, output, session) {
     cursor = 0,
     listenToFbtn = FALSE,      # buggy
     play = list(on = FALSE),
-    debugQn = TRUE             # for debugging - click "?" to step into the code
+    debugQn = FALSE             # for debugging - click "?" to step into the code
   )
 
   # NB: using myPars$play$cursor for some reason invalidates the observer,
@@ -263,7 +263,7 @@ server = function(input, output, session) {
         samplingRate = myPars$samplingRate,
         dynamicRange = input$dynamicRange,
         windowLength = input$windowLength,
-        overlap = input$overlap,
+        step = input$step,
         wn = input$wn,
         zp = 2 ^ input$zp,
         contrast = input$specContrast,
@@ -1134,7 +1134,7 @@ server = function(input, output, session) {
         to = myPars$regionToAnalyze[2] / 1000,
         scale = myPars$maxAmpl,
         windowLength = input$windowLength_lpc,
-        overlap = input$overlap_lpc,
+        step = input$step_lpc,
         wn = input$wn_lpc,
         zp = input$zp_lpc,
         dynamicRange = input$dynamicRange_lpc,
@@ -1182,7 +1182,7 @@ server = function(input, output, session) {
   # if any of LPC settings change, we re-analyze the entire file
   observeEvent(
     c(input$nFormants, input$silence, input$coeffs, input$minformant,
-      input$maxbw, input$windowLength_lpc, input$overlap_lpc,
+      input$maxbw, input$windowLength_lpc, input$step_lpc,
       input$wn_lpc, input$zp_lpc, input$dynamicRange_lpc), {
         myPars$analyzedUpTo = 0
       },
@@ -1347,8 +1347,10 @@ server = function(input, output, session) {
     }
   })
 
+  # HOTKEYS
   observeEvent(input$userPressedSmth, {
     button_code = floor(input$userPressedSmth)
+    # see https://keycode.info/
     if (button_code == 32) {                      # SPACEBAR (play / stop)
       if (myPars$play$on) stopPlay() else startPlay()
     } else if (button_code == 46) {               # DELETE (delete current annotation)
@@ -1487,6 +1489,34 @@ server = function(input, output, session) {
     }
   }, ignoreNULL = TRUE)
 
+  # step-overlap
+  observeEvent(input$overlap, {
+    # change step if overlap changes, but don't change step if windowLength changes
+    step = round(input$windowLength * (1 - input$overlap / 100))
+    if (input$step != step)
+      updateNumericInput(session, 'step', value = step)
+  }, ignoreInit = TRUE)
+  observeEvent(c(input$step, input$windowLength), {
+    # change overlap if step or windowLength change
+    overlap = (1 - input$step / input$windowLength) * 100
+    if (input$overlap != overlap)
+      updateSliderInput(session, 'overlap', value = overlap)
+  })
+
+  observeEvent(input$overlap_lpc, {
+    # change step if overlap changes, but don't change step if windowLength changes
+    step_lpc = round(input$windowLength_lpc * (1 - input$overlap_lpc / 100))
+    if (input$step_lpc != step_lpc)
+      updateNumericInput(session, 'step_lpc', value = step_lpc)
+  }, ignoreInit = TRUE)
+  observeEvent(c(input$step_lpc, input$windowLength_lpc), {
+    # change overlap if step or windowLength change
+    overlap_lpc = (1 - input$step_lpc / input$windowLength_lpc) * 100
+    if (input$overlap_lpc != overlap_lpc)
+      updateSliderInput(session, 'overlap_lpc', value = overlap_lpc)
+  })
+
+
   # SAVE OUTPUT
   done = function() {
     # meaning we are done with a sound - prepares the output
@@ -1591,6 +1621,7 @@ server = function(input, output, session) {
 
   # Windowing
   shinyBS::addTooltip(session, id='windowLength_lpc', title = 'Length of STFT window for LPC analysis, ms. Independent of the window used for plotting the spectrogram', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS::addTooltip(session, id='step_lpc', title = 'Step between analysis frames, ms', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='overlap_lpc', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='dynamicRange_lpc', title = 'Dynamic range, dB', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='zp_lpc', title = 'Zero padding: 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
@@ -1605,6 +1636,7 @@ server = function(input, output, session) {
   # spectrogram
   shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window for LPC analysis, ms. Independent of the window used for plotting the spectrogram', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS::addTooltip(session, id='step', title = 'Step between analysis frames, ms', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range, dB', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))

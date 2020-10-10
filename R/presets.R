@@ -316,6 +316,7 @@ def_form = matrix(c(
   'maxbw', 600, 10, 5000, 10,
 
   'windowLength_lpc', 10, 1, 100, 1,
+  'step_lpc', 5, 1, 100, 1,
   'overlap_lpc', 50, 0, 99, 1,
   'dynamicRange_lpc', 80, 10, 200, 10,
   'zp_lpc', 0, 0, 13, 1,
@@ -324,6 +325,7 @@ def_form = matrix(c(
   'specContrast', .2, -1, 1, .05,
   'specBrightness', -.1, -1, 1, .05,
   'windowLength', 40, 1, 500, 1,
+  'step', 25, 1, 500, 1,
   'overlap', 50, 0, 99, 1,
   'dynamicRange', 80, 10, 200, 10,
   'zp', 0, 0, 13, 1,
