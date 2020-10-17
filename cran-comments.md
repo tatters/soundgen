@@ -4,9 +4,10 @@
   - Ubuntu Linux 16.04 LTS, R-release, GCC
   - Fedora Linux, R-devel, clang, gfortran
   - Windows Server 2008 R2 SP1, R-devel
+* check_win_devel
 
 ## R CMD check results
-One or two NOTEs:
+One NOTE on all platforms:
 ------
 * checking installed package size ... NOTE
   installed size is  6.4Mb
@@ -14,6 +15,6 @@ One or two NOTEs:
     doc   4.5Mb
 Comment: I do have two large vignettes (the .Rmd text alone is ~200 KB, plus illustrations) that have not increased in size over the past few updates.
     
-* checking for future file timestamps ... NOTE
-unable to verify current time
-Comment: seems to be some server issue, nothing to do with the package
+* checking examples ... NOTE (on Linux in rhub)
+Examples with CPU (user + system) or elapsed time > 5s
+Comment: I think rhub is just unusually slow today - the build time was ~1.5 h
