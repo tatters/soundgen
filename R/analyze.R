@@ -60,10 +60,9 @@
 #' @inheritParams getLoudness
 #' @param from,to if NULL (default), analyzes the whole sound, otherwise
 #'   from...to (s)
-#' @param silence (0 to 1) frames with RMS amplitude below silence threshold are
-#'   not analyzed at all. NB: this number is dynamically updated: the actual
-#'   silence threshold may be higher depending on the quietest frame, but it
-#'   will never be lower than this specified number.
+#' @param silence (0 to 1 as proportion of max amplitude) frames with RMS
+#'   amplitude below \code{silence * max_ampl adjusted by scale} are not
+#'   analyzed at all.
 #' @param SPL_measured sound pressure level at which the sound is presented, dB
 #'   (set to 0 to skip analyzing subjective loudness)
 #' @param cutFreq if specified, spectral descriptives (peakFreq, specCentroid,
@@ -785,8 +784,6 @@ analyze = function(
     # (NB: m / scale corrects the scale back to original, otherwise sound is [-1, 1])
     sqrt(mean((sound[myseq[x]:(myseq[x] + windowLength_points - 1)] * m / scale) ^ 2))
   })
-  # dynamically adjust silence threshold to be no lower than the observed min ampl
-  silence = max(silence, min(ampl, na.rm = TRUE))
 
   # calculate entropy of each frame within the most relevant
   # vocal range only (up to to cutFreq Hz)

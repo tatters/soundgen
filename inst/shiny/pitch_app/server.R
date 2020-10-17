@@ -25,10 +25,10 @@ server = function(input, output, session) {
     scrollFactor = .75,        # how far to scroll on arrow press/click
     wheelScrollFactor = .1,    # how far to scroll on mouse wheel (prop of xlim)
     cursor = 0,
-    pitchCert_mult = NULL,  # old pitch prior
+    pitchCert_mult = NULL,     # old pitch prior
     initDur = 1500,            # initial duration to plot (ms)
     play = list(on = FALSE),
-    debugQn = TRUE             # for debugging - click "?" to step into the code
+    debugQn = FALSE            # for debugging - click "?" to step into the code
   )
 
 
