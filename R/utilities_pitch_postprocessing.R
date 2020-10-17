@@ -838,7 +838,8 @@ findVoicedSegments = function(pitchCands,
   while (i < (length(putativelyVoiced) - nRequired + 1)) {
     # find beginning
     while (i < (length(putativelyVoiced) - nRequired + 1)) {
-      if (sum(putativelyVoiced[i:(i + nRequired - 1)]) == nRequired) {
+      if (sum(putativelyVoiced[i:(i + nRequired - 1)]) == nRequired |
+          i %in% manualV) {  # start a new syllable if we hit a manually voiced frame
         segmentStart = c(segmentStart, i)
         break
       }

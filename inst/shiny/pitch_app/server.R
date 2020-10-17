@@ -595,6 +595,8 @@ server = function(input, output, session) {
             len_old = length(myPars$pitch)  # !!! switch to myPars$manual
             len_new = ncol(myPars$pitchCands$freq)
             myPars$manual$frame = ceiling(myPars$manual$frame * len_new / len_old)
+            # in case some manual frames merge into one, remove duplicates
+            myPars$manual = myPars$manual[!duplicated(myPars$manual$frame), ]
           }
           obs_pitch()  # run pathfinder
           if (length(myPars$pitch) != ncol(myPars$pitchCands$freq)) browser()
@@ -1134,7 +1136,9 @@ server = function(input, output, session) {
     shinyjs::js$scrollBar(  # need an external js script for this
       id = 'scrollBar',  # defined in UI
       width = paste0(width, '%'),
-      left = paste0(left, '%'))
+      left = paste0(left, '%')
+    )
+    myPars$cursor = myPars$spec_xlim[1]
   })
 
   observeEvent(input$scrollBarLeft, {

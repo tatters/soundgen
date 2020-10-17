@@ -1450,7 +1450,9 @@ server = function(input, output, session) {
     shinyjs::js$scrollBar(  # need an external js script for this
       id = 'scrollBar',  # defined in UI
       width = paste0(width, '%'),
-      left = paste0(left, '%'))
+      left = paste0(left, '%')
+    )
+    myPars$cursor = myPars$spec_xlim[1]
   })
 
   observeEvent(input$scrollBarLeft, {
