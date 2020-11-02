@@ -27,8 +27,7 @@ if unvoiced)}
 
 \item{shortestPause}{the smallest gap between voiced syllables (ms): large
 value = interpolate and merge, small value = treat as separate syllables
-separated by an unvoiced gap
-means they shouldn't be merged into one voiced syllable}
+separated by an unvoiced gap}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms}
 

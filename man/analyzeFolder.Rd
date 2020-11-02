@@ -80,10 +80,9 @@ numeric vector, rather than an audio file)}
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
 
-\item{silence}{(0 to 1) frames with RMS amplitude below silence threshold are
-not analyzed at all. NB: this number is dynamically updated: the actual
-silence threshold may be higher depending on the quietest frame, but it
-will never be lower than this specified number.}
+\item{silence}{(0 to 1 as proportion of max amplitude) frames with RMS
+amplitude below \code{silence * max_ampl adjusted by scale} are not
+analyzed at all.}
 
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB
 (set to 0 to skip analyzing subjective loudness)}
@@ -184,8 +183,7 @@ if unvoiced)}
 
 \item{shortestPause}{the smallest gap between voiced syllables (ms): large
 value = interpolate and merge, small value = treat as separate syllables
-separated by an unvoiced gap
-means they shouldn't be merged into one voiced syllable}
+separated by an unvoiced gap}
 
 \item{interpolWin}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
@@ -236,7 +234,8 @@ deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
 take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-list containing frame-by-frame values}
+list containing frame-by-frame values; if \code{summaryFun = 'extended'},
+all pitch candidates are returns as a list}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 

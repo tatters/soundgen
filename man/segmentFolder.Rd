@@ -92,7 +92,8 @@ on each syllable and bursts (location, duration, amplitude, ...)}
 eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
 take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-list containing frame-by-frame values}
+list containing frame-by-frame values; if \code{summaryFun = 'extended'},
+all pitch candidates are returns as a list}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 

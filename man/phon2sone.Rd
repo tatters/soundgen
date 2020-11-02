@@ -17,7 +17,7 @@ Source: Timoney, J., Lysaght, T., Schoenwiesner, M., & MacManus, L. (2004).
 Implementing loudness models in matlab.
 }
 \examples{
-phon = 0:120
+phon = seq(0, 120, 2)
 sone = soundgen:::phon2sone(phon)
 plot(phon, sone, type = 'b')
 plot(phon, log2(sone), type = 'b')

@@ -151,7 +151,8 @@
 #'   eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 #'   are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
 #'   take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-#'   list containing frame-by-frame values
+#'   list containing frame-by-frame values; if \code{summaryFun = 'extended'},
+#'   all pitch candidates are returns as a list
 #' @param invalidArgAction what to do if an argument is invalid or outside the
 #'   range in \code{defaults_analyze}: 'adjust' = reset to default value,
 #'   'abort' = stop execution, 'ignore' = throw a warning and continue (may
@@ -172,9 +173,9 @@
 #'   acoustic variable. If \code{voicedSeparate = TRUE}, descriptives are
 #'   calculated separately for the entire sound and for the voiced frames. The
 #'   best guess at the pitch contour considering all available information is
-#'   stored in the variable called "pitch". In addition, the output contains
-#'   pitch estimates by separate algorithms included in \code{pitchMethods} and
-#'   a number of other acoustic descriptors:
+#'   stored in the variable called "pitch". If \code{summaryFun = 'extended'},
+#'   the output is a list containing, in addition to the usual results, matrices
+#'   of pitch estimates by separate algorithms included in \code{pitchMethods},
 #'   \describe{\item{duration}{total duration, s}
 #'   \item{duration_noSilence}{duration from the beginning of the first
 #'   non-silent STFT frame to the end of the last non-silent STFT frame, s (NB:
@@ -198,10 +199,8 @@
 #'   sone, corresponding to the chosen SPL_measured - see
 #'   \code{\link{getLoudness}}} \item{peakFreq}{the frequency with maximum
 #'   spectral power (Hz)} \item{pitch}{post-processed pitch contour based on all
-#'   F0 estimates} \item{pitchAutocor}{autocorrelation estimate of F0}
-#'   \item{pitchCep}{cepstral estimate of F0} \item{pitchSpec}{BaNa estimate of
-#'   F0} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and 75th
-#'   quantiles of the spectrum of voiced frames (Hz)} \item{roughness}{the
+#'   F0 estimates} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and
+#'   75th quantiles of the spectrum of voiced frames (Hz)} \item{roughness}{the
 #'   amount of amplitude modulation, see modulationSpectrum}
 #'   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
 #'   spectral moment (Hz)} \item{specSlope}{the slope of linear regression fit

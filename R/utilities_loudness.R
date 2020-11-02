@@ -160,7 +160,7 @@ iso226 = function(phon, nBarks = 22) {
 #' @param phon loudness level, phon (vectorized)
 #' @keywords internal
 #' @examples
-#' phon = 0:120
+#' phon = seq(0, 120, 2)
 #' sone = soundgen:::phon2sone(phon)
 #' plot(phon, sone, type = 'b')
 #' plot(phon, log2(sone), type = 'b')
@@ -172,9 +172,6 @@ phon2sone = function(phon) {
   sone[idx2] = 2 ^ ((phon[idx2] - 40) / 10)
   return(sone)
 }
-# idx_phon = seq(0, 140, 10)
-# idx_sone = phon2sone(idx_phon)
-# plot(idx_phon, idx_sone, type = 'b')
 
 
 #' Spread spectrum
