@@ -58,8 +58,6 @@
 #'
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
-#' @param from,to if NULL (default), analyzes the whole sound, otherwise
-#'   from...to (s)
 #' @param silence (0 to 1 as proportion of max amplitude) frames with RMS
 #'   amplitude below \code{silence * max_ampl adjusted by scale} are not
 #'   analyzed at all.

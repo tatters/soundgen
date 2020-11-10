@@ -79,7 +79,10 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file)}
 
-\item{from, to}{if NULL (default), analyzes the whole sound, otherwise
+\item{from}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
+
+\item{to}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange

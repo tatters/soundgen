@@ -20,6 +20,8 @@
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
 #'   numeric vector, rather than an audio file)
+#' @param from,to if NULL (default), analyzes the whole sound, otherwise
+#'   from...to (s)
 #' @param dynamicRange dynamic range, dB. All values more than one dynamicRange
 #'   under maximum are treated as zero
 #' @param windowLength length of FFT window, ms
@@ -164,6 +166,8 @@
 spectrogram = function(
   x,
   samplingRate = NULL,
+  from = NULL,
+  to = NULL,
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
@@ -254,6 +258,27 @@ spectrogram = function(
       }
     }
   }
+
+  # from...to selection
+  ls = length(sound)
+  if (any(is.numeric(c(from, to)))) {
+    if (!is.numeric(from)) {
+      from_points = 1
+    } else {
+      from_points = max(1, round(from * samplingRate))
+    }
+    if (!is.numeric(to)) {
+      to_points = ls
+    }  else {
+      to_points = min(ls, round(to * samplingRate))
+    }
+    sound = sound[from_points:to_points]
+    internal$timeShift = from_points / samplingRate
+    ls = length(sound)
+  } else {
+    internal$timeShift = 0
+  }
+  duration = ls / samplingRate
 
   # Get a bank of windowed frames
   if (is.null(internal$timeShift)) internal$timeShift = 0
@@ -721,7 +746,7 @@ getFrameBank = function(sound,
                         filter = NULL,
                         padWithSilence = FALSE,
                         timeShift = NULL) {
-  # # normalize to range from no less than -1 to no more than +1
+  # normalize to range from no less than -1 to no more than +1
   if (!is.numeric(sound)) return(NA)
   sound[is.na(sound)] = 0
   if (normalize & any(sound != 0)) {

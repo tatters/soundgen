@@ -7,6 +7,8 @@
 spectrogram(
   x,
   samplingRate = NULL,
+  from = NULL,
+  to = NULL,
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
@@ -51,6 +53,9 @@ samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file)}
+
+\item{from, to}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
