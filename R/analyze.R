@@ -257,6 +257,7 @@
 #'   priorMean = NA,  # no prior info at all
 #'   pitchDom = list(col = 'red', domThres = .25),
 #'   pitchPlot = list(col = 'black', lty = 3, lwd = 3),
+#'   extraContour = list(x = 'peakFreq', type = 'b', col = 'brown'),
 #'   osc = 'dB', heights = c(2, 1))
 #'
 #' # Different options for summarizing the output
@@ -383,6 +384,7 @@ analyze = function(
   osc = 'linear',
   osc_dB = NULL,
   pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),
+  extraContour = NULL,
   ylim = NULL,
   xlab = 'Time',
   ylab = 'Frequency',
@@ -485,13 +487,7 @@ analyze = function(
   # Check parameters supplied as lists
   pitchDom_plotPars = pitchAutocor_plotPars =
     pitchCep_plotPars = pitchSpec_plotPars =
-    pitchHps_plotPars = harmHeight_plotPars =
-    NULL  # otherwise CMD check complains
-  if (!is.null(harmHeight$plotPars)) {
-    harm_plotPars = harmHeight$plotPars
-  } else {
-    harm_plotPars = list()
-  }
+    pitchHps_plotPars = harmHeight_plotPars = NULL  # otherwise CMD check complains
   # Here we specify just the names of pars as c('', '').
   # (values are in defaults_analyze)
   parsToValidate = list(
@@ -1124,6 +1120,34 @@ analyze = function(
 
   ## Add pitch contours to the spectrogram
   if (plot) {
+    # extra contour
+    cnt = cnt_plotPars = NULL
+    if (!is.null(extraContour)) {
+      if (is.list(extraContour)) {
+        cnt_name = extraContour[[1]]
+        cnt_plotPars = extraContour[2:length(extraContour)]
+      } else {
+        cnt_name = extraContour
+      }
+      valid_cols = colnames(result)[4:ncol(result)]
+      valid_cols = valid_cols[valid_cols != 'voiced']
+      if (cnt_name %in% valid_cols) {
+        cnt = result[, cnt_name]
+        col_non_Hz = c('ampl, amplVoiced', 'entropy', 'entropyVoiced',
+                       paste0('f', 1:10, '_width'), 'harmEnergy', 'HNR',
+                       'HNR_voiced', 'loudness', 'loudnessVoiced', 'roughness',
+                       'roughnessVoiced', 'specSlope', 'specSlopeVoiced')
+        if (cnt_name %in% col_non_Hz) {
+          # normalize
+          if (is.null(ylim)) ylim = c(0, samplingRate / 2 / 1000)
+          cnt = cnt / max(cnt, na.rm = TRUE) * ylim[2] * 1000
+        }
+      } else {
+        message(paste0('Valid extraContour names are: ',
+                       paste(valid_cols, collapse = ', ')))
+      }
+    }
+
     # we call spectrogram() a second time to get nice silence padding and to add
     # pitch contours internally in spectrogram() - a hassle, but it only take a
     # few ms, and otherwise it's hard to add pitch contours b/c the y-axis is
@@ -1162,9 +1186,9 @@ analyze = function(
             spec = pitchSpec_plotPars,
             hps = pitchHps_plotPars
           ),
+          extraContour = cnt,
+          extraContour_pars = cnt_plotPars,
           pitchPlot = pitchPlot,
-          extraContour = result$harmHeight,
-          extraContour_pars = harmHeight_plotPars,
           priorMean = priorMean,
           priorSD = priorSD,
           pitchFloor = pitchFloor,
@@ -1176,7 +1200,8 @@ analyze = function(
           ylab = ylab,
           main = plotname,
           timeShift = timeShift
-        ))), extraSpecPars))
+        ))
+    ), extraSpecPars))
   }
   if (is.character(savePath)) {
     dev.off()
@@ -1311,6 +1336,7 @@ analyzeFolder = function(
   showLegend = TRUE,
   savePlots = FALSE,
   pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),
+  extraContour = NULL,
   ylim = NULL,
   xlab = 'Time, ms',
   ylab = 'kHz',
@@ -1350,6 +1376,7 @@ analyzeFolder = function(
   myPars = myPars[1:(length(myPars)-1)]
   # add plot pars correctly, without flattening the lists
   myPars$pitchPlot = pitchPlot
+  myPars$extraContour = extraContour
   if (savePlots) myPars$savePath = myfolder
 
   # add pitchManual, if any

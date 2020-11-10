@@ -1013,7 +1013,7 @@ addPitchCands = function(pitchCands,
     ), pars_pitchContour))
   }
 
-  # Add another contour such as harmHeight
+  # Add an extra contour such as harmHeight
   if (!is.null(extraContour)) {
     if (any(!is.na(extraContour)) & length(timestamps) > 0) {
       if (is.null(extraContour_pars$type)) extraContour_pars$type = 'l'
@@ -1021,7 +1021,7 @@ addPitchCands = function(pitchCands,
         if (is.null(extraContour_pars$lty)) extraContour_pars$lty = 2
         if (is.null(extraContour_pars$lwd)) extraContour_pars$lwd = 2
         if (is.null(extraContour_pars$col)) extraContour_pars$col = 'pink'
-        do.call(lines, c(list(x = timestamps, y = extraContour * yScaleCoef),
+        do.call(points, c(list(x = timestamps, y = extraContour * yScaleCoef),
                          extraContour_pars))
       }
     }

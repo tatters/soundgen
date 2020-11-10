@@ -72,6 +72,9 @@
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
 #'   or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
 #'   'cm.colors', etc
+#' @param extraContour a vector of arbitrary length scaled in Hz that will be
+#'   plotted over the spectrogram (eg pitch contour); can also be a list with
+#'   extra graphical parameters such as lwd, col, etc. (see examples)
 #' @param units deprecated
 #' @param xlab,ylab,main,mar,xaxp graphical parameters
 #' @param grid if numeric, adds n = \code{grid} dotted lines per kHz
@@ -147,6 +150,16 @@
 #'   maxPoints = c(1e5, 5e5),  # limit the number of pixels in osc/spec
 #'   output = 'original', ylim = c(0, 6))
 #' nrow(sp) * ncol(sp) / 5e5  # spec downsampled by a factor of ~9
+#'
+#' # Plot some arbitrary contour over the spectrogram (simply calling lines()
+#' # will not work if osc = TRUE b/c the plot layout is modified)
+#' s = soundgen()
+#' an = analyze(s, 16000, plot = FALSE)
+#' spectrogram(s, 16000, extraContour = an$dom, ylim = c(0, 2))
+#' # For values that are not in Hz, normalize any way you like
+#' spectrogram(s, 16000, ylim = c(0, 2), extraContour = list(
+#'   x = an$loudness / max(an$loudness, na.rm = TRUE) * 2000, # ylim[2] = 2000 Hz
+#'   type = 'b', pch = 5, lwd = 2, lty = 2, col = 'blue'))
 #' }
 spectrogram = function(
   x,
@@ -177,6 +190,7 @@ spectrogram = function(
   maxPoints = c(1e5, 5e5),
   padWithSilence = TRUE,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
+  extraContour = NULL,
   units = 'deprecated',
   xlab = NULL,
   ylab = NULL,
@@ -504,6 +518,27 @@ spectrogram = function(
     }
     if (!is.null(internal$pitch)) {
       do.call(addPitchCands, c(internal$pitch, list(y_Hz = y_Hz)))
+    }
+
+    # add an extra contour, if any
+    if (!is.null(extraContour)) {
+      extraContour_pars = list()
+      if (is.list(extraContour)) {
+        if (length(extraContour) > 1)
+          extraContour_pars = extraContour[2:length(extraContour)]
+        cnt = extraContour[[1]]
+      } else {
+        cnt = extraContour
+      }
+      # make sure the contour's length = ncol(spectrogram)
+      lc = length(cnt)
+      cnt = approx(x = 1:lc, y = cnt,
+                   xout = seq(1, lc, length.out = length(X)),
+                   na.rm = FALSE)$y  # see ex. in ?approx on handling NAs
+      do.call(addPitchCands, list(
+        extraContour = cnt, extraContour_pars = extraContour_pars,
+        y_Hz = y_Hz, timestamps = X,
+        pitchCands = NA, pitchCert = NA, pitchSource = NA, pitch = NA))
     }
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)

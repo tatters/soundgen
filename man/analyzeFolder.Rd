@@ -56,6 +56,7 @@ analyzeFolder(
   showLegend = TRUE,
   savePlots = FALSE,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3, showPrior = TRUE),
+  extraContour = NULL,
   ylim = NULL,
   xlab = "Time, ms",
   ylab = "kHz",
@@ -248,6 +249,10 @@ osc; linear = on the original scale; dB = in decibels}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{list(type = 'n')} to suppress}
+
+\item{extraContour}{a vector of arbitrary length scaled in Hz that will be
+plotted over the spectrogram (eg pitch contour); can also be a list with
+extra graphical parameters such as lwd, col, etc. (see examples)}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 

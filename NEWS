@@ -1,4 +1,7 @@
           CHANGES IN SOUNDGEN VERSION 1.8.2.9000 [...date...]
+MINOR:
+  * spectrogram(): a new argument "extraContour" for plotting something over the spectrogram
+
 
           CHANGES IN SOUNDGEN VERSION 1.8.2 [17-October-2020]
 NEW FUNCTIONS:

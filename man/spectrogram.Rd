@@ -33,6 +33,7 @@ spectrogram(
   maxPoints = c(1e+05, 5e+05),
   padWithSilence = TRUE,
   colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
+  extraContour = NULL,
   units = "deprecated",
   xlab = NULL,
   ylab = NULL,
@@ -128,6 +129,10 @@ apparent duration doesn't change)}
 or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
 'cm.colors', etc}
 
+\item{extraContour}{a vector of arbitrary length scaled in Hz that will be
+plotted over the spectrogram (eg pitch contour); can also be a list with
+extra graphical parameters such as lwd, col, etc. (see examples)}
+
 \item{units}{deprecated}
 
 \item{xlab, ylab, main, mar, xaxp}{graphical parameters}
@@ -222,6 +227,16 @@ sp = spectrogram('~/Downloads/temp.wav', overlap = 0,
   maxPoints = c(1e5, 5e5),  # limit the number of pixels in osc/spec
   output = 'original', ylim = c(0, 6))
 nrow(sp) * ncol(sp) / 5e5  # spec downsampled by a factor of ~9
+
+# Plot some arbitrary contour over the spectrogram (simply calling lines()
+# will not work if osc = TRUE b/c the plot layout is modified)
+s = soundgen()
+an = analyze(s, 16000, plot = FALSE)
+spectrogram(s, 16000, extraContour = an$dom, ylim = c(0, 2))
+# For values that are not in Hz, normalize any way you like
+spectrogram(s, 16000, ylim = c(0, 2), extraContour = list(
+  x = an$loudness / max(an$loudness, na.rm = TRUE) * 2000, # ylim[2] = 2000 Hz
+  type = 'b', pch = 5, lwd = 2, lty = 2, col = 'blue'))
 }
 }
 \seealso{
