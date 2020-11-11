@@ -169,6 +169,8 @@ phon2sone = function(phon) {
   idx1 = which(phon < 40)
   idx2 = which(phon >= 40)
   sone[idx1] = (phon[idx1] / 40) ^ 2.642
+  # alternative formula http://www.sengpielaudio.com/calculatorSonephon.htm
+  # sone[idx1] = (phon[idx1] / 40) ^ 2.86 - .005
   sone[idx2] = 2 ^ ((phon[idx2] - 40) / 10)
   return(sone)
 }
