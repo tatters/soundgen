@@ -231,19 +231,25 @@ getPrior = function(priorMean,
                     plot = TRUE,
                     pitchCands = NULL,
                     ...) {
-  priorMean_semitones = HzToSemitones(priorMean)
-  shape = priorMean_semitones ^ 2 / priorSD ^ 2
-  rate = priorMean_semitones / priorSD ^ 2
   freqs = seq(HzToSemitones(pitchFloor),
               HzToSemitones(pitchCeiling),
               length.out = len)
-  prior_normalizer = dgamma(
-    freqs,
-    shape = shape,
-    rate = rate
-  )
-  prior_norm_max = max(prior_normalizer)
-  prior = prior_normalizer / prior_norm_max
+  if (is.numeric(priorMean) & is.numeric(priorSD)) {
+    priorMean_semitones = HzToSemitones(priorMean)
+    shape = priorMean_semitones ^ 2 / priorSD ^ 2
+    rate = priorMean_semitones / priorSD ^ 2
+    prior_normalizer = dgamma(
+      freqs,
+      shape = shape,
+      rate = rate
+    )
+    prior_norm_max = max(prior_normalizer)
+    prior = prior_normalizer / prior_norm_max
+  } else {
+    # flat prior
+    prior = rep(1, len)
+  }
+
   out = data.frame(freq = semitonesToHz(freqs),
                    prob = prior)
   if (plot) {
@@ -255,11 +261,16 @@ getPrior = function(priorMean,
     )
   }
   if (!is.null(pitchCands)) {
-    pitchCert_multiplier = dgamma(
-      HzToSemitones(pitchCands),
-      shape = shape,
-      rate = rate
-    ) / prior_norm_max
+    if (is.numeric(priorMean) & is.numeric(priorSD)) {
+      pitchCert_multiplier = dgamma(
+        HzToSemitones(pitchCands),
+        shape = shape,
+        rate = rate
+      ) / prior_norm_max
+    } else {
+      pitchCert_multiplier = matrix(1, nrow = nrow(pitchCands),
+                                    ncol = ncol(pitchCands))
+    }
     invisible(pitchCert_multiplier)
   } else {
     invisible(out)
@@ -500,9 +511,9 @@ harmHeight = function(frame,
 
   # METHOD 1: look for peaks at multiples of f0
   lh_peaks = harmHeight_peaks(frame_dB, pitch, bin, freqs,
-                                  harmThres = harmThres,
-                                  harmTol = harmTol,
-                                  plot = FALSE)
+                              harmThres = harmThres,
+                              harmTol = harmTol,
+                              plot = FALSE)
 
   # METHODS 2 & 3: look for peaks separated by f0
   lh2 = harmHeight_dif(frame_dB, pitch, bin, freqs,

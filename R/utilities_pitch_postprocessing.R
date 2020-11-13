@@ -168,8 +168,11 @@ pathfinder = function(pitchCands,
       snakePlot = snakePlot
     )
   }
-  if (!is.numeric(bestPath) |
-      length(bestPath) != nc) browser()
+  if (!is.numeric(bestPath) | length(bestPath) != nc) {
+    # browser()
+    bestPath = pitchCenterGravity
+  }
+
   return(2 ^ bestPath)
 }
 
@@ -379,14 +382,16 @@ pathfinding_fast = function(pitchCands,
   #
   #   er = try(costPathForward < costPathBackward, silent = TRUE)
   #   if (class(er)[1] == 'try-error' | is.na(er)) browser()
-  if (length(costPathForward) != 1 | length(costPathBackward) != 1) browser()
+  if (length(costPathForward) != 1 | length(costPathBackward) != 1) {
+    # browser()
+    return(NA)
+  }
   if (costPathForward < costPathBackward) {
     bestPath = path
   } else {
     bestPath = rev(path_rev)
   }
-  if (length(bestPath) != nc) browser()
-
+  # if (length(bestPath) != nc) browser()
   return(bestPath)
 }
 
