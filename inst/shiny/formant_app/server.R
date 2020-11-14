@@ -580,7 +580,7 @@ server = function(input, output, session) {
 
   output$specOver = renderPlot({
     if (!is.null(myPars$spec)) {
-      par(mar = c(0.2, 2, 0.5, 2), bg = NA)
+      par(mar = c(0.2, 2, 0.5, 2), bg = 'transparent')
       # bg=NA makes the image transparent
 
       # empty plot to enable hover/click events for the spectrogram underneath
@@ -657,7 +657,7 @@ server = function(input, output, session) {
 
   output$specSlider = renderPlot({
     if (!is.null(myPars$spec)) {
-      par(mar = c(0.2, 2, 0.5, 2), bg = NA)
+      par(mar = c(0.2, 2, 0.5, 2), bg = 'transparent')
       # bg=NA makes the image transparent
 
       if (myPars$cursor == 0) {
