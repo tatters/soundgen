@@ -202,8 +202,8 @@
 #'   amount of amplitude modulation, see modulationSpectrum}
 #'   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
 #'   spectral moment (Hz)} \item{specSlope}{the slope of linear regression fit
-#'   to the spectrum below cutFreq} \item{voiced}{is the current STFT frame
-#'   voiced? TRUE / FALSE}
+#'   to the spectrum below cutFreq (dB/kHz)} \item{voiced}{is the current STFT
+#'   frame voiced? TRUE / FALSE}
 #' }
 #' @export
 #' @examples

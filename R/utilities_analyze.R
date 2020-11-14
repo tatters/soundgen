@@ -64,8 +64,13 @@ analyzeFrame = function(frame, bin, freqs,
   # cutFreq kHz lies between quartile25 and quartile75
   quartile75 = absSpec_cut$freq[min(which(cums >= 0.75 * amplitude))]
 
+  # get spectral slope in dB/kHz
+  absSpec_cut$amp_dB = 20 * log10(absSpec_cut$amp)
+  absSpec_cut$amp_dB = absSpec_cut$amp_dB - max(absSpec_cut$amp_dB)
+  # plot(absSpec_cut$freq, absSpec_cut$amp_dB, type = 'l')
+  specSlope = summary(lm(amp_dB ~ freq, data = absSpec_cut))$coef[2, 1] * 1000
+
   # scale correction for loudness estimation
-  specSlope = summary(lm(amp ~ freq, data = absSpec_cut))$coef[2, 1]
   if (is.numeric(scaleCorrection)) {
     loudness = getLoudnessPerFrame(
       spec = frame * scaleCorrection,

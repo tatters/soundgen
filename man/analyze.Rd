@@ -62,8 +62,8 @@ analyze(
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3, showPrior = TRUE),
   extraContour = NULL,
   ylim = NULL,
-  xlab = "Time",
-  ylab = "Frequency",
+  xlab = NULL,
+  ylab = NULL,
   main = NULL,
   width = 900,
   height = 500,
@@ -299,8 +299,8 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
   amount of amplitude modulation, see modulationSpectrum}
   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
   spectral moment (Hz)} \item{specSlope}{the slope of linear regression fit
-  to the spectrum below cutFreq} \item{voiced}{is the current STFT frame
-  voiced? TRUE / FALSE}
+  to the spectrum below cutFreq (dB/kHz)} \item{voiced}{is the current STFT
+  frame voiced? TRUE / FALSE}
 }
 }
 \description{

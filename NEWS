@@ -2,6 +2,7 @@
 MINOR:
   * spectrogram(), analyze(), analyzeFolder(): a new argument "extraContour" for plotting something over the spectrogram
   * spectrogram(): new arguments "from" and "to" for plotting a part of a long sound
+  * analyze(): spectral slope (specSlope) is returned in dB/kHz
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.2 [17-October-2020]
