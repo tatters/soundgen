@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: preserve freq zoom across files in queue; check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -218,12 +218,12 @@ server = function(input, output, session) {
       myPars$myAudio = myPars$myAudio / max(abs(myPars$myAudio)) * myPars$maxAmpl
     }
     myPars$nyquist = myPars$samplingRate / 2 / 1000
-    updateSliderInput(session, 'spec_ylim',
-                      value = c(0, min(def_form['spec_ylim', 'default'], myPars$nyquist)),
-                      max = myPars$nyquist)
-    updateSliderInput(session, 'spectrum_xlim',
-                      value = c(0, min(def_form['spectrum_xlim', 'default'], myPars$nyquist)),
-                      max = myPars$nyquist)
+    # updateSliderInput(session, 'spec_ylim',
+    #                   value = c(0, min(def_form['spec_ylim', 'default'], myPars$nyquist)),
+    #                   max = myPars$nyquist)
+    # updateSliderInput(session, 'spectrum_xlim',
+    #                   value = c(0, min(def_form['spectrum_xlim', 'default'], myPars$nyquist)),
+    #                   max = myPars$nyquist)
     myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
     myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
     myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
