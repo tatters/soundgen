@@ -3,6 +3,10 @@ MINOR:
   * spectrogram(), analyze(), analyzeFolder(): a new argument "extraContour" for plotting something over the spectrogram
   * spectrogram(): new arguments "from" and "to" for plotting a part of a long sound
   * analyze(): spectral slope (specSlope) is returned in dB/kHz
+  * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue
+
+BUGS FIXED:
+  * formant_app(): fixed occasional crashing when scrolling with left/right buttons
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.2 [17-October-2020]

@@ -1099,6 +1099,8 @@ server = function(input, output, session) {
     newLeft = max(0, midpoint - halfRan)
     newRight = min(myPars$dur, midpoint + halfRan)
     myPars$spec_xlim = c(newLeft, newRight)
+    # use user-set time zoom in the next audio
+    if (!is.null(myPars$spec_xlim)) myPars$initDur = diff(myPars$spec_xlim)
   }
   observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
   observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))

@@ -22,9 +22,9 @@ server = function(input, output, session) {
   options(shiny.maxRequestSize = 30 * 1024 ^ 2)
 
   myPars = reactiveValues(
-    zoomFactor = 2,     # zoom buttons change time zoom by this factor
+    zoomFactor = 2,         # zoom buttons change time zoom by this factor
     zoomFactor_freq = 1.5,  # same for frequency
-    print = FALSE,       # if TRUE, some functions print a meassage to the console when called
+    print = FALSE,          # if TRUE, some functions print a meassage to the console when called
     drawSpec = TRUE,
     shinyTip_show = 1000,      # delay until showing a tip (ms)
     shinyTip_hide = 0,         # delay until hiding a tip (ms)
@@ -483,7 +483,7 @@ server = function(input, output, session) {
     return(out)
   }
 
-  observe({
+  observeEvent(c(myPars$spec, myPars$analyzedUpTo), {
     if (!is.null(myPars$spec)) {
       if (is.null(myPars$analyzedUpTo)) {
         myPars$regionToAnalyze = myPars$spec_xlim
@@ -491,6 +491,17 @@ server = function(input, output, session) {
       } else {
         if (myPars$analyzedUpTo < myPars$spec_xlim[2]) {
           myPars$regionToAnalyze = c(myPars$analyzedUpTo, myPars$spec_xlim[2])
+          if (diff(myPars$regionToAnalyze) < input$windowLength_lpc) {
+            # too little new audio to analyze - extend
+            myPars$regionToAnalyze[2] = min(
+              myPars$regionToAnalyze[2] + input$windowLength_lpc, myPars$dur
+            )
+            if (diff(myPars$regionToAnalyze) < input$windowLength_lpc) {
+              myPars$regionToAnalyze[1] = max(
+                myPars$regionToAnalyze[1] - input$windowLength_lpc, 0
+              )
+            }
+          }
           call = TRUE
         } else {
           call = FALSE
@@ -1127,6 +1138,7 @@ server = function(input, output, session) {
       } else {
         coeffs = NULL
       }
+
       myPars$temp_anal = analyze(
         myPars$myAudio,
         samplingRate = myPars$samplingRate,
@@ -1392,7 +1404,7 @@ server = function(input, output, session) {
   })
 
   changeZoom = function(coef, toCursor = FALSE) {
-    # intelligent zoom-in a la Audacity: midpoint moves closer to seletion/cursor
+    # intelligent zoom-in a la Audacity: midpoint moves closer to selection/cursor
     if (!is.null(myPars$cursor) & toCursor) {
       if (!is.null(myPars$spectrogram_brush)) {
         midpoint = 3/4 * mean(c(myPars$spectrogram_brush$xmin,
@@ -1413,6 +1425,8 @@ server = function(input, output, session) {
     newLeft = max(0, midpoint - halfRan)
     newRight = min(myPars$dur, midpoint + halfRan)
     myPars$spec_xlim = c(newLeft, newRight)
+    # use user-set time zoom in the next audio
+    if (!is.null(myPars$spec_xlim)) myPars$initDur = diff(myPars$spec_xlim)
   }
   observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
   observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
