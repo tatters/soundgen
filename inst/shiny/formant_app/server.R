@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: preserve freq zoom across files in queue; check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -483,7 +483,7 @@ server = function(input, output, session) {
     return(out)
   }
 
-  observeEvent(c(myPars$spec, myPars$analyzedUpTo), {
+  observeEvent(c(myPars$spec, myPars$spec_xlim, myPars$analyzedUpTo), {
     if (!is.null(myPars$spec)) {
       if (is.null(myPars$analyzedUpTo)) {
         myPars$regionToAnalyze = myPars$spec_xlim
@@ -1291,7 +1291,9 @@ server = function(input, output, session) {
   ## Buttons for operations with selection
   startPlay = function() {
     if (!is.null(myPars$myAudio)) {
-      if (!is.null(myPars$spectrogram_brush)) {
+      if (!is.null(myPars$spectrogram_brush) &&
+          (myPars$spectrogram_brush$xmax - myPars$spectrogram_brush$xmin > 100)) {
+        # at least 100 ms selected
         myPars$play$from = myPars$spectrogram_brush$xmin / 1000
         myPars$play$to = myPars$spectrogram_brush$xmax / 1000
       } else {

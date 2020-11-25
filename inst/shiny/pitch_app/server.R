@@ -28,7 +28,7 @@ server = function(input, output, session) {
     pitchCert_mult = NULL,     # old pitch prior
     initDur = 1500,            # initial duration to plot (ms)
     play = list(on = FALSE),
-    debugQn = FALSE            # for debugging - click "?" to step into the code
+    debugQn = TRUE            # for debugging - click "?" to step into the code
   )
 
 
@@ -665,7 +665,7 @@ server = function(input, output, session) {
         unvoiced_frames = (1:ncol(myPars$pitchCands$freq)) [-voiced_frames]
         # make sure myPars$pitch is the same length as ncol(pitchCands$freq)
         if (length(myPars$pitch) != ncol(myPars$pitchCands$freq)) {
-          myPars$pitch = upsamplePitchContour(
+          myPars$pitch = soundgen:::upsamplePitchContour(
             pitch = myPars$pitch,
             len = ncol(myPars$pitchCands$freq),
             plot = FALSE)
@@ -805,12 +805,11 @@ server = function(input, output, session) {
   ## Buttons for operations with selection
   startPlay = function() {
     if (!is.null(myPars$myAudio)) {
-      if (!is.null(myPars$spectrogram_brush)) {
+      if (!is.null(myPars$spectrogram_brush) &&
+          (myPars$spectrogram_brush$xmax - myPars$spectrogram_brush$xmin > 100)) {
+        # at least 100 ms selected
         myPars$play$from = myPars$spectrogram_brush$xmin / 1000
         myPars$play$to = myPars$spectrogram_brush$xmax / 1000
-      } else if (!is.null(myPars$currentAnn)) {
-        myPars$play$from = myPars$ann$from[myPars$currentAnn] / 1000
-        myPars$play$to = myPars$ann$to[myPars$currentAnn] / 1000
       } else {
         myPars$play$from = myPars$cursor / 1000 # myPars$spec_xlim[1] / 1000
         myPars$play$to = myPars$spec_xlim[2] / 1000
