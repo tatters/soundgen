@@ -644,7 +644,7 @@ harmHeight_dif = function(frame_dB,
   sel_bins = min(round(pitch_bins * harmPerSel), length(frame_dB) / 2)
   harmTol_bins = round(pitch_bins * harmTol)  # tolerated deviance in bins
   i = pitch_bins  # start at f0
-  pitch_bin_cep = pitch_bin_peaks = c()
+  pitch_bin_cep = pitch_bin_peaks = vector('logical', 0)
   while (i + sel_bins < length(frame_dB)) {
     end = i + sel_bins - 1
 
