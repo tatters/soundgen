@@ -56,6 +56,8 @@
 #' @param col,xlab,ylab,main main plotting parameters
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
+#' @param maxPoints the maximum number of "pixels" in the oscillogram and
+#'   envelope (for quick plotting of long audio files)
 #' @param ... other graphical parameters passed to graphics::plot
 #' @return If \code{summary = TRUE}, returns only a summary of the number and
 #'   spacing of syllables and vocal bursts. If \code{summary = FALSE}, returns a
@@ -68,8 +70,8 @@
 #'   noise = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
 #'   rolloff_noise = -8, amplGlobal = c(0, -20),
 #'   dynamicRange = 120)
-#' spectrogram(sound, samplingRate = 16000, osc = TRUE)
-#'  # playme(sound, samplingRate = 16000)
+#' # spectrogram(sound, samplingRate = 16000, osc = TRUE)
+#' # playme(sound, samplingRate = 16000)
 #'
 #' s = segment(sound, samplingRate = 16000, plot = TRUE)
 #' # accept quicker and quieter syllables
@@ -121,6 +123,7 @@ segment = function(x,
                    height = 500,
                    units = 'px',
                    res = NA,
+                   maxPoints = 1e5,
                    sylPlot = list(
                      lty = 1,
                      lwd = 2,
@@ -267,8 +270,17 @@ segment = function(x,
     layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(2, 1))
     par(mar = c(op$mar[1:2], 0, op$mar[4]), xaxt = 's', yaxt = 's')
     xlim = c(0, len / samplingRate * 1000)
-    plot(x = 1:len / samplingRate * 1000,
-         y = sound, type = 'l', xlim = xlim,
+
+    # downsample long sounds to avoid delays when plotting
+    if (len > maxPoints) {
+      idx_sound = seq(1, len, by = ceiling(len / maxPoints))
+    } else {
+      idx_sound = 1:len
+    }
+
+    # plot osc
+    plot(x = idx_sound / samplingRate * 1000,
+         y = sound[idx_sound], type = 'l', xlim = xlim,
          axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
          xlab = xlab, ylab = '', main = '', ...)
     box()
@@ -277,8 +289,19 @@ segment = function(x,
     axis(side = 1, at = time_location, labels = time_labels, ...)
     abline(h = 0, lty = 2)
     par(mar = c(0, op$mar[2:4]), xaxt = 'n', yaxt = 's')
-    plot(x = envelope$time, y = envelope$value, type = 'l',
-         xlim =xlim, col = col,
+
+    # downsample long envelopes
+    nr_env = nrow(envelope)
+    if (nr_env > maxPoints) {
+      idx_env = seq(1, nr_env, by = ceiling(nr_env / maxPoints))
+    } else {
+      idx_env = 1:nr_env
+    }
+
+    # plot envelope
+    plot(x = envelope$time[idx_env],
+         y = envelope$value[idx_env],
+         type = 'l', xlim = xlim, col = col,
          xaxs = "i", xlab = '', ylab = ylab, main = main, ...)
     points(bursts, col = burstPlot$col, cex = burstPlot$cex, pch = burstPlot$pch)
     for (s in 1:nrow(syllables)) {

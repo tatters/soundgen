@@ -437,7 +437,7 @@ spectrogram = function(
     if (osc %in% c('linear', 'dB')) {
       # For long files, downsample before plotting
       if (!is.null(maxPoints) && maxPoints[1] < ls) {
-        myseq = round(seq(1, ls, by = ls / maxPoints[1]))
+        myseq = seq(1, ls, by = ceiling(ls / maxPoints[1]))
         sound = sound[myseq]
         ls = length(myseq)
       }
@@ -510,8 +510,8 @@ spectrogram = function(
       message(paste('Plotting with reduced resolution;',
                     'increase maxPoints or set to NULL to override'))
       downs = sqrt(lxy / maxPoints[2])
-      seqx = round(seq(1, lx, length.out = lx / downs))
-      seqy = round(seq(1, ly, length.out = ly / downs))
+      seqx = seq(1, lx, length.out = ceiling(lx / downs))
+      seqy = seq(1, ly, length.out = ceiling(ly / downs))
       X = X[seqx]
       Y = Y[seqy]
       Z1_plot = Z1[seqx, seqy]
@@ -976,7 +976,7 @@ osc = function(
     # For long files, downsample before plotting
     l = length(sound)
     if (!is.null(maxPoints) && maxPoints < l) {
-      myseq = round(seq(1, l, by = l / maxPoints))
+      myseq = seq(1, l, by = ceiling(l / maxPoints))
       maxPoints = length(myseq)
       sound_plot = sound[myseq]
     } else {

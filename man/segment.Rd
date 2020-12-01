@@ -30,6 +30,7 @@ segment(
   height = 500,
   units = "px",
   res = NA,
+  maxPoints = 1e+05,
   sylPlot = list(lty = 1, lwd = 2, col = "blue"),
   burstPlot = list(pch = 8, cex = 3, col = "red"),
   ...
@@ -97,6 +98,9 @@ to NA}
 \item{width, height, units, res}{parameters passed to
 \code{\link[grDevices]{png}} if the plot is saved}
 
+\item{maxPoints}{the maximum number of "pixels" in the oscillogram and
+envelope (for quick plotting of long audio files)}
+
 \item{sylPlot}{a list of graphical parameters for displaying the syllables}
 
 \item{burstPlot}{a list of graphical parameters for displaying the bursts}
@@ -132,8 +136,8 @@ sound = soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
   noise = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
   rolloff_noise = -8, amplGlobal = c(0, -20),
   dynamicRange = 120)
-spectrogram(sound, samplingRate = 16000, osc = TRUE)
- # playme(sound, samplingRate = 16000)
+# spectrogram(sound, samplingRate = 16000, osc = TRUE)
+# playme(sound, samplingRate = 16000)
 
 s = segment(sound, samplingRate = 16000, plot = TRUE)
 # accept quicker and quieter syllables
