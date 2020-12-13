@@ -858,3 +858,10 @@ segment = function(
 
   invisible(output)
 }
+
+
+#' Segment folder
+#' @param ... any input parameters
+segmentFolder = function(...) {
+  message('segmentFolder() is deprecated; please use segment() instead')
+}
