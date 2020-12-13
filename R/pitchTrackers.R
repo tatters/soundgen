@@ -53,7 +53,7 @@ getDom = function(frame,
     parabCor = parabPeakInterpol(threePoints)
     dom = freqs[idx_peak] + bin * parabCor$p
     dom_ampl = 10 ^ parabCor$ampl_p
-    if (dom_ampl > 2) browser()
+    if (dom_ampl > 1) dom_ampl = 1  # cap at 1
   } else {
     dom = freqs[idx_peak]
     dom_ampl = frame[idx_peak]

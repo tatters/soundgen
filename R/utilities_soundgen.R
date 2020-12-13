@@ -791,3 +791,186 @@ objectToString = function(x) {
   }
   return(cp)
 }
+
+
+
+#' Reverb & echo
+#'
+#' Add reverberation and/or echo to a sound. Algorithm for reverb: add
+#' time-shifted copies of the signal weighted by a decay function, which is
+#' analogous to convoluting the input with a parametric model of some
+#' hypothetical impulse response function. In simple terms: we specify how much
+#' and when the sound rebounds back (as from a wall) and add these time-shifted
+#' copies to the original, optionally with some spectral filtering.
+#' @inheritParams spectrogram
+#' @param len (optional) the length of input vector
+#' @param filter (optional) a spectral filter to apply to the created reverb and
+#'   echo (see \code{addFormants} for acceptable formats)
+#' @param echoDelay the delay at which the echo appears, ms
+#' @param echoLevel the rate at which the echo weakens at each repetition, dB
+#' @param reverbDelay the time of maximum reverb density, ms
+#' @param reverbSpread standard deviation of reverb spread around time \code{reverbDelay}, ms
+#' @param reverbLevel the maximum amplitude of reverb, dB below input
+#' @param reverbDensity the number of echos or "voices" added
+#' @param reverbType not yet implemented
+#' @param dynamicRange the precision with which the reverb and echo are calculated, dB
+#' @export
+#' @examples
+#' s = soundgen()
+#' s_rev = reverb(s, 16000)
+#' # playme(s_rev)
+#'
+#' \dontrun{
+#' # double echo, no reverb
+#' s1 = reverb(s, samplingRate = 16000, reverbLevel = NULL,
+#'             echoDelay = c(250, 800), echoLevel = c(-15, -25))
+#' # playme(s1)
+#' # spectrogram(s1, 16000, osc = TRUE, ylim = c(0, 4))
+#'
+#' # only reverb (indoors)
+#' s2 = reverb(s, samplingRate = 16000, echoDelay = NULL,
+#'             reverbDelay = 70, reverbSpread = 130,
+#'             reverbLevel = -20, reverbDensity = 20)
+#' # playme(s2)
+#' # spectrogram(s2, 16000, osc = TRUE, ylim = c(0, 4))
+#'
+#' # reverb (caves)
+#' s3 = reverb(s, samplingRate = 16000, echoDelay = NULL,
+#'             reverbDelay = 600, reverbSpread = 1500,
+#'             reverbLevel = -10, reverbDensity = 100)
+#' # playme(s3)
+#' # spectrogram(s3, 16000, osc = TRUE, ylim = c(0, 4))
+#'
+#' # both echo and reverb with high frequencies emphasized
+#' s4 = reverb(s, samplingRate = 16000,
+#'             echoDelay = 250, echoLevel = -20,
+#'             reverbDelay = 70, reverbSpread = 220,
+#'             reverbLevel = -35, reverbDensity = 50,
+#'             filter = list(formants = NULL, lipRad = 3))
+#' # playme(s4)
+#' # spectrogram(s4, 16000, osc = TRUE, ylim = c(0, 4))
+#' }
+reverb = function(x,
+                  samplingRate,
+                  len = NULL,
+                  echoDelay = 200,
+                  echoLevel = -20,
+                  reverbDelay = 70,
+                  reverbSpread = 130,
+                  reverbLevel = -25,
+                  reverbDensity = 50,
+                  reverbType = 'gaussian',
+                  filter = list(),
+                  dynamicRange = 80,
+                  output = c('audio', 'detailed')[1]) {
+  if (is.null(len)) len = length(x)
+
+  ## reverb
+  if (is.numeric(reverbDelay) & is.numeric(reverbLevel)) {
+    if (reverbType == 'gaussian') {
+      # Gaussian over 3 SD
+      rvb_len_ms = reverbDelay + 3 * reverbSpread
+      nFr_rvb = round(rvb_len_ms * samplingRate / 1000)
+      win = dnorm(1:nFr_rvb,
+                  mean = reverbDelay * samplingRate / 1000,
+                  sd = reverbSpread * samplingRate / 1000)
+      win = win / max(win) * dynamicRange - dynamicRange + reverbLevel
+      idx_keep = sample(1:nFr_rvb, size = min(nFr_rvb, reverbDensity))
+      win = 10 ^ (win / 20)
+      win[-idx_keep] = 0
+      # plot(win, type = 'l')
+    } else {
+      stop("Only reverbType = 'gaussian' has been implemented so far")
+      # exponential decay: halves (-6 dB) every reverbDelay
+      n_halves = min(4, round((dynamicRange + reverbLevel) / 6))
+      rvb_len_ms = n_halves * reverbDelay
+      nFr_rvb = ceiling(rvb_len_ms * samplingRate / 1000)
+      len_halflife = ceiling(reverbDelay * samplingRate / 1000)
+      reverbLevel_lin = 10 ^ (reverbLevel / 20)
+      win = 2 ^ (-(1:nFr_rvb) / len_halflife) * reverbLevel_lin
+      # plot(win, type = 'l')
+
+      # add some noise
+      if (FALSE) {
+        # rvb_wiggle = getRandomWalk(len = nFr_rvb,
+        #   rw_range = reverbSpread * reverbLevel_lin * 2) - reverbSpread * reverbLevel_lin
+        lw = rvb_len_ms / 2  # relatively smooth wiggle (1 value per 2 ms)
+        # sd_w = seq(reverbSpread, reverbSpread / n_halves, length.out = lw) * win[1]
+        rvb_wiggle = rnorm(lw, mean = 0, sd = sd_w)
+        rvb_wiggle = approx(rvb_wiggle, n = nFr_rvb)$y
+        # plot(rvb_wiggle, type = 'l')
+        win = win + rvb_wiggle
+        # plot(win, type = 'l')
+      }
+    }
+
+    # create reverb by adding up time-shifted signal weighted by decay window
+    rvb = rep(0, len + nFr_rvb - 1)
+    for (i in idx_keep) {
+      idx_i = i:(i + len - 1)
+      rvb[idx_i] = rvb[idx_i] + x * win[i]
+    }
+    # rvb = rvb / max(abs(rvb)) * 10 ^ (reverbLevel / 20)  # ideally get win on the correct scale from the start to avoid this step
+    # playme(rvb)
+    # spectrogram(rvb, 16000, ylim = c(0, 4), osc = TRUE)
+    # rvb = rvb_pad[1:len]  # range(rvb)
+  } else {
+    rvb = 0
+  }
+
+
+  ## echo
+  if (is.numeric(echoLevel) && echoLevel > (-dynamicRange) & any(echoDelay > 0)) {
+    le = length(echoDelay)
+    if (le > 1 & length(echoLevel) == 1) echoLevel = rep(echoLevel, le)
+    echo = NULL
+    for (e in 1:le) {
+      nFr_echo = dynamicRange / (-echoLevel[e])
+      step_echo = ceiling(echoDelay[e] * samplingRate / 1000)
+      echo_e = rep(0, len + nFr_echo * step_echo - 1)
+      for (i in 1:nFr_echo) {
+        idx_start = i * step_echo
+        idx_i = idx_start:(idx_start + len - 1)
+        echo_e[idx_i] = echo_e[idx_i] + x * 10 ^ (echoLevel[e] * i / 20)
+      }
+      if (is.null(echo)) {
+        echo = echo_e
+      } else {
+        echo = addVectors(echo, echo_e, normalize = FALSE)
+      }
+    }
+    # playme(echo)
+  } else {
+    echo = 0
+  }
+
+  effect = addVectors(rvb, echo, normalize = FALSE)
+  if (length(filter) > 1) {
+    scale = max(effect)
+    rvb = do.call(addFormants, c(list(
+      sound = effect, samplingRate = samplingRate,
+      normalize = TRUE),
+      filter)
+    ) * scale
+    # playme(effect)
+    # spectrogram(effect, 16000, ylim = c(0, 4), osc = TRUE)
+  }
+
+  out = addVectors(x, effect)
+  # playme(out)
+  # spectrogram(out, 16000, ylim = c(0, 4), osc = TRUE)
+
+  if (output == 'audio') {
+    result = out
+  } else if (output == 'detailed') {
+    result = list(
+      rvb_win = win,
+      rvb = rvb,
+      echo = echo,
+      effect = effect,
+      audio = out
+    )
+  }
+  invisible(result)
+}
+

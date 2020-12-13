@@ -3,7 +3,7 @@
 #' Optimize parameters for acoustic analysis
 #'
 #' This customized wrapper for \code{\link[stats]{optim}} attempts to optimize the
-#' parameters of \code{\link{segmentFolder}} or \code{\link{analyzeFolder}} by
+#' parameters of \code{\link{segment}} or \code{\link{analyzeFolder}} by
 #' comparing the results with a manually annotated "key". This optimization
 #' function uses a single measurement per audio file (e.g., median pitch or the
 #' number of syllables). For other purposes, you may want to adapt the
@@ -11,7 +11,7 @@
 #' syllables, their median length, frame-by-frame pitch values, or any other
 #' characteristic that you want to optimize for. The general idea remains the
 #' same, however: we want to tune function parameters to fit our type of audio
-#' and research priorities. The default settings of \code{\link{segmentFolder}}
+#' and research priorities. The default settings of \code{\link{segment}}
 #' and \code{\link{analyzeFolder}} have been optimized for human non-linguistic
 #' vocalizations.
 #'
@@ -20,7 +20,7 @@
 #' convergence. Adapt the code to enforce suitable constraints, depending
 #' on your data.
 #' @param myfolder path to where the .wav files live
-#' @param myfun the function being optimized: either 'segmentFolder' or
+#' @param myfun the function being optimized: either 'segment' or
 #'   'analyzeFolder' (in quotes)
 #' @param key a vector containing the "correct" measurement that we are aiming
 #'   to reproduce
@@ -70,7 +70,7 @@
 #' # Run optimization loop several times with random initial values
 #' # to check convergence
 #' # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
-#' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = key,
+#' res = optimizePars(myfolder = myfolder, myfun = 'segment', key = key,
 #'   pars = c('shortestSyl', 'shortestPause', 'sylThres'),
 #'   fitnessPar = 'nBursts',
 #'   nIter = 3, control = list(maxit = 50, reltol = .01, trace = 0))
@@ -81,13 +81,13 @@
 #'   plot(res[, c], res[, 1], main = colnames(res)[c])
 #' }
 #' pars = as.list(res[1, 2:ncol(res)])  # top candidate (best pars)
-#' s = do.call(segmentFolder, c(myfolder, pars))  # segment with best pars
+#' s = do.call(segment, c(myfolder, pars))  # segment with best pars
 #' cor(key, as.numeric(s[, fitnessPar]))
 #' boxplot(as.numeric(s[, fitnessPar]) ~ as.integer(key), xlab='key')
 #' abline(a=0, b=1, col='red')
 #'
 #' # Try a grid with particular parameter values instead of formal optimization
-#' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_manual,
+#' res = optimizePars(myfolder = myfolder, myfun = 'segment', key = segment_manual,
 #'   pars = c('shortestSyl', 'shortestPause'),
 #'   fitnessPar = 'nBursts',
 #'   mygrid = expand.grid(shortestSyl = c(30, 40),

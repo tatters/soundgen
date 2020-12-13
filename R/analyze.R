@@ -1395,10 +1395,16 @@ analyzeFolder = function(
         warnAboutResetSummary = TRUE
       }
     }
-    result[[i]] = do.call(analyze, c(filenames[i],
-                                     myPars,
-                                     list(pitchManual = pitch_file),
-                                     ...))
+    temp_anal = try(do.call(analyze, c(filenames[i],
+                                       myPars,
+                                       list(pitchManual = pitch_file),
+                                       ...)))
+    if (class(result) == 'try-error') {
+      warning(paste('Failed to analyze file', filenames_base[i]))
+      next
+    } else {
+      result[[i]] = temp_anal
+    }
     if (verbose) {
       reportTime(i = i, nIter = length(filenames),
                  time_start = time_start, jobs = filesizes)
@@ -1434,3 +1440,5 @@ analyzeFolder = function(
 
   invisible(output)
 }
+
+

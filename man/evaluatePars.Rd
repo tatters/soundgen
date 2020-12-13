@@ -23,7 +23,7 @@ evaluatePars(
 \item{pars}{names of arguments to \code{myfun} that should be
 optimized}
 
-\item{myfun}{the function being optimized: either 'segmentFolder' or
+\item{myfun}{the function being optimized: either 'segment' or
 'analyzeFolder' (in quotes)}
 
 \item{bounds}{a list setting the lower and upper boundaries for possible

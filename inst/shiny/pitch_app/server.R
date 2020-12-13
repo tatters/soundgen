@@ -646,10 +646,10 @@ server = function(input, output, session) {
         } else {
           # some changes in terms of syllable structure - update the syllables
           # that changed
-          a1 = myPars$voicedSegments_old
-          a2 = myPars$voicedSegments
-          a1$included_a1 = TRUE
-          a2$included_a2 = TRUE
+          a1 = myPars$voicedSegments_old  # may be empty
+          a2 = myPars$voicedSegments  # may be empty
+          if (nrow(a1) > 0) a1$included_a1 = TRUE
+          if (nrow(a2) > 0) a2$included_a2 = TRUE
           res = merge(a1, a2, all = TRUE)
           sylToUpdate = na.omit(res[is.na(res$included_a1) & res$included_a2, 1:2])
         }

@@ -543,29 +543,37 @@ Formants are the natural resonances of the vocal tract - that is, frequency band
 # Audio segmentation 
 ## Bursts and syllables 
 ### Segmenting a single sound: `segment`
-In addition to measuring spectral characteristics and fundamental frequency, it is often important to analyze the temporal structure of a sound. In particular, it is often helpful to divide a sound into separate "syllables" - continuous acoustic fragments separated by what we consider to be "silence". If this "silence" was not full of background noise and breathing, the task would be trivial: we could simply define syllables as continuous segments with ampiltude above some threshold. As it is, with non-studio material it is problematic to find a single threshold that would accurately coincide with the beginning and end of syllables in different sounds (presuming that we are interested in batch processing multiple sounds without manually adjusting the settings for each sound). 
+In addition to measuring spectral characteristics and fundamental frequency, it is often important to analyze the temporal structure of a sound. In particular, it is often helpful to divide a sound into separate "syllables" - continuous acoustic fragments separated by what we consider to be "silence". If this "silence" was not full of background noise and breathing, the task would be trivial: we could simply define syllables as continuous segments with ampiltude above some threshold. As it is, with non-studio material it is problematic to find a single threshold that would accurately coincide with the beginning and end of syllables in different sounds (presuming that we are interested in batch processing multiple sounds without manually adjusting the settings for each sound). Soundgen attempts to solve this problem by using an adaptive algorithm sensitive to the nature of background noise, signal-to-noise ratio, and acoustic novelty to achieve flexible and fast syllable segmentation.
 
-Sometimes we are more interested in the rate of syllables per second and in their regularity, rather than the absolute duration of each syllable. In this case it makes more sense to look for bursts of acoustic energy - local maxima in amplitude envelope that are high enough both in absolute terms (relative to the global maximum) and with respect to the surrounding region (relative to local mimima). The spacing between bursts - the interburst interval - can allow us to recover the perceptually salient temporal structure of a bout of vocalizing, such as the number of syllables in a bout of laughing, their average frequency, and regularity.
+Sometimes we are more interested in the rate of syllables per second and in their regularity, rather than the absolute duration of each syllable. In this case it makes more sense to look for bursts of acoustic energy or sudden changes relative to background noise. The spacing between bursts - the interburst interval - is a perceptually salient characteristic of a bout of vocalizing.
 
-Soundgen package contains a function called `segment`, which uses both these approaches: it looks for both syllables and bursts. These two algorithms are not independent: syllables are found first, and then the median length of a syllable becomes the expected interburst interval, guiding burst detection. `segment` operates with amplitude envelopes - smoothed contours of sound intensity. To demonstrate how it works, we will look at the example from `?segment` and go through the control parameters.
+Soundgen package contains a function called `segment`, which uses both these approaches: it looks for continuous syllables and for acoustic bursts. These two algorithms are not independent: syllables are found first, and then the median length of a syllable becomes the expected interburst interval, guiding burst detection. `segment` operates with ordinary or mel-transformed spectrograms or with amplitude envelopes - smoothed contours of sound intensity.
 
 ```{r fig.height = 5, fig.width = 7}
 # for info on using soundgen() function, see the vignette on sound synthesis 
 s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
-              pitch = c(368, 284),
-              noise = list(time = c(0, 67, 86, 186), 
-                           value = c(-45, -47, -89, -120)),
-              rolloffNoise = -8, amplGlobal = c(0, -20))
-# spectrogram(s2, samplingRate = 16000, osc = TRUE)
+              pitch = c(368, 284), amplGlobal = c(0, -20))
+# add noise so SNR decreases from 20 to 0 dB from syl1 to syl8
+s2 = s2 + runif(length(s2), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
 # playme(s2, samplingRate = 16000)
 a = segment(s2, samplingRate = 16000, plot = TRUE)
 ```
 
-This synthesized laugh-like sound contains 8 syllables, each 50 ms long and separated by 70 ms of unvoiced fragments with some overlapping aspiration noise (NOT silence!). With default settings, `segment` finds 5 syllables of median length `median(a$syllables$sylLen, na.rm = TRUE)` = 66 ms separated by `median(a$syllables$pauseLen, na.rm = TRUE)` = 57 ms. The syllables are shown by blue line segments in the plot above. The last syllables are missed either because they are below the default detection threshold `sylThres` (90% of the global mean amplitude) or because their apparent duration falls below the default `shortestSyl` of 40 ms due to its low amplitude. All 8 bursts are correctly detected. The interburst interval is estimated to be `median(a$bursts$interburstInt, na.rm = TRUE)` = 123 ms (the correct number is 120 ms), with SD = `sd(a$bursts$interburstInt, na.rm = TRUE)` = 4 ms (the correct number is 0, since we set temperature to 0). Note that, just as with many real-life sounds, the question of when each syllable starts and ends is pretty meaningless, given the continuous and loud breathing noise. In contrast, the spacing of bursts is both perceptually meaningful and objectively measurable.
+This synthesized laugh-like sound contains 8 syllables, each 50 ms long and separated by 70 ms of unvoiced fragments with some overlapping aspiration noise (NOT silence!). With default settings, `segment` finds 7 syllables of median length `median(a$syllables$sylLen, na.rm = TRUE)` = 48 ms separated by `median(a$syllables$pauseLen, na.rm = TRUE)` = 72 ms. The syllables are shown by blue line segments in the plot above. The last syllables are missed either because they are below the default detection threshold `SNR` or because their apparent duration falls below the default `shortestSyl` of 40 ms. All 8 bursts are correctly detected. The interburst interval is estimated to be `median(a$bursts$interburst, na.rm = TRUE)` = 120 ms (the correct number is 70 + 50 = 120 ms), with SD = `sd(a$bursts$interburst, na.rm = TRUE)` = 3 ms (the correct number is 0 since we set temperature to 0). Note that, just as with many real-life sounds, the question of when each syllable starts and ends is pretty subjective, and segmentation can be performed on different time scales, eg looking for bouts of laughter surrounded by noise or for individual syllables within each laugh.
 
 Some other settings worth mentioning are:
 
-* `windowLength`, `overlap`: length (ms) and overlap (%) of the smoothing window used to produce the amplitude envelope. See `?seewave::env`, which is called with the argument msmooth = c(smooth_points, smoothOverlap), where smooth_points =  ceiling(windowLength * samplingRate / 1000). Setting the overlap too low makes the enveloped jagged and imprecise, while setting the window length too low produces insufficient smoothing:
+* `propNoise`, `SNR`: two key settings that enable the algorithm to separate signal from noise. If you know how much of your recording(s) is likely to be noise, specify "propNoise", then use "SNR" to fine-tune the balance between false negatives (missing faint signals) and false positives (hallucinating signals that are actually noise).
+
+```{r fig.show = "hold", fig.height = 4, fig.width = 5}
+a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
+             SNR = 0.1, main = 'SNR very low')
+a2 = suppressWarnings(segment(s2, samplingRate = 16000, plot = TRUE, 
+            SNR = 14, main = 'SNR very high'))
+```
+
+
+* `windowLength`, `overlap`: length (ms) and overlap (%) of the smoothing window used to produce the signal envelope. Setting the overlap too low makes the enveloped jagged and imprecise, while setting the window length too low produces insufficient smoothing:
 
 ```{r fig.show = "hold", fig.height = 4, fig.width = 5}
 a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
@@ -587,22 +595,10 @@ a2 = segment(s2, samplingRate = 16000, plot = TRUE,
              shortestPause = 80, main = 'shortestPause too long')  
 ```
 
-* `burstThres` and `peakToTrough` control how high a burst has to be in absolute terms (compared to the global maximum of the envelope) and in relative terms (compared to the local minimum). So a burst is a local maximum that is at least `burstThres` high and at least `peakToTrough` times higher than the local minimum. The size of the analysis window for finding local maxima and minima is controlled by `interburst`, which defaults to the median length of detected syllables times `interburstMult`. By default the local minimum is only calculated to the left of the candidate burst (`troughLeft = TRUE, troughRight = FALSE`). The left-right distinction is irrelevant with this artificial, perfectly symmetrical example, but it appears to improve performance with real-life sounds, which often display assymmetrical attack with sharp onset and more gentle decay.
+* `peakToTrough` controls how high a burst has to be compared to the local minimum. The size of the analysis window for finding local maxima and minima is controlled by `interburst`, which defaults to the median length of detected syllables + pause between them. By default the local minimum is calculated on both left and right sides of the candidate burst (`troughLocation = 'either'`). The left-right distinction is irrelevant with this artificial, perfectly symmetrical example, but setting `troughLocation = 'left'` may improve performance with real-life sounds with an assymmetric attack (sharp onset and gradual decay).
 
-```{r fig.show = "hold", fig.height = 4, fig.width = 5}
-# absolute threshold burstThres set too high
-a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             burstThres = 0.5, main = 'burstThres too high')
-# improper syllable merging due to shortestPause, but overriden by manually 
-# specified interburst
-a2 = segment(s2, samplingRate = 16000, plot = TRUE, 
-             shortestPause = 80, interburst = 100) 
-```
 
-### Batch processing: `segmentFolder`
-Just as `analyzeFolder` is a wrapper around `analyze` that simplifies looping through a whole folder of .wav files, `segmentFolder` provides a convenient wrapper around `segment`. It accepts the same arguments as `segment` and can optionally save segmentation plots in the designated folder (e.g., `savePath = ~/Downloads/`). It also reports estimated time left (`verbose = TRUE`). You can save either detailed stats on individual syllables and bursts (`summaryFun = NULL`) or produce a summary table with means, medians, and SDs (`summary = TRUE`).
-
-*TIP If you are analyzing a single sound and are willing to adjust the settings manually, you can measure both syllables and bursts accurately. For batch processing without manual adjustments, bursts are more robust*
+*TIP For batch processing without manual adjustments, and particularly when the focus is on describing the overall rate of acoustic events rather than on actually segmenting a recording into separate vocalizations, bursts may be more robust than syllables*
 
 
 ## Self-similarity matrices

@@ -7,99 +7,136 @@
 segment(
   x,
   samplingRate = NULL,
-  windowLength = 40,
-  overlap = 80,
+  from = NULL,
+  to = NULL,
   shortestSyl = 40,
   shortestPause = 40,
-  sylThres = 0.9,
+  method = c("env", "spec", "mel")[3],
+  propNoise = NULL,
+  SNR = NULL,
+  noiseLevelStabWeight = c(1, 0.25),
+  windowLength = shortestSyl,
+  step = NULL,
+  overlap = 80,
+  reverbPars = list(reverbDelay = 70, reverbSpread = 130, reverbLevel = -35,
+    reverbDensity = 50),
   interburst = NULL,
-  interburstMult = 1,
-  burstThres = 0.075,
-  peakToTrough = 3,
-  troughLeft = TRUE,
-  troughRight = FALSE,
-  summary = NULL,
-  summaryFun = NULL,
+  peakToTrough = SNR + 3,
+  troughLocation = c("left", "right", "both", "either")[4],
+  summaryFun = if (is.character(x) && dir.exists(x)) c("median", "sd") else NULL,
   plot = FALSE,
-  savePath = NA,
-  col = "green",
+  savePlots = NULL,
+  saveAudio = NULL,
+  addSilence = 50,
+  verbose = TRUE,
+  reportEvery = 10,
   xlab = "",
-  ylab = "Amplitude",
+  ylab = "Signal, dB",
   main = NULL,
+  showLegend = FALSE,
   width = 900,
   height = 500,
   units = "px",
   res = NA,
-  maxPoints = 1e+05,
+  maxPoints = 10000,
+  specPlot = list(color.palette = "bw"),
+  contourPlot = list(lty = 1, lwd = 2, col = "green"),
   sylPlot = list(lty = 1, lwd = 2, col = "blue"),
   burstPlot = list(pch = 8, cex = 3, col = "red"),
   ...
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
-samplingRate}
+\item{x}{input audio: full path to a folder with wav/mp3 files or a single
+wav/mp3, or else a numeric vector representing the actual audio sampled at
+\code{samplingRate}}
 
-\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file)}
+\item{samplingRate}{the number of samples per second (only needed if the
+input is a vector rather than an audio file)}
 
-\item{windowLength, overlap}{length (ms) and overlap (%) of the smoothing
-window used to produce the amplitude envelope, see
-\code{\link[seewave]{env}}}
+\item{from}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
+
+\item{to}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
 
 \item{shortestSyl}{minimum acceptable length of syllables, ms}
 
-\item{shortestPause}{minimum acceptable break between syllables, ms.
-Syllables separated by less time are merged. To avoid merging, specify
-\code{shortestPause = NA}}
+\item{shortestPause}{minimum acceptable break between syllables, ms
+(syllables separated by shorter pauses are merged)}
 
-\item{sylThres}{amplitude threshold for syllable detection (as a
-proportion of global mean amplitude of smoothed envelope)}
+\item{method}{the signal used to search for syllables: 'env' =
+Hilbert-transformed amplitude envelope, 'spec' = spectrogram, 'mel' =
+mel-transformed spectrogram (see tuneR::melfcc)}
 
-\item{interburst}{minimum time between two consecutive bursts (ms). If
-specified, it overrides \code{interburstMult}}
+\item{propNoise}{the proportion of non-zero sound assumed to represent
+background noise (note that complete silence is not considered, so padding
+with silence won't affect the algorithm)}
 
-\item{interburstMult}{multiplier of the default minimum interburst
-interval (median syllable length or, if no syllables are detected, the same
-number as \code{shortestSyl}). Only used if \code{interburst} is
-not specified. Larger values improve detection of unusually broad shallow
-peaks, while smaller values improve the detection of sharp narrow peaks}
+\item{SNR}{expected signal-to-noise ratio (dB above noise), which determines
+the threshold for syllable detection. The meaning of "dB" here is
+approximate since the "signal" may be different from sound intensity}
 
-\item{burstThres}{to qualify as a burst, a local maximum has to be at least
-\code{burstThres} times the height of the global maximum of amplitude
-envelope}
+\item{noiseLevelStabWeight}{a vector of length 2 specifying the relative
+weights of the overall signal level vs. stability when attempting to
+automatically locate the regions that represent noise. Increasing the
+weight of stability tends to accentuate the beginning and end of each
+syllable.}
 
-\item{peakToTrough}{to qualify as a burst, a local maximum has to be at
-least \code{peakToTrough} times the local minimum on the LEFT over
-analysis window (which is controlled by \code{interburst} or
-\code{interburstMult})}
+\item{windowLength}{length of FFT window, ms}
 
-\item{troughLeft, troughRight}{should local maxima be compared to the trough
-on the left and/or right of it? Default to TRUE and FALSE, respectively}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
-\item{summary}{if TRUE, returns only a summary of the number and spacing of
-syllables and vocal bursts. If FALSE, returns a list containing full stats
-on each syllable and bursts (location, duration, amplitude, ...)}
+\item{overlap}{overlap between successive FFT frames, \%}
 
-\item{summaryFun}{functions used to summarize each acoustic characteristic,
-eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
-are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
-take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-list containing frame-by-frame values; if \code{summaryFun = 'extended'},
-all pitch candidates are returns as a list}
+\item{reverbPars}{parameters passed on to \code{\link{reverb}} to attempt to
+cancel the effects of reverberation or echo, which otherwise tend to merge
+short and loud segments like rapid barks}
+
+\item{interburst}{minimum time between two consecutive bursts (ms). Defaults
+to the average detected \code{(syllable + pause) / 2}}
+
+\item{peakToTrough}{to qualify as a burst, a local maximum has to be at least
+\code{peakToTrough} dB above the left and/or right local trough(s)
+(controlled by \code{troughLocation}) over the analysis window (controlled
+by \code{interburst}). Defaults to SNR + 3 dB}
+
+\item{troughLocation}{should local maxima be compared to the trough on the
+left and/or right of it? Values: 'left', 'right', 'both', 'either'}
+
+\item{summaryFun}{functions used to summarize each acoustic characteristic;
+see \code{\link{analyze}}}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 
-\item{savePath}{full path to the folder in which to save the plot. Defaults
-to NA}
+\item{savePlots}{full path to the folder in which to save the plot(s). NULL =
+don't save. Note that the html file with clickable plots will only work if
+the plots are saved in the same folder as input audio files}
 
-\item{col, xlab, ylab, main}{main plotting parameters}
+\item{saveAudio}{full path to the folder in which to save audio files (one
+per detected syllable)}
+
+\item{addSilence}{if syllables are saved as separate audio files, they can be
+padded with some silence (ms)}
+
+\item{verbose, reportEvery}{if TRUE, reports progress every \code{reportEvery}
+files and estimated time left}
+
+\item{xlab, ylab, main}{main plotting parameters}
+
+\item{showLegend}{if TRUE, shows a legend for thresholds}
 
 \item{width, height, units, res}{parameters passed to
 \code{\link[grDevices]{png}} if the plot is saved}
 
-\item{maxPoints}{the maximum number of "pixels" in the oscillogram and
-envelope (for quick plotting of long audio files)}
+\item{maxPoints}{the maximum number of "pixels" (for quick plotting of long
+audio files)}
+
+\item{specPlot}{a list of graphical parameters for displaying the spectrogram
+(if \code{method = 'spec' or 'mel'}); set to NULL to hide the spectrogram}
+
+\item{contourPlot}{a list of graphical parameters for displaying the signal
+contour used to detect syllables (see details)}
 
 \item{sylPlot}{a list of graphical parameters for displaying the syllables}
 
@@ -108,63 +145,90 @@ envelope (for quick plotting of long audio files)}
 \item{...}{other graphical parameters passed to graphics::plot}
 }
 \value{
-If \code{summary = TRUE}, returns only a summary of the number and
-  spacing of syllables and vocal bursts. If \code{summary = FALSE}, returns a
-  list containing full stats on each syllable and bursts (location, duration,
-  amplitude, ...).
+If \code{summaryFun = NULL}, returns returns a list containing full
+  stats on each syllable and burst (one row per syllable and per burst),
+  otherwise returns only a dataframe with one row per file - a summary of the
+  number and spacing of syllables and vocal bursts.
 }
 \description{
-Finds syllables and bursts. Syllables are defined as continuous segments with
-amplitude above threshold. Bursts are defined as local maxima in amplitude
-envelope that are high enough both in absolute terms (relative to the global
-maximum) and with respect to the surrounding region (relative to local
-mimima). See vignette('acoustic_analysis', package = 'soundgen') for details.
+Finds syllables and bursts separated by background noise in long recordings.
+Syllables are defined as continuous segments that seem to be different from
+noise based on amplitude and/or spectral similarity thresholds. Bursts are
+defined as local maxima in signal envelope that are high enough both in
+absolute terms (relative to the global maximum) and with respect to the
+surrounding region (relative to local mimima). See
+vignette('acoustic_analysis', package = 'soundgen') for details.
 }
 \details{
-The algorithm is very flexible, but the parameters may be hard to optimize by
-hand. If you have an annotated sample of the sort of audio you are planning
-to analyze, with syllables and/or bursts counted manually, you can use it for
-automatic optimization of control parameters (see
-\code{\link{optimizePars}}. The defaults are the results of just such
-optimization against 260 human vocalizations in Anikin, A. & Persson, T.
-(2017). Non-linguistic vocalizations from online amateur videos for emotion
-research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
+Algorithm: first the audio recording is partitioned into signal and noise
+regions: the quietest and most stable regions are located, and noise
+threshold is defined from a user-specified proportion of noise in the
+recording (\code{propNoise}) or, if \code{propNoise = NULL}, from the lowest
+local maximum in the density function of a weighted product of amplitude and
+stability (that is, we assume that quiet and stable regions are likely to
+represent noise). Once we know what the noise looks like - in terms of its
+typical amplitude and/or spectrum - we derive signal contour as its
+difference from noise at each time point. If \code{method = 'env'}, this is
+Hilbert transform minus noise, and if \code{method = 'spec' or 'mel'}, this
+is the inverse of cosine similarity between the spectrum of each frame and
+the estimated spectrum of noise weighted by amplitude. By default,
+signal-to-noise ratio (SNR) is estimated as half-median of above-noise
+signal, but it is recommended that this parameter is adjusted by hand to suit
+the purposes of segmentation, as it is the key setting that controls the
+balance between false negatives (missing faint signals) and false positives
+(hallucinating signals that are actually noise). Note also that effects of
+echo or reverberation can be taken into account: syllable detection threshold
+may be raised following powerful acoustic bursts with the help of the
+\code{reverbPars} argument. At the final stage, continuous "islands" SNR dB
+above noise level are detected as syllables, and "peaks" on the islands are
+detected as bursts. The algorithm is very flexible, but the parameters may be
+hard to optimize by hand. If you have an annotated sample of the sort of
+audio you are planning to analyze, with syllables and/or bursts counted
+manually, you can use it for automatic optimization of control parameters
+(see \code{\link{optimizePars}}.
 }
 \examples{
-sound = soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
-  pitch = c(368, 284), temperature = 0.1,
-  noise = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
-  rolloff_noise = -8, amplGlobal = c(0, -20),
-  dynamicRange = 120)
+sound = soundgen(nSyl = 4, sylLen = 100, pauseLen = 70,
+                 attackLen = 20, amplGlobal = c(0, -20),
+                 pitch = c(368, 284), temperature = .1)
+# add noise so SNR decreases from 20 to 0 dB from syl1 to syl4
+sound = sound + runif(length(sound), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
+# osc(sound, samplingRate = 16000, dB = TRUE)
 # spectrogram(sound, samplingRate = 16000, osc = TRUE)
 # playme(sound, samplingRate = 16000)
 
 s = segment(sound, samplingRate = 16000, plot = TRUE)
-# accept quicker and quieter syllables
-s = segment(sound, samplingRate = 16000, plot = TRUE,
-  shortestSyl = 25, shortestPause = 25, sylThres = .2, burstThres = .05)
 
 # just a summary (see examples in ?analyze for custom summaryFun)
-segment(sound, samplingRate = 16000, summaryFun = c('mean', 'sd'))
-# Note that syllables are slightly longer and pauses shorter than they should
-# be (b/c of the smoothing of amplitude envelope), while interburst intervals
-# are right on target (~120 ms)
+s1 = segment(sound, samplingRate = 16000, summaryFun = c('median', 'sd'))
+s1
 
 # customizing the plot
 s = segment(sound, samplingRate = 16000, plot = TRUE,
-            shortestSyl = 25, shortestPause = 25,
-            sylThres = .2, burstThres = .05,
-            col = 'black', lwd = .5,
             sylPlot = list(lty = 2, col = 'gray20'),
             burstPlot = list(pch = 16, col = 'gray80'),
-            xlab = 'Some custom label', cex.lab = 1.2, main = 'My awesome plot')
-
+            specPlot = list(color.palette = 'heat.colors'),
+            xlab = 'Some custom label', cex.lab = 1.2,
+            showLegend = TRUE,
+            main = 'My awesome plot')
 \dontrun{
-# customize the resolution of saved plot
-s = segment(sound, samplingRate = 16000, savePath = '~/Downloads/',
-            width = 1920, height = 1080, units = 'px')
+# set SNR manually to control detection threshold
+s = segment(sound, samplingRate = 16000, SNR = 1, plot = TRUE)
+
+# Download 260 sounds from the supplements to Anikin & Persson (2017) at
+# http://cogsci.se/publications.html
+# unzip them into a folder, say '~/Downloads/temp'
+myfolder = '~/Downloads/temp260'  # 260 .wav files live here
+s = segment(myfolder, verbose = TRUE)
+
+# Check accuracy: import a manual count of syllables (our "key")
+key = segmentManual  # a vector of 260 integers
+trial = as.numeric(s$nBursts)
+cor(key, trial, use = 'pairwise.complete.obs')
+boxplot(trial ~ as.integer(key), xlab='key')
+abline(a=0, b=1, col='red')
 }
 }
 \seealso{
-\code{\link{segmentFolder}} \code{\link{analyze}}  \code{\link{ssm}}
+\code{\link{analyze}}  \code{\link{ssm}}
 }

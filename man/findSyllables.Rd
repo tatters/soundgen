@@ -4,31 +4,23 @@
 \alias{findSyllables}
 \title{Find syllables}
 \usage{
-findSyllables(
-  envelope,
-  timestep,
-  threshold,
-  shortestSyl,
-  shortestPause,
-  mergeSyl
-)
+findSyllables(ampl, step, windowLength, threshold, shortestSyl, shortestPause)
 }
 \arguments{
-\item{envelope}{downsampled amplitude envelope}
+\item{step}{time difference between two points in the envelope (ms)}
 
-\item{timestep}{time difference between two points in the envelope (ms)}
+\item{windowLength}{length of FFT window, ms}
 
 \item{threshold}{all continuous segments above this value are considered to
 be syllables}
 
 \item{shortestSyl}{minimum acceptable length of syllables, ms}
 
-\item{shortestPause}{minimum acceptable break between syllables, ms.
-Syllables separated by less time are merged. To avoid merging, specify
-\code{shortestPause = NA}}
+\item{shortestPause}{minimum acceptable break between syllables, ms
+(syllables separated by shorter pauses are merged)}
 
-\item{mergeSyl}{if TRUE, syllable separated by less than
-\code{shortestPause} will be merged}
+\item{envelope}{downsampled amplitude envelope: dataframe with columns "time"
+and "value"}
 }
 \value{
 Returns a dataframe with timing of syllables.

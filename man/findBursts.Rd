@@ -5,37 +5,31 @@
 \title{Find bursts}
 \usage{
 findBursts(
-  envelope,
-  timestep,
+  ampl,
+  step,
+  windowLength,
   interburst,
   burstThres,
   peakToTrough,
-  troughLeft = TRUE,
-  troughRight = FALSE
+  troughLocation = "either",
+  scale = c("dB", "linear")[2]
 )
 }
 \arguments{
-\item{envelope}{downsampled amplitude envelope}
+\item{step}{time difference between two points in the envelope (ms)}
 
-\item{timestep}{time difference between two points in the envelope (ms)}
+\item{windowLength}{length of FFT window, ms}
 
-\item{interburst}{minimum time between two consecutive bursts (ms). If
-specified, it overrides \code{interburstMult}}
+\item{interburst}{minimum time between two consecutive bursts (ms). Defaults
+to the average detected \code{(syllable + pause) / 2}}
 
-\item{burstThres}{to qualify as a burst, a local maximum has to be at least
-\code{burstThres} times the height of the global maximum of amplitude
-envelope}
+\item{peakToTrough}{to qualify as a burst, a local maximum has to be at least
+\code{peakToTrough} dB above the left and/or right local trough(s)
+(controlled by \code{troughLocation}) over the analysis window (controlled
+by \code{interburst}). Defaults to SNR + 3 dB}
 
-\item{peakToTrough}{to qualify as a burst, a local maximum has to be at
-least \code{peakToTrough} times the local minimum on the LEFT over
-analysis window (which is controlled by \code{interburst} or
-\code{interburstMult})}
-
-\item{troughLeft}{should local maxima be compared to the trough
-on the left and/or right of it? Default to TRUE and FALSE, respectively}
-
-\item{troughRight}{should local maxima be compared to the trough
-on the left and/or right of it? Default to TRUE and FALSE, respectively}
+\item{troughLocation}{should local maxima be compared to the trough on the
+left and/or right of it? Values: 'left', 'right', 'both', 'either'}
 }
 \value{
 Returns a dataframe with timing of bursts

@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: check & debug with real tasks; LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); VTL smts not updated when adjusting formant values; highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -351,16 +351,16 @@ server = function(input, output, session) {
           vn = suppressWarnings(as.numeric(v))
           if (v == '') {
             # empty string - reset to default
-            myPars$ann[myPars$currentAnn, paste0('f', f)] = myPars$formants[f]
+            myPars$ann[myPars$currentAnn, paste0('F', f)] = myPars$formants[f]
             updateTextInput(
               session, fn,
               value = as.character(myPars$formants[f]))
           } else if (!is.na(vn)) {
             # number - treat as manual correction
-            myPars$ann[myPars$currentAnn, paste0('f', f)] = vn
+            myPars$ann[myPars$currentAnn, paste0('F', f)] = vn
           } else {
             # any other (invalid) input - treat as a missing formant (NA)
-            myPars$ann[myPars$currentAnn, paste0('f', f)] = NA
+            myPars$ann[myPars$currentAnn, paste0('F', f)] = NA
           }
           updateVTL()
           hr()
@@ -370,7 +370,7 @@ server = function(input, output, session) {
       # add onclick event with shinyjs to select the formant to edit
       this_div = paste0('fDiv_', f)
       shinyjs::onclick(id = this_div, {
-        myPars$selectedF = paste0('f', f)
+        myPars$selectedF = paste0('F', f)
         shinyjs::addCssClass(id = this_div, class = 'selected')
         other_divs = paste0('fDiv_', (1:input$nFormants)[-f])
         for (d in other_divs) {
@@ -491,14 +491,14 @@ server = function(input, output, session) {
       } else {
         if (myPars$analyzedUpTo < myPars$spec_xlim[2]) {
           myPars$regionToAnalyze = c(myPars$analyzedUpTo, myPars$spec_xlim[2])
-          if (diff(myPars$regionToAnalyze) < input$windowLength_lpc) {
+          if (diff(myPars$regionToAnalyze) < 500) {
             # too little new audio to analyze - extend
             myPars$regionToAnalyze[2] = min(
-              myPars$regionToAnalyze[2] + input$windowLength_lpc, myPars$dur
+              myPars$regionToAnalyze[2] + 500, myPars$dur
             )
-            if (diff(myPars$regionToAnalyze) < input$windowLength_lpc) {
+            if (diff(myPars$regionToAnalyze) < 500) {
               myPars$regionToAnalyze[1] = max(
-                myPars$regionToAnalyze[1] - input$windowLength_lpc, 0
+                myPars$regionToAnalyze[1] - 500, 0
               )
             }
           }
@@ -520,7 +520,7 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$nFormants, {
-    myPars$ff = paste0('f', 1:input$nFormants)
+    myPars$ff = paste0('F', 1:input$nFormants)
     myPars$f_col_names = paste0(myPars$ff, '_freq')
     if (!is.null(myPars$formantTracks)) {
       missingCols = myPars$f_col_names[which(!myPars$f_col_names %in% colnames(myPars$formantTracks))]
@@ -601,32 +601,6 @@ server = function(input, output, session) {
         type = 'n'),
         myPars$specOver_opts))
 
-      if (!is.null(myPars$spectrogram_hover)) {
-        # horizontal line
-        do.call(points, c(list(
-          x = myPars$spec_xlim,
-          y = rep(myPars$spectrogram_hover$y, 2),
-          type = 'l', lty = 3),
-          myPars$specOver_opts))
-        # frequency label
-        do.call(text, list(
-          x = myPars$spec_xlim[1],
-          y = myPars$spectrogram_hover$y,
-          labels = myPars$spectrogram_hover$freq,
-          adj = c(0, 0)))
-        # vertical line
-        do.call(points, list(
-          x = rep(myPars$spectrogram_hover$x, 2),
-          y = input$spec_ylim,
-          type = 'l', lty = 3))
-        # time label
-        do.call(text, list(
-          x = myPars$spectrogram_hover$x,
-          y = input$spec_ylim[1] + .025 * diff(input$spec_ylim),
-          labels = soundgen:::convert_sec_to_hms(myPars$spectrogram_hover$x / 1000, 3),
-          adj = .5))
-      }
-
       # Add a rectangle showing the current annotation
       if (!is.null(myPars$currentAnn)) {
         isolate({  # from myPars$ann
@@ -663,6 +637,43 @@ server = function(input, output, session) {
                  cex = input$spec_cex)
         }
       }
+
+      # Add formant frequencies from current ann
+      if (!is.null(myPars$currentAnn)) {
+        ff = myPars$ann[myPars$currentAnn, myPars$ff]
+        text(x = rep(myPars$ann$from[myPars$currentAnn], length(ff)),
+             y = ff / 1000,
+             labels = names(ff),
+             adj = c(0, .5), col = 'green', cex = 1.5)
+      }
+
+      # grid and x/y labels on hover
+      if (!is.null(myPars$spectrogram_hover)) {
+        # horizontal line
+        do.call(points, c(list(
+          x = myPars$spec_xlim,
+          y = rep(myPars$spectrogram_hover$y, 2),
+          type = 'l', lty = 3),
+          myPars$specOver_opts))
+        # frequency label
+        do.call(text, list(
+          x = myPars$spec_xlim[1],
+          y = myPars$spectrogram_hover$y,
+          labels = myPars$spectrogram_hover$freq,
+          adj = c(0, 0)))
+        # vertical line
+        do.call(points, list(
+          x = rep(myPars$spectrogram_hover$x, 2),
+          y = input$spec_ylim,
+          type = 'l', lty = 3))
+        # time label
+        do.call(text, list(
+          x = myPars$spectrogram_hover$x,
+          y = input$spec_ylim[1] + .025 * diff(input$spec_ylim),
+          labels = soundgen:::convert_sec_to_hms(myPars$spectrogram_hover$x / 1000, 3),
+          adj = .5))
+      }
+
     }
   })
 
@@ -1538,6 +1549,8 @@ server = function(input, output, session) {
   # SAVE OUTPUT
   done = function() {
     # meaning we are done with a sound - prepares the output
+    updateVTL()  # in case of glitches (smts VTL is not updated
+    # as it should be when ff are changed manually)
     if (myPars$print) print('Running done()...')
     if (!is.null(myPars$ann)) {
       if (is.null(myPars$out)) {

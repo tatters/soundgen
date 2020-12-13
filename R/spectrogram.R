@@ -207,6 +207,7 @@ spectrogram = function(
 ) {
   sound = NULL
   duration = internal$duration
+  if (!is.null(step)) overlap = 100 * (1 - step / windowLength)
   if (overlap < 0 | overlap > 100) {
     warning('overlap must be >0 and <= 100%; resetting to 70')
     overlap = 70
@@ -276,12 +277,11 @@ spectrogram = function(
     internal$timeShift = from_points / samplingRate
     ls = length(sound)
   } else {
-    internal$timeShift = 0
+    if (is.null(internal$timeShift)) internal$timeShift = 0
   }
   duration = ls / samplingRate
 
   # Get a bank of windowed frames
-  if (is.null(internal$timeShift)) internal$timeShift = 0
   if (!is.null(sound)) {
     frameBank = getFrameBank(
       sound = sound,
