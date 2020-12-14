@@ -6,8 +6,7 @@
 \usage{
 reverb(
   x,
-  samplingRate,
-  len = NULL,
+  samplingRate = NULL,
   echoDelay = 200,
   echoLevel = -20,
   reverbDelay = 70,
@@ -17,7 +16,8 @@ reverb(
   reverbType = "gaussian",
   filter = list(),
   dynamicRange = 80,
-  output = c("audio", "detailed")[1]
+  output = c("audio", "detailed")[1],
+  len = NULL
 )
 }
 \arguments{
@@ -27,15 +27,14 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file)}
 
-\item{len}{(optional) the length of input vector}
-
 \item{echoDelay}{the delay at which the echo appears, ms}
 
 \item{echoLevel}{the rate at which the echo weakens at each repetition, dB}
 
 \item{reverbDelay}{the time of maximum reverb density, ms}
 
-\item{reverbSpread}{standard deviation of reverb spread around time \code{reverbDelay}, ms}
+\item{reverbSpread}{standard deviation of reverb spread around time
+\code{reverbDelay}, ms}
 
 \item{reverbLevel}{the maximum amplitude of reverb, dB below input}
 
@@ -46,12 +45,15 @@ numeric vector, rather than an audio file)}
 \item{filter}{(optional) a spectral filter to apply to the created reverb and
 echo (see \code{addFormants} for acceptable formats)}
 
-\item{dynamicRange}{the precision with which the reverb and echo are calculated, dB}
+\item{dynamicRange}{the precision with which the reverb and echo are
+calculated, dB}
 
 \item{output}{specifies what to return: nothing ('none'), unmodified
 spectrogram ('original'), denoised and/or smoothed spectrogram
 ('processed'), or unmodified spectrogram with the imaginary part giving
 phase ('complex')}
+
+\item{len}{(optional) the length of input vector (used internally for speed)}
 }
 \description{
 Add reverberation and/or echo to a sound. Algorithm for reverb: add
@@ -90,10 +92,15 @@ s3 = reverb(s, samplingRate = 16000, echoDelay = NULL,
 # both echo and reverb with high frequencies emphasized
 s4 = reverb(s, samplingRate = 16000,
             echoDelay = 250, echoLevel = -20,
-            reverbDelay = 70, reverbSpread = 220,
-            reverbLevel = -35, reverbDensity = 50,
+            reverbDelay = 70, reverbSpread = 120,
+            reverbLevel = -25, reverbDensity = 50,
             filter = list(formants = NULL, lipRad = 3))
 # playme(s4)
 # spectrogram(s4, 16000, osc = TRUE, ylim = c(0, 4))
+
+# add reverb to a recording
+s5 = reverb('~/Downloads/temp260/ut_fear_57-m-tone.wav',
+            echoDelay = 850, echoLevel = -40)
+# playme(s5, 44100)
 }
 }

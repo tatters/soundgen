@@ -804,17 +804,19 @@ objectToString = function(x) {
 #' and when the sound rebounds back (as from a wall) and add these time-shifted
 #' copies to the original, optionally with some spectral filtering.
 #' @inheritParams spectrogram
-#' @param len (optional) the length of input vector
 #' @param filter (optional) a spectral filter to apply to the created reverb and
 #'   echo (see \code{addFormants} for acceptable formats)
 #' @param echoDelay the delay at which the echo appears, ms
 #' @param echoLevel the rate at which the echo weakens at each repetition, dB
 #' @param reverbDelay the time of maximum reverb density, ms
-#' @param reverbSpread standard deviation of reverb spread around time \code{reverbDelay}, ms
+#' @param reverbSpread standard deviation of reverb spread around time
+#'   \code{reverbDelay}, ms
 #' @param reverbLevel the maximum amplitude of reverb, dB below input
 #' @param reverbDensity the number of echos or "voices" added
 #' @param reverbType not yet implemented
-#' @param dynamicRange the precision with which the reverb and echo are calculated, dB
+#' @param dynamicRange the precision with which the reverb and echo are
+#'   calculated, dB
+#' @param len (optional) the length of input vector (used internally for speed)
 #' @export
 #' @examples
 #' s = soundgen()
@@ -845,15 +847,19 @@ objectToString = function(x) {
 #' # both echo and reverb with high frequencies emphasized
 #' s4 = reverb(s, samplingRate = 16000,
 #'             echoDelay = 250, echoLevel = -20,
-#'             reverbDelay = 70, reverbSpread = 220,
-#'             reverbLevel = -35, reverbDensity = 50,
+#'             reverbDelay = 70, reverbSpread = 120,
+#'             reverbLevel = -25, reverbDensity = 50,
 #'             filter = list(formants = NULL, lipRad = 3))
 #' # playme(s4)
 #' # spectrogram(s4, 16000, osc = TRUE, ylim = c(0, 4))
+#'
+#' # add reverb to a recording
+#' s5 = reverb('~/Downloads/temp260/ut_fear_57-m-tone.wav',
+#'             echoDelay = 850, echoLevel = -40)
+#' # playme(s5, 44100)
 #' }
 reverb = function(x,
-                  samplingRate,
-                  len = NULL,
+                  samplingRate = NULL,
                   echoDelay = 200,
                   echoLevel = -20,
                   reverbDelay = 70,
@@ -863,8 +869,28 @@ reverb = function(x,
                   reverbType = 'gaussian',
                   filter = list(),
                   dynamicRange = 80,
-                  output = c('audio', 'detailed')[1]) {
-  if (is.null(len)) len = length(x)
+                  output = c('audio', 'detailed')[1],
+                  len = NULL) {
+  # import audio
+  if (class(x)[1] == 'character') {
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    samplingRate = sound_wav@samp.rate
+    sound = as.numeric(sound_wav@left)
+  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
+    if (is.null(samplingRate)) {
+      stop ('Please specify samplingRate, eg 44100')
+    } else {
+      sound = x
+    }
+  }
+  if (is.null(len)) len = length(sound)
 
   ## reverb
   if (is.numeric(reverbDelay) & is.numeric(reverbLevel)) {
@@ -909,16 +935,14 @@ reverb = function(x,
     rvb = rep(0, len + nFr_rvb - 1)
     for (i in idx_keep) {
       idx_i = i:(i + len - 1)
-      rvb[idx_i] = rvb[idx_i] + x * win[i]
+      rvb[idx_i] = rvb[idx_i] + sound * win[i]
     }
-    # rvb = rvb / max(abs(rvb)) * 10 ^ (reverbLevel / 20)  # ideally get win on the correct scale from the start to avoid this step
     # playme(rvb)
     # spectrogram(rvb, 16000, ylim = c(0, 4), osc = TRUE)
     # rvb = rvb_pad[1:len]  # range(rvb)
   } else {
     rvb = 0
   }
-
 
   ## echo
   if (is.numeric(echoLevel) && echoLevel > (-dynamicRange) & any(echoDelay > 0)) {
@@ -932,7 +956,7 @@ reverb = function(x,
       for (i in 1:nFr_echo) {
         idx_start = i * step_echo
         idx_i = idx_start:(idx_start + len - 1)
-        echo_e[idx_i] = echo_e[idx_i] + x * 10 ^ (echoLevel[e] * i / 20)
+        echo_e[idx_i] = echo_e[idx_i] + sound * 10 ^ (echoLevel[e] * i / 20)
       }
       if (is.null(echo)) {
         echo = echo_e
@@ -957,7 +981,7 @@ reverb = function(x,
     # spectrogram(effect, 16000, ylim = c(0, 4), osc = TRUE)
   }
 
-  out = addVectors(x, effect)
+  out = addVectors(sound, effect)
   # playme(out)
   # spectrogram(out, 16000, ylim = c(0, 4), osc = TRUE)
 
