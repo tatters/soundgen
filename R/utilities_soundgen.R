@@ -4,20 +4,19 @@
 #'
 #' Provides a nicely formatted "estimated time left" in loops plus a summary upon completion.
 #' @param i current iteration
-#' @param nIter total number of iterations
 #' @param time_start time when the loop started running
+#' @param nIter total number of iterations
+#' @param reportEvery report progress every n iterations
 #' @param jobs vector of length \code{nIter} specifying the relative difficulty
 #'   of each iteration. If not NULL, estimated time left takes into account
 #'   whether the jobs ahead will take more or less time than the jobs already
 #'   completed
-#' @param reportEvery report progress every n iterations
 #' @export
 #' @examples
 #' time_start = proc.time()
-#' for (i in 1:20) {
-#'   Sys.sleep(i ^ 2 / 10000)
-#'   reportTime(i = i, nIter = 20, time_start = time_start,
-#'   jobs = (1:20) ^ 2, reportEvery = 5)
+#' for (i in 1:100) {
+#'   Sys.sleep(i ^ 1.02 / 10000)
+#'   reportTime(i = i, time_start = time_start, nIter = 100, jobs = (1:100) ^ 1.02)
 #' }
 #' \dontrun{
 #' # Unknown number of iterations:
@@ -40,11 +39,13 @@
 #'              time_start = time_start, jobs = filesizes)
 #' }
 #' }
-reportTime = function(i,
-                      time_start,
-                      nIter = NULL,
-                      jobs = NULL,
-                      reportEvery = 1) {
+reportTime = function(
+  i,
+  time_start,
+  nIter = NULL,
+  reportEvery = if(is.null(nIter)) 1 else max(1, 10 ^ (floor(log10(nIter)) - 1)),
+  jobs = NULL
+) {
   time_diff = as.numeric((proc.time() - time_start)[3])
   if (is.null(nIter)) {
     # number of iter unknown, so we just report time elapsed
