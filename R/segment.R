@@ -415,9 +415,14 @@ segmentSound = function(
       from = max(1, samplingRate * ((syllables$start[i]) / 1000))  #  - windowLength / 2
       to = min(length(sound), samplingRate * ((syllables$end[i]) / 1000))
       temp = c(addSil, sound[from:to], addSil)
+      if (is.character(x)) {
+        bx = basename(x)
+        name_noExt = substr(bx, 1, nchar(bx) - 4)
+      } else {
+        name_noExt = 'sound'
+      }
       filename_i = paste0(
-        saveAudio, ifelse(is.character(x), basename(x), 'sound'),
-        '_', round(syllables$start[i], 0),
+        saveAudio, name_noExt, '_', round(syllables$start[i], 0),
         '-', round(syllables$end[i], 0), '.wav')
       seewave::savewav(temp, f = samplingRate, filename = filename_i)
     }
