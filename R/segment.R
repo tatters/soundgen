@@ -27,7 +27,6 @@ segmentSound = function(
   interburst = NULL,
   peakToTrough = SNR + 3,
   troughLocation = c('left', 'right', 'both', 'either')[4],
-  summaryFun = NULL,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,
@@ -72,7 +71,7 @@ segmentSound = function(
   }
 
   # from...to selection
-  ls = length(sound)
+  len = length(sound)
   if (any(is.numeric(c(from, to)))) {
     if (!is.numeric(from)) {
       from_points = 1
@@ -80,13 +79,13 @@ segmentSound = function(
       from_points = max(1, round(from * samplingRate))
     }
     if (!is.numeric(to)) {
-      to_points = ls
+      to_points = len
     }  else {
-      to_points = min(ls, round(to * samplingRate))
+      to_points = min(len, round(to * samplingRate))
     }
     sound = sound[from_points:to_points]
     timeShift = from_points / samplingRate * 1000
-    ls = length(sound)
+    len = length(sound)
   } else {
     timeShift = 0
   }
@@ -94,11 +93,11 @@ segmentSound = function(
   ## normalize
   sound = sound - mean(sound)  # center around 0
   sound = sound / max(abs(sound))  # range approx. -1 to 1
-  len = length(sound)
   windowLength_points = ceiling(windowLength * samplingRate / 1000)
   if (windowLength_points > len / 2) {
     windowLength_points = len / 2
     step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
+    windowLength = windowLength_points / samplingRate * 1000
   }
   dur_total = len / samplingRate * 1000
   step_points = round(step / 1000 * samplingRate)
@@ -388,26 +387,6 @@ segmentSound = function(
   syllables[, c('start', 'end')] = syllables[, c('start', 'end')] + timeShift
   bursts$time = bursts$time + timeShift
 
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    sum_syl = summarizeAnalyze(syllables[, c('sylLen', 'pauseLen')],
-                               summaryFun = summaryFun,
-                               var_noSummary = NULL)
-    sum_bursts = summarizeAnalyze(bursts[, 'interburst', drop = FALSE],
-                                  summaryFun = summaryFun,
-                                  var_noSummary = NULL)
-    result = as.data.frame(c(
-      list(nSyl = nrow(syllables)),
-      sum_syl,
-      list(nBursts = nrow(bursts)),
-      sum_bursts
-    ))
-    result[apply(result, c(1, 2), is.nan)] = NA
-  } else {
-    result = list(
-      syllables = syllables[, c('syllable', 'start', 'end', 'sylLen', 'pauseLen')],
-      bursts = bursts)
-  }
-
   ## save all extracted syllables as separate audio files for easy examination
   if (is.character(saveAudio) && !is.na(syllables$sylLen[1])) {
     addSil = rep(0, addSilence * samplingRate / 1000)
@@ -547,6 +526,9 @@ segmentSound = function(
     }
   }
 
+  result = list(
+    syllables = syllables[, c('syllable', 'start', 'end', 'sylLen', 'pauseLen')],
+    bursts = bursts)
   return(result)
 }
 
@@ -809,12 +791,15 @@ segment = function(
     last_char = substr(saveAudio, nchar(saveAudio), nchar(saveAudio))
     if(last_char != '/') saveAudio = paste0(saveAudio, '/')
   }
+  if (class(savePlots) == 'character' && nchar(savePlots) > 0) {
+    if (!dir.exists(savePlots)) dir.create(savePlots)
+  }
 
   ## Prepare a list of arguments to pass to segmentSound()
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'verbose', 'reportEvery',
+    'x', 'verbose', 'reportEvery', 'summaryFun',
     'reverbPars', 'sylPlot', 'burstPlot', 'specPlot')]  # otherwise flattens lists
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
@@ -826,13 +811,55 @@ segment = function(
   myPars$inputType = inputType
 
   ## Run the analysis
-  result = vector('list', nFiles)
+  syllables = bursts = mysum = vector('list', nFiles)
+  names(syllables) = names(bursts) = filenames_base
   for (i in 1:nFiles) {
+    # segment file i
     if (inputType == 'file') {
-      result[[i]] = do.call('segmentSound', c(list(x = filenames[i]), myPars, ...))
+      seg = try(do.call('segmentSound', c(list(x = filenames[i]), myPars, ...)))
     } else if (inputType == 'waveform') {
-      result[[i]] = do.call('segmentSound', c(list(x = filenames), myPars, ...))
+      seg = try(do.call('segmentSound', c(list(x = filenames), myPars, ...)))
     }
+    if (class(seg) == 'try-error') {
+      if (nFiles > 1) {
+        warning(paste('Failed to segment file', filenames[i]))
+      } else {
+        warning('Failed to segment the input')
+      }
+      seg = list(
+        syllables = data.frame(syllable = NA,
+                               start_idx = NA, end_idx = NA,
+                               start = NA, end = NA, dur = NA,
+                               sylLen = NA, pauseLen = NA),
+        bursts = data.frame(time = NA, ampl = NA, interburst = NA)
+      )
+    }
+    syllables[[i]] = seg$syllables
+    bursts[[i]] = seg$bursts
+
+    # summarize (optional)
+    if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+      sum_syl = summarizeAnalyze(
+        seg$syllables[, c('sylLen', 'pauseLen')],
+        summaryFun = summaryFun,
+        var_noSummary = NULL)
+      sum_bursts = summarizeAnalyze(
+        seg$bursts[, 'interburst', drop = FALSE],
+        summaryFun = summaryFun,
+        var_noSummary = NULL)
+      temp = as.data.frame(c(
+        list(nSyl = nrow(seg$syllables)),
+        sum_syl,
+        list(nBursts = nrow(seg$bursts)),
+        sum_bursts
+      ))
+      temp[apply(temp, c(1, 2), is.nan)] = NA
+      mysum[[i]] = temp
+    } else {
+      mysum = NULL
+    }
+
+    # report time
     if (verbose) {
       if (i %% reportEvery == 0) {
         reportTime(i = i, nIter = length(filenames),
@@ -841,25 +868,29 @@ segment = function(
     }
   }
 
-  ## Prepare output
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    # summarize
-    output = cbind(data.frame(file = filenames_base),
-                   do.call(rbind, result))
-  } else {
-    # return as lists
-    if (nFiles > 1) {
-      output = result
-      names(output) = filenames_base
-    } else {
-      output = result[[1]]
-    }
-  }
-
   if (class(savePlots) == 'character' && nchar(savePlots) > 0) {
     if (!dir.exists(savePlots)) dir.create(savePlots)
     htmlPlots(savePlots, myfiles = filenames, width = paste0(width, units))
   }
+
+  ## Prepare output
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    # rbind summaries
+    mysum_all = cbind(data.frame(file = filenames_base),
+                      do.call(rbind, mysum))
+  } else {
+    mysum_all = NULL
+  }
+  if (nFiles == 1) {
+    # unlist syllables & bursts
+    syllables = syllables[[1]]
+    bursts = bursts[[1]]
+  }
+  output = list(
+    syllables = syllables,
+    bursts = bursts,
+    summary = mysum_all
+  )
 
   invisible(output)
 }

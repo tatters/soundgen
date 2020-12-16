@@ -2,7 +2,8 @@
 
 #' Report time
 #'
-#' Provides a nicely formatted "estimated time left" in loops plus a summary upon completion.
+#' Provides a nicely formatted "estimated time left" in loops plus a summary
+#' upon completion.
 #' @param i current iteration
 #' @param time_start time when the loop started running
 #' @param nIter total number of iterations
@@ -59,7 +60,7 @@ reportTime = function(
       time_total = convert_sec_to_hms(time_diff)
       print(paste0('Completed ', i, ' iterations in ', time_total, '.'))
     } else {
-      if (i %% reportEvery == 0) {
+      if (i %% reportEvery == 0 || i == 1) {
         if (is.null(jobs)) {
           # simply count iterations
           time_left = time_diff / i * (nIter - i)

@@ -24,7 +24,6 @@ segmentSound(
   interburst = NULL,
   peakToTrough = SNR + 3,
   troughLocation = c("left", "right", "both", "either")[4],
-  summaryFun = NULL,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,
@@ -104,9 +103,6 @@ by \code{interburst}). Defaults to SNR + 3 dB}
 
 \item{troughLocation}{should local maxima be compared to the trough on the
 left and/or right of it? Values: 'left', 'right', 'both', 'either'}
-
-\item{summaryFun}{functions used to summarize each acoustic characteristic;
-see \code{\link{analyze}}}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 

@@ -27,7 +27,8 @@ whether the jobs ahead will take more or less time than the jobs already
 completed}
 }
 \description{
-Provides a nicely formatted "estimated time left" in loops plus a summary upon completion.
+Provides a nicely formatted "estimated time left" in loops plus a summary
+upon completion.
 }
 \examples{
 time_start = proc.time()
