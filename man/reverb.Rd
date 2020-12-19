@@ -48,10 +48,8 @@ echo (see \code{addFormants} for acceptable formats)}
 \item{dynamicRange}{the precision with which the reverb and echo are
 calculated, dB}
 
-\item{output}{specifies what to return: nothing ('none'), unmodified
-spectrogram ('original'), denoised and/or smoothed spectrogram
-('processed'), or unmodified spectrogram with the imaginary part giving
-phase ('complex')}
+\item{output}{"audio" = returns just the processed audio, "detailed" =
+returns a list with reverb window, the added reverb/echo, etc.}
 
 \item{len}{(optional) the length of input vector (used internally for speed)}
 }

@@ -795,6 +795,60 @@ objectToString = function(x) {
 }
 
 
+#' Silence sound segments
+#'
+#' Internal soundgen function
+#'
+#' Fills specified segments with silence (0) and fades in-out the ends of the
+#' silenced segment.
+#' @param x sound as a numeric vector
+#' @param samplingRate sampling rate, Hz
+#' @param na_seg dataframe containing columns "start_prop" and "end_prop"
+#' @param attackLen attack length, ms
+#' @keywords internal
+#' @examples
+#' s = runif(4000) * 2 - 1
+#' s1 = soundgen:::silenceSegments(s, 16000,
+#'        na_seg = data.frame(prop_start = c(.1, .5), prop_end = c(.2, .85)),
+#'        attackLen = c(5, 15))
+#' osc(s1)
+silenceSegments = function(
+  x,
+  samplingRate,
+  na_seg,
+  attackLen = 50
+) {
+  ls = length(x)
+  l = floor(attackLen * samplingRate / 1000)
+  if (length(l) == 1) l = c(l, l)
+  for (r in 1:nrow(na_seg)) {
+    idx_start = round(na_seg$prop_start[r] * ls)
+    idx_end = round(na_seg$prop_end[r] * ls)
+    idx_zero = idx_start:idx_end
+    x[idx_zero] = 0
+    if (any(attackLen > 0)) {
+      if (na_seg$prop_start[r] > 0) {
+        # fade out at idx_start
+        fade_from = max(1, idx_start - l[2])
+        fade_idx = fade_from:idx_start
+        x[fade_idx] = fade(x[fade_idx],
+                           fadeIn = 0,
+                           fadeOut = l[2])
+      }
+      if (na_seg$prop_end[r] < 1) {
+        # fade out the start of the next syl
+        fade_to = min(ls, idx_end + l[1])
+        fade_idx = idx_end:fade_to
+        x[fade_idx] = fade(x[fade_idx],
+                           fadeIn = l[1],
+                           fadeOut = 0)
+      }
+    }
+    # spectrogram(x, samplingRate)
+  }
+  return(x)
+}
+
 
 #' Reverb & echo
 #'
@@ -817,6 +871,8 @@ objectToString = function(x) {
 #' @param reverbType not yet implemented
 #' @param dynamicRange the precision with which the reverb and echo are
 #'   calculated, dB
+#' @param output "audio" = returns just the processed audio, "detailed" =
+#'   returns a list with reverb window, the added reverb/echo, etc.
 #' @param len (optional) the length of input vector (used internally for speed)
 #' @export
 #' @examples

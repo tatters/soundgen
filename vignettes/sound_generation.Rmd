@@ -171,7 +171,10 @@ In the simplest case, all anchors are equidistant, dividing the sound into equal
 ```{r}
 sound = soundgen(pitch = 440, play = playback)  # steady pitch at 440 Hz
 sound = soundgen(pitch = 3000:2000, play = playback)  # downward chirp
-sound = soundgen(pitch = c(150, 250, 100), sylLen = 700, play = playback)  # up and down
+sound = soundgen(pitch = c(150, 250, 100), 
+                 sylLen = 700, play = playback)  # up and down
+sound = soundgen(pitch = c(150, 200, NA, 110), 
+                 sylLen = 700, play = playback)  # 3rd quarter silent
 ```
 
 You can also use a mathematical formula to produce very precise pitch modulation, just check that the values are on the right scale. For example, sinusoidal pitch modulation can be created as follows:

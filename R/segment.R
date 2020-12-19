@@ -157,7 +157,7 @@ segmentSound = function(
 
     # adaptive thresholds may help to control for reverb
     if (length(reverbPars) > 0 & is.list(reverbPars)) {
-      # dynamic thresholdf
+      # dynamic threshold
       rvb_list = do.call('reverb', c(
         list(x = ampl,
              samplingRate = 1000 / step,

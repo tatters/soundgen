@@ -8,6 +8,7 @@ MINOR:
   * spectrogram(), analyze(): new arguments "from" and "to" for analyzing only a part of a long sound
   * analyze(): spectral slope (specSlope) is returned in dB/kHz
   * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue
+  * soundgen(): pitch anchors can contain NAs, eg "pitch = c(150, 200, NA, 110)" - the 3rd quarter will be unvoiced
 
 BUGS FIXED:
   * formant_app(): fixed occasional crashing when scrolling with left/right buttons, other small-scale debugging

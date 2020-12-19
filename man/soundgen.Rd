@@ -385,8 +385,8 @@ sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
   pitchGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 
-# Subharmonics in sidebands (noisy scream)
-sound = soundgen (subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
+# Subharmonics / sidebands (noisy scream)
+sound = soundgen(subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
   pitch = data.frame(
     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
   sylLen = 800,

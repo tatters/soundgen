@@ -1,4 +1,4 @@
-# TODO: analyze etc - add error-proof operation a la segment; deprecate all Folder functions - just accept a file or a folder as input; double-check the new segment() & its documentation; step correction to integer step_points in analyze etc a la segment(); sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); mel-spectrum - check/implement bandpass filters for each critical band; adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); soundgen() should accept smth like pitch = c(300, NA, 150, 250) and interpret this as two syllables with a pause - use eg as preview in manual pitch correction; morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO: spectrogram should accept integer input (just do as.numeric internally); analyze etc - add error-proof operation a la segment; deprecate all Folder functions - just accept a file or a folder as input; double-check the new segment() & its documentation; step correction to integer step_points in analyze etc a la segment(); sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); mel-spectrum - check/implement bandpass filters for each critical band; adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser') or options('browser' = '/usr/bin/google-chrome') to check a Shiny app in a non-default browser
 
@@ -247,8 +247,8 @@ NULL
 #'     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
 #'   pitchGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 #'
-#' # Subharmonics in sidebands (noisy scream)
-#' sound = soundgen (subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
+#' # Subharmonics / sidebands (noisy scream)
+#' sound = soundgen(subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
 #'   pitch = data.frame(
 #'     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
 #'   sylLen = 800,
@@ -402,6 +402,22 @@ soundgen = function(
   if (!is.integer(repeatBout)) {
     repeatBout = floor(repeatBout) +
       rbinom(1, 1, repeatBout - floor(repeatBout))
+  }
+
+  # deal with NAs in pitch contour: save NA location, then interpolate
+  if (nSyl == 1 && is.numeric(pitch) && any(is.na(pitch))) {
+    lp = length(pitch)
+    change_idx = which(diff(is.na(pitch)) != 0)  # last idx before change
+    na_seg = data.frame(
+      start = c(1, change_idx + 1),
+      end = c(change_idx, lp)
+    )
+    na_seg = na_seg[is.na(pitch[na_seg$start]), ]
+    na_seg$prop_start = (na_seg$start - 1) / lp
+    na_seg$prop_end = na_seg$end / lp
+    pitch = intplPitch(pitch)  # fill in NA by interpolation
+  } else {
+    na_seg = NULL
   }
 
   # check and, if necessary, reformat anchors to dataframes
@@ -819,7 +835,7 @@ soundgen = function(
     noise_syl = list()
 
     for (s in 1:nrow(syllables)) {
-      # scale noise anchors for polysyllabic sounds with lengh(sylLen) > 1
+      # scale noise anchors for polysyllabic sounds with length(sylLen) > 1
       noise_syl[[s]] = noise
       noise_syl[[s]]$time = scaleNoiseAnchors(
         noiseTime = noise_syl[[s]]$time,
@@ -970,6 +986,17 @@ soundgen = function(
       # if (any(is.na(syllable))) {
       #   stop('The new syllable contains NA values!')
       # }
+
+      # silence the syllable at the former location of NAs in pitch contour, if any
+      if (!is.null(na_seg)) {
+        syllable = silenceSegments(
+          x = syllable,
+          samplingRate = samplingRate,
+          na_seg = na_seg,
+          attackLen = attackLen
+        )
+        # spectrogram(syllable, samplingRate)
+      }
 
       # generate a pause for all but the last syllable
       if (s < nrow(syllables)) {
