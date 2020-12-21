@@ -10,6 +10,7 @@ MINOR:
   * analyze(): spectral slope (specSlope) is returned in dB/kHz
   * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue
   * soundgen(): pitch anchors can contain NAs, eg "pitch = c(150, 200, NA, 110)" - the 3rd quarter will be unvoiced
+  * addFormants(): new argument "zFun" for arbitrary transformations of the spectrogram between STFT and iSTFT (eg for de-noising, spectral warping, etc.)
 
 BUGS FIXED:
   * formant_app(): fixed occasional crashing when scrolling with left/right buttons, other small-scale debugging

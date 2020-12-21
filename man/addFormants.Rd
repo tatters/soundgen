@@ -5,9 +5,10 @@
 \title{Add formants}
 \usage{
 addFormants(
-  sound,
+  x,
   formants,
   spectralEnvelope = NULL,
+  zFun = NULL,
   action = c("add", "remove")[1],
   vocalTract = NA,
   formantDep = 1,
@@ -25,11 +26,13 @@ addFormants(
   samplingRate = 16000,
   windowLength_points = 800,
   overlap = 75,
-  normalize = TRUE
+  normalize = TRUE,
+  ...
 )
 }
 \arguments{
-\item{sound}{numeric vector with \code{samplingRate}}
+\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
+representing the waveform with specified samplingRate}
 
 \item{formants}{either a character string like "aaui" referring to default
 presets for speaker "M1" or a list of formant times, frequencies,
@@ -45,6 +48,10 @@ numbers specifying the power in each frequency bin on a linear scale
 specifying the filter for each STFT step is also accepted. The easiest way
 to create this matrix is to call soundgen:::getSpectralEnvelope or to use
 the spectrum of a recorded sound}
+
+\item{zFun}{(optional) an arbitrary function to apply to the spectrogram
+prior to iSTFT, where "z" is the spectrogram - a matrix of complex values
+(see examples)}
 
 \item{action}{'add' = add formants to the sound, 'remove' = remove formants
 (inverse filtering)}
@@ -98,6 +105,8 @@ formant drift and dispersal, respectively}
 \code{\link[seewave]{istft}}}
 
 \item{normalize}{if TRUE, normalizes the output to range from -1 to +1}
+
+\item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }
 \description{
 A spectral filter that either adds or removes formants from a sound - that
@@ -133,8 +142,26 @@ sound_inverse_filt = addFormants(sound_filtered,
 # spectrogram(sound_inverse_filt, samplingRate = 16000)
 
 \dontrun{
-# Use the spectral envelope of an existing recording (bleating of a sheep)
+## Perform some user-defined manipulation of the spectrogram with zFun
+# Ex.: noise removal - silence all bins under threshold,
+# say -0 dB below the max value
+s_noisy = soundgen(sylLen = 200, addSilence = 0,
+                   noise = list(time = c(-100, 300), value = -20))
+spectrogram(s_noisy, 16000)
+playme(s_noisy)
+zFun = function(z, cutoff = -50) {
+  az = abs(z)
+  thres = max(az) * 10 ^ (cutoff / 20)
+  z[which(az < thres)] = 0
+  return(z)
+}
+s_denoised = addFormants(s_noisy, formants = NA, zFun = zFun, cutoff = -40)
+spectrogram(s_denoised, 16000)
+playme(s_denoised)
+
+## Use the spectral envelope of an existing recording (bleating of a sheep)
 # (see also the same example with noise as source in ?generateNoise)
+# (NB: this can also be achieved with a single call to transplantFormants)
 data(sheep, package = 'seewave')  # import a recording from seewave
 sound_orig = as.numeric(scale(sheep@left))
 samplingRate = sheep@samp.rate

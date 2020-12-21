@@ -1,4 +1,4 @@
-# TODO: spectrogram should accept integer input (just do as.numeric internally); analyze etc - add error-proof operation a la segment; deprecate all Folder functions - just accept a file or a folder as input; step correction to integer step_points in analyze etc a la segment();
+# TODO: analyze etc - add error-proof operation a la segment; deprecate all Folder functions - just accept a file or a folder as input; step correction to integer step_points in analyze etc a la segment();
 
 # TODO maybe: sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); mel-spectrum - check/implement bandpass filters for each critical band; adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
@@ -1144,7 +1144,7 @@ soundgen = function(
         if (length(sound) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           soundFiltered = do.call(addFormants, c(
             formantPars,
-            list(sound = sound,
+            list(x = sound,
                  formants = formants,
                  formantDepStoch = formantDepStoch,
                  normalize = FALSE)
@@ -1158,7 +1158,7 @@ soundgen = function(
         if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           voicedFiltered = do.call(addFormants, c(
             formantPars,
-            list(sound = voiced,
+            list(x = voiced,
                  formants = formants,
                  formantDepStoch = formantDepStoch,
                  normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
@@ -1170,7 +1170,7 @@ soundgen = function(
         if (length(sound_unvoiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
           unvoicedFiltered = do.call(addFormants, c(
             formantPars,
-            list(sound = sound_unvoiced,
+            list(x = sound_unvoiced,
                  formants = formantsNoise,
                  formantDepStoch = formantDepStoch_noise,
                  normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
@@ -1195,7 +1195,7 @@ soundgen = function(
       if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
         soundFiltered = do.call(addFormants, c(
           formantPars,
-          list(sound = voiced,
+          list(x = voiced,
                formants = formants,
                formantDepStoch = formantDepStoch,
                normalize = FALSE)

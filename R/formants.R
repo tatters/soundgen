@@ -823,7 +823,8 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' @seealso \code{\link{getSpectralEnvelope}} \code{\link{transplantFormants}}
 #'   \code{\link{soundgen}}
 #'
-#' @param sound numeric vector with \code{samplingRate}
+#' @inheritParams soundgen
+#' @inheritParams spectrogram
 #' @param action 'add' = add formants to the sound, 'remove' = remove formants
 #'   (inverse filtering)
 #' @param spectralEnvelope (optional): as an alternative to specifying formant
@@ -833,6 +834,9 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #'   specifying the filter for each STFT step is also accepted. The easiest way
 #'   to create this matrix is to call soundgen:::getSpectralEnvelope or to use
 #'   the spectrum of a recorded sound
+#' @param zFun (optional) an arbitrary function to apply to the spectrogram
+#'   prior to iSTFT, where "z" is the spectrogram - a matrix of complex values
+#'   (see examples)
 #' @param formDrift,formDisp scaling factors for the effect of temperature on
 #'   formant drift and dispersal, respectively
 #' @param windowLength_points length of FFT window, points
@@ -841,7 +845,6 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #'   (default) = polynomial local smoothing function. NB: this does NOT affect
 #'   the smoothing of formant anchors
 #' @param normalize if TRUE, normalizes the output to range from -1 to +1
-#' @inheritParams soundgen
 #' @export
 #' @examples
 #' sound = c(rep(0, 1000), runif(16000), rep(0, 1000))  # white noise
@@ -862,8 +865,26 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' # spectrogram(sound_inverse_filt, samplingRate = 16000)
 #'
 #' \dontrun{
-#' # Use the spectral envelope of an existing recording (bleating of a sheep)
+#' ## Perform some user-defined manipulation of the spectrogram with zFun
+#' # Ex.: noise removal - silence all bins under threshold,
+#' # say -0 dB below the max value
+#' s_noisy = soundgen(sylLen = 200, addSilence = 0,
+#'                    noise = list(time = c(-100, 300), value = -20))
+#' spectrogram(s_noisy, 16000)
+#' playme(s_noisy)
+#' zFun = function(z, cutoff = -50) {
+#'   az = abs(z)
+#'   thres = max(az) * 10 ^ (cutoff / 20)
+#'   z[which(az < thres)] = 0
+#'   return(z)
+#' }
+#' s_denoised = addFormants(s_noisy, formants = NA, zFun = zFun, cutoff = -40)
+#' spectrogram(s_denoised, 16000)
+#' playme(s_denoised)
+#'
+#' ## Use the spectral envelope of an existing recording (bleating of a sheep)
 #' # (see also the same example with noise as source in ?generateNoise)
+#' # (NB: this can also be achieved with a single call to transplantFormants)
 #' data(sheep, package = 'seewave')  # import a recording from seewave
 #' sound_orig = as.numeric(scale(sheep@left))
 #' samplingRate = sheep@samp.rate
@@ -905,9 +926,10 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' # NB: but the source of excitation in the original is actually a mix of
 #' # harmonics and noise, while the new sound is purely tonal
 #' }
-addFormants = function(sound,
+addFormants = function(x,
                        formants,
                        spectralEnvelope = NULL,
+                       zFun = NULL,
                        action = c('add', 'remove')[1],
                        vocalTract = NA,
                        formantDep = 1,
@@ -925,8 +947,39 @@ addFormants = function(sound,
                        samplingRate = 16000,
                        windowLength_points = 800,
                        overlap = 75,
-                       normalize = TRUE) {
+                       normalize = TRUE,
+                       ...) {
   formants = reformatFormants(formants)
+
+  # import audio
+  if (class(x)[1] == 'character') {
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    if (sound_wav@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
+    samplingRate = sound_wav@samp.rate
+    sound = sound_wav@left
+  } else if (is.numeric(x)) {
+    if (is.null(samplingRate)) {
+      stop('Please specify "samplingRate", eg 44100')
+    } else {
+      sound = x
+    }
+  } else if (class(x) == 'Wave') {
+    if (x@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
+    samplingRate = x@samp.rate
+    sound = x@left
+  } else {
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+  }
+
   # prepare vocal tract filter (formants + some spectral noise + lip radiation)
   if (sum(sound) == 0) {
     # otherwise fft glitches
@@ -998,7 +1051,7 @@ addFormants = function(sound,
         movingFormants = TRUE
       } else {  # vector
         nInt = 1
-        vingFormants = FALSE
+        movingFormants = FALSE
       }
       spectralEnvelope = interpolMatrix(
         spectralEnvelope,
@@ -1037,6 +1090,10 @@ addFormants = function(sound,
           x / spectralEnvelope)
       }
     }
+
+    # apply some arbitrary function to the spectrogram before iSTFT
+    if (!is.null(zFun) && class(zFun) == 'function')
+      z = do.call(zFun, list(z = z, ...))
 
     # inverse fft
     soundFiltered = as.numeric(
