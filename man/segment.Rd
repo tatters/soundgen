@@ -15,7 +15,7 @@ segment(
   propNoise = NULL,
   SNR = NULL,
   noiseLevelStabWeight = c(1, 0.25),
-  windowLength = shortestSyl,
+  windowLength = 40,
   step = NULL,
   overlap = 80,
   reverbPars = list(reverbDelay = 70, reverbSpread = 130, reverbLevel = -35,
@@ -24,6 +24,7 @@ segment(
   peakToTrough = SNR + 3,
   troughLocation = c("left", "right", "both", "either")[4],
   summaryFun = if (is.character(x) && dir.exists(x)) c("median", "sd") else NULL,
+  maxDur = 30,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,
@@ -107,6 +108,11 @@ left and/or right of it? Values: 'left', 'right', 'both', 'either'}
 \item{summaryFun}{functions used to summarize each acoustic characteristic;
 see \code{\link{analyze}}}
 
+\item{maxDur}{long files are split into chunks \code{maxDur} s in duration to
+avoid running out of RAM; the outputs for all fragments are glued together,
+but plotting is switched off. Note that noise profile is estimated in each
+chunk separately, so set it low if the background noise is highly variable}
+
 \item{plot}{if TRUE, produces a segmentation plot}
 
 \item{savePlots}{full path to the folder in which to save the plot(s). NULL =
@@ -151,41 +157,41 @@ If \code{summaryFun = NULL}, returns returns a list containing full
   number and spacing of syllables and vocal bursts.
 }
 \description{
-Finds syllables and bursts separated by background noise in long recordings.
-Syllables are defined as continuous segments that seem to be different from
-noise based on amplitude and/or spectral similarity thresholds. Bursts are
-defined as local maxima in signal envelope that are high enough both in
-absolute terms (relative to the global maximum) and with respect to the
-surrounding region (relative to local mimima). See
-vignette('acoustic_analysis', package = 'soundgen') for details.
+Finds syllables and bursts separated by background noise in long recordings
+(up to 1-2 hours of audio per file). Syllables are defined as continuous
+segments that seem to be different from noise based on amplitude and/or
+spectral similarity thresholds. Bursts are defined as local maxima in signal
+envelope that are high enough both in absolute terms (relative to the global
+maximum) and with respect to the surrounding region (relative to local
+mimima). See vignette('acoustic_analysis', package = 'soundgen') for details.
 }
 \details{
-Algorithm: first the audio recording is partitioned into signal and noise
-regions: the quietest and most stable regions are located, and noise
-threshold is defined from a user-specified proportion of noise in the
-recording (\code{propNoise}) or, if \code{propNoise = NULL}, from the lowest
-local maximum in the density function of a weighted product of amplitude and
-stability (that is, we assume that quiet and stable regions are likely to
-represent noise). Once we know what the noise looks like - in terms of its
-typical amplitude and/or spectrum - we derive signal contour as its
-difference from noise at each time point. If \code{method = 'env'}, this is
-Hilbert transform minus noise, and if \code{method = 'spec' or 'mel'}, this
-is the inverse of cosine similarity between the spectrum of each frame and
-the estimated spectrum of noise weighted by amplitude. By default,
-signal-to-noise ratio (SNR) is estimated as half-median of above-noise
-signal, but it is recommended that this parameter is adjusted by hand to suit
-the purposes of segmentation, as it is the key setting that controls the
-balance between false negatives (missing faint signals) and false positives
-(hallucinating signals that are actually noise). Note also that effects of
-echo or reverberation can be taken into account: syllable detection threshold
-may be raised following powerful acoustic bursts with the help of the
-\code{reverbPars} argument. At the final stage, continuous "islands" SNR dB
-above noise level are detected as syllables, and "peaks" on the islands are
-detected as bursts. The algorithm is very flexible, but the parameters may be
-hard to optimize by hand. If you have an annotated sample of the sort of
-audio you are planning to analyze, with syllables and/or bursts counted
-manually, you can use it for automatic optimization of control parameters
-(see \code{\link{optimizePars}}.
+Algorithm: for each chunk at most \code{maxDur} long, first the audio
+recording is partitioned into signal and noise regions: the quietest and most
+stable regions are located, and noise threshold is defined from a
+user-specified proportion of noise in the recording (\code{propNoise}) or, if
+\code{propNoise = NULL}, from the lowest local maximum in the density
+function of a weighted product of amplitude and stability (that is, we assume
+that quiet and stable regions are likely to represent noise). Once we know
+what the noise looks like - in terms of its typical amplitude and/or spectrum
+- we derive signal contour as its difference from noise at each time point.
+If \code{method = 'env'}, this is Hilbert transform minus noise, and if
+\code{method = 'spec' or 'mel'}, this is the inverse of cosine similarity
+between the spectrum of each frame and the estimated spectrum of noise
+weighted by amplitude. By default, signal-to-noise ratio (SNR) is estimated
+as half-median of above-noise signal, but it is recommended that this
+parameter is adjusted by hand to suit the purposes of segmentation, as it is
+the key setting that controls the balance between false negatives (missing
+faint signals) and false positives (hallucinating signals that are actually
+noise). Note also that effects of echo or reverberation can be taken into
+account: syllable detection threshold may be raised following powerful
+acoustic bursts with the help of the \code{reverbPars} argument. At the final
+stage, continuous "islands" SNR dB above noise level are detected as
+syllables, and "peaks" on the islands are detected as bursts. The algorithm
+is very flexible, but the parameters may be hard to optimize by hand. If you
+have an annotated sample of the sort of audio you are planning to analyze,
+with syllables and/or bursts counted manually, you can use it for automatic
+optimization of control parameters (see \code{\link{optimizePars}}.
 }
 \examples{
 sound = soundgen(nSyl = 4, sylLen = 100, pauseLen = 70,
@@ -199,9 +205,9 @@ sound = sound + runif(length(sound), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
 
 s = segment(sound, samplingRate = 16000, plot = TRUE)
 
-# just a summary (see examples in ?analyze for custom summaryFun)
+# summarize per file (see examples in ?analyze for custom summaryFun)
 s1 = segment(sound, samplingRate = 16000, summaryFun = c('median', 'sd'))
-s1
+s1$summary
 
 # customizing the plot
 s = segment(sound, samplingRate = 16000, plot = TRUE,
@@ -219,14 +225,17 @@ s = segment(sound, samplingRate = 16000, SNR = 1, plot = TRUE)
 # http://cogsci.se/publications.html
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp260'  # 260 .wav files live here
-s = segment(myfolder, verbose = TRUE)
+s = segment(myfolder, propNoise = .05, SNR = 3, verbose = TRUE)
 
 # Check accuracy: import a manual count of syllables (our "key")
 key = segmentManual  # a vector of 260 integers
-trial = as.numeric(s$nBursts)
+trial = as.numeric(s$summary$nBursts)
 cor(key, trial, use = 'pairwise.complete.obs')
 boxplot(trial ~ as.integer(key), xlab='key')
 abline(a=0, b=1, col='red')
+
+# or look at the detected syllables instead of bursts:
+cor(key, s$summary$nSyl, use = 'pairwise.complete.obs')
 }
 }
 \seealso{

@@ -19,7 +19,7 @@ segmentSound = function(
   propNoise = NULL,
   SNR = NULL,
   noiseLevelStabWeight = c(1, .25),
-  windowLength = shortestSyl,
+  windowLength = 40,
   step = NULL,
   overlap = 80,
   reverbPars = list(reverbDelay = 70, reverbSpread = 130,
@@ -27,6 +27,7 @@ segmentSound = function(
   interburst = NULL,
   peakToTrough = SNR + 3,
   troughLocation = c('left', 'right', 'both', 'either')[4],
+  maxDur = 30,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,
@@ -105,287 +106,359 @@ segmentSound = function(
   # step_points can only be an integer, introducing small timing errors in long sounds
   # plot(sound, type='l')
 
-  if (method == 'env') {
-    ## work with smoothed amplitude envelope
-    ampl = seewave::env(
-      sound,
-      f = samplingRate,
-      envt = 'hil',
-      msmooth = c(windowLength_points, overlap),
-      fftw = FALSE,
+  analyze_from = 0
+  analyze_to = min(maxDur * 1000, dur_total)
+  stopNextTime = analyze_to >= dur_total
+  syllables = bursts = NULL
+  propNoise_user = propNoise
+  SNR_user = SNR
+  while(analyze_to <= dur_total) {
+    if (plot && analyze_to < dur_total) {
       plot = FALSE
-    )[, 1]
-    ampl = 20 * log10(ampl)
-    ampl = ampl - min(ampl)
-    nc = length(ampl)
-    # plot(ampl, type = 'l')
-
-    # attempt to estimate propNoise from data
-    d_ampl = c(0, abs(diff(ampl)))
-    # ampl_dampl = ampl * d_ampl  # plot(ampl_dampl, type = 'l')
-    # weighted contributions from ampl (overall level) and d_ampl (level stability)
-    ampl_dampl = exp(log(ampl) * noiseLevelStabWeight[1] +
-                       log(d_ampl) * noiseLevelStabWeight[2])
-    nonZero_ampl_dampl = which(ampl_dampl > 0)
-    if (is.null(propNoise)) {
-      dens_ampl_dampl = density(ampl_dampl[nonZero_ampl_dampl])
-      a_zoo = zoo::as.zoo(dens_ampl_dampl$y)
-      temp = zoo::rollapply(a_zoo,
-                            width = 3,
-                            align = 'center',
-                            function(x) {
-                              which.max(x) == ceiling(length(x) / 2)
-                            })
-      idx = zoo::index(temp)[zoo::coredata(temp)]
-      thres_noise = dens_ampl_dampl$x[idx[1]]
-      col_noise = which(ampl_dampl <= thres_noise)
-      propNoise = max(.01, round(length(col_noise) / nc, 3))
-      message(paste0('propNoise set to ', propNoise, '; reset manually if needed'))
-    } else {
-      col_noise = which(ampl_dampl <= quantile(ampl_dampl[nonZero_ampl_dampl],
-                                               probs = propNoise))
-      thres_noise = as.numeric(median(ampl[col_noise]))
+      message(paste(
+        'This long sound will be analyzed piecewise and cannot be plotted.',
+        'Increase maxDur or use from/to to analyze and plot a part.'))
     }
-    thres_difNoise = as.numeric(quantile(ampl[nonZero_ampl_dampl], probs = propNoise))
+    from_points = max(1, round(analyze_from * samplingRate / 1000))
+    to_points = min(len, round(analyze_to * samplingRate / 1000))
+    sound_part = sound[from_points:to_points]
 
-    # attempt to estimate SNR from data
-    if (is.null(SNR) & propNoise > 0) {
-      SNR = round((median(ampl[-col_noise]) - thres_difNoise) / 2, 1)
-      message(paste0('SNR set to ', SNR, '; reset manually if needed'))
-    }
-    if (length(peakToTrough) < 1) peakToTrough = 10 ^ ((SNR + 3) / 20)
+    if (method == 'env') {
+      ## work with smoothed amplitude envelope
+      ampl = seewave::env(
+        sound_part,
+        f = samplingRate,
+        envt = 'hil',
+        msmooth = c(windowLength_points, overlap),
+        fftw = FALSE,
+        plot = FALSE
+      )[, 1]
+      ampl = 20 * log10(ampl)
+      ampl = ampl - min(ampl)
+      nc = length(ampl)
+      # plot(ampl, type = 'l')
 
-    # adaptive thresholds may help to control for reverb
-    if (length(reverbPars) > 0 & is.list(reverbPars)) {
-      # dynamic threshold
-      rvb_list = do.call('reverb', c(
-        list(x = ampl,
-             samplingRate = 1000 / step,
-             len = nc,
-             output = 'detailed'),
-        reverbPars
-      ))
-      rvb = rvb_list$rvb[1:nc]
-      threshold = thres_difNoise + SNR + rvb
-      # plot(difNoise, type = 'l')
-      # abline(h = thres_difNoise + SNR, lty = 2)
-      # points(threshold, type = 'l', col = 'blue')
-    } else {
-      # static threshold
-      threshold = rep(thres_difNoise + SNR, nc)
-    }
-
-    # find syllables
-    syllables = findSyllables(
-      ampl = ampl,
-      threshold = threshold,
-      shortestSyl = shortestSyl,
-      shortestPause = shortestPause,
-      step = step,
-      windowLength = windowLength
-    )
-  } else if (method %in% c('mel', 'spec')) {
-    ## work with some form of spectrogram
-    if (!exists('sound_wav') | any(is.numeric(c(from, to)))) {
-      # redo Wave in case of from...to... to avoid analyzing the entire file
-      sound_wav = tuneR::Wave(sound, samp.rate = samplingRate, bit = 16)
-    }
-    myspec = tuneR::melfcc(sound_wav,
-                           wintime = windowLength / 1000,
-                           hoptime = step / 1000,
-                           lifterexp = 0,
-                           preemph = 0,
-                           numcep = 1,
-                           spec_out = TRUE)
-    if (method == 'mel') {
-      sp = t(myspec$aspectrum)
-    } else if (method == 'spec') {
-      sp = t(myspec$pspectrum)
-    }
-    sp = 20 * log10(sp / max(sp) + 1e-4)  # in case of pure silence --> log(0)
-    nc = ncol(sp)
-    cs = colMeans(sp)
-    cs = cs - min(cs)  # make non-negative for ease of further processing
-    # image(t(sp))
-
-    # novelty
-    # better than ssm-related novelty b/c that one looks inside each syllable
-    if (FALSE) {  # could use as a par to segment(useNovelty = c(TRUE, FALSE)[2])
-      nFr = max(3, ceiling(windowLength / step))
-      win = dnorm(1:nFr, mean = 1, sd = nFr / 2)
-      win = rev(win / sum(win))  # normalize to sum to 1
-      novelty = vector('numeric', nc)
-      novelty[1] = 0
-      novelty[2] = cs[2] - cs[1]
-      for (i in 3:nc) {
-        if (i <= nFr) {
-          idx = 1:(i - 1)
-          win_i = dnorm(1:(i - 1), mean = 1, sd = nFr / 2)
-          win_i = rev(win_i / sum(win_i))
-        } else {
-          idx = (i - nFr):(i - 1)
-          win_i = win
-        }
-        novelty[i] = cs[i] - sum(cs[idx] * win_i)
+      # attempt to estimate propNoise from data
+      d_ampl = c(0, abs(diff(ampl)))
+      # ampl_dampl = ampl * d_ampl  # plot(ampl_dampl, type = 'l')
+      # weighted contributions from ampl (overall level) and d_ampl (level stability)
+      ampl_dampl = exp(log(ampl) * noiseLevelStabWeight[1] +
+                         log(d_ampl) * noiseLevelStabWeight[2])
+      nonZero_ampl_dampl = which(ampl_dampl > 0)
+      if (is.null(propNoise)) {
+        dens_ampl_dampl = density(ampl_dampl[nonZero_ampl_dampl])
+        a_zoo = zoo::as.zoo(dens_ampl_dampl$y)
+        temp = zoo::rollapply(a_zoo,
+                              width = 3,
+                              align = 'center',
+                              function(x) {
+                                which.max(x) == ceiling(length(x) / 2)
+                              })
+        idx = zoo::index(temp)[zoo::coredata(temp)]
+        thres_noise = dens_ampl_dampl$x[idx[1]]
+        col_noise = which(ampl_dampl <= thres_noise)
+        propNoise = max(.01, round(length(col_noise) / nc, 3))
+        message(paste0('propNoise set to ', propNoise, '; reset manually if needed'))
+      } else {
+        col_noise = which(ampl_dampl <= quantile(ampl_dampl[nonZero_ampl_dampl],
+                                                 probs = propNoise))
+        thres_noise = as.numeric(median(ampl[col_noise]))
       }
-      # plot(novelty, type = 'l')
-    } else {
-      novelty = 0
-    }
+      thres_difNoise = as.numeric(quantile(ampl[nonZero_ampl_dampl], probs = propNoise))
 
-    # or simple diff, maybe with smoothing afterwards
-    # novelty_matrix = t(apply(sp, 1, function(x) diff(x)))
-    # NB: not abs(diff) - should be negative at the end of each syl
-    # image(t(log(novelty_matrix)))
-    # novelty = c(0, colMeans(novelty_matrix))
-    # novelty = soundgen::getEnv(novelty,
-    #                            windowLength_points = windowLength / step,
-    #                            method = 'mean')
+      # attempt to estimate SNR from data
+      if (is.null(SNR) & propNoise > 0) {
+        SNR = round((median(ampl[-col_noise]) - thres_difNoise) / 2, 1)
+        message(paste0('SNR set to ', SNR, '; reset manually if needed'))
+      }
+      if (length(peakToTrough) < 1) peakToTrough = 10 ^ ((SNR + 3) / 20)
 
-    # compare the spectrum of each STFT frame to the spectrum of noise
-    # estimate the spectrum of background noise
-    d_cs = c(0, abs(diff(cs)))
-    # cs_dcs = cs * d_cs  # plot(cs_dcs, type = 'l')
-    # weighted contributions from cs (overall level) and d_cs (level stability)
-    cs_dcs = exp(log(cs) * noiseLevelStabWeight[1] +
-                   log(d_cs) * noiseLevelStabWeight[2])
-    nonZero_cs_dcs = which(cs_dcs > 0)
-    if (is.null(propNoise)) {
-      dens_cs_dcs = density(cs_dcs[nonZero_cs_dcs])
-      a_zoo = zoo::as.zoo(dens_cs_dcs$y)
-      temp = zoo::rollapply(a_zoo,
-                            width = 3,
-                            align = 'center',
-                            function(x) {
-                              which.max(x) == ceiling(length(x) / 2)
-                            })
-      idx = zoo::index(temp)[zoo::coredata(temp)]
-      thres_noise = max(min(cs_dcs), dens_cs_dcs$x[idx[1]])
-      col_noise = which(cs_dcs <= thres_noise)
-      propNoise = max(.01, round(length(col_noise) / nc, 3))
-      message(paste0('propNoise set to ', propNoise, '; reset manually if needed'))
-    } else {
-      col_noise = which(cs_dcs <= quantile(cs_dcs[nonZero_cs_dcs], probs = propNoise))
-      thres_noise = as.numeric(median(cs[col_noise]))
-    }
-    noise = rowMeans(sp[, col_noise])
-    # plot(noise, type = 'l')  # the spectrum of background noise, presumably
+      # adaptive thresholds may help to control for reverb
+      if (length(reverbPars) > 0 & is.list(reverbPars)) {
+        # dynamic threshold
+        rvb_list = do.call('reverb', c(
+          list(x = ampl,
+               samplingRate = 1000 / step,
+               len = nc,
+               output = 'detailed'),
+          reverbPars
+        ))
+        rvb = rvb_list$rvb[1:nc]
+        threshold = thres_difNoise + SNR + rvb
+        # plot(difNoise, type = 'l')
+        # abline(h = thres_difNoise + SNR, lty = 2)
+        # points(threshold, type = 'l', col = 'blue')
+      } else {
+        # static threshold
+        threshold = rep(thres_difNoise + SNR, nc)
+      }
 
-    # some kind of bin-by-bin spectral difference from noise
-    difNoise = vector('numeric', nc)
-    for (c in 1:nc) {
-      # cosine
-      difNoise[c] = 1 - crossprod(sp[, c], noise) /
-        sqrt(crossprod(sp[, c]) * crossprod(noise))
-      # difNoise[c] = 1 - cor(sp[, c], noise)  # throws NAs, weird range
-      # difNoise[c] = quantile(sp[, c] - noise, .75)
-      # max(sp[, c] - noise)   # not robust to noise
-      # mean(sp[, c] - noise)  # not sensitive to spectral changes - like using ampl env
-    }
+      # find syllables
+      syllables_part = findSyllables(
+        ampl = ampl,
+        threshold = threshold,
+        shortestSyl = shortestSyl,
+        shortestPause = shortestPause,
+        step = step,
+        windowLength = windowLength
+      )
+    } else if (method %in% c('mel', 'spec')) {
+      ## work with some form of spectrogram
+      if (!exists('sound_wav') | any(is.numeric(c(from, to))) | analyze_to < dur_total) {
+        # redo Wave in case of from...to... to avoid analyzing the entire file
+        sound_wav = tuneR::Wave(sound_part, samp.rate = samplingRate, bit = 16)
+      }
+      myspec = tuneR::melfcc(sound_wav,
+                             wintime = windowLength / 1000,
+                             hoptime = step / 1000,
+                             lifterexp = 0,
+                             preemph = 0,
+                             numcep = 1,
+                             spec_out = TRUE)
+      if (method == 'mel') {
+        sp = t(myspec$aspectrum)
+      } else if (method == 'spec') {
+        sp = t(myspec$pspectrum)
+      }
+      sp = 20 * log10(sp / max(sp) + 1e-4)  # in case of pure silence --> log(0)
+      nc = ncol(sp)
+      cs = colMeans(sp)
+      cs = cs - min(cs)  # make non-negative for ease of further processing
+      # image(t(sp))
 
-    difNoise = difNoise / max(difNoise) * max(cs) + cs - thres_noise
-    # plot(difNoise, type = 'l')
-    # hist(difNoise)
+      # novelty
+      # better than ssm-related novelty b/c that one looks inside each syllable
+      if (FALSE) {  # could use as a par to segment(useNovelty = c(TRUE, FALSE)[2])
+        nFr = max(3, ceiling(windowLength / step))
+        win = dnorm(1:nFr, mean = 1, sd = nFr / 2)
+        win = rev(win / sum(win))  # normalize to sum to 1
+        novelty = vector('numeric', nc)
+        novelty[1] = 0
+        novelty[2] = cs[2] - cs[1]
+        for (i in 3:nc) {
+          if (i <= nFr) {
+            idx = 1:(i - 1)
+            win_i = dnorm(1:(i - 1), mean = 1, sd = nFr / 2)
+            win_i = rev(win_i / sum(win_i))
+          } else {
+            idx = (i - nFr):(i - 1)
+            win_i = win
+          }
+          novelty[i] = cs[i] - sum(cs[idx] * win_i)
+        }
+        # plot(novelty, type = 'l')
+      } else {
+        novelty = 0
+      }
 
-    thres_difNoise = as.numeric(quantile(difNoise, probs = propNoise))
-    # plot(difNoise, type = 'l')
-    # abline(h = thres_difNoise + SNR, lty = 3, col = 'blue')
+      # or simple diff, maybe with smoothing afterwards
+      # novelty_matrix = t(apply(sp, 1, function(x) diff(x)))
+      # NB: not abs(diff) - should be negative at the end of each syl
+      # image(t(log(novelty_matrix)))
+      # novelty = c(0, colMeans(novelty_matrix))
+      # novelty = soundgen::getEnv(novelty,
+      #                            windowLength_points = windowLength / step,
+      #                            method = 'mean')
 
-    # attempt to estimate SNR from data
-    if (is.null(SNR)) {
-      # prop_snr = max(min(.99, propNoise + .25), .5)
-      # SNR = quantile(difNoise[difNoise > thres_difNoise], probs = prop_snr) - thres_difNoise
-      SNR = round((median(difNoise[-col_noise]) - thres_difNoise) / 2, 1)
-      message(paste0('SNR set to ', SNR, '; reset manually if needed'))
-      # SNR = min(30, max(cs) / 2 - thres_noise)
-      # SNR = max(difNoise[col_noise]) + 10 * sd(difNoise[col_noise])
-    }
-    if (length(peakToTrough) < 1) peakToTrough = SNR + 3
+      # compare the spectrum of each STFT frame to the spectrum of noise
+      # estimate the spectrum of background noise
+      d_cs = c(0, abs(diff(cs)))
+      # cs_dcs = cs * d_cs  # plot(cs_dcs, type = 'l')
+      # weighted contributions from cs (overall level) and d_cs (level stability)
+      cs_dcs = exp(log(cs) * noiseLevelStabWeight[1] +
+                     log(d_cs) * noiseLevelStabWeight[2])
+      nonZero_cs_dcs = which(cs_dcs > 0)
+      if (is.null(propNoise)) {
+        dens_cs_dcs = density(cs_dcs[nonZero_cs_dcs])
+        a_zoo = zoo::as.zoo(dens_cs_dcs$y)
+        temp = zoo::rollapply(a_zoo,
+                              width = 3,
+                              align = 'center',
+                              function(x) {
+                                which.max(x) == ceiling(length(x) / 2)
+                              })
+        idx = zoo::index(temp)[zoo::coredata(temp)]
+        thres_noise = max(min(cs_dcs), dens_cs_dcs$x[idx[1]])
+        col_noise = which(cs_dcs <= thres_noise)
+        propNoise = max(.01, round(length(col_noise) / nc, 3))
+        message(paste0('propNoise set to ', propNoise, '; reset manually if needed'))
+      } else {
+        col_noise = which(cs_dcs <= quantile(cs_dcs[nonZero_cs_dcs], probs = propNoise))
+        thres_noise = as.numeric(median(cs[col_noise]))
+      }
+      noise = rowMeans(sp[, col_noise])
+      # plot(noise, type = 'l')  # the spectrum of background noise, presumably
 
-    # adaptive thresholds may help to control for reverb
-    if (length(reverbPars) > 0 & is.list(reverbPars)) {
-      # dynamic thresholdf
-      rvb_list = do.call('reverb', c(
-        list(x = cs,
-             samplingRate = 1000 / step,
-             len = nc,
-             output = 'detailed'),
-        reverbPars
-      ))
-      rvb = rvb_list$rvb[1:nc]
-      # plot(cs, type = 'l')
-      # points(rvb, type = 'l', col = 'blue')
+      # some kind of bin-by-bin spectral difference from noise
+      difNoise = vector('numeric', nc)
+      for (c in 1:nc) {
+        # cosine
+        difNoise[c] = 1 - crossprod(sp[, c], noise) /
+          sqrt(crossprod(sp[, c]) * crossprod(noise))
+        # difNoise[c] = 1 - cor(sp[, c], noise)  # throws NAs, weird range
+        # difNoise[c] = quantile(sp[, c] - noise, .75)
+        # max(sp[, c] - noise)   # not robust to noise
+        # mean(sp[, c] - noise)  # not sensitive to spectral changes - like using ampl env
+      }
 
-      # # alternative (a tiny bit slower, produces a more wiggly rvb): calculate
-      # # pointwise reverb from preceding samples
-      # rvb = vector('numeric', nc)
-      # for (i in 1:nc) {
-      #   if (i <= lw) {
-      #     idx = 1:(i - 1)
-      #     win_i = win[(lw - i + 2):lw]
-      #   } else {
-      #     idx = (i - lw):(i - 1)
-      #     win_i = win
-      #   }
-      #   rvb[i] = sum(cs[idx] * win_i)
-      # }
-
-      threshold = thres_difNoise + SNR + rvb  #  * 10 ^ (reverbDep / 20)
-      # rvb_adj = rvb / max(cs)
-      # rvb[rvb < thres_noise] = thres_noise; (rvb - thres_noise) / (max(cs) - thres_noise)
-      # threshold = thres_difNoise + SNR * (1 + rvb_adj)
+      difNoise = difNoise / max(difNoise) * max(cs) + cs - thres_noise
       # plot(difNoise, type = 'l')
-      # abline(h = thres_difNoise + SNR, lty = 2)
+      # hist(difNoise)
+
+      thres_difNoise = as.numeric(quantile(difNoise, probs = propNoise))
+      # plot(difNoise, type = 'l')
+      # abline(h = thres_difNoise + SNR, lty = 3, col = 'blue')
+
+      # attempt to estimate SNR from data
+      if (is.null(SNR)) {
+        # prop_snr = max(min(.99, propNoise + .25), .5)
+        # SNR = quantile(difNoise[difNoise > thres_difNoise], probs = prop_snr) - thres_difNoise
+        SNR = round((median(difNoise[-col_noise]) - thres_difNoise) / 2, 1)
+        message(paste0('SNR set to ', SNR, '; reset manually if needed'))
+        # SNR = min(30, max(cs) / 2 - thres_noise)
+        # SNR = max(difNoise[col_noise]) + 10 * sd(difNoise[col_noise])
+      }
+      if (length(peakToTrough) < 1) peakToTrough = SNR + 3
+
+      # adaptive thresholds may help to control for reverb
+      if (length(reverbPars) > 0 & is.list(reverbPars)) {
+        # dynamic thresholdf
+        rvb_list = do.call('reverb', c(
+          list(x = cs,
+               samplingRate = 1000 / step,
+               len = nc,
+               output = 'detailed'),
+          reverbPars
+        ))
+        rvb = rvb_list$rvb[1:nc]
+        # plot(cs, type = 'l')
+        # points(rvb, type = 'l', col = 'blue')
+
+        # # alternative (a tiny bit slower, produces a more wiggly rvb): calculate
+        # # pointwise reverb from preceding samples
+        # rvb = vector('numeric', nc)
+        # for (i in 1:nc) {
+        #   if (i <= lw) {
+        #     idx = 1:(i - 1)
+        #     win_i = win[(lw - i + 2):lw]
+        #   } else {
+        #     idx = (i - lw):(i - 1)
+        #     win_i = win
+        #   }
+        #   rvb[i] = sum(cs[idx] * win_i)
+        # }
+
+        threshold = thres_difNoise + SNR + rvb  #  * 10 ^ (reverbDep / 20)
+        # rvb_adj = rvb / max(cs)
+        # rvb[rvb < thres_noise] = thres_noise; (rvb - thres_noise) / (max(cs) - thres_noise)
+        # threshold = thres_difNoise + SNR * (1 + rvb_adj)
+        # plot(difNoise, type = 'l')
+        # abline(h = thres_difNoise + SNR, lty = 2)
+        # points(threshold, type = 'l', col = 'blue')
+
+      } else {
+        # static threshold
+        threshold = rep(thres_difNoise + SNR, nc) # * 10 ^ (SNR / 20)
+      }
+
+      # add up the novelty and difNoise curves
+      ampl = novelty + difNoise
+      # ampl = getEnv(
+      #   novelty + difNoise,
+      #   windowLength_points = mean(c(shortestSyl, shortestPause)) / step,
+      #   method = 'peak'
+      # )
+      # plot(ampl, type = 'l')
       # points(threshold, type = 'l', col = 'blue')
 
-    } else {
-      # static threshold
-      threshold = rep(thres_difNoise + SNR, nc) # * 10 ^ (SNR / 20)
+      # find syllables
+      syllables_part = findSyllables(
+        ampl = ampl,
+        threshold = threshold,
+        shortestSyl = shortestSyl,
+        shortestPause = shortestPause,
+        step = step,
+        windowLength = windowLength
+      )
+    }
+    ## find bursts and get descriptives
+    # calculate the window for analyzing bursts based on syllables
+    # (if no syllables are detected, just use shortestSyl)
+    if (is.null(interburst)) {
+      median_scaled = median(syllables_part$sylLen, na.rm = TRUE)
+      if (any(!is.na(syllables_part$pauseLen))) {
+        median_scaled = median_scaled + median(syllables_part$pauseLen, na.rm = TRUE)
+      }
+      interburst = ifelse(!is.na(median_scaled) & length(median_scaled) > 0,
+                          median_scaled,
+                          shortestSyl)
     }
 
-    # add up the novelty and difNoise curves
-    ampl = novelty + difNoise
-    # ampl = getEnv(
-    #   novelty + difNoise,
-    #   windowLength_points = mean(c(shortestSyl, shortestPause)) / step,
-    #   method = 'peak'
-    # )
-    # plot(ampl, type = 'l')
-    # points(threshold, type = 'l', col = 'blue')
-
-    # find syllables
-    syllables = findSyllables(
+    bursts_part = findBursts(
       ampl = ampl,
-      threshold = threshold,
-      shortestSyl = shortestSyl,
-      shortestPause = shortestPause,
       step = step,
-      windowLength = windowLength
+      windowLength = windowLength,
+      interburst = interburst,
+      burstThres = threshold,
+      peakToTrough = peakToTrough,
+      troughLocation = troughLocation,
+      scale = 'dB'
     )
-  }
-  ## find bursts and get descriptives
-  # calculate the window for analyzing bursts based on syllables
-  # (if no syllables are detected, just use shortestSyl)
-  if (is.null(interburst)) {
-    median_scaled = median(syllables$sylLen, na.rm = TRUE)
-    if (any(!is.na(syllables$pauseLen))) {
-      median_scaled = median_scaled + median(syllables$pauseLen, na.rm = TRUE)
+    syllables_part[, c('start', 'end')] = syllables_part[, c('start', 'end')] +
+      timeShift + analyze_from
+    bursts_part$time = bursts_part$time + timeShift + analyze_from
+
+    # start next part just before the last detected syllable if it looks like
+    # this syllable might be incomplete (ends within 100 ms of the end of sound_part)
+    if (!is.na(syllables_part$start[1]) &&
+        (analyze_to - (syllables_part$end[nrow(syllables_part)] - timeShift) < 100)) {
+      analyze_from = syllables_part$start[nrow(syllables_part)] - timeShift - shortestPause
+      # remove syllables and bursts from the overlapping part
+      syllables_part = syllables_part[-nrow(syllables_part), ]
+      bursts_part = bursts_part[bursts_part$time < analyze_from, ]
+    } else {
+      analyze_from = analyze_to
     }
-    interburst = ifelse(!is.na(median_scaled) & length(median_scaled) > 0,
-                        median_scaled,
-                        shortestSyl)
+    if (is.null(propNoise_user)) propNoise = NULL  # reset in next part
+    if (is.null(SNR_user)) SNR = NULL              # reset in next part
+    analyze_to = min(analyze_from + maxDur * 1000, dur_total)
+    if (analyze_to >= dur_total) stopNextTime = TRUE
+
+    # add to growing syllables/bursts for the entire file
+    if (is.null(syllables)) {
+      syllables = syllables_part
+    } else {
+      syllables = rbind(syllables, syllables_part)
+    }
+    if (is.null(bursts)) {
+      bursts = bursts_part
+    } else {
+      bursts = rbind(bursts, bursts_part)
+    }
+    if (stopNextTime) break
+  }
+  # end of WHILE loop for processing long sounds
+
+  # in case of long files, interbursts for the first burst in a new analyzed
+  # fragment become NAs - recalculate
+  syllables = na.omit(syllables)
+  if (nrow(syllables) > 0) {
+    syllables$syllable = 1:nrow(syllables)
+  } else {
+    syllables = data.frame(syllable = NA,
+                           start = NA, end = NA,
+                           sylLen = NA, pauseLen = NA)
+  }
+  bursts = bursts[which(!is.na(bursts$time)), ]
+  if (nrow(bursts) < 1) {
+    bursts = data.frame(time = NA, ampl = NA, interburst = NA)
+  } else if (nrow(bursts) > 1) {
+    for (i in 2:nrow(bursts)) {
+      if (is.na(bursts$interburst[i]))
+        bursts$interburst[i] = bursts$time[i] - bursts$time[i - 1]
+    }
   }
 
-  bursts = findBursts(ampl = ampl,
-                      step = step,
-                      windowLength = windowLength,
-                      interburst = interburst,
-                      burstThres = threshold,
-                      peakToTrough = peakToTrough,
-                      troughLocation = troughLocation,
-                      scale = 'dB')
-  syllables[, c('start', 'end')] = syllables[, c('start', 'end')] + timeShift
-  bursts$time = bursts$time + timeShift
 
   ## save all extracted syllables as separate audio files for easy examination
   if (is.character(saveAudio) && !is.na(syllables$sylLen[1])) {
@@ -535,40 +608,40 @@ segmentSound = function(
 
 #' Segment a sound
 #'
-#' Finds syllables and bursts separated by background noise in long recordings.
-#' Syllables are defined as continuous segments that seem to be different from
-#' noise based on amplitude and/or spectral similarity thresholds. Bursts are
-#' defined as local maxima in signal envelope that are high enough both in
-#' absolute terms (relative to the global maximum) and with respect to the
-#' surrounding region (relative to local mimima). See
-#' vignette('acoustic_analysis', package = 'soundgen') for details.
+#' Finds syllables and bursts separated by background noise in long recordings
+#' (up to 1-2 hours of audio per file). Syllables are defined as continuous
+#' segments that seem to be different from noise based on amplitude and/or
+#' spectral similarity thresholds. Bursts are defined as local maxima in signal
+#' envelope that are high enough both in absolute terms (relative to the global
+#' maximum) and with respect to the surrounding region (relative to local
+#' mimima). See vignette('acoustic_analysis', package = 'soundgen') for details.
 #'
-#' Algorithm: first the audio recording is partitioned into signal and noise
-#' regions: the quietest and most stable regions are located, and noise
-#' threshold is defined from a user-specified proportion of noise in the
-#' recording (\code{propNoise}) or, if \code{propNoise = NULL}, from the lowest
-#' local maximum in the density function of a weighted product of amplitude and
-#' stability (that is, we assume that quiet and stable regions are likely to
-#' represent noise). Once we know what the noise looks like - in terms of its
-#' typical amplitude and/or spectrum - we derive signal contour as its
-#' difference from noise at each time point. If \code{method = 'env'}, this is
-#' Hilbert transform minus noise, and if \code{method = 'spec' or 'mel'}, this
-#' is the inverse of cosine similarity between the spectrum of each frame and
-#' the estimated spectrum of noise weighted by amplitude. By default,
-#' signal-to-noise ratio (SNR) is estimated as half-median of above-noise
-#' signal, but it is recommended that this parameter is adjusted by hand to suit
-#' the purposes of segmentation, as it is the key setting that controls the
-#' balance between false negatives (missing faint signals) and false positives
-#' (hallucinating signals that are actually noise). Note also that effects of
-#' echo or reverberation can be taken into account: syllable detection threshold
-#' may be raised following powerful acoustic bursts with the help of the
-#' \code{reverbPars} argument. At the final stage, continuous "islands" SNR dB
-#' above noise level are detected as syllables, and "peaks" on the islands are
-#' detected as bursts. The algorithm is very flexible, but the parameters may be
-#' hard to optimize by hand. If you have an annotated sample of the sort of
-#' audio you are planning to analyze, with syllables and/or bursts counted
-#' manually, you can use it for automatic optimization of control parameters
-#' (see \code{\link{optimizePars}}.
+#' Algorithm: for each chunk at most \code{maxDur} long, first the audio
+#' recording is partitioned into signal and noise regions: the quietest and most
+#' stable regions are located, and noise threshold is defined from a
+#' user-specified proportion of noise in the recording (\code{propNoise}) or, if
+#' \code{propNoise = NULL}, from the lowest local maximum in the density
+#' function of a weighted product of amplitude and stability (that is, we assume
+#' that quiet and stable regions are likely to represent noise). Once we know
+#' what the noise looks like - in terms of its typical amplitude and/or spectrum
+#' - we derive signal contour as its difference from noise at each time point.
+#' If \code{method = 'env'}, this is Hilbert transform minus noise, and if
+#' \code{method = 'spec' or 'mel'}, this is the inverse of cosine similarity
+#' between the spectrum of each frame and the estimated spectrum of noise
+#' weighted by amplitude. By default, signal-to-noise ratio (SNR) is estimated
+#' as half-median of above-noise signal, but it is recommended that this
+#' parameter is adjusted by hand to suit the purposes of segmentation, as it is
+#' the key setting that controls the balance between false negatives (missing
+#' faint signals) and false positives (hallucinating signals that are actually
+#' noise). Note also that effects of echo or reverberation can be taken into
+#' account: syllable detection threshold may be raised following powerful
+#' acoustic bursts with the help of the \code{reverbPars} argument. At the final
+#' stage, continuous "islands" SNR dB above noise level are detected as
+#' syllables, and "peaks" on the islands are detected as bursts. The algorithm
+#' is very flexible, but the parameters may be hard to optimize by hand. If you
+#' have an annotated sample of the sort of audio you are planning to analyze,
+#' with syllables and/or bursts counted manually, you can use it for automatic
+#' optimization of control parameters (see \code{\link{optimizePars}}.
 #'
 #' @seealso \code{\link{analyze}}  \code{\link{ssm}}
 #'
@@ -608,6 +681,10 @@ segmentSound = function(
 #'   left and/or right of it? Values: 'left', 'right', 'both', 'either'
 #' @param summaryFun functions used to summarize each acoustic characteristic;
 #'   see \code{\link{analyze}}
+#' @param maxDur long files are split into chunks \code{maxDur} s in duration to
+#'   avoid running out of RAM; the outputs for all fragments are glued together,
+#'   but plotting is switched off. Note that noise profile is estimated in each
+#'   chunk separately, so set it low if the background noise is highly variable
 #' @param plot if TRUE, produces a segmentation plot
 #' @param savePlots full path to the folder in which to save the plot(s). NULL =
 #'   don't save. Note that the html file with clickable plots will only work if
@@ -649,9 +726,9 @@ segmentSound = function(
 #'
 #' s = segment(sound, samplingRate = 16000, plot = TRUE)
 #'
-#' # just a summary (see examples in ?analyze for custom summaryFun)
+#' # summarize per file (see examples in ?analyze for custom summaryFun)
 #' s1 = segment(sound, samplingRate = 16000, summaryFun = c('median', 'sd'))
-#' s1
+#' s1$summary
 #'
 #' # customizing the plot
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
@@ -669,14 +746,17 @@ segmentSound = function(
 #' # http://cogsci.se/publications.html
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp260'  # 260 .wav files live here
-#' s = segment(myfolder, verbose = TRUE)
+#' s = segment(myfolder, propNoise = .05, SNR = 3, verbose = TRUE)
 #'
 #' # Check accuracy: import a manual count of syllables (our "key")
 #' key = segmentManual  # a vector of 260 integers
-#' trial = as.numeric(s$nBursts)
+#' trial = as.numeric(s$summary$nBursts)
 #' cor(key, trial, use = 'pairwise.complete.obs')
 #' boxplot(trial ~ as.integer(key), xlab='key')
 #' abline(a=0, b=1, col='red')
+#'
+#' # or look at the detected syllables instead of bursts:
+#' cor(key, s$summary$nSyl, use = 'pairwise.complete.obs')
 #' }
 segment = function(
   x,
@@ -689,7 +769,7 @@ segment = function(
   propNoise = NULL,
   SNR = NULL,
   noiseLevelStabWeight = c(1, .25),
-  windowLength = shortestSyl,
+  windowLength = 40,
   step = NULL,
   overlap = 80,
   reverbPars = list(reverbDelay = 70, reverbSpread = 130,
@@ -698,6 +778,7 @@ segment = function(
   peakToTrough = SNR + 3,
   troughLocation = c('left', 'right', 'both', 'either')[4],
   summaryFun = if (is.character(x) && dir.exists(x)) c('median', 'sd') else NULL,
+  maxDur = 30,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,

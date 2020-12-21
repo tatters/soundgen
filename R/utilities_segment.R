@@ -78,7 +78,7 @@ findSyllables = function(ampl,
   } else {
     syllables = data.frame(syllable = NA,
                            start_idx = NA, end_idx = NA,
-                           start = NA, end = NA, dur = NA,
+                           start = NA, end = NA,
                            sylLen = NA, pauseLen = NA)
   }
 

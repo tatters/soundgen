@@ -16,7 +16,7 @@ segmentSound(
   propNoise = NULL,
   SNR = NULL,
   noiseLevelStabWeight = c(1, 0.25),
-  windowLength = shortestSyl,
+  windowLength = 40,
   step = NULL,
   overlap = 80,
   reverbPars = list(reverbDelay = 70, reverbSpread = 130, reverbLevel = -35,
@@ -24,6 +24,7 @@ segmentSound(
   interburst = NULL,
   peakToTrough = SNR + 3,
   troughLocation = c("left", "right", "both", "either")[4],
+  maxDur = 30,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,
@@ -103,6 +104,11 @@ by \code{interburst}). Defaults to SNR + 3 dB}
 
 \item{troughLocation}{should local maxima be compared to the trough on the
 left and/or right of it? Values: 'left', 'right', 'both', 'either'}
+
+\item{maxDur}{long files are split into chunks \code{maxDur} s in duration to
+avoid running out of RAM; the outputs for all fragments are glued together,
+but plotting is switched off. Note that noise profile is estimated in each
+chunk separately, so set it low if the background noise is highly variable}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 
