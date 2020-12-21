@@ -7,8 +7,6 @@
 getEnv(sound, windowLength_points, method = c("rms", "peak", "mean", "hil")[1])
 }
 \arguments{
-\item{sound}{input vector oscillating about zero}
-
 \item{windowLength_points}{the length of smoothing window, points. If
 specified, overrides both \code{windowLength} and \code{samplingRate}}
 

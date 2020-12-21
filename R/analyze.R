@@ -438,6 +438,14 @@ analyze = function(
         warning(paste('Scale cannot be smaller than observed max; resetting to', m))
       }
     }
+  } else if (class(x) == 'Wave') {
+    if (x@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
+    samplingRate = x@samp.rate
+    sound = x@left
+    scale = 2 ^ (x@bit - 1)
+    m = max(abs(sound))
+    plotname = ifelse(!missing(main) & !is.null(main), main, '')
   } else {
     stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
@@ -1218,7 +1226,7 @@ analyze = function(
                 pitchCands = pitchCands_list,
                 spectrogram = s))
   } else {
-    return(out)
+    invisible(out)
   }
 }
 

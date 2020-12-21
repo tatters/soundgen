@@ -31,11 +31,11 @@ ssm(
 )
 }
 \arguments{
-\item{x}{path to a .wav file or a vector of amplitudes with specified
-samplingRate}
+\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
+representing the waveform with specified samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than a .wav file)}
+numeric vector, rather than an audio file or Wave object)}
 
 \item{windowLength}{length of FFT window, ms}
 

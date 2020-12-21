@@ -267,8 +267,12 @@ modulationSpectrum = function(
       }
     }
     plotname = ifelse(!missing(main) & !is.null(main), main, '')
+  } else if (class(x) == 'Wave') {
+    samplingRate = x@samp.rate
+    myInput = list(as.numeric(x@left))
+    plotname = ifelse(!missing(main) & !is.null(main), main, '')
   } else {
-    stop('Input not recognized')
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
 
   # load input

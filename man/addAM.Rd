@@ -67,13 +67,13 @@ s2 = addAM(sound1, 16000,
 
 # Sinusoidal AM produces exactly 2 extra harmonics at ±am_freq around each f0
 harmonic:
-s3 = addAM(sound2, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
+s3 = addAM(sound1, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
            plot = TRUE, play = TRUE)
 spectrogram(s3, 16000, windowLength = 150, ylim = c(0, 2))
 
 # Non-sinusoidal AM produces multiple new harmonics, which can resemble
 subharmonics...
-s4 = addAM(sound2, 16000, amDep = 70, amFreq = 50, amShape = -1,
+s4 = addAM(sound1, 16000, amDep = 70, amFreq = 50, amShape = -1,
            plot = TRUE, play = TRUE)
 spectrogram(s4, 16000, windowLength = 150, ylim = c(0, 2))
 
@@ -85,7 +85,7 @@ s5 = addAM(sound3, 16000, amDep = c(0, 30, 100, 40, 0),
 spectrogram(s5, 16000, ylim = c(0, 5))
 
 # Feel free to add AM stochastically:
-s6 = addAM(sound2, 16000,
+s6 = addAM(sound1, 16000,
            amDep = rnorm(10, 40, 20), amFreq = rnorm(20, 70, 20),
            plot = TRUE, play = TRUE)
 spectrogram(s6, 16000, windowLength = 150, ylim = c(0, 2))

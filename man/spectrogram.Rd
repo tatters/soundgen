@@ -48,11 +48,11 @@ spectrogram(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
-samplingRate}
+\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
+representing the waveform with specified samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file)}
+numeric vector, rather than an audio file or Wave object)}
 
 \item{from, to}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}
@@ -169,7 +169,7 @@ of its graphical parameters from functions like \code{\link{soundgen}},
 parameters.
 }
 \examples{
-# synthesize a sound 1 s long, with gradually increasing hissing noise
+# synthesize a sound 500 ms long, with gradually increasing hissing noise
 sound = soundgen(sylLen = 500, temperature = 0.001, noise = list(
   time = c(0, 650), value = c(-40, 0)), formantsNoise = list(
   f1 = list(freq = 5000, width = 10000)))

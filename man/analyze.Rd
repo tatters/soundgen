@@ -73,11 +73,11 @@ analyze(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
-samplingRate}
+\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
+representing the waveform with specified samplingRate}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file)}
+numeric vector, rather than an audio file or Wave object)}
 
 \item{from}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}

@@ -17,14 +17,14 @@ flatSpectrum(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file or a vector of amplitudes with specified
-samplingRate}
+\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
+representing the waveform with specified samplingRate}
 
 \item{freqWindow}{the width of smoothing window, Hz. Defaults to median
 pitch estimated by \code{\link{analyze}}}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file)}
+numeric vector, rather than an audio file or Wave object)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}

@@ -23,7 +23,7 @@ getSmoothSpectrum(
 \item{sound}{the audio (numeric, any scale)}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file)}
+numeric vector, rather than an audio file or Wave object)}
 
 \item{len}{the desired resolution of the output}
 

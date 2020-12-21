@@ -5,7 +5,7 @@
 \title{Flat envelope}
 \usage{
 flatEnv(
-  sound,
+  x,
   windowLength = 200,
   samplingRate = 16000,
   method = c("hil", "rms", "peak")[1],
@@ -16,7 +16,7 @@ flatEnv(
 )
 }
 \arguments{
-\item{sound}{input vector oscillating about zero}
+\item{x}{input vector oscillating about zero}
 
 \item{windowLength}{the length of smoothing window, ms}
 

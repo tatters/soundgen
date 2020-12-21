@@ -17,13 +17,7 @@
 #'   novelty. In Multimedia and Expo, 2000. ICME 2000. 2000 IEEE International
 #'   Conference on (Vol. 1, pp. 452-455). IEEE.
 #'   }
-#' @param x path to a .wav file or a vector of amplitudes with specified
-#'   samplingRate
-#' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
-#'   numeric vector, rather than a .wav file)
-#' @param windowLength length of FFT window, ms
-#' @param overlap overlap between successive FFT frames, \%
-#' @param step you can override \code{overlap} by specifying FFT step, ms
+#' @inheritParams spectrogram
 #' @param ssmWin window for averaging SSM, ms
 #' @param maxFreq highest band edge of mel filters, Hz. Defaults to
 #'   \code{samplingRate / 2}. See \code{\link[tuneR]{melfcc}}
@@ -110,13 +104,18 @@ ssm = function(x,
   if (class(x)[1] == 'character') {
     sound = tuneR::readWave(x)
     samplingRate = sound@samp.rate
-  }  else if (class(x)[1] == 'numeric' & length(x) > 1) {
+  }  else if (is.numeric(x)) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
       sound = tuneR::Wave(left = x, samp.rate = samplingRate, bit = 16)
       sound = tuneR::normalize(sound, unit = '32')
     }
+  } else if (class(x) == 'Wave') {
+    sound = x
+    samplingRate = x@samp.rate
+  } else {
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2

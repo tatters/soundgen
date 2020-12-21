@@ -201,44 +201,48 @@ getRMS = function(x,
     } else {
       stop('Input not recognized: must be a numeric vector or wav/mp3 file')
     }
+    if (sound_wav@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
     samplingRate = sound_wav@samp.rate
-    windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
     sound = sound_wav@left
-    scale = 2^(sound_wav@bit - 1)
-    if (windowLength_points > (length(sound) / 2)) {
-      windowLength_points = floor(length(sound) / 4) * 2
-      step = round(windowLength * (1 - overlap / 100))
-    }
-    if (windowLength_points == 0) {
-      stop('The sound and/or the windowLength is too short')
-    }
-    duration = length(sound) / samplingRate
-  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
+    scale = 2 ^ (sound_wav@bit - 1)
+    m = max(abs(sound))
+  } else if (is.numeric(x)) {
     if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
+      stop('Please specify "samplingRate", eg 44100')
     } else {
       sound = x
-      m = max(abs(sound))
-      if (is.null(scale)) {
-        scale = max(m, 1)
-        message(paste('Scale not specified. Assuming that max amplitude is', scale))
-      } else if (is.numeric(scale)) {
-        if (scale < m) {
-          scale = m
-          warning(paste('Scale cannot be smaller than observed max; resetting to', m))
-        }
-      }
-      duration = length(sound) / samplingRate
-      windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-      if (windowLength_points > (length(sound) / 2)) {
-        windowLength_points = floor(length(sound) / 4) * 2
-        step = round(windowLength * (1 - overlap / 100))
-      }
-      if (windowLength_points == 0) {
-        stop('The sound and/or the windowLength is too short')
+    }
+    m = max(abs(sound))
+    if (is.null(scale)) {
+      scale = max(m, 1)
+      message(paste('Scale not specified. Assuming that max amplitude is', scale))
+    } else if (is.numeric(scale)) {
+      if (scale < m) {
+        scale = m
+        warning(paste('Scale cannot be smaller than observed max; resetting to', m))
       }
     }
+  } else if (class(x) == 'Wave') {
+    if (x@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
+    samplingRate = x@samp.rate
+    sound = x@left
+    scale = 2 ^ (x@bit - 1)
+    m = max(abs(sound))
+  } else {
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
+
+  ls = length(sound)
+  duration = ls / samplingRate
+  if (!is.numeric(windowLength) | windowLength <= 0 |
+      windowLength > (duration * 1000)) {
+    windowLength = min(50, duration / 2 * 1000)
+    warning(paste0('"windowLength" must be between 0 and sound_duration ms;
+            defaulting to ', windowLength, ' ms'))
+  }
+  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
 
   # DC offset
   if (killDC) {
@@ -247,7 +251,7 @@ getRMS = function(x,
 
   # calculate RMS per frame
   step_points = round(step / 1000 * samplingRate)
-  myseq = seq(1, max(1, (length(sound) - windowLength_points)), step_points)
+  myseq = seq(1, max(1, (ls - windowLength_points)), step_points)
   r = apply(as.matrix(myseq), 1, function(x) {
     sqrt(mean(sound[x:(windowLength_points + x - 1)] ^ 2))
   })
@@ -255,7 +259,7 @@ getRMS = function(x,
 
   # plotting
   if (plot) {
-    time = 1:length(sound) / samplingRate * 1000
+    time = 1:ls / samplingRate * 1000
     plot(time, sound, type = 'n', xlab = xlab, ylab = ylab, xaxt = 'n', ...)
     time_location = axTicks(1)
     time_labels = convert_sec_to_hms(time_location / 1000, 3)
@@ -561,7 +565,7 @@ normalizeFolder = function(myfolder,
 #' Flattens the amplitude envelope of a waveform. This is achieved by dividing
 #' the waveform by some function of its smoothed amplitude envelope (Hilbert,
 #' peak or root mean square).
-#' @param sound input vector oscillating about zero
+#' @param x input vector oscillating about zero
 #' @param windowLength the length of smoothing window, ms
 #' @param samplingRate the sampling rate, Hz. Only needed if the length of
 #'   smoothing window is specified in ms rather than points
@@ -596,7 +600,7 @@ normalizeFolder = function(myfolder,
 #' s2 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = FALSE)
 #' s3 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = TRUE)
 #' }
-flatEnv = function(sound,
+flatEnv = function(x,
                    windowLength = 200,
                    samplingRate = 16000,
                    method = c('hil', 'rms', 'peak')[1],
@@ -604,6 +608,49 @@ flatEnv = function(sound,
                    killDC = FALSE,
                    dynamicRange = 80,
                    plot = FALSE) {
+  # import audio
+  if (class(x)[1] == 'character') {
+    extension = substr(x, nchar(x) - 2, nchar(x))
+    if (extension == 'wav' | extension == 'WAV') {
+      sound_wav = tuneR::readWave(x)
+    } else if (extension == 'mp3' | extension == 'MP3') {
+      sound_wav = tuneR::readMP3(x)
+    } else {
+      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    }
+    if (sound_wav@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
+    samplingRate = sound_wav@samp.rate
+    sound = sound_wav@left
+    scale = 2 ^ (sound_wav@bit - 1)
+    m = max(abs(sound))
+  } else if (is.numeric(x)) {
+    if (is.null(samplingRate)) {
+      stop('Please specify "samplingRate", eg 44100')
+    } else {
+      sound = x
+    }
+    m = max(abs(sound))
+    if (is.null(scale)) {
+      scale = max(m, 1)
+      message(paste('Scale not specified. Assuming that max amplitude is', scale))
+    } else if (is.numeric(scale)) {
+      if (scale < m) {
+        scale = m
+        warning(paste('Scale cannot be smaller than observed max; resetting to', m))
+      }
+    }
+  } else if (class(x) == 'Wave') {
+    if (x@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
+    samplingRate = x@samp.rate
+    sound = x@left
+    scale = 2 ^ (x@bit - 1)
+    m = max(abs(sound))
+  } else {
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+  }
+
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
       if (is.numeric(samplingRate)) {
@@ -615,7 +662,7 @@ flatEnv = function(sound,
     }
   }
 
-  m = max(abs(sound))       # original scale (eg -1 to +1 gives m = 1)
+  # m = original scale (eg -1 to +1 gives m = 1)
   soundNorm = sound / m    # normalize
   throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
   # get smoothed amplitude envelope
@@ -781,13 +828,13 @@ transplantEnv = function(
 #'
 #' # Sinusoidal AM produces exactly 2 extra harmonics at ±am_freq around each f0
 #' harmonic:
-#' s3 = addAM(sound2, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
+#' s3 = addAM(sound1, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
 #'            plot = TRUE, play = TRUE)
 #' spectrogram(s3, 16000, windowLength = 150, ylim = c(0, 2))
 #'
 #' # Non-sinusoidal AM produces multiple new harmonics, which can resemble
 #' subharmonics...
-#' s4 = addAM(sound2, 16000, amDep = 70, amFreq = 50, amShape = -1,
+#' s4 = addAM(sound1, 16000, amDep = 70, amFreq = 50, amShape = -1,
 #'            plot = TRUE, play = TRUE)
 #' spectrogram(s4, 16000, windowLength = 150, ylim = c(0, 2))
 #'
@@ -799,7 +846,7 @@ transplantEnv = function(
 #' spectrogram(s5, 16000, ylim = c(0, 5))
 #'
 #' # Feel free to add AM stochastically:
-#' s6 = addAM(sound2, 16000,
+#' s6 = addAM(sound1, 16000,
 #'            amDep = rnorm(10, 40, 20), amFreq = rnorm(20, 70, 20),
 #'            plot = TRUE, play = TRUE)
 #' spectrogram(s6, 16000, windowLength = 150, ylim = c(0, 2))
@@ -835,12 +882,17 @@ addAM = function(x,
     }
     samplingRate = sound_wav@samp.rate
     sound = as.numeric(sound_wav@left)
-  } else if (class(x)[1] == 'numeric') {
+  } else if (is.numeric(x)) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
       sound = x
     }
+  } else if (class(x) == 'Wave') {
+    samplingRate = x@samp.rate
+    sound = as.numeric(x@left)
+  } else {
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
   len = length(sound)
 

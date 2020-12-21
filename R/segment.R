@@ -855,6 +855,12 @@ segment = function(
     filenames_base = 'sound'
     if (is.null(samplingRate))
       stop('samplingRate must be provided if input is a numeric vector')
+  } else if (class(x) == 'Wave') {
+    inputType = 'waveform'
+    filenames = x@left
+    nFiles = 1
+    filenames_base = 'sound'
+    samplingRate = x@samp.rate
   } else {
     stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
   }

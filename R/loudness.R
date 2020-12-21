@@ -127,6 +127,15 @@ getLoudness = function(x,
         warning(paste('Scale exceeds the observed range; resetting to', m))
       }
     }
+  } else if (class(x) == 'Wave') {
+    if (x@stereo)
+      message('Input is a stereo file; only the left channel is analyzed')
+    samplingRate = x@samp.rate
+    sound = x@left
+    scale = 2 ^ (x@bit - 1)
+    m = max(abs(sound))
+  } else {
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
   }
   if (samplingRate < 2000) return(NA)  # need at least 8 barks (1 kHz) Niquist
 

@@ -13,8 +13,6 @@ killDC(
 )
 }
 \arguments{
-\item{sound}{input vector oscillating about zero}
-
 \item{windowLength}{the length of smoothing window, ms}
 
 \item{samplingRate}{the sampling rate, Hz. Only needed if the length of

@@ -16,10 +16,10 @@
 #'
 #' @seealso \code{\link{osc}} \code{\link{modulationSpectrum}} \code{\link{ssm}}
 #'
-#' @param x path to a .wav or .mp3 file or a vector of amplitudes with specified
-#'   samplingRate
+#' @param x path to a .wav or .mp3 file, Wave object, or a numeric vector
+#'   representing the waveform with specified samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
-#'   numeric vector, rather than an audio file)
+#'   numeric vector, rather than an audio file or Wave object)
 #' @param from,to if NULL (default), analyzes the whole sound, otherwise
 #'   from...to (s)
 #' @param dynamicRange dynamic range, dB. All values more than one dynamicRange
@@ -89,7 +89,7 @@
 #'   'spectralDerivative') as a matrix of real numbers.
 #' @seealso \code{\link{modulationSpectrum}} \code{\link{ssm}}
 #' @examples
-#' # synthesize a sound 1 s long, with gradually increasing hissing noise
+#' # synthesize a sound 500 ms long, with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 500, temperature = 0.001, noise = list(
 #'   time = c(0, 650), value = c(-40, 0)), formantsNoise = list(
 #'   f1 = list(freq = 5000, width = 10000)))
@@ -225,39 +225,43 @@ spectrogram = function(
       stop('Input not recognized: must be a numeric vector or wav/mp3 file')
     }
     samplingRate = sound_wav@samp.rate
-    windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
     sound = as.numeric(sound_wav@left)
     maxAmpl = 2^(sound_wav@bit - 1)
-    ls = length(sound)
-    if (windowLength_points > (ls / 2)) {
-      windowLength_points = floor(ls / 4) * 2
-      step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
-    }
-    if (windowLength_points == 0) {
-      stop('The sound and/or the windowLength is too short for plotting a spectrogram')
-    }
-    duration = ls / samplingRate
-  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
+  } else if (is.numeric(x) & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
-      sound = x
+      if (is.integer(sound[1])) {
+        sound = as.numeric(x)
+      } else {
+        sound = x
+      }
       if (is.null(scale)) {
         maxAmpl = max(abs(sound))
       } else {
         maxAmpl = scale
       }
-      ls = length(sound)
-      duration = ls / samplingRate
-      windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-      if (windowLength_points > (ls / 2)) {
-        windowLength_points = floor(ls / 4) * 2
-        step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
-      }
-      if (windowLength_points == 0) {
-        stop('The sound and/or the windowLength is too short for plotting a spectrogram')
-      }
     }
+  } else if (class(x) == 'Wave') {
+    samplingRate = x@samp.rate
+    sound = as.numeric(x@left)
+    maxAmpl = 2^(x@bit - 1)
+  } else if (!is.null(x)) {
+    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+  }
+
+  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  if (!is.null(sound)) {
+    # internal (analyze sends preprocessed frame bank)
+    ls = length(sound)
+    if (windowLength_points > (ls / 2)) {
+      windowLength_points = floor(ls / 4) * 2
+      step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
+    }
+    duration = ls / samplingRate
+  }
+  if (windowLength_points == 0) {
+    stop('The sound and/or the windowLength is too short for plotting a spectrogram')
   }
 
   # from...to selection
