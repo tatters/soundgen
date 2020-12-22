@@ -25,7 +25,10 @@ a numeric vector, rather than a .wav file)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
+because digital audio is sampled at discrete time intervals of
+1/samplingRate, the actual step and thus the time stamps of STFT frames
+will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{dynamicRange}{parts of the spectra quieter than \code{-dynamicRange} dB
 are not compared}

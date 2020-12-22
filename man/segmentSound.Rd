@@ -5,8 +5,7 @@
 \title{Internal soundgen function}
 \usage{
 segmentSound(
-  x,
-  inputType,
+  sound,
   samplingRate = NULL,
   from = NULL,
   to = NULL,
@@ -25,10 +24,11 @@ segmentSound(
   peakToTrough = SNR + 3,
   troughLocation = c("left", "right", "both", "either")[4],
   maxDur = 30,
-  plot = FALSE,
-  savePlots = NULL,
   saveAudio = NULL,
   addSilence = 50,
+  plot = FALSE,
+  plotname = "",
+  savePlots = NULL,
   xlab = "",
   ylab = "Signal, dB",
   main = NULL,
@@ -46,11 +46,7 @@ segmentSound(
 )
 }
 \arguments{
-\item{x}{input audio: full path to a folder with wav/mp3 files or a single
-wav/mp3, or else a numeric vector representing the actual audio sampled at
-\code{samplingRate}}
-
-\item{inputType}{to save time, specify what the input is (file or waveform)}
+\item{sound}{waveform as a numeric vector}
 
 \item{samplingRate}{the number of samples per second (only needed if the
 input is a vector rather than an audio file)}
@@ -86,7 +82,10 @@ syllable.}
 
 \item{windowLength}{length of FFT window, ms}
 
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
+because digital audio is sampled at discrete time intervals of
+1/samplingRate, the actual step and thus the time stamps of STFT frames
+will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
@@ -110,17 +109,17 @@ avoid running out of RAM; the outputs for all fragments are glued together,
 but plotting is switched off. Note that noise profile is estimated in each
 chunk separately, so set it low if the background noise is highly variable}
 
-\item{plot}{if TRUE, produces a segmentation plot}
-
-\item{savePlots}{full path to the folder in which to save the plot(s). NULL =
-don't save. Note that the html file with clickable plots will only work if
-the plots are saved in the same folder as input audio files}
-
 \item{saveAudio}{full path to the folder in which to save audio files (one
 per detected syllable)}
 
 \item{addSilence}{if syllables are saved as separate audio files, they can be
 padded with some silence (ms)}
+
+\item{plot}{if TRUE, produces a segmentation plot}
+
+\item{savePlots}{full path to the folder in which to save the plot(s). NULL =
+don't save. Note that the html file with clickable plots will only work if
+the plots are saved in the same folder as input audio files}
 
 \item{xlab}{main plotting parameters}
 

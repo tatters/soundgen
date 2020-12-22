@@ -2,68 +2,13 @@
 % Please edit documentation in R/amplitude.R
 \name{getRMSFolder}
 \alias{getRMSFolder}
-\title{RMS amplitude per folder}
+\title{Segment folder}
 \usage{
-getRMSFolder(
-  myfolder,
-  windowLength = 50,
-  step = NULL,
-  overlap = 70,
-  normalize = TRUE,
-  killDC = FALSE,
-  windowDC = 200,
-  summary = NULL,
-  summaryFun = "mean",
-  verbose = TRUE
-)
+getRMSFolder(...)
 }
 \arguments{
-\item{myfolder}{path to folder containing wav/mp3 files}
-
-\item{windowLength}{length of FFT window, ms}
-
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
-
-\item{overlap}{overlap between successive FFT frames, \%}
-
-\item{normalize}{if TRUE, RMS amplitude is normalized to [0, 1]}
-
-\item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
-
-\item{windowDC}{the window for calculating DC offset, ms}
-
-\item{summary}{deprecated}
-
-\item{summaryFun}{the function used to summarize RMS values across all frames
-(NULL = no summary); see ?analyze for details}
-
-\item{verbose}{if TRUE, reports estimated time left}
+\item{...}{any input parameters}
 }
 \description{
-A wrapper around \code{\link{getRMS}} that goes through all wav/mp3 files in
-a folder and returns either a list with RMS values per frame from each file
-or, if \code{summaryFun} is not NULL, a dataframe with a single summary value
-of RMS per file. This summary value can be mean, max and so on, as per
-\code{summaryFun}.
-}
-\examples{
-\dontrun{
-getRMSFolder('~/Downloads/temp')
-# Compare:
-analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
-              plot = FALSE)$ampl_mean
-# (per STFT frame, but should be very similar)
-
-User-defined summary functions:
-ran = function(x) diff(range(x))
-getRMSFolder('~/Downloads/temp', summaryFun = c('mean', 'ran'))
-
-meanSD = function(x) {
-  paste0('mean = ', round(mean(x), 2), '; sd = ', round(sd(x), 2))
-}
-getRMSFolder('~/Downloads/temp', summaryFun = 'meanSD')
-}
-}
-\seealso{
-\code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
+Segment folder
 }

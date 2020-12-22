@@ -20,11 +20,12 @@
 #' @param len length of output
 #' @param spectralEnvelope (optional): as an alternative to using rolloffNoise,
 #'   we can provide the exact filter - a vector of non-negative numbers
-#'   specifying the power in each frequency bin on a linear scale (interpolated
-#'   to length equal to windowLength_points/2). A matrix specifying the filter
-#'   for each STFT step is also accepted. The easiest way to create this matrix
-#'   is to call soundgen:::getSpectralEnvelope or to use the spectrum of a
-#'   recorded sound
+#'   specifying the desired spectrum on a linear scale up to Nyquist frequency
+#'   (samplingRate / 2). The length doesn't matter as it can be interpolated
+#'   internally to windowLength_points/2. A matrix specifying the filter for
+#'   each STFT step is also accepted. The easiest way to obtain spectralEnvelope
+#'   is to call soundgen:::getSpectralEnvelope or to use the spectrum /
+#'   spectrogram of a recorded sound
 #' @inheritParams soundgen
 #' @param windowLength_points the length of fft window, points
 #' @export
@@ -135,12 +136,12 @@ generateNoise = function(len,
                          play = FALSE) {
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
-    len = rnorm_truncated(n = 1,
-                          mean = len,
-                          sd = len * temperature * .5,
-                          low = 0, high = samplingRate * 10,  # max 10 s
-                          roundToInteger = TRUE,
-                          invalidArgAction = 'adjust')
+    # len = rnorm_truncated(n = 1,
+    #                       mean = len,
+    #                       sd = len * temperature * .5,
+    #                       low = 0, high = len * 2,  # max 2 * original length
+    #                       roundToInteger = TRUE,
+    #                       invalidArgAction = 'adjust')
     if (is.list(rolloffNoise)) {
       rolloffNoise = wiggleAnchors(
         rolloffNoise,

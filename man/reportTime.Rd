@@ -4,13 +4,7 @@
 \alias{reportTime}
 \title{Report time}
 \usage{
-reportTime(
-  i,
-  time_start,
-  nIter = NULL,
-  reportEvery = if (is.null(nIter)) 1 else max(1, 10^(floor(log10(nIter)) - 1)),
-  jobs = NULL
-)
+reportTime(i, time_start, nIter = NULL, reportEvery = NULL, jobs = NULL)
 }
 \arguments{
 \item{i}{current iteration}

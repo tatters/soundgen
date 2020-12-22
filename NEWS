@@ -1,10 +1,13 @@
           CHANGES IN SOUNDGEN VERSION 1.8.2.9000 [...date...]
 MAJOR (affects back-compatibility):
+  * Functions segment(), getRMS(), ... accept as input either a single sound (numeric vectors, Wave objects, or filenames) or a folder with audio files
+  * Accordingly, functions segmentFolder(), getRMSFolder(), ... are deprecated
   * segment(): a new segmentation algorithm based on spectral signal-noise separation, several deprecated and several new arguments, support for long files (>1 h of audio), an option to export detected syllables as separate files, etc.
-  * sgmentFolder(): deprecated, used segment() instead
+
+MAJOR:
+  * All functions for acoustic analysis accept input in the Wave format from tuneR library
 
 MINOR:
-  * All functions for acoustic analysis accept the Wave format from tuneR library
   * spectrogram(), analyze(), analyzeFolder(): a new argument "extraContour" for plotting something over the spectrogram
   * spectrogram(), analyze(): new arguments "from" and "to" for analyzing only a part of a long sound
   * analyze(): spectral slope (specSlope) is returned in dB/kHz

@@ -44,10 +44,14 @@ reportTime = function(
   i,
   time_start,
   nIter = NULL,
-  reportEvery = if(is.null(nIter)) 1 else max(1, 10 ^ (floor(log10(nIter)) - 1)),
+  reportEvery = NULL,
   jobs = NULL
 ) {
   time_diff = as.numeric((proc.time() - time_start)[3])
+  if (is.null(reportEvery))
+    reportEvery = ifelse(is.null(nIter),
+                         1,
+                         max(1, 10 ^ (floor(log10(nIter)) - 1)))
   if (is.null(nIter)) {
     # number of iter unknown, so we just report time elapsed
     if (i %% reportEvery == 0) {

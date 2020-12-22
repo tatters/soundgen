@@ -4,12 +4,10 @@
 #'
 #' A helper function called internally by segment() for segmenting a single sound.
 #' @inheritParams segment
-#' @param inputType to save time, specify what the input is (file or waveform)
-#'
+#' @param sound waveform as a numeric vector
 #' @keywords internal
 segmentSound = function(
-  x,
-  inputType,
+  sound,
   samplingRate = NULL,
   from = NULL,
   to = NULL,
@@ -28,10 +26,11 @@ segmentSound = function(
   peakToTrough = SNR + 3,
   troughLocation = c('left', 'right', 'both', 'either')[4],
   maxDur = 30,
-  plot = FALSE,
-  savePlots = NULL,
   saveAudio = NULL,
   addSilence = 50,
+  plot = FALSE,
+  plotname = '',
+  savePlots = NULL,
   xlab = '',
   ylab = 'Signal, dB',
   main = NULL,
@@ -46,31 +45,6 @@ segmentSound = function(
   sylPlot = list(lty = 1, lwd = 2, col = 'blue'),
   burstPlot = list(pch = 8, cex = 3, col = 'red'),
   ...) {
-  ## import a sound
-  if (inputType == 'file') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    samplingRate = sound_wav@samp.rate
-    sound = as.numeric(sound_wav@left)
-    plotname = tail(unlist(strsplit(x, '/')), n = 1)
-    plotname = substring(plotname, 1, nchar(plotname) - 4)
-    if (is.null(main)) main = plotname
-  }  else if (inputType == 'waveform') {
-    if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
-    } else {
-      sound = x
-      plotname = 'newPlot'
-      if (is.null(main)) main = ''
-    }
-  }
-
   # from...to selection
   len = length(sound)
   if (any(is.numeric(c(from, to)))) {
@@ -103,6 +77,7 @@ segmentSound = function(
   dur_total = len / samplingRate * 1000
   step_points = round(step / 1000 * samplingRate)
   step = step_points / samplingRate * 1000
+  windowLength = windowLength_points / samplingRate * 1000
   # step_points can only be an integer, introducing small timing errors in long sounds
   # plot(sound, type='l')
 
@@ -685,6 +660,8 @@ segmentSound = function(
 #'   avoid running out of RAM; the outputs for all fragments are glued together,
 #'   but plotting is switched off. Note that noise profile is estimated in each
 #'   chunk separately, so set it low if the background noise is highly variable
+#' @param reportEvery report estimated time left every ... iterations (NA = no
+#'   reporting, NULL = default frequency)
 #' @param plot if TRUE, produces a segmentation plot
 #' @param savePlots full path to the folder in which to save the plot(s). NULL =
 #'   don't save. Note that the html file with clickable plots will only work if
@@ -693,8 +670,6 @@ segmentSound = function(
 #'   per detected syllable)
 #' @param addSilence if syllables are saved as separate audio files, they can be
 #'   padded with some silence (ms)
-#' @param verbose,reportEvery if TRUE, reports progress every \code{reportEvery}
-#'   files and estimated time left
 #' @param specPlot a list of graphical parameters for displaying the spectrogram
 #'   (if \code{method = 'spec' or 'mel'}); set to NULL to hide the spectrogram
 #' @param contourPlot a list of graphical parameters for displaying the signal
@@ -717,7 +692,7 @@ segmentSound = function(
 #' @examples
 #' sound = soundgen(nSyl = 4, sylLen = 100, pauseLen = 70,
 #'                  attackLen = 20, amplGlobal = c(0, -20),
-#'                  pitch = c(368, 284), temperature = .1)
+#'                  pitch = c(368, 284), temperature = .001)
 #' # add noise so SNR decreases from 20 to 0 dB from syl1 to syl4
 #' sound = sound + runif(length(sound), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
 #' # osc(sound, samplingRate = 16000, dB = TRUE)
@@ -725,19 +700,16 @@ segmentSound = function(
 #' # playme(sound, samplingRate = 16000)
 #'
 #' s = segment(sound, samplingRate = 16000, plot = TRUE)
-#'
-#' # summarize per file (see examples in ?analyze for custom summaryFun)
-#' s1 = segment(sound, samplingRate = 16000, summaryFun = c('median', 'sd'))
-#' s1$summary
+#' s
 #'
 #' # customizing the plot
-#' s = segment(sound, samplingRate = 16000, plot = TRUE,
-#'             sylPlot = list(lty = 2, col = 'gray20'),
-#'             burstPlot = list(pch = 16, col = 'gray80'),
-#'             specPlot = list(color.palette = 'heat.colors'),
-#'             xlab = 'Some custom label', cex.lab = 1.2,
-#'             showLegend = TRUE,
-#'             main = 'My awesome plot')
+#' segment(sound, samplingRate = 16000, plot = TRUE,
+#'         sylPlot = list(lty = 2, col = 'gray20'),
+#'         burstPlot = list(pch = 16, col = 'gray80'),
+#'         specPlot = list(color.palette = 'heat.colors'),
+#'         xlab = 'Some custom label', cex.lab = 1.2,
+#'         showLegend = TRUE,
+#'         main = 'My awesome plot')
 #' \dontrun{
 #' # set SNR manually to control detection threshold
 #' s = segment(sound, samplingRate = 16000, SNR = 1, plot = TRUE)
@@ -777,14 +749,13 @@ segment = function(
   interburst = NULL,
   peakToTrough = SNR + 3,
   troughLocation = c('left', 'right', 'both', 'either')[4],
-  summaryFun = if (is.character(x) && dir.exists(x)) c('median', 'sd') else NULL,
+  summaryFun = c('median', 'sd'),
   maxDur = 30,
+  reportEvery = NULL,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,
   addSilence = 50,
-  verbose = TRUE,
-  reportEvery = 10,
   xlab = '',
   ylab = 'Signal, dB',
   main = NULL,
@@ -829,6 +800,7 @@ segment = function(
   }
 
   ## Read the input
+  filenames = sound = NULL
   if (is.character(x)) {
     inputType = 'file'
     if (dir.exists(x)) {
@@ -849,15 +821,14 @@ segment = function(
     filesizes = file.info(filenames)$size
   } else if (is.numeric(x)) {
     # input is a numeric vector
-    inputType = 'waveform'
-    filenames = x
+    sound = x
     nFiles = 1
     filenames_base = 'sound'
     if (is.null(samplingRate))
       stop('samplingRate must be provided if input is a numeric vector')
   } else if (class(x) == 'Wave') {
-    inputType = 'waveform'
-    filenames = x@left
+    # input is a Wave object
+    sound = x@left
     nFiles = 1
     filenames_base = 'sound'
     samplingRate = x@samp.rate
@@ -886,7 +857,7 @@ segment = function(
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'verbose', 'reportEvery', 'summaryFun',
+    'x', 'verbose', 'reportEvery', 'summaryFun', 'samplingRate',
     'reverbPars', 'sylPlot', 'burstPlot', 'specPlot')]  # otherwise flattens lists
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
@@ -895,28 +866,45 @@ segment = function(
   myPars$burstPlot = burstPlot
   myPars$specPlot = specPlot
   myPars$reverbPars = reverbPars
-  myPars$inputType = inputType
 
   ## Run the analysis
   syllables = bursts = mysum = vector('list', nFiles)
   names(syllables) = names(bursts) = filenames_base
   for (i in 1:nFiles) {
-    # segment file i
-    if (inputType == 'file') {
-      seg = try(do.call('segmentSound', c(list(x = filenames[i]), myPars, ...)))
-    } else if (inputType == 'waveform') {
-      seg = try(do.call('segmentSound', c(list(x = filenames), myPars, ...)))
-    }
-    if (class(seg) == 'try-error') {
-      if (nFiles > 1) {
-        warning(paste('Failed to segment file', filenames[i]))
+    failed = FALSE
+    # import file
+    if (!is.null(filenames)) {
+      fi = filenames[i]
+      ext_i = substr(fi, nchar(fi) - 3, nchar(fi))
+      if (ext_i %in% c('.wav', '.WAV')) {
+        sound_wave = try(tuneR::readWave(filenames[i]))
       } else {
-        warning('Failed to segment the input')
+        sound_wave = try(tuneR::readMP3(filenames[i]))
+      }
+      if (class(sound_wave) == 'try-error') {
+        failed = TRUE
+      } else {
+        sound = as.numeric(sound_wave@left)
+        samplingRate = sound_wave@samp.rate
+      }
+    }
+
+    # segment file
+    seg = try(do.call('segmentSound', c(
+      list(sound, samplingRate = samplingRate, plotname = filenames_base[i]),
+      myPars, ...)
+    ))
+    if (class(seg) == 'try-error') failed = TRUE
+    if (failed) {
+      if (nFiles > 1) {
+        warning(paste('Failed to process file', filenames[i]))
+      } else {
+        warning('Failed to process the input')
       }
       seg = list(
         syllables = data.frame(syllable = NA,
                                start_idx = NA, end_idx = NA,
-                               start = NA, end = NA, dur = NA,
+                               start = NA, end = NA,
                                sylLen = NA, pauseLen = NA),
         bursts = data.frame(time = NA, ampl = NA, interburst = NA)
       )
@@ -935,9 +923,9 @@ segment = function(
         summaryFun = summaryFun,
         var_noSummary = NULL)
       temp = as.data.frame(c(
-        list(nSyl = nrow(seg$syllables)),
+        list(nSyl = if (failed) NA else sum(!is.na(seg$syllables$start))),
         sum_syl,
-        list(nBursts = nrow(seg$bursts)),
+        list(nBursts = if (failed) NA else sum(!is.na(seg$bursts$time))),
         sum_bursts
       ))
       temp[apply(temp, c(1, 2), is.nan)] = NA
@@ -947,11 +935,9 @@ segment = function(
     }
 
     # report time
-    if (verbose) {
-      if (i %% reportEvery == 0) {
-        reportTime(i = i, nIter = length(filenames),
-                   time_start = time_start, jobs = filesizes)
-      }
+    if (is.null(reportEvery) || is.finite(reportEvery)) {
+      reportTime(i = i, nIter = nFiles, reportEvery = reportEvery,
+                 time_start = time_start, jobs = filesizes)
     }
   }
 

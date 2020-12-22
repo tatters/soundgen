@@ -23,14 +23,13 @@ segment(
   interburst = NULL,
   peakToTrough = SNR + 3,
   troughLocation = c("left", "right", "both", "either")[4],
-  summaryFun = if (is.character(x) && dir.exists(x)) c("median", "sd") else NULL,
+  summaryFun = c("median", "sd"),
   maxDur = 30,
+  reportEvery = NULL,
   plot = FALSE,
   savePlots = NULL,
   saveAudio = NULL,
   addSilence = 50,
-  verbose = TRUE,
-  reportEvery = 10,
   xlab = "",
   ylab = "Signal, dB",
   main = NULL,
@@ -86,7 +85,10 @@ syllable.}
 
 \item{windowLength}{length of FFT window, ms}
 
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
+because digital audio is sampled at discrete time intervals of
+1/samplingRate, the actual step and thus the time stamps of STFT frames
+will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
@@ -113,6 +115,9 @@ avoid running out of RAM; the outputs for all fragments are glued together,
 but plotting is switched off. Note that noise profile is estimated in each
 chunk separately, so set it low if the background noise is highly variable}
 
+\item{reportEvery}{report estimated time left every ... iterations (NA = no
+reporting, NULL = default frequency)}
+
 \item{plot}{if TRUE, produces a segmentation plot}
 
 \item{savePlots}{full path to the folder in which to save the plot(s). NULL =
@@ -124,9 +129,6 @@ per detected syllable)}
 
 \item{addSilence}{if syllables are saved as separate audio files, they can be
 padded with some silence (ms)}
-
-\item{verbose, reportEvery}{if TRUE, reports progress every \code{reportEvery}
-files and estimated time left}
 
 \item{xlab, ylab, main}{main plotting parameters}
 
@@ -196,7 +198,7 @@ optimization of control parameters (see \code{\link{optimizePars}}.
 \examples{
 sound = soundgen(nSyl = 4, sylLen = 100, pauseLen = 70,
                  attackLen = 20, amplGlobal = c(0, -20),
-                 pitch = c(368, 284), temperature = .1)
+                 pitch = c(368, 284), temperature = .001)
 # add noise so SNR decreases from 20 to 0 dB from syl1 to syl4
 sound = sound + runif(length(sound), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
 # osc(sound, samplingRate = 16000, dB = TRUE)
@@ -204,19 +206,16 @@ sound = sound + runif(length(sound), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
 # playme(sound, samplingRate = 16000)
 
 s = segment(sound, samplingRate = 16000, plot = TRUE)
-
-# summarize per file (see examples in ?analyze for custom summaryFun)
-s1 = segment(sound, samplingRate = 16000, summaryFun = c('median', 'sd'))
-s1$summary
+s
 
 # customizing the plot
-s = segment(sound, samplingRate = 16000, plot = TRUE,
-            sylPlot = list(lty = 2, col = 'gray20'),
-            burstPlot = list(pch = 16, col = 'gray80'),
-            specPlot = list(color.palette = 'heat.colors'),
-            xlab = 'Some custom label', cex.lab = 1.2,
-            showLegend = TRUE,
-            main = 'My awesome plot')
+segment(sound, samplingRate = 16000, plot = TRUE,
+        sylPlot = list(lty = 2, col = 'gray20'),
+        burstPlot = list(pch = 16, col = 'gray80'),
+        specPlot = list(color.palette = 'heat.colors'),
+        xlab = 'Some custom label', cex.lab = 1.2,
+        showLegend = TRUE,
+        main = 'My awesome plot')
 \dontrun{
 # set SNR manually to control detection threshold
 s = segment(sound, samplingRate = 16000, SNR = 1, plot = TRUE)

@@ -610,6 +610,7 @@ analyze = function(
   if (step > windowLength)
     warning(paste('"step" should normally not be larger than "windowLength" ms:',
                   'you are skipping parts of the sound!'))
+
   if (shortestPause < step) {
     warning(paste0('shortestPause (', shortestPause,
                    ' ms) is shorter than one STFT step (', step, ' ms)',

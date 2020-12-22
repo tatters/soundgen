@@ -15,11 +15,11 @@ normalizeFolder(
   killDC = FALSE,
   windowDC = 200,
   savepath = NULL,
-  verbose = TRUE
+  reportEvery = NULL
 )
 }
 \arguments{
-\item{myfolder}{path to folder containing wav/mp3 files}
+\item{myfolder}{full path to folder containing input audio files}
 
 \item{type}{normalize so the output files has the same peak amplitude
 ('peak'), root mean square amplitude ('rms'), or subjective loudness in
@@ -33,7 +33,10 @@ etc rms amplitude or loudness? (summaryFun has no effect if type = 'peak')}
 
 \item{windowLength}{length of FFT window, ms}
 
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
+because digital audio is sampled at discrete time intervals of
+1/samplingRate, the actual step and thus the time stamps of STFT frames
+will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
@@ -44,7 +47,8 @@ etc rms amplitude or loudness? (summaryFun has no effect if type = 'peak')}
 \item{savepath}{full path to where the normalized files should be saved
 (defaults to '/normalized')}
 
-\item{verbose}{if TRUE, reports estimated time left}
+\item{reportEvery}{report estimated time left every ... iterations (NA = no
+reporting, NULL = default frequency)}
 }
 \description{
 Normalizes the amplitude of all wav/mp3 files in a folder based on their peak
@@ -69,10 +73,10 @@ normalization procedure is similar to that for \code{type = 'rms'}.
 \examples{
 \dontrun{
 # put a few short audio files in a folder, eg '~/Downloads/temp'
-getRMSFolder('~/Downloads/temp', summaryFun = 'mean')  # different
-normalizeFolder('~/Downloads/temp', type = 'rms', summaryFun = 'mean',
-  savepath = '~/Downloads/temp/normalized')
-getRMSFolder('~/Downloads/temp/normalized', summaryFun = 'mean')  # same
+getRMS('~/Downloads/temp2', summaryFun = 'mean')$summary  # different
+normalizeFolder('~/Downloads/temp2', type = 'rms', summaryFun = 'mean',
+  savepath = '~/Downloads/temp2/normalized')
+getRMS('~/Downloads/temp2/normalized', summaryFun = 'mean')$summary  # same
 # If the saved audio files are treated as stereo with one channel missing,
 # try reconverting with ffmpeg (saving is handled by tuneR::writeWave)
 }

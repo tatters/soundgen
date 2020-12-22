@@ -43,7 +43,10 @@ each point in the two spectra; "dtw" = discrete time warp with
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
+because digital audio is sampled at discrete time intervals of
+1/samplingRate, the actual step and thus the time stamps of STFT frames
+will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{padWith}{compared spectra are padded with either silence (\code{padWith
 = 0}) or with NA's (\code{padWith = NA}) to have the same number of

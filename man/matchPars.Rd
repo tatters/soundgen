@@ -59,7 +59,10 @@ accept the new sound candidate}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
+because digital audio is sampled at discrete time intervals of
+1/samplingRate, the actual step and thus the time stamps of STFT frames
+will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{verbose}{if TRUE, plays back the accepted candidate at each iteration
 and reports the outcome}

@@ -2,19 +2,21 @@
 % Please edit documentation in R/amplitude.R
 \name{getRMS}
 \alias{getRMS}
-\title{RMS amplitude per frame}
+\title{RMS amplitude}
 \usage{
 getRMS(
   x,
   samplingRate = NULL,
+  scale = NULL,
   windowLength = 50,
   step = NULL,
-  overlap = 75,
-  killDC = FALSE,
-  scale = NULL,
+  overlap = 70,
   normalize = TRUE,
+  killDC = FALSE,
   windowDC = 200,
-  plot = TRUE,
+  summaryFun = "mean",
+  reportEvery = NULL,
+  plot = FALSE,
   xlab = "",
   ylab = "",
   type = "b",
@@ -30,22 +32,31 @@ representing the waveform with specified samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file or Wave object)}
 
-\item{windowLength}{length of FFT window, ms}
-
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
-
-\item{overlap}{overlap between successive FFT frames, \%}
-
-\item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
-
 \item{scale}{maximum possible amplitude of input used for normalization (not
 needed for audio files)}
 
+\item{windowLength}{length of FFT window, ms}
+
+\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
+because digital audio is sampled at discrete time intervals of
+1/samplingRate, the actual step and thus the time stamps of STFT frames
+will be slightly different, eg 24.98866 instead of 25.0 ms)}
+
+\item{overlap}{overlap between successive FFT frames, \%}
+
 \item{normalize}{if TRUE, RMS amplitude is normalized to [0, 1]}
+
+\item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
 
 \item{windowDC}{the window for calculating DC offset, ms}
 
-\item{plot}{should a spectrogram be plotted? TRUE / FALSE}
+\item{summaryFun}{the function used to summarize RMS values across all frames
+(NULL = no summary); see ?analyze for details}
+
+\item{reportEvery}{report estimated time left every ... iterations (NA = no
+reporting, NULL = default frequency)}
+
+\item{plot}{if TRUE, plot a contour of RMS amplitude}
 
 \item{xlab, ylab}{general graphical parameters}
 
@@ -54,12 +65,14 @@ needed for audio files)}
 \item{...}{other graphical parameters}
 }
 \value{
-Returns a numeric vector of RMS amplitudes per frame on the scale of
-  input. Names give time stamps for the center of each frame, in ms.
+Returns a list containing: \describe{\item{RMS}{a list of RMS
+  amplitudes per frame for each sound, on the scale of input; names give time
+  stamps for the center of each frame, in ms.} \item{summary}{a dataframe
+  with summary measures, one row per sound}}
 }
 \description{
-Calculates root mean square (RMS) amplitude in overlapping frames, providing
-an envelope of RMS amplitude as a measure of sound intensity. Longer windows
+Calculates root mean square (RMS) amplitude in overlapping windows, providing
+an envelope of RMS amplitude - a measure of sound intensity. Longer windows
 provide smoother, more robust estimates; shorter windows and more overlap
 improve temporal resolution, but they also increase processing time and make
 the contour less smooth.
@@ -78,16 +91,30 @@ s = soundgen() + .1  # with added DC offset
 plot(s, type = 'l')
 r = getRMS(s, samplingRate = 16000,
   windowLength = 40, overlap = 50, killDC = TRUE,
-  type = 'l', lty = 2, main = 'RMS envelope')
+  plot = TRUE, type = 'l', lty = 2, main = 'RMS envelope')
 # short window = jagged envelope
 r = getRMS(s, samplingRate = 16000,
   windowLength = 5, overlap = 0, killDC = TRUE,
-  col = 'blue', pch = 13, main = 'RMS envelope')
+  plot = TRUE, col = 'blue', pch = 13, main = 'RMS envelope')
 \dontrun{
-r = getRMS('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
+r = getRMS('~/Downloads/temp')
+r$summary
+
+# Compare:
+analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
+              plot = FALSE)$ampl_mean
+# (per STFT frame, but should be very similar)
+
+User-defined summary functions:
+ran = function(x) diff(range(x))
+getRMS('~/Downloads/temp', summaryFun = c('mean', 'ran'))$summary
+
+meanSD = function(x) {
+  paste0('mean = ', round(mean(x), 2), '; sd = ', round(sd(x), 2))
+}
+getRMS('~/Downloads/temp', summaryFun = 'meanSD')$summary
 }
 }
 \seealso{
-\code{\link{getRMSFolder}}
-  \code{\link{analyze}}\code{\link{getLoudness}}
+\code{\link{analyze}} \code{\link{getLoudness}}
 }

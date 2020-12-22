@@ -243,66 +243,6 @@ getLoudness = function(x,
   invisible(list(specSone = specSone, loudness = loudness))
 }
 
-# ## EMPIRICAL CALIBRATION OF LOUDNESS (SONE) RETURNED BY getLoudness()
-# # Simple linear scaling can correct for a given windowLength, but
-# # how does scaling coef depend on windowLength and samplingRate?
-# wl = expand.grid(windowLength = seq(10, 150, by = 10),
-#                  samplingRate = c(16000, 24000, 32000, 44000))
-# wl$windowLength_points = 2 ^ (ceiling(log2(wl$windowLength * samplingRate / 1000)))
-# for (i in 1:nrow(wl)) {
-#   sound = sin(2*pi*1000/wl$samplingRate[i]*(1:20000))
-#   wl$loudness[i] = getLoudness(x = sound, samplingRate = wl$samplingRate[i], windowLength = wl$windowLength[i], step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
-# }
-# # plot(wl$windowLength, wl$loudness)
-# library(ggplot2)
-# ggplot(wl, aes(x = windowLength, y = loudness, color = as.factor(samplingRate))) +
-#   geom_point() +
-#   geom_line()
-#
-# # account for windowLength
-# samplingRate = 44100
-# sound = sin(2*pi*1000/samplingRate*(1:20000))
-# wl = data.frame(windowLength = seq(5, 200, by = 5))
-# wl$windowLength_points = 2 ^ (ceiling(log2(wl$windowLength * samplingRate / 1000)))
-# for (i in 1:nrow(wl)) {
-#   wl$loudness[i] = getLoudness(x = sound, samplingRate = samplingRate, windowLength = wl$windowLength[i], step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
-# }
-# plot(wl$windowLength, wl$loudness)
-# # wl
-# # plot(wl$windowLength_points, wl$loudness)
-#
-# mod = nls(loudness ~ a + b * windowLength ^ c, wl, start = list(a = 0, b = 1, c = .5))
-# plot(wl$windowLength, wl$loudness)
-# lines(wl$windowLength, predict(mod, list(windowLength = wl$windowLength)))
-# summary(mod)
-# # use these regression coefficients to calculate scaling factor
-# # as a function of windowLength
-#
-#
-# # account for samplingRate
-# windowLength = 30
-# wl = data.frame(samplingRate = seq(16000, 44000, by = 1000))
-# for (i in 1:nrow(wl)) {
-#   sound = sin(2*pi*1000/wl$samplingRate[i]*(1:20000))
-#   wl$loudness[i] = getLoudness(x = sound, samplingRate = wl$samplingRate[i], windowLength = windowLength, step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
-# }
-# plot(wl$samplingRate, wl$loudness)
-# mod = nls(loudness ~ a + b * samplingRate ^ c, wl, start = list(a = 0, b = 1, c = .5))
-# plot(wl$samplingRate, wl$loudness)
-# lines(wl$samplingRate, predict(mod, list(samplingRate = wl$samplingRate)))
-# summary(mod)
-#
-# # CHECKING THE CALIBRATION
-# samplingRate = 24000
-# sound = sin(2*pi*1000/samplingRate*(1:20000))
-# cal = data.frame(SPL_measured = seq(40, 80, by = 10))
-# for (i in 1:nrow(cal)) {
-#   cal$loudness[i] = mean(getLoudness(x = sound, samplingRate = samplingRate, windowLength = 20, step = NULL, overlap = 50, SPL_measured = cal$SPL_measured[i], Pref = 2e-5, plot = FALSE)$loudness)
-# }
-# cal  # loudness should be 1, 2, 4, 8, 16 sone
-# cal$loudness / cal$loudness[1]
-# plot(cal$SPL_measured, cal$loudness / cal$loudness[1] - c(1, 2, 4, 8, 16))
-
 
 #' Loudness per folder
 #'
@@ -398,3 +338,88 @@ getLoudnessFolder = function(myfolder,
   return(output)
 }
 
+
+# Where is the ^5/3 in loudness adjustment coming from?
+# s = '~/Downloads/temp/145_ut_effort_24.wav'
+# s1 = tuneR::readWave(s)
+# s2 = as.numeric(s1@left)
+# range(s2)
+#
+# mean(getLoudness(s2, samplingRate = s1@samp.rate, scale = 2^(s1@bit-1), plot = FALSE)$loudness)
+# mean(getLoudness(s2 / 10, samplingRate = s1@samp.rate, scale = 2^(s1@bit-1), plot = FALSE)$loudness)
+#
+# out = data.frame(coef = seq(0, 1, length.out = 100), loud = NA)
+# for (i in 1:nrow(out)) {
+#   out$loud[i] = mean(getLoudness(s2 * out$coef[i],
+#                                  samplingRate = s1@samp.rate,
+#                                  scale = 2^(s1@bit-1),
+#                                  plot = FALSE)$loudness)
+# }
+# plot(out, type = 'l')
+#
+# mod = nls(loud ~ a + b * coef ^ c, out, start = list(a = 0, b = 1, c = .5))
+# plot(out, type = 'l')
+# points(out$coef, predict(mod, list(coef = out$coef)), type = 'b', col = 'green')
+# summary(mod)  # a = 0, b = 12, c = 0.6
+# # so loud1/loud2 = coef1^c / coef2^c = (coef1/coef2)^c, where c = 0.6,
+# # so coef1/coef2 = (loud1/loud2)^(1/0.6) = (loud1/loud2)^(5/3)
+
+# ## EMPIRICAL CALIBRATION OF LOUDNESS (SONE) RETURNED BY getLoudness()
+# # Simple linear scaling can correct for a given windowLength, but
+# # how does scaling coef depend on windowLength and samplingRate?
+# wl = expand.grid(windowLength = seq(10, 150, by = 10),
+#                  samplingRate = c(16000, 24000, 32000, 44000))
+# wl$windowLength_points = 2 ^ (ceiling(log2(wl$windowLength * samplingRate / 1000)))
+# for (i in 1:nrow(wl)) {
+#   sound = sin(2*pi*1000/wl$samplingRate[i]*(1:20000))
+#   wl$loudness[i] = getLoudness(x = sound, samplingRate = wl$samplingRate[i], windowLength = wl$windowLength[i], step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
+# }
+# # plot(wl$windowLength, wl$loudness)
+# library(ggplot2)
+# ggplot(wl, aes(x = windowLength, y = loudness, color = as.factor(samplingRate))) +
+#   geom_point() +
+#   geom_line()
+#
+# # account for windowLength
+# samplingRate = 44100
+# sound = sin(2*pi*1000/samplingRate*(1:20000))
+# wl = data.frame(windowLength = seq(5, 200, by = 5))
+# wl$windowLength_points = 2 ^ (ceiling(log2(wl$windowLength * samplingRate / 1000)))
+# for (i in 1:nrow(wl)) {
+#   wl$loudness[i] = getLoudness(x = sound, samplingRate = samplingRate, windowLength = wl$windowLength[i], step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
+# }
+# plot(wl$windowLength, wl$loudness)
+# # wl
+# # plot(wl$windowLength_points, wl$loudness)
+#
+# mod = nls(loudness ~ a + b * windowLength ^ c, wl, start = list(a = 0, b = 1, c = .5))
+# plot(wl$windowLength, wl$loudness)
+# lines(wl$windowLength, predict(mod, list(windowLength = wl$windowLength)))
+# summary(mod)
+# # use these regression coefficients to calculate scaling factor
+# # as a function of windowLength
+#
+#
+# # account for samplingRate
+# windowLength = 30
+# wl = data.frame(samplingRate = seq(16000, 44000, by = 1000))
+# for (i in 1:nrow(wl)) {
+#   sound = sin(2*pi*1000/wl$samplingRate[i]*(1:20000))
+#   wl$loudness[i] = getLoudness(x = sound, samplingRate = wl$samplingRate[i], windowLength = windowLength, step = NULL, overlap = 0, SPL_measured = 40, Pref = 2e-5, plot = FALSE)$loudness[1]
+# }
+# plot(wl$samplingRate, wl$loudness)
+# mod = nls(loudness ~ a + b * samplingRate ^ c, wl, start = list(a = 0, b = 1, c = .5))
+# plot(wl$samplingRate, wl$loudness)
+# lines(wl$samplingRate, predict(mod, list(samplingRate = wl$samplingRate)))
+# summary(mod)
+#
+# # CHECKING THE CALIBRATION
+# samplingRate = 24000
+# sound = sin(2*pi*1000/samplingRate*(1:20000))
+# cal = data.frame(SPL_measured = seq(40, 80, by = 10))
+# for (i in 1:nrow(cal)) {
+#   cal$loudness[i] = mean(getLoudness(x = sound, samplingRate = samplingRate, windowLength = 20, step = NULL, overlap = 50, SPL_measured = cal$SPL_measured[i], Pref = 2e-5, plot = FALSE)$loudness)
+# }
+# cal  # loudness should be 1, 2, 4, 8, 16 sone
+# cal$loudness / cal$loudness[1]
+# plot(cal$SPL_measured, cal$loudness / cal$loudness[1] - c(1, 2, 4, 8, 16))

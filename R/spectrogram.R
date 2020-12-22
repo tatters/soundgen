@@ -26,7 +26,10 @@
 #'   under maximum are treated as zero
 #' @param windowLength length of FFT window, ms
 #' @param overlap overlap between successive FFT frames, \%
-#' @param step you can override \code{overlap} by specifying FFT step, ms
+#' @param step you can override \code{overlap} by specifying FFT step, ms (NB:
+#'   because digital audio is sampled at discrete time intervals of
+#'   1/samplingRate, the actual step and thus the time stamps of STFT frames
+#'   will be slightly different, eg 24.98866 instead of 25.0 ms)
 #' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular,
 #'   blackman, flattop
 #' @param normalize if TRUE, scales input prior to FFT
