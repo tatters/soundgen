@@ -442,12 +442,7 @@ segmentSound = function(
       from = max(1, samplingRate * ((syllables$start[i]) / 1000))  #  - windowLength / 2
       to = min(length(sound), samplingRate * ((syllables$end[i]) / 1000))
       temp = c(addSil, sound[from:to], addSil)
-      if (is.character(x)) {
-        bx = basename(x)
-        name_noExt = substr(bx, 1, nchar(bx) - 4)
-      } else {
-        name_noExt = 'sound'
-      }
+      name_noExt = substr(plotname, 1, nchar(plotname) - 4)
       filename_i = paste0(
         saveAudio, name_noExt, '_', round(syllables$start[i], 0),
         '-', round(syllables$end[i], 0), '.wav')
@@ -857,7 +852,7 @@ segment = function(
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'verbose', 'reportEvery', 'summaryFun', 'samplingRate',
+    'x', 'samplingRate', 'reportEvery', 'summaryFun',
     'reverbPars', 'sylPlot', 'burstPlot', 'specPlot')]  # otherwise flattens lists
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
@@ -891,7 +886,7 @@ segment = function(
 
     # segment file
     seg = try(do.call('segmentSound', c(
-      list(sound, samplingRate = samplingRate, plotname = filenames_base[i]),
+      list(sound = sound, samplingRate = samplingRate, plotname = filenames_base[i]),
       myPars, ...)
     ))
     if (class(seg) == 'try-error') failed = TRUE
@@ -935,7 +930,7 @@ segment = function(
     }
 
     # report time
-    if (is.null(reportEvery) || is.finite(reportEvery)) {
+    if ((is.null(reportEvery) || is.finite(reportEvery)) & nFiles > 1) {
       reportTime(i = i, nIter = nFiles, reportEvery = reportEvery,
                  time_start = time_start, jobs = filesizes)
     }
