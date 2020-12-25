@@ -17,6 +17,7 @@ MINOR:
 
 BUGS FIXED:
   * formant_app(): fixed occasional crashing when scrolling with left/right buttons, other small-scale debugging
+  * soundgen(): fixed a problem with occasionally cutting off sounds with sharp attack, which made them end with audible clicks
 
 
           CHANGES IN SOUNDGEN VERSION 1.8.2 [17-October-2020]

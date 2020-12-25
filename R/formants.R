@@ -847,18 +847,20 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' @param normalize if TRUE, normalizes the output to range from -1 to +1
 #' @export
 #' @examples
-#' sound = c(rep(0, 1000), runif(16000), rep(0, 1000))  # white noise
+#' sound = c(rep(0, 1000), runif(8000) * 2 - 1, rep(0, 1000))  # white noise
 #' # NB: pad with silence to avoid artefacts if removing formants
 #' # playme(sound)
 #' # spectrogram(sound, samplingRate = 16000)
 #'
 #' # add F1 = 900, F2 = 1300 Hz
-#' sound_filtered = addFormants(sound, formants = c(900, 1300))
+#' sound_filtered = addFormants(sound, samplingRate = 16000,
+#'                              formants = c(900, 1300))
 #' # playme(sound_filtered)
 #' # spectrogram(sound_filtered, samplingRate = 16000)
 #'
 #' # ...and remove them again (assuming we know what the formants are)
 #' sound_inverse_filt = addFormants(sound_filtered,
+#'                                  samplingRate = 16000,
 #'                                  formants = c(900, 1300),
 #'                                  action = 'remove')
 #' # playme(sound_inverse_filt)
@@ -878,7 +880,8 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #'   z[which(az < thres)] = 0
 #'   return(z)
 #' }
-#' s_denoised = addFormants(s_noisy, formants = NA, zFun = zFun, cutoff = -40)
+#' s_denoised = addFormants(s_noisy, samplingRate = 16000,
+#'                          formants = NA, zFun = zFun, cutoff = -40)
 #' spectrogram(s_denoised, 16000)
 #' playme(s_denoised)
 #'
@@ -927,13 +930,14 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' # harmonics and noise, while the new sound is purely tonal
 #' }
 addFormants = function(x,
+                       samplingRate = NULL,
                        formants,
                        spectralEnvelope = NULL,
                        zFun = NULL,
                        action = c('add', 'remove')[1],
                        vocalTract = NA,
                        formantDep = 1,
-                       formantDepStoch = 20,
+                       formantDepStoch = 1,
                        formantWidth = 1,
                        formantCeiling = 2,
                        lipRad = 6,
@@ -944,7 +948,6 @@ addFormants = function(x,
                        temperature = 0.025,
                        formDrift = 0.3,
                        formDisp = 0.2,
-                       samplingRate = 16000,
                        windowLength_points = 800,
                        overlap = 75,
                        normalize = TRUE,
@@ -1105,6 +1108,8 @@ addFormants = function(x,
         output = "matrix"
       )
     )
+    # osc(soundFiltered, samplingRate = samplingRate)
+
     # normalize
     if (normalize) {
       soundFiltered = soundFiltered - mean(soundFiltered)
@@ -1114,12 +1119,15 @@ addFormants = function(x,
 
   # remove zero padding
   l = length(soundFiltered)
-  tailIdx = suppressWarnings(max(which(soundFiltered[(l - windowLength_points):l] > .03)))
-  idx = l - windowLength_points + tailIdx - 1
-  if(!is.finite(idx)) idx = l - windowLength_points
+  hl = seewave::env(soundFiltered[(l - windowLength_points + 1):l],
+                    f = samplingRate, envt = 'hil', plot = FALSE)
+  tailIdx = suppressWarnings(min(which(hl < (.01 * max(hl)))))
+  idx = l - windowLength_points + tailIdx
+  if(!is.finite(idx)) idx = l # l - windowLength_points
   soundFiltered = soundFiltered[(windowLength_points + 1):idx]
+  # osc(soundFiltered, samplingRate = samplingRate)
 
-  # spectrogram(soundFiltered, samplingRate = samplingRate)
+  # spectrogram(soundFiltered, samplingRate = samplingRate, ylim = c(0, 4))
   # playme(soundFiltered, samplingRate = samplingRate)
   return(soundFiltered)
 }

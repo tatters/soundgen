@@ -6,13 +6,14 @@
 \usage{
 addFormants(
   x,
+  samplingRate = NULL,
   formants,
   spectralEnvelope = NULL,
   zFun = NULL,
   action = c("add", "remove")[1],
   vocalTract = NA,
   formantDep = 1,
-  formantDepStoch = 20,
+  formantDepStoch = 1,
   formantWidth = 1,
   formantCeiling = 2,
   lipRad = 6,
@@ -23,7 +24,6 @@ addFormants(
   temperature = 0.025,
   formDrift = 0.3,
   formDisp = 0.2,
-  samplingRate = 16000,
   windowLength_points = 800,
   overlap = 75,
   normalize = TRUE,
@@ -33,6 +33,8 @@ addFormants(
 \arguments{
 \item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
 representing the waveform with specified samplingRate}
+
+\item{samplingRate}{sampling frequency, Hz}
 
 \item{formants}{either a character string like "aaui" referring to default
 presets for speaker "M1" or a list of formant times, frequencies,
@@ -97,8 +99,6 @@ in sound generation}
 \item{formDrift, formDisp}{scaling factors for the effect of temperature on
 formant drift and dispersal, respectively}
 
-\item{samplingRate}{sampling frequency, Hz}
-
 \item{windowLength_points}{length of FFT window, points}
 
 \item{overlap}{FFT window overlap, \%. For allowed values, see
@@ -124,18 +124,20 @@ a time series via inverse STFT. This is a subroutine in
 \code{\link{soundgen}}, but it can also be used on any existing sound.
 }
 \examples{
-sound = c(rep(0, 1000), runif(16000), rep(0, 1000))  # white noise
+sound = c(rep(0, 1000), runif(8000) * 2 - 1, rep(0, 1000))  # white noise
 # NB: pad with silence to avoid artefacts if removing formants
 # playme(sound)
 # spectrogram(sound, samplingRate = 16000)
 
 # add F1 = 900, F2 = 1300 Hz
-sound_filtered = addFormants(sound, formants = c(900, 1300))
+sound_filtered = addFormants(sound, samplingRate = 16000,
+                             formants = c(900, 1300))
 # playme(sound_filtered)
 # spectrogram(sound_filtered, samplingRate = 16000)
 
 # ...and remove them again (assuming we know what the formants are)
 sound_inverse_filt = addFormants(sound_filtered,
+                                 samplingRate = 16000,
                                  formants = c(900, 1300),
                                  action = 'remove')
 # playme(sound_inverse_filt)
@@ -155,7 +157,8 @@ zFun = function(z, cutoff = -50) {
   z[which(az < thres)] = 0
   return(z)
 }
-s_denoised = addFormants(s_noisy, formants = NA, zFun = zFun, cutoff = -40)
+s_denoised = addFormants(s_noisy, samplingRate = 16000,
+                         formants = NA, zFun = zFun, cutoff = -40)
 spectrogram(s_denoised, 16000)
 playme(s_denoised)
 

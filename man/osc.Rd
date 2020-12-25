@@ -6,10 +6,10 @@
 \usage{
 osc(
   x,
+  samplingRate = NULL,
   dynamicRange = 80,
   dB = FALSE,
   maxAmpl = NULL,
-  samplingRate = NULL,
   returnWave = FALSE,
   plot = TRUE,
   xlab = NULL,
@@ -25,6 +25,9 @@ osc(
 \item{x}{path to a .wav file or a vector of amplitudes with specified
 samplingRate}
 
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector, rather than a .wav file)}
+
 \item{dynamicRange}{dynamic range of the oscillogram, dB}
 
 \item{dB}{if TRUE, plots on a dB instead of linear scale}
@@ -32,9 +35,6 @@ samplingRate}
 \item{maxAmpl}{the maximum theoretically possible value indicating on which
 scale the sound is coded: 1 if the range is -1 to +1, 2^15 for 16-bit wav
 files, etc}
-
-\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than a .wav file)}
 
 \item{returnWave}{if TRUE, returns a log-transformed waveform as a numeric vector}
 

@@ -919,10 +919,10 @@ filled.contour.mod = function(
 #' }
 osc = function(
   x,
+  samplingRate = NULL,
   dynamicRange = 80,
   dB = FALSE,
   maxAmpl = NULL,
-  samplingRate = NULL,
   returnWave = FALSE,
   plot = TRUE,
   xlab = NULL,
