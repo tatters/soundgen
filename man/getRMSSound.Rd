@@ -5,9 +5,7 @@
 \title{RMS amplitude per sound}
 \usage{
 getRMSSound(
-  sound,
-  samplingRate,
-  scale = NULL,
+  audio,
   windowLength = 50,
   step = NULL,
   overlap = 75,
@@ -24,11 +22,7 @@ getRMSSound(
 )
 }
 \arguments{
-\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
-
-\item{scale}{maximum possible amplitude of input used for normalization (not
-needed for audio files)}
+\item{audio}{a list returned by \code{readAudio}}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -41,7 +35,8 @@ will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
 
-\item{normalize}{if TRUE, RMS amplitude is normalized to [0, 1]}
+\item{normalize}{if TRUE, the RMS amplitude is returned as proportion of
+the maximum possible amplitude as given by \code{scale}}
 
 \item{windowDC}{the window for calculating DC offset, ms}
 
@@ -61,9 +56,5 @@ will be slightly different, eg 24.98866 instead of 25.0 ms)}
 }
 \description{
 Internal soundgen function called by \code{\link{getRMS}}.
-}
-\seealso{
-\code{\link{getRMSFolder}}
-  \code{\link{analyze}}\code{\link{getLoudness}}
 }
 \keyword{internal}

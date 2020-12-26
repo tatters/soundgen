@@ -93,7 +93,8 @@ amplitude below \code{silence * max_ampl adjusted by scale} are not
 analyzed at all.}
 
 \item{scale}{maximum possible amplitude of input used for normalization of
-input vector (not needed if input is an audio file)}
+input vector (only needed if \code{x} is a numeric vector, rather than an
+audio file or Wave object)}
 
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB
 (set to 0 to skip analyzing subjective loudness)}

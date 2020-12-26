@@ -378,10 +378,11 @@ s = soundgen(sylLen = 1000, formants = NA,
              plot = TRUE, heights = c(1, 1), play = playback)
 ```
 
-A common special case of modifying the amplitude envelope of a synthesized or recorded sound is to flatten it, making sure the amplitude remains relatively stable throughout the duration of the signal. There is a separate function for achieving this, namely `flatEnv()`:
+A common special case of modifying the amplitude envelope of a synthesized or recorded sound is compression, which helps to make the amplitude remains relatively stable throughout the duration of the signal. There is a separate function for achieving this, namely `compressor()` AKA `flatEnv()`:
 ```{r fig.width = 7, fig.height = 3}
 s = rnorm(500) * seq(1, 0, length.out = 500)
-s1 = flatEnv(s, plot = TRUE, killDC = TRUE, windowLength_points = 50)
+s1 = compressor(s, samplingRate = 1000, plot = TRUE,
+                killDC = TRUE, windowLength_points = 50)
 ```
 
 Another common modification is to fade the sound in and/or out. One way to do this is to change the attack (which affects both the beginning and the end) or to use amplitude anchors. On other occasions, or if your sound already exists and you want to change it, the way to go about it is to use a separate function, `fade()`. This also gives you more options, e.g. different attack shapes, while soundgen() defaults to linear fade-in/out for attack.
@@ -395,7 +396,7 @@ s1 = fade(s, fadeIn = 50, fadeOut = 100, samplingRate = 16000,
 # different fades are available: linear, logarithmic, etc
 ```
 
-*TIP: attackLen in soundgen is applied only to voiced source, and before it is filtered (i.e., before formants are added). Artifacts are possible, such as audible clicks because the sound terminates too abruptly. In that case, please increase attackLen or apply fade() after synthesizing the sound.*
+*TIP: attackLen in soundgen is applied only to voiced source, and before it is filtered (i.e., before formants are added). In case of artifacts increase attackLen or apply fade() after synthesizing the sound.*
 
 ## Spectral filter (formants)
 ### Vowel presets

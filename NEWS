@@ -5,15 +5,16 @@ MAJOR (affects back-compatibility):
   * segment(): a new segmentation algorithm based on spectral signal-noise separation, several deprecated and several new arguments, support for long files (>1 h of audio), an option to export detected syllables as separate files, etc.
 
 MAJOR:
-  * All functions for acoustic analysis accept input in the Wave format from tuneR library
+  * Support for audio input of class "Wave" from tuneR library
 
 MINOR:
   * spectrogram(), analyze(), analyzeFolder(): a new argument "extraContour" for plotting something over the spectrogram
-  * spectrogram(), analyze(): new arguments "from" and "to" for analyzing only a part of a long sound
+  * spectrogram(), analyze(), etc.: new arguments "from" and "to" for analyzing only a part of a long sound
   * analyze(): spectral slope (specSlope) is returned in dB/kHz
   * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue
   * soundgen(): pitch anchors can contain NAs, eg "pitch = c(150, 200, NA, 110)" - the 3rd quarter will be unvoiced
   * addFormants(): new argument "zFun" for arbitrary transformations of the spectrogram between STFT and iSTFT (eg for de-noising, spectral warping, etc.)
+  * flatEnv() AKA compressor(): a new argument "compression" regulates the amount of compression
 
 BUGS FIXED:
   * formant_app(): fixed occasional crashing when scrolling with left/right buttons, other small-scale debugging

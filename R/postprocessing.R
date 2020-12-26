@@ -442,7 +442,9 @@ flatSpectrum = function(x,
   # modify the spectrogram
   for (i in 1:ncol(spec)) {
     abs_s = abs(spec[, i])
-    cor_coef = flatEnv(abs_s, method = 'peak',
+    cor_coef = flatEnv(abs_s,
+                       samplingRate = 1,  # not used, but can't be left NULL
+                       method = 'peak',
                        windowLength_points = freqWindow_bins) / abs_s
     spec[, i] = complex(real = Re(spec[, i]) * cor_coef,
                         imaginary = Im(spec[, i]))

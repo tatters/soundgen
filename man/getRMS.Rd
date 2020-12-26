@@ -8,11 +8,13 @@ getRMS(
   x,
   samplingRate = NULL,
   scale = NULL,
+  from = NULL,
+  to = NULL,
   windowLength = 50,
   step = NULL,
   overlap = 70,
-  normalize = TRUE,
   killDC = FALSE,
+  normalize = TRUE,
   windowDC = 200,
   summaryFun = "mean",
   reportEvery = NULL,
@@ -32,8 +34,15 @@ representing the waveform with specified samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file or Wave object)}
 
-\item{scale}{maximum possible amplitude of input used for normalization (not
-needed for audio files)}
+\item{scale}{maximum possible amplitude of input used for normalization of
+input vector (only needed if \code{x} is a numeric vector, rather than an
+audio file or Wave object)}
+
+\item{from}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
+
+\item{to}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
 
 \item{windowLength}{length of FFT window, ms}
 
@@ -44,14 +53,15 @@ will be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{normalize}{if TRUE, RMS amplitude is normalized to [0, 1]}
-
 \item{killDC}{if TRUE, removed DC offset (see also \code{\link{flatEnv}})}
+
+\item{normalize}{if TRUE, the RMS amplitude is returned as proportion of
+the maximum possible amplitude as given by \code{scale}}
 
 \item{windowDC}{the window for calculating DC offset, ms}
 
-\item{summaryFun}{the function used to summarize RMS values across all frames
-(NULL = no summary); see ?analyze for details}
+\item{summaryFun}{functions used to summarize each acoustic characteristic;
+see \code{\link{analyze}}}
 
 \item{reportEvery}{report estimated time left every ... iterations (NA = no
 reporting, NULL = default frequency)}
@@ -65,7 +75,7 @@ reporting, NULL = default frequency)}
 \item{...}{other graphical parameters}
 }
 \value{
-Returns a list containing: \describe{\item{RMS}{a list of RMS
+Returns a list containing: \describe{\item{detailed}{a list of RMS
   amplitudes per frame for each sound, on the scale of input; names give time
   stamps for the center of each frame, in ms.} \item{summary}{a dataframe
   with summary measures, one row per sound}}
@@ -88,7 +98,7 @@ calculated as the mean / median / max of RMS values per frame.
 }
 \examples{
 s = soundgen() + .1  # with added DC offset
-plot(s, type = 'l')
+osc(s)
 r = getRMS(s, samplingRate = 16000,
   windowLength = 40, overlap = 50, killDC = TRUE,
   plot = TRUE, type = 'l', lty = 2, main = 'RMS envelope')
@@ -107,12 +117,10 @@ analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
 
 User-defined summary functions:
 ran = function(x) diff(range(x))
-getRMS('~/Downloads/temp', summaryFun = c('mean', 'ran'))$summary
-
 meanSD = function(x) {
   paste0('mean = ', round(mean(x), 2), '; sd = ', round(sd(x), 2))
 }
-getRMS('~/Downloads/temp', summaryFun = 'meanSD')$summary
+getRMS('~/Downloads/temp', summaryFun = c('mean', 'ran', 'meanSD'))$summary
 }
 }
 \seealso{

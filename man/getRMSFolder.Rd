@@ -2,7 +2,7 @@
 % Please edit documentation in R/amplitude.R
 \name{getRMSFolder}
 \alias{getRMSFolder}
-\title{Segment folder}
+\title{Get RMS folder}
 \usage{
 getRMSFolder(...)
 }
@@ -10,5 +10,5 @@ getRMSFolder(...)
 \item{...}{any input parameters}
 }
 \description{
-Segment folder
+Get RMS folder
 }

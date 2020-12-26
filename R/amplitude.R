@@ -1,17 +1,10 @@
 #' RMS amplitude per sound
 #'
 #' Internal soundgen function called by \code{\link{getRMS}}.
-#'
-#' @seealso \code{\link{getRMSFolder}}
-#'   \code{\link{analyze}}\code{\link{getLoudness}}
-#'
+#' @param audio a list returned by \code{readAudio}
 #' @inheritParams getRMS
-#' @param scale maximum possible amplitude of input used for normalization (not
-#'   needed for audio files)
 #' @keywords internal
-getRMSSound = function(sound,
-                       samplingRate,
-                       scale = NULL,
+getRMSSound = function(audio,
                        windowLength = 50,
                        step = NULL,
                        overlap = 75,
@@ -30,44 +23,43 @@ getRMSSound = function(sound,
     overlap = 70
   }
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  ls = length(sound)
-  duration = ls / samplingRate
   if (!is.numeric(windowLength) | windowLength <= 0 |
-      windowLength > (duration * 1000)) {
-    windowLength = min(50, duration / 2 * 1000)
+      windowLength > (audio$duration * 1000)) {
+    windowLength = min(50, audio$duration / 2 * 1000)
     warning(paste0('"windowLength" must be between 0 and sound_duration ms;
             defaulting to ', windowLength, ' ms'))
   }
-  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-  step_points = round(step / 1000 * samplingRate)
-  step = step_points / samplingRate * 1000
-  windowLength = windowLength_points / samplingRate * 1000
+  windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
+  step_points = round(step / 1000 * audio$samplingRate)
+  step = step_points / audio$samplingRate * 1000
+  windowLength = windowLength_points / audio$samplingRate * 1000
   # step_points can only be an integer, introducing small timing errors in long sounds
 
   # DC offset
   if (killDC) {
-    sound = killDC(sound, windowLength = windowDC, samplingRate = samplingRate)
+    sound = killDC(audio$sound, windowLength = windowDC, samplingRate = audio$samplingRate)
   }
 
   # calculate RMS per frame
-  myseq = seq(1, max(1, (ls - windowLength_points)), step_points)
+  myseq = seq(1, max(1, (audio$ls - windowLength_points)), step_points)
   r = apply(as.matrix(myseq), 1, function(x) {
-    sqrt(mean(sound[x:(windowLength_points + x - 1)] ^ 2))
+    sqrt(mean(audio$sound[x:(windowLength_points + x - 1)] ^ 2))
   })
-  names(r) = myseq / samplingRate * 1000 + windowLength / 2
+  names(r) = myseq / audio$samplingRate * 1000 + windowLength / 2
 
   # plotting
   if (plot) {
-    time = 1:ls / samplingRate * 1000
-    plot(time, sound, type = 'n', xlab = xlab, ylab = ylab, xaxt = 'n', ...)
+    time = 1:audio$ls / audio$samplingRate * 1000
+    plot(time, audio$sound, type = 'n', xlab = xlab, ylab = ylab, xaxt = 'n',
+         ylim = c(-audio$scale, audio$scale), ...)
     time_location = axTicks(1)
     time_labels = convert_sec_to_hms(time_location / 1000, 3)
     axis(side = 1, at = time_location, labels = time_labels)
-    points(time, sound, type = 'l')
+    points(time, audio$sound, type = 'l')
     points(as.numeric(names(r)), r, type = type, col = col, lwd = lwd, ...)
   }
 
-  if (normalize) r = r / scale
+  if (normalize) r = r / audio$scale
   return(r)
 }
 
@@ -91,21 +83,17 @@ getRMSSound = function(sound,
 #' @seealso \code{\link{analyze}} \code{\link{getLoudness}}
 #'
 #' @inheritParams spectrogram
-#' @param scale maximum possible amplitude of input used for normalization (not
-#'   needed for audio files)
-#' @param normalize if TRUE, RMS amplitude is normalized to [0, 1]
+#' @inheritParams segment
 #' @param killDC if TRUE, removed DC offset (see also \code{\link{flatEnv}})
+#' @param normalize if TRUE, the RMS amplitude is returned as proportion of
+#'   the maximum possible amplitude as given by \code{scale}
 #' @param windowDC the window for calculating DC offset, ms
-#' @param summaryFun the function used to summarize RMS values across all frames
-#'   (NULL = no summary); see ?analyze for details
-#' @param reportEvery report estimated time left every ... iterations (NA = no
-#'   reporting, NULL = default frequency)
 #' @param plot if TRUE, plot a contour of RMS amplitude
 #' @param xlab,ylab general graphical parameters
 #' @param type,col,lwd graphical parameters pertaining to the RMS envelope
 #' @param ... other graphical parameters
 #'
-#' @return Returns a list containing: \describe{\item{RMS}{a list of RMS
+#' @return Returns a list containing: \describe{\item{detailed}{a list of RMS
 #'   amplitudes per frame for each sound, on the scale of input; names give time
 #'   stamps for the center of each frame, in ms.} \item{summary}{a dataframe
 #'   with summary measures, one row per sound}}
@@ -113,7 +101,7 @@ getRMSSound = function(sound,
 #' @export
 #' @examples
 #' s = soundgen() + .1  # with added DC offset
-#' plot(s, type = 'l')
+#' osc(s)
 #' r = getRMS(s, samplingRate = 16000,
 #'   windowLength = 40, overlap = 50, killDC = TRUE,
 #'   plot = TRUE, type = 'l', lty = 2, main = 'RMS envelope')
@@ -132,22 +120,22 @@ getRMSSound = function(sound,
 #'
 #' User-defined summary functions:
 #' ran = function(x) diff(range(x))
-#' getRMS('~/Downloads/temp', summaryFun = c('mean', 'ran'))$summary
-#'
 #' meanSD = function(x) {
 #'   paste0('mean = ', round(mean(x), 2), '; sd = ', round(sd(x), 2))
 #' }
-#' getRMS('~/Downloads/temp', summaryFun = 'meanSD')$summary
+#' getRMS('~/Downloads/temp', summaryFun = c('mean', 'ran', 'meanSD'))$summary
 #' }
 getRMS = function(
   x,
   samplingRate = NULL,
   scale = NULL,
+  from = NULL,
+  to = NULL,
   windowLength = 50,
   step = NULL,
   overlap = 70,
-  normalize = TRUE,
   killDC = FALSE,
+  normalize = TRUE,
   windowDC = 200,
   summaryFun = 'mean',
   reportEvery = NULL,
@@ -159,136 +147,27 @@ getRMS = function(
   lwd = 2,
   ...
 ) {
-  time_start = proc.time()  # timing
-
-  ## Read the input
-  filenames = sound = NULL
-  if (is.character(x)) {
-    inputType = 'file'
-    if (dir.exists(x)) {
-      # input is a folder
-      filenames = list.files(x, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
-      if (length(filenames) < 1)
-        stop(paste('No wav/mp3 files found in', x))
-    } else if (file.exists(x)) {
-      # input is an audio file
-      filenames = x
-      if (!substr(x, nchar(x) - 3, nchar(x)) %in% c('.wav', '.mp3', '.WAV', '.MP3'))
-        stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
-    } else {
-      stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
-    }
-    nFiles = length(filenames)
-    filenames_base = basename(filenames)
-    filesizes = file.info(filenames)$size
-  } else if (is.numeric(x)) {
-    # input is a numeric vector
-    sound = x
-    nFiles = 1
-    filenames_base = 'sound'
-    if (is.null(samplingRate))
-      stop('samplingRate must be provided if input is a numeric vector')
-  } else if (class(x) == 'Wave') {
-    # input is a Wave object
-    sound = x@left
-    nFiles = 1
-    filenames_base = 'sound'
-    samplingRate = x@samp.rate
-  } else {
-    stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
-  }
-
-  # match par-s
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
-  # exclude ...
-  myPars = myPars[1:(length(myPars)-1)]
+  # match args
+  myPars = c(as.list(environment()), list(...))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'scale', 'verbose', 'summary', 'summaryFun')]
-
-  result = vector('list', nFiles)
-  names(result) = filenames_base
-  for (i in 1:nFiles) {
-    failed = FALSE
-    # import file
-    if (!is.null(filenames)) {
-      fi = filenames[i]
-      ext_i = substr(fi, nchar(fi) - 3, nchar(fi))
-      if (ext_i %in% c('.wav', '.WAV')) {
-        sound_wave = try(tuneR::readWave(filenames[i]))
-      } else {
-        sound_wave = try(tuneR::readMP3(filenames[i]))
-      }
-      if (class(sound_wave) == 'try-error') {
-        failed = TRUE
-      } else {
-        sound = as.numeric(sound_wave@left)
-        samplingRate = sound_wave@samp.rate
-        scale = 2 ^ (sound_wave@bit - 1)
-      }
-    } else {
-      m = max(abs(sound))
-      if (is.null(scale)) {
-        scale = max(m, 1)
-        message(paste('Scale not specified. Assuming that max amplitude is', scale))
-      } else if (is.numeric(scale)) {
-        if (scale < m) {
-          scale = m
-          warning(paste('Scale cannot be smaller than observed max; resetting to', m))
-        }
-      }
-    }
-
-    # analyze file
-    if (!failed) {
-      an_i = try(do.call('getRMSSound', c(
-        list(sound, samplingRate = samplingRate, scale = scale),
-        myPars, ...)
-      ))
-      if (class(an_i) == 'try-error') failed = TRUE
-    }
-    if (failed) {
-      if (nFiles > 1) {
-        warning(paste('Failed to process file', filenames[i]))
-      } else {
-        warning('Failed to process the input')
-      }
-      an_i = numeric(0)
-    }
-    result[[i]] = an_i
-
-    # report time
-    if ((is.null(reportEvery) || is.finite(reportEvery)) & nFiles > 1) {
-      reportTime(i = i, nIter = nFiles, reportEvery = reportEvery,
-                 time_start = time_start, jobs = filesizes)
-    }
-  }
-
-  # prepare output
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    temp = vector('list', nFiles)
-    for (i in 1:length(result)) {
-      temp[[i]] = summarizeAnalyze(
-        data.frame(ampl = result[[i]]),
-        summaryFun = summaryFun,
-        var_noSummary = NULL)
-    }
-    mysum_all = cbind(data.frame(file = filenames_base),
-                      do.call('rbind', temp))
-  } else {
-    mysum_all = NULL
-  }
-  if (nFiles == 1) result = result[[1]]
-  output = list(
-    RMS = result,
-    summary = mysum_all
+    'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery', 'summaryFun')]
+  result = processAudio(x = x,
+                        samplingRate = samplingRate,
+                        scale = scale,
+                        from = from,
+                        to = to,
+                        funToCall = 'getRMSSound',
+                        myPars = myPars,
+                        summaryFun = summaryFun,
+                        var_noSummary = NULL,
+                        reportEvery = reportEvery
   )
-
-  invisible(output)
+  invisible(result)
 }
 
 
-#' Segment folder
+#' Get RMS folder
 #' @param ... any input parameters
 getRMSFolder = function(...) {
   message('getRMSFolder() is deprecated; please use getRMS() instead')
@@ -400,7 +279,7 @@ normalizeFolder = function(
                                scale = 2^(files[[i]]@bit - 1),
                                killDC = killDC,
                                windowDC = windowDC,
-                               plot = FALSE)$RMS
+                               plot = FALSE)$detailed
       }
     } else if (type == 'loudness') {
       for (i in 1:n) {
@@ -457,103 +336,115 @@ normalizeFolder = function(
 }
 
 
-
-
-#' Flat envelope
+#' Flat envelope / compressor
 #'
-#' Flattens the amplitude envelope of a waveform. This is achieved by dividing
-#' the waveform by some function of its smoothed amplitude envelope (Hilbert,
-#' peak or root mean square).
-#' @param x input vector oscillating about zero
+#' Applies a compressor - that is, flattens the amplitude envelope of a
+#' waveform, reducing the difference in amplitude between loud and quiet
+#' sections. This is achieved by dividing the waveform by some function of its
+#' smoothed amplitude envelope (Hilbert, peak or root mean square).
+#'
+#' @inheritParams spectrogram
+#' @inheritParams segment
+#' @param compression the amount of compression to apply: 0 = none, 1 = maximum
+#' @param method hil = Hilbert envelope, rms = root mean square amplitude, peak
+#'   = peak amplitude per window
 #' @param windowLength the length of smoothing window, ms
-#' @param samplingRate the sampling rate, Hz. Only needed if the length of
-#'   smoothing window is specified in ms rather than points
-#' @param method 'hil' for Hilbert envelope, 'rms' for root mean square
-#'   amplitude, 'peak' for peak amplitude per window
 #' @param windowLength_points the length of smoothing window, points. If
-#'   specified, overrides both \code{windowLength} and \code{samplingRate}
+#'   specified, overrides \code{windowLength}
 #' @param killDC if TRUE, dynamically removes DC offset or similar deviations of
-#'   average waveform from zero
+#'   average waveform from zero (see examples)
 #' @param dynamicRange parts of sound quieter than \code{-dynamicRange} dB will
 #'   not be amplified
-#' @param plot if TRUE, plots the original sound, smoothed envelope, and
-#'   flattened sound
+#' @param plot if TRUE, plots the original sound, the smoothed envelope, and
+#'   the compressed sound
+#' @param saveAudio full path to the folder in which to save the compressed
+#'   sound(s)
+#'
+#' @return If the input is a single audio (file, Wave, or numeric vector),
+#'   returns the compressed waveform as a numeric vector with the original
+#'   sampling rate and scale. If the input is a folder with several audio files,
+#'   returns a list of compressed waveforms, one for each file.
 #' @export
 #' @examples
 #' a = rnorm(500) * seq(1, 0, length.out = 500)
-#' b = flatEnv(a, plot = TRUE, windowLength_points = 5)    # too short
-#' c = flatEnv(a, plot = TRUE, windowLength_points = 250)  # too long
-#' d = flatEnv(a, plot = TRUE, windowLength_points = 50)   # about right
+#' b = flatEnv(a, 1000, plot = TRUE, windowLength_points = 5)    # too short
+#' c = flatEnv(a, 1000, plot = TRUE, windowLength_points = 250)  # too long
+#' d = flatEnv(a, 1000, plot = TRUE, windowLength_points = 50)   # about right
 #'
 #' \dontrun{
-#' s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE, osc = TRUE)
+#' s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE)
 #' # playme(s)
-#' s_flat1 = flatEnv(s, plot = TRUE, windowLength = 50, method = 'hil')
-#' s_flat2 = flatEnv(s, plot = TRUE, windowLength = 10, method = 'rms')
-#' s_flat3 = flatEnv(s, plot = TRUE, windowLength = 10, method = 'peak')
+#' s_flat1 = flatEnv(s, 16000, plot = TRUE, windowLength = 50, method = 'hil')
+#' s_flat2 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'rms')
+#' s_flat3 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'peak')
 #' # playme(s_flat2)
 #'
 #' # Remove DC offset
 #' s1 = c(rep(0, 50), runif(1000, -1, 1), rep(0, 50)) +
 #'      seq(.3, 1, length.out = 1100)
-#' s2 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = FALSE)
-#' s3 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = TRUE)
+#' s2 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = FALSE)
+#' s3 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = TRUE)
+#'
+#' # "Flatten" and save all audio files in a folder
+#' s4 = flatEnv('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/compressed')
+#' osc(s4[[1]])
 #' }
 flatEnv = function(x,
-                   windowLength = 200,
-                   samplingRate = 16000,
+                   samplingRate = NULL,
+                   scale = NULL,
+                   compression = 1,
                    method = c('hil', 'rms', 'peak')[1],
+                   windowLength = 50,
                    windowLength_points = NULL,
                    killDC = FALSE,
-                   dynamicRange = 80,
-                   plot = FALSE) {
-  # import audio
-  if (class(x)[1] == 'character') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    if (sound_wav@stereo)
-      message('Input is a stereo file; only the left channel is analyzed')
-    samplingRate = sound_wav@samp.rate
-    sound = sound_wav@left
-    scale = 2 ^ (sound_wav@bit - 1)
-    m = max(abs(sound))
-  } else if (is.numeric(x)) {
-    if (is.null(samplingRate)) {
-      stop('Please specify "samplingRate", eg 44100')
-    } else {
-      sound = x
-    }
-    m = max(abs(sound))
-    if (is.null(scale)) {
-      scale = max(m, 1)
-      message(paste('Scale not specified. Assuming that max amplitude is', scale))
-    } else if (is.numeric(scale)) {
-      if (scale < m) {
-        scale = m
-        warning(paste('Scale cannot be smaller than observed max; resetting to', m))
-      }
-    }
-  } else if (class(x) == 'Wave') {
-    if (x@stereo)
-      message('Input is a stereo file; only the left channel is analyzed')
-    samplingRate = x@samp.rate
-    sound = x@left
-    scale = 2 ^ (x@bit - 1)
-    m = max(abs(sound))
-  } else {
-    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-  }
+                   dynamicRange = 40,
+                   reportEvery = NULL,
+                   plot = FALSE,
+                   saveAudio = NULL) {
+  # match args
+  myPars = c(as.list(environment()))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'scale', 'reportEvery')]
+  result = processAudio(x = x,
+                        samplingRate = samplingRate,
+                        scale = scale,
+                        funToCall = 'flatEnvSound',
+                        myPars = myPars,
+                        summaryFun = NULL,
+                        var_noSummary = NULL,
+                        reportEvery = reportEvery
+  )$detailed
+  invisible(result)
+}
 
+
+#' @rdname flatEnv
+#' @export
+compressor = flatEnv
+
+
+#' Flat envelope per sound
+#'
+#' Internal soundgen function
+#'
+#' @param audio a list returned by \code{readAudio}
+#' @inheritParams flatEnv
+#' @inheritParams segment
+#' @keywords internal
+flatEnvSound = function(audio,
+                        compression = 1,
+                        method = c('hil', 'rms', 'peak')[1],
+                        windowLength = 50,
+                        windowLength_points = NULL,
+                        killDC = FALSE,
+                        dynamicRange = 40,
+                        plot = FALSE,
+                        saveAudio = NULL) {
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
-      if (is.numeric(samplingRate)) {
-        windowLength_points = windowLength / 1000 * samplingRate
+      if (is.numeric(audio$samplingRate)) {
+        windowLength_points = windowLength / 1000 * audio$samplingRate
       } else {
         stop(paste('Please specify either windowLength (ms) plus samplingRate (Hz)',
                    'or the length of smoothing window in points (windowLength_points)'))
@@ -561,39 +452,48 @@ flatEnv = function(x,
     }
   }
 
-  # m = original scale (eg -1 to +1 gives m = 1)
-  soundNorm = sound / m    # normalize
-  throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
-  # get smoothed amplitude envelope
-  env = getEnv(sound = soundNorm,
-               windowLength_points = windowLength_points,
-               method = method)
-  env = env / max(abs(env))
+  # audio$scale = original scale (eg -1 to +1 gives m = 1)
+  throwaway_lin = 10 ^ (-dynamicRange / 20) * audio$scale  # from dB to linear + normalize
 
-  # don't amplify very quiet sections
-  env_cut = env
-  env_cut[env_cut < throwaway_lin] = 1
-  # flatten amplitude envelope
-  soundFlat = soundNorm / env_cut
-  # re-normalize to original scale
-  soundFlat = soundFlat / max(abs(soundFlat)) * m
   # remove DC offset
   if (killDC) {
-    soundFlat = killDC(sound = soundFlat,
+    soundFlat = killDC(sound = audio$sound,
                        windowLength_points = windowLength_points,
                        plot = FALSE)
+  } else {
+    soundFlat = audio$sound
   }
 
+  # get smoothed amplitude envelope
+  env = getEnv(sound = soundFlat,
+               windowLength_points = windowLength_points,
+               method = method)
+  env[env < 0] = 0
+
+  # don't amplify very quiet sections
+  idx = which(env > throwaway_lin)
+  # flatten amplitude envelope
+  soundFlat[idx] = soundFlat[idx] * (1 - compression) +
+    soundFlat[idx] / env[idx] * audio$scale * compression
+  # re-normalize to original scale
+  soundFlat = soundFlat / max(abs(soundFlat)) * audio$scale
+
   if (plot) {
-    env_m = env * m
-    ylim = range(c(sound, env_m))
+    ylim = range(c(audio$sound, soundFlat))
     op = par('mfrow')
     par(mfrow = c(1, 2))
-    plot(sound, type = 'l', main = 'Original', ylim = ylim)
-    points(env_m, type = 'l', lty = 1, col = 'blue')
-    plot(soundFlat, type = 'l', main = 'Flattened', ylim = ylim)
+    plot(audio$sound, type = 'l', main = 'Original', ylim = ylim)
+    points(env, type = 'l', lty = 1, col = 'blue')
+    plot(soundFlat, type = 'l', main = 'Compressed', ylim = ylim)
     par(mfrow = op)
   }
+
+  if (!is.null(saveAudio)) {
+    if (!dir.exists(saveAudio)) dir.create(saveAudio)
+    seewave::savewav(soundFlat, f = audio$samplingRate,
+                     filename = paste0(saveAudio, '/', audio$filename_base))
+  }
+
   return(soundFlat)
 }
 
@@ -711,7 +611,7 @@ transplantEnv = function(
 #' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
 #' @inheritParams soundgen
-#' @param checkFormat only FALSE when called internally by soundgen()
+#' @inheritParams segment
 #' @param plot if TRUE, plots the amplitude modulation
 #' @export
 #' @examples
@@ -768,34 +668,46 @@ addAM = function(x,
                  invalidArgAction = c('adjust', 'abort', 'ignore')[1],
                  plot = FALSE,
                  play = FALSE,
-                 checkFormat = TRUE) {
-  # import audio
-  if (class(x)[1] == 'character') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    samplingRate = sound_wav@samp.rate
-    sound = as.numeric(sound_wav@left)
-  } else if (is.numeric(x)) {
-    if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
-    } else {
-      sound = x
-    }
-  } else if (class(x) == 'Wave') {
-    samplingRate = x@samp.rate
-    sound = as.numeric(x@left)
-  } else {
-    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-  }
-  len = length(sound)
+                 saveAudio = NULL,
+                 reportEvery = NULL) {
+  # match args
+  myPars = c(as.list(environment()))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'from', 'to', 'reportEvery')]
+  result = processAudio(x = x,
+                        samplingRate = samplingRate,
+                        funToCall = 'addAMSound',
+                        myPars = myPars,
+                        summaryFun = NULL,
+                        reportEvery = reportEvery
+  )
+  invisible(result$detailed)
+}
 
-  # check the format
+
+#' Add AM to a sound
+#'
+#' Internal soundgen function, see \code{\link{addAM}}.
+#'
+#' @inheritParams addAM
+#' @param sound numeric vector
+#' @param ls the length of \code{sound}, points
+#' @param checkFormat only FALSE when called internally by soundgen()
+#' @keywords internal
+addAMSound = function(
+  audio,
+  amDep = 25,
+  amFreq = 30,
+  amType = c('logistic', 'sine')[1],
+  amShape = 0,
+  invalidArgAction = c('adjust', 'abort', 'ignore')[1],
+  plot = FALSE,
+  play = FALSE,
+  saveAudio = NULL,
+  filename_base = NULL,
+  checkFormat = TRUE) {
+  # check the format of AM pars
   if (checkFormat) {
     anchors = c('amDep', 'amFreq', 'amShape')
     for (anchor in anchors) {
@@ -818,7 +730,7 @@ addAM = function(x,
       }
       p_vectorized = getSmoothContour(
         anchors = get(p),
-        len = len,
+        len = audio$ls,
         interpol = 'approx',
         valueFloor = valueFloor_p,
         valueCeiling = valueCeiling_p
@@ -833,34 +745,39 @@ addAM = function(x,
   # prepare am vector
   if (amType == 'sine') {
     if (length(amFreq_vector) == 1) {
-      int = amFreq_vector * (1:len)
+      int = amFreq_vector * (1:audio$ls)
     } else {
       int = cumsum(amFreq_vector)
     }
-    sig = .5 + .5 * cos(2 * pi * int / samplingRate)
+    sig = .5 + .5 * cos(2 * pi * int / audio$samplingRate)
   } else {
-    sig = getSigmoid(len = len,
-                     samplingRate = samplingRate,
+    sig = getSigmoid(len = audio$ls,
+                     samplingRate = audio$samplingRate,
                      freq = amFreq_vector,
                      shape = amShape_vector)
   }
   # plot(sig, type = 'l')
   # sig is on a scale [0, 1]
   am = 1 - sig * amDep_vector / 100
-  sound_am = sound * am
+  sound_am = audio$sound * am
 
   if (plot) {
     osc(x = am,
-        samplingRate = samplingRate,
+        samplingRate = audio$samplingRate,
         main = 'Amplitude modulation',
         xlab = 'Time, ms',
         ylab = '',
         ylim = c(0, 1),
         midline = FALSE)
   }
-  if (play) playme(sound_am, samplingRate)
+  if (play) playme(sound_am, audio$samplingRate)
+  if (!is.null(saveAudio)) {
+    if (!dir.exists(saveAudio)) dir.create(saveAudio)
+    seewave::savewav(sound_am, f = audio$samplingRate, filename = audio$filename_base)
+  }
   invisible(sound_am)
 }
+
 
 
 #' Get amplitude envelope

@@ -29,17 +29,17 @@ to be the same)}
 
 \item{windowLength}{the length of smoothing window, ms}
 
-\item{method}{'hil' for Hilbert envelope, 'rms' for root mean square
-amplitude, 'peak' for peak amplitude per window}
+\item{method}{hil = Hilbert envelope, rms = root mean square amplitude, peak
+= peak amplitude per window}
 
 \item{killDC}{if TRUE, dynamically removes DC offset or similar deviations of
-average waveform from zero}
+average waveform from zero (see examples)}
 
 \item{dynamicRange}{parts of sound quieter than \code{-dynamicRange} dB will
 not be amplified}
 
-\item{plot}{if TRUE, plots the original sound, smoothed envelope, and
-flattened sound}
+\item{plot}{if TRUE, plots the original sound, the smoothed envelope, and
+the compressed sound}
 }
 \value{
 Returns the recipient sound with the donor's amplitude envelope - a

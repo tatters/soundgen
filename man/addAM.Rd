@@ -14,7 +14,8 @@ addAM(
   invalidArgAction = c("adjust", "abort", "ignore")[1],
   plot = FALSE,
   play = FALSE,
-  checkFormat = TRUE
+  saveAudio = NULL,
+  reportEvery = NULL
 )
 }
 \arguments{
@@ -44,7 +45,11 @@ your system. If character, passed to \code{\link[tuneR]{play}} as the name
 of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
 
-\item{checkFormat}{only FALSE when called internally by soundgen()}
+\item{saveAudio}{full path to the folder in which to save audio files (one
+per detected syllable)}
+
+\item{reportEvery}{report estimated time left every ... iterations (NA = no
+reporting, NULL = default frequency)}
 }
 \description{
 Adds sinusidal or logistic amplitude modulation to a sound. This produces

@@ -2,65 +2,109 @@
 % Please edit documentation in R/amplitude.R
 \name{flatEnv}
 \alias{flatEnv}
-\title{Flat envelope}
+\alias{compressor}
+\title{Flat envelope / compressor}
 \usage{
 flatEnv(
   x,
-  windowLength = 200,
-  samplingRate = 16000,
+  samplingRate = NULL,
+  scale = NULL,
+  compression = 1,
   method = c("hil", "rms", "peak")[1],
+  windowLength = 50,
   windowLength_points = NULL,
   killDC = FALSE,
-  dynamicRange = 80,
-  plot = FALSE
+  dynamicRange = 40,
+  reportEvery = NULL,
+  plot = FALSE,
+  saveAudio = NULL
+)
+
+compressor(
+  x,
+  samplingRate = NULL,
+  scale = NULL,
+  compression = 1,
+  method = c("hil", "rms", "peak")[1],
+  windowLength = 50,
+  windowLength_points = NULL,
+  killDC = FALSE,
+  dynamicRange = 40,
+  reportEvery = NULL,
+  plot = FALSE,
+  saveAudio = NULL
 )
 }
 \arguments{
-\item{x}{input vector oscillating about zero}
+\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
+representing the waveform with specified samplingRate}
+
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector, rather than an audio file or Wave object)}
+
+\item{scale}{maximum possible amplitude of input used for normalization of
+input vector (only needed if \code{x} is a numeric vector, rather than an
+audio file or Wave object)}
+
+\item{compression}{the amount of compression to apply: 0 = none, 1 = maximum}
+
+\item{method}{hil = Hilbert envelope, rms = root mean square amplitude, peak
+= peak amplitude per window}
 
 \item{windowLength}{the length of smoothing window, ms}
 
-\item{samplingRate}{the sampling rate, Hz. Only needed if the length of
-smoothing window is specified in ms rather than points}
-
-\item{method}{'hil' for Hilbert envelope, 'rms' for root mean square
-amplitude, 'peak' for peak amplitude per window}
-
 \item{windowLength_points}{the length of smoothing window, points. If
-specified, overrides both \code{windowLength} and \code{samplingRate}}
+specified, overrides \code{windowLength}}
 
 \item{killDC}{if TRUE, dynamically removes DC offset or similar deviations of
-average waveform from zero}
+average waveform from zero (see examples)}
 
 \item{dynamicRange}{parts of sound quieter than \code{-dynamicRange} dB will
 not be amplified}
 
-\item{plot}{if TRUE, plots the original sound, smoothed envelope, and
-flattened sound}
+\item{reportEvery}{report estimated time left every ... iterations (NA = no
+reporting, NULL = default frequency)}
+
+\item{plot}{if TRUE, plots the original sound, the smoothed envelope, and
+the compressed sound}
+
+\item{saveAudio}{full path to the folder in which to save the compressed
+sound(s)}
+}
+\value{
+If the input is a single audio (file, Wave, or numeric vector),
+  returns the compressed waveform as a numeric vector with the original
+  sampling rate and scale. If the input is a folder with several audio files,
+  returns a list of compressed waveforms, one for each file.
 }
 \description{
-Flattens the amplitude envelope of a waveform. This is achieved by dividing
-the waveform by some function of its smoothed amplitude envelope (Hilbert,
-peak or root mean square).
+Applies a compressor - that is, flattens the amplitude envelope of a
+waveform, reducing the difference in amplitude between loud and quiet
+sections. This is achieved by dividing the waveform by some function of its
+smoothed amplitude envelope (Hilbert, peak or root mean square).
 }
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
-b = flatEnv(a, plot = TRUE, windowLength_points = 5)    # too short
-c = flatEnv(a, plot = TRUE, windowLength_points = 250)  # too long
-d = flatEnv(a, plot = TRUE, windowLength_points = 50)   # about right
+b = flatEnv(a, 1000, plot = TRUE, windowLength_points = 5)    # too short
+c = flatEnv(a, 1000, plot = TRUE, windowLength_points = 250)  # too long
+d = flatEnv(a, 1000, plot = TRUE, windowLength_points = 50)   # about right
 
 \dontrun{
-s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE, osc = TRUE)
+s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE)
 # playme(s)
-s_flat1 = flatEnv(s, plot = TRUE, windowLength = 50, method = 'hil')
-s_flat2 = flatEnv(s, plot = TRUE, windowLength = 10, method = 'rms')
-s_flat3 = flatEnv(s, plot = TRUE, windowLength = 10, method = 'peak')
+s_flat1 = flatEnv(s, 16000, plot = TRUE, windowLength = 50, method = 'hil')
+s_flat2 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'rms')
+s_flat3 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'peak')
 # playme(s_flat2)
 
 # Remove DC offset
 s1 = c(rep(0, 50), runif(1000, -1, 1), rep(0, 50)) +
      seq(.3, 1, length.out = 1100)
-s2 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = FALSE)
-s3 = flatEnv(s1, plot = TRUE, windowLength_points = 50, killDC = TRUE)
+s2 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = FALSE)
+s3 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = TRUE)
+
+# "Flatten" and save all audio files in a folder
+s4 = flatEnv('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/compressed')
+osc(s4[[1]])
 }
 }

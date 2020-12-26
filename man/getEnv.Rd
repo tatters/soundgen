@@ -8,7 +8,7 @@ getEnv(sound, windowLength_points, method = c("rms", "peak", "mean", "hil")[1])
 }
 \arguments{
 \item{windowLength_points}{the length of smoothing window, points. If
-specified, overrides both \code{windowLength} and \code{samplingRate}}
+specified, overrides \code{windowLength}}
 
 \item{method}{'peak' for peak amplitude per window, 'rms' for root mean
 square amplitude, 'mean' for mean (for DC offset removal), 'hil' for

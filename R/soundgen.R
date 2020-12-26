@@ -1,4 +1,4 @@
-# TODO: soundgen - remove or fix voicedSeparate; analyze etc - add error-proof operation a la segment; deprecate all Folder functions - just accept a file or a folder as input
+# TODO: analyze - remove or fix voicedSeparate; analyze etc - add error-proof operation a la segment; deprecate all Folder functions - just accept a file or a folder as input
 
 # TODO maybe: inverse distance weighting interpolation instead of interpolMatrix; sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); mel-spectrum - check/implement bandpass filters for each critical band; adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
@@ -1209,9 +1209,12 @@ soundgen = function(
     # Add amplitude modulation (affects both voiced and unvoiced)
     if (is.list(amDep)) {
       if (any(amDep$value > 0)) {
-        soundFiltered = addAM(
-          x = soundFiltered,
-          samplingRate = samplingRate,
+        soundFiltered = addAMSound(
+          audio = list(
+            sound = soundFiltered,
+            samplingRate = samplingRate,
+            ls = length(soundFiltered)
+          ),
           amDep = amDep,
           amFreq = amFreq,
           amType = amType,

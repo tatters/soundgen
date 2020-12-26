@@ -853,3 +853,229 @@ silenceSegments = function(
   return(x)
 }
 
+
+#' Check audio input type
+#'
+#' Internal soundgen function.
+#'
+#' Checks the types of audio input to another function, which could be a folder
+#' with audio files, a single file, a Wave object, or a numeric vector. The
+#' purposes of this helper function are to ascertain that there are some valid
+#' inputs and to make a list of valid audio files, if any.
+#' @param x path to a .wav or .mp3 file, Wave object, or a numeric vector
+#'   representing the waveform with specified samplingRate
+#' @keywords internal
+checkInputType = function(x) {
+  if (is.character(x)) {
+    type = 'file'
+    if (dir.exists(x)) {
+      # input is a folder
+      filenames = list.files(x, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
+      if (length(filenames) < 1)
+        stop(paste('No wav/mp3 files found in', x))
+    } else if (file.exists(x)) {
+      # input is an audio file
+      filenames = x
+      if (!substr(x, nchar(x) - 3, nchar(x)) %in% c('.wav', '.mp3', '.WAV', '.MP3'))
+        stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
+    } else {
+      stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
+    }
+    n = length(filenames)
+    filenames_base = basename(filenames)
+    filesizes = file.info(filenames)$size
+  } else {
+    n = 1
+    filenames = NULL
+    filenames_base = 'sound'
+    filesizes = NULL
+    if (is.numeric(x)) {
+      type = 'vector'
+    } else if (class(x) == 'Wave') {
+      # input is a Wave object
+      type = 'Wave'
+    } else {
+      stop(paste('Input not recognized - must be a folder, wav/mp3 file,',
+                 'Wave object, or numeric vector'))
+    }
+  }
+  return(list(
+    type = type,
+    n = n,
+    filenames = filenames,
+    filenames_base = filenames_base,
+    filesizes = filesizes
+  ))
+}
+
+
+#' Read audio
+#'
+#' Internal soundgen function.
+#'
+#' @param x audio input (only used for Wave object or numeric vectors)
+#' @param input a list returned by \code{\link{checkInputType}}
+#' @param i iteration
+#' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
+#'   numeric vector, rather than an audio file or Wave object)
+#' @param scale maximum possible amplitude of input used for normalization of
+#'   input vector (only needed if \code{x} is a numeric vector, rather than an
+#'   audio file or Wave object)
+#' @param from,to if NULL (default), analyzes the whole sound, otherwise
+#'   from...to (s)
+#' @keywords internal
+readAudio = function(x,
+                     input,
+                     i,
+                     samplingRate = NULL,
+                     scale = NULL,
+                     from = NULL,
+                     to = NULL) {
+  failed = FALSE
+  if (input$type == 'file') {
+    fi = input$filenames[i]
+    ext_i = substr(fi, nchar(fi) - 3, nchar(fi))
+    if (ext_i %in% c('.wav', '.WAV')) {
+      sound_wave = try(tuneR::readWave(fi))
+    } else {
+      sound_wave = try(tuneR::readMP3(fi))
+    }
+    if (class(sound_wave) == 'try-error') {
+      failed = TRUE
+      sound = samplingRate = scale = NULL
+    } else {
+      sound = as.numeric(sound_wave@left)
+      samplingRate = sound_wave@samp.rate
+      scale = 2 ^ (sound_wave@bit - 1)
+    }
+  } else if (input$type == 'vector') {
+    if (is.null(samplingRate))
+      stop('samplingRate must be provided if input is a numeric vector')
+    sound = x
+    m = max(abs(sound))
+    if (is.null(scale)) {
+      scale = max(m, 1)
+      message(paste('Scale not specified. Assuming that max amplitude is',
+                    scale))
+    } else if (is.numeric(scale)) {
+      if (scale < m) {
+        scale = m
+        warning(paste('Scale cannot be smaller than observed max;',
+                      'resetting to', m))
+      }
+    }
+  } else if (input$type == 'Wave') {
+    sound = x@left
+    samplingRate = x@samp.rate
+    scale = 2 ^ (x@bit - 1)
+  }
+
+  # from...to
+  # from...to selection
+  ls = length(sound)
+  if (any(is.numeric(c(from, to)))) {
+    if (!is.numeric(from)) {
+      from_points = 1
+    } else {
+      from_points = max(1, round(from * samplingRate))
+    }
+    if (!is.numeric(to)) {
+      to_points = ls
+    }  else {
+      to_points = min(ls, round(to * samplingRate))
+    }
+    sound = sound[from_points:to_points]
+    timeShift = from_points / samplingRate
+    ls = length(sound)
+  } else {
+    timeShift = 0
+  }
+  duration = ls / samplingRate
+
+  return(list(
+    sound = sound,
+    samplingRate = samplingRate,
+    scale = scale,
+    failed = failed,
+    ls = ls,
+    duration = duration,
+    timeShift = timeShift,
+    filename = input$filenames[i],
+    filename_base = input$filenames_base[i]
+  ))
+}
+
+
+#' Process audio
+#'
+#' Internal soundgen function.
+#'
+#' @inheritParams spectrogram
+#' @param funToCall function to call (specify what to do with each audio input)
+#' @param myPars a list of parameters to pass on to `funToCall`
+#' @param summaryFun function(s) used to summarize the output per input
+#' @param var_noSummary names of output variables that should not be summarized
+#' @param reportEvery report estimated time left every ... iterations (NA = no
+#'   reporting, NULL = default frequency)
+#' @keywords internal
+processAudio = function(x,
+                        samplingRate = NULL,
+                        scale = NULL,
+                        from = NULL,
+                        to = NULL,
+                        funToCall,
+                        myPars,
+                        summaryFun,
+                        var_noSummary = NULL,
+                        reportEvery = NULL) {
+  input = checkInputType(x)
+  result = vector('list', input$n)
+  names(result) = input$filenames_base
+  time_start = proc.time()  # timing
+  for (i in 1:input$n) {
+    audio = readAudio(x, input, i,
+                      samplingRate = samplingRate,
+                      scale = scale,
+                      from = from, to = to)
+    # analyze file
+    if (!audio$failed) {
+      an_i = try(do.call(funToCall, c(list(audio = audio), myPars)))
+      if (class(an_i) == 'try-error') audio$failed = TRUE
+    }
+    if (audio$failed) {
+      if (input$n > 1) {
+        warning(paste('Failed to process file', input$filenames[i]))
+      } else {
+        warning('Failed to process the input')
+      }
+      an_i = numeric(0)
+    }
+    result[[i]] = an_i
+
+    # report time
+    if ((is.null(reportEvery) || is.finite(reportEvery)) & input$n > 1) {
+      reportTime(i = i, nIter = input$n, reportEvery = reportEvery,
+                 time_start = time_start, jobs = input$filesizes)
+    }
+  }
+
+  # prepare output
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    temp = vector('list', input$n)
+    for (i in 1:length(result)) {
+      temp[[i]] = summarizeAnalyze(
+        data.frame(ampl = result[[i]]),
+        summaryFun = summaryFun,
+        var_noSummary = var_noSummary)
+    }
+    mysum_all = cbind(data.frame(file = input$filenames_base),
+                      do.call('rbind', temp))
+  } else {
+    mysum_all = NULL
+  }
+  if (input$n == 1) result = result[[1]]
+  return(list(
+    detailed = result,
+    summary = mysum_all
+  ))
+}

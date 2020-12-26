@@ -34,7 +34,8 @@
 #'   blackman, flattop
 #' @param normalize if TRUE, scales input prior to FFT
 #' @param scale maximum possible amplitude of input used for normalization of
-#'   input vector (not needed if input is an audio file)
+#'   input vector (only needed if \code{x} is a numeric vector, rather than an
+#'   audio file or Wave object)
 #' @param zp window length after zero padding, points
 #' @param smoothFreq,smoothTime length of the window, in data points (0 to
 #'   +inf), for calculating a rolling median. Applies median smoothing to
