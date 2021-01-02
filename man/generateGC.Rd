@@ -26,21 +26,22 @@ first harmonic)}
 
 \item{samplingRate}{the sampling rate of generated sound, Hz}
 
-\item{wn}{windowing function applied to each glottal cycle (see ftwindow_modif)}
+\item{wn}{windowing function applied to each glottal cycle (see
+\code{\link[seewave]{ftwindow}})}
 
 \item{interpol}{method used to adjust the number of gc to target duration}
 }
 \value{
-Returns a waveform as a non-normalized numeric vector centered at zero.
+Returns a waveform as a non-normalized numeric vector centered at
+  zero.
 }
 \description{
-Internal soundgen function.
-Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff -
-note that all three should be vectors of the same length, namely nGC) and
-creates a waveform consisting of a string of these glottal cycles separated
-by pauses (if there is a closed phase). The principle is to work with one
-glottal cycle at a time and create a sine wave for each harmonic, with
-amplitudes adjusted by rolloff.
+Internal soundgen function. Takes descriptives of a number of glottal cycles
+(f0, closed phase, rolloff - note that all three should be vectors of the
+same length, namely nGC) and creates a waveform consisting of a string of
+these glottal cycles separated by pauses (if there is a closed phase). The
+principle is to work with one glottal cycle at a time and create a sine wave
+for each harmonic, with amplitudes adjusted by rolloff.
 }
 \examples{
 pitch_per_gc = seq(100, 150, length.out = 25)

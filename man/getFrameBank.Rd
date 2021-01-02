@@ -25,13 +25,13 @@ numeric vector, rather than an audio file or Wave object)}
 
 \item{windowLength_points}{length of fft window (points)}
 
-\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
-blackman, flattop}
+\item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
+gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{zp}{window length after zero padding, points}
 
@@ -40,7 +40,7 @@ will be slightly different, eg 24.98866 instead of 25.0 ms)}
 \item{filter}{fft window filter (defaults to NULL)}
 
 \item{padWithSilence}{if TRUE, pads the sound with just enough silence to
-resolve the edges properly (only the original region is plotted, so
+resolve the edges properly (only the original region is plotted, so the
 apparent duration doesn't change)}
 
 \item{timeShift}{time (s) added to timestamps}

@@ -47,12 +47,11 @@ segment(
 )
 }
 \arguments{
-\item{x}{input audio: full path to a folder with wav/mp3 files or a single
-wav/mp3, or else a numeric vector representing the actual audio sampled at
-\code{samplingRate}}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
-\item{samplingRate}{the number of samples per second (only needed if the
-input is a vector rather than an audio file)}
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector, rather than an audio file or Wave object)}
 
 \item{from}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}
@@ -88,7 +87,7 @@ syllable.}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
@@ -115,14 +114,13 @@ avoid running out of RAM; the outputs for all fragments are glued together,
 but plotting is switched off. Note that noise profile is estimated in each
 chunk separately, so set it low if the background noise is highly variable}
 
-\item{reportEvery}{report estimated time left every ... iterations (NA = no
-reporting, NULL = default frequency)}
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 
-\item{savePlots}{full path to the folder in which to save the plot(s). NULL =
-don't save. Note that the html file with clickable plots will only work if
-the plots are saved in the same folder as input audio files}
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
 
 \item{saveAudio}{full path to the folder in which to save audio files (one
 per detected syllable)}
@@ -224,7 +222,7 @@ s = segment(sound, samplingRate = 16000, SNR = 1, plot = TRUE)
 # http://cogsci.se/publications.html
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp260'  # 260 .wav files live here
-s = segment(myfolder, propNoise = .05, SNR = 3, verbose = TRUE)
+s = segment(myfolder, propNoise = .05, SNR = 3)
 
 # Check accuracy: import a manual count of syllables (our "key")
 key = segmentManual  # a vector of 260 integers

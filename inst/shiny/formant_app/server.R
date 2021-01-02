@@ -1149,13 +1149,14 @@ server = function(input, output, session) {
       } else {
         coeffs = NULL
       }
-
-      myPars$temp_anal = analyze(
-        myPars$myAudio,
-        samplingRate = myPars$samplingRate,
-        from = myPars$regionToAnalyze[1] / 1000,
-        to = myPars$regionToAnalyze[2] / 1000,
-        scale = myPars$maxAmpl,
+      sel_anal = round(myPars$regionToAnalyze[1] / 1000 * myPars$samplingRate) :
+        round(myPars$regionToAnalyze[2] / 1000 * myPars$samplingRate)
+      myPars$temp_anal = analyzeSound(
+        list(sound = myPars$myAudio[sel_anal],
+             samplingRate = myPars$samplingRate,
+             scale = myPars$maxAmpl,
+             timeShift = 0,
+             duration = length(sel_anal) / myPars$samplingRate),
         windowLength = input$windowLength_lpc,
         step = input$step_lpc,
         wn = input$wn_lpc,
@@ -1173,7 +1174,8 @@ server = function(input, output, session) {
         nFormants = NULL,  # save all available formants
         roughness = list(amRes = 0),  # no roughness analysis
         summaryFun = NULL,
-        plot = FALSE
+        plot = FALSE,
+        returnPitchCands = FALSE
       )
       myPars$nMeasuredFmts = length(grep('_freq', colnames(myPars$temp_anal)))
       myPars$allF_colnames = paste0('f', 1:myPars$nMeasuredFmts, '_freq')

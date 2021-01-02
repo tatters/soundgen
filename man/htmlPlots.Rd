@@ -4,14 +4,14 @@
 \alias{htmlPlots}
 \title{HTML for clickable plots}
 \usage{
-htmlPlots(myfolder, myfiles, width = "900px")
+htmlPlots(htmlFile, plotFiles, audioFiles = "", width = "900px")
 }
 \arguments{
+\item{width}{default flex-basis, ie approximate default width of each image}
+
 \item{myfolder}{full path to target folder, without a '/' at the end}
 
 \item{myfiles}{a list of full names of files (with paths and extensions)}
-
-\item{width}{default flex-basis, ie approximate default width of each image}
 }
 \description{
 Internal soundgen function

@@ -1,14 +1,15 @@
           CHANGES IN SOUNDGEN VERSION 1.8.2.9000 [...date...]
 MAJOR (affects back-compatibility):
-  * Functions segment(), getRMS(), ... accept as input either a single sound (numeric vectors, Wave objects, or filenames) or a folder with audio files
-  * Accordingly, functions segmentFolder(), getRMSFolder(), ... are deprecated
+  * Functions analyzeFolder(), spectrogramFolder(), segmentFolder(), getRMSFolder(), getLoudness(), ... are deprecated. Instead, analyze(), spectrogram(), osc(), segment(), getRMS(), getLoudness(), ... accept as input either a single sound (numeric vectors, Wave objects, or filenames) or a folder with audio files.
+  * Functions analyze(), spectrogram(), osc(), segment(), getRMS(), getLoudness(), ... return lists with both detailed results and summaries; for example, analyze() returns a list with two components: "$detailed" (frame-by-frame acoustic measures, one dataframe per file) and "$summary" (summaries based on "summaryFun", one row per file)
   * segment(): a new segmentation algorithm based on spectral signal-noise separation, several deprecated and several new arguments, support for long files (>1 h of audio), an option to export detected syllables as separate files, etc.
+  * All functions for acoustic analysis employ harmonized terminology for arguments that specify whether to save plots ("savePlots") and report estimated time left ("reportEvery")
 
 MAJOR:
   * Support for audio input of class "Wave" from tuneR library
 
 MINOR:
-  * spectrogram(), analyze(), analyzeFolder(): a new argument "extraContour" for plotting something over the spectrogram
+  * spectrogram(), analyze(): a new argument "extraContour" for plotting something over the spectrogram
   * spectrogram(), analyze(), etc.: new arguments "from" and "to" for analyzing only a part of a long sound
   * analyze(): spectral slope (specSlope) is returned in dB/kHz
   * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue

@@ -1,3 +1,13 @@
+### MODULATION SPECTRUM
+
+#' Modulation spectrum folder
+#' @param ... any input parameters
+modulationSpectrumFolder = function(...) {
+  message('modulationSpectrumFolder() is deprecated;',
+          'please use modulationSpectrum(averageMS = FALSE) instead')
+}
+
+
 #' Modulation spectrum
 #'
 #' Produces a modulation spectrum of waveform(s) or audio file(s), with temporal
@@ -28,33 +38,28 @@
 #'   natural sounds and ethological theories of auditory processing. The Journal
 #'   of the Acoustical Society of America, 114(6), 3394-3411.
 #' }
-#' @param x folder, path to a wav/mp3 file, a numeric vector representing a
-#'   waveform, or a list of numeric vectors
-#' @param samplingRate sampling rate of x (only needed if x is a numeric vector,
-#'   rather than an audio file). For a list of sounds, give either one
-#'   samplingRate (the same for all) or as many values as there are input files
+#' @inheritParams spectrogram
+#' @inheritParams analyze
 #' @param roughRange the range of temporal modulation frequencies that
 #'   constitute the "roughness" zone, Hz
-#' @inheritParams spectrogram
 #' @param amRes target resolution of amplitude modulation, Hz. If \code{NULL},
 #'   the entire sound is analyzed at once (or in chunks \code{maxDur} s long),
 #'   resulting in a single roughness value. Otherwise, roughness is calculated
 #'   per frame, each selected to contain enough STFT windows to calculate
 #'   roughness with precision given by \code{amRes}
-#' @param maxDur maximum allowed duration of a single sound, s (longer sounds
-#'   are split, and their modulation spectra averaged)
+#' @param maxDur sounds longer than \code{maxDur} s are split into fragments,
+#'   and the modulation spectra of all fragments are averaged
 #' @param logSpec if TRUE, the spectrogram is log-transformed prior to taking 2D
 #'   FFT
 #' @param power raise modulation spectrum to this power (eg power = 2 for ^2, or
 #'   "power spectrum")
+#' @param returnMS if FALSE, only roughness is returned (much faster)
 #' @param returnComplex if TRUE, returns a complex modulation spectrum (without
 #'   normalization and warping)
-#' @param aggregComplex if TRUE, aggregates complex MS from multiple inputs,
-#'   otherwise returns the complex MS of the first input (recommended when
-#'   filtering and inverting the MS of a single sound, e.g. with
-#'   \code{\link{filterSoundByMS}})
-#' @param plot if TRUE, plots the (averaged) modulation spectrum
-#' @param savePath if a valid path is specified, a plot is saved in this folder
+#' @param averageMS if TRUE, the modulation spectra of all inputs are averaged
+#'   into a single output; if FALSE, a separate MS is returned for each input
+#' @param plot if TRUE, plots the modulation spectrum of each sound
+#' @param savePlots if a valid path is specified, a plot is saved in this folder
 #'   (defaults to NA)
 #' @param logWarp the base of log for warping the modulation spectrum (ie log2
 #'   if logWarp = 2); set to NULL or NA if you don't want to log-warp
@@ -104,9 +109,11 @@
 #'
 #' \dontrun{
 #' # Roughness contour of a long sound (starts tonal, then gets rough)
-#' s_long = soundgen(sylLen = 4000, pitch = 400, plot = TRUE,
+#' s_long = soundgen(sylLen = 4000, pitch = 400,
 #'   amDep = c(0, 0, 50), jitterDep = c(0, 0, 2))
-#' modulationSpectrum(s_long, 16000, plot = FALSE)$roughness
+#' rough = modulationSpectrum(s_long, 16000, plot = FALSE)$roughness
+#' spectrogram(s_long, 16000, ylim = c(0, 4),
+#'             extraContour = list(rough / max(rough) * 4000, col = 'blue'))
 #'
 #' # Input can also be a list of waveforms (numeric vectors)
 #' ss = vector('list', 10)
@@ -115,18 +122,10 @@
 #'     pitch = runif(3, 400, 600))
 #' }
 #' # lapply(ss, playme)
-#' ms1 = modulationSpectrum(ss[[1]], samplingRate = 16000)  # the first sound
-#' dim(ms1$original)
-#' ms2 = modulationSpectrum(ss, samplingRate = 16000)  # all 10 sounds
-#' dim(ms2$original)
-#'
-#' # Careful with complex MS of multiple inputs:
-#' ms3 = modulationSpectrum(ss, samplingRate = 16000,
-#'   returnComplex = TRUE, aggregComplex = FALSE)
-#' dim(ms3$complex)  # complex MS of the first input only
-#' ms4 = modulationSpectrum(ss, samplingRate = 16000,
-#'   returnComplex = TRUE, aggregComplex = TRUE)
-#' dim(ms4$complex)  # aggregated over inputs
+#' # MS of the first sound
+#' ms1 = modulationSpectrum(ss[[1]], samplingRate = 16000, scale = 1)
+#' # average MS of all 10 sounds
+#' ms2 = modulationSpectrum(ss, samplingRate = 16000, scale = 1, averageMS = TRUE)
 #'
 #' # As with spectrograms, there is a tradeoff in time-frequency resolution
 #' s = soundgen(pitch = 500, amFreq = 50, amDep = 100, samplingRate = 44100)
@@ -152,10 +151,17 @@
 #' # Input can be a wav/mp3 file
 #' ms = modulationSpectrum('~/Downloads/temp/200_ut_fear-bungee_11.wav')
 #'
-#' # Input can be path to folder with audio files (average modulation spectrum)
-#' ms = modulationSpectrum('~/Downloads/temp', kernelSize = 11)
-#' # NB: longer files will be split into fragments <maxDur in length, and no
-#' # roughness contours are extracted
+#' # Input can be path to folder with audio files. Each file is processed
+#' # separately, and the output can contain an MS per file...
+#' ms1 = modulationSpectrum('~/Downloads/temp', kernelSize = 11,
+#'                          plot = FALSE, averageMS = FALSE)
+#' str(ms1$original)
+#' ms1$summary
+#' # ...or a single MS can be calculated:
+#' ms2 = modulationSpectrum('~/Downloads/temp', kernelSize = 11,
+#'                          plot = FALSE, averageMS = TRUE)
+#' str(ms2$original)
+#' ms2$summary
 #'
 #' # A sound with ~3 syllables per second and only downsweeps in F0 contour
 #' s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
@@ -197,6 +203,9 @@
 modulationSpectrum = function(
   x,
   samplingRate = NULL,
+  scale = NULL,
+  from = NULL,
+  to = NULL,
   amRes = 5,
   maxDur = 5,
   logSpec = FALSE,
@@ -207,10 +216,13 @@ modulationSpectrum = function(
   zp = 0,
   power = 1,
   roughRange = c(30, 150),
+  returnMS = TRUE,
   returnComplex = FALSE,
-  aggregComplex = TRUE,
+  summaryFun = c('mean', 'median', 'sd'),
+  averageMS = FALSE,
+  reportEvery = NULL,
   plot = TRUE,
-  savePath = NA,
+  savePlots = NULL,
   logWarp = NA,
   quantiles = c(.5, .8, .9),
   kernelSize = 5,
@@ -227,86 +239,156 @@ modulationSpectrum = function(
   res = NA,
   ...
 ) {
-  # determine the type of input
-  if (is.character(x)) {
-    # assume that this is a directory containing sound files
-    myInput = as.list(list.files(x, pattern = "*.wav|.mp3", full.names = TRUE))
-    if (!length(myInput) > 0) {
-      # assume that it is a single sound file
-      myInput = as.list(x)
-      plotname = tail(unlist(strsplit(x, '/')), n = 1)
-      plotname = ifelse(
-        !missing(main) & !is.null(main),
-        main,
-        substring(plotname, first = 1,
-                  last = (nchar(plotname) - 4))
-      )
+  ## Prepare a list of arguments to pass to segmentSound()
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude unnecessary args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'scale', 'savePlots', 'reportEvery', 'summaryFun', 'averageMS')]
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+
+  # analyze
+  pa = processAudio(
+    x,
+    samplingRate = samplingRate,
+    scale = scale,
+    from = from,
+    to = to,
+    funToCall = 'modulationSpectrumSound',
+    myPars = myPars,
+    reportEvery = reportEvery,
+    savePlots = savePlots
+  )
+
+  # htmlPlots
+  if (!is.null(pa$input$savePlots)) {
+    if (pa$input$filenames_base[1] == 'sound') {
+      plotname = 'sound'
     } else {
-      plotname = ''
+      plotname = substr(pa$input$filenames_base, 1,
+                        nchar(pa$input$filenames_base) - 4)
     }
-    samplingRate = rep(NA, length(myInput))
-  } else if (is.numeric(x)) {
-    # assume that it is an actual waveform vector
-    myInput = list(x)
-    if (!is.numeric(samplingRate)) {
-      stop('Please specify samplingRate')
-    }
-    plotname = ifelse(!missing(main) & !is.null(main), main, '')
-  } else if (is.list(x)) {
-    # assume that it is a list of waveforms
-    myInput = x
-    if (!is.numeric(samplingRate)) {
-      stop('Please specify samplingRate')
-    } else {
-      if (length(samplingRate) > 1) {
-        if (length(samplingRate) != length(myInput)) {
-          stop('Please specify samplingRate of length 1 or the same length as input')
-        }
-      } else {
-        samplingRate = rep(samplingRate, length(myInput))
+    htmlPlots(
+      htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_MS.html'),
+      plotFiles = paste0(pa$input$savePlots, plotname, "_MS.png"),
+      audioFiles = pa$input$filenames,
+      width = paste0(width, units))
+  }
+
+  # prepare output
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    temp = vector('list', pa$input$n)
+    for (i in 1:pa$input$n) {
+      if (!pa$input$failed[i]) {
+        temp[[i]] = summarizeAnalyze(
+          data.frame(roughness = pa$result[[i]]$roughness),
+          summaryFun = summaryFun,
+          var_noSummary = NULL)
       }
     }
-    plotname = ifelse(!missing(main) & !is.null(main), main, '')
-  } else if (class(x) == 'Wave') {
-    samplingRate = x@samp.rate
-    myInput = list(as.numeric(x@left))
-    plotname = ifelse(!missing(main) & !is.null(main), main, '')
+    idx_failed = which(pa$input$failed)
+    idx_ok = which(!pa$input$failed)
+    if (length(idx_failed) > 0) {
+      idx_ok = which(!pa$input$failed)
+      if (length(idx_ok) > 0) {
+        filler = temp[[idx_ok[1]]] [1, ]
+        filler[1, ] = NA
+      } else {
+        stop('Failed to analyze any input')
+      }
+      for (i in idx_failed) temp[[i]] = filler
+    }
+    mysum_all = cbind(data.frame(file = pa$input$filenames_base),
+                      do.call('rbind', temp))
   } else {
-    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    mysum_all = NULL
+  }
+  for (i in idx_failed) pa$result[[i]] = list(
+    original = NULL, processed = NULL, complex = NULL, roughness = NULL
+  )
+
+  out_prep = c('original', 'processed', 'complex', 'roughness')
+  if (pa$input$n == 1) {
+    # unlist
+    for (op in out_prep) assign(noquote(op), pa$result[[1]] [[op]])
+  } else {
+    for (op in out_prep) assign(noquote(op), lapply(pa$result, function(x) x[[op]]))
   }
 
-  # load input
-  duration = rep(NA, length(myInput))
-  for (i in 1:length(myInput)) {
-    if (is.character(myInput[[i]])) {
-      sound1 = as.character(myInput[[i]])
-      ext = substr(sound1, (nchar(sound1) - 2), nchar(sound1))
-      if (ext %in% c('wav', 'WAV')) {
-        temp = tuneR::readWave(myInput[[i]])
-      } else if (ext %in% c('mp3', 'MP3')) {
-        temp = tuneR::readMP3(myInput[[i]])
-      } else {
-        stop('Input not recognized')
-      }
-      myInput[[i]] = as.numeric(temp@left)
-      samplingRate[i] = temp@samp.rate
-      duration[i] = length(temp@left) / temp@samp.rate
-    } else if (is.numeric(myInput[[i]])) {
-      duration[i] = length(myInput[[i]]) / samplingRate[[i]]
-    } else {
-      stop('Input not recognized')
+  # average MS across sounds
+  op_prep2 = c('original', 'processed')  # roughness is not a matrix
+  if (returnComplex) {
+    op_prep2 = c(op_prep2, 'complex')
+  } else {
+    complex = NULL
+  }
+  if (averageMS & pa$input$n > 1) {
+    for (op in op_prep2) {
+      assign(
+        noquote(op),
+        averageMatrices(
+          get(op) [idx_ok],
+          rFun = 'max',   # normally same samplingRate, but if not, upsample frequency resolution
+          cFun = 'median',   # typical ncol (depends on sound dur)
+          reduceFun = '+')  # internally divides by length, so actually becomes mean
+      )
     }
   }
 
+  invisible(list(original = original,
+                 processed = processed,
+                 compLlex = complex,
+                 roughness = roughness,
+                 summary = mysum_all))
+}
+
+
+#' Modulation spectrum sound
+#'
+#' Internal soundgen function.
+#' @inheritParams modulationSpectrum
+#' @param audio a list returned by \code{readAudio}
+#' @keywords internal
+modulationSpectrumSound = function(
+  audio,
+  amRes = 5,
+  maxDur = 5,
+  logSpec = FALSE,
+  windowLength = 25,
+  step = NULL,
+  overlap = 80,
+  wn = 'hanning',
+  zp = 0,
+  power = 1,
+  roughRange = c(30, 150),
+  returnMS = TRUE,
+  returnComplex = FALSE,
+  plot = TRUE,
+  savePlots = NULL,
+  logWarp = NA,
+  quantiles = c(.5, .8, .9),
+  kernelSize = 5,
+  kernelSD = .5,
+  colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
+  xlab = 'Hz',
+  ylab = '1/KHz',
+  main = NULL,
+  xlim = NULL,
+  ylim = NULL,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  ...
+) {
   # Re-set windowLength, step, and overlap so as to ensure that
   # windowLength_points and step_points are not fractions
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  step_points = round(step / 1000 * samplingRate)
-  step = step_points[1] / samplingRate[1] * 1000
-  windowLength_points = round(windowLength / 1000 * samplingRate)
-  windowLength = windowLength_points[1] / samplingRate[1] * 1000
-  overlap = 100 * (1 - step_points[1] / windowLength_points[1])
-  sr = max(samplingRate)  # again, in case not the same
+  step_points = round(step / 1000 * audio$samplingRate)
+  step = step_points / audio$samplingRate * 1000
+  windowLength_points = round(windowLength / 1000 * audio$samplingRate)
+  windowLength = windowLength_points / audio$samplingRate * 1000
+  overlap = 100 * (1 - step_points / windowLength_points)
 
   max_am = 1000 / step / 2
   if (max_am < roughRange[1]) {
@@ -321,117 +403,52 @@ modulationSpectrum = function(
     nFrames = NULL
   }
 
-  if (length(myInput) == 1 & is.numeric(nFrames)) {
-    # one input, we want roughness contour
-    roughContour = TRUE
-
+  if (is.numeric(nFrames)) {
     # split the input sound into chunks nFrames long
     chunk_ms = windowLength + step * (nFrames - 1)
-    l = chunk_ms * samplingRate / 1000
-    fullSound = myInput[[1]]
-    l_full = length(fullSound)
-    if (l > l_full) {
+    splitInto = ceiling(audio$duration * 1000 / chunk_ms)
+    if (chunk_ms > (audio$duration * 1000)) {
       message(paste('The sound is too short to be analyzed with amRes =', amRes,
                     'Hz. Roughness is probably not measured correctly'))
-      l = l_full
+      chunk_ms = audio$duration
     }
-    myseq = 1 + l * (0:(floor(l_full / l) - 1))
-    myInput = vector('list', length(myseq))
-    n = length(myInput)
-    for (i in 1:n) {
-      idx = myseq[i]:(myseq[i] + l - 1)
-      myInput[[i]] = fullSound[idx]
-    }
-    windowLength_points = rep(windowLength_points, n)
-    step_points = rep(step_points, n)
-    samplingRate = rep(samplingRate, n)
   } else {
-    # multiple inputs to aggregate and/or we want a single roughness value
-    roughContour = FALSE
-
-    # split sounds that exceed maxDur
-    toSplit = which(duration > maxDur)
-    if (length(toSplit) > 0) {
-      splitInto = ceiling(duration / maxDur)
-      # so, for ex., if 2.1 times longer than maxDur, split into three
-      for (i in toSplit) {
-        idx = floor(seq(1, length(myInput[[i]]), length.out = splitInto[i] + 1))
-        for (j in 2:splitInto[i]) {
-          # append fragments 2-end to myInput
-          start = idx[j] + 1
-          end = idx[j + 1]
-          myInput[[length(myInput) + 1]] = myInput[[i]][start:end]
-          samplingRate = c(samplingRate, samplingRate[i])
-          windowLength_points = c(windowLength_points, windowLength_points[length(windowLength_points)])
-          step_points = c(step_points, step_points[length(step_points)])
-        }
-        # the first fragment replaces the old long sound in myInput
-        myInput[[i]] = myInput[[i]][1:idx[2]]
-      }
-    }
+    # split only those sounds that exceed maxDur
+    splitInto = ceiling(audio$duration / maxDur)
+    # so, for ex., if 2.1 times longer than maxDur, split into three
+  }
+  myseq = floor(seq(1, length(audio$sound), length.out = splitInto + 1))
+  myInput = vector('list', splitInto)
+  for (i in 1:splitInto) {
+    idx = myseq[i]:(myseq[i + 1])
+    myInput[[i]] = audio$sound[idx]
   }
 
-  # extract modulation spectrum per sound
-  out = vector('list', length(myInput))
+  # extract modulation spectrum per fragment
+  out = vector('list', splitInto)
   if (returnComplex) {
     out_complex = out
   } else {
     out_aggreg_complex = NULL
   }
-  for (i in 1:length(myInput)) {
-    # Calling stdft is ~80 times faster than going through spectrogram (!)
-    step_seq = seq(1, length(myInput[[i]]) + 1 - windowLength_points[i], step_points[i])
-    # print(length(step_seq))
-    if (length(step_seq) < 3) next
-    s1 = seewave::stdft(
-      wave = as.matrix(myInput[[i]]),
+  for (i in 1:splitInto) {
+    ms_i = modulationSpectrumFragment(
+      myInput[[i]],
+      samplingRate = audio$samplingRate,
+      windowLength = windowLength,
+      windowLength_points = windowLength_points,
+      step = step,
+      step_points = step_points,
       wn = wn,
-      wl = windowLength_points[i],  # for multiple inputs, samplingRate, wl etc can vary
-      f = samplingRate[i],
       zp = zp,
-      step = step_seq,
-      scale = FALSE,
-      norm = FALSE,
-      complex = FALSE
-    )
-    # image(t(log(s1))); s1[1:3, 1:3]; dim(s1); range(s1)
-
-    # log-transform amplitudes
-    if (logSpec) {
-      positives = which(s1 > 0)
-      nonpositives = which(s1 <= 0)
-      s1[positives] = log(s1[positives])
-      if (length(positives) > 0 & length(nonpositives) > 0) {
-        s1[nonpositives] = min(s1[positives])
-      }
-      s1 = s1 - min(s1) + 1e-16  # positive
-      # image(t(log(s1)))
-    }
-
-    # 2D fft
-    ms_complex = specToMS(s1, windowLength = windowLength, step = step)
-    ms = abs(ms_complex)
-    # image(as.numeric(colnames(ms)), as.numeric(rownames(ms)), t(log(ms)))
-    symAxis = floor(nrow(ms) / 2) + 1
-    # ms[(symAxis - 2) : (symAxis + 2), 1:2]
-    ms_half = ms[symAxis:nrow(ms),, drop = FALSE]  # take only the upper half (always even)
-
-    # power
-    if (is.numeric(power) && power != 1) ms_half = ms_half ^ power
-
-    # normalize
-    if (any(s1 != 0)) {
-      ms_half = ms_half - min(ms_half)
-      ms_half = ms_half / max(ms_half)
-    }
-    # image(x = as.numeric(colnames(ms_half)), z = t(log(ms_half)))
-    out[[i]] = ms_half
+      logSpec = logSpec,
+      power = power)
+    out[[i]] = ms_i$ms_half
 
     if (returnComplex) {
-      out_complex[[i]] = ms_complex
+      out_complex[[i]] = ms_i$ms_complex
     }
   }
-
   keep = which(unlist(lapply(out, function(x) !is.null(x))))
   out = out[keep]
   if (length(out) < 1) {
@@ -442,71 +459,75 @@ modulationSpectrum = function(
                 'roughness' = NA))
   }
 
-  # average modulation spectra across all sounds
-  max_rows = max(unlist(lapply(out, nrow)))
-  # normally same samplingRate, but in case not, upsample frequency resolution
-  # typical ncol (depends on sound dur)
-  typicalCols = round(median(unlist(lapply(out, ncol))))
-  out1 = lapply(out, function(x) interpolMatrix(x, nr = max_rows, nc = typicalCols))
-  out_aggreg = Reduce('+', out1) / length(myInput)
-  X = as.numeric(colnames(out_aggreg))
-  Y = as.numeric(rownames(out_aggreg))
-  # image(X, Y, t(log(out_aggreg)))
+  # extract a measure of roughness
+  roughness = unlist(lapply(out, function(x)
+    getRough(x, roughRange, colNames = as.numeric(colnames(out[[1]])))))
 
-  # prepare a separate summary of the complex ms
-  if (returnComplex) {
-    if (aggregComplex) {
-      out1_complex = lapply(out_complex, function(x) {
-        interpolMatrix(x, nr = max_rows * 2, nc = typicalCols)
-      })
-      out_aggreg_complex = Reduce('+', out1_complex) / length(myInput)
+  # average modulation spectra across all sounds
+  if (!returnMS) {
+    result = list('original' = NULL,
+                  'processed' = NULL,
+                  'complex' = NULL,
+                  'roughness' = roughness)
+  } else {
+    out_aggreg = averageMatrices(
+      out,
+      rFun = 'max',   # normally same samplingRate, but if not, upsample frequency resolution
+      cFun = 'median',  # typical ncol (depends on sound dur)
+      reduceFun = '+')  # internally divides by length, so actually becomes mean
+    X = as.numeric(colnames(out_aggreg))
+    Y = as.numeric(rownames(out_aggreg))
+    # image(X, Y, t(log(out_aggreg)))
+
+    # prepare a separate summary of the complex ms
+    if (returnComplex) {
+      out_aggreg_complex = averageMatrices(
+        out_complex,
+        rFun = 'max',
+        cFun = 'median',
+        reduceFun = '+')
       colnames(out_aggreg_complex) = X
       rownames(out_aggreg_complex) = c(-rev(Y), Y)
       # image(t(log(abs(out_aggreg_complex))))
-    } else {
-      out_aggreg_complex = out_complex[[1]]
     }
-  }
 
-  # extract a measure of roughness
-  if (roughContour) {
-    roughness = unlist(lapply(out, function(x)
-      getRough(x, roughRange, colNames = as.numeric(colnames(out[[1]])))))
-  } else {
-    roughness = getRough(out_aggreg, roughRange, colNames = X)
-  }
+    # log-transform the axes (or, actually, warps the matrix itself)
+    if (is.numeric(logWarp)) {
+      neg_col = which(X < 0)
+      zero_col = which(X == 0)
+      pos_col = which(X > 0)
+      m_left = logMatrix(out_aggreg[, rev(neg_col)], base = logWarp)
+      # NB: flip the left half!
+      m_right = logMatrix(out_aggreg[, pos_col], base = logWarp)
+      out_transf = cbind(m_left[, ncol(m_left):1],
+                         out_aggreg[, zero_col, drop = FALSE], m_right)
+      X1 = as.numeric(colnames(out_transf))  # warped by logMatrix
+      Y1 = as.numeric(rownames(out_transf))  # warped by logMatrix
+    } else {
+      out_transf = out_aggreg
+    }
+    # image(out_transf)
 
-  # log-transform the axes (or, actually, warps the matrix itself)
-  if (is.numeric(logWarp)) {
-    neg_col = which(X < 0)
-    zero_col = which(X == 0)
-    pos_col = which(X > 0)
-    m_left = logMatrix(out_aggreg[, rev(neg_col)], base = logWarp)
-    # NB: flip the left half!
-    m_right = logMatrix(out_aggreg[, pos_col], base = logWarp)
-    out_transf = cbind(m_left[, ncol(m_left):1], out_aggreg[, zero_col, drop = FALSE], m_right)
-    X1 = as.numeric(colnames(out_transf))  # warped by logMatrix
-    Y1 = as.numeric(rownames(out_transf))  # warped by logMatrix
-  } else {
-    out_transf = out_aggreg
-  }
-  # image(out_transf)
+    # smoothing / blurring
+    out_transf = gaussianSmooth2D(out_transf,
+                                  kernelSize = kernelSize,
+                                  kernelSD = kernelSD)
+    result = list('original' = out_aggreg,
+                  'processed' = out_transf,
+                  'complex' = out_aggreg_complex,
+                  'roughness' = roughness)
+  }  # end of if (returnMS)
 
-  # smoothing / blurring
-  out_transf = gaussianSmooth2D(out_transf,
-                                kernelSize = kernelSize,
-                                kernelSD = kernelSD)
 
-  # plot
-  if (is.character(savePath)) {
-    # make sure the last character of savePath is "/"
-    last_char = substr(savePath, nchar(savePath), nchar(savePath))
-    if(last_char != '/') savePath = paste0(savePath, '/')
+  # PLOTTING
+  if (is.character(audio$savePlots)) {
     plot = TRUE
-    f = ifelse(plotname == '',
-               'sound',
-               plotname)
-    png(filename = paste0(savePath, f, ".png"),
+    if (audio$filename_base == 'sound') {
+      plotname = 'sound'
+    } else {
+      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
+    }
+    png(filename = paste0(audio$savePlots, plotname, "_MS.png"),
         width = width, height = height, units = units, res = res)
   }
 
@@ -573,121 +594,88 @@ modulationSpectrum = function(
             levels = qntls, labels = quantiles * 100,
             xaxs = 'i', yaxs = 'i',
             axes = FALSE, frame.plot = FALSE,
-            main = plotname, xlim = xlim, ylim = ylim, ...)
+            main = audio$filename_base, xlim = xlim, ylim = ylim, ...)
     par(new = FALSE)
-    if (is.character(savePath)) dev.off()
+    if (is.character(audio$savePlots)) dev.off()
   }
 
-  invisible(list('original' = out_aggreg,
-                 'processed' = out_transf,
-                 'complex' = out_aggreg_complex,
-                 'roughness' = roughness))
+  invisible(result)
 }
 
 
-#' Modulation spectrum per folder
+#' Modulation spectrum fragment
 #'
-#' Extracts modulation spectra of all wav/mp3 files in a folder - separately for
-#' each file, without averaging. Good for saving plots of the modulation spectra
-#' and/or measuring the roughness of multiple files. See
-#' \code{\link{modulationSpectrum}} for further details.
-#'
-#' @seealso \code{\link{modulationSpectrum}}
-#'
-#' @inheritParams analyzeFolder
+#' Internal soundgen function.
 #' @inheritParams modulationSpectrum
-#' @inheritParams spectrogram
-#' @return If \code{summaryFun} is defined, returns a dataframe with just
-#'   roughness per audio file, otherwise returns a list with the actual
-#'   modulation spectra.
-#' @export
+#' @param sound numeric vector
+#' @keywords internal
 #' @examples
-#' \dontrun{
-#' ms = modulationSpectrumFolder('~/Downloads/temp', savePlots = TRUE,
-#'                               kernelSize = 15)
-#' ms
-#' }
-modulationSpectrumFolder = function(
-  myfolder,
-  summaryFun = c('mean', 'sd'),
-  htmlPlots = TRUE,
-  verbose = TRUE,
-  amRes = 5,
-  maxDur = 5,
-  logSpec = FALSE,
-  windowLength = 25,
-  step = NULL,
-  overlap = 80,
-  wn = 'hamming',
-  zp = 0,
-  power = 1,
-  roughRange = c(30, 150),
-  plot = FALSE,
-  savePlots = FALSE,
-  logWarp = NA,
-  quantiles = c(.5, .8, .9),
-  kernelSize = 5,
-  kernelSD = .5,
-  colorTheme = c('bw', 'seewave', '...')[1],
-  xlab = 'Hz',
-  ylab = '1/KHz',
-  width = 900,
-  height = 500,
-  units = 'px',
-  res = NA,
-  ...
-) {
-  time_start = proc.time()  # timing
-  filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
-  filenames_base = basename(filenames)
-  if (length(filenames) < 1) {
-    stop(paste('No wav/mp3 files found in', myfolder))
-  }
-  # in order to provide more accurate estimates of time to completion,
-  # check the size of all files in the target folder
-  filesizes = file.info(filenames)$size
+#' s = soundgen(amFreq = 25, amDep = 100)
+#' ms = soundgen:::modulationSpectrumFragment(s, 16000,
+#'   windowLength = 50, windowLength_points = .05 * 16000,
+#'   step = 5, step_points = .005 * 16000)
+#' image(as.numeric(colnames(ms$ms_half)), as.numeric(rownames(ms$ms_half)),
+#'       t(log(ms$ms_half)))
+modulationSpectrumFragment = function(sound,
+                                      samplingRate,
+                                      windowLength,
+                                      windowLength_points,
+                                      step,
+                                      step_points,
+                                      wn = 'hanning',
+                                      zp = 0,
+                                      logSpec = FALSE,
+                                      power = 1) {
+  # Calling stdft is ~80 times faster than going through spectrogram (!)
+  step_seq = seq(1, length(sound) + 1 - windowLength_points, step_points)
+  # print(length(step_seq))
+  if (length(step_seq) < 3) return(NULL)
+  s1 = seewave::stdft(
+    wave = as.matrix(sound),
+    wn = wn,
+    wl = windowLength_points,
+    f = samplingRate,
+    zp = zp,
+    step = step_seq,
+    scale = FALSE,
+    norm = FALSE,
+    complex = FALSE
+  )
+  # image(t(log(s1))); s1[1:3, 1:3]; dim(s1); range(s1)
 
-  # match par-s
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
-  # exclude some args
-  myPars = myPars[!names(myPars) %in% c(
-    'myfolder' , 'htmlPlots', 'verbose', 'savePlots', 'summaryFun')]
-  # exclude ...
-  myPars = myPars[1:(length(myPars)-1)]
-  if (savePlots) myPars$savePath = myfolder
-  if (is.null(amRes)) summaryFun = 'identity'
-  # nothing to summarize - 1 value per file
-
-  result = list()
-  for (i in 1:length(filenames)) {
-    result[[i]] = do.call(modulationSpectrum, c(filenames[i], myPars, ...))
-    if (verbose) {
-      reportTime(i = i, nIter = length(filenames),
-                 time_start = time_start, jobs = filesizes)
+  # log-transform amplitudes
+  if (logSpec) {
+    positives = which(s1 > 0)
+    nonpositives = which(s1 <= 0)
+    s1[positives] = log(s1[positives])
+    if (length(positives) > 0 & length(nonpositives) > 0) {
+      s1[nonpositives] = min(s1[positives])
     }
+    s1 = s1 - min(s1) + 1e-16  # positive
+    # image(t(log(s1)))
   }
 
-  # prepare output
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    result_sum = lapply(result, function(x) {
-      summarizeAnalyze(data.frame(roughness = x$roughness),
-                       summaryFun = summaryFun,
-                       var_noSummary = NULL)
-    })
-    output = cbind(data.frame(file = filenames_base),
-                   do.call(rbind, result_sum))
-    if (colnames(output)[2] == 'roughness_identity')
-      colnames(output)[2] = 'roughness'
-  } else {
-    output = result
-    names(output) = filenames_base
-  }
+  # 2D fft
+  ms_complex = specToMS(s1, windowLength = windowLength, step = step)
+  ms = abs(ms_complex)
+  # image(as.numeric(colnames(ms)), as.numeric(rownames(ms)), t(log(ms)))
+  symAxis = floor(nrow(ms) / 2) + 1
+  # ms[(symAxis - 2) : (symAxis + 2), 1:2]
+  ms_half = ms[symAxis:nrow(ms),, drop = FALSE]  # take only the upper half (always even)
 
-  if (htmlPlots & savePlots) {
-    htmlPlots(myfolder, myfiles = filenames, width = paste0(width, units))
-  }
+  # power
+  if (is.numeric(power) && power != 1) ms_half = ms_half ^ power
 
-  invisible(output)
+  # normalize
+  if (any(s1 != 0)) {
+    ms_half = ms_half - min(ms_half)
+    ms_half = ms_half / max(ms_half)
+  }
+  # image(x = as.numeric(colnames(ms_half)), z = t(log(ms_half)))
+  return(list(
+    ms_half = ms_half,
+    ms_complex = ms_complex
+  ))
 }
 
 
@@ -716,4 +704,37 @@ getRough = function(m, roughRange, colNames = NULL) {
     roughness = 0
   }
   return(roughness)
+}
+
+
+#' Average matrices
+#'
+#' Internal soundgen function.
+#'
+#' Takes a list of matrices (normally modulation spectra), interpolates them to
+#' have the same size, and then reduces them (eg takes the average).
+#' @param mat_list a list of matrices to aggregate (eg spectrograms or
+#'   modulation spectra)
+#' @param rFun, cFun functions used to determine the number of rows and columns
+#'   in the result
+#' @param aggFun function used to aggregate
+#' @keywords internal
+#' @examples
+#' mat_list = list(
+#'   matrix(1:30, nrow = 5),
+#'   matrix(80:17, nrow = 8)
+#' )
+#' soundgen:::averageMatrices(mat_list)
+#' soundgen:::averageMatrices(mat_list, cFun = 'max', aggFun = '*')
+averageMatrices = function(mat_list,
+                           rFun = 'max',
+                           cFun = 'median',
+                           reduceFun = '+') {
+  # normally same samplingRate, but in case not, upsample frequency resolution
+  nr = round(do.call(rFun, list(unlist(lapply(mat_list, nrow)))))
+  # take typical ncol (depends on sound dur)
+  nc = round(do.call(cFun, list(unlist(lapply(mat_list, ncol)))))
+  mat_list_sameDim = lapply(mat_list, function(x) interpolMatrix(x, nr = nr, nc = nc))
+  agg = Reduce(reduceFun, mat_list_sameDim) / length(mat_list)
+  return(agg)
 }

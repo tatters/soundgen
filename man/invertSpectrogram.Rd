@@ -34,10 +34,10 @@ numeric vector, rather than an audio file or Wave object)}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
-\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
-blackman, flattop}
+\item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
+gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{specType}{the scale of target spectroram: 'abs' = absolute, 'log' =
 log-transformed, 'dB' = in decibels}

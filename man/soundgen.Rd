@@ -381,13 +381,15 @@ sound = soundgen(formants = 'uai', nSyl = 3, play = playback)
 
 # Intonation contours per syllable and globally:
 sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
-  play = playback, pitch = data.frame(
-    time = c(0, 0.65, 1), value = c(977, 1540, 826)),
-  pitchGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
+  pitch = list(
+    time = c(0, 0.65, 1),
+    value = c(977, 1540, 826)),
+  pitchGlobal = list(time = c(0, .5, 1), value = c(-6, 7, 0)),
+  play = playback, plot = TRUE)
 
 # Subharmonics / sidebands (noisy scream)
 sound = soundgen(subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
-  pitch = data.frame(
+  pitch = list(
     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
   sylLen = 800,
   play = playback, plot = TRUE)

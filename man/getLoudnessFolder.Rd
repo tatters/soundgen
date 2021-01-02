@@ -2,75 +2,13 @@
 % Please edit documentation in R/loudness.R
 \name{getLoudnessFolder}
 \alias{getLoudnessFolder}
-\title{Loudness per folder}
+\title{Get loudness folder}
 \usage{
-getLoudnessFolder(
-  myfolder,
-  windowLength = 50,
-  step = NULL,
-  overlap = 50,
-  SPL_measured = 70,
-  Pref = 2e-05,
-  spreadSpectrum = TRUE,
-  summary = NULL,
-  summaryFun = "mean",
-  verbose = TRUE
-)
+getLoudnessFolder(...)
 }
 \arguments{
-\item{myfolder}{path to folder containing wav/mp3 files}
-
-\item{windowLength}{length of FFT window, ms}
-
-\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
-because digital audio is sampled at discrete time intervals of
-1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
-
-\item{overlap}{overlap between successive FFT frames, \%}
-
-\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
-
-\item{Pref}{reference pressure, Pa}
-
-\item{spreadSpectrum}{if TRUE, applies a spreading function to account for
-frequency masking}
-
-\item{summary}{deprecated}
-
-\item{summaryFun}{the function used to summarize loudness values across all STFT frames,
-eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
-are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
-take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-list containing frame-by-frame values}
-
-\item{verbose}{if TRUE, reports estimated time left}
+\item{...}{any input parameters}
 }
 \description{
-A wrapper around \code{\link{getLoudness}} that goes through all wav/mp3
-files in a folder and returns either a list with loudness values per STFT
-frame from each file or, if \code{summaryFun} is not NULL, a dataframe with a
-single summary value of loudness per file. This summary value can be mean,
-max and so on, as per \code{summaryFun}.
-}
-\examples{
-\dontrun{
-getLoudnessFolder('~/Downloads/temp')
-# Compare:
-analyzeFolder('~/Downloads/temp1', pitchMethods = NULL,
-              plot = FALSE)$loudness_mean
-# (per STFT frame; should be very similar, but not identical unless silence =
-0, because # analyze() discards frames considered silent)
-
-# custom summaryFun
-ran = function(x) diff(range(x))
-getLoudnessFolder('~/Downloads/temp', summaryFun = c('mean', 'ran'))
-
-# save loudness values per frame without summarizing
-l = getLoudnessFolder('~/Downloads/temp', summaryFun = NULL)
-}
-}
-\seealso{
-\code{\link{getLoudness}} \code{\link{getRMS}}
-  \code{\link{analyze}}
+Get loudness folder
 }

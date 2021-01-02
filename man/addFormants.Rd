@@ -31,8 +31,8 @@ addFormants(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
-representing the waveform with specified samplingRate}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
 \item{samplingRate}{sampling frequency, Hz}
 

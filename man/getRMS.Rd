@@ -28,8 +28,8 @@ getRMS(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
-representing the waveform with specified samplingRate}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file or Wave object)}
@@ -49,7 +49,7 @@ from...to (s)}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
@@ -63,8 +63,8 @@ the maximum possible amplitude as given by \code{scale}}
 \item{summaryFun}{functions used to summarize each acoustic characteristic;
 see \code{\link{analyze}}}
 
-\item{reportEvery}{report estimated time left every ... iterations (NA = no
-reporting, NULL = default frequency)}
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
 
 \item{plot}{if TRUE, plot a contour of RMS amplitude}
 

@@ -36,7 +36,7 @@ etc rms amplitude or loudness? (summaryFun has no effect if type = 'peak')}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
@@ -47,8 +47,8 @@ will be slightly different, eg 24.98866 instead of 25.0 ms)}
 \item{savepath}{full path to where the normalized files should be saved
 (defaults to '/normalized')}
 
-\item{reportEvery}{report estimated time left every ... iterations (NA = no
-reporting, NULL = default frequency)}
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
 }
 \description{
 Normalizes the amplitude of all wav/mp3 files in a folder based on their peak

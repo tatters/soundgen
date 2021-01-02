@@ -5,10 +5,7 @@
 \title{Internal soundgen function}
 \usage{
 segmentSound(
-  sound,
-  samplingRate = NULL,
-  from = NULL,
-  to = NULL,
+  audio,
   shortestSyl = 40,
   shortestPause = 40,
   method = c("env", "spec", "mel")[3],
@@ -46,16 +43,7 @@ segmentSound(
 )
 }
 \arguments{
-\item{sound}{waveform as a numeric vector}
-
-\item{samplingRate}{the number of samples per second (only needed if the
-input is a vector rather than an audio file)}
-
-\item{from}{if NULL (default), analyzes the whole sound, otherwise
-from...to (s)}
-
-\item{to}{if NULL (default), analyzes the whole sound, otherwise
-from...to (s)}
+\item{audio}{a list returned by \code{readAudio}}
 
 \item{shortestSyl}{minimum acceptable length of syllables, ms}
 
@@ -85,7 +73,7 @@ syllable.}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
@@ -117,9 +105,8 @@ padded with some silence (ms)}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 
-\item{savePlots}{full path to the folder in which to save the plot(s). NULL =
-don't save. Note that the html file with clickable plots will only work if
-the plots are saved in the same folder as input audio files}
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
 
 \item{xlab}{main plotting parameters}
 

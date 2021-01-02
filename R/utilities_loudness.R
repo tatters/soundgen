@@ -67,16 +67,17 @@ scaleSPL = function(x, scale = NULL, SPL_measured = 70, Pref = 2e-5) {
   RMS = sqrt(mean(x_refScaled ^ 2))
   SPL_internal = 20 * log10(RMS)  # dB-SPL
   c = 10 ^ ((SPL_measured - SPL_internal) / 20)
+
+  # correct according to scale (eg if the original sound is quieter than the max
+  # possible amplitude, adjust loudness for that)
+  if (is.numeric(scale)) {
+    c = c * max(abs(x)) / scale
+  }
   x_scaled = c * x_refScaled  # range(x_scaled)
   # plot(x_scaled[5000:6000], type = 'l')
   # check that the new RMS is SPL_measured:
   # 20 * log10(sqrt(mean(x_scaled^2))) should be ~SPL_measured
 
-  # correct according to scale (eg if the original sound is quieter than the max
-  # possible amplitude, adjust loudness for that)
-  if (is.numeric(scale)) {
-    x_scaled = x_scaled / (scale / max(abs(x)))
-  }
   return(x_scaled)
 }
 

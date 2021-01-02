@@ -1,16 +1,329 @@
 ## FINDING SYLLABLES AND VOCAL BURSTS ##
 
+#' Segment folder
+#' @param ... any input parameters
+segmentFolder = function(...) {
+  message('segmentFolder() is deprecated; please use segment() instead')
+}
+
+
+#' Segment a sound
+#'
+#' Finds syllables and bursts separated by background noise in long recordings
+#' (up to 1-2 hours of audio per file). Syllables are defined as continuous
+#' segments that seem to be different from noise based on amplitude and/or
+#' spectral similarity thresholds. Bursts are defined as local maxima in signal
+#' envelope that are high enough both in absolute terms (relative to the global
+#' maximum) and with respect to the surrounding region (relative to local
+#' mimima). See vignette('acoustic_analysis', package = 'soundgen') for details.
+#'
+#' Algorithm: for each chunk at most \code{maxDur} long, first the audio
+#' recording is partitioned into signal and noise regions: the quietest and most
+#' stable regions are located, and noise threshold is defined from a
+#' user-specified proportion of noise in the recording (\code{propNoise}) or, if
+#' \code{propNoise = NULL}, from the lowest local maximum in the density
+#' function of a weighted product of amplitude and stability (that is, we assume
+#' that quiet and stable regions are likely to represent noise). Once we know
+#' what the noise looks like - in terms of its typical amplitude and/or spectrum
+#' - we derive signal contour as its difference from noise at each time point.
+#' If \code{method = 'env'}, this is Hilbert transform minus noise, and if
+#' \code{method = 'spec' or 'mel'}, this is the inverse of cosine similarity
+#' between the spectrum of each frame and the estimated spectrum of noise
+#' weighted by amplitude. By default, signal-to-noise ratio (SNR) is estimated
+#' as half-median of above-noise signal, but it is recommended that this
+#' parameter is adjusted by hand to suit the purposes of segmentation, as it is
+#' the key setting that controls the balance between false negatives (missing
+#' faint signals) and false positives (hallucinating signals that are actually
+#' noise). Note also that effects of echo or reverberation can be taken into
+#' account: syllable detection threshold may be raised following powerful
+#' acoustic bursts with the help of the \code{reverbPars} argument. At the final
+#' stage, continuous "islands" SNR dB above noise level are detected as
+#' syllables, and "peaks" on the islands are detected as bursts. The algorithm
+#' is very flexible, but the parameters may be hard to optimize by hand. If you
+#' have an annotated sample of the sort of audio you are planning to analyze,
+#' with syllables and/or bursts counted manually, you can use it for automatic
+#' optimization of control parameters (see \code{\link{optimizePars}}.
+#'
+#' @seealso \code{\link{analyze}}  \code{\link{ssm}}
+#'
+#' @inheritParams spectrogram
+#' @inheritParams analyze
+#' @param shortestSyl minimum acceptable length of syllables, ms
+#' @param shortestPause minimum acceptable break between syllables, ms
+#'   (syllables separated by shorter pauses are merged)
+#' @param method the signal used to search for syllables: 'env' =
+#'   Hilbert-transformed amplitude envelope, 'spec' = spectrogram, 'mel' =
+#'   mel-transformed spectrogram (see tuneR::melfcc)
+#' @param propNoise the proportion of non-zero sound assumed to represent
+#'   background noise (note that complete silence is not considered, so padding
+#'   with silence won't affect the algorithm)
+#' @param SNR expected signal-to-noise ratio (dB above noise), which determines
+#'   the threshold for syllable detection. The meaning of "dB" here is
+#'   approximate since the "signal" may be different from sound intensity
+#' @param noiseLevelStabWeight a vector of length 2 specifying the relative
+#'   weights of the overall signal level vs. stability when attempting to
+#'   automatically locate the regions that represent noise. Increasing the
+#'   weight of stability tends to accentuate the beginning and end of each
+#'   syllable.
+#' @param reverbPars parameters passed on to \code{\link{reverb}} to attempt to
+#'   cancel the effects of reverberation or echo, which otherwise tend to merge
+#'   short and loud segments like rapid barks
+#' @param interburst minimum time between two consecutive bursts (ms). Defaults
+#'   to the average detected \code{(syllable + pause) / 2}
+#' @param peakToTrough to qualify as a burst, a local maximum has to be at least
+#'   \code{peakToTrough} dB above the left and/or right local trough(s)
+#'   (controlled by \code{troughLocation}) over the analysis window (controlled
+#'   by \code{interburst}). Defaults to SNR + 3 dB
+#' @param troughLocation should local maxima be compared to the trough on the
+#'   left and/or right of it? Values: 'left', 'right', 'both', 'either'
+#' @param summaryFun functions used to summarize each acoustic characteristic;
+#'   see \code{\link{analyze}}
+#' @param maxDur long files are split into chunks \code{maxDur} s in duration to
+#'   avoid running out of RAM; the outputs for all fragments are glued together,
+#'   but plotting is switched off. Note that noise profile is estimated in each
+#'   chunk separately, so set it low if the background noise is highly variable
+#' @param plot if TRUE, produces a segmentation plot
+#' @param saveAudio full path to the folder in which to save audio files (one
+#'   per detected syllable)
+#' @param addSilence if syllables are saved as separate audio files, they can be
+#'   padded with some silence (ms)
+#' @param specPlot a list of graphical parameters for displaying the spectrogram
+#'   (if \code{method = 'spec' or 'mel'}); set to NULL to hide the spectrogram
+#' @param contourPlot a list of graphical parameters for displaying the signal
+#'   contour used to detect syllables (see details)
+#' @param sylPlot a list of graphical parameters for displaying the syllables
+#' @param burstPlot a list of graphical parameters for displaying the bursts
+#' @param xlab,ylab,main main plotting parameters
+#' @param width,height,units,res parameters passed to
+#'   \code{\link[grDevices]{png}} if the plot is saved
+#' @param showLegend if TRUE, shows a legend for thresholds
+#' @param maxPoints the maximum number of "pixels" (for quick plotting of long
+#'   audio files)
+#' @param ... other graphical parameters passed to graphics::plot
+#'
+#' @return If \code{summaryFun = NULL}, returns returns a list containing full
+#'   stats on each syllable and burst (one row per syllable and per burst),
+#'   otherwise returns only a dataframe with one row per file - a summary of the
+#'   number and spacing of syllables and vocal bursts.
+#' @export
+#' @examples
+#' sound = soundgen(nSyl = 4, sylLen = 100, pauseLen = 70,
+#'                  attackLen = 20, amplGlobal = c(0, -20),
+#'                  pitch = c(368, 284), temperature = .001)
+#' # add noise so SNR decreases from 20 to 0 dB from syl1 to syl4
+#' sound = sound + runif(length(sound), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
+#' # osc(sound, samplingRate = 16000, dB = TRUE)
+#' # spectrogram(sound, samplingRate = 16000, osc = TRUE)
+#' # playme(sound, samplingRate = 16000)
+#'
+#' s = segment(sound, samplingRate = 16000, plot = TRUE)
+#' s
+#'
+#' # customizing the plot
+#' segment(sound, samplingRate = 16000, plot = TRUE,
+#'         sylPlot = list(lty = 2, col = 'gray20'),
+#'         burstPlot = list(pch = 16, col = 'gray80'),
+#'         specPlot = list(color.palette = 'heat.colors'),
+#'         xlab = 'Some custom label', cex.lab = 1.2,
+#'         showLegend = TRUE,
+#'         main = 'My awesome plot')
+#' \dontrun{
+#' # set SNR manually to control detection threshold
+#' s = segment(sound, samplingRate = 16000, SNR = 1, plot = TRUE)
+#'
+#' # Download 260 sounds from the supplements to Anikin & Persson (2017) at
+#' # http://cogsci.se/publications.html
+#' # unzip them into a folder, say '~/Downloads/temp'
+#' myfolder = '~/Downloads/temp260'  # 260 .wav files live here
+#' s = segment(myfolder, propNoise = .05, SNR = 3)
+#'
+#' # Check accuracy: import a manual count of syllables (our "key")
+#' key = segmentManual  # a vector of 260 integers
+#' trial = as.numeric(s$summary$nBursts)
+#' cor(key, trial, use = 'pairwise.complete.obs')
+#' boxplot(trial ~ as.integer(key), xlab='key')
+#' abline(a=0, b=1, col='red')
+#'
+#' # or look at the detected syllables instead of bursts:
+#' cor(key, s$summary$nSyl, use = 'pairwise.complete.obs')
+#' }
+segment = function(
+  x,
+  samplingRate = NULL,
+  from = NULL,
+  to = NULL,
+  shortestSyl = 40,
+  shortestPause = 40,
+  method = c('env', 'spec', 'mel')[3],
+  propNoise = NULL,
+  SNR = NULL,
+  noiseLevelStabWeight = c(1, .25),
+  windowLength = 40,
+  step = NULL,
+  overlap = 80,
+  reverbPars = list(reverbDelay = 70, reverbSpread = 130,
+                    reverbLevel = -35, reverbDensity = 50),
+  interburst = NULL,
+  peakToTrough = SNR + 3,
+  troughLocation = c('left', 'right', 'both', 'either')[4],
+  summaryFun = c('median', 'sd'),
+  maxDur = 30,
+  reportEvery = NULL,
+  plot = FALSE,
+  savePlots = NULL,
+  saveAudio = NULL,
+  addSilence = 50,
+  xlab = '',
+  ylab = 'Signal, dB',
+  main = NULL,
+  showLegend = FALSE,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  maxPoints = 1e4,
+  specPlot = list(color.palette = 'bw'),
+  contourPlot = list(lty = 1, lwd = 2, col = 'green'),
+  sylPlot = list(lty = 1, lwd = 2, col = 'blue'),
+  burstPlot = list(pch = 8, cex = 3, col = 'red'),
+  ...
+) {
+  time_start = proc.time()  # timing
+
+  ## Check the arguments
+  if (windowLength < 10) {
+    warning('windowLength < 10 ms is slow and usually not very useful')
+  }
+  if (!is.null(step)) overlap = 100 * (1 - step / windowLength)
+  if (overlap < 0 | overlap > 100) {
+    warning('overlap must be >0 and <= 100%; resetting to 70')
+    overlap = 70
+  }
+  if (is.null(step)) step = windowLength * (1 - overlap / 100)
+
+  if (!troughLocation %in% c('left', 'right', 'both', 'either')) {
+    warning(paste(
+      "Valid values of troughLocation: 'left', 'right', 'both', 'either'.",
+      "Defaulting to 'either'")
+    )
+    troughLocation = 'either'
+  }
+  if (!method %in% c('env', 'spec', 'mel')) {
+    warning(paste(
+      "Valid values of method: 'env', 'spec', 'mel'.",
+      "Defaulting to 'mel'")
+    )
+    method = 'mel'
+  }
+
+  ## Prepare a list of arguments to pass to segmentSound()
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude unnecessary args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'reportEvery', 'summaryFun',
+    'reverbPars', 'sylPlot', 'burstPlot', 'specPlot')]  # otherwise flattens lists
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+  # add back arguments that are lists
+  myPars$sylPlot = sylPlot
+  myPars$burstPlot = burstPlot
+  myPars$specPlot = specPlot
+  myPars$reverbPars = reverbPars
+
+  # analyze
+  pa = processAudio(
+    x,
+    samplingRate = samplingRate,
+    scale = scale,
+    from = from,
+    to = to,
+    funToCall = 'segmentSound',
+    myPars = myPars,
+    reportEvery = reportEvery,
+    savePlots = savePlots
+  )
+
+  # htmlPlots
+  if (!is.null(pa$input$savePlots)) {
+    if (pa$input$filenames_base[1] == 'sound') {
+      plotname = 'sound'
+    } else {
+      plotname = substr(pa$input$filenames_base, 1,
+                        nchar(pa$input$filenames_base) - 4)
+    }
+    htmlPlots(
+      htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_segment.html'),
+      plotFiles = paste0(pa$input$savePlots, plotname, "_segment.png"),
+      audioFiles = pa$input$filenames,
+      width = paste0(width, units))
+  }
+
+  # prepare output
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    temp = vector('list', pa$input$n)
+    for (i in 1:pa$input$n) {
+      if (!pa$input$failed[i]) {
+        seg = pa$result[[i]]
+        sum_syl = summarizeAnalyze(
+          seg$syllables[, c('sylLen', 'pauseLen')],
+          summaryFun = summaryFun,
+          var_noSummary = NULL)
+        sum_bursts = summarizeAnalyze(
+          seg$bursts[, 'interburst', drop = FALSE],
+          summaryFun = summaryFun,
+          var_noSummary = NULL)
+        temp[[i]] = as.data.frame(c(
+          list(nSyl = if (pa$input$failed[i]) NA else sum(!is.na(seg$syllables$start))),
+          sum_syl,
+          list(nBursts = if (pa$input$failed[i]) NA else sum(!is.na(seg$bursts$time))),
+          sum_bursts
+        ))
+        temp[[i]][apply(temp[[i]], c(1, 2), is.nan)] = NA
+      }
+    }
+    idx_failed = which(pa$input$failed)
+    if (length(idx_failed) > 0) {
+      idx_ok = which(!pa$input$failed)
+      if (length(idx_ok) > 0) {
+        filler = temp[[idx_ok[1]]] [1, ]
+        filler[1, ] = NA
+      } else {
+        stop('Failed to analyze any input')
+      }
+      for (i in idx_failed) temp[[i]] = filler
+    }
+    mysum_all = cbind(data.frame(file = pa$input$filenames_base),
+                      do.call('rbind', temp))
+  } else {
+    mysum_all = NULL
+  }
+
+  if (pa$input$n == 1) {
+    # unlist syllables & bursts
+    syllables = pa$result[[1]]$syllables
+    bursts = pa$result[[1]]$bursts
+  } else {
+    syllables = lapply(pa$result, function(x) x[['syllables']])
+    bursts = lapply(pa$result, function(x) x[['bursts']])
+  }
+
+  output = list(
+    syllables = syllables,
+    bursts = bursts,
+    summary = mysum_all
+  )
+  invisible(output)
+}
+
+
 #' Internal soundgen function
 #'
 #' A helper function called internally by segment() for segmenting a single sound.
 #' @inheritParams segment
-#' @param sound waveform as a numeric vector
+#' @param audio a list returned by \code{readAudio}
 #' @keywords internal
 segmentSound = function(
-  sound,
-  samplingRate = NULL,
-  from = NULL,
-  to = NULL,
+  audio,
   shortestSyl = 40,
   shortestPause = 40,
   method = c('env', 'spec', 'mel')[3],
@@ -45,64 +358,45 @@ segmentSound = function(
   sylPlot = list(lty = 1, lwd = 2, col = 'blue'),
   burstPlot = list(pch = 8, cex = 3, col = 'red'),
   ...) {
-  # from...to selection
-  len = length(sound)
-  if (any(is.numeric(c(from, to)))) {
-    if (!is.numeric(from)) {
-      from_points = 1
-    } else {
-      from_points = max(1, round(from * samplingRate))
-    }
-    if (!is.numeric(to)) {
-      to_points = len
-    }  else {
-      to_points = min(len, round(to * samplingRate))
-    }
-    sound = sound[from_points:to_points]
-    timeShift = from_points / samplingRate * 1000
-    len = length(sound)
-  } else {
-    timeShift = 0
-  }
 
   ## normalize
-  sound = sound - mean(sound)  # center around 0
-  sound = sound / max(abs(sound))  # range approx. -1 to 1
-  windowLength_points = ceiling(windowLength * samplingRate / 1000)
-  if (windowLength_points > len / 2) {
-    windowLength_points = len / 2
-    step = windowLength_points / samplingRate * 1000 * (1 - overlap / 100)
-    windowLength = windowLength_points / samplingRate * 1000
+  audio$sound = audio$sound - mean(audio$sound)  # center around 0
+  audio$sound = audio$sound / max(abs(audio$sound))  # range approx. -1 to 1
+  windowLength_points = ceiling(windowLength * audio$samplingRate / 1000)
+  if (windowLength_points > audio$ls / 2) {
+    windowLength_points = audio$ls / 2
+    step = windowLength_points / audio$samplingRate * 1000 * (1 - overlap / 100)
+    windowLength = windowLength_points / audio$samplingRate * 1000
   }
-  dur_total = len / samplingRate * 1000
-  step_points = round(step / 1000 * samplingRate)
-  step = step_points / samplingRate * 1000
-  windowLength = windowLength_points / samplingRate * 1000
+  dur_total_ms = audio$duration * 1000
+  step_points = round(step / 1000 * audio$samplingRate)
+  step = step_points / audio$samplingRate * 1000
+  windowLength = windowLength_points / audio$samplingRate * 1000
   # step_points can only be an integer, introducing small timing errors in long sounds
-  # plot(sound, type='l')
+  # plot(audio$sound, type='l')
 
   analyze_from = 0
-  analyze_to = min(maxDur * 1000, dur_total)
-  stopNextTime = analyze_to >= dur_total
+  analyze_to = min(maxDur * 1000, dur_total_ms)
+  stopNextTime = analyze_to >= dur_total_ms
   syllables = bursts = NULL
   propNoise_user = propNoise
   SNR_user = SNR
-  while(analyze_to <= dur_total) {
-    if (plot && analyze_to < dur_total) {
+  while(analyze_to <= dur_total_ms) {
+    if (plot && analyze_to < dur_total_ms) {
       plot = FALSE
       message(paste(
         'This long sound will be analyzed piecewise and cannot be plotted.',
         'Increase maxDur or use from/to to analyze and plot a part.'))
     }
-    from_points = max(1, round(analyze_from * samplingRate / 1000))
-    to_points = min(len, round(analyze_to * samplingRate / 1000))
-    sound_part = sound[from_points:to_points]
+    from_points = max(1, round(analyze_from * audio$samplingRate / 1000))
+    to_points = min(audio$ls, round(analyze_to * audio$samplingRate / 1000))
+    sound_part = audio$sound[from_points:to_points]
 
     if (method == 'env') {
       ## work with smoothed amplitude envelope
       ampl = seewave::env(
         sound_part,
-        f = samplingRate,
+        f = audio$samplingRate,
         envt = 'hil',
         msmooth = c(windowLength_points, overlap),
         fftw = FALSE,
@@ -179,17 +473,15 @@ segmentSound = function(
       )
     } else if (method %in% c('mel', 'spec')) {
       ## work with some form of spectrogram
-      if (!exists('sound_wav') | any(is.numeric(c(from, to))) | analyze_to < dur_total) {
-        # redo Wave in case of from...to... to avoid analyzing the entire file
-        sound_wav = tuneR::Wave(sound_part, samp.rate = samplingRate, bit = 16)
-      }
-      myspec = tuneR::melfcc(sound_wav,
-                             wintime = windowLength / 1000,
-                             hoptime = step / 1000,
-                             lifterexp = 0,
-                             preemph = 0,
-                             numcep = 1,
-                             spec_out = TRUE)
+      myspec = tuneR::melfcc(
+        tuneR::Wave(sound_part, samp.rate = audio$samplingRate, bit = 16),
+        wintime = windowLength / 1000,
+        hoptime = step / 1000,
+        lifterexp = 0,
+        preemph = 0,
+        numcep = 1,
+        spec_out = TRUE
+      )
       if (method == 'mel') {
         sp = t(myspec$aspectrum)
       } else if (method == 'spec') {
@@ -380,14 +672,14 @@ segmentSound = function(
       scale = 'dB'
     )
     syllables_part[, c('start', 'end')] = syllables_part[, c('start', 'end')] +
-      timeShift + analyze_from
-    bursts_part$time = bursts_part$time + timeShift + analyze_from
+      audio$timeShift + analyze_from
+    bursts_part$time = bursts_part$time + audio$timeShift + analyze_from
 
     # start next part just before the last detected syllable if it looks like
     # this syllable might be incomplete (ends within 100 ms of the end of sound_part)
     if (!is.na(syllables_part$start[1]) &&
-        (analyze_to - (syllables_part$end[nrow(syllables_part)] - timeShift) < 100)) {
-      analyze_from = syllables_part$start[nrow(syllables_part)] - timeShift - shortestPause
+        (analyze_to - (syllables_part$end[nrow(syllables_part)] - audio$timeShift) < 100)) {
+      analyze_from = syllables_part$start[nrow(syllables_part)] - audio$timeShift - shortestPause
       # remove syllables and bursts from the overlapping part
       syllables_part = syllables_part[-nrow(syllables_part), ]
       bursts_part = bursts_part[bursts_part$time < analyze_from, ]
@@ -396,8 +688,8 @@ segmentSound = function(
     }
     if (is.null(propNoise_user)) propNoise = NULL  # reset in next part
     if (is.null(SNR_user)) SNR = NULL              # reset in next part
-    analyze_to = min(analyze_from + maxDur * 1000, dur_total)
-    if (analyze_to >= dur_total) stopNextTime = TRUE
+    analyze_to = min(analyze_from + maxDur * 1000, dur_total_ms)
+    if (analyze_to >= dur_total_ms) stopNextTime = TRUE
 
     # add to growing syllables/bursts for the entire file
     if (is.null(syllables)) {
@@ -437,21 +729,30 @@ segmentSound = function(
 
   ## save all extracted syllables as separate audio files for easy examination
   if (is.character(saveAudio) && !is.na(syllables$sylLen[1])) {
-    addSil = rep(0, addSilence * samplingRate / 1000)
+    addSil = rep(0, addSilence * audio$samplingRate / 1000)
     for (i in 1:nrow(syllables)) {
-      from = max(1, samplingRate * ((syllables$start[i]) / 1000))  #  - windowLength / 2
-      to = min(length(sound), samplingRate * ((syllables$end[i]) / 1000))
-      temp = c(addSil, sound[from:to], addSil)
+      from = max(1, audio$samplingRate * ((syllables$start[i]) / 1000))  #  - windowLength / 2
+      to = min(length(audio$sound), audio$samplingRate * ((syllables$end[i]) / 1000))
+      temp = c(addSil, audio$sound[from:to], addSil)
       name_noExt = substr(plotname, 1, nchar(plotname) - 4)
       filename_i = paste0(
         saveAudio, name_noExt, '_', round(syllables$start[i], 0),
         '-', round(syllables$end[i], 0), '.wav')
-      seewave::savewav(temp, f = samplingRate, filename = filename_i)
+      seewave::savewav(temp, f = audio$samplingRate, filename = filename_i)
     }
   }
 
   ## plotting
-  if (is.character(savePlots)) plot = TRUE
+  if (is.character(audio$savePlots)) {
+    plot = TRUE
+    if (audio$filename_base == 'sound') {
+      plotname = 'sound'
+    } else {
+      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
+    }
+    png(filename = paste0(audio$savePlots, plotname, "_segment.png"),
+        width = width, height = height, units = units, res = res)
+  }
   if (plot) {
     # defaults
     if (is.null(sylPlot$lty)) sylPlot$lty = 1
@@ -461,26 +762,21 @@ segmentSound = function(
     if (is.null(burstPlot$cex)) burstPlot$cex = 3
     if (is.null(burstPlot$col)) burstPlot$col = 'red'
 
-    if (is.character(savePlots)) {
-      png(filename = paste0(savePlots, plotname, ".png"),
-          width = width, height = height, units = units, res = res)
-    }
-
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(2, 1))
     par(mar = c(op$mar[1:2], 0, op$mar[4]), xaxt = 's', yaxt = 's')
-    xlim = c(0, len / samplingRate * 1000) + timeShift
+    xlim = c(0, audio$ls / audio$samplingRate * 1000) + audio$timeShift
 
     # downsample long sounds to avoid delays when plotting
-    if (len > maxPoints) {
-      idx_sound = seq(1, len, by = ceiling(len / maxPoints))
+    if (audio$ls > maxPoints) {
+      idx_sound = seq(1, audio$ls, by = ceiling(audio$ls / maxPoints))
     } else {
-      idx_sound = 1:len
+      idx_sound = 1:audio$ls
     }
 
     # plot osc
-    plot(x = idx_sound / samplingRate * 1000 + timeShift,
-         y = sound[idx_sound], type = 'l', xlim = xlim,
+    plot(x = idx_sound / audio$samplingRate * 1000 + audio$timeShift,
+         y = audio$sound[idx_sound], type = 'l', xlim = xlim,
          axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
          xlab = xlab, ylab = '', main = '', ...)
     box()
@@ -491,14 +787,8 @@ segmentSound = function(
     par(mar = c(0, op$mar[2:4]), xaxt = 'n', yaxt = 's')
 
     # plot envelope
-    # if (method != 'env') {
-    #   m = min(ampl)
-    #   ampl = log(ampl - m + 1e-3)
-    #   threshold = log(threshold - m + 1e-3)
-    #   # plot(ampl, type = 'l')
-    # }
     envelope = data.frame(
-      time = (1:length(ampl) - 1) * step + windowLength / 2 + timeShift,
+      time = (1:length(ampl) - 1) * step + windowLength / 2 + audio$timeShift,
       value = ampl
     )
     # downsample long envelopes
@@ -557,16 +847,14 @@ segmentSound = function(
                           sylPlot))
     }
 
-    if (showLegend) legend('topright',
-                           legend = c('Syllable threshold', 'Noise threshold'),
-                           lty = c(1, 3), col = c(sylPlot$col, 'gray50')
-    )
+    if (showLegend)
+      legend('topright',
+             legend = c('Syllable threshold', 'Noise threshold'),
+             lty = c(1, 3), col = c(sylPlot$col, 'gray50'))
 
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
-    if (is.character(savePlots)){
-      dev.off()
-    }
+    if (is.character(savePlots)) dev.off()
   }
 
   result = list(
@@ -576,396 +864,4 @@ segmentSound = function(
 }
 
 
-#' Segment a sound
-#'
-#' Finds syllables and bursts separated by background noise in long recordings
-#' (up to 1-2 hours of audio per file). Syllables are defined as continuous
-#' segments that seem to be different from noise based on amplitude and/or
-#' spectral similarity thresholds. Bursts are defined as local maxima in signal
-#' envelope that are high enough both in absolute terms (relative to the global
-#' maximum) and with respect to the surrounding region (relative to local
-#' mimima). See vignette('acoustic_analysis', package = 'soundgen') for details.
-#'
-#' Algorithm: for each chunk at most \code{maxDur} long, first the audio
-#' recording is partitioned into signal and noise regions: the quietest and most
-#' stable regions are located, and noise threshold is defined from a
-#' user-specified proportion of noise in the recording (\code{propNoise}) or, if
-#' \code{propNoise = NULL}, from the lowest local maximum in the density
-#' function of a weighted product of amplitude and stability (that is, we assume
-#' that quiet and stable regions are likely to represent noise). Once we know
-#' what the noise looks like - in terms of its typical amplitude and/or spectrum
-#' - we derive signal contour as its difference from noise at each time point.
-#' If \code{method = 'env'}, this is Hilbert transform minus noise, and if
-#' \code{method = 'spec' or 'mel'}, this is the inverse of cosine similarity
-#' between the spectrum of each frame and the estimated spectrum of noise
-#' weighted by amplitude. By default, signal-to-noise ratio (SNR) is estimated
-#' as half-median of above-noise signal, but it is recommended that this
-#' parameter is adjusted by hand to suit the purposes of segmentation, as it is
-#' the key setting that controls the balance between false negatives (missing
-#' faint signals) and false positives (hallucinating signals that are actually
-#' noise). Note also that effects of echo or reverberation can be taken into
-#' account: syllable detection threshold may be raised following powerful
-#' acoustic bursts with the help of the \code{reverbPars} argument. At the final
-#' stage, continuous "islands" SNR dB above noise level are detected as
-#' syllables, and "peaks" on the islands are detected as bursts. The algorithm
-#' is very flexible, but the parameters may be hard to optimize by hand. If you
-#' have an annotated sample of the sort of audio you are planning to analyze,
-#' with syllables and/or bursts counted manually, you can use it for automatic
-#' optimization of control parameters (see \code{\link{optimizePars}}.
-#'
-#' @seealso \code{\link{analyze}}  \code{\link{ssm}}
-#'
-#' @inheritParams spectrogram
-#' @param x input audio: full path to a folder with wav/mp3 files or a single
-#'   wav/mp3, or else a numeric vector representing the actual audio sampled at
-#'   \code{samplingRate}
-#' @param samplingRate the number of samples per second (only needed if the
-#'   input is a vector rather than an audio file)
-#' @param shortestSyl minimum acceptable length of syllables, ms
-#' @param shortestPause minimum acceptable break between syllables, ms
-#'   (syllables separated by shorter pauses are merged)
-#' @param method the signal used to search for syllables: 'env' =
-#'   Hilbert-transformed amplitude envelope, 'spec' = spectrogram, 'mel' =
-#'   mel-transformed spectrogram (see tuneR::melfcc)
-#' @param propNoise the proportion of non-zero sound assumed to represent
-#'   background noise (note that complete silence is not considered, so padding
-#'   with silence won't affect the algorithm)
-#' @param SNR expected signal-to-noise ratio (dB above noise), which determines
-#'   the threshold for syllable detection. The meaning of "dB" here is
-#'   approximate since the "signal" may be different from sound intensity
-#' @param noiseLevelStabWeight a vector of length 2 specifying the relative
-#'   weights of the overall signal level vs. stability when attempting to
-#'   automatically locate the regions that represent noise. Increasing the
-#'   weight of stability tends to accentuate the beginning and end of each
-#'   syllable.
-#' @param reverbPars parameters passed on to \code{\link{reverb}} to attempt to
-#'   cancel the effects of reverberation or echo, which otherwise tend to merge
-#'   short and loud segments like rapid barks
-#' @param interburst minimum time between two consecutive bursts (ms). Defaults
-#'   to the average detected \code{(syllable + pause) / 2}
-#' @param peakToTrough to qualify as a burst, a local maximum has to be at least
-#'   \code{peakToTrough} dB above the left and/or right local trough(s)
-#'   (controlled by \code{troughLocation}) over the analysis window (controlled
-#'   by \code{interburst}). Defaults to SNR + 3 dB
-#' @param troughLocation should local maxima be compared to the trough on the
-#'   left and/or right of it? Values: 'left', 'right', 'both', 'either'
-#' @param summaryFun functions used to summarize each acoustic characteristic;
-#'   see \code{\link{analyze}}
-#' @param maxDur long files are split into chunks \code{maxDur} s in duration to
-#'   avoid running out of RAM; the outputs for all fragments are glued together,
-#'   but plotting is switched off. Note that noise profile is estimated in each
-#'   chunk separately, so set it low if the background noise is highly variable
-#' @param reportEvery report estimated time left every ... iterations (NA = no
-#'   reporting, NULL = default frequency)
-#' @param plot if TRUE, produces a segmentation plot
-#' @param savePlots full path to the folder in which to save the plot(s). NULL =
-#'   don't save. Note that the html file with clickable plots will only work if
-#'   the plots are saved in the same folder as input audio files
-#' @param saveAudio full path to the folder in which to save audio files (one
-#'   per detected syllable)
-#' @param addSilence if syllables are saved as separate audio files, they can be
-#'   padded with some silence (ms)
-#' @param specPlot a list of graphical parameters for displaying the spectrogram
-#'   (if \code{method = 'spec' or 'mel'}); set to NULL to hide the spectrogram
-#' @param contourPlot a list of graphical parameters for displaying the signal
-#'   contour used to detect syllables (see details)
-#' @param sylPlot a list of graphical parameters for displaying the syllables
-#' @param burstPlot a list of graphical parameters for displaying the bursts
-#' @param xlab,ylab,main main plotting parameters
-#' @param width,height,units,res parameters passed to
-#'   \code{\link[grDevices]{png}} if the plot is saved
-#' @param showLegend if TRUE, shows a legend for thresholds
-#' @param maxPoints the maximum number of "pixels" (for quick plotting of long
-#'   audio files)
-#' @param ... other graphical parameters passed to graphics::plot
-#'
-#' @return If \code{summaryFun = NULL}, returns returns a list containing full
-#'   stats on each syllable and burst (one row per syllable and per burst),
-#'   otherwise returns only a dataframe with one row per file - a summary of the
-#'   number and spacing of syllables and vocal bursts.
-#' @export
-#' @examples
-#' sound = soundgen(nSyl = 4, sylLen = 100, pauseLen = 70,
-#'                  attackLen = 20, amplGlobal = c(0, -20),
-#'                  pitch = c(368, 284), temperature = .001)
-#' # add noise so SNR decreases from 20 to 0 dB from syl1 to syl4
-#' sound = sound + runif(length(sound), -10 ^ (-20 / 20), 10 ^ (-20 / 20))
-#' # osc(sound, samplingRate = 16000, dB = TRUE)
-#' # spectrogram(sound, samplingRate = 16000, osc = TRUE)
-#' # playme(sound, samplingRate = 16000)
-#'
-#' s = segment(sound, samplingRate = 16000, plot = TRUE)
-#' s
-#'
-#' # customizing the plot
-#' segment(sound, samplingRate = 16000, plot = TRUE,
-#'         sylPlot = list(lty = 2, col = 'gray20'),
-#'         burstPlot = list(pch = 16, col = 'gray80'),
-#'         specPlot = list(color.palette = 'heat.colors'),
-#'         xlab = 'Some custom label', cex.lab = 1.2,
-#'         showLegend = TRUE,
-#'         main = 'My awesome plot')
-#' \dontrun{
-#' # set SNR manually to control detection threshold
-#' s = segment(sound, samplingRate = 16000, SNR = 1, plot = TRUE)
-#'
-#' # Download 260 sounds from the supplements to Anikin & Persson (2017) at
-#' # http://cogsci.se/publications.html
-#' # unzip them into a folder, say '~/Downloads/temp'
-#' myfolder = '~/Downloads/temp260'  # 260 .wav files live here
-#' s = segment(myfolder, propNoise = .05, SNR = 3, verbose = TRUE)
-#'
-#' # Check accuracy: import a manual count of syllables (our "key")
-#' key = segmentManual  # a vector of 260 integers
-#' trial = as.numeric(s$summary$nBursts)
-#' cor(key, trial, use = 'pairwise.complete.obs')
-#' boxplot(trial ~ as.integer(key), xlab='key')
-#' abline(a=0, b=1, col='red')
-#'
-#' # or look at the detected syllables instead of bursts:
-#' cor(key, s$summary$nSyl, use = 'pairwise.complete.obs')
-#' }
-segment = function(
-  x,
-  samplingRate = NULL,
-  from = NULL,
-  to = NULL,
-  shortestSyl = 40,
-  shortestPause = 40,
-  method = c('env', 'spec', 'mel')[3],
-  propNoise = NULL,
-  SNR = NULL,
-  noiseLevelStabWeight = c(1, .25),
-  windowLength = 40,
-  step = NULL,
-  overlap = 80,
-  reverbPars = list(reverbDelay = 70, reverbSpread = 130,
-                    reverbLevel = -35, reverbDensity = 50),
-  interburst = NULL,
-  peakToTrough = SNR + 3,
-  troughLocation = c('left', 'right', 'both', 'either')[4],
-  summaryFun = c('median', 'sd'),
-  maxDur = 30,
-  reportEvery = NULL,
-  plot = FALSE,
-  savePlots = NULL,
-  saveAudio = NULL,
-  addSilence = 50,
-  xlab = '',
-  ylab = 'Signal, dB',
-  main = NULL,
-  showLegend = FALSE,
-  width = 900,
-  height = 500,
-  units = 'px',
-  res = NA,
-  maxPoints = 1e4,
-  specPlot = list(color.palette = 'bw'),
-  contourPlot = list(lty = 1, lwd = 2, col = 'green'),
-  sylPlot = list(lty = 1, lwd = 2, col = 'blue'),
-  burstPlot = list(pch = 8, cex = 3, col = 'red'),
-  ...
-) {
-  time_start = proc.time()  # timing
 
-  ## Check the arguments
-  if (windowLength < 10) {
-    warning('windowLength < 10 ms is slow and usually not very useful')
-  }
-  if (!is.null(step)) overlap = 100 * (1 - step / windowLength)
-  if (overlap < 0 | overlap > 100) {
-    warning('overlap must be >0 and <= 100%; resetting to 70')
-    overlap = 70
-  }
-  if (is.null(step)) step = windowLength * (1 - overlap / 100)
-
-  if (!troughLocation %in% c('left', 'right', 'both', 'either')) {
-    warning(paste(
-      "Valid values of troughLocation: 'left', 'right', 'both', 'either'.",
-      "Defaulting to 'either'")
-    )
-    troughLocation = 'either'
-  }
-  if (!method %in% c('env', 'spec', 'mel')) {
-    warning(paste(
-      "Valid values of method: 'env', 'spec', 'mel'.",
-      "Defaulting to 'mel'")
-    )
-    method = 'mel'
-  }
-
-  ## Read the input
-  filenames = sound = NULL
-  if (is.character(x)) {
-    inputType = 'file'
-    if (dir.exists(x)) {
-      # input is a folder
-      filenames = list.files(x, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
-      if (length(filenames) < 1)
-        stop(paste('No wav/mp3 files found in', x))
-    } else if (file.exists(x)) {
-      # input is an audio file
-      filenames = x
-      if (!substr(x, nchar(x) - 3, nchar(x)) %in% c('.wav', '.mp3', '.WAV', '.MP3'))
-        stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
-    } else {
-      stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
-    }
-    nFiles = length(filenames)
-    filenames_base = basename(filenames)
-    filesizes = file.info(filenames)$size
-  } else if (is.numeric(x)) {
-    # input is a numeric vector
-    sound = x
-    nFiles = 1
-    filenames_base = 'sound'
-    if (is.null(samplingRate))
-      stop('samplingRate must be provided if input is a numeric vector')
-  } else if (class(x) == 'Wave') {
-    # input is a Wave object
-    sound = x@left
-    nFiles = 1
-    filenames_base = 'sound'
-    samplingRate = x@samp.rate
-  } else {
-    stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
-  }
-
-  ## Prepare folders for saving the output
-  if (is.character(savePlots)) {
-    if (!dir.exists(savePlots)) dir.create(savePlots)
-    # make sure the last character of savePlots is "/"
-    last_char = substr(savePlots, nchar(savePlots), nchar(savePlots))
-    if(last_char != '/') savePlots = paste0(savePlots, '/')
-  }
-  if (is.character(saveAudio)) {
-    if (!dir.exists(saveAudio)) dir.create(saveAudio)
-    # make sure the last character of savePlots is "/"
-    last_char = substr(saveAudio, nchar(saveAudio), nchar(saveAudio))
-    if(last_char != '/') saveAudio = paste0(saveAudio, '/')
-  }
-  if (class(savePlots) == 'character' && nchar(savePlots) > 0) {
-    if (!dir.exists(savePlots)) dir.create(savePlots)
-  }
-
-  ## Prepare a list of arguments to pass to segmentSound()
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
-  # exclude unnecessary args
-  myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'reportEvery', 'summaryFun',
-    'reverbPars', 'sylPlot', 'burstPlot', 'specPlot')]  # otherwise flattens lists
-  # exclude ...
-  myPars = myPars[1:(length(myPars)-1)]
-  # add back arguments that are lists
-  myPars$sylPlot = sylPlot
-  myPars$burstPlot = burstPlot
-  myPars$specPlot = specPlot
-  myPars$reverbPars = reverbPars
-
-  ## Run the analysis
-  syllables = bursts = mysum = vector('list', nFiles)
-  names(syllables) = names(bursts) = filenames_base
-  for (i in 1:nFiles) {
-    failed = FALSE
-    # import file
-    if (!is.null(filenames)) {
-      fi = filenames[i]
-      ext_i = substr(fi, nchar(fi) - 3, nchar(fi))
-      if (ext_i %in% c('.wav', '.WAV')) {
-        sound_wave = try(tuneR::readWave(filenames[i]))
-      } else {
-        sound_wave = try(tuneR::readMP3(filenames[i]))
-      }
-      if (class(sound_wave) == 'try-error') {
-        failed = TRUE
-      } else {
-        sound = as.numeric(sound_wave@left)
-        samplingRate = sound_wave@samp.rate
-      }
-    }
-
-    # segment file
-    seg = try(do.call('segmentSound', c(
-      list(sound = sound, samplingRate = samplingRate, plotname = filenames_base[i]),
-      myPars, ...)
-    ))
-    if (class(seg) == 'try-error') failed = TRUE
-    if (failed) {
-      if (nFiles > 1) {
-        warning(paste('Failed to process file', filenames[i]))
-      } else {
-        warning('Failed to process the input')
-      }
-      seg = list(
-        syllables = data.frame(syllable = NA,
-                               start_idx = NA, end_idx = NA,
-                               start = NA, end = NA,
-                               sylLen = NA, pauseLen = NA),
-        bursts = data.frame(time = NA, ampl = NA, interburst = NA)
-      )
-    }
-    syllables[[i]] = seg$syllables
-    bursts[[i]] = seg$bursts
-
-    # summarize (optional)
-    if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-      sum_syl = summarizeAnalyze(
-        seg$syllables[, c('sylLen', 'pauseLen')],
-        summaryFun = summaryFun,
-        var_noSummary = NULL)
-      sum_bursts = summarizeAnalyze(
-        seg$bursts[, 'interburst', drop = FALSE],
-        summaryFun = summaryFun,
-        var_noSummary = NULL)
-      temp = as.data.frame(c(
-        list(nSyl = if (failed) NA else sum(!is.na(seg$syllables$start))),
-        sum_syl,
-        list(nBursts = if (failed) NA else sum(!is.na(seg$bursts$time))),
-        sum_bursts
-      ))
-      temp[apply(temp, c(1, 2), is.nan)] = NA
-      mysum[[i]] = temp
-    } else {
-      mysum = NULL
-    }
-
-    # report time
-    if ((is.null(reportEvery) || is.finite(reportEvery)) & nFiles > 1) {
-      reportTime(i = i, nIter = nFiles, reportEvery = reportEvery,
-                 time_start = time_start, jobs = filesizes)
-    }
-  }
-
-  if (class(savePlots) == 'character' && nchar(savePlots) > 0) {
-    if (!dir.exists(savePlots)) dir.create(savePlots)
-    htmlPlots(savePlots, myfiles = filenames, width = paste0(width, units))
-  }
-
-  ## Prepare output
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    # rbind summaries
-    mysum_all = cbind(data.frame(file = filenames_base),
-                      do.call(rbind, mysum))
-  } else {
-    mysum_all = NULL
-  }
-  if (nFiles == 1) {
-    # unlist syllables & bursts
-    syllables = syllables[[1]]
-    bursts = bursts[[1]]
-  }
-  output = list(
-    syllables = syllables,
-    bursts = bursts,
-    summary = mysum_all
-  )
-
-  invisible(output)
-}
-
-
-#' Segment folder
-#' @param ... any input parameters
-segmentFolder = function(...) {
-  message('segmentFolder() is deprecated; please use segment() instead')
-}

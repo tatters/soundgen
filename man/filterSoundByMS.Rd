@@ -25,12 +25,11 @@ filterSoundByMS(
 )
 }
 \arguments{
-\item{x}{folder, path to a wav/mp3 file, a numeric vector representing a
-waveform, or a list of numeric vectors}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
-\item{samplingRate}{sampling rate of x (only needed if x is a numeric vector,
-rather than an audio file). For a list of sounds, give either one
-samplingRate (the same for all) or as many values as there are input files}
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector, rather than an audio file or Wave object)}
 
 \item{logSpec}{if TRUE, the spectrogram is log-transformed prior to taking 2D
 FFT}
@@ -40,12 +39,12 @@ FFT}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
-blackman, flattop}
+\item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
+gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
@@ -72,9 +71,6 @@ inversion (Beauregard et al., 2015)}
 
 \item{plot}{if TRUE, produces a triple plot: original MS, filtered MS, and
 the MS of the output sound}
-
-\item{savePath}{if a valid path is specified, a plot is saved in this folder
-(defaults to NA)}
 }
 \value{
 Returns the filtered audio as a numeric vector normalized to [-1, 1]

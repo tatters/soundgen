@@ -2,16 +2,16 @@
 % Please edit documentation in R/analyze.R
 \name{analyze}
 \alias{analyze}
-\title{Analyze sound}
+\title{Analyze}
 \usage{
 analyze(
   x,
   samplingRate = NULL,
+  scale = NULL,
   from = NULL,
   to = NULL,
   dynamicRange = 80,
   silence = 0.04,
-  scale = NULL,
   SPL_measured = 70,
   Pref = 2e-05,
   windowLength = 50,
@@ -20,9 +20,8 @@ analyze(
   wn = "gaussian",
   zp = 0,
   cutFreq = NULL,
-  voicedSeparate = TRUE,
-  formants = list(verify = FALSE),
   nFormants = 3,
+  formants = list(verify = FALSE),
   roughness = list(plot = FALSE),
   pitchMethods = c("dom", "autocor"),
   pitchManual = NULL,
@@ -51,19 +50,18 @@ analyze(
   snakePlot = FALSE,
   smooth = 1,
   smoothVars = c("pitch", "dom"),
-  summary = NULL,
-  summaryFun = NULL,
+  summaryFun = c("mean", "median", "sd"),
   invalidArgAction = c("adjust", "abort", "ignore")[1],
-  plot = TRUE,
-  showLegend = TRUE,
-  savePath = NA,
+  reportEvery = NULL,
+  plot = FALSE,
   osc = "linear",
-  osc_dB = NULL,
+  showLegend = TRUE,
+  savePlots = NULL,
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3, showPrior = TRUE),
   extraContour = NULL,
   ylim = NULL,
-  xlab = NULL,
-  ylab = NULL,
+  xlab = "Time, ms",
+  ylab = "kHz",
   main = NULL,
   width = 900,
   height = 500,
@@ -73,11 +71,15 @@ analyze(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
-representing the waveform with specified samplingRate}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file or Wave object)}
+
+\item{scale}{maximum possible amplitude of input used for normalization of
+input vector (only needed if \code{x} is a numeric vector, rather than an
+audio file or Wave object)}
 
 \item{from}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}
@@ -92,10 +94,6 @@ under maximum are treated as zero}
 amplitude below \code{silence * max_ampl adjusted by scale} are not
 analyzed at all.}
 
-\item{scale}{maximum possible amplitude of input used for normalization of
-input vector (only needed if \code{x} is a numeric vector, rather than an
-audio file or Wave object)}
-
 \item{SPL_measured}{sound pressure level at which the sound is presented, dB
 (set to 0 to skip analyzing subjective loudness)}
 
@@ -106,12 +104,12 @@ audio file or Wave object)}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
-blackman, flattop}
+\item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
+gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
 
@@ -123,16 +121,12 @@ rates, set to half the lowest sampling rate to make the spectra more
 comparable. Note that "entropyThres" applies only to this frequency range,
 which also affects which frames will not be analyzed with pitchAutocor.}
 
-\item{voicedSeparate}{if TRUE, descriptives are calculated separately for the
-entire sound and for the voiced frames, creating extra variables in the
-output}
+\item{nFormants}{the number of formants to extract per STFT frame (0 = no
+formant analysis, NULL = as many as possible)}
 
 \item{formants}{a list of arguments passed to
 \code{\link[phonTools]{findformants}} - an external function called to
 perform LPC analysis}
-
-\item{nFormants}{the number of formants to extract per STFT frame (0 = no
-formant analysis, NULL = as many as possible)}
 
 \item{roughness}{a list of parameters passed to
 \code{\link{modulationSpectrum}} for measuring roughness. Set
@@ -143,9 +137,10 @@ pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 NULL = no pitch analysis)}
 
-\item{pitchManual}{manually corrected pitch contour - a numeric vector of any
-length, but ideally as returned by \code{\link{pitch_app}} with the same
-windowLength and step as in current call to analyze}
+\item{pitchManual}{normally the output of \code{\link{pitch_app}} containing
+a manually corrected pitch contour, ideally with the same windowLength and
+step as current call to analyzeFolder; a dataframe with at least two
+columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")}
 
 \item{entropyThres}{pitch tracking is only performed for frames with Weiner
 entropy below \code{entropyThres}, but other spectral descriptives are
@@ -223,8 +218,6 @@ the variables in \code{smoothVars} are adjusted with median smoothing.
 \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 
-\item{summary}{deprecated}
-
 \item{summaryFun}{functions used to summarize each acoustic characteristic,
 eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
@@ -237,17 +230,18 @@ range in \code{defaults_analyze}: 'adjust' = reset to default value,
 'abort' = stop execution, 'ignore' = throw a warning and continue (may
 crash)}
 
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
+
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
+
+\item{osc}{should an oscillogram be shown under the spectrogram? "none" = no
+osc; "linear" = on the original scale; "dB" = in decibels}
 
 \item{showLegend}{if TRUE, adds a legend with pitch tracking methods}
 
-\item{savePath}{if a valid path is specified, a plot is saved in this folder
-(defaults to NA)}
-
-\item{osc}{should an oscillogram be shown under the spectrogram? none = no
-osc; linear = on the original scale; dB = in decibels}
-
-\item{osc_dB}{deprecated}
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{list(type = 'n')} to suppress}
@@ -266,11 +260,10 @@ extra graphical parameters such as lwd, col, etc. (see examples)}
 \item{...}{other graphical parameters passed to \code{\link{spectrogram}}}
 }
 \value{
-If \code{summary = TRUE}, returns a dataframe with one row and three
+Returns a dataframe with one row and three
   columns per acoustic variable (mean / median / SD). If \code{summary =
   FALSE}, returns a dataframe with one row per STFT frame and one column per
-  acoustic variable. If \code{voicedSeparate = TRUE}, descriptives are
-  calculated separately for the entire sound and for the voiced frames. The
+  acoustic variable. The
   best guess at the pitch contour considering all available information is
   stored in the variable called "pitch". If \code{summaryFun = 'extended'},
   the output is a list containing, in addition to the usual results, matrices
@@ -313,7 +306,9 @@ characteristics, and estimated loudness (see \code{\link{getLoudness}}). The
 default values of arguments are optimized for human non-linguistic
 vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
 details. The defaults and reasonable ranges of all arguments can be found in
-\link{defaults_analyze}.
+\link{defaults_analyze}. Alternative workflow: extract manually corrected
+pitch contours with pitch_app(), then run \code{analyze(pitchManual = ...)}
+with these manual contours.
 }
 \details{
 Each pitch tracker is controlled by its own list of settings, as follows:
@@ -431,7 +426,7 @@ a = analyze(sound1, samplingRate = 16000, cutFreq = c(100, 8000))
 
 # Save the plot
 a = analyze(sound1, 44100, ylim = c(0, 5),
-            savePath = '~/Downloads/',
+            savePlots = '~/Downloads/',
             width = 20, height = 15, units = 'cm', res = 300)
 
 ## Amplitude and loudness: analyze() should give the same results as
@@ -478,10 +473,41 @@ a = analyze(s, 350000, pitchCeiling = 45000, priorMean = NA,
             windowLength = 5, overlap = 0,
             nFormants = 0, SPL_measured = 0)
 # NB: ignore formants and loudness estimates for such non-human sounds
+
+# download 260 sounds from Anikin & Persson (2017)
+# http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/260sounds_wav.zip
+# unzip them into a folder, say '~/Downloads/temp'
+myfolder = '~/Downloads/temp'  # 260 .wav files live here
+s = analyze(myfolder)  # ~ 10-20 minutes!
+# s = write.csv(s, paste0(myfolder, '/temp.csv'))  # save a backup
+
+# Check accuracy: import manually verified pitch values (our "key")
+# pitchManual   # "ground truth" of mean pitch per sound
+# pitchContour  # "ground truth" of complete pitch contours per sound
+files_manual = paste0(names(pitchManual), '.wav')
+idx = match(s$file, files_manual)  # in case the order is wrong
+s$key = pitchManual[idx]
+
+# Compare manually verified mean pitch with the output of analyzeFolder:
+cor(s$key, s$summary$pitch_median, use = 'pairwise.complete.obs')
+plot(s$key, s$summary$pitch_median, log = 'xy')
+abline(a=0, b=1, col='red')
+
+# Re-running analyzeFolder with manually corrected contours gives correct
+pitch-related descriptives like amplVoiced and harmonics (NB: you get it "for
+free" when running pitch_app)
+s1 = analyze(myfolder, pitchManual = pitchContour)
+plot(s$summary$harmonics_median, s1$summary$harmonics_median)
+abline(a=0, b=1, col='red')
+
+# Save spectrograms with pitch contours plus an html file for easy access
+s2 = analyze('~/Downloads/temp', savePlots = '',
+  showLegend = TRUE, pitchManual = pitchContour,
+  width = 20, height = 12,
+  units = 'cm', res = 300, ylim = c(0, 5))
 }
 }
 \seealso{
-\code{\link{analyzeFolder}} \code{\link{pitch_app}}
-  \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
-  \code{\link{modulationSpectrum}} \code{\link{ssm}}
+\code{\link{pitch_app}} \code{\link{getLoudness}}
+  \code{\link{segment}} \code{\link{getRMS}}
 }

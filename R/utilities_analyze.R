@@ -715,3 +715,359 @@ harmEnergy = function(pitch, s, freqs = NULL, coef = 1.25) {
   })
   return(he)
 }
+
+
+#' Format pitchManual
+#'
+#' Internal soundgen function
+#'
+#' @param pitchManual dataframe produced by analyze() or pitch_app(), path to a
+#'   .csv file in which this dataframe is stored, a named list with a numeric
+#'   vector of pitch values per sound, or a numeric vector
+#' @return A named list of pitch contours.
+#' @keywords internal
+#' @examples
+#' soundgen:::formatPitchManual(c(NA, 120, 180, NA))
+#' soundgen:::formatPitchManual('NA, 120, 180, NA')
+#' soundgen:::formatPitchManual(list('myfile.wav' = c(NA, 120, 180, NA)))
+#' soundgen:::formatPitchManual(data.frame(file = c('file1.wav', 'file2.wav'),
+#'                                         pitch = c('NA, 120', '180, NA')))
+#' soundgen:::formatPitchManual('adja')
+formatPitchManual = function(pitchManual) {
+  pitchManual_list = NULL
+  failed = FALSE
+  if (is.character(pitchManual)) {
+    if (file.exists(pitchManual)) {
+      # path to csv
+      pitchManual_df = try(read.csv(pitchManual)[, c('file', 'pitch')])
+      if (class(pitchManual_df) == 'type-error') {
+        # problem opening file
+        failed = TRUE
+      } else {
+        # file OK
+        pitchManual_list = vector('list', nrow(pitchManual_df))
+        names(pitchManual_list) = pitchManual_df$file
+        for (i in 1:nrow(pitchManual_df)) {
+          pitchManual_list[[i]] = suppressWarnings(as.numeric(unlist(strsplit(
+            as.character(pitchManual_df$pitch[[i]]), ','))))
+        }
+      }
+    } else {
+      # just a string - try to convert to numeric
+      temp = try(suppressWarnings(as.numeric(unlist(strsplit(
+        as.character(pitchManual), ',')))))
+      if (class(temp) == 'try-error' || !any(!is.na(temp))) {
+        failed = TRUE
+        pitchManual_list = NULL
+      } else {
+        pitchManual_list = list(sound = temp)
+      }
+    }
+  } else if (is.list(pitchManual)) {
+    # list or dataframe
+    if (!is.null(pitchManual$file) && !is.null(pitchManual$pitch) &&
+        is.character(pitchManual$pitch[1])) {
+      # output of analyze() imported as dataframe
+      pitchManual_df = as.data.frame(pitchManual)
+      pitchManual_list = vector('list', nrow(pitchManual_df))
+      names(pitchManual_list) = pitchManual_df$file
+      for (i in 1:nrow(pitchManual_df)) {
+        pitchManual_list[[i]] = suppressWarnings(as.numeric(unlist(strsplit(
+          as.character(pitchManual_df$pitch[[i]]), ','))))
+      }
+    } else {
+      # preformatted list - return as is
+      pitchManual_list = pitchManual
+    }
+  } else if (is.numeric(pitchManual)) {
+    # numeric vector (pitch contour of a single sound)
+    pitchManual_list = list(sound = pitchManual)
+  } else {
+    failed = TRUE
+  }
+
+  if (failed) {
+    warning(paste(
+      "pitchManual not recognized; should be a numeric vector, named list,",
+      "dataframe containing the output of analyze() with columns 'file' and",
+      "'pitch', or a named list with pitch contours per file"))
+  }
+
+  return(pitchManual_list)
+}
+
+
+
+#' Check audio input type
+#'
+#' Internal soundgen function.
+#'
+#' Checks the types of audio input to another function, which could be a folder
+#' with audio files, a single file, a Wave object, or a numeric vector. The
+#' purposes of this helper function are to ascertain that there are some valid
+#' inputs and to make a list of valid audio files, if any.
+#' @param x path to a .wav or .mp3 file, Wave object, or a numeric vector
+#'   representing the waveform with specified samplingRate
+#' @keywords internal
+checkInputType = function(x) {
+  if (is.character(x)) {
+    if (dir.exists(x)) {
+      # input is a folder
+      x = dirname(paste0(x, '/arbitrary'))  # strips terminal '/', if any
+      filenames = list.files(x, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
+      if (length(filenames) < 1)
+        stop(paste('No wav/mp3 files found in', x))
+    } else if (file.exists(x)) {
+      # input is an audio file
+      filenames = x
+      if (!substr(x, nchar(x) - 3, nchar(x)) %in% c('.wav', '.mp3', '.WAV', '.MP3'))
+        stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
+    } else {
+      stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
+    }
+    n = length(filenames)
+    type = rep('file', n)
+    filenames_base = basename(filenames)
+    filesizes = file.info(filenames)$size
+  } else {
+    if (!is.list(x)) x = list(x)
+    n = length(x)
+    if (n == 1) {
+      filenames_base = 'sound'
+    } else {
+      filenames_base = paste0('sound', 1:n)
+    }
+    filenames = NULL
+    filesizes = NULL
+    type = rep(NA, n)
+    for (i in 1:n) {
+      if (is.numeric(x[[i]])) {
+        type[i] = 'vector'
+      } else if (class(x[[i]]) == 'Wave') {
+        # input is a Wave object
+        type[i] = 'Wave'
+      } else {
+        stop(paste('Input not recognized - must be a folder, wav/mp3 file,',
+                   'Wave object, or numeric vector'))
+      }
+    }
+  }
+  return(list(
+    type = type,
+    n = n,
+    filenames = filenames,
+    filenames_base = filenames_base,
+    filesizes = filesizes
+  ))
+}
+
+
+#' Read audio
+#'
+#' Internal soundgen function.
+#'
+#' @param x audio input (only used for Wave object or numeric vectors)
+#' @param input a list returned by \code{\link{checkInputType}}
+#' @param i iteration
+#' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
+#'   numeric vector, rather than an audio file or Wave object)
+#' @param scale maximum possible amplitude of input used for normalization of
+#'   input vector (only needed if \code{x} is a numeric vector, rather than an
+#'   audio file or Wave object)
+#' @param from,to if NULL (default), analyzes the whole sound, otherwise
+#'   from...to (s)
+#' @keywords internal
+readAudio = function(x,
+                     input,
+                     i,
+                     samplingRate = NULL,
+                     scale = NULL,
+                     from = NULL,
+                     to = NULL) {
+  failed = FALSE
+  if (input$type[i] == 'file') {
+    fi = input$filenames[i]
+    ext_i = substr(fi, nchar(fi) - 3, nchar(fi))
+    if (ext_i %in% c('.wav', '.WAV')) {
+      sound_wave = try(tuneR::readWave(fi))
+    } else {
+      sound_wave = try(tuneR::readMP3(fi))
+    }
+    if (class(sound_wave) == 'try-error') {
+      failed = TRUE
+      sound = samplingRate = scale = NULL
+    } else {
+      sound = as.numeric(sound_wave@left)
+      samplingRate = sound_wave@samp.rate
+      scale = 2 ^ (sound_wave@bit - 1)
+    }
+  } else if (input$type[i] == 'vector') {
+    if (is.null(samplingRate)) {
+      samplingRate = 16000
+      message('samplingRate not specified; defaulting to 16000')
+    }
+    sound = x
+    m = max(abs(sound))
+    if (is.null(scale)) {
+      scale = max(m, 1)
+      message(paste('Scale not specified. Assuming that max amplitude is',
+                    scale))
+    } else if (is.numeric(scale)) {
+      if (scale < m) {
+        scale = m
+        warning(paste('Scale cannot be smaller than observed max;',
+                      'resetting to', m))
+      }
+    }
+  } else if (input$type[i] == 'Wave') {
+    sound = x@left
+    samplingRate = x@samp.rate
+    scale = 2 ^ (x@bit - 1)
+  }
+
+  # from...to
+  # from...to selection
+  ls = length(sound)
+  if (any(is.numeric(c(from, to)))) {
+    if (!is.numeric(from)) {
+      from_points = 1
+    } else {
+      from_points = max(1, round(from * samplingRate))
+    }
+    if (!is.numeric(to)) {
+      to_points = ls
+    }  else {
+      to_points = min(ls, round(to * samplingRate))
+    }
+    sound = sound[from_points:to_points]
+    timeShift = from_points / samplingRate
+    ls = length(sound)
+  } else {
+    timeShift = 0
+  }
+  duration = ls / samplingRate
+
+  return(list(
+    sound = sound,
+    samplingRate = samplingRate,
+    scale = scale,
+    failed = failed,
+    ls = ls,
+    duration = duration,
+    timeShift = timeShift,
+    filename = input$filenames[i],
+    filename_base = input$filenames_base[i]
+  ))
+}
+
+
+#' Process audio
+#'
+#' Internal soundgen function.
+#'
+#' @inheritParams spectrogram
+#' @param funToCall function to call (specify what to do with each audio input)
+#' @param myPars a list of parameters to pass on to `funToCall`
+#' @param summaryFun function(s) used to summarize the output per input
+#' @param var_noSummary names of output variables that should not be summarized
+#' @param reportEvery report estimated time left every ... iterations (NA = no
+#'   reporting, NULL = default frequency)
+#' @keywords internal
+processAudio = function(x,
+                        samplingRate = NULL,
+                        scale = NULL,
+                        from = NULL,
+                        to = NULL,
+                        funToCall,
+                        myPars = list(),
+                        var_noSummary = NULL,
+                        reportEvery = NULL,
+                        savePlots = NULL,
+                        saveAudio = NULL) {
+  input = checkInputType(x)
+  input$failed = rep(FALSE, input$n)
+
+  # savePlots
+  if (is.character(savePlots)) {
+    if (savePlots == '') {
+      # same as the folder where the audio input lives
+      if (input$type[1] == 'file') {
+        savePlots = paste0(dirname(input$filenames[1]), '/')
+      } else {
+        savePlots = paste0(getwd(), '/')
+      }
+    } else {
+      # make sure the last character of savePath is "/"
+      savePlots = paste0(
+        dirname(paste0(savePlots, '/arbitrary')),
+        '/'
+      )
+    }
+    if (!dir.exists(savePlots)) dir.create(savePlots)
+  } else {
+    savePlots = NULL
+  }
+  input$savePlots = savePlots  # to pass on to top function like analyze()
+
+  # saveAudio
+  if (is.character(saveAudio)) {
+    if (saveAudio == '') {
+      # same as the folder where the audio input lives
+      if (input$type[1] == 'file') {
+        saveAudio = paste0(dirname(input$filenames[1]), '/')
+      } else {
+        saveAudio = paste0(getwd(), '/')
+      }
+    } else {
+      # make sure the last character of savePath is "/"
+      if (substr(saveAudio, nchar(saveAudio), nchar(saveAudio)) != '/')
+        saveAudio = paste0(saveAudio, '/')
+    }
+    if (!dir.exists(saveAudio)) dir.create(saveAudio)
+  } else {
+    saveAudio = NULL
+  }
+  input$saveAudio = saveAudio  # to pass on to top function like analyze()
+
+  result = vector('list', input$n)
+  names(result) = input$filenames_base
+  if (!is.list(x)) x = list(x)
+  time_start = proc.time()  # timing
+  for (i in 1:input$n) {
+    audio = readAudio(x[[i]], input, i,
+                      samplingRate = samplingRate,
+                      scale = scale,
+                      from = from, to = to)
+    # to pass savePlots and saveAudio on to funToCall without adding extra
+    # args, put them in "audio"
+    audio$savePlots = savePlots
+    audio$saveAudio = saveAudio
+
+    # analyze file
+    if (!audio$failed) {
+      an_i = try(do.call(funToCall, c(list(audio = audio), myPars)))
+      if (class(an_i)[1] == 'try-error') audio$failed = TRUE
+    }
+    if (audio$failed) {
+      if (input$n > 1) {
+        warning(paste('Failed to process file', input$filenames[i]))
+      } else {
+        warning('Failed to process the input')
+      }
+      an_i = numeric(0)
+      input$failed[i] = TRUE
+    }
+    result[[i]] = an_i
+
+    # report time
+    if ((is.null(reportEvery) || is.finite(reportEvery)) & input$n > 1) {
+      reportTime(i = i, nIter = input$n, reportEvery = reportEvery,
+                 time_start = time_start, jobs = input$filesizes)
+    }
+  }
+
+  return(list(
+    input = input,
+    result = result
+  ))
+}

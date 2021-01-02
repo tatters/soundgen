@@ -48,8 +48,8 @@ setting another default player for \code{\link[tuneR]{play}}}
 \item{saveAudio}{full path to the folder in which to save audio files (one
 per detected syllable)}
 
-\item{reportEvery}{report estimated time left every ... iterations (NA = no
-reporting, NULL = default frequency)}
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
 }
 \description{
 Adds sinusidal or logistic amplitude modulation to a sound. This produces

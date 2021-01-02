@@ -36,8 +36,8 @@ compressor(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
-representing the waveform with specified samplingRate}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file or Wave object)}
@@ -62,8 +62,8 @@ average waveform from zero (see examples)}
 \item{dynamicRange}{parts of sound quieter than \code{-dynamicRange} dB will
 not be amplified}
 
-\item{reportEvery}{report estimated time left every ... iterations (NA = no
-reporting, NULL = default frequency)}
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
 
 \item{plot}{if TRUE, plots the original sound, the smoothed envelope, and
 the compressed sound}
@@ -92,9 +92,12 @@ d = flatEnv(a, 1000, plot = TRUE, windowLength_points = 50)   # about right
 \dontrun{
 s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE)
 # playme(s)
-s_flat1 = flatEnv(s, 16000, plot = TRUE, windowLength = 50, method = 'hil')
-s_flat2 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'rms')
-s_flat3 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'peak')
+s_flat1 = flatEnv(s, 16000, dynamicRange = 60, plot = TRUE,
+                  windowLength = 50, method = 'hil')
+s_flat2 = flatEnv(s, 16000, dynamicRange = 60, plot = TRUE,
+                  windowLength = 10, method = 'rms')
+s_flat3 = flatEnv(s, 16000, dynamicRange = 60, plot = TRUE,
+                  windowLength = 10, method = 'peak')
 # playme(s_flat2)
 
 # Remove DC offset

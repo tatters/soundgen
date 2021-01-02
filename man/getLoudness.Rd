@@ -8,56 +8,100 @@ getLoudness(
   x,
   samplingRate = NULL,
   scale = NULL,
+  from = NULL,
+  to = NULL,
   windowLength = 50,
   step = NULL,
   overlap = 50,
   SPL_measured = 70,
   Pref = 2e-05,
   spreadSpectrum = TRUE,
+  summaryFun = c("mean", "median", "sd"),
+  reportEvery = NULL,
   plot = TRUE,
+  savePlots = NULL,
+  ylim = NULL,
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
   mar = c(5.1, 4.1, 4.1, 4.1),
   ...
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
-representing the waveform with specified samplingRate}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
-\item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than an audio file), must be > 2000 Hz}
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector, rather than an audio file or Wave object)}
 
-\item{scale}{the maximum possible value of \code{x} (only needed if \code{x}
-is a numeric vector, rather than an audio file); defaults to observed
-\code{max(abs(x))} if it is greater than 1 and to 1 otherwise}
+\item{scale}{maximum possible amplitude of input used for normalization of
+input vector (only needed if \code{x} is a numeric vector, rather than an
+audio file or Wave object)}
+
+\item{from}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
+
+\item{to}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
 
 \item{windowLength}{length of FFT window, ms}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB
+(set to 0 to skip analyzing subjective loudness)}
 
 \item{Pref}{reference pressure, Pa}
 
 \item{spreadSpectrum}{if TRUE, applies a spreading function to account for
 frequency masking}
 
+\item{summaryFun}{functions used to summarize each acoustic characteristic,
+eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
+are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
+take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
+list containing frame-by-frame values; if \code{summaryFun = 'extended'},
+all pitch candidates are returns as a list}
+
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
+
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
+
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
+
+\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
+
+\item{width}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{height}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{units}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{res}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
 
 \item{mar}{margins of the spectrogram}
 
 \item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }
 \value{
-Returns a list of length two: \describe{
-  \item{specSone}{spectrum in sone: a matrix with frequency on the bark
-  scale in rows and time (STFT frames) in columns}
-  \item{loudness}{a vector of loudness per STFT frame (sone)}
-  }
+Returns a list: \describe{ \item{specSone}{spectrum in bark-sone (one
+  per file): a matrix of loudness values in sone, with frequency on the bark
+  scale in rows and time (STFT frames) in columns} \item{loudness}{a vector
+  of loudness in sone per STFT frame (one per file)} \item{summary}{a
+  dataframe of summary loudness measures (one row per file)} }
 }
 \description{
 Estimates subjective loudness per frame, in sone. Based on EMBSD speech
@@ -88,34 +132,45 @@ sounds = list(
   white_noise2 = runif(8000, -1, 1) / 2,  # ~6 dB quieter
   pure_tone_1KHz = sin(2*pi*1000/16000*(1:8000))  # pure tone at 1 kHz
 )
-loud = rep(0, length(sounds)); names(loud) = names(sounds)
-for (i in 1:length(sounds)) {
-  # playme(sounds[[i]], 16000)
-  l = getLoudness(
-    x = sounds[[i]], samplingRate = 16000, scale = 1,
+l = getLoudness(
+    x = sounds, samplingRate = 16000, scale = 1,
     windowLength = 20, step = NULL,
     overlap = 50, SPL_measured = 40,
     Pref = 2e-5, plot = FALSE)
-  loud[i] = mean(l$loudness)
-}
-loud
+l$summary
 # white noise (sound 1) is twice as loud as pure tone at 1 KHz (sound 3),
 # and note that the same white noise with lower amplitude has lower loudness
 # (provided that "scale" is specified)
 # compare: lapply(sounds, range)
 
 \dontrun{
-  s = soundgen()
-  l = getLoudness(s, SPL_measured = 70, samplingRate = 16000)
-  # The estimated loudness in sone depends on target SPL
-  l = getLoudness(s, SPL_measured = 40, samplingRate = 16000)
+s = soundgen()
+# playme(s)
+l1 = getLoudness(s, samplingRate = 16000, SPL_measured = 70)
+l1$summary
+# The estimated loudness in sone depends on target SPL
+l2 = getLoudness(s, samplingRate = 16000, SPL_measured = 40)
+l2$summary
 
-  # ...but not (much) on windowLength and samplingRate
-  l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,
-                  samplingRate = 16000, plot = TRUE)
+# ...but not (much) on windowLength and samplingRate
+l3 = getLoudness(s, samplingRate = 16000, SPL_measured = 40, windowLength = 50)
+l3$summary
 
-  # input can be an audio file
-  getLoudness('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
+# input can be an audio file...
+getLoudness('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
+
+...or a folder with multiple audio files
+getLoudness('~/Downloads/temp2', plot = FALSE)$summary
+# Compare:
+analyze('~/Downloads/temp2', pitchMethods = NULL,
+        plot = FALSE, silence = 0)$summary$loudness_mean
+# (per STFT frame; should be similar if silence = 0, because
+# otherwise analyze() discards frames considered silent)
+
+# custom summaryFun
+ran = function(x) diff(range(x))
+getLoudness('~/Downloads/temp2', plot = FALSE,
+            summaryFun = c('mean', 'ran'))$summary
 }
 }
 \references{

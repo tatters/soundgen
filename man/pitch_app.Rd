@@ -21,9 +21,13 @@ mean(pitch, na.rm = TRUE); sd(pitch, na.rm = TRUE)
 
 \bold{Suggested workflow}
 
-Start by clicking "Load audio" to upload one or several audio files
-(wav/mp3). Long files will be very slow, so please cut your audio into
-manageable chunks (ideally <10 s). Adjust the settings as needed, edit the
+Start by setting the basic analysis settings such as pitchFloor,
+pitchCeiling, silence, etc. Then click "Load audio" to upload one or several
+audio files (wav/mp3). Long files will be very slow, so please cut your audio
+into manageable chunks (ideally <10 s). If Shiny complains that maximum
+upload size is exceeded, you can increase it, say to 30 MB, with
+`options(shiny.maxRequestSize = 30 * 1024^2)`. Once the audio has been
+uploaded to the browser, fine-tune the analysis settings as needed, edit the
 pitch contour in the first file to your satisfaction, then click "Next" to
 proceed to the next file, etc. Remember that setting a reasonable prior is
 often faster than adjusting the contour one anchor at a time. When done,

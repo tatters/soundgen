@@ -1,3 +1,12 @@
+### Functions for analyzing subjective loudness
+
+#' Get loudness folder
+#' @param ... any input parameters
+getLoudnessFolder = function(...) {
+  message('getLoudnessFolder() is deprecated; please use getLoudness() instead')
+}
+
+
 #' Get loudness
 #'
 #' Estimates subjective loudness per frame, in sone. Based on EMBSD speech
@@ -25,22 +34,16 @@
 #'   \code{\link{analyze}}
 #'
 #' @inheritParams spectrogram
-#' @param samplingRate sampling rate of \code{x} (only needed if
-#'   \code{x} is a numeric vector, rather than an audio file), must be > 2000 Hz
-#' @param scale the maximum possible value of \code{x} (only needed if \code{x}
-#'   is a numeric vector, rather than an audio file); defaults to observed
-#'   \code{max(abs(x))} if it is greater than 1 and to 1 otherwise
-#' @param SPL_measured sound pressure level at which the sound is presented, dB
-#' @param Pref reference pressure, Pa
+#' @inheritParams analyze
 #' @param spreadSpectrum if TRUE, applies a spreading function to account for
 #'   frequency masking
 #' @param mar margins of the spectrogram
 #' @param ... other plotting parameters passed to \code{\link{spectrogram}}
-#' @return Returns a list of length two: \describe{
-#'   \item{specSone}{spectrum in sone: a matrix with frequency on the bark
-#'   scale in rows and time (STFT frames) in columns}
-#'   \item{loudness}{a vector of loudness per STFT frame (sone)}
-#'   }
+#' @return Returns a list: \describe{ \item{specSone}{spectrum in bark-sone (one
+#'   per file): a matrix of loudness values in sone, with frequency on the bark
+#'   scale in rows and time (STFT frames) in columns} \item{loudness}{a vector
+#'   of loudness in sone per STFT frame (one per file)} \item{summary}{a
+#'   dataframe of summary loudness measures (one row per file)} }
 #' @references \itemize{
 #'   \item ISO 226 as implemented by Jeff Tackett (2005) on
 #'   https://www.mathworks.com/matlabcentral/fileexchange/
@@ -56,109 +59,207 @@
 #'   white_noise2 = runif(8000, -1, 1) / 2,  # ~6 dB quieter
 #'   pure_tone_1KHz = sin(2*pi*1000/16000*(1:8000))  # pure tone at 1 kHz
 #' )
-#' loud = rep(0, length(sounds)); names(loud) = names(sounds)
-#' for (i in 1:length(sounds)) {
-#'   # playme(sounds[[i]], 16000)
-#'   l = getLoudness(
-#'     x = sounds[[i]], samplingRate = 16000, scale = 1,
+#' l = getLoudness(
+#'     x = sounds, samplingRate = 16000, scale = 1,
 #'     windowLength = 20, step = NULL,
 #'     overlap = 50, SPL_measured = 40,
 #'     Pref = 2e-5, plot = FALSE)
-#'   loud[i] = mean(l$loudness)
-#' }
-#' loud
+#' l$summary
 #' # white noise (sound 1) is twice as loud as pure tone at 1 KHz (sound 3),
 #' # and note that the same white noise with lower amplitude has lower loudness
 #' # (provided that "scale" is specified)
 #' # compare: lapply(sounds, range)
 #'
 #' \dontrun{
-#'   s = soundgen()
-#'   l = getLoudness(s, SPL_measured = 70, samplingRate = 16000)
-#'   # The estimated loudness in sone depends on target SPL
-#'   l = getLoudness(s, SPL_measured = 40, samplingRate = 16000)
+#' s = soundgen()
+#' # playme(s)
+#' l1 = getLoudness(s, samplingRate = 16000, SPL_measured = 70)
+#' l1$summary
+#' # The estimated loudness in sone depends on target SPL
+#' l2 = getLoudness(s, samplingRate = 16000, SPL_measured = 40)
+#' l2$summary
 #'
-#'   # ...but not (much) on windowLength and samplingRate
-#'   l = getLoudness(soundgen(), SPL_measured = 40, windowLength = 50,
-#'                   samplingRate = 16000, plot = TRUE)
+#' # ...but not (much) on windowLength and samplingRate
+#' l3 = getLoudness(s, samplingRate = 16000, SPL_measured = 40, windowLength = 50)
+#' l3$summary
 #'
-#'   # input can be an audio file
-#'   getLoudness('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
+#' # input can be an audio file...
+#' getLoudness('~/Downloads/temp/032_ut_anger_30-m-roar-curse.wav')
+#'
+#' ...or a folder with multiple audio files
+#' getLoudness('~/Downloads/temp2', plot = FALSE)$summary
+#' # Compare:
+#' analyze('~/Downloads/temp2', pitchMethods = NULL,
+#'         plot = FALSE, silence = 0)$summary$loudness_mean
+#' # (per STFT frame; should be similar if silence = 0, because
+#' # otherwise analyze() discards frames considered silent)
+#'
+#' # custom summaryFun
+#' ran = function(x) diff(range(x))
+#' getLoudness('~/Downloads/temp2', plot = FALSE,
+#'             summaryFun = c('mean', 'ran'))$summary
 #' }
 getLoudness = function(x,
                        samplingRate = NULL,
                        scale = NULL,
+                       from = NULL,
+                       to = NULL,
                        windowLength = 50,
                        step = NULL,
                        overlap = 50,
                        SPL_measured = 70,
                        Pref = 2e-5,
                        spreadSpectrum = TRUE,
+                       summaryFun = c('mean', 'median', 'sd'),
+                       reportEvery = NULL,
                        plot = TRUE,
+                       savePlots = NULL,
+                       ylim = NULL,
+                       width = 900,
+                       height = 500,
+                       units = 'px',
+                       res = NA,
                        mar = c(5.1, 4.1, 4.1, 4.1),
                        ...) {
-  # import sound
-  if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  if (class(x)[1] == 'character') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
+  ## Prepare a list of arguments to pass to segmentSound()
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude unnecessary args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'scale', 'savePlots', 'reportEvery', 'summaryFun')]
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+
+  # analyze
+  pa = processAudio(
+    x,
+    samplingRate = samplingRate,
+    scale = scale,
+    from = from,
+    to = to,
+    funToCall = 'getLoudnessSound',
+    myPars = myPars,
+    reportEvery = reportEvery,
+    savePlots = savePlots
+  )
+
+  # htmlPlots
+  if (!is.null(pa$input$savePlots)) {
+    if (pa$input$filenames_base[1] == 'sound') {
+      plotname = 'sound'
     } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+      plotname = substr(pa$input$filenames_base, 1,
+                        nchar(pa$input$filenames_base) - 4)
     }
-    samplingRate = sound_wav@samp.rate
-    sound = sound_wav@left
-    scale = 2 ^ (sound_wav@bit - 1) # range(sound)
-  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
-    if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
-    } else {
-      sound = x
-    }
-    m = max(abs(sound))
-    if (is.null(scale)) {
-      scale = max(m, 1)
-      warning(paste('Scale not specified. Assuming that max amplitude is', scale))
-    } else if (is.numeric(scale)) {
-      if (scale < m) {
-        scale = m
-        warning(paste('Scale exceeds the observed range; resetting to', m))
+    htmlPlots(
+      htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_loudness.html'),
+      plotFiles = paste0(pa$input$savePlots, plotname, "_loudness.png"),
+      audioFiles = pa$input$filenames,
+      width = paste0(width, units))
+  }
+
+  # prepare output
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    temp = vector('list', pa$input$n)
+    for (i in 1:pa$input$n) {
+      if (!pa$input$failed[i]) {
+        temp[[i]] = summarizeAnalyze(
+          data.frame(loudness = pa$result[[i]]$loudness),
+          summaryFun = summaryFun,
+          var_noSummary = NULL)
       }
     }
-  } else if (class(x) == 'Wave') {
-    if (x@stereo)
-      message('Input is a stereo file; only the left channel is analyzed')
-    samplingRate = x@samp.rate
-    sound = x@left
-    scale = 2 ^ (x@bit - 1)
-    m = max(abs(sound))
+    idx_failed = which(pa$input$failed)
+    if (length(idx_failed) > 0) {
+      idx_ok = which(!pa$input$failed)
+      if (length(idx_ok) > 0) {
+        filler = temp[[idx_ok[1]]] [1, ]
+        filler[1, ] = NA
+      } else {
+        stop('Failed to analyze any input')
+      }
+      for (i in idx_failed) temp[[i]] = filler
+    }
+    mysum_all = cbind(data.frame(file = pa$input$filenames_base),
+                      do.call('rbind', temp))
   } else {
-    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    mysum_all = NULL
   }
-  if (samplingRate < 2000) return(NA)  # need at least 8 barks (1 kHz) Niquist
+
+  if (pa$input$n == 1) {
+    # unlist specSone and loudness
+    specSone = pa$result[[1]]$specSone
+    loudness = pa$result[[1]]$loudness
+  } else {
+    specSone = lapply(pa$result, function(x) x[['specSone']])
+    loudness = lapply(pa$result, function(x) x[['loudness']])
+  }
+
+  invisible(list(
+    specSone = specSone,
+    loudness = loudness,
+    summary = mysum_all
+  ))
+}
+
+
+#' Loudness sound
+#'
+#' Internal soundgen function
+#' @inheritParams getLoudness
+#' @param audio a list returned by \code{readAudio}
+#' @keywords internal
+getLoudnessSound = function(audio,
+                            windowLength = 50,
+                            step = NULL,
+                            overlap = 50,
+                            SPL_measured = 70,
+                            Pref = 2e-5,
+                            spreadSpectrum = TRUE,
+                            plot = TRUE,
+                            savePlots = NULL,
+                            ylim = NULL,
+                            width = 900,
+                            height = 500,
+                            units = 'px',
+                            res = NA,
+                            mar = c(5.1, 4.1, 4.1, 4.1),
+                            ...) {
+  if (is.null(step)) step = windowLength * (1 - overlap / 100)
+  if (audio$samplingRate < 2000) {
+    warning(paste('samplingRate of', audio$samplingRate, 'is too low;',
+                  'need a Nyquist of at least 8 barks (1 kHz)'))
+    return(NA)
+  }
 
   # scale to dB SPL
-  sound_scaled = scaleSPL(sound,
-                          scale = scale,
+  # range(audio$sound)
+  sound_scaled = scaleSPL(audio$sound,
+                          scale = audio$scale,
                           SPL_measured = SPL_measured,
                           Pref = Pref)
-  # range(sound); range(sound_scaled)
+  # range(sound_scaled)
   # log10(sqrt(mean(sound_scaled ^ 2))) * 20
   # (should be the same as SPL_measured w/o scale adjustment)
 
   # get power spectrum
-  powerSpec = spectrogram(
-    sound_scaled, samplingRate = samplingRate,
-    windowLength = windowLength, step = step,
-    output = 'original', normalize = FALSE,
-    padWithSilence = FALSE,
-    plot = plot, mar = mar, ...) ^ 2
+  if (is.character(audio$savePlots)) {
+    plot = TRUE
+    if (audio$filename_base == 'sound') {
+      plotname = 'sound'
+    } else {
+      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
+    }
+    png(filename = paste0(audio$savePlots, plotname, "_loudness.png"),
+        width = width, height = height, units = units, res = res)
+  }
+  powerSpec = tuneR::powspec(
+    sound_scaled, sr = audio$samplingRate,
+    wintime = windowLength / 1000, steptime = step / 1000,
+    dither = FALSE)
   # range(log10(powerSpec) * 10)
 
   # normalize power spectrum by the size of STFT frame
-  # windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  # windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
   powerSpec_scaled = powerSpec / nrow(powerSpec)  # same as * 2 / windowLength_points
   # range(log10(powerSpec_scaled) * 10)
   # image(t(powerSpec_scaled))
@@ -166,7 +267,7 @@ getLoudness = function(x,
   # get auditory spectrum
   audSpec = tuneR::audspec(
     powerSpec_scaled,
-    sr = samplingRate,
+    sr = audio$samplingRate,
     fbtype = 'bark')$aspectrum
   # image(t(audSpec))
   # range(log10(audSpec) * 10)
@@ -174,7 +275,7 @@ getLoudness = function(x,
   # plot(log10(audSpec[, 1]) * 10, type = 'l')
 
   # throw away very high frequencies
-  if (samplingRate > 44100) {
+  if (audio$samplingRate > 44100) {
     message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
                   '(27 KHz) as inaudible to humans'))
     audSpec = audSpec[1:27, ]  # max 27 barks
@@ -218,124 +319,23 @@ getLoudness = function(x,
 
   # empirical normalization (see commented-out code below the function)
   loudness = loudness / (5.73 +  6.56 * windowLength ^ .35) /
-    (.0357 + .0345 * samplingRate ^ .3113)
+    (.0357 + .0345 * audio$samplingRate ^ .3113)
 
   # plotting
   if (plot) {
-    # spectrogram(sound, samplingRate = 16000, osc = TRUE)
-    op = par(c('mar', 'new')) # save user's original pars
-    par(new = TRUE, mar = mar)
-    # adjust the timing of loudness to match the actual time stamps
-    # in getFrameBank (~the middle of each fft frame)
-    X = as.numeric(colnames(powerSpec))
-    duration = length(sound) / samplingRate
-    plot(x = X,
-         y = loudness,
-         type = "b",
-         xlim = c(0, duration * 1000),
-         xaxs = "i", yaxs = "i",
-         axes = FALSE, bty = "n",
-         xlab = "", ylab = "")
-    axis(side = 4, at = pretty(range(loudness)))
-    mtext("Loudness, sone", side = 4, line = 3)
-    par('mar' = op$mar, 'new' = op$new)  # restore original pars
+    if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
+    loudness_norm = loudness / max(loudness) * ylim[2] * 1000
+    spectrogramSound(
+      audio,
+      windowLength = windowLength, step = step,
+      output = 'original', normalize = FALSE,
+      padWithSilence = FALSE,
+      plot = TRUE, mar = mar, ylim = ylim,
+      extraContour = list(x = loudness_norm, col = 'blue'),
+      ...)
+    if (is.character(audio$savePlots)) dev.off()
   }
   invisible(list(specSone = specSone, loudness = loudness))
-}
-
-
-#' Loudness per folder
-#'
-#' A wrapper around \code{\link{getLoudness}} that goes through all wav/mp3
-#' files in a folder and returns either a list with loudness values per STFT
-#' frame from each file or, if \code{summaryFun} is not NULL, a dataframe with a
-#' single summary value of loudness per file. This summary value can be mean,
-#' max and so on, as per \code{summaryFun}.
-#'
-#' @seealso \code{\link{getLoudness}} \code{\link{getRMS}}
-#'   \code{\link{analyze}}
-#'
-#' @param myfolder path to folder containing wav/mp3 files
-#' @inheritParams getLoudness
-#' @param summary deprecated
-#' @param summaryFun the function used to summarize loudness values across all STFT frames,
-#'   eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
-#'   are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
-#'   take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-#'   list containing frame-by-frame values
-#' @param verbose if TRUE, reports estimated time left
-#' @export
-#' @examples
-#' \dontrun{
-#' getLoudnessFolder('~/Downloads/temp')
-#' # Compare:
-#' analyzeFolder('~/Downloads/temp1', pitchMethods = NULL,
-#'               plot = FALSE)$loudness_mean
-#' # (per STFT frame; should be very similar, but not identical unless silence =
-#' 0, because # analyze() discards frames considered silent)
-#'
-#' # custom summaryFun
-#' ran = function(x) diff(range(x))
-#' getLoudnessFolder('~/Downloads/temp', summaryFun = c('mean', 'ran'))
-#'
-#' # save loudness values per frame without summarizing
-#' l = getLoudnessFolder('~/Downloads/temp', summaryFun = NULL)
-#' }
-getLoudnessFolder = function(myfolder,
-                             windowLength = 50,
-                             step = NULL,
-                             overlap = 50,
-                             SPL_measured = 70,
-                             Pref = 2e-5,
-                             spreadSpectrum = TRUE,
-                             summary = NULL,
-                             summaryFun = 'mean',
-                             verbose = TRUE) {
-  ## preliminaries - deprecated pars
-  if (!missing('summary')) {
-    message(paste0('summary', ' is deprecated, set "summaryFun = NULL" instead'))
-  }
-
-  time_start = proc.time()  # timing
-  filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
-  if (length(filenames) < 1) {
-    stop(paste('No wav/mp3 files found in', myfolder))
-  }
-  # in order to provide more accurate estimates of time to completion,
-  # check the size of all files in the target folder
-  filesizes = file.info(filenames)$size
-
-  # match par-s
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
-  # exclude some args
-  myPars = myPars[!names(myPars) %in% c(
-    'myfolder', 'verbose', 'summary', 'summaryFun')]
-
-  result = list()
-  for (i in 1:length(filenames)) {
-    result[[i]] = do.call(getLoudness, c(filenames[i], myPars, plot = FALSE))$loudness
-    if (verbose) {
-      reportTime(i = i, nIter = length(filenames),
-                 time_start = time_start, jobs = filesizes)
-    }
-  }
-
-  # prepare output
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    temp = vector('list', length = length(result))
-    for (i in 1:length(result)) {
-      temp[[i]] = summarizeAnalyze(
-        data.frame(loudness = result[[i]]),
-        summaryFun = summaryFun,
-        var_noSummary = NULL)
-    }
-    output = cbind(data.frame(file = basename(filenames)),
-                              do.call('rbind', temp))
-  } else {
-    output = result
-    names(output) = basename(filenames)
-  }
-  return(output)
 }
 
 

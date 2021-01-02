@@ -1,13 +1,22 @@
 ### MAIN FUNCTIONS FOR ACOUSTIC ANALYSIS ###
 
-#' Analyze sound
+#' Analyze folder
+#' @param ... any input parameters
+analyzeFolder = function(...) {
+  message('analyzeFolder() is deprecated; please use analyze() instead')
+}
+
+
+#' Analyze
 #'
 #' Acoustic analysis of a single sound file: pitch tracking, basic spectral
 #' characteristics, and estimated loudness (see \code{\link{getLoudness}}). The
 #' default values of arguments are optimized for human non-linguistic
 #' vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
 #' details. The defaults and reasonable ranges of all arguments can be found in
-#' \link{defaults_analyze}.
+#' \link{defaults_analyze}. Alternative workflow: extract manually corrected
+#' pitch contours with pitch_app(), then run \code{analyze(pitchManual = ...)}
+#' with these manual contours.
 #'
 #' Each pitch tracker is controlled by its own list of settings, as follows:
 #' \describe{\item{\code{pitchDom} (lowest dominant frequency band)}{\itemize{
@@ -52,9 +61,8 @@
 #' multiples of f0, proportion of f0 \item + plotting pars, notably set
 #' \code{type = 'l'} to plot the \code{harmHeight} contour }} }
 #'
-#' @seealso \code{\link{analyzeFolder}} \code{\link{pitch_app}}
-#'   \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
-#'   \code{\link{modulationSpectrum}} \code{\link{ssm}}
+#' @seealso \code{\link{pitch_app}} \code{\link{getLoudness}}
+#'   \code{\link{segment}} \code{\link{getRMS}}
 #'
 #' @inheritParams spectrogram
 #' @inheritParams getLoudness
@@ -63,6 +71,7 @@
 #'   analyzed at all.
 #' @param SPL_measured sound pressure level at which the sound is presented, dB
 #'   (set to 0 to skip analyzing subjective loudness)
+#' @param Pref reference pressure, Pa
 #' @param cutFreq if specified, spectral descriptives (peakFreq, specCentroid,
 #'   specSlope, and quartiles) are calculated only between \code{cutFreq[1]} and
 #'   \code{cutFreq[2]}. If a single number is given, analyzes frequencies from 0
@@ -70,9 +79,6 @@
 #'   rates, set to half the lowest sampling rate to make the spectra more
 #'   comparable. Note that "entropyThres" applies only to this frequency range,
 #'   which also affects which frames will not be analyzed with pitchAutocor.
-#' @param voicedSeparate if TRUE, descriptives are calculated separately for the
-#'   entire sound and for the voiced frames, creating extra variables in the
-#'   output
 #' @param formants a list of arguments passed to
 #'   \code{\link[phonTools]{findformants}} - an external function called to
 #'   perform LPC analysis
@@ -144,7 +150,6 @@
 #'   the variables in \code{smoothVars} are adjusted with median smoothing.
 #'   \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 #'   deviation of ~4 semitones. To disable, set \code{smooth = 0}
-#' @param summary deprecated
 #' @param summaryFun functions used to summarize each acoustic characteristic,
 #'   eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 #'   are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
@@ -157,19 +162,22 @@
 #'   crash)
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param showLegend if TRUE, adds a legend with pitch tracking methods
-#' @param savePath if a valid path is specified, a plot is saved in this folder
-#'   (defaults to NA)
+#' @param savePlots full path to the folder in which to save the plots (NULL =
+#'   don't save, '' = same folder as audio)
 #' @param pitchPlot a list of graphical parameters for displaying the final
 #'   pitch contour. Set to \code{list(type = 'n')} to suppress
 #' @param xlab,ylab,main plotting parameters
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link{spectrogram}}
-#' @return If \code{summary = TRUE}, returns a dataframe with one row and three
+#' @param pitchManual normally the output of \code{\link{pitch_app}} containing
+#'   a manually corrected pitch contour, ideally with the same windowLength and
+#'   step as current call to analyzeFolder; a dataframe with at least two
+#'   columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")
+#' @return Returns a dataframe with one row and three
 #'   columns per acoustic variable (mean / median / SD). If \code{summary =
 #'   FALSE}, returns a dataframe with one row per STFT frame and one column per
-#'   acoustic variable. If \code{voicedSeparate = TRUE}, descriptives are
-#'   calculated separately for the entire sound and for the voiced frames. The
+#'   acoustic variable. The
 #'   best guess at the pitch contour considering all available information is
 #'   stored in the variable called "pitch". If \code{summaryFun = 'extended'},
 #'   the output is a list containing, in addition to the usual results, matrices
@@ -278,7 +286,7 @@
 #'
 #' # Save the plot
 #' a = analyze(sound1, 44100, ylim = c(0, 5),
-#'             savePath = '~/Downloads/',
+#'             savePlots = '~/Downloads/',
 #'             width = 20, height = 15, units = 'cm', res = 300)
 #'
 #' ## Amplitude and loudness: analyze() should give the same results as
@@ -325,15 +333,47 @@
 #'             windowLength = 5, overlap = 0,
 #'             nFormants = 0, SPL_measured = 0)
 #' # NB: ignore formants and loudness estimates for such non-human sounds
+#'
+#' # download 260 sounds from Anikin & Persson (2017)
+#' # http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/260sounds_wav.zip
+#' # unzip them into a folder, say '~/Downloads/temp'
+#' myfolder = '~/Downloads/temp'  # 260 .wav files live here
+#' s = analyze(myfolder)  # ~ 10-20 minutes!
+#' # s = write.csv(s, paste0(myfolder, '/temp.csv'))  # save a backup
+#'
+#' # Check accuracy: import manually verified pitch values (our "key")
+#' # pitchManual   # "ground truth" of mean pitch per sound
+#' # pitchContour  # "ground truth" of complete pitch contours per sound
+#' files_manual = paste0(names(pitchManual), '.wav')
+#' idx = match(s$file, files_manual)  # in case the order is wrong
+#' s$key = pitchManual[idx]
+#'
+#' # Compare manually verified mean pitch with the output of analyzeFolder:
+#' cor(s$key, s$summary$pitch_median, use = 'pairwise.complete.obs')
+#' plot(s$key, s$summary$pitch_median, log = 'xy')
+#' abline(a=0, b=1, col='red')
+#'
+#' # Re-running analyzeFolder with manually corrected contours gives correct
+#' pitch-related descriptives like amplVoiced and harmonics (NB: you get it "for
+#' free" when running pitch_app)
+#' s1 = analyze(myfolder, pitchManual = pitchContour)
+#' plot(s$summary$harmonics_median, s1$summary$harmonics_median)
+#' abline(a=0, b=1, col='red')
+#'
+#' # Save spectrograms with pitch contours plus an html file for easy access
+#' s2 = analyze('~/Downloads/temp', savePlots = '',
+#'   showLegend = TRUE, pitchManual = pitchContour,
+#'   width = 20, height = 12,
+#'   units = 'cm', res = 300, ylim = c(0, 5))
 #' }
 analyze = function(
   x,
   samplingRate = NULL,
+  scale = NULL,
   from = NULL,
   to = NULL,
   dynamicRange = 80,
   silence = 0.04,
-  scale = NULL,
   SPL_measured = 70,
   Pref = 2e-5,
   windowLength = 50,
@@ -342,9 +382,8 @@ analyze = function(
   wn = 'gaussian',
   zp = 0,
   cutFreq = NULL,
-  voicedSeparate = TRUE,
-  formants = list(verify = FALSE),
   nFormants = 3,
+  formants = list(verify = FALSE),
   roughness = list(plot = FALSE),
   pitchMethods = c('dom', 'autocor'),
   pitchManual = NULL,
@@ -373,19 +412,18 @@ analyze = function(
   snakePlot = FALSE,
   smooth = 1,
   smoothVars = c('pitch', 'dom'),
-  summary = NULL,
-  summaryFun = NULL,
+  summaryFun = c('mean', 'median', 'sd'),
   invalidArgAction = c('adjust', 'abort', 'ignore')[1],
-  plot = TRUE,
-  showLegend = TRUE,
-  savePath = NA,
+  reportEvery = NULL,
+  plot = FALSE,
   osc = 'linear',
-  osc_dB = NULL,
+  showLegend = TRUE,
+  savePlots = NULL,
   pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),
   extraContour = NULL,
   ylim = NULL,
-  xlab = NULL,
-  ylab = NULL,
+  xlab = 'Time, ms',
+  ylab = 'kHz',
   main = NULL,
   width = 900,
   height = 500,
@@ -393,86 +431,8 @@ analyze = function(
   res = NA,
   ...
 ) {
-  ## preliminaries - deprecated pars
-  if (!is.null(summary)) {
-    message(paste0('summary', ' is deprecated, set "summaryFun = NULL" instead'))
-  }
-
-  # import a sound
-  if (class(x)[1] == 'character') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    if (sound_wav@stereo)
-      message('Input is a stereo file; only the left channel is analyzed')
-    samplingRate = sound_wav@samp.rate
-    sound = sound_wav@left
-    scale = 2 ^ (sound_wav@bit - 1)
-    m = max(abs(sound))
-    plotname = tail(unlist(strsplit(x, '/')), n = 1)
-    plotname = ifelse(
-      !missing(main) & !is.null(main),
-      main,
-      substring(plotname, first = 1,
-                last = (nchar(plotname) - 4))
-    )
-  } else if (is.numeric(x)) {
-    if (is.null(samplingRate)) {
-      stop('Please specify "samplingRate", eg 44100')
-    } else {
-      sound = x
-      plotname = ifelse(!missing(main) & !is.null(main), main, '')
-    }
-    m = max(abs(sound))
-    if (is.null(scale)) {
-      scale = max(m, 1)
-      message(paste('Scale not specified. Assuming that max amplitude is', scale))
-    } else if (is.numeric(scale)) {
-      if (scale < m) {
-        scale = m
-        warning(paste('Scale cannot be smaller than observed max; resetting to', m))
-      }
-    }
-  } else if (class(x) == 'Wave') {
-    if (x@stereo)
-      message('Input is a stereo file; only the left channel is analyzed')
-    samplingRate = x@samp.rate
-    sound = x@left
-    scale = 2 ^ (x@bit - 1)
-    m = max(abs(sound))
-    plotname = ifelse(!missing(main) & !is.null(main), main, '')
-  } else {
-    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-  }
-
-  # calculate scaling coefficient for loudness calculation, but don't convert
-  # yet, since most routines in analyze() require scale [-1, 1]
-  scaleCorrection = NA
-  if (is.numeric(SPL_measured) && SPL_measured > 0) {
-    # NB: m / scale = 1 if the sound is normalized to 0 dB (max amplitude)
-    # scaleCorrection = max(abs(scaleSPL(sound * m / scale,
-    #                                    scale = 1,
-    #                                    SPL_measured = SPL_measured,
-    #                                    Pref = Pref))) /  # peak ampl of rescaled
-    #   m  # peak ampl of original
-    scaleCorrection = max(abs(scaleSPL(sound,
-                                       scale = scale,
-                                       SPL_measured = SPL_measured,
-                                       Pref = Pref)))
-  }
-
-  # Adjust silence threshold as proportion of the observed max ampl
-  # (has the effect of looking for voiced segments even in very quiet files)
-  m_to_scale = m / scale
-  silence = silence * m_to_scale
-  if (m_to_scale < silence)
-    message('The audio is too quiet: max ampl is lower than silence = ', silence)
-
+  ## Validate the parameter values that do not depend on sound-specific
+  ## characteristics like samplingRate and duration
   # Check simple numeric default pars
   simplePars = c('silence', 'entropyThres', 'domThres',
                  'autocorThres', 'autocorSmooth',
@@ -485,10 +445,12 @@ analyze = function(
     if (class(gp)[1] != "try-error") {
       if (is.numeric(gp)) {
         assign(noquote(p),
-               validatePars(p, gp, defaults_analyze, invalidArgAction))
+               validatePars(p, gp, def = defaults_analyze,
+                            invalidArgAction = invalidArgAction))
       }
     }
   }
+  rm(simplePars, gp, p)
 
   # Check parameters supplied as lists
   pitchDom_plotPars = pitchAutocor_plotPars =
@@ -530,6 +492,7 @@ analyze = function(
     assign(noquote(names(parsToValidate)[i]), parGroup_user)
   }
   if (is.null(roughness$plot)) roughness$plot = FALSE
+  rm('parsToValidate', 'parGroup_user', 'parGroup_def', 'p', 'i')
 
   # Check defaults that depend on other pars or require customized warnings
   if (is.character(pitchMethods) && pitchMethods[1] != '') {
@@ -541,53 +504,214 @@ analyze = function(
                     '; valid pitchMethods:',
                     paste(valid_names, collapse = ', ')))
     }
+    rm('valid_names', 'invalid_names')
   }
-  if (SPL_measured != 0) {  # if analyzing loudness
-    if (samplingRate < 2000) {
-      warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
-                    'and estimate loudness in sone'))
-    } else if (samplingRate > 44100) {
-      message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
-                    '(27 KHz) as inaudible to humans when estimating loudness'))
+  if (is.numeric(priorSD)) {
+    if (priorSD <= 0) {
+      priorSD = 6
+      warning('"priorSD" must be positive; defaulting to 6 semitones')
     }
+  }
+  if (!is.numeric(nCands) | nCands < 1) {
+    nCands = 1
+    warning('"nCands" must be a positive integer; defaulting to 1')
+  } else if (!is.integer(nCands)) {
+    nCands = round(nCands)
+  }
+  if (!is.numeric(shortestSyl) | shortestSyl < 0) {
+    shortestSyl = 0
+    warning('shortestSyl must be non-negative; defaulting to 0 ms')
+  }
+  if (!is.numeric(shortestPause) | shortestPause < 0) {
+    shortestPause = 0
+    warning('shortestPause must be a non-negative number; defaulting to 0 ms')
   }
 
-  # from...to selection
-  ls = length(sound)
-  if (any(is.numeric(c(from, to)))) {
-    if (!is.numeric(from)) {
-      from_points = 1
-    } else {
-      from_points = max(1, round(from * samplingRate))
-    }
-    if (!is.numeric(to)) {
-      to_points = ls
-    }  else {
-      to_points = min(ls, round(to * samplingRate))
-    }
-    sound = sound[from_points:to_points]
-    timeShift = from_points / samplingRate
-    ls = length(sound)
+  # Check non-numeric defaults
+  supported_wn = c('bartlett', 'blackman', 'flattop', 'gaussian',
+                   'hamming', 'hanning', 'rectangle')
+  if (!wn %in% supported_wn) {
+    wn = 'gaussian'
+    warning(paste('Implemented "wn":',
+                  paste(supported_wn, collapse = ', '),
+                  '. Defaulting to "gaussian"'))
+  }
+  if (!pathfinding %in% c('none', 'fast', 'slow')) {
+    pathfinding = 'fast'
+    warning(paste('Implemented "pathfinding": "none", "fast", "slow";',
+                  'defaulting to "fast"'))
+  }
+  rm(supported_wn)
+
+  # reformat pitchManual, if any
+  if (!is.null(pitchManual)) {
+    pitchManual_list = formatPitchManual(pitchManual)
   } else {
-    timeShift = 0
+    pitchManual_list = NULL
   }
-  duration = ls / samplingRate
 
-  # normalize to range from no less than -1 to no more than +1
-  if (any(sound > 0)) {
-    sound = sound - mean(sound)  # center
+  # match args
+  myPars = c(as.list(environment()), list(...))
+  # myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery',
+    'savePlots', 'pitchPlot', 'pitchManual', 'summaryFun', 'invalidArgAction')]
+  # add plot pars correctly, without flattening the lists
+  list_pars = c('pitchManual_list', 'pitchPlot',
+                'pitchDom_plotPars', 'pitchAutocor_plotPars',
+                'pitchCep_plotPars', 'pitchSpec_plotPars',
+                'pitchHps_plotPars', 'harmHeight_plotPars')
+  for (lp in list_pars) myPars[[lp]] = get(lp)
+
+  # analyze
+  pa = processAudio(
+    x,
+    samplingRate = samplingRate,
+    scale = scale,
+    from = from,
+    to = to,
+    funToCall = 'analyzeSound',
+    myPars = myPars,
+    reportEvery = reportEvery,
+    savePlots = savePlots
+  )
+
+  # htmlPlots
+  if (!is.null(pa$input$savePlots)) {
+    if (pa$input$filenames_base[1] == 'sound') {
+      plotname = 'sound'
+    } else {
+      plotname = substr(pa$input$filenames_base, 1,
+                        nchar(pa$input$filenames_base) - 4)
+    }
+    htmlPlots(
+      htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_analyze.html'),
+      plotFiles = paste0(pa$input$savePlots, plotname, "_analyze.png"),
+      audioFiles = pa$input$filenames,
+      width = paste0(width, units))
   }
-  sound = sound / max(abs(sound))
 
+  # prepare output
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    temp = vector('list', pa$input$n)
+    for (i in 1:pa$input$n) {
+      if (!pa$input$failed[i]) {
+        temp[[i]] = summarizeAnalyze(
+          pa$result[[i]],
+          summaryFun = summaryFun,
+          var_noSummary = c('duration', 'duration_noSilence', 'voiced', 'time'))
+      }
+    }
+    idx_failed = which(pa$input$failed)
+    if (length(idx_failed) > 0) {
+      idx_ok = which(!pa$input$failed)
+      if (length(idx_ok) > 0) {
+        filler = temp[[idx_ok[1]]] [1, ]
+        filler[1, ] = NA
+      } else {
+        stop('Failed to analyze any input')
+      }
+      for (i in idx_failed) temp[[i]] = filler
+    }
+    mysum_all = cbind(data.frame(file = pa$input$filenames_base),
+                      do.call('rbind', temp))
+  } else {
+    mysum_all = NULL
+  }
+  if (pa$input$n == 1) pa$result = pa$result[[1]]
+  invisible(list(
+    detailed = pa$result,
+    summary = mysum_all
+  ))
+}
+
+
+#' Analyze sound
+#'
+#' Internal soundgen function
+#'
+#' Called by \code{\link{analyze}} and \code{\link{pitch_app}} to analyze a
+#' single sound.
+#' @inheritParams analyze
+#' @param audio a list returned by \code{readAudio}
+#' @keywords internal
+analyzeSound = function(
+  audio,
+  dynamicRange = 80,
+  silence = 0.04,
+  SPL_measured = 70,
+  Pref = 2e-5,
+  windowLength = 50,
+  step = NULL,
+  overlap = 50,
+  wn = 'gaussian',
+  zp = 0,
+  cutFreq = NULL,
+  nFormants = 3,
+  formants = list(verify = FALSE),
+  roughness = list(plot = FALSE),
+  pitchMethods = c('dom', 'autocor'),
+  pitchManual_list = NULL,
+  entropyThres = 0.6,
+  pitchFloor = 75,
+  pitchCeiling = 3500,
+  priorMean = 300,
+  priorSD = 6,
+  nCands = 1,
+  minVoicedCands = NULL,
+  pitchDom = list(),
+  pitchAutocor = list(),
+  pitchCep = list(),
+  pitchSpec = list(),
+  pitchHps = list(),
+  harmHeight = list(),
+  shortestSyl = 20,
+  shortestPause = 60,
+  interpolWin = 75,
+  interpolTol = 0.3,
+  interpolCert = 0.3,
+  pathfinding = c('none', 'fast', 'slow')[2],
+  annealPars = list(maxit = 5000, temp = 1000),
+  certWeight = .5,
+  snakeStep = 0.05,
+  snakePlot = FALSE,
+  smooth = 1,
+  smoothVars = c('pitch', 'dom'),
+  returnPitchCands = FALSE,
+  plot = TRUE,
+  showLegend = TRUE,
+  savePlots = NULL,
+  osc = 'linear',
+  pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),
+  pitchDom_plotPars = list(),
+  pitchAutocor_plotPars =list(),
+  pitchCep_plotPars = list(),
+  pitchSpec_plotPars =list(),
+  pitchHps_plotPars = list(),
+  harmHeight_plotPars = list(),
+  extraContour = NULL,
+  ylim = NULL,
+  xlab = NULL,
+  ylab = NULL,
+  main = NULL,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  ...
+) {
+  ## Validate the parameter values that do not depend on sound-specific
+  ## characteristics like samplingRate and duration
   if (!is.numeric(windowLength) | windowLength <= 0 |
-      windowLength > (duration * 1000)) {
-    windowLength = min(50, duration / 2 * 1000)
+      windowLength > (audio$duration * 1000)) {
+    windowLength = min(50, audio$duration / 2 * 1000)
     warning(paste0('"windowLength" must be between 0 and sound_duration ms;
             defaulting to ', windowLength, ' ms'))
   }
-  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:
-  # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0)
+  # 2^round(log(windowLength*audio$samplingRate/1000)/log(2), 0)
 
   if (!is.numeric(step)) {
     if (!is.numeric(overlap) | overlap < 0 | overlap > 99) {
@@ -599,10 +723,10 @@ analyze = function(
     }
   } else {
     if (is.numeric(overlap) & overlap != 50) {  # step specified, overlap != default
-      warning('"overlap" is ignored if "step" is not NULL')
+      message('"overlap" is ignored if "step" is not NULL')
     }
   }
-  if (step <= 0 | step > (duration * 1000)) {
+  if (step <= 0 | step > (audio$duration * 1000)) {
     step = windowLength / 2
     warning('"step" must be between 0 and sound_duration ms;
             defaulting to windowLength / 2')
@@ -635,55 +759,35 @@ analyze = function(
     # a single value refers to upper end of the analyzed frequency range
     if (length(cutFreq) == 1) cutFreq = c(0, cutFreq)
     if (is.na(cutFreq[1]) || cutFreq[1] <= 0) cutFreq[1] = 0
-    if (is.na(cutFreq[2]) || cutFreq[2] > (samplingRate / 2)) {
-      cutFreq[2] = samplingRate / 2
+    if (is.na(cutFreq[2]) || cutFreq[2] > (audio$samplingRate / 2)) {
+      cutFreq[2] = audio$samplingRate / 2
       warning(paste('"cutFreq" should not be above Nyquist (samplingRate / 2);',
                     'setting cutFreq = NULL'))
     }
   }
   if (!is.numeric(pitchFloor) | pitchFloor <= 0 |
-      pitchFloor > samplingRate / 2) {
+      pitchFloor > audio$samplingRate / 2) {
     pitchFloor = 1
     warning(paste('"pitchFloor" must be between 0 and pitchCeiling;',
                   'defaulting to 1 Hz'))
   } # 1 Hz ~ 4 octaves below C0
-  if (!is.numeric(pitchCeiling) | pitchCeiling > samplingRate / 2) {
-    pitchCeiling = samplingRate / 2  # Nyquist
+  if (!is.numeric(pitchCeiling) | pitchCeiling > audio$samplingRate / 2) {
+    pitchCeiling = audio$samplingRate / 2  # Nyquist
     warning(paste('"pitchCeiling" must be between 0 and Nyquist;',
                   'defaulting to samplingRate / 2'))
   }
   if (pitchFloor > pitchCeiling) {
     pitchFloor = 1
-    pitchCeiling = samplingRate / 2
+    pitchCeiling = audio$samplingRate / 2
     warning(paste('"pitchFloor" cannot be above "pitchCeiling";',
                   'defaulting to 1 Hz and samplingRate / 2, respectively'))
   }
   if (is.numeric(priorMean)) {
-    if (priorMean > samplingRate / 2 | priorMean <= 0) {
+    if (priorMean > audio$samplingRate / 2 | priorMean <= 0) {
       priorMean = 300
       warning(paste('"priorMean" must be between 0 and Nyquist;',
                     'defaulting to 300; set to NULL to disable prior'))
     }
-  }
-  if (is.numeric(priorSD)) {
-    if (priorSD <= 0) {
-      priorSD = 6
-      warning('"priorSD" must be positive; defaulting to 6 semitones')
-    }
-  }
-  if (!is.numeric(nCands) | nCands < 1) {
-    nCands = 1
-    warning('"nCands" must be a positive integer; defaulting to 1')
-  } else if (!is.integer(nCands)) {
-    nCands = round(nCands)
-  }
-  if (!is.numeric(shortestSyl) | shortestSyl < 0) {
-    shortestSyl = 0
-    warning('shortestSyl must be non-negative; defaulting to 0 ms')
-  }
-  if (!is.numeric(shortestPause) | shortestPause < 0) {
-    shortestPause = 0
-    warning('shortestPause must be a non-negative number; defaulting to 0 ms')
   }
   if (shortestPause > 0 & interpolWin > 0) {
     if (interpolWin * step < shortestPause / 2) {
@@ -697,7 +801,7 @@ analyze = function(
     warning('"interpolTol" must be positive; defaulting to 0.3')
   }
   if (!is.numeric(pitchAutocor$autocorSmooth)) {
-    pitchAutocor$autocorSmooth = 2 * ceiling(7 * samplingRate / 44100 / 2) - 1
+    pitchAutocor$autocorSmooth = 2 * ceiling(7 * audio$samplingRate / 44100 / 2) - 1
     # width of smoothing interval, chosen to be proportionate to samplingRate (7
     # for samplingRate 44100), but always an odd number.
     # for(i in seq(16000, 60000, length.out = 10)) {
@@ -705,23 +809,51 @@ analyze = function(
     # }
   }
 
-  # Check non-numeric defaults
-  supported_wn = c('bartlett', 'blackman', 'flattop', 'gaussian',
-                   'hamming', 'hanning', 'rectangle')
-  if (!wn %in% supported_wn) {
-    wn = 'gaussian'
-    warning(paste('Implemented "wn":',
-                  paste(supported_wn, collapse = ', '),
-                  '. Defaulting to "gaussian"'))
-  }
-  if (!pathfinding %in% c('none', 'fast', 'slow')) {
-    pathfinding = 'fast'
-    warning(paste('Implemented "pathfinding": "none", "fast", "slow";',
-                  'defaulting to "fast"'))
+
+  ## NORMALIZATION
+  # calculate scaling coefficient for loudness calculation, but don't convert
+  # yet, since most routines in analyze() require scale [-1, 1]
+  if (is.numeric(SPL_measured) && SPL_measured > 0) {
+    scaleCorrection = max(abs(scaleSPL(audio$sound,
+                                       scale = audio$scale,
+                                       SPL_measured = SPL_measured,
+                                       Pref = Pref)))
+  } else {
+    scaleCorrection = NA
   }
 
+  # Adjust silence threshold as proportion of the observed max ampl
+  # (has the effect of looking for voiced segments even in very quiet files)
+  m = max(abs(audio$sound))
+  m_to_scale = m / audio$scale
+  silence = silence * m_to_scale
+  if (m_to_scale < silence)
+    message('The audio is too quiet: max ampl is lower than silence = ', silence)
+
+  if (SPL_measured != 0) {  # if analyzing loudness
+    if (audio$samplingRate < 2000) {
+      warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
+                    'and estimate loudness in sone'))
+    } else if (audio$samplingRate > 44100) {
+      message(paste('Sampling rate above 44100, but discarding frequencies above 27 barks',
+                    '(27 KHz) as inaudible to humans when estimating loudness'))
+    }
+  }
+
+  # normalize to range from no less than -1 to no more than +1
+  if (any(audio$sound > 0)) {
+    # center first
+    mean_s = mean(audio$sound)
+    audio$sound = audio$sound - mean(audio$sound)
+    audio$sound = audio$sound / max(abs(audio$sound))
+  } else {
+    audio$sound = audio$sound / m
+  }
+
+
+  ## ANALYSIS
   # Set up filter for calculating pitchAutocor
-  filter = ftwindow_modif(2 * windowLength_points, wn = wn) # plot(filter, type='l')
+  filter = seewave::ftwindow(2 * windowLength_points, wn = wn) # plot(filter, type='l')
   powerSpectrum_filter = abs(fft(filter)) ^ 2
   autoCorrelation_filter = abs(fft(powerSpectrum_filter, inverse = TRUE)) ^ 2
   autoCorrelation_filter = autoCorrelation_filter[1:windowLength_points]
@@ -729,20 +861,19 @@ analyze = function(
   # plot(autoCorrelation_filter, type = 'l')
 
   ## fft and acf per frame
-  if (is.character(savePath)) {
-    # make sure the last character of savePath is "/"
-    last_char = substr(savePath, nchar(savePath), nchar(savePath))
-    if(last_char != '/') savePath = paste0(savePath, '/')
+  if (is.character(audio$savePlots)) {
     plot = TRUE
-    f = ifelse(plotname == '',
-               'sound',
-               plotname)
-    png(filename = paste0(savePath, f, ".png"),
+    if (audio$filename_base == 'sound') {
+      plotname = 'sound'
+    } else {
+      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
+    }
+    png(filename = paste0(audio$savePlots, plotname, "_analyze.png"),
         width = width, height = height, units = units, res = res)
   }
   frameBank = getFrameBank(
-    sound = sound,
-    samplingRate = samplingRate,
+    sound = audio$sound,
+    samplingRate = audio$samplingRate,
     windowLength_points = windowLength_points,
     wn = wn,
     step = step,
@@ -750,18 +881,16 @@ analyze = function(
     normalize = TRUE,
     filter = NULL,
     padWithSilence = FALSE,
-    timeShift = timeShift
+    timeShift = audio$timeShift
   )
   timestamps = as.numeric(colnames(frameBank))
 
   extraSpecPars = list(...)
   extraSpecPars$osc = NULL
-  s = do.call(spectrogram, c(list(
-    x = NULL,
-    internal = list(duration = duration,
-                    frameBank = frameBank),
+  s = do.call(spectrogramSound, c(list(
+    audio = audio[names(audio) != 'savePlots'], # otherwise spectrogram() plots
+    internal = list(frameBank = frameBank),
     dynamicRange = dynamicRange,
-    samplingRate = samplingRate,
     windowLength = windowLength,
     zp = zp,
     wn = wn,
@@ -770,21 +899,23 @@ analyze = function(
     output = 'original',
     plot = FALSE
   ), extraSpecPars))
+  # image(t(s))
   if (is.na(s)[1]) {
-    message(paste('The sound is too short to analyze',
-                  'with windowLength =', windowLength))
-    return(list(duration = duration))
+    stop(paste('The sound is too short to analyze',
+               'with windowLength =', windowLength))
   }
-  bin = samplingRate / 2 / nrow(s)  # width of spectral bin, Hz
+  bin = audio$samplingRate / 2 / nrow(s)  # width of spectral bin, Hz
   freqs = as.numeric(rownames(s)) * 1000  # central bin freqs, Hz
 
   # calculate rms amplitude of each frame
-  myseq = (timestamps - timeShift * 1000 - windowLength / 2) * samplingRate / 1000 + 1
+  myseq = (timestamps - audio$timeShift * 1000 - windowLength / 2) *
+    audio$samplingRate / 1000 + 1
   myseq[1] = 1  # just in case of rounding errors
   ampl = apply(as.matrix(1:length(myseq)), 1, function(x) {
     # perceived intensity - root mean square of amplitude
     # (NB: m / scale corrects the scale back to original, otherwise sound is [-1, 1])
-    sqrt(mean((sound[myseq[x]:(myseq[x] + windowLength_points - 1)] * m / scale) ^ 2))
+    sqrt(mean((audio$sound[myseq[x]:(myseq[x] + windowLength_points - 1)] *
+                 m / audio$scale) ^ 2))
   })
 
   # calculate entropy of each frame within the most relevant
@@ -833,7 +964,7 @@ analyze = function(
   }
   autocorBank = autocorBank[-1, ]  # b/c it starts with zero lag (identity)
   # plot(autocorBank[, 15], type = 'l')
-  rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
+  rownames(autocorBank) = audio$samplingRate / (1:nrow(autocorBank))
 
   ## FORMANTS
   fmts = NULL
@@ -847,9 +978,9 @@ analyze = function(
     for (i in 1:nf) {
       fmts_list[[i]] = try(suppressWarnings(do.call(
         phonTools::findformants,
-        c(formants,
-          list(frameBank[, framesToAnalyze[i]],
-               fs = samplingRate)))),
+        c(list(frameBank[, framesToAnalyze[i]],
+               fs = audio$samplingRate),
+          formants))),
         silent = TRUE)
       if (class(fmts_list[[i]]) == 'try-error') {
         fmts_list[[i]] = data.frame(formant = NA, bandwidth = NA)[-1, ]
@@ -923,7 +1054,7 @@ analyze = function(
       frame = s[, i],
       bin = bin, freqs = freqs,  # prepared in analyze() to save time
       autoCorrelation = autocorBank[, i],
-      samplingRate = samplingRate,
+      samplingRate = audio$samplingRate,
       scaleCorrection = scaleCorrection,
       cutFreq = cutFreq,
       trackPitch = cond_entropy[i],
@@ -941,16 +1072,17 @@ analyze = function(
 
   # Store the descriptives provided by function analyzeFrame in a dataframe
   result = lapply(frameInfo, function(y) y[['summaries']])
-  result = data.frame(matrix(unlist(result), nrow=length(frameInfo), byrow=TRUE))
+  result = data.frame(matrix(unlist(result), nrow = length(frameInfo), byrow = TRUE))
   colnames(result) = names(frameInfo[[1]]$summaries)
   if (!is.null(fmts)) result = cbind(result, fmts)
   result$entropy = entropy
   result$ampl = ampl
   result$time = as.numeric(colnames(frameBank))
   result$duration_noSilence = duration_noSilence
-  result$duration = duration
+  result$duration = audio$duration
   nc = ncol(result)
   result = result[, c(rev((nc-4):nc), 1:(nc-5))]  # change the order of columns
+
 
   ## Postprocessing
   # extract and prepare pitch candidates for the pathfinder algorithm
@@ -1011,7 +1143,7 @@ analyze = function(
       minVoicedCands = minVoicedCands,
       pitchMethods = pitchMethods,
       step = step,
-      samplingRate = samplingRate
+      samplingRate = audio$samplingRate
     )
 
     # for each syllable, impute NA's and find a nice path through pitch candidates
@@ -1053,7 +1185,7 @@ analyze = function(
 
   ## Median smoothing of specified contours (by default pitch & dom)
   if (smooth > 0) {
-    points_per_sec = nrow(result) / duration
+    points_per_sec = nrow(result) / audio$duration
     # smooth of 1 means that smoothing window is ~100 ms
     smoothing_ww = round(smooth * points_per_sec / 10, 0)
     # the larger smooth, the heavier the smoothing (lower tolerance
@@ -1076,15 +1208,20 @@ analyze = function(
 
   ## Finalize / update results using the final pitch contour
   # (or the manual pitch contour, if provided)
-  if (!is.null(pitchManual) &
-      length(pitchManual) > 0) {  # numeric(0) if $pitch is missing in manual
+  pitch_true = result$pitch
+  if (!is.null(pitchManual_list)) {
     # up/downsample pitchManual to the right length
-    pitch_true = upsamplePitchContour(
-      pitch = pitchManual,
-      len = nrow(result),
-      plot = FALSE)
-  } else {
-    pitch_true = result$pitch
+    pitch_raw = pitchManual_list[[audio$filename_base]]
+    if (!is.null(pitch_raw)) {
+      pitch_true = upsamplePitchContour(
+        pitch = pitch_raw,
+        len = nrow(result),
+        plot = FALSE)
+    } else {
+      message(paste(
+        'Failed to find file', audio$filename_base,
+        'in the provided pitchManual; using detected pitch contour instead'))
+    }
   }
 
   ## Roughness calculation
@@ -1093,8 +1230,8 @@ analyze = function(
     result$roughness = NA
   } else {
     rough = do.call(modulationSpectrum, c(
-      list(x = sound,
-           samplingRate = samplingRate),
+      list(x = audio$sound,
+           samplingRate = audio$samplingRate),
       roughness))$roughness
     result$roughness = upsamplePitchContour(rough, len = nrow(result),
                                             plot = FALSE)
@@ -1104,13 +1241,12 @@ analyze = function(
   varsToUnv = c('ampl', 'roughness', 'entropy', 'dom', 'HNR', 'loudness',
                 'peakFreq', 'quartile25', 'quartile50', 'quartile75',
                 'specCentroid', 'specSlope')
-  if (voicedSeparate) {
-    # save spectral descriptives separately for voiced and unvoiced frames
-    for (v in varsToUnv) {
-      result[, paste0(v, 'Voiced')] = result[, v]
-    }
+  # save spectral descriptives separately for voiced and unvoiced frames
+  for (v in varsToUnv) {
+    result[, paste0(v, 'Voiced')] = result[, v]
   }
 
+  # update using final / manual pitch
   result = updateAnalyze(
     result = result,
     pitch_true = pitch_true,
@@ -1124,6 +1260,7 @@ analyze = function(
     # NB: peakFreq & specCentroid are defined for unvoiced frames, but not quartiles
     varsToUnv = paste0(varsToUnv, 'Voiced')
   )
+
 
   ## Add pitch contours to the spectrogram
   if (plot) {
@@ -1146,7 +1283,7 @@ analyze = function(
                        'roughnessVoiced', 'specSlope', 'specSlopeVoiced')
         if (cnt_name %in% col_non_Hz) {
           # normalize
-          if (is.null(ylim)) ylim = c(0, samplingRate / 2 / 1000)
+          if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
           cnt = cnt / max(cnt, na.rm = TRUE) * ylim[2] * 1000
         }
       } else {
@@ -1154,32 +1291,35 @@ analyze = function(
                        paste(valid_cols, collapse = ', ')))
       }
     }
+    if (is.null(main)) {
+      if (audio$filename_base == 'sound') {
+        main = ''
+      } else {
+        main = audio$filename_base
+      }
+    }
 
     # we call spectrogram() a second time to get nice silence padding and to add
     # pitch contours internally in spectrogram() - a hassle, but it only take a
     # few ms, and otherwise it's hard to add pitch contours b/c the y-axis is
     # messed up if spectrogram() calls layout() to add an oscillogram
-    do.call(spectrogram, c(list(
-      x = sound,
+    do.call(spectrogramSound, c(list(
+      audio = audio[names(audio) != 'savePlots'],
       dynamicRange = dynamicRange,
-      samplingRate = samplingRate,
       windowLength = windowLength,
       zp = zp,
       wn = wn,
       step = step,
-      main = plotname,
       normalize = FALSE,
-      scale = scale / m,
       output = 'original',
+      plot = TRUE,
       ylim = ylim,
       xlab = xlab,
       ylab = ylab,
-      plot = TRUE,
+      main = main,
       osc = osc,
       internal = list(
         frameBank = frameBank,
-        duration = duration,
-        timeShift = timeShift,
         pitch = list(
           pitchCands = pitchCands_list$freq,
           pitchCert = pitchCands_list$cert,
@@ -1205,249 +1345,20 @@ analyze = function(
           ylim = ylim,
           xlab = xlab,
           ylab = ylab,
-          main = plotname,
-          timeShift = timeShift
+          main = audio$filename_base,
+          timeShift = audio$timeShift
         ))
     ), extraSpecPars))
   }
-  if (is.character(savePath)) {
+  if (is.character(audio$savePlots)) {
     dev.off()
   }
 
-  # prepare the output
-  sf = summaryFun[which(summaryFun != 'extended')]
-  if (!is.null(sf) && any(!is.na(sf))) {
-    out = summarizeAnalyze(result, sf)
+  if (returnPitchCands) {
+    invisible(list(result = result,
+                   pitchCands = pitchCands_list,
+                   spectrogram = s))
   } else {
-    out = result
-  }
-  if ('extended' %in% summaryFun) {
-    return(list(summary = out,
-                result = result,
-                pitchCands = pitchCands_list,
-                spectrogram = s))
-  } else {
-    invisible(out)
+    invisible(result)
   }
 }
-
-
-#' Analyze folder
-#'
-#' Acoustic analysis of all wav/mp3 files in a folder. See \code{\link{analyze}}
-#' and vignette('acoustic_analysis', package = 'soundgen') for further details.
-#' See \code{\link{pitch_app}} for a more realistic workflow: extract manually
-#' corrected pitch contours with pitch_app(), then run analyzeFolder() with
-#' these manual contours
-#'
-#' @seealso \code{\link{analyze}} \code{\link{pitch_app}}
-#'   \code{\link{getLoudness}} \code{\link{segment}} \code{\link{getRMS}}
-#'
-#' @param myfolder full path to target folder
-#' @param verbose if TRUE, reports progress and estimated time left
-#' @param pitchManual normally the output of \code{\link{pitch_app}} containing
-#'   a manually corrected pitch contour, ideally with the same windowLength and
-#'   step as current call to analyzeFolder; a dataframe with at least two
-#'   columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")
-#' @inheritParams analyze
-#' @inheritParams spectrogram
-#' @inheritParams getLoudness
-#' @param savePlots if TRUE, saves plots as .png files
-#' @param htmlPlots if TRUE, saves an html file with clickable plots
-#' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
-#'   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
-#' @export
-#' @examples
-#' \dontrun{
-#' # download 260 sounds from Anikin & Persson (2017)
-#' # http://cogsci.se/publications/anikin-persson_2017_nonlinguistic-vocs/260sounds_wav.zip
-#' # unzip them into a folder, say '~/Downloads/temp'
-#' myfolder = '~/Downloads/temp'  # 260 .wav files live here
-#' s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 10-20 minutes!
-#' # s = write.csv(s, paste0(myfolder, '/temp.csv'))  # save a backup
-#'
-#' # Check accuracy: import manually verified pitch values (our "key")
-#' # pitchManual   # "ground truth" of mean pitch per sound
-#' # pitchContour  # "ground truth" of complete pitch contours per sound
-#' files_manual = paste0(names(pitchManual), '.wav')
-#' idx = match(s$file, files_manual)  # in case the order is wrong
-#' s$key = pitchManual[idx]
-#'
-#' # Compare manually verified mean pitch with the output of analyzeFolder:
-#' cor(s$key, s$pitch_median, use = 'pairwise.complete.obs')
-#' plot(s$key, s$pitch_median, log = 'xy')
-#' abline(a=0, b=1, col='red')
-#'
-#' # Re-running analyzeFolder with manually corrected contours gives correct
-#' pitch-related descriptives like amplVoiced and harmonics (NB: you get it "for
-#' free" when running pitch_app)
-#' s1 = analyzeFolder(myfolder, verbose = TRUE, pitchManual = pitchContour)
-#' plot(s$harmonics_median, s1$harmonics_median)
-#' abline(a=0, b=1, col='red')
-#'
-#' # Save spectrograms with pitch contours plus an html file for easy access
-#' s2 = analyzeFolder('~/Downloads/temp', savePlots = TRUE,
-#'   showLegend = TRUE, pitchManual = pitchContour,
-#'   width = 20, height = 12,
-#'   units = 'cm', res = 300, ylim = c(0, 5))
-#' }
-analyzeFolder = function(
-  myfolder,
-  htmlPlots = TRUE,
-  verbose = TRUE,
-  samplingRate = NULL,
-  dynamicRange = 80,
-  silence = 0.04,
-  SPL_measured = 70,
-  Pref = 2e-5,
-  windowLength = 50,
-  step = NULL,
-  overlap = 50,
-  wn = 'gaussian',
-  zp = 0,
-  cutFreq = NULL,
-  voicedSeparate = TRUE,
-  formants = list(verify = FALSE),
-  nFormants = 3,
-  pitchMethods = c('dom', 'autocor'),
-  pitchManual = NULL,
-  entropyThres = 0.6,
-  pitchFloor = 75,
-  pitchCeiling = 3500,
-  priorMean = 300,
-  priorSD = 6,
-  nCands = 1,
-  minVoicedCands = NULL,
-  pitchDom = list(),
-  pitchAutocor = list(),
-  pitchCep = list(),
-  pitchSpec = list(),
-  pitchHps = list(),
-  harmHeight = list(type = 'n'),
-  shortestSyl = 20,
-  shortestPause = 60,
-  interpolWin = 75,
-  interpolTol = 0.3,
-  interpolCert = 0.3,
-  pathfinding = c('none', 'fast', 'slow')[2],
-  annealPars = list(maxit = 5000, temp = 1000),
-  certWeight = .5,
-  snakeStep = 0.05,
-  snakePlot = FALSE,
-  smooth = 1,
-  smoothVars = c('pitch', 'dom'),
-  summary = NULL,
-  summaryFun = c('mean', 'median', 'sd'),
-  plot = FALSE,
-  osc = 'linear',
-  showLegend = TRUE,
-  savePlots = FALSE,
-  pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),
-  extraContour = NULL,
-  ylim = NULL,
-  xlab = 'Time, ms',
-  ylab = 'kHz',
-  main = NULL,
-  width = 900,
-  height = 500,
-  units = 'px',
-  res = NA,
-  ...
-) {
-  ## preliminaries - deprecated pars
-  if (!missing('summary')) {
-    message(paste0('summary', ' is deprecated, set "summaryFun = NULL" instead'))
-  }
-
-  warnAboutResetSummary = FALSE
-  time_start = proc.time()  # timing
-  filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
-  if (length(filenames) < 1) {
-    stop(paste('No wav/mp3 files found in', myfolder))
-  }
-  filenames_base = basename(filenames)
-  # in order to provide more accurate estimates of time to completion,
-  # check the size of all files in the target folder
-  filesizes = file.info(filenames)$size
-
-  # as.list(match.call()) also works, but we want to get default args as well,
-  # since plot should default to TRUE for analyze() and FALSE for analyzeFolder(),
-  # and summary vice versa.
-  # See https://stackoverflow.com/questions/14397364/match-call-with-default-arguments
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
-  # exclude some args
-  myPars = myPars[!names(myPars) %in% c(
-    'myfolder' , 'htmlPlots', 'verbose', 'savePlots',
-    'pitchPlot', 'pitchManual')]
-  # exclude ...
-  myPars = myPars[1:(length(myPars)-1)]
-  # add plot pars correctly, without flattening the lists
-  myPars$pitchPlot = pitchPlot
-  myPars$extraContour = extraContour
-  if (savePlots) myPars$savePath = myfolder
-
-  # add pitchManual, if any
-  if (!is.null(pitchManual)) {
-    pitchManual_idx = match(filenames_base, pitchManual$file)
-  }
-
-  result = list()
-  for (i in 1:length(filenames)) {
-    pitch_file = NULL
-    if (!is.null(pitchManual)) {
-      if (is.finite(pitchManual_idx[i])) {
-        pitch_file = suppressWarnings(as.numeric(unlist(strsplit(
-          as.character(pitchManual$pitch[pitchManual_idx[i]]), ','))))
-      } else {
-        message(paste('File', filenames_base[i], 'not found in pitchManual$file'))
-        summary = FALSE
-        warnAboutResetSummary = TRUE
-      }
-    }
-    temp_anal = try(do.call(analyze, c(filenames[i],
-                                       myPars,
-                                       list(pitchManual = pitch_file),
-                                       ...)))
-    if (class(result) == 'try-error') {
-      warning(paste('Failed to analyze file', filenames_base[i]))
-      next
-    } else {
-      result[[i]] = temp_anal
-    }
-    if (verbose) {
-      reportTime(i = i, nIter = length(filenames),
-                 time_start = time_start, jobs = filesizes)
-    }
-  }
-
-  # prepare output
-  if (warnAboutResetSummary) {
-    message('Cannot summarize the results when some files are missing in pitchManual')
-  }
-  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
-    # if some sounds are too short, analyze() returns only duration, so we pad
-    # those with NA to the right length in order to run rbind afterwards
-    nc = max(unlist(lapply(result, ncol)), na.rm = TRUE) - 1
-    for (i in 1:length(result)) {
-      if (length(result[[i]]) == 1) {
-        result[[i]] = c(as.numeric(result[[i]]), rep(NA, nc))
-      }
-    }
-    output = cbind(data.frame(file = filenames_base),
-                   do.call(rbind, result))
-    # output = as.data.frame(t(sapply(result, function(x) unlist(rbind(x)))))
-    # output$file = filenames_base
-    # output = output[, c('file', colnames(output)[1:(ncol(output) - 1)])]
-  } else {
-    output = result
-    names(output) = filenames_base
-  }
-
-  if (htmlPlots & savePlots) {
-    htmlPlots(myfolder, myfiles = filenames, width = paste0(width, units))
-  }
-
-  invisible(output)
-}
-
-

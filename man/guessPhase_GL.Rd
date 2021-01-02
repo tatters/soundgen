@@ -31,8 +31,8 @@ numeric vector, rather than an audio file or Wave object)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
-blackman, flattop}
+\item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
+gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{windowLength_points}{STFT window length in points}
 

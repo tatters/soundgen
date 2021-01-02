@@ -161,6 +161,14 @@ server = function(input, output, session) {
     }
     updateSliderInput(session, 'spec_ylim', max = myPars$samplingRate / 2 / 1000)  # check!!!
     myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
+    myPars$myAudio_list = list(
+      sound = myPars$myAudio,
+      samplingRate = myPars$samplingRate,
+      scale = myPars$maxAmpl,
+      timeShift = 0,
+      ls = length(myPars$myAudio),
+      duration = myPars$dur / 1000
+    )
     myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
     myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
 
@@ -183,9 +191,8 @@ server = function(input, output, session) {
     # matrix and re-draw manually with soundgen:::filled.contour.mod
     if (!is.null(myPars$myAudio)) {
       if (myPars$print) print('Extracting spectrogram...')
-      myPars$spec = spectrogram(
-        myPars$myAudio,
-        samplingRate = myPars$samplingRate,
+      myPars$spec = spectrogramSound(
+        myPars$myAudio_list,
         dynamicRange = input$dynamicRange,
         windowLength = input$windowLength,
         step = input$step,
@@ -518,10 +525,8 @@ server = function(input, output, session) {
     if (!is.null(myPars$myAudio)) {
       if (myPars$print) print('Calling analyze()...')
       withProgress(message = 'Analyzing the sound...', value = 0.5, {
-        temp_anal = analyze(
-          myPars$myAudio,
-          samplingRate = myPars$samplingRate,
-          scale = myPars$maxAmpl,
+        temp_anal = analyzeSound(
+          myPars$myAudio_list,
           windowLength = input$windowLength,
           step = input$step,
           wn = input$wn,
@@ -575,11 +580,15 @@ server = function(input, output, session) {
           snakeStep = 0,
           snakePlot = FALSE,
           smooth = 0,
-          summaryFun = 'extended',
-          plot = FALSE
+          plot = FALSE,
+          returnPitchCands = TRUE
         )
-        myPars$summary = temp_anal$summary
         myPars$result = temp_anal$result
+        myPars$summary = summarizeAnalyze(
+          temp_anal$result,
+          summaryFun = input$summaryFun,
+          var_noSummary = c('duration', 'duration_noSilence', 'voiced', 'time')
+        )
         myPars$pitchCands = temp_anal$pitchCands
         myPars$spec_from_anal = temp_anal$spectrogram
         myPars$X = as.numeric(colnames(myPars$spec_from_anal))

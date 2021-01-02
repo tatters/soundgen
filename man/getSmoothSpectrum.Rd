@@ -36,9 +36,9 @@ minimal smoothing, 1 = strong smoothing)}
 
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
-\item{xlab}{graphical parameters}
+\item{xlab}{graphical parameters for plotting}
 
-\item{ylab}{graphical parameters}
+\item{ylab}{graphical parameters for plotting}
 
 \item{...}{other graphical parameters}
 

@@ -1,69 +1,3 @@
-#' RMS amplitude per sound
-#'
-#' Internal soundgen function called by \code{\link{getRMS}}.
-#' @param audio a list returned by \code{readAudio}
-#' @inheritParams getRMS
-#' @keywords internal
-getRMSSound = function(audio,
-                       windowLength = 50,
-                       step = NULL,
-                       overlap = 75,
-                       killDC = FALSE,
-                       normalize = TRUE,
-                       windowDC = 200,
-                       plot = TRUE,
-                       xlab = '',
-                       ylab = '',
-                       type = 'b',
-                       col = 'green',
-                       lwd = 2,
-                       ...) {
-  if (overlap < 0 | overlap > 100) {
-    warning('overlap must be >0 and <= 100%; resetting to 70')
-    overlap = 70
-  }
-  if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  if (!is.numeric(windowLength) | windowLength <= 0 |
-      windowLength > (audio$duration * 1000)) {
-    windowLength = min(50, audio$duration / 2 * 1000)
-    warning(paste0('"windowLength" must be between 0 and sound_duration ms;
-            defaulting to ', windowLength, ' ms'))
-  }
-  windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
-  step_points = round(step / 1000 * audio$samplingRate)
-  step = step_points / audio$samplingRate * 1000
-  windowLength = windowLength_points / audio$samplingRate * 1000
-  # step_points can only be an integer, introducing small timing errors in long sounds
-
-  # DC offset
-  if (killDC) {
-    sound = killDC(audio$sound, windowLength = windowDC, samplingRate = audio$samplingRate)
-  }
-
-  # calculate RMS per frame
-  myseq = seq(1, max(1, (audio$ls - windowLength_points)), step_points)
-  r = apply(as.matrix(myseq), 1, function(x) {
-    sqrt(mean(audio$sound[x:(windowLength_points + x - 1)] ^ 2))
-  })
-  names(r) = myseq / audio$samplingRate * 1000 + windowLength / 2
-
-  # plotting
-  if (plot) {
-    time = 1:audio$ls / audio$samplingRate * 1000
-    plot(time, audio$sound, type = 'n', xlab = xlab, ylab = ylab, xaxt = 'n',
-         ylim = c(-audio$scale, audio$scale), ...)
-    time_location = axTicks(1)
-    time_labels = convert_sec_to_hms(time_location / 1000, 3)
-    axis(side = 1, at = time_location, labels = time_labels)
-    points(time, audio$sound, type = 'l')
-    points(as.numeric(names(r)), r, type = type, col = col, lwd = lwd, ...)
-  }
-
-  if (normalize) r = r / audio$scale
-  return(r)
-}
-
-
 #' RMS amplitude
 #'
 #' Calculates root mean square (RMS) amplitude in overlapping windows, providing
@@ -152,18 +86,35 @@ getRMS = function(
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery', 'summaryFun')]
-  result = processAudio(x = x,
-                        samplingRate = samplingRate,
-                        scale = scale,
-                        from = from,
-                        to = to,
-                        funToCall = 'getRMSSound',
-                        myPars = myPars,
-                        summaryFun = summaryFun,
-                        var_noSummary = NULL,
-                        reportEvery = reportEvery
+  pa = processAudio(x,
+                    samplingRate = samplingRate,
+                    scale = scale,
+                    from = from,
+                    to = to,
+                    funToCall = 'getRMSSound',
+                    myPars = myPars,
+                    reportEvery = reportEvery
   )
-  invisible(result)
+
+  # prepare output
+  if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
+    temp = vector('list', pa$input$n)
+    for (i in 1:pa$input$n) {
+      temp[[i]] = summarizeAnalyze(
+        data.frame(ampl = pa$result[[i]]),
+        summaryFun = summaryFun,
+        var_noSummary = NULL)
+    }
+    mysum_all = cbind(data.frame(file = pa$input$filenames_base),
+                      do.call('rbind', temp))
+  } else {
+    mysum_all = NULL
+  }
+  if (pa$input$n == 1) pa$result = pa$result[[1]]
+  invisible(list(
+    detailed = pa$result,
+    summary = mysum_all
+  ))
 }
 
 
@@ -173,6 +124,71 @@ getRMSFolder = function(...) {
   message('getRMSFolder() is deprecated; please use getRMS() instead')
 }
 
+
+#' RMS amplitude per sound
+#'
+#' Internal soundgen function called by \code{\link{getRMS}}.
+#' @param audio a list returned by \code{readAudio}
+#' @inheritParams getRMS
+#' @keywords internal
+getRMSSound = function(audio,
+                       windowLength = 50,
+                       step = NULL,
+                       overlap = 75,
+                       killDC = FALSE,
+                       normalize = TRUE,
+                       windowDC = 200,
+                       plot = TRUE,
+                       xlab = '',
+                       ylab = '',
+                       type = 'b',
+                       col = 'green',
+                       lwd = 2,
+                       ...) {
+  if (overlap < 0 | overlap > 100) {
+    warning('overlap must be >0 and <= 100%; resetting to 70')
+    overlap = 70
+  }
+  if (is.null(step)) step = windowLength * (1 - overlap / 100)
+  if (!is.numeric(windowLength) | windowLength <= 0 |
+      windowLength > (audio$duration * 1000)) {
+    windowLength = min(50, audio$duration / 2 * 1000)
+    warning(paste0('"windowLength" must be between 0 and sound_duration ms;
+            defaulting to ', windowLength, ' ms'))
+  }
+  windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
+  step_points = round(step / 1000 * audio$samplingRate)
+  step = step_points / audio$samplingRate * 1000
+  windowLength = windowLength_points / audio$samplingRate * 1000
+  # step_points can only be an integer, introducing small timing errors in long sounds
+
+  # DC offset
+  if (killDC) {
+    sound = killDC(audio$sound, windowLength = windowDC, samplingRate = audio$samplingRate)
+  }
+
+  # calculate RMS per frame
+  myseq = seq(1, max(1, (audio$ls - windowLength_points)), step_points)
+  r = apply(as.matrix(myseq), 1, function(x) {
+    sqrt(mean(audio$sound[x:(windowLength_points + x - 1)] ^ 2))
+  })
+  names(r) = myseq / audio$samplingRate * 1000 + windowLength / 2
+
+  # plotting
+  if (plot) {
+    time = 1:audio$ls / audio$samplingRate * 1000
+    plot(time, audio$sound, type = 'n', xlab = xlab, ylab = ylab, xaxt = 'n',
+         ylim = c(-audio$scale, audio$scale), ...)
+    time_location = axTicks(1)
+    time_labels = convert_sec_to_hms(time_location / 1000, 3)
+    axis(side = 1, at = time_location, labels = time_labels)
+    points(time, audio$sound, type = 'l')
+    points(as.numeric(names(r)), r, type = type, col = col, lwd = lwd, ...)
+  }
+
+  if (normalize) r = r / audio$scale
+  return(r)
+}
 
 
 #' Normalize folder
@@ -374,9 +390,12 @@ normalizeFolder = function(
 #' \dontrun{
 #' s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE)
 #' # playme(s)
-#' s_flat1 = flatEnv(s, 16000, plot = TRUE, windowLength = 50, method = 'hil')
-#' s_flat2 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'rms')
-#' s_flat3 = flatEnv(s, 16000, plot = TRUE, windowLength = 10, method = 'peak')
+#' s_flat1 = flatEnv(s, 16000, dynamicRange = 60, plot = TRUE,
+#'                   windowLength = 50, method = 'hil')
+#' s_flat2 = flatEnv(s, 16000, dynamicRange = 60, plot = TRUE,
+#'                   windowLength = 10, method = 'rms')
+#' s_flat3 = flatEnv(s, 16000, dynamicRange = 60, plot = TRUE,
+#'                   windowLength = 10, method = 'peak')
 #' # playme(s_flat2)
 #'
 #' # Remove DC offset
@@ -406,15 +425,20 @@ flatEnv = function(x,
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'scale', 'reportEvery')]
-  result = processAudio(x = x,
-                        samplingRate = samplingRate,
-                        scale = scale,
-                        funToCall = 'flatEnvSound',
-                        myPars = myPars,
-                        summaryFun = NULL,
-                        var_noSummary = NULL,
-                        reportEvery = reportEvery
-  )$detailed
+  pa = processAudio(x = x,
+                    samplingRate = samplingRate,
+                    scale = scale,
+                    funToCall = 'flatEnvSound',
+                    myPars = myPars,
+                    reportEvery = reportEvery
+  )
+
+  # prepare output
+  if (pa$input$n == 1) {
+    result = pa$result[[1]]
+  } else {
+    result = pa$result
+  }
   invisible(result)
 }
 
@@ -675,14 +699,19 @@ addAM = function(x,
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'from', 'to', 'reportEvery')]
-  result = processAudio(x = x,
-                        samplingRate = samplingRate,
-                        funToCall = 'addAMSound',
-                        myPars = myPars,
-                        summaryFun = NULL,
-                        reportEvery = reportEvery
+  pa = processAudio(x,
+                    samplingRate = samplingRate,
+                    funToCall = 'addAMSound',
+                    myPars = myPars,
+                    reportEvery = reportEvery
   )
-  invisible(result$detailed)
+  # prepare output
+  if (pa$input$n == 1) {
+    result = pa$result[[1]]
+  } else {
+    result = pa$result
+  }
+  invisible(result)
 }
 
 

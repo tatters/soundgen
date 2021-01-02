@@ -31,8 +31,8 @@ ssm(
 )
 }
 \arguments{
-\item{x}{path to a .wav or .mp3 file, Wave object, or a numeric vector
-representing the waveform with specified samplingRate}
+\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
+representing the waveform}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than an audio file or Wave object)}
@@ -44,7 +44,7 @@ numeric vector, rather than an audio file or Wave object)}
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
-will be slightly different, eg 24.98866 instead of 25.0 ms)}
+may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{ssmWin}{window for averaging SSM, ms}
 

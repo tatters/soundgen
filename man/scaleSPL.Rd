@@ -9,11 +9,12 @@ scaleSPL(x, scale = NULL, SPL_measured = 70, Pref = 2e-05)
 \arguments{
 \item{x}{numeric vector ranging from -1 to +1}
 
-\item{scale}{the maximum possible value of \code{x} (only needed if \code{x}
-is a numeric vector, rather than an audio file); defaults to observed
-\code{max(abs(x))} if it is greater than 1 and to 1 otherwise}
+\item{scale}{maximum possible amplitude of input used for normalization of
+input vector (only needed if \code{x} is a numeric vector, rather than an
+audio file or Wave object)}
 
-\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB
+(set to 0 to skip analyzing subjective loudness)}
 
 \item{Pref}{reference pressure, Pa}
 }

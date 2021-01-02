@@ -1,6 +1,6 @@
 # TODO: analyze - remove or fix voicedSeparate; analyze etc - add error-proof operation a la segment; deprecate all Folder functions - just accept a file or a folder as input
 
-# TODO maybe: inverse distance weighting interpolation instead of interpolMatrix; sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); mel-spectrum - check/implement bandpass filters for each critical band; adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
+# TODO maybe: add mel/bark to spectrogram(yScale); inverse distance weighting interpolation instead of interpolMatrix; sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); mel-spectrum - check/implement bandpass filters for each critical band; adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser') or options('browser' = '/usr/bin/google-chrome') to check a Shiny app in a non-default browser
 
@@ -245,13 +245,15 @@ NULL
 #'
 #' # Intonation contours per syllable and globally:
 #' sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
-#'   play = playback, pitch = data.frame(
-#'     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
-#'   pitchGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
+#'   pitch = list(
+#'     time = c(0, 0.65, 1),
+#'     value = c(977, 1540, 826)),
+#'   pitchGlobal = list(time = c(0, .5, 1), value = c(-6, 7, 0)),
+#'   play = playback, plot = TRUE)
 #'
 #' # Subharmonics / sidebands (noisy scream)
 #' sound = soundgen(subFreq = 75, subDep = runif(10, 0, 60), subWidth = 130,
-#'   pitch = data.frame(
+#'   pitch = list(
 #'     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
 #'   sylLen = 800,
 #'   play = playback, plot = TRUE)

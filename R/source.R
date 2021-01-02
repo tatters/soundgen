@@ -840,13 +840,12 @@ generateHarmonics = function(pitch,
 
 #' Generate glottal cycles
 #'
-#' Internal soundgen function.
-#' Takes descriptives of a number of glottal cycles (f0, closed phase, rolloff -
-#' note that all three should be vectors of the same length, namely nGC) and
-#' creates a waveform consisting of a string of these glottal cycles separated
-#' by pauses (if there is a closed phase). The principle is to work with one
-#' glottal cycle at a time and create a sine wave for each harmonic, with
-#' amplitudes adjusted by rolloff.
+#' Internal soundgen function. Takes descriptives of a number of glottal cycles
+#' (f0, closed phase, rolloff - note that all three should be vectors of the
+#' same length, namely nGC) and creates a waveform consisting of a string of
+#' these glottal cycles separated by pauses (if there is a closed phase). The
+#' principle is to work with one glottal cycle at a time and create a sine wave
+#' for each harmonic, with amplitudes adjusted by rolloff.
 #' @param pitch_per_gc pitch per glottal cycle, Hz
 #' @param glottisClosed_per_gc proportion of closed phase per glottal cycle, \%
 #' @param rolloff_per_gc a list of one-column matrices, one for each glottal
@@ -855,9 +854,11 @@ generateHarmonics = function(pitch,
 #'   the ratio to F0 (eg 1.5 means it's a subharmonic added between f0 and its
 #'   first harmonic)
 #' @param samplingRate the sampling rate of generated sound, Hz
-#' @param wn windowing function applied to each glottal cycle (see ftwindow_modif)
+#' @param wn windowing function applied to each glottal cycle (see
+#'   \code{\link[seewave]{ftwindow}})
 #' @param interpol method used to adjust the number of gc to target duration
-#' @return Returns a waveform as a non-normalized numeric vector centered at zero.
+#' @return Returns a waveform as a non-normalized numeric vector centered at
+#'   zero.
 #' @keywords internal
 #' @examples
 #' pitch_per_gc = seq(100, 150, length.out = 25)
@@ -926,7 +927,7 @@ generateGC = function(pitch_per_gc,
       # waveform = crossFade(waveform, new, crossLenPoints = fadeTime_points, shape = 'lin')
     } else {
       # window before glueing gc with pauses
-      win = ftwindow_modif(wl = gc_len_adj[i], wn = wn)
+      win = seewave::ftwindow(wl = gc_len_adj[i], wn = wn)
       # plot(win, type = 'b')
       cycle_win = cycle * win
       # plot(cycle_win, type = 'l')
