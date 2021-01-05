@@ -4,7 +4,14 @@
 \alias{selfsim}
 \title{Compute self-similarity}
 \usage{
-selfsim(m, norm = FALSE, simil = c("cosine", "cor")[1], win = 1)
+selfsim(
+  m,
+  norm = FALSE,
+  simil = c("cosine", "cor")[1],
+  win = 1,
+  sparse = FALSE,
+  kernelSize = NULL
+)
 }
 \arguments{
 \item{m}{input matrix such as a spectrogram}
@@ -15,6 +22,9 @@ selfsim(m, norm = FALSE, simil = c("cosine", "cor")[1], win = 1)
 = Pearson's correlation}
 
 \item{win}{the length of window for averaging self-similarity, frames}
+
+\item{sparse}{if TRUE, the entire SSM is not calculated, but only the central
+region needed to extract the novelty contour (speeds up the processing)}
 }
 \value{
 Returns a square self-similarity matrix.

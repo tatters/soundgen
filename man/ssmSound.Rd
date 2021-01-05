@@ -9,15 +9,16 @@ ssmSound(
   windowLength = 40,
   overlap = 75,
   step = NULL,
-  ssmWin = 40,
+  win = 1,
+  sparse = FALSE,
   maxFreq = NULL,
   nBands = NULL,
   MFCC = 2:13,
-  input = c("mfcc", "audiogram", "spectrum")[1],
+  input = c("mfcc", "audiogram", "spectrum")[2],
   norm = FALSE,
   simil = c("cosine", "cor")[1],
-  kernelLen = 200,
-  kernelSD = 0.2,
+  kernelLen = 100,
+  kernelSD = 0.5,
   padWith = 0,
   plot = TRUE,
   main = NULL,
@@ -45,7 +46,8 @@ because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
 may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
-\item{ssmWin}{window for averaging SSM, ms}
+\item{sparse}{if TRUE, the entire SSM is not calculated, but only the central
+region needed to extract the novelty contour (speeds up the processing)}
 
 \item{maxFreq}{highest band edge of mel filters, Hz. Defaults to
 \code{samplingRate / 2}. See \code{\link[tuneR]{melfcc}}}
@@ -56,7 +58,7 @@ windowLength / 20}. See \code{\link[tuneR]{melfcc}}}
 \item{MFCC}{which mel-frequency cepstral coefficients to use; defaults to
 \code{2:13}}
 
-\item{input}{either MFCCs ("cepstrum") or mel-filtered spectrum ("audiogram")}
+\item{input}{the spectral representation used to calculate the SSM}
 
 \item{norm}{if TRUE, the spectrum of each STFT frame is normalized}
 
@@ -64,7 +66,7 @@ windowLength / 20}. See \code{\link[tuneR]{melfcc}}}
 = Pearson's correlation}
 
 \item{kernelLen}{length of checkerboard kernel for calculating novelty, ms
-(larger values favor global vs. local novelty)}
+(larger values favor global, slow vs. local, fast novelty)}
 
 \item{kernelSD}{SD of checkerboard kernel for calculating novelty}
 
