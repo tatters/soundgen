@@ -668,7 +668,7 @@ ms = modulationSpectrum(
   s, samplingRate = 16000, windowLength = 40, step = 10,
   logSpec = FALSE,  # log-transform the spectrogram before 2D FFT?
   power = 2,  # square amplitudes in modulation spectrum ("power" spectrum)
-  roughRange = c(15, 35),  # temporal modulations in the "roughness" range
+  roughRange = c(30, 150),  # temporal modulations in the "roughness" range
   logWarp = 2,  # log-transform axes for plotting
   kernelSize = 7,  # apply Gaussian blur for smoothing
   quantiles = c(.5, .8, .95, .99),  # customize contour lines

@@ -144,15 +144,9 @@ getLoudness = function(x,
 
   # htmlPlots
   if (!is.null(pa$input$savePlots)) {
-    if (pa$input$filenames_base[1] == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(pa$input$filenames_base, 1,
-                        nchar(pa$input$filenames_base) - 4)
-    }
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_loudness.html'),
-      plotFiles = paste0(pa$input$savePlots, plotname, "_loudness.png"),
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_loudness.png"),
       audioFiles = pa$input$filenames,
       width = paste0(width, units))
   }
@@ -244,12 +238,7 @@ getLoudnessSound = function(audio,
   # get power spectrum
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    if (audio$filename_base == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
-    }
-    png(filename = paste0(audio$savePlots, plotname, "_loudness.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_base, "_loudness.png"),
         width = width, height = height, units = units, res = res)
   }
   powerSpec = tuneR::powspec(
@@ -326,7 +315,7 @@ getLoudnessSound = function(audio,
     if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
     loudness_norm = loudness / max(loudness) * ylim[2] * 1000
     spectrogramSound(
-      audio,
+      audio[which(names(audio) != 'savePlots')],
       windowLength = windowLength, step = step,
       output = 'original', normalize = FALSE,
       padWithSilence = FALSE,

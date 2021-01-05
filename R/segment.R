@@ -245,15 +245,9 @@ segment = function(
 
   # htmlPlots
   if (!is.null(pa$input$savePlots)) {
-    if (pa$input$filenames_base[1] == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(pa$input$filenames_base, 1,
-                        nchar(pa$input$filenames_base) - 4)
-    }
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_segment.html'),
-      plotFiles = paste0(pa$input$savePlots, plotname, "_segment.png"),
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_segment.png"),
       audioFiles = pa$input$filenames,
       width = paste0(width, units))
   }
@@ -726,9 +720,15 @@ segmentSound = function(
     }
   }
 
+  ## plotting
+  if (is.character(audio$savePlots)) {
+    plot = TRUE
+    png(filename = paste0(audio$savePlots, audio$filename_base, "_segment.png"),
+        width = width, height = height, units = units, res = res)
+  }
 
   ## save all extracted syllables as separate audio files for easy examination
-  if (is.character(saveAudio) && !is.na(syllables$sylLen[1])) {
+  if (is.character(audio$saveAudio) && !is.na(syllables$sylLen[1])) {
     addSil = rep(0, addSilence * audio$samplingRate / 1000)
     for (i in 1:nrow(syllables)) {
       from = max(1, audio$samplingRate * ((syllables$start[i]) / 1000))  #  - windowLength / 2
@@ -736,23 +736,12 @@ segmentSound = function(
       temp = c(addSil, audio$sound[from:to], addSil)
       name_noExt = substr(plotname, 1, nchar(plotname) - 4)
       filename_i = paste0(
-        saveAudio, name_noExt, '_', round(syllables$start[i], 0),
+        audio$saveAudio, name_noExt, '_', round(syllables$start[i], 0),
         '-', round(syllables$end[i], 0), '.wav')
       seewave::savewav(temp, f = audio$samplingRate, filename = filename_i)
     }
   }
 
-  ## plotting
-  if (is.character(audio$savePlots)) {
-    plot = TRUE
-    if (audio$filename_base == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
-    }
-    png(filename = paste0(audio$savePlots, plotname, "_segment.png"),
-        width = width, height = height, units = units, res = res)
-  }
   if (plot) {
     # defaults
     if (is.null(sylPlot$lty)) sylPlot$lty = 1
@@ -761,6 +750,14 @@ segmentSound = function(
     if (is.null(burstPlot$pch)) burstPlot$pch = 8
     if (is.null(burstPlot$cex)) burstPlot$cex = 3
     if (is.null(burstPlot$col)) burstPlot$col = 'red'
+
+    if (is.null(main)) {
+      if (audio$filename_base == 'sound') {
+        main = ''
+      } else {
+        main = audio$filename_base
+      }
+    }
 
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(2, 1))
@@ -862,6 +859,3 @@ segmentSound = function(
     bursts = bursts)
   return(result)
 }
-
-
-

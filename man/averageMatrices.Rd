@@ -28,6 +28,6 @@ mat_list = list(
   matrix(80:17, nrow = 8)
 )
 soundgen:::averageMatrices(mat_list)
-soundgen:::averageMatrices(mat_list, cFun = 'max', aggFun = '*')
+soundgen:::averageMatrices(mat_list, cFun = 'max', reduceFun = '*')
 }
 \keyword{internal}

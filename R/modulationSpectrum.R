@@ -262,15 +262,9 @@ modulationSpectrum = function(
 
   # htmlPlots
   if (!is.null(pa$input$savePlots)) {
-    if (pa$input$filenames_base[1] == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(pa$input$filenames_base, 1,
-                        nchar(pa$input$filenames_base) - 4)
-    }
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_MS.html'),
-      plotFiles = paste0(pa$input$savePlots, plotname, "_MS.png"),
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_MS.png"),
       audioFiles = pa$input$filenames,
       width = paste0(width, units))
   }
@@ -306,7 +300,9 @@ modulationSpectrum = function(
   for (i in idx_failed) pa$result[[i]] = list(
     original = NULL, processed = NULL, complex = NULL, roughness = NULL
   )
-
+  435
+  original = processed = complex = roughness = NULL
+  # (otherwise note about no visible binding)
   out_prep = c('original', 'processed', 'complex', 'roughness')
   if (pa$input$n == 1) {
     # unlist
@@ -337,7 +333,7 @@ modulationSpectrum = function(
 
   invisible(list(original = original,
                  processed = processed,
-                 compLlex = complex,
+                 complex = complex,
                  roughness = roughness,
                  summary = mysum_all))
 }
@@ -406,7 +402,7 @@ modulationSpectrumSound = function(
   if (is.numeric(nFrames)) {
     # split the input sound into chunks nFrames long
     chunk_ms = windowLength + step * (nFrames - 1)
-    splitInto = ceiling(audio$duration * 1000 / chunk_ms)
+    splitInto = max(1, ceiling(audio$duration * 1000 / chunk_ms))
     if (chunk_ms > (audio$duration * 1000)) {
       message(paste('The sound is too short to be analyzed with amRes =', amRes,
                     'Hz. Roughness is probably not measured correctly'))
@@ -414,14 +410,18 @@ modulationSpectrumSound = function(
     }
   } else {
     # split only those sounds that exceed maxDur
-    splitInto = ceiling(audio$duration / maxDur)
+    splitInto = max(1, ceiling(audio$duration / maxDur))
     # so, for ex., if 2.1 times longer than maxDur, split into three
   }
-  myseq = floor(seq(1, length(audio$sound), length.out = splitInto + 1))
-  myInput = vector('list', splitInto)
-  for (i in 1:splitInto) {
-    idx = myseq[i]:(myseq[i + 1])
-    myInput[[i]] = audio$sound[idx]
+  if (splitInto > 1) {
+    myseq = floor(seq(1, length(audio$sound), length.out = splitInto + 1))
+    myInput = vector('list', splitInto)
+    for (i in 1:splitInto) {
+      idx = myseq[i]:(myseq[i + 1])
+      myInput[[i]] = audio$sound[idx]
+    }
+  } else {
+    myInput = list(audio$sound)
   }
 
   # extract modulation spectrum per fragment
@@ -486,8 +486,6 @@ modulationSpectrumSound = function(
         rFun = 'max',
         cFun = 'median',
         reduceFun = '+')
-      colnames(out_aggreg_complex) = X
-      rownames(out_aggreg_complex) = c(-rev(Y), Y)
       # image(t(log(abs(out_aggreg_complex))))
     }
 
@@ -522,12 +520,7 @@ modulationSpectrumSound = function(
   # PLOTTING
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    if (audio$filename_base == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
-    }
-    png(filename = paste0(audio$savePlots, plotname, "_MS.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_base, "_MS.png"),
         width = width, height = height, units = units, res = res)
   }
 
@@ -542,7 +535,7 @@ modulationSpectrumSound = function(
         color.palette = color.palette,
         xlab = xlab, ylab = ylab,
         bty = 'n', axisX = FALSE, axisY = FALSE,
-        main = plotname,
+        main = audio$filename_base,
         xlim = xlim, ylim = ylim,
         ...
       )
@@ -725,7 +718,7 @@ getRough = function(m, roughRange, colNames = NULL) {
 #'   matrix(80:17, nrow = 8)
 #' )
 #' soundgen:::averageMatrices(mat_list)
-#' soundgen:::averageMatrices(mat_list, cFun = 'max', aggFun = '*')
+#' soundgen:::averageMatrices(mat_list, cFun = 'max', reduceFun = '*')
 averageMatrices = function(mat_list,
                            rFun = 'max',
                            cFun = 'median',

@@ -811,23 +811,28 @@ formatPitchManual = function(pitchManual) {
 #' @keywords internal
 checkInputType = function(x) {
   if (is.character(x)) {
-    if (dir.exists(x)) {
+    if (length(x) == 1 && dir.exists(x)) {
       # input is a folder
       x = dirname(paste0(x, '/arbitrary'))  # strips terminal '/', if any
       filenames = list.files(x, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
       if (length(filenames) < 1)
         stop(paste('No wav/mp3 files found in', x))
-    } else if (file.exists(x)) {
-      # input is an audio file
-      filenames = x
-      if (!substr(x, nchar(x) - 3, nchar(x)) %in% c('.wav', '.mp3', '.WAV', '.MP3'))
-        stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
     } else {
-      stop('Input not recognized - must be a folder, wav/mp3 file, or numeric vector')
+      # input is one or more audio files
+      for (f in 1:length(x)) {
+        if (!file.exists(x) ||
+            !substr(x, nchar(x) - 3, nchar(x)) %in% c('.wav', '.mp3', '.WAV', '.MP3')) {
+          stop('Input not recognized - must be a folder, wav/mp3 file(s), or numeric vector(s)')
+        }
+      }
+      filenames = x
     }
     n = length(filenames)
     type = rep('file', n)
     filenames_base = basename(filenames)
+    # strip extension
+    for (f in 1:n)
+      filenames_base[f] = substr(filenames_base[f], 1, nchar(filenames_base[f]) - 4)
     filesizes = file.info(filenames)$size
   } else {
     if (!is.list(x)) x = list(x)
@@ -910,8 +915,7 @@ readAudio = function(x,
     m = max(abs(sound))
     if (is.null(scale)) {
       scale = max(m, 1)
-      message(paste('Scale not specified. Assuming that max amplitude is',
-                    scale))
+      # message(paste('Scale not specified. Assuming that max amplitude is', scale))
     } else if (is.numeric(scale)) {
       if (scale < m) {
         scale = m
@@ -1031,6 +1035,7 @@ processAudio = function(x,
 
   result = vector('list', input$n)
   names(result) = input$filenames_base
+  if (input$type[1] == 'file') x = rep(list(NULL), input$n)
   if (!is.list(x)) x = list(x)
   time_start = proc.time()  # timing
   for (i in 1:input$n) {

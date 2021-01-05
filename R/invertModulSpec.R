@@ -19,62 +19,73 @@
 #' @inheritParams modulationSpectrum
 #' @inheritParams filterMS
 #' @inheritParams invertSpectrogram
+#' @param saveAudio path to folder in which to save audio ('' = same as input,
+#'   NULL = don't save)
 #' @param play if TRUE, plays back the output
 #' @param plot if TRUE, produces a triple plot: original MS, filtered MS, and
 #'   the MS of the output sound
 #' @export
 #' @examples
 #' # Create a sound to be filtered
-#' samplingRate = 16000
 #' s = soundgen(pitch = rnorm(n = 20, mean = 200, sd = 25),
-#'   amFreq = 25, amDep = 50, samplingRate = samplingRate,
+#'   amFreq = 25, amDep = 50, samplingRate = 16000,
 #'   addSilence = 50, plot = TRUE, osc = TRUE)
-#' # playme(s, samplingRate)
+#' # playme(s, 16000)
 #'
 #' # Filter
-#' s_filt = filterSoundByMS(s, samplingRate = samplingRate,
+#' s_filt = filterSoundByMS(s, samplingRate = 16000,
 #'   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
 #'   action = 'remove', nIter = 10)
 #' # playme(s_filt, samplingRate)
+#'
 #' \dontrun{
+#' # Process all files in a folder, save filtered audio and plots
+#' s_filt = filterSoundByMS('~/Downloads/temp2',
+#'   saveAudio = '', savePlots = '',
+#'   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
+#'   action = 'remove', nIter = 10)
+#'
 #' # Download an example - a bit of speech (sampled at 16000 Hz)
 #' download.file('http://cogsci.se/soundgen/audio/speechEx.wav',
 #'               destfile = '~/Downloads/speechEx.wav')  # modify as needed
 #' target = '~/Downloads/speechEx.wav'
 #' samplingRate = tuneR::readWave(target)@samp.rate
-#' playme(target, samplingRate)
-#' spectrogram(target, samplingRate = samplingRate, osc = TRUE)
+#' playme(target)
+#' spectrogram(target, osc = TRUE)
 #'
 #' # Remove AM above 3 Hz from a bit of speech (remove most temporal details)
-#' s_filt1 = filterSoundByMS(target, samplingRate = samplingRate,
-#'   amCond = 'abs(am) > 3', action = 'remove', nIter = 15)
+#' s_filt1 = filterSoundByMS(target, amCond = 'abs(am) > 3',
+#'                           action = 'remove', nIter = 15)
 #' playme(s_filt1, samplingRate)
 #' spectrogram(s_filt1, samplingRate = samplingRate, osc = TRUE)
 #'
-#' # Barely any change when AM in 5-25 Hz is preserved:
-#' s_filt2 = filterSoundByMS(target, samplingRate = samplingRate,
-#'   amCond = 'abs(am) > 5 & abs(am) < 25', action = 'preserve', nIter = 15)
+#' # Intelligigble when AM in 5-25 Hz is preserved:
+#' s_filt2 = filterSoundByMS(target, amCond = 'abs(am) > 5 & abs(am) < 25',
+#'                           action = 'preserve', nIter = 15)
 #' playme(s_filt2, samplingRate)
+#' spectrogram(s_filt2, samplingRate = samplingRate, osc = TRUE)
 #'
 #' # Remove slow AM/FM (prosody) to achieve a "robotic" voice
-#' s_filt3 = filterSoundByMS(target, samplingRate = samplingRate,
-#'   jointCond = 'am^2 + (fm*3)^2 < 300', nIter = 15)
+#' s_filt3 = filterSoundByMS(target, jointCond = 'am^2 + (fm*3)^2 < 300',
+#'                           nIter = 15)
 #' playme(s_filt3, samplingRate)
+#' spectrogram(s_filt3, samplingRate = samplingRate, osc = TRUE)
+#'
 #'
 #' ## An alternative manual workflow w/o calling filterSoundByMS()
 #' # This way you can modify the MS directly and more flexibly
 #' # than with the filterMS() function called by filterSoundByMS()
 #'
 #' # (optional) Check that the target spectrogram can be successfully inverted
-#' spec = spectrogram(s, samplingRate, windowLength = 25, overlap = 80,
+#' spec = spectrogram(s, 16000, windowLength = 25, overlap = 80,
 #'   wn = 'hanning', osc = TRUE, padWithSilence = FALSE)
-#' s_rev = invertSpectrogram(spec, samplingRate = samplingRate,
+#' s_rev = invertSpectrogram(spec, samplingRate = 16000,
 #'   windowLength = 25, overlap = 80, wn = 'hamming', play = FALSE)
-#' # playme(s_rev, samplingRate)  # should be close to the original
-#' spectrogram(s_rev, samplingRate, osc = TRUE)
+#' # playme(s_rev, 16000)  # should be close to the original
+#' spectrogram(s_rev, 16000, osc = TRUE)
 #'
 #' # Get modulation spectrum starting from the sound...
-#' ms = modulationSpectrum(s, samplingRate = samplingRate, windowLength = 25,
+#' ms = modulationSpectrum(s, samplingRate = 16000, windowLength = 25,
 #'   overlap = 80, wn = 'hanning', amRes = NULL, maxDur = Inf, logSpec = FALSE,
 #'   power = NA, returnComplex = TRUE, plot = FALSE)$complex
 #' # ... or starting from the spectrogram:
@@ -99,20 +110,20 @@
 #' image(t(log(abs(spec_filt))))
 #'
 #' # Invert the spectrogram
-#' s_filt = invertSpectrogram(abs(spec_filt), samplingRate = samplingRate,
+#' s_filt = invertSpectrogram(abs(spec_filt), samplingRate = 16000,
 #'   windowLength = 25, overlap = 80, wn = 'hanning')
 #' # NB: use the same settings as in "spec = spectrogram(s, ...)" above
 #'
 #' # Compare with the original
-#' playme(s, samplingRate)
-#' spectrogram(s, samplingRate, osc = TRUE)
-#' playme(s_filt, samplingRate)
-#' spectrogram(s_filt, samplingRate, osc = TRUE)
+#' playme(s, 16000)
+#' spectrogram(s, 16000, osc = TRUE)
+#' playme(s_filt, 16000)
+#' spectrogram(s_filt, 16000, osc = TRUE)
 #'
 # Check that the modulation spectrum is as desired
-#' ms_new = modulationSpectrum(s_filt, samplingRate = samplingRate,
+#' ms_new = modulationSpectrum(s_filt, samplingRate = 16000,
 #'   windowLength = 25, overlap = 80, wn = 'hanning', maxDur = Inf,
-#'   plot = FALSE, returnComplex = TRUE)$complex
+#'   plot = TRUE, returnComplex = TRUE)$complex
 #' image(x = as.numeric(colnames(ms_new)), y = as.numeric(rownames(ms_new)),
 #'   z = t(log(abs(ms_new))))
 #' plot(as.numeric(colnames(ms)), log(abs(ms[nrow(ms) / 2, ])), type = 'l')
@@ -123,6 +134,72 @@
 filterSoundByMS = function(
   x,
   samplingRate = NULL,
+  from = NULL,
+  to = NULL,
+  logSpec = FALSE,
+  windowLength = 25,
+  step = NULL,
+  overlap = 80,
+  wn = 'hamming',
+  zp = 0,
+  amCond = NULL,
+  fmCond = NULL,
+  jointCond = NULL,
+  action = c('remove', 'preserve')[1],
+  initialPhase = c('zero', 'random', 'spsi')[3],
+  nIter = 50,
+  reportEvery = NULL,
+  play = FALSE,
+  saveAudio = NULL,
+  plot = TRUE,
+  savePlots = NULL,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA) {
+  ## Prepare a list of arguments to pass to segmentSound()
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  # exclude unnecessary args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'from', 'to', 'savePlots', 'reportEvery')]
+  # exclude ...
+  myPars = myPars[1:(length(myPars)-1)]
+
+  # analyze
+  pa = processAudio(
+    x,
+    samplingRate = samplingRate,
+    from = from,
+    to = to,
+    funToCall = 'filterSoundByMSSound',
+    myPars = myPars,
+    reportEvery = reportEvery,
+    savePlots = savePlots,
+    saveAudio = saveAudio
+  )
+
+  # htmlPlots
+  if (!is.null(pa$input$savePlots)) {
+    htmlPlots(
+      htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_filterByMS.html'),
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_filterByMS.png"),
+      audioFiles = pa$input$filenames,
+      width = paste0(width, units))
+  }
+
+  if (pa$input$n == 1) pa$result = pa$result[[1]]
+  invisible(pa$result)
+}
+
+
+#' Filter a single sound by MS
+#'
+#' Internal soundgen function.
+#' @inheritParams filterSoundByMS
+#' @param audio a list returned by \code{readAudio}
+#' @keywords internal
+filterSoundByMSSound = function(
+  audio,
   logSpec = FALSE,
   windowLength = 25,
   step = NULL,
@@ -136,47 +213,29 @@ filterSoundByMS = function(
   initialPhase = c('zero', 'random', 'spsi')[3],
   nIter = 50,
   play = FALSE,
+  saveAudio = NULL,
   plot = TRUE,
-  savePath = NA) {
-
-  ## import a sound
-  if (class(x)[1] == 'character') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    samplingRate = sound_wav@samp.rate
-    sound = as.numeric(sound_wav@left)
-  }  else if (class(x)[1] == 'numeric' & length(x) > 1) {
-    if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
-    } else {
-      sound = x
-    }
-  }
-
+  savePlots = NULL,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA) {
   # make sure windowLength_points and step_points are not fractions
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  step_points = round(step / 1000 * samplingRate)
-  step = step_points / samplingRate * 1000
-  windowLength_points = round(windowLength / 1000 * samplingRate)
-  windowLength = windowLength_points / samplingRate * 1000
+  step_points = round(step / 1000 * audio$samplingRate)
+  step = step_points / audio$samplingRate * 1000
+  windowLength_points = round(windowLength / 1000 * audio$samplingRate)
+  windowLength = windowLength_points / audio$samplingRate * 1000
   overlap = 100 * (1 - step_points / windowLength_points)
 
   # Get a modulation spectrum
-  ms = modulationSpectrum(
-    sound,
-    samplingRate = samplingRate,
+  ms = modulationSpectrumSound(
+    audio[c('sound', 'samplingRate', 'ls', 'duration')],  # avoid passing savePlots etc
     windowLength = windowLength,
     step = step, overlap = overlap, wn = wn,
     amRes = NULL,  # no roughness contour, the whole sound at once
     maxDur = Inf, logSpec = logSpec,
     power = NA, returnComplex = TRUE,
-    aggregComplex = FALSE,
     plot = FALSE
   )$complex
   # image(x = as.numeric(colnames(ms)), y = as.numeric(rownames(ms)), z = t(log(abs(ms))))
@@ -192,7 +251,7 @@ filterSoundByMS = function(
 
   # Invert the spectrogram
   s_new = invertSpectrogram(
-    abs(spec_filt), samplingRate = samplingRate,
+    abs(spec_filt), samplingRate = audio$samplingRate,
     windowLength = windowLength, wn = wn,
     overlap = overlap, step = step,
     specType = ifelse(logSpec, 'log', 'abs'),
@@ -204,19 +263,34 @@ filterSoundByMS = function(
     plotError = FALSE
   )
 
-  if (play) playme(s_new, samplingRate)
+  if (play) playme(s_new, audio$samplingRate)
+
+  # PLOTTING
+  if (is.character(audio$savePlots)) {
+    plot = TRUE
+    png(filename = paste0(audio$savePlots, audio$filename_base, "_filterByMS.png"),
+        width = width, height = height, units = units, res = res)
+  }
+
+  # save audio
+  if (is.character(audio$saveAudio)) {
+    seewave::savewav(
+      s_new, f = audio$samplingRate,
+      filename = paste0(audio$saveAudio, audio$filename_base, '_filterByMS.wav')
+    )
+  }
 
   if (plot) {
     # Get an MS of the new sound
-    ms_actual = modulationSpectrum(
-      s_new,
-      samplingRate = samplingRate,
+    audio_new = audio
+    audio_new$sound = s_new
+    ms_actual = modulationSpectrumSound(
+      audio_new[c('sound', 'samplingRate', 'ls', 'duration')],  # avoid passing savePlots etc
       windowLength = windowLength,
       step = step, overlap = overlap, wn = wn,
       amRes = NULL,  # no roughness contour, the whole sound at once
       maxDur = Inf, logSpec = logSpec,
       power = NA, returnComplex = TRUE,
-      aggregComplex = FALSE,
       plot = FALSE
     )$complex
 
@@ -237,9 +311,11 @@ filterSoundByMS = function(
           main = 'Achieved MS',
           xlab = '', ylab = '')
     par(mfrow = c(1, 1))
+    if (is.character(audio$saveAudio)) dev.off()
   }
   return(s_new)
 }
+
 
 #' Filter modulation spectrum
 #'
