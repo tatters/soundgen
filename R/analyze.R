@@ -85,15 +85,19 @@ analyzeFolder = function(...) {
 #' @param nFormants the number of formants to extract per STFT frame (0 = no
 #'   formant analysis, NULL = as many as possible)
 #' @param roughness a list of parameters passed to
-#'   \code{\link{modulationSpectrum}} for measuring roughness. Set
-#'   \code{roughness = list(amRes = 0)} to skip roughness analysis
+#'   \code{\link{modulationSpectrum}} for measuring roughness. NULL = skip
+#'   roughness analysis
+#' @param novelty a list of parameters passed to \code{\link{ssm}} for measuring
+#'   spectral novelty. NULL = skip novelty analysis
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 #'   NULL = no pitch analysis)
-#' @param pitchManual manually corrected pitch contour - a numeric vector of any
-#'   length, but ideally as returned by \code{\link{pitch_app}} with the same
-#'   windowLength and step as in current call to analyze
+#' @param pitchManual manually corrected pitch contour. For a single sound,
+#'   provide a numeric vector of any length, and for multiple sounds, a
+#'   dataframe with columns "file" and "pitch" (or path to a csv file), ideally
+#'   as returned by \code{\link{pitch_app}} with the same windowLength and step
+#'   as in current call to analyze
 #' @param entropyThres pitch tracking is only performed for frames with Weiner
 #'   entropy below \code{entropyThres}, but other spectral descriptives are
 #'   still calculated (NULL = analyze everything)
@@ -170,10 +174,6 @@ analyzeFolder = function(...) {
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link{spectrogram}}
-#' @param pitchManual normally the output of \code{\link{pitch_app}} containing
-#'   a manually corrected pitch contour, ideally with the same windowLength and
-#'   step as current call to analyzeFolder; a dataframe with at least two
-#'   columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")
 #' @return Returns a dataframe with one row and three
 #'   columns per acoustic variable (mean / median / SD). If \code{summary =
 #'   FALSE}, returns a dataframe with one row per STFT frame and one column per
@@ -384,7 +384,8 @@ analyze = function(
   cutFreq = NULL,
   nFormants = 3,
   formants = list(verify = FALSE),
-  roughness = list(plot = FALSE),
+  roughness = list(),
+  novelty = list(input = 'melspec', kernelLen = 100),
   pitchMethods = c('dom', 'autocor'),
   pitchManual = NULL,
   entropyThres = 0.6,
@@ -491,7 +492,6 @@ analyze = function(
     }
     assign(noquote(names(parsToValidate)[i]), parGroup_user)
   }
-  if (is.null(roughness$plot)) roughness$plot = FALSE
   rm('parsToValidate', 'parGroup_user', 'parGroup_def', 'p', 'i')
 
   # Check defaults that depend on other pars or require customized warnings
@@ -550,18 +550,26 @@ analyze = function(
     pitchManual_list = NULL
   }
 
+  # reformat novelty list, if any
+  if (!is.null(novelty)) {
+    if (is.null(novelty$windowLength)) novelty$windowLength = windowLength
+    if (is.null(novelty$step)) novelty$step = step
+  }
+
   # match args
   myPars = c(as.list(environment()), list(...))
   # myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery',
-    'savePlots', 'pitchPlot', 'pitchManual', 'summaryFun', 'invalidArgAction')]
+    'savePlots', 'pitchPlot', 'pitchManual', 'summaryFun', 'invalidArgAction',
+    'roughness', 'novelty')]
   # add plot pars correctly, without flattening the lists
   list_pars = c('pitchManual_list', 'pitchPlot',
                 'pitchDom_plotPars', 'pitchAutocor_plotPars',
                 'pitchCep_plotPars', 'pitchSpec_plotPars',
-                'pitchHps_plotPars', 'harmHeight_plotPars')
+                'pitchHps_plotPars', 'harmHeight_plotPars',
+                'roughness', 'novelty')
   for (lp in list_pars) myPars[[lp]] = get(lp)
 
   # analyze
@@ -643,8 +651,9 @@ analyzeSound = function(
   zp = 0,
   cutFreq = NULL,
   nFormants = 3,
-  formants = list(verify = FALSE),
-  roughness = list(plot = FALSE),
+  formants = NULL,
+  roughness = NULL,
+  novelty = NULL,
   pitchMethods = c('dom', 'autocor'),
   pitchManual_list = NULL,
   entropyThres = 0.6,
@@ -1199,9 +1208,13 @@ analyzeSound = function(
   # (or the manual pitch contour, if provided)
   pitch_true = result$pitch
   if (!is.null(pitchManual_list)) {
-    # up/downsample pitchManual to the right length
-    pitch_raw = pitchManual_list[[audio$filename_base]]
+    if (length(pitchManual_list) == 1) {
+      pitch_raw = pitchManual_list[[1]]
+    } else {
+      pitch_raw = pitchManual_list[[audio$filename_base]]
+    }
     if (!is.null(pitch_raw)) {
+      # up/downsample pitchManual to the right length
       pitch_true = upsamplePitchContour(
         pitch = pitch_raw,
         len = nrow(result),
@@ -1214,22 +1227,36 @@ analyzeSound = function(
   }
 
   ## Roughness calculation
-  if (!is.null(roughness$amRes) && roughness$amRes == 0) {
+  if (is.null(roughness) ||
+      (!is.null(roughness$amRes) && roughness$amRes == 0)) {
     # don't analyze the modulation spectrum
     result$roughness = NA
   } else {
     rough = do.call(modulationSpectrumSound, c(
       list(audio = audio[c('sound', 'samplingRate', 'ls', 'duration')],
-           returnMS = FALSE),
+           returnMS = FALSE, plot = FALSE),
       roughness))$roughness
     result$roughness = upsamplePitchContour(rough, len = nrow(result),
                                             plot = FALSE)
     result$roughness[!cond_silence] = NA
   }
 
-  varsToUnv = c('ampl', 'roughness', 'entropy', 'dom', 'HNR', 'loudness',
-                'peakFreq', 'quartile25', 'quartile50', 'quartile75',
-                'specCentroid', 'specSlope')
+  ## Novelty calculation
+  if (is.null(novelty)) {
+    result$novelty = NA
+  } else {
+    novel = do.call(ssmSound, c(
+      list(audio = audio[c('sound', 'samplingRate', 'ls', 'duration')],
+           sparse = TRUE, plot = FALSE),
+      novelty))$novelty
+    result$novelty = upsamplePitchContour(novel, len = nrow(result),
+                                          plot = FALSE)
+    result$novelty[!cond_silence] = NA
+  }
+
+  varsToUnv = c('ampl', 'roughness', 'novelty', 'entropy', 'dom', 'HNR',
+                'loudness', 'peakFreq', 'quartile25', 'quartile50',
+                'quartile75', 'specCentroid', 'specSlope')
   # save spectral descriptives separately for voiced and unvoiced frames
   for (v in varsToUnv) {
     result[, paste0(v, 'Voiced')] = result[, v]
@@ -1268,8 +1295,10 @@ analyzeSound = function(
         cnt = result[, cnt_name]
         col_non_Hz = c('ampl, amplVoiced', 'entropy', 'entropyVoiced',
                        paste0('f', 1:10, '_width'), 'harmEnergy', 'HNR',
-                       'HNR_voiced', 'loudness', 'loudnessVoiced', 'roughness',
-                       'roughnessVoiced', 'specSlope', 'specSlopeVoiced')
+                       'HNR_voiced', 'loudness', 'loudnessVoiced',
+                       'roughness', 'roughnessVoiced',
+                       'novelty', 'noveltyVoiced',
+                       'specSlope', 'specSlopeVoiced')
         if (cnt_name %in% col_non_Hz) {
           # normalize
           if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)

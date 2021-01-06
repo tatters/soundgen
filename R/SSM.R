@@ -85,7 +85,7 @@ ssm = function(
   maxFreq = NULL,
   nBands = NULL,
   MFCC = 2:13,
-  input = c('mfcc', 'audiogram', 'spectrum')[2],
+  input = c('mfcc', 'melspec', 'spectrum')[2],
   norm = FALSE,
   simil = c('cosine', 'cor')[1],
   kernelLen = 100,
@@ -119,14 +119,6 @@ ssm = function(
     col = 'black',
     lwd = 3
   )) {
-  if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  if (is.null(nBands)) {
-    nBands = 100 * windowLength / 20
-  }
-  if (is.null(step)) {
-    step = windowLength / 4
-  }
-
   ## Prepare a list of arguments to pass to segmentSound()
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
@@ -226,7 +218,7 @@ ssmSound = function(
   maxFreq = NULL,
   nBands = NULL,
   MFCC = 2:13,
-  input = c('mfcc', 'audiogram', 'spectrum')[2],
+  input = c('mfcc', 'melspec', 'spectrum')[2],
   norm = FALSE,
   simil = c('cosine', 'cor')[1],
   kernelLen = 100,
@@ -258,6 +250,13 @@ ssmSound = function(
     lwd = 3
   )) {
   ## set pars
+  if (is.null(step)) step = windowLength * (1 - overlap / 100)
+  if (is.null(nBands)) {
+    nBands = 100 * windowLength / 20
+  }
+  if (is.null(step)) {
+    step = windowLength / 4
+  }
   windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
   frame_points = round(audio$samplingRate * step / 1000)
   kernelSize = max(4, round(kernelLen * audio$samplingRate / 1000 / frame_points /
@@ -282,7 +281,7 @@ ssmSound = function(
     # (?), and it overestimates the similarity of different frames
     target_spec = t(mel$cepstra)[MFCC, ]
     target_spec[is.na(target_spec)] = 0  # MFCC are NaN for silent frames
-  } else if (input == 'audiogram') {
+  } else if (input == 'melspec') {
     target_spec = t(mel$aspectrum)
   } else if (input == 'spectrum') {
     target_spec = t(mel$pspectrum)
@@ -313,7 +312,7 @@ ssmSound = function(
   }
   if (plot) {
     # log-transform and normalize spectrogram
-    if (input == 'audiogram') {
+    if (input == 'melspec') {
       spec = log(zeroOne(mel$aspectrum) + 1e-4)  # dynamic range ~ 80 dB or 1e-4
     } else {
       spec = log(zeroOne(mel$pspectrum) + 1e-4)

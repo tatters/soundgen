@@ -22,7 +22,8 @@ analyze(
   cutFreq = NULL,
   nFormants = 3,
   formants = list(verify = FALSE),
-  roughness = list(plot = FALSE),
+  roughness = list(),
+  novelty = list(input = "melspec", kernelLen = 100),
   pitchMethods = c("dom", "autocor"),
   pitchManual = NULL,
   entropyThres = 0.6,
@@ -129,18 +130,22 @@ formant analysis, NULL = as many as possible)}
 perform LPC analysis}
 
 \item{roughness}{a list of parameters passed to
-\code{\link{modulationSpectrum}} for measuring roughness. Set
-\code{roughness = list(amRes = 0)} to skip roughness analysis}
+\code{\link{modulationSpectrum}} for measuring roughness. NULL = skip
+roughness analysis}
+
+\item{novelty}{a list of parameters passed to \code{\link{ssm}} for measuring
+spectral novelty. NULL = skip novelty analysis}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
 NULL = no pitch analysis)}
 
-\item{pitchManual}{normally the output of \code{\link{pitch_app}} containing
-a manually corrected pitch contour, ideally with the same windowLength and
-step as current call to analyzeFolder; a dataframe with at least two
-columns: "file" (w/o path) and "pitch" (character like "NA, 150, 175, NA")}
+\item{pitchManual}{manually corrected pitch contour. For a single sound,
+provide a numeric vector of any length, and for multiple sounds, a
+dataframe with columns "file" and "pitch" (or path to a csv file), ideally
+as returned by \code{\link{pitch_app}} with the same windowLength and step
+as in current call to analyze}
 
 \item{entropyThres}{pitch tracking is only performed for frames with Weiner
 entropy below \code{entropyThres}, but other spectral descriptives are

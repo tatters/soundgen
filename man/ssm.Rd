@@ -17,7 +17,7 @@ ssm(
   maxFreq = NULL,
   nBands = NULL,
   MFCC = 2:13,
-  input = c("mfcc", "audiogram", "spectrum")[2],
+  input = c("mfcc", "melspec", "spectrum")[2],
   norm = FALSE,
   simil = c("cosine", "cor")[1],
   kernelLen = 100,

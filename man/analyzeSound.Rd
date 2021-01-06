@@ -17,8 +17,9 @@ analyzeSound(
   zp = 0,
   cutFreq = NULL,
   nFormants = 3,
-  formants = list(verify = FALSE),
-  roughness = list(plot = FALSE),
+  formants = NULL,
+  roughness = NULL,
+  novelty = NULL,
   pitchMethods = c("dom", "autocor"),
   pitchManual_list = NULL,
   entropyThres = 0.6,
@@ -115,8 +116,11 @@ formant analysis, NULL = as many as possible)}
 perform LPC analysis}
 
 \item{roughness}{a list of parameters passed to
-\code{\link{modulationSpectrum}} for measuring roughness. Set
-\code{roughness = list(amRes = 0)} to skip roughness analysis}
+\code{\link{modulationSpectrum}} for measuring roughness. NULL = skip
+roughness analysis}
+
+\item{novelty}{a list of parameters passed to \code{\link{ssm}} for measuring
+spectral novelty. NULL = skip novelty analysis}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,

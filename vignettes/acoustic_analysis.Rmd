@@ -629,7 +629,7 @@ The results of SSM analysis can vary dramatically, depending on how it is perfor
 ```{r fig.show = "hold", fig.height = 6, fig.width = 7}
 par(mfrow = c(2, 1))
 m1 = ssm(s3, samplingRate = 16000,
-         input = 'audiogram', simil = 'cor', norm = FALSE, 
+         input = 'melspec', simil = 'cor', norm = FALSE, 
          ssmWin = 10, kernelLen = 150)  # detailed, local features
 m2 = ssm(s3, samplingRate = 16000,
          input = 'mfcc', simil = 'cosine', norm = TRUE, 

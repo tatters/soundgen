@@ -1,21 +1,19 @@
           CHANGES IN SOUNDGEN VERSION 1.8.2.9000 [...date...]
 MAJOR (affects back-compatibility):
-  * Functions analyzeFolder(), spectrogramFolder(), segmentFolder(), modulationSpectrumFolder(), getRMSFolder(), getLoudnessFolder(), ... are deprecated. Instead, analyze(), spectrogram(), osc(), segment(), modulationSpectrum(), getRMS(), getLoudness(), ... accept as input either a single sound (numeric vectors, Wave objects, or filenames) or multiple sounds (a list of objects or path to folder with audio files).
-  * Functions analyze(), spectrogram(), osc(), segment(), modulationSpectrum(), getRMS(), getLoudness(), ... return lists with both detailed results and summaries; for example, analyze() returns a list with two components: "$detailed" (frame-by-frame acoustic measures, one dataframe per file) and "$summary" (summaries based on "summaryFun", one row per file)
+  * Functions analyzeFolder(), spectrogramFolder(), segmentFolder(), modulationSpectrumFolder(), getRMSFolder(), getLoudnessFolder(), ... are deprecated. Instead, analyze(), spectrogram(), osc(), segment(), modulationSpectrum(), getRMS(), getLoudness(), ssm(), ... accept as input either a single sound (numeric vector, Wave object, or filename) or multiple sounds (a list of vectors or Wave objects, multiple filenames like "c(file1, file2)"", or path to folder with audio files).
+  * Functions for acoustic analysis return lists with both detailed results and summaries; for example, analyze() returns a list with two components: "$detailed" (frame-by-frame acoustic measures, one dataframe per file) and "$summary" (summaries based on "summaryFun", one row per file)
   * segment(): a new segmentation algorithm based on spectral signal-noise separation, several deprecated and several new arguments, support for long files (>1 h of audio), an option to export detected syllables as separate files, etc.
-  * All functions for acoustic analysis employ harmonized terminology for arguments that specify whether to save plots ("savePlots") and report estimated time left ("reportEvery").
-
-MAJOR:
-  * Support for audio input of class "Wave" from tuneR library
+  * Harmonized terminology throughout the package for basic arguments like "from", "to", saving plots and audio ("savePlots" / "saveAudio"), reporting estimated time left ("reportEvery"), etc.
 
 MINOR:
   * spectrogram(), analyze(): a new argument "extraContour" for plotting something over the spectrogram
-  * spectrogram(), analyze(), etc.: new arguments "from" and "to" for analyzing only a part of a long sound
   * analyze(): spectral slope (specSlope) is returned in dB/kHz
+  * analyze() calls ssm() and returns a novelty contour (a new argument "novelty")
   * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue
   * soundgen(): pitch anchors can contain NAs, eg "pitch = c(150, 200, NA, 110)" - the 3rd quarter will be unvoiced
   * addFormants(): new argument "zFun" for arbitrary transformations of the spectrogram between STFT and iSTFT (eg for de-noising, spectral warping, etc.)
   * flatEnv() AKA compressor(): a new argument "compression" regulates the amount of compression
+  * ssm(): a new argument "sparse" for quickly extracting just the novelty contour from long sounds, changes in default settings, input "audiogram" renamed to "melspec", etc.
 
 BUGS FIXED:
   * formant_app(): fixed occasional crashing when scrolling with left/right buttons, other small-scale debugging
