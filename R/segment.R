@@ -220,7 +220,7 @@ segment = function(
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'reportEvery', 'summaryFun',
+    'x', 'samplingRate', 'from', 'to', 'reportEvery', 'summaryFun',
     'reverbPars', 'sylPlot', 'burstPlot', 'specPlot')]  # otherwise flattens lists
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
@@ -240,7 +240,8 @@ segment = function(
     funToCall = 'segmentSound',
     myPars = myPars,
     reportEvery = reportEvery,
-    savePlots = savePlots
+    savePlots = savePlots,
+    saveAudio = saveAudio
   )
 
   # htmlPlots
@@ -734,9 +735,8 @@ segmentSound = function(
       from = max(1, audio$samplingRate * ((syllables$start[i]) / 1000))  #  - windowLength / 2
       to = min(length(audio$sound), audio$samplingRate * ((syllables$end[i]) / 1000))
       temp = c(addSil, audio$sound[from:to], addSil)
-      name_noExt = substr(plotname, 1, nchar(plotname) - 4)
       filename_i = paste0(
-        audio$saveAudio, name_noExt, '_', round(syllables$start[i], 0),
+        audio$saveAudio, audio$filename_base, '_', round(syllables$start[i], 0),
         '-', round(syllables$end[i], 0), '.wav')
       seewave::savewav(temp, f = audio$samplingRate, filename = filename_i)
     }

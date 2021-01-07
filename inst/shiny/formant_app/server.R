@@ -1156,6 +1156,7 @@ server = function(input, output, session) {
              samplingRate = myPars$samplingRate,
              scale = myPars$maxAmpl,
              timeShift = 0,
+             ls = length(sel_anal),
              duration = length(sel_anal) / myPars$samplingRate),
         windowLength = input$windowLength_lpc,
         step = input$step_lpc,

@@ -383,7 +383,7 @@ analyze = function(
   zp = 0,
   cutFreq = NULL,
   nFormants = 3,
-  formants = list(verify = FALSE),
+  formants = list(),
   roughness = list(),
   novelty = list(input = 'melspec', kernelLen = 100),
   pitchMethods = c('dom', 'autocor'),
@@ -967,7 +967,7 @@ analyzeSound = function(
   ## FORMANTS
   fmts = NULL
   no_formants = FALSE
-  if (is.null(nFormants)) nFormants = 1000
+  if (is.null(nFormants)) nFormants = 100
   # try one frame to see how many formants are returned
   fmts_list = vector('list', length = nf)
   if (nFormants > 0 & nf > 0) {

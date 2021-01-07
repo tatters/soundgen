@@ -127,7 +127,8 @@ getPitchAutocor = function(autoCorrelation,
     upsample_to_bin = which(diff(a$freq) > -autocorUpsample)[1]
     upsample_len = round((a$freq[upsample_from_bin] - a$freq[upsample_to_bin]) /
                            autocorUpsample)
-    if (pitchCeiling > a$freq[upsample_to_bin] & upsample_len > 1) {
+    if (!is.na(upsample_len) &&
+        pitchCeiling > a$freq[upsample_to_bin] & upsample_len > 1) {
       temp = spline(a$amp[upsample_from_bin:upsample_to_bin],
                     n = upsample_len,
                     x = a$freq[upsample_from_bin:upsample_to_bin])
