@@ -82,5 +82,5 @@ getRMS('~/Downloads/temp2/normalized', summaryFun = 'mean')$summary  # same
 }
 }
 \seealso{
-\code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
+\code{\link{getRMS}} \code{\link{analyze}} \code{\link{getLoudness}}
 }

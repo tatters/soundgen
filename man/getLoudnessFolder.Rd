@@ -10,5 +10,5 @@ getLoudnessFolder(...)
 \item{...}{any input parameters}
 }
 \description{
-Get loudness folder
+Deprecated; use \code{\link{getLoudness}} instead
 }

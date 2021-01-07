@@ -10,5 +10,5 @@ analyzeFolder(...)
 \item{...}{any input parameters}
 }
 \description{
-Analyze folder
+Deprecated; use \code{\link{analyze}} instead
 }

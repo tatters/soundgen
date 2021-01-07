@@ -2,18 +2,17 @@
 
 #' Optimize parameters for acoustic analysis
 #'
-#' This customized wrapper for \code{\link[stats]{optim}} attempts to optimize the
-#' parameters of \code{\link{segment}} or \code{\link{analyzeFolder}} by
-#' comparing the results with a manually annotated "key". This optimization
-#' function uses a single measurement per audio file (e.g., median pitch or the
-#' number of syllables). For other purposes, you may want to adapt the
-#' optimization function so that the key specifies the exact timing of
-#' syllables, their median length, frame-by-frame pitch values, or any other
-#' characteristic that you want to optimize for. The general idea remains the
-#' same, however: we want to tune function parameters to fit our type of audio
-#' and research priorities. The default settings of \code{\link{segment}}
-#' and \code{\link{analyzeFolder}} have been optimized for human non-linguistic
-#' vocalizations.
+#' This customized wrapper for \code{\link[stats]{optim}} attempts to optimize
+#' the parameters of \code{\link{segment}} or \code{\link{analyze}} by comparing
+#' the results with a manually annotated "key". This optimization function uses
+#' a single measurement per audio file (e.g., median pitch or the number of
+#' syllables). For other purposes, you may want to adapt the optimization
+#' function so that the key specifies the exact timing of syllables, their
+#' median length, frame-by-frame pitch values, or any other characteristic that
+#' you want to optimize for. The general idea remains the same, however: we want
+#' to tune function parameters to fit our type of audio and research priorities.
+#' The default settings of \code{\link{segment}} and \code{\link{analyze}} have
+#' been optimized for human non-linguistic vocalizations.
 #'
 #' If your sounds are very different from human non-linguistic vocalizations,
 #' you may want to change the default values of other arguments to speed up
@@ -21,7 +20,7 @@
 #' on your data.
 #' @param myfolder path to where the .wav files live
 #' @param myfun the function being optimized: either 'segment' or
-#'   'analyzeFolder' (in quotes)
+#'   'analyze' (in quotes)
 #' @param key a vector containing the "correct" measurement that we are aiming
 #'   to reproduce
 #' @param pars names of arguments to \code{myfun} that should be
@@ -97,7 +96,7 @@
 #' # Optimization of PITCH TRACKING (takes several hours!)
 #' res = optimizePars(
 #'   myfolder = myfolder,
-#'     myfun = 'analyzeFolder',
+#'     myfun = 'analyze',
 #'     key = log(pitchManual),  # log-scale better for pitch
 #'     pars = c('windowLength', 'silence'),
 #'     bounds = list(low = c(5, 0), high = c(500, 1)),
@@ -109,20 +108,21 @@
 #'       (1 - mean(is.na(x) & !is.na(key))) # penalize failing to detect f0
 #' })
 #' }
-optimizePars = function(myfolder,
-                        key,
-                        myfun,
-                        pars,
-                        bounds = NULL,
-                        fitnessPar,
-                        fitnessFun = function(x) 1 - cor(x, key, use = 'pairwise.complete.obs'),
-                        nIter = 10,
-                        init = NULL,
-                        initSD = .2,
-                        control = list(maxit = 50, reltol = .01, trace = 0),
-                        otherPars = list(plot = FALSE, verbose = FALSE),
-                        mygrid = NULL,
-                        verbose = TRUE) {
+optimizePars = function(
+  myfolder,
+  key,
+  myfun,
+  pars,
+  bounds = NULL,
+  fitnessPar,
+  fitnessFun = function(x) 1 - cor(x, key, use = 'pairwise.complete.obs'),
+  nIter = 10,
+  init = NULL,
+  initSD = .2,
+  control = list(maxit = 50, reltol = .01, trace = 0),
+  otherPars = list(plot = FALSE, verbose = FALSE),
+  mygrid = NULL,
+  verbose = TRUE) {
   if (is.null(bounds)) {
     bounds = list(low = rep(-Inf, length(pars)),
                   high = rep(Inf, length(pars)))

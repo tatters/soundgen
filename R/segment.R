@@ -1,6 +1,8 @@
 ## FINDING SYLLABLES AND VOCAL BURSTS ##
 
 #' Segment folder
+#'
+#' Deprecated; use \code{\link{segment}} instead
 #' @param ... any input parameters
 segmentFolder = function(...) {
   message('segmentFolder() is deprecated; please use segment() instead')

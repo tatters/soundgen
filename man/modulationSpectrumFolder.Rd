@@ -10,5 +10,5 @@ modulationSpectrumFolder(...)
 \item{...}{any input parameters}
 }
 \description{
-Modulation spectrum folder
+Deprecated; use \code{\link{modulationSpectrum}} instead
 }

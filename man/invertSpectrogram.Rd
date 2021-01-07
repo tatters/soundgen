@@ -25,7 +25,7 @@ invertSpectrogram(
 matrix with frequency bins in rows and time frames in columns}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{windowLength}{length of FFT window, ms}
 

@@ -1,6 +1,8 @@
 ### Functions for analyzing subjective loudness
 
 #' Get loudness folder
+#'
+#' Deprecated; use \code{\link{getLoudness}} instead
 #' @param ... any input parameters
 getLoudnessFolder = function(...) {
   message('getLoudnessFolder() is deprecated; please use getLoudness() instead')

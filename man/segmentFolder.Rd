@@ -10,5 +10,5 @@ segmentFolder(...)
 \item{...}{any input parameters}
 }
 \description{
-Segment folder
+Deprecated; use \code{\link{segment}} instead
 }

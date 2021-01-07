@@ -24,7 +24,7 @@ evaluatePars(
 optimized}
 
 \item{myfun}{the function being optimized: either 'segment' or
-'analyzeFolder' (in quotes)}
+'analyze' (in quotes)}
 
 \item{bounds}{a list setting the lower and upper boundaries for possible
 values of optimized parameters. For ex., if we optimize \code{smooth}

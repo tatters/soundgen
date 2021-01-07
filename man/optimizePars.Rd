@@ -28,7 +28,7 @@ optimizePars(
 to reproduce}
 
 \item{myfun}{the function being optimized: either 'segment' or
-'analyzeFolder' (in quotes)}
+'analyze' (in quotes)}
 
 \item{pars}{names of arguments to \code{myfun} that should be
 optimized}
@@ -74,18 +74,17 @@ Returns a matrix with one row per iteration with fitness in the first
   remaining columns.
 }
 \description{
-This customized wrapper for \code{\link[stats]{optim}} attempts to optimize the
-parameters of \code{\link{segment}} or \code{\link{analyzeFolder}} by
-comparing the results with a manually annotated "key". This optimization
-function uses a single measurement per audio file (e.g., median pitch or the
-number of syllables). For other purposes, you may want to adapt the
-optimization function so that the key specifies the exact timing of
-syllables, their median length, frame-by-frame pitch values, or any other
-characteristic that you want to optimize for. The general idea remains the
-same, however: we want to tune function parameters to fit our type of audio
-and research priorities. The default settings of \code{\link{segment}}
-and \code{\link{analyzeFolder}} have been optimized for human non-linguistic
-vocalizations.
+This customized wrapper for \code{\link[stats]{optim}} attempts to optimize
+the parameters of \code{\link{segment}} or \code{\link{analyze}} by comparing
+the results with a manually annotated "key". This optimization function uses
+a single measurement per audio file (e.g., median pitch or the number of
+syllables). For other purposes, you may want to adapt the optimization
+function so that the key specifies the exact timing of syllables, their
+median length, frame-by-frame pitch values, or any other characteristic that
+you want to optimize for. The general idea remains the same, however: we want
+to tune function parameters to fit our type of audio and research priorities.
+The default settings of \code{\link{segment}} and \code{\link{analyze}} have
+been optimized for human non-linguistic vocalizations.
 }
 \details{
 If your sounds are very different from human non-linguistic vocalizations,
@@ -135,7 +134,7 @@ res = optimizePars(myfolder = myfolder, myfun = 'segment', key = segment_manual,
 # Optimization of PITCH TRACKING (takes several hours!)
 res = optimizePars(
   myfolder = myfolder,
-    myfun = 'analyzeFolder',
+    myfun = 'analyze',
     key = log(pitchManual),  # log-scale better for pitch
     pars = c('windowLength', 'silence'),
     bounds = list(low = c(5, 0), high = c(500, 1)),

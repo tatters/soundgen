@@ -41,11 +41,12 @@ ssm(
 )
 }
 \arguments{
-\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
-representing the waveform}
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{from}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}
@@ -95,9 +96,7 @@ before and after the recording as unknown, 0 = treat it as silence}
 \item{summaryFun}{functions used to summarize each acoustic characteristic,
 eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
-take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-list containing frame-by-frame values; if \code{summaryFun = 'extended'},
-all pitch candidates are returns as a list}
+take care of NAs yourself}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations}
@@ -179,6 +178,4 @@ ssm(sound, samplingRate = 16000,
 \seealso{
 \code{\link{spectrogram}} \code{\link{modulationSpectrum}}
   \code{\link{segment}}
-
-\code{\link{spectrogram}} \code{\link{modulationSpectrum}}
 }

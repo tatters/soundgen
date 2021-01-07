@@ -21,11 +21,12 @@ reverb(
 )
 }
 \arguments{
-\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
-representing the waveform}
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{echoDelay}{the delay at which the echo appears, ms}
 
@@ -54,7 +55,7 @@ returns a list with reverb window, the added reverb/echo, etc.}
 \item{len}{(optional) the length of input vector (used internally for speed)}
 }
 \description{
-Add reverberation and/or echo to a sound. Algorithm for reverb: add
+Adds reverberation and/or echo to a sound. Algorithm for reverb: adds
 time-shifted copies of the signal weighted by a decay function, which is
 analogous to convoluting the input with a parametric model of some
 hypothetical impulse response function. In simple terms: we specify how much

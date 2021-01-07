@@ -51,15 +51,15 @@ spectrogram(
 )
 }
 \arguments{
-\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
-representing the waveform}
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{scale}{maximum possible amplitude of input used for normalization of
-input vector (only needed if \code{x} is a numeric vector, rather than an
-audio file or Wave object)}
+input vector (only needed if \code{x} is a numeric vector)}
 
 \item{from, to}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}
@@ -115,8 +115,8 @@ left every ... iterations}
 \item{savePlots}{full path to the folder in which to save the plots (NULL =
 don't save, '' = same folder as audio)}
 
-\item{osc}{should an oscillogram be shown under the spectrogram? "none" = no
-osc; "linear" = on the original scale; "dB" = in decibels}
+\item{osc}{"none" = no oscillogram; "linear" = on the original scale; "dB" =
+in decibels}
 
 \item{heights}{a vector of length two specifying the relative height of the
 spectrogram and the oscillogram (including time axes labels)}
@@ -256,6 +256,4 @@ spectrogram(s, 16000, ylim = c(0, 2), extraContour = list(
 }
 \seealso{
 \code{\link{osc}} \code{\link{modulationSpectrum}} \code{\link{ssm}}
-
-\code{\link{modulationSpectrum}} \code{\link{ssm}}
 }

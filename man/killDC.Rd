@@ -16,7 +16,7 @@ killDC(
 \item{windowLength}{the length of smoothing window, ms}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{windowLength_points}{the length of smoothing window, points. If
 specified, overrides \code{windowLength}}

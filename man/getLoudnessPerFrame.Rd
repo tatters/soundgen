@@ -8,7 +8,7 @@ getLoudnessPerFrame(spec, samplingRate, spreadSpectrum = TRUE)
 }
 \arguments{
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{spreadSpectrum}{if TRUE, applies a spreading function to account for
 frequency masking}

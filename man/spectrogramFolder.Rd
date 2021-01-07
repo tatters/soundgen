@@ -10,5 +10,5 @@ spectrogramFolder(...)
 \item{...}{any input parameters}
 }
 \description{
-Spectrogram folder
+Deprecated; use \code{\link{spectrogram}} instead
 }

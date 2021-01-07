@@ -29,7 +29,7 @@ Defaults to median pitch of each respective sound estimated by
 \item{recipient}{the sound that receives the formants}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}

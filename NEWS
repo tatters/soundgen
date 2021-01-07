@@ -5,6 +5,9 @@ MAJOR (affects back-compatibility):
   * segment(): a new segmentation algorithm based on spectral signal-noise separation, several deprecated and several new arguments, support for long files (>1 h of audio), an option to export detected syllables as separate files, etc.
   * Harmonized terminology throughout the package for basic arguments like "from", "to", saving plots and audio ("savePlots" / "saveAudio"), reporting estimated time left ("reportEvery"), etc.
 
+NEW FUNCTIONS:
+  * reverb(): adds reverberation and/or echo to a sound
+
 MINOR:
   * spectrogram(), analyze(): a new argument "extraContour" for plotting something over the spectrogram
   * analyze(): spectral slope (specSlope) is returned in dB/kHz

@@ -45,15 +45,15 @@ modulationSpectrum(
 )
 }
 \arguments{
-\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
-representing the waveform}
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{scale}{maximum possible amplitude of input used for normalization of
-input vector (only needed if \code{x} is a numeric vector, rather than an
-audio file or Wave object)}
+input vector (only needed if \code{x} is a numeric vector)}
 
 \item{from}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}
@@ -101,9 +101,7 @@ normalization and warping)}
 \item{summaryFun}{functions used to summarize each acoustic characteristic,
 eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
-take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-list containing frame-by-frame values; if \code{summaryFun = 'extended'},
-all pitch candidates are returns as a list}
+take care of NAs yourself}
 
 \item{averageMS}{if TRUE, the modulation spectra of all inputs are averaged
 into a single output; if FALSE, a separate MS is returned for each input}
@@ -298,5 +296,5 @@ image(t(log(abs(ms$complex))))
 }
 }
 \seealso{
-\code{\link{modulationSpectrumFolder}} \code{\link{spectrogram}}
+\code{\link{spectrogram}} \code{\link{analyze}}
 }

@@ -46,11 +46,11 @@ is above some threshold - specified in \code{\link{analyze}})}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
-'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
-NULL = no pitch analysis)}
+'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band, 'hps' =
+harmonic product spectrum, '' or NULL = no pitch analysis}
 
-\item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame), normally 1...4}
+\item{nCands}{maximum number of pitch candidates per method, normally 1...4
+(except for \code{dom}, which returns at most one candidate per frame)}
 
 \item{pitchDom}{a list of control parameters for pitch tracking using the
 lowest dominant frequency band or "dom" method; see details and
@@ -67,7 +67,7 @@ cepstrum or "cep" method; see details and \code{?soundgen:::getPitchCep}}
 BaNa or "spec" method; see details and \code{?soundgen:::getPitchSpec}}
 
 \item{pitchHps}{a list of control parameters for pitch tracking using the
-harmonic product spectrum ("hps") method; see details and
+harmonic product spectrum or "hps" method; see details and
 \code{?soundgen:::getPitchHps}}
 
 \item{pitchFloor}{absolute bounds for pitch candidates (Hz)}

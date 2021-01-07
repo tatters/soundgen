@@ -1,6 +1,8 @@
 ### FUNCTIONS FOR PREPARING AND PLOTTING A SPECTROGRAM ###
 
 #' Spectrogram folder
+#'
+#' Deprecated; use \code{\link{spectrogram}} instead
 #' @param ... any input parameters
 spectrogramFolder = function(...) {
   message('spectrogramFolder() is deprecated; please use spectrogram() instead')
@@ -23,13 +25,13 @@ spectrogramFolder = function(...) {
 #'
 #' @seealso \code{\link{osc}} \code{\link{modulationSpectrum}} \code{\link{ssm}}
 #'
-#' @param x path to a folder, wav or mp3 file, Wave object, or a numeric vector
-#'   representing the waveform
+#' @param x path to a folder, one or more wav or mp3 files c('file1.wav',
+#'   'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+#'   numeric vectors
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
-#'   numeric vector, rather than an audio file or Wave object)
+#'   numeric vector)
 #' @param scale maximum possible amplitude of input used for normalization of
-#'   input vector (only needed if \code{x} is a numeric vector, rather than an
-#'   audio file or Wave object)
+#'   input vector (only needed if \code{x} is a numeric vector)
 #' @param from,to if NULL (default), analyzes the whole sound, otherwise
 #'   from...to (s)
 #' @param dynamicRange dynamic range, dB. All values more than one dynamicRange
@@ -74,8 +76,8 @@ spectrogramFolder = function(...) {
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
 #' @param savePlots full path to the folder in which to save the plots (NULL =
 #'   don't save, '' = same folder as audio)
-#' @param osc should an oscillogram be shown under the spectrogram? "none" = no
-#'   osc; "linear" = on the original scale; "dB" = in decibels
+#' @param osc "none" = no oscillogram; "linear" = on the original scale; "dB" =
+#'   in decibels
 #' @param ylim frequency range to plot, kHz (defaults to 0 to Nyquist frequency)
 #' @param yScale scale of the frequency axis: 'linear' = linear, 'log' =
 #'   logarithmic
@@ -100,7 +102,6 @@ spectrogramFolder = function(...) {
 #'   spectrum (if output = 'original'), denoised and/or smoothed spectrum (if
 #'   output = 'processed'), or spectral derivatives (if method =
 #'   'spectralDerivative') as a matrix of real numbers.
-#' @seealso \code{\link{modulationSpectrum}} \code{\link{ssm}}
 #' @examples
 #' # synthesize a sound 500 ms long, with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 500, temperature = 0.001, noise = list(

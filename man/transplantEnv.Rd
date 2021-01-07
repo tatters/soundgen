@@ -65,5 +65,5 @@ transplantEnv(donor, samplingRateD = 200,
                windowLength = 10, method = 'peak', plot = TRUE)
 }
 \seealso{
-\code{\link{flatEnv}}, \code{\link[seewave]{setenv}}
+\code{\link{flatEnv}} \code{\link[seewave]{setenv}}
 }

@@ -1,6 +1,8 @@
 ### MAIN FUNCTIONS FOR ACOUSTIC ANALYSIS ###
 
 #' Analyze folder
+#'
+#' Deprecated; use \code{\link{analyze}} instead
 #' @param ... any input parameters
 analyzeFolder = function(...) {
   message('analyzeFolder() is deprecated; please use analyze() instead')
@@ -9,25 +11,27 @@ analyzeFolder = function(...) {
 
 #' Analyze
 #'
-#' Acoustic analysis of a single sound file: pitch tracking, basic spectral
-#' characteristics, and estimated loudness (see \code{\link{getLoudness}}). The
-#' default values of arguments are optimized for human non-linguistic
-#' vocalizations. See vignette('acoustic_analysis', package = 'soundgen') for
-#' details. The defaults and reasonable ranges of all arguments can be found in
+#' Acoustic analysis of one or more sounds: pitch tracking, basic spectral
+#' characteristics, formants, estimated loudness (see
+#' \code{\link{getLoudness}}), roughness (see \code{\link{modulationSpectrum}}),
+#' novelty (see \code{\link{ssm}}), etc. The default values of arguments are
+#' optimized for human non-linguistic vocalizations. See
+#' vignette('acoustic_analysis', package = 'soundgen') for details. The defaults
+#' and reasonable ranges of all arguments can be found in
 #' \link{defaults_analyze}. Alternative workflow: extract manually corrected
 #' pitch contours with pitch_app(), then run \code{analyze(pitchManual = ...)}
 #' with these manual contours.
 #'
 #' Each pitch tracker is controlled by its own list of settings, as follows:
-#' \describe{\item{\code{pitchDom} (lowest dominant frequency band)}{\itemize{
-#' \item \code{domThres} (0 to 1) to find the lowest dominant frequency band, we
+#' \describe{\item{\code{pitchDom} (lowest dominant frequency band)} {\itemize{
+#' \item\code{domThres} (0 to 1) to find the lowest dominant frequency band, we
 #' do short-term FFT and take the lowest frequency with amplitude at least
-#' domThres \item \code{domSmooth} the width of smoothing interval (Hz) for
-#' finding \code{dom}}} \item{\code{pitchAutocor} (autocorrelation)}{\itemize{
-#' \item \code{autocorThres} voicing threshold (unitless, ~0 to 1) \item
-#' \code{autocorSmooth} the width of smoothing interval (in bins) for finding
-#' peaks in the autocorrelation function. Defaults to 7 for sampling rate 44100
-#' and smaller odd numbers for lower values of sampling rate \item
+#' domThres \item\code{domSmooth} the width of smoothing interval (Hz) for
+#' finding \code{dom}}} \item{\code{pitchAutocor} (autocorrelation)} {\itemize{
+#' \item \code{autocorThres} voicing threshold (unitless, ~0 to 1)
+#' \item\code{autocorSmooth} the width of smoothing interval (in bins) for
+#' finding peaks in the autocorrelation function. Defaults to 7 for sampling
+#' rate 44100 and smaller odd numbers for lower values of sampling rate \item
 #' \code{autocorUpsample} upsamples acf to this resolution (Hz) to improve
 #' accuracy in high frequencies \item \code{autocorBestPeak} amplitude of the
 #' lowest best candidate relative to the absolute max of the acf }}
@@ -46,14 +50,14 @@ analyzeFolder = function(...) {
 #' \code{specSinglePeakCert} (0 to 1) if F0 is calculated based on a single
 #' harmonic ratio (as opposed to several ratios converging on the same
 #' candidate), its certainty is taken to be \code{specSinglePeakCert}}} \item{
-#' pitchHps (harmonic product spectrum)}{\itemize{\item \code{hpsNum} the
-#' number of times to downsample the spectrum \item \code{hpsThres} voicing
-#' threshold (unitless, ~0 to 1) \item \code{hpsNorm} the amount of inflation of
-#' hps pitch certainty (0 = none) \item \code{hpsPenalty} the amount of
-#' penalizing hps candidates in low frequencies (0 = none) }} }  Each of these
-#' lists also accepts graphical parameters that affect how pitch candidates are
-#' plotted, eg \code{pitchDom = list(domThres = .5, col = 'yellow')}. Other
-#' arguments that are lists of subroutine-specific settings include: \describe{
+#' pitchHps (harmonic product spectrum)}{\itemize{\item \code{hpsNum} the number
+#' of times to downsample the spectrum \item \code{hpsThres} voicing threshold
+#' (unitless, ~0 to 1) \item \code{hpsNorm} the amount of inflation of hps pitch
+#' certainty (0 = none) \item \code{hpsPenalty} the amount of penalizing hps
+#' candidates in low frequencies (0 = none) }} }  Each of these lists also
+#' accepts graphical parameters that affect how pitch candidates are plotted, eg
+#' \code{pitchDom = list(domThres = .5, col = 'yellow')}. Other arguments that
+#' are lists of subroutine-specific settings include: \describe{
 #' \item{\code{harmonicHeight} (finding how high harmonics reach in the
 #' spectrum)}{\itemize{\item \code{harmThres} minimum height of spectral peak,
 #' dB \item \code{harmPerSel} the number of harmonics per sliding selection
@@ -91,8 +95,8 @@ analyzeFolder = function(...) {
 #'   spectral novelty. NULL = skip novelty analysis
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
-#'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
-#'   NULL = no pitch analysis)
+#'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band, 'hps' =
+#'   harmonic product spectrum, '' or NULL = no pitch analysis
 #' @param pitchManual manually corrected pitch contour. For a single sound,
 #'   provide a numeric vector of any length, and for multiple sounds, a
 #'   dataframe with columns "file" and "pitch" (or path to a csv file), ideally
@@ -107,8 +111,8 @@ analyzeFolder = function(...) {
 #'   most likely pitch values for this file. For ex., \code{priorMean = 300,
 #'   priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 #'   an octave)
-#' @param nCands maximum number of pitch candidates per method (except for
-#'   \code{dom}, which returns at most one candidate per frame), normally 1...4
+#' @param nCands maximum number of pitch candidates per method, normally 1...4
+#'   (except for \code{dom}, which returns at most one candidate per frame)
 #' @param minVoicedCands minimum number of pitch candidates that have to be
 #'   defined to consider a frame voiced (if NULL, defaults to 2 if \code{dom} is
 #'   among other candidates and 1 otherwise)
@@ -123,7 +127,7 @@ analyzeFolder = function(...) {
 #' @param pitchSpec a list of control parameters for pitch tracking using the
 #'   BaNa or "spec" method; see details and \code{?soundgen:::getPitchSpec}
 #' @param pitchHps a list of control parameters for pitch tracking using the
-#'   harmonic product spectrum ("hps") method; see details and
+#'   harmonic product spectrum or "hps" method; see details and
 #'   \code{?soundgen:::getPitchHps}
 #' @param harmHeight a list of control parameters for estimating how high
 #'   harmonics reach in the spectrum; see details and \code{?soundgen:::harmHeight}
@@ -157,9 +161,7 @@ analyzeFolder = function(...) {
 #' @param summaryFun functions used to summarize each acoustic characteristic,
 #'   eg "c('mean', 'sd')"; user-defined functions are fine (see examples); NAs
 #'   are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
-#'   take care of NAs yourself; if \code{summaryFun = NULL}, analyze() returns a
-#'   list containing frame-by-frame values; if \code{summaryFun = 'extended'},
-#'   all pitch candidates are returns as a list
+#'   take care of NAs yourself
 #' @param invalidArgAction what to do if an argument is invalid or outside the
 #'   range in \code{defaults_analyze}: 'adjust' = reset to default value,
 #'   'abort' = stop execution, 'ignore' = throw a warning and continue (may
@@ -170,28 +172,27 @@ analyzeFolder = function(...) {
 #'   don't save, '' = same folder as audio)
 #' @param pitchPlot a list of graphical parameters for displaying the final
 #'   pitch contour. Set to \code{list(type = 'n')} to suppress
+#' @param extraContour name of an output variable to overlapy on the pitch
+#'   contour plot, eg 'peakFreq' or 'loudness'; can also be a list with extra
+#'   graphical parameters such as lwd, col, etc.
 #' @param xlab,ylab,main plotting parameters
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link{spectrogram}}
-#' @return Returns a dataframe with one row and three
-#'   columns per acoustic variable (mean / median / SD). If \code{summary =
-#'   FALSE}, returns a dataframe with one row per STFT frame and one column per
-#'   acoustic variable. The
-#'   best guess at the pitch contour considering all available information is
-#'   stored in the variable called "pitch". If \code{summaryFun = 'extended'},
-#'   the output is a list containing, in addition to the usual results, matrices
-#'   of pitch estimates by separate algorithms included in \code{pitchMethods},
+#' @return Returns a list with \code{$detailed} frame-by-frame descriptives and
+#'   a \code{$summary} with one row per file, as deterimined by
+#'   \code{summaryFun} (e.g., mean / median / SD of each acoustic variable
+#'   across all STFT frames). Output measures include:
 #'   \describe{\item{duration}{total duration, s}
 #'   \item{duration_noSilence}{duration from the beginning of the first
 #'   non-silent STFT frame to the end of the last non-silent STFT frame, s (NB:
 #'   depends strongly on \code{windowLength} and \code{silence} settings)}
 #'   \item{time}{time of the middle of each frame (ms)} \item{ampl}{root mean
 #'   square of amplitude per frame, calculated as sqrt(mean(frame ^ 2))}
-#'   \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking
-#'   methods / Dominant frequency" in the vignette)} \item{entropy}{Weiner
-#'   entropy of the spectrum of the current frame. Close to 0: pure tone or
-#'   tonal sound with nearly all energy in harmonics; close to 1: white noise}
+#'   \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking methods
+#'   / Dominant frequency" in the vignette)} \item{entropy}{Weiner entropy of
+#'   the spectrum of the current frame. Close to 0: pure tone or tonal sound
+#'   with nearly all energy in harmonics; close to 1: white noise}
 #'   \item{f1_freq, f1_width, ...}{the frequency and bandwidth of the first
 #'   nFormants formants per STFT frame, as calculated by
 #'   phonTools::findformants} \item{harmEnergy}{the amount of energy in upper
@@ -203,9 +204,11 @@ analyzeFolder = function(...) {
 #'   tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much
 #'   energy in harmonics as in noise} \item{loudness}{subjective loudness, in
 #'   sone, corresponding to the chosen SPL_measured - see
-#'   \code{\link{getLoudness}}} \item{peakFreq}{the frequency with maximum
-#'   spectral power (Hz)} \item{pitch}{post-processed pitch contour based on all
-#'   F0 estimates} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and
+#'   \code{\link{getLoudness}}} \item{novelty}{spectral novelty - a measure of
+#'   how variable the spectrum is on a particular time scale, as estimated by
+#'   \code{\link{ssm}}} \item{peakFreq}{the frequency with maximum spectral
+#'   power (Hz)} \item{pitch}{post-processed pitch contour based on all F0
+#'   estimates} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and
 #'   75th quantiles of the spectrum of voiced frames (Hz)} \item{roughness}{the
 #'   amount of amplitude modulation, see modulationSpectrum}
 #'   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
@@ -348,12 +351,12 @@ analyzeFolder = function(...) {
 #' idx = match(s$file, files_manual)  # in case the order is wrong
 #' s$key = pitchManual[idx]
 #'
-#' # Compare manually verified mean pitch with the output of analyzeFolder:
+#' # Compare manually verified mean pitch with the output of analyze:
 #' cor(s$key, s$summary$pitch_median, use = 'pairwise.complete.obs')
 #' plot(s$key, s$summary$pitch_median, log = 'xy')
 #' abline(a=0, b=1, col='red')
 #'
-#' # Re-running analyzeFolder with manually corrected contours gives correct
+#' # Re-running analyze with manually corrected contours gives correct
 #' pitch-related descriptives like amplVoiced and harmonics (NB: you get it "for
 #' free" when running pitch_app)
 #' s1 = analyze(myfolder, pitchManual = pitchContour)

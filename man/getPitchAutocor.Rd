@@ -22,8 +22,8 @@ getPitchAutocor(
 
 \item{samplingRate}{sampling rate (Hz)}
 
-\item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame), normally 1...4}
+\item{nCands}{maximum number of pitch candidates per method, normally 1...4
+(except for \code{dom}, which returns at most one candidate per frame)}
 
 \item{autocorThres}{voicing threshold (unitless, ~0 to 1)}
 

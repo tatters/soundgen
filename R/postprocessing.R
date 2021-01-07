@@ -470,7 +470,7 @@ flatSpectrum = function(x,
 
 #' Reverb & echo
 #'
-#' Add reverberation and/or echo to a sound. Algorithm for reverb: add
+#' Adds reverberation and/or echo to a sound. Algorithm for reverb: adds
 #' time-shifted copies of the signal weighted by a decay function, which is
 #' analogous to convoluting the input with a parametric model of some
 #' hypothetical impulse response function. In simple terms: we specify how much

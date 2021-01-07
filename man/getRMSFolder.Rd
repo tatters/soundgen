@@ -10,5 +10,5 @@ getRMSFolder(...)
 \item{...}{any input parameters}
 }
 \description{
-Get RMS folder
+Deprecated; use \code{\link{getRMS}} instead
 }

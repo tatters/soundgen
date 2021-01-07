@@ -94,8 +94,8 @@ phase ('complex')}
 
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
-\item{osc}{should an oscillogram be shown under the spectrogram? "none" = no
-osc; "linear" = on the original scale; "dB" = in decibels}
+\item{osc}{"none" = no oscillogram; "linear" = on the original scale; "dB" =
+in decibels}
 
 \item{heights}{a vector of length two specifying the relative height of the
 spectrogram and the oscillogram (including time axes labels)}

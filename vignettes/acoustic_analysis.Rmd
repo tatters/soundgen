@@ -34,17 +34,17 @@ Many of the large variety of existing tools for acoustic analysis were designed 
   
 The most relevant soundgen functions for acoustic analysis are:
   
-* `analyze`, `analyzeFolder`: extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per STFT frame
+* `analyze`: extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, formants, etc. The output includes a summary per file, with each variable presented as mean / median / SD, as well as detailed statistics per STFT frame
 * `pitch_app`: opens a shiny app in a web browser for manually correcting and exporting the pitch contours extracted by `analyze`
 * `formant_app`: another web app, for annotating and manually correcting formant measurements provided by phonTools::findformants()
-* `segment`, `segmentFolder`: finds syllables and bursts of energy using the amplitude envelope
-* `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
-* `getLoudness`, `getLoudnessFolder`: estimates the subjective loudness per STFT frame, in sone
-*  `modulationSpectrum`, `modulationSpectrumFolder`: calculates a joint temporal-spectral modulation spectrum and a measure of acoustic roughness
-* `getRMS`, `getRMSFolder`: measures the root mean square amplitude of audio files
+* `segment`: segments a long recording into individual syllables using spectral signal-noise separation
+* `ssm`: produces a self-similarity matrix and calculates a novelty contour
+* `getLoudness`: estimates the subjective loudness per STFT frame, in sone
+*  `modulationSpectrum`: calculates a joint temporal-spectral modulation spectrum and a measure of acoustic roughness
+* `getRMS`: measures the root mean square amplitude of audio files
 * `spectrogram`, `osc`: basic plots
   
-*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use formant_app or another interactive program like PRAAT and check everything manually. A good approach may be to start with pitch_app to ensure accurate pitch tracking, then run `soundgen::analyze` with these manual pitch values to get a table of many common acoustic predictors, and finally add other descriptives such as roughness (from `modulationSpectrumFolder`), novelty (from `ssm`), etc.*
+*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R (e.g., with `tuneR::melfcc`), so there was no need to duplicate it in soundgen. Linear predictive coding (LPC) is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`). As a convenience, `soundgen::analyze` shows the output of `phonTools::findformants`, but for serious formant analysis you might want to use formant_app or another interactive program like PRAAT and check everything manually. A good approach may be to start with pitch_app to ensure accurate pitch tracking, then run `soundgen::analyze` with these manual pitch values to get a table of many common acoustic predictors.*
   
 This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics.
 
@@ -79,9 +79,9 @@ Putting the spectra of all frames together, we get a spectrogram. `analyze` call
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 a1 = analyze(s1, samplingRate = 16000, plot = TRUE, ylim = c(0, 4))
-# summary(a1)  # many acoustic predictors measured for each STFT frame
+# a1$detailed  # many acoustic predictors measured for each STFT frame
 median(true_pitch)  # true value, as synthesized above
-median(a1$pitch, na.rm = TRUE)  # our estimate
+median(a1$detailed$pitch, na.rm = TRUE)  # our estimate
 # Pitch postprocessing is stochastic (see below), so the contour may vary.
 # Many candidates are off target, mainly b/c of misleading subharmonics.
 ```
@@ -108,18 +108,19 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `harmHeight`: how high harmonics reach in the spectrum, based on the best guess at pitch (or the manually provided pitch values): see `soundgen:::harmHeight` for details
 * `HNR`: harmonics-to-noise ratio (dB), a measure of harmonicity returned by `soundgen:::getPitchAutocor()` (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as in noise
 * `loudness`: subjective loudness in sone, assuming a certain sound pressure level (takes into account the energy in different frequency bands as well as the sensitivity of human ears to different frequencies); see `getLoudness()` and section on Loudness below for details
+* `novelty`: spectral novelty - a measure of how variable the spectrum is on a particular time scale, as estimated by `ssm()`
 * `peakFreq`: the frequency with maximum spectral energy below `cutFreq` (Hz)
-* `roughness`: the amount of spectrotemporal modulation in the "roughness" zone of frequencies (estimated by `modulatinSpectrum`, the arguments to which are passed in `roughness = list()`)
+* `roughness`: the amount of spectrotemporal modulation in the "roughness" zone of frequencies (estimated by `modulationSpectrum`, the arguments to which are passed in `roughness = list()`)
 * `quartile25`, `quartile50`, `quartile75`: the 25th, 50th, and 75th quantiles of the spectrum below `cutFreq` (Hz) for VOICED frames
 * `specCentroid`: the center of gravity of the frame’s spectrum below `cutFreq`, first spectral moment (Hz)
 * `specSlope`: the slope of linear regression fit to the spectrum below `cutFreq`
 * `voiced`: is the current STFT frame voiced? TRUE / FALSE
 
-*TIP: if `voicedSeparate = TRUE`, these descriptors are calculated separately for the entire sound and only for the voiced frames, resulting in extra output variables like "amplVoiced".*
+*TIP: many of these descriptors are calculated separately for the entire sound and only for the voiced frames, resulting in extra output variables like "amplVoiced".*
 
 
 ## Custom spectral descriptives
-The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). One way to obtain extra predictors is to add the necessary code to the internal function `soundgen:::analyzeFrame()` and to `soundgen::analyze()`. If you want deltas, they can be extracted directly from the output of `analyze(..., summaryFun = NULL)`. But in many cases the easiest solution may be to just extract the spectra and then process them manually, without calling `analyze()`. In fact, many popular spectral descriptors are mathematically trivial to derive - all you need is the spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
+The function `soundgen::analyze` returns a few spectral descriptives that make sense for nonverbal vocalizations, but additional predictors may be useful for other applications (bird songs, non-biological sounds, etc.). Many popular spectral descriptors are mathematically trivial to derive - all you need is the spectrum for each STFT frame, or perhaps even the average spectrum of the entire sound. Here is how you can get these spectra.
 
 For the average spectrum of an entire sound, go no further than `seewave::spec` or `seewave::meanspec`:
 ```{r}

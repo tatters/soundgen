@@ -47,8 +47,8 @@ candidate), its certainty is taken to be \code{specSinglePeakCert}}
 \item{specMerge}{pitch candidates within \code{specMerge} semitones are
 merged with boosted certainty}
 
-\item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame), normally 1...4}
+\item{nCands}{maximum number of pitch candidates per method, normally 1...4
+(except for \code{dom}, which returns at most one candidate per frame)}
 }
 \value{
 Returns either NULL or a dataframe of pitch candidates.

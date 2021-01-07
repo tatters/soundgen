@@ -1,3 +1,12 @@
+#' Get RMS folder
+#'
+#' Deprecated; use \code{\link{getRMS}} instead
+#' @param ... any input parameters
+getRMSFolder = function(...) {
+  message('getRMSFolder() is deprecated; please use getRMS() instead')
+}
+
+
 #' RMS amplitude
 #'
 #' Calculates root mean square (RMS) amplitude in overlapping windows, providing
@@ -48,8 +57,8 @@
 #' r$summary
 #'
 #' # Compare:
-#' analyzeFolder('~/Downloads/temp', pitchMethods = NULL,
-#'               plot = FALSE)$ampl_mean
+#' analyze('~/Downloads/temp', pitchMethods = NULL,
+#'         plot = FALSE)$ampl_mean
 #' # (per STFT frame, but should be very similar)
 #'
 #' User-defined summary functions:
@@ -115,13 +124,6 @@ getRMS = function(
     detailed = pa$result,
     summary = mysum_all
   ))
-}
-
-
-#' Get RMS folder
-#' @param ... any input parameters
-getRMSFolder = function(...) {
-  message('getRMSFolder() is deprecated; please use getRMS() instead')
 }
 
 
@@ -211,7 +213,7 @@ getRMSSound = function(audio,
 #' assumes frequency sensitivity typical of human hearing. The following
 #' normalization procedure is similar to that for \code{type = 'rms'}.
 #'
-#' @seealso \code{\link{getRMS}} \code{\link{analyze}}\code{\link{getLoudness}}
+#' @seealso \code{\link{getRMS}} \code{\link{analyze}} \code{\link{getLoudness}}
 #'
 #' @inheritParams getRMS
 #' @param myfolder full path to folder containing input audio files
@@ -532,7 +534,7 @@ flatEnvSound = function(audio,
 #' \code{\link[seewave]{setenv}}, but with a different smoothing algorithm and
 #' with a choice of several types of envelope: hil, rms, or peak.
 #'
-#' @seealso \code{\link{flatEnv}}, \code{\link[seewave]{setenv}}
+#' @seealso \code{\link{flatEnv}} \code{\link[seewave]{setenv}}
 #'
 #' @param donor the sound that "donates" the amplitude envelope (numeric vector
 #'   - NOT an audio file)

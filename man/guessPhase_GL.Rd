@@ -27,7 +27,7 @@ matrix with frequency bins in rows and time frames in columns}
 1984), 0 = don't run}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 

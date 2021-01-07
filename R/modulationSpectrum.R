@@ -1,6 +1,8 @@
 ### MODULATION SPECTRUM
 
 #' Modulation spectrum folder
+#'
+#' Deprecated; use \code{\link{modulationSpectrum}} instead
 #' @param ... any input parameters
 modulationSpectrumFolder = function(...) {
   message('modulationSpectrumFolder() is deprecated;',
@@ -31,7 +33,7 @@ modulationSpectrumFolder = function(...) {
 #' \code{\link{modulationSpectrumFolder}}, which produces a separate modulation
 #' spectrum per file, without averaging.
 #'
-#' @seealso \code{\link{modulationSpectrumFolder}} \code{\link{spectrogram}}
+#' @seealso \code{\link{spectrogram}} \code{\link{analyze}}
 #'
 #' @references \itemize{
 #'   \item Singh, N. C., & Theunissen, F. E. (2003). Modulation spectra of

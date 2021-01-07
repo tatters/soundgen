@@ -47,11 +47,12 @@ segment(
 )
 }
 \arguments{
-\item{x}{path to a folder, wav or mp3 file, Wave object, or a numeric vector
-representing the waveform}
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector, rather than an audio file or Wave object)}
+numeric vector)}
 
 \item{from}{if NULL (default), analyzes the whole sound, otherwise
 from...to (s)}

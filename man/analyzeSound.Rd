@@ -124,8 +124,8 @@ spectral novelty. NULL = skip novelty analysis}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
-'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band ('' or
-NULL = no pitch analysis)}
+'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band, 'hps' =
+harmonic product spectrum, '' or NULL = no pitch analysis}
 
 \item{entropyThres}{pitch tracking is only performed for frames with Weiner
 entropy below \code{entropyThres}, but other spectral descriptives are
@@ -147,8 +147,8 @@ most likely pitch values for this file. For ex., \code{priorMean = 300,
 priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
 
-\item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame), normally 1...4}
+\item{nCands}{maximum number of pitch candidates per method, normally 1...4
+(except for \code{dom}, which returns at most one candidate per frame)}
 
 \item{minVoicedCands}{minimum number of pitch candidates that have to be
 defined to consider a frame voiced (if NULL, defaults to 2 if \code{dom} is
@@ -169,7 +169,7 @@ cepstrum or "cep" method; see details and \code{?soundgen:::getPitchCep}}
 BaNa or "spec" method; see details and \code{?soundgen:::getPitchSpec}}
 
 \item{pitchHps}{a list of control parameters for pitch tracking using the
-harmonic product spectrum ("hps") method; see details and
+harmonic product spectrum or "hps" method; see details and
 \code{?soundgen:::getPitchHps}}
 
 \item{harmHeight}{a list of control parameters for estimating how high
@@ -233,15 +233,15 @@ deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 \item{savePlots}{full path to the folder in which to save the plots (NULL =
 don't save, '' = same folder as audio)}
 
-\item{osc}{should an oscillogram be shown under the spectrogram? "none" = no
-osc; "linear" = on the original scale; "dB" = in decibels}
+\item{osc}{"none" = no oscillogram; "linear" = on the original scale; "dB" =
+in decibels}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the final
 pitch contour. Set to \code{list(type = 'n')} to suppress}
 
-\item{extraContour}{a vector of arbitrary length scaled in Hz that will be
-plotted over the spectrogram (eg pitch contour); can also be a list with
-extra graphical parameters such as lwd, col, etc. (see examples)}
+\item{extraContour}{name of an output variable to overlapy on the pitch
+contour plot, eg 'peakFreq' or 'loudness'; can also be a list with extra
+graphical parameters such as lwd, col, etc.}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 

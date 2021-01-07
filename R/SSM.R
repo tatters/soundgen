@@ -49,7 +49,6 @@
 #' @return Returns a list of two components: $ssm contains the self-similarity
 #'   matrix, and $novelty contains the novelty vector.
 #' @export
-#' @seealso \code{\link{spectrogram}} \code{\link{modulationSpectrum}}
 #' @examples
 #' sound = c(soundgen(),
 #'           soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
