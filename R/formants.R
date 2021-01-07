@@ -1327,7 +1327,7 @@ transplantFormants = function(donor,
   # Flatten the recipient spectrogram
   if (!is.numeric(freqWindow_recipient)) {
     anal_recipient = analyze(recipient, samplingRate, plot = FALSE)
-    freqWindow_recipient = median(anal_recipient$pitch, na.rm = TRUE)
+    freqWindow_recipient = median(anal_recipient$detailed$pitch, na.rm = TRUE)
   }
   freqRange_kHz_rec = diff(range(as.numeric(rownames(spec_recipient))))
   freqBin_Hz_rec = freqRange_kHz_rec * 1000 / nrow(spec_recipient)
@@ -1340,8 +1340,9 @@ transplantFormants = function(donor,
   for (i in 1:ncol(spec_recipient)) {
     abs_s = abs(spec_recipient[, i])
     # plot(abs_s, type = 'l')
-    cor_coef = flatEnv(abs_s, method = 'peak',
-                       windowLength_points = freqWindow_rec_bins) / abs_s
+    cor_coef = flatEnv(
+      abs_s, samplingRate = 1, method = 'peak',
+      windowLength_points = freqWindow_rec_bins) / abs_s
     # plot(Re(spec_recipient[, i]) * cor_coef, type = 'l')
     spec_recipient[, i] = complex(
       real = Re(spec_recipient[, i]) * cor_coef,
@@ -1356,7 +1357,7 @@ transplantFormants = function(donor,
       freqWindow_donor = freqWindow_recipient
     } else {
       anal_donor = analyze(donor, samplingRate, plot = FALSE)
-      freqWindow_donor = median(anal_donor$pitch, na.rm = TRUE)
+      freqWindow_donor = median(anal_donor$detailed$pitch, na.rm = TRUE)
     }
   }
   freqRange_kHz_donor = diff(range(as.numeric(rownames(spec_donor_rightDim))))
