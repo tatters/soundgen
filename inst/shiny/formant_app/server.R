@@ -1167,8 +1167,7 @@ server = function(input, output, session) {
         formants = list(
           coeffs = coeffs,
           minformant = input$minformant,
-          maxbw = input$maxbw,
-          verify = FALSE
+          maxbw = input$maxbw
         ),
         pitchMethods = NULL,  # disable pitch tracking
         SPL_measured = 0,  # disable loudness analysis
