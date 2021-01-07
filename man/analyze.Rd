@@ -21,7 +21,7 @@ analyze(
   zp = 0,
   cutFreq = NULL,
   nFormants = 3,
-  formants = list(verify = FALSE),
+  formants = list(),
   roughness = list(),
   novelty = list(input = "melspec", kernelLen = 100),
   pitchMethods = c("dom", "autocor"),

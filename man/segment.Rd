@@ -38,7 +38,7 @@ segment(
   height = 500,
   units = "px",
   res = NA,
-  maxPoints = 10000,
+  maxPoints = c(1e+05, 5e+05),
   specPlot = list(color.palette = "bw"),
   contourPlot = list(lty = 1, lwd = 2, col = "green"),
   sylPlot = list(lty = 1, lwd = 2, col = "blue"),
@@ -135,8 +135,9 @@ padded with some silence (ms)}
 \item{width, height, units, res}{parameters passed to
 \code{\link[grDevices]{png}} if the plot is saved}
 
-\item{maxPoints}{the maximum number of "pixels" (for quick plotting of long
-audio files)}
+\item{maxPoints}{the maximum number of "pixels" in the oscillogram (if any)
+and spectrogram; good for quickly plotting long audio files; defaults to
+c(1e5, 5e5)}
 
 \item{specPlot}{a list of graphical parameters for displaying the spectrogram
 (if \code{method = 'spec' or 'mel'}); set to NULL to hide the spectrogram}

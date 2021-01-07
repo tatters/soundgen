@@ -97,8 +97,6 @@ segmentFolder = function(...) {
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param showLegend if TRUE, shows a legend for thresholds
-#' @param maxPoints the maximum number of "pixels" (for quick plotting of long
-#'   audio files)
 #' @param ... other graphical parameters passed to graphics::plot
 #'
 #' @return If \code{summaryFun = NULL}, returns returns a list containing full
@@ -181,7 +179,7 @@ segment = function(
   height = 500,
   units = 'px',
   res = NA,
-  maxPoints = 1e4,
+  maxPoints = c(1e5, 5e5),
   specPlot = list(color.palette = 'bw'),
   contourPlot = list(lty = 1, lwd = 2, col = 'green'),
   sylPlot = list(lty = 1, lwd = 2, col = 'blue'),
@@ -347,7 +345,7 @@ segmentSound = function(
   height = 500,
   units = 'px',
   res = NA,
-  maxPoints = 1e4,
+  maxPoints = c(1e5, 5e5),
   specPlot = NULL,
   contourPlot = list(lty = 1, lwd = 2, col = 'green'),
   sylPlot = list(lty = 1, lwd = 2, col = 'blue'),
@@ -759,14 +757,18 @@ segmentSound = function(
       }
     }
 
+    if (!is.null(maxPoints)) {
+      if (length(maxPoints) == 1) maxPoints = c(maxPoints, maxPoints)
+    }
+
     op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(2, 1))
     par(mar = c(op$mar[1:2], 0, op$mar[4]), xaxt = 's', yaxt = 's')
     xlim = c(0, audio$ls / audio$samplingRate * 1000) + audio$timeShift
 
     # downsample long sounds to avoid delays when plotting
-    if (audio$ls > maxPoints) {
-      idx_sound = seq(1, audio$ls, by = ceiling(audio$ls / maxPoints))
+    if (audio$ls > maxPoints[1]) {
+      idx_sound = seq(1, audio$ls, by = ceiling(audio$ls / maxPoints[1]))
     } else {
       idx_sound = 1:audio$ls
     }
@@ -790,11 +792,9 @@ segmentSound = function(
     )
     # downsample long envelopes
     nr_env = nrow(envelope)
-    if (nr_env > maxPoints) {
-      idx_env = seq(1, nr_env, by = ceiling(nr_env / maxPoints))
+    if (nr_env > maxPoints[1]) {
+      idx_env = seq(1, nr_env, by = ceiling(nr_env / maxPoints[1]))
       envelope = envelope[idx_env, ]
-      idx_sp = seq(1, nr_env, by = ceiling(nr_env / maxPoints * nrow(sp)))
-      sp = sp[, idx_sp]
     } else {
       idx_env = 1:nr_env
     }
@@ -810,10 +810,11 @@ segmentSound = function(
         z = t(zeroOne(sp)),
         levels = seq(0, 1, length = 30),
         xlim = xlim, xaxs = "i", xlab = '',
-        ylab = ylab, main = main, ...),
+        ylab = ylab, main = main,
+        maxPoints = maxPoints[2], ...),
         specPlot))
-      do.call('points', c(list(x = envelope$time[idx_env],
-                               y = envelope$value[idx_env],
+      do.call('points', c(list(x = envelope$time,
+                               y = envelope$value,
                                type = 'l'),
                           contourPlot))
     } else {
@@ -839,7 +840,7 @@ segmentSound = function(
         #          lty = sylPlot$lty, lwd = sylPlot$lwd, col = sylPlot$col)
       }
       do.call('points', c(list(x = envelope$time[idx_env],
-                               y = thres_contour,
+                               y = thres_contour[idx_env],
                                type = 'l'),
                           sylPlot))
     }
