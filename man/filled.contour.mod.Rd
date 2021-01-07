@@ -21,6 +21,7 @@ filled.contour.mod(
   log = "",
   axisX = TRUE,
   axisY = TRUE,
+  maxPoints = 5e+05,
   ...
 )
 }

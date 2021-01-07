@@ -528,19 +528,6 @@ spectrogramSound = function(
     ly = length(Y)
     Z1_plot = Z1[, idx_y]
 
-    # For long files, downsample before plotting
-    lxy = lx *ly
-    if (!is.null(maxPoints) && maxPoints[2] < lxy) {
-      message(paste('Plotting with reduced resolution;',
-                    'increase maxPoints or set to NULL to override'))
-      downs = sqrt(lxy / maxPoints[2])
-      seqx = seq(1, lx, length.out = ceiling(lx / downs))
-      seqy = seq(1, ly, length.out = ceiling(ly / downs))
-      X = X[seqx]
-      Y = Y[seqy]
-      Z1_plot = Z1[seqx, seqy]
-    }
-
     filled.contour.mod(
       x = X, y = Y, z = Z1_plot,
       levels = seq(0, 1, length = 30),
@@ -549,6 +536,7 @@ spectrogramSound = function(
       xlab = xlab, ylab = ylab,
       xlim = xlim, xaxt = 'n',
       log = ifelse(yScale == 'log', 'y', ''),
+      maxPoints = maxPoints[2],
       ...
     )
     if (!(osc %in% c('linear', 'dB'))) {
@@ -720,6 +708,7 @@ filled.contour.mod = function(
   log = '',
   axisX = TRUE,
   axisY = TRUE,
+  maxPoints = 5e5,
   ...
 ) {
   suppressWarnings({
@@ -729,6 +718,24 @@ filled.contour.mod = function(
     if (!is.matrix(z) || nrow(z) <= 1 || ncol(z) <= 1)
       stop("no proper 'z' matrix specified")
     if (!is.double(z))  storage.mode(z) = "double"
+
+    # for very large matrices, downsample before plotting to avoid delays
+    if (!is.null(maxPoints)) {
+      lx = length(x)
+      ly = length(y)
+      lxy = lx *ly
+      if (maxPoints < lxy) {
+        message(paste('Plotting with reduced resolution;',
+                      'increase maxPoints or set to NULL to override'))
+        downs = sqrt(lxy / maxPoints)
+        seqx = seq(1, lx, length.out = ceiling(lx / downs))
+        seqy = seq(1, ly, length.out = ceiling(ly / downs))
+        x = x[seqx]
+        y = y[seqy]
+        z = z[seqx, seqy]
+      }
+    }
+
     .filled.contour(as.double(x), as.double(y), z, as.double(levels), col = col)
     title(...)
     if (axisX) axis(1, ...)

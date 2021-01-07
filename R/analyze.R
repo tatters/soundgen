@@ -977,7 +977,7 @@ analyzeSound = function(
       fmts_list[[i]] = try(suppressWarnings(do.call(
         phonTools::findformants,
         c(list(frameBank[, framesToAnalyze[i]],
-               fs = audio$samplingRate),
+               fs = audio$samplingRate, verify = FALSE),
           formants))),
         silent = TRUE)
       if (class(fmts_list[[i]]) == 'try-error') {
