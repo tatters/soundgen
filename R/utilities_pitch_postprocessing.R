@@ -77,7 +77,7 @@ pathfinder = function(pitchCands,
   # if a frame has no pitch candidate at all (NA) or no candidate
   # between the most likely candidates for the adjacent frames, add such a
   # candidate with ~low certainty
-  if (interpolWin_bin > 0) {
+  if (length(interpolWin_bin) > 0 && interpolWin_bin > 0) {
     # order pitch candidates and certainties in each frame pushing NAs down so
     # as to simplify the matrix (the position of manual candidates is not
     # important since they are saved in 'manual')

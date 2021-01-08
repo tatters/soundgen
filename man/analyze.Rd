@@ -40,9 +40,7 @@ analyze(
   harmHeight = list(type = "n"),
   shortestSyl = 20,
   shortestPause = 60,
-  interpolWin = 75,
-  interpolTol = 0.3,
-  interpolCert = 0.3,
+  interpol = list(win = 75, tol = 0.3, cert = 0.3),
   pathfinding = c("none", "fast", "slow")[2],
   annealPars = list(maxit = 5000, temp = 1000),
   certWeight = 0.5,
@@ -193,10 +191,9 @@ if unvoiced)}
 value = interpolate and merge, small value = treat as separate syllables
 separated by an unvoiced gap}
 
-\item{interpolWin, interpolTol, interpolCert}{control the behavior of
-interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWin = 0}. See \code{soundgen:::pathfinder}
-for details.}
+\item{interpol}{a list of parameters (currently \code{win, tol, cert}) passed
+to \code{soundgen:::pathfinder} for interpolating missing pitch candidates
+(NULL = no interpolation)}
 
 \item{pathfinding}{method of finding the optimal path through pitch
 candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,

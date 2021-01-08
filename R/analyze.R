@@ -137,10 +137,9 @@ analyzeFolder = function(...) {
 #' @param shortestPause the smallest gap between voiced syllables (ms): large
 #'   value = interpolate and merge, small value = treat as separate syllables
 #'   separated by an unvoiced gap
-#' @param interpolWin,interpolTol,interpolCert control the behavior of
-#'   interpolation algorithm when postprocessing pitch candidates. To turn off
-#'   interpolation, set \code{interpolWin = 0}. See \code{soundgen:::pathfinder}
-#'   for details.
+#' @param interpol a list of parameters (currently \code{win, tol, cert}) passed
+#'   to \code{soundgen:::pathfinder} for interpolating missing pitch candidates
+#'   (NULL = no interpolation)
 #' @param pathfinding method of finding the optimal path through pitch
 #'   candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
 #'   'slow' = annealing. See \code{soundgen:::pathfinder}
@@ -409,9 +408,7 @@ analyze = function(
   harmHeight = list(type = 'n'),
   shortestSyl = 20,
   shortestPause = 60,
-  interpolWin = 75,
-  interpolTol = 0.3,
-  interpolCert = 0.3,
+  interpol = list(win = 75, tol = 0.3, cert = 0.3),
   pathfinding = c('none', 'fast', 'slow')[2],
   annealPars = list(maxit = 5000, temp = 1000),
   certWeight = .5,
@@ -445,8 +442,7 @@ analyze = function(
                  'autocorThres', 'autocorSmooth',
                  'cepThres', 'cepSmooth',
                  'specThres', 'specPeak',
-                 'specSinglePeakCert', 'certWeight',
-                 'interpolWin', 'interpolCert')
+                 'specSinglePeakCert', 'certWeight')
   for (p in simplePars) {
     gp = try(get(p), silent = TRUE)
     if (class(gp)[1] != "try-error") {
@@ -556,7 +552,7 @@ analyze = function(
     pitchManual_list = NULL
   }
 
-  # reformat loudness/novelty list, if any
+  # reformat loudness/novelty etc lists, if any
   if (!is.null(novelty)) {
     if (is.null(novelty$windowLength)) novelty$windowLength = windowLength
     if (is.null(novelty$step)) novelty$step = step
@@ -565,6 +561,11 @@ analyze = function(
     if (is.null(loudness$SPL_measured)) loudness$SPL_measured = 70
     if (is.null(loudness$Pref)) loudness$Pref = 2e-5
     if (is.null(loudness$spreadSpectrum)) loudness$spreadSpectrum = TRUE
+  }
+  if (!is.null(interpol)) {
+    if (is.null(interpol$win)) interpol$win = 75
+    if (is.null(interpol$tol)) interpol$tol = .3
+    if (is.null(interpol$cert)) interpol$cert = .3
   }
 
   # match args
@@ -580,7 +581,7 @@ analyze = function(
                 'pitchDom_plotPars', 'pitchAutocor_plotPars',
                 'pitchCep_plotPars', 'pitchSpec_plotPars',
                 'pitchHps_plotPars', 'harmHeight_plotPars',
-                'loudness', 'roughness', 'novelty')
+                'loudness', 'roughness', 'novelty', 'interpol')
   for (lp in list_pars) myPars[[lp]] = get(lp)
 
   # analyze
@@ -681,9 +682,7 @@ analyzeSound = function(
   harmHeight = list(),
   shortestSyl = 20,
   shortestPause = 60,
-  interpolWin = 75,
-  interpolTol = 0.3,
-  interpolCert = 0.3,
+  interpol = NULL,
   pathfinding = c('none', 'fast', 'slow')[2],
   annealPars = list(maxit = 5000, temp = 1000),
   certWeight = .5,
@@ -802,17 +801,21 @@ analyzeSound = function(
                     'defaulting to 300; set to NULL to disable prior'))
     }
   }
-  if (shortestPause > 0 & interpolWin > 0) {
-    if (interpolWin * step < shortestPause / 2) {
-      interpolWin = ceiling(shortestPause / 2 / step)
-      warning(paste('"interpolWin" reset to', interpolWin,
-                    ': interpolation must be able to bridge merged voiced fragments'))
+  if (!is.null(interpol)) {
+    if (shortestPause > 0 & interpol$win > 0) {
+      if (interpol$win * step < shortestPause / 2) {
+        interpol$win = ceiling(shortestPause / 2 / step)
+        warning(paste(
+          '"interpol$win" reset to', interpol$win,
+          ': interpolation must be able to bridge merged voiced fragments'))
+      }
+    }
+    if (interpol$tol <= 0) {
+      interpol$tol = 0.3
+      warning('"interpol$tol" must be positive; defaulting to 0.3')
     }
   }
-  if (interpolTol <= 0) {
-    interpolTol = 0.3
-    warning('"interpolTol" must be positive; defaulting to 0.3')
-  }
+
   if (!is.numeric(pitchAutocor$autocorSmooth)) {
     pitchAutocor$autocorSmooth = 2 * ceiling(7 * audio$samplingRate / 44100 / 2) - 1
     # width of smoothing interval, chosen to be proportionate to samplingRate (7
@@ -1170,9 +1173,9 @@ analyzeSound = function(
           certWeight = certWeight,
           pathfinding = pathfinding,
           annealPars = annealPars,
-          interpolWin_bin = ceiling(interpolWin / step),
-          interpolTol = interpolTol,
-          interpolCert = interpolCert,
+          interpolWin_bin = ceiling(interpol$win / step),
+          interpolTol = interpol$tol,
+          interpolCert = interpol$cert,
           snakeStep = snakeStep,
           snakePlot = snakePlot
         )

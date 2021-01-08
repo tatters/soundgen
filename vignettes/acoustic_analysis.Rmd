@@ -380,7 +380,7 @@ a = analyze(
   s1, 
   samplingRate = 16000, plot = TRUE, ylim = c(0, 4), priorMean = NA,
   shortestSyl = 0,        # any length of voiced fragments
-  interpolWin = 0,        # don't interpolate missing f0 values
+  interpol = NULL,        # don't interpolate missing f0 values
   pathfinding = 'none',   # don't look for optimal path through candidates
   snakeStep = 0,          # don't run the snake
   smooth = 0              # don't run median smoothing
@@ -395,26 +395,25 @@ It often makes sense to make assumptions about the possible temporal structure o
 The next few blocks of postprocessing are performed by an internal function, `soundgen:::pathfinder()`. Its input is a matrix of pitch candidates for each frame of a single voiced syllable, usually with multiple candidates per frame. Each candidate is also associated with a different certainty. We want to find a good path through these candidates - that is, a pitch contour that both passes close to the strongest candidates and minimizes pitch jumps, producing a relatively smooth contour. The simplest first approximation is to take a mean of all pitch candidates per frame weighted by their certainty - the "center of gravity" of pitch candidates - and for each frame to select the candidate that lies closest to this center of gravity. This initial guess at a reasonable path may or may not be processed further, depending on the settings described below.
 
 ### Interpolation
-To make sure we have at least one pitch candidate for every frame in the supposedly continuous voiced fragment, we interpolate to fill in any missing values. The same algorithm also adds new pitch candidates with certainty `interpolCert` if a frame has no pitch candidates within `interpolTol` of the median of the "center of gravity" estimate over plus-minus `interpolWin` frames. The frequency of new candidates is equal to this median. For example, if `interpolTol = 0.05`, new candidates are calculated if there are none within 0.95 to 1.05 times the median over the interpolation window. You can also enable interpolation to fill in unvoiced frames, but without adding new pitch candidates in voiced frames. To do so, set `interpolTol = Inf`.
+To make sure we have at least one pitch candidate for every frame in the supposedly continuous voiced fragment, we interpolate to fill in any missing values. The same algorithm also adds new pitch candidates with certainty `interpol$cert` if a frame has no pitch candidates within `interpol$tol` of the median of the "center of gravity" estimate over plus-minus `interpol$win` frames. The frequency of new candidates is equal to this median. For example, if `interpol$tol = 0.05`, new candidates are calculated if there are none within 0.95 to 1.05 times the median over the interpolation window. You can also enable interpolation to fill in unvoiced frames, but without adding new pitch candidates in voiced frames. To do so, set `interpol$tol = Inf`.
 
 Here is an example (interpolated segments are shown with a dotted line)
 
 ```{r fig.show = "hold", fig.height = 3, fig.width = 7}
-a1 = analyze(s1, samplingRate = 16000, priorMean = NA,
-             pitchMethods = 'cep', pitchCep = list(cepThres = .4), step = 25,
-             snakeStep = 0, smooth = 0,
-             interpolWin = 0,   # disable interpolation
+a1 = analyze(s1, samplingRate = 16000, step = 10, priorMean = NA,
+             pitchMethods = 'cep', pitchCep = list(cepThres = .45),
+             interpol = NULL,   # disable interpolation
              pathfinding = 'none',  
-             summaryFun = NULL,
-             plot = FALSE)
-a2 = analyze(s1, samplingRate = 16000, priorMean = NA,
-             pitchMethods = 'cep', pitchCep = list(cepThres = .4), step = 25,
-             pathfinding = 'none',
-             snakeStep = 0, smooth = 0, 
-             summaryFun = NULL,
-             plot = FALSE)  
-plot(a1$detailed$time, a1$detailed$pitch, type = 'l', xlab = 'Time, ms', ylab = 'Pitch, Hz')
-points(a2$detailed$time, a2$detailed$pitch, type = 'l', col = 'red', lty = 3)
+             snakeStep = 0, smooth = 0, plot = FALSE)
+a2 = analyze(s1, samplingRate = 16000, step = 10, priorMean = NA,
+             pitchMethods = 'cep', pitchCep = list(cepThres = .45),
+             # interpol = list(win = 100, tol = .1),
+             pathfinding = 'none', 
+             snakeStep = 0, smooth = 0, plot = FALSE)  
+plot(a1$detailed$time, a1$detailed$pitch, type = 'l', 
+     xlab = 'Time, ms', ylab = 'Pitch, Hz')
+points(a2$detailed$time, a2$detailed$pitch, type = 'l', 
+       col = 'red', lty = 3)
 
 ```
 
@@ -423,14 +422,14 @@ The next step after interpolation is pathfinding proper - searching for the opti
 
 ```{r fig.show = "hold", fig.height = 6, fig.width = 7}
 a1 = analyze(s1, samplingRate = 16000, priorMean = NA,
-             pitchMethods = 'cep', pitchCep = list(cepThres = .15), nCands = 3,
-             snakeStep = 0, smooth = 0, interpolTol = Inf,
+             pitchMethods = 'cep', pitchCep = list(cepThres = .15), nCands = 2,
+             snakeStep = 0, smooth = 0, interpol = list(tol = Inf),
              certWeight = 0,  # minimize pitch jumps
              plot = TRUE, main = 'Minimize jumps', 
              showLegend = FALSE, osc = FALSE, ylim = c(0, 3))  
 a2 = analyze(s1, samplingRate = 16000, priorMean = NA,
-             pitchMethods = 'cep', pitchCep = list(cepThres = .15), nCands = 3,
-             snakeStep = 0, smooth = 0, interpolTol = Inf,
+             pitchMethods = 'cep', pitchCep = list(cepThres = .15), nCands = 2,
+             snakeStep = 0, smooth = 0, interpol = list(tol = Inf),
              certWeight = 1,  # minimize deviation from high-certainty candidates
              plot = TRUE, main = 'Pass through top cand-s', 
              showLegend = FALSE, osc = FALSE, ylim = c(0, 3))
