@@ -4,12 +4,15 @@
 \alias{playme}
 \title{Play audio}
 \usage{
-playme(sound, samplingRate = 16000, player = NULL, from = NULL, to = NULL)
+playme(x, samplingRate = 16000, player = NULL, from = NULL, to = NULL)
 }
 \arguments{
-\item{sound}{numeric vector or path to wav/mp3 file}
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
 
-\item{samplingRate}{sampling rate (only needed if sound is a vector)}
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector)}
 
 \item{player}{the name of player to use, eg "aplay", "play", "vlc", etc.
 Defaults to "play" on Linux, "afplay" on MacOS, and tuneR default on
@@ -19,26 +22,28 @@ Windows. In case of errors, try setting another default player for
 \item{from, to}{play a selected time range (s)}
 }
 \description{
-Plays an audio file (wav or mp3) or a numeric vector. This is a simple
-wrapper for the functionality provided by \code{\link[tuneR]{play}}.
-Recommended players on Linux: "play" from the "vox" library (default),
-"aplay".
+Plays one or more sounds: wav/mp3 file(s), Wave objects, or numeric vectors.
+This is a simple wrapper for the functionality provided by
+\code{\link[tuneR]{play}}. Recommended players on Linux: "play" from the
+"vox" library (default), "aplay".
 }
 \examples{
+\dontrun{
 # Play an audio file:
-# playme('pathToMyAudio/audio.wav')
+playme('pathToMyAudio/audio.wav')
 
 # Create and play a numeric vector:
 f0_Hz = 440
 sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
-# playme(sound, 16000)
-# playme(sound, 16000, from = .1, to = .5)  # play from 100 to 500 ms
+playme(sound, 16000)
+playme(sound, 16000, from = .1, to = .5)  # play from 100 to 500 ms
 
 # In case of errors, look into tuneR::play(). For ex., you might need to
 # specify which player to use:
-# playme(sound, 16000, player = 'aplay')
+playme(sound, 16000, player = 'aplay')
 
 # To avoid doing it all the time, set the default player:
 tuneR::setWavPlayer('aplay')
-# playme(sound, 16000)  # should work without specifying the player
+playme(sound, 16000)  # should now work without specifying the player
+}
 }

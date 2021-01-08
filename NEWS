@@ -1,7 +1,8 @@
           CHANGES IN SOUNDGEN VERSION 1.8.2.9000 [...date...]
 MAJOR (affects back-compatibility):
-  * Functions analyzeFolder(), spectrogramFolder(), segmentFolder(), modulationSpectrumFolder(), getRMSFolder(), getLoudnessFolder(), ... are deprecated. Instead, analyze(), spectrogram(), osc(), segment(), modulationSpectrum(), getRMS(), getLoudness(), ssm(), ... accept as input either a single sound (numeric vector, Wave object, or filename) or multiple sounds (a list of vectors or Wave objects, multiple filenames like "c(file1, file2)"", or path to folder with audio files).
-  * Functions for acoustic analysis return lists with both detailed results and summaries; for example, analyze() returns a list with two components: "$detailed" (frame-by-frame acoustic measures, one dataframe per file) and "$summary" (summaries based on "summaryFun", one row per file)
+  * Functions analyzeFolder(), spectrogramFolder(), segmentFolder(), modulationSpectrumFolder(), getRMSFolder(), getLoudnessFolder(), ... are deprecated.
+  * Instead, analyze(), spectrogram(), osc(), segment(), modulationSpectrum(), getRMS(), getLoudness(), ssm(), playme(), ... accept as input either a single sound (numeric vector, Wave object, or filename) or multiple sounds (a list of vectors or Wave objects, multiple filenames like "c(file1, file2)"", or path to folder with audio files).
+  * Functions for acoustic analysis return lists with both detailed results and summaries; for example, analyze() returns a list with two components: "$detailed" (frame-by-frame acoustic measures, one dataframe per file) and "$summary" (summaries based on "summaryFun", one row per file).
   * segment(): a new segmentation algorithm based on spectral signal-noise separation, several deprecated and several new arguments, support for long files (>1 h of audio), an option to export detected syllables as separate files, etc.
   * Harmonized terminology throughout the package for basic arguments like "from", "to", saving plots and audio ("savePlots" / "saveAudio"), reporting estimated time left ("reportEvery"), etc.
 

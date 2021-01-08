@@ -1,11 +1,10 @@
 #' Play audio
 #'
-#' Plays an audio file (wav or mp3) or a numeric vector. This is a simple
-#' wrapper for the functionality provided by \code{\link[tuneR]{play}}.
-#' Recommended players on Linux: "play" from the "vox" library (default),
-#' "aplay".
-#' @param sound numeric vector or path to wav/mp3 file
-#' @param samplingRate sampling rate (only needed if sound is a vector)
+#' Plays one or more sounds: wav/mp3 file(s), Wave objects, or numeric vectors.
+#' This is a simple wrapper for the functionality provided by
+#' \code{\link[tuneR]{play}}. Recommended players on Linux: "play" from the
+#' "vox" library (default), "aplay".
+#' @inheritParams spectrogram
 #' @param player the name of player to use, eg "aplay", "play", "vlc", etc.
 #'   Defaults to "play" on Linux, "afplay" on MacOS, and tuneR default on
 #'   Windows. In case of errors, try setting another default player for
@@ -13,76 +12,88 @@
 #' @param from,to play a selected time range (s)
 #' @export
 #' @examples
+#' \dontrun{
 #' # Play an audio file:
-#' # playme('pathToMyAudio/audio.wav')
+#' playme('pathToMyAudio/audio.wav')
 #'
 #' # Create and play a numeric vector:
 #' f0_Hz = 440
 #' sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
-#' # playme(sound, 16000)
-#' # playme(sound, 16000, from = .1, to = .5)  # play from 100 to 500 ms
+#' playme(sound, 16000)
+#' playme(sound, 16000, from = .1, to = .5)  # play from 100 to 500 ms
 #'
 #' # In case of errors, look into tuneR::play(). For ex., you might need to
 #' # specify which player to use:
-#' # playme(sound, 16000, player = 'aplay')
+#' playme(sound, 16000, player = 'aplay')
 #'
 #' # To avoid doing it all the time, set the default player:
 #' tuneR::setWavPlayer('aplay')
-#' # playme(sound, 16000)  # should work without specifying the player
-playme = function(sound,
+#' playme(sound, 16000)  # should now work without specifying the player
+#' }
+playme = function(x,
                   samplingRate = 16000,
                   player = NULL,
                   from = NULL,
                   to = NULL) {
-  # input: a vector of numbers on any scale or a path to a .wav file
-  if (class(sound)[1] == 'character') {
-    extension = substr(sound, nchar(sound) - 2, nchar(sound))
-    if (extension == 'wav' | extension == 'WAV') {
-      soundWave = tuneR::readWave(sound)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      soundWave = tuneR::readMP3(sound)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-  } else if (class(sound)[1] == 'numeric' | class(sound)[1] == 'integer') {
-    soundWave = tuneR::Wave(
-      left = sound,
-      samp.rate = samplingRate,
-      bit = 16,
-      pcm = TRUE
-    )
-    soundWave = tuneR::normalize(soundWave, unit = '32') # / 2
-  }
-
-  # to play a selected time range
-  if (!is.null(from) | !is.null(to)) {
-    if (is.null(from)) from = 0
-    if (is.null(to)) to = length(soundWave@left) / soundWave@samp.rate
-    soundWave = tuneR::extractWave(object = soundWave,
-                                   from = from,
-                                   to = to,
-                                   interact = FALSE,
-                                   xunit = 'time')
-  }
-
-  if (!is.null(player)) {
-    p = tuneR::play(soundWave, player = player)
+  # try to guess what player to use
+  os = Sys.info()[['sysname']]
+  if (os == 'Linux' | os == 'linux') {
+    player = 'play'
+  } else if (os == 'Darwin' | os == 'darwin') {
+    player = 'afplay'
   } else {
-    # try to guess
-    os = Sys.info()[['sysname']]
-    if (os == 'Linux' | os == 'linux') {
-      p = tuneR::play(soundWave, 'play')
-    } else if (os == 'Darwin' | os == 'darwin') {
-      p = tuneR::play(soundWave, 'afplay')
-    } else {  # a good default on windows?
-      p = tuneR::play(soundWave)
-    }
+    # a good default on windows?
   }
-  if (p > 0) {  # error in sh
-    warning(paste0(
-      "Error in tuneR::play. Try setting the default audio player,",
-      "eg tuneR::setWavPlayer('aplay'). See http://music.informatics.",
-      "indiana.edu/courses/I546/tuneR_play.pdf"))
+
+  # check input type
+  input = checkInputType(x)
+  if (input$type[1] == 'file') x = rep(list(NULL), input$n)
+  if (!is.list(x)) x = list(x)
+
+  # play each input
+  for (i in 1:length(x)) {
+    # make input i into a Wave object
+    if (input$type[i] == 'file') {
+      fi = input$filenames[i]
+      ext_i = substr(fi, nchar(fi) - 3, nchar(fi))
+      if (ext_i %in% c('.wav', '.WAV')) {
+        sound_wave = try(tuneR::readWave(fi))
+      } else if (ext_i %in% c('mp3', 'MP3')) {
+        sound_wave = try(tuneR::readMP3(fi))
+      } else {
+        warning(paste('Input', fi, 'not recognized: expected a wav/mp3 file'))
+      }
+    } else if (input$type[i] == 'vector') {
+      sound_wave = tuneR::Wave(
+        left = x[[i]],
+        samp.rate = samplingRate,
+        bit = 16,
+        pcm = TRUE
+      )
+      sound_wave = tuneR::normalize(sound_wave, unit = '32') # / 2
+    } else if (input$type[i] == 'Wave') {
+      sound_wave = x[[i]]
+    }
+
+    if (class(sound_wave) != 'try-error') {
+      # select time range
+      if (!is.null(from) | !is.null(to)) {
+        if (is.null(from)) from = 0
+        if (is.null(to)) to = length(sound_wave@left) / sound_wave@samp.rate
+        soundWave = tuneR::extractWave(object = sound_wave,
+                                       from = from,
+                                       to = to,
+                                       interact = FALSE,
+                                       xunit = 'time')
+      }
+      p = tuneR::play(sound_wave, player = player)
+      if (p > 0) {  # error in sh
+        warning(paste0(
+          "Error in tuneR::play. Try setting the default audio player,",
+          "eg tuneR::setWavPlayer('aplay'). See http://music.informatics.",
+          "indiana.edu/courses/I546/tuneR_play.pdf"))
+      }
+    }
   }
   # can't get rid of printed output! sink(), capture.output, invisible don't work!!!
 }
