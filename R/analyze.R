@@ -23,11 +23,11 @@ analyzeFolder = function(...) {
 #' with these manual contours.
 #'
 #' Each pitch tracker is controlled by its own list of settings, as follows:
-#' \describe{\item{\code{pitchDom} (lowest dominant frequency band)} {\itemize{
+#' \describe{\item{\code{pitchDom} (lowest dominant frequency band)}{\itemize{
 #' \item\code{domThres} (0 to 1) to find the lowest dominant frequency band, we
 #' do short-term FFT and take the lowest frequency with amplitude at least
 #' domThres \item\code{domSmooth} the width of smoothing interval (Hz) for
-#' finding \code{dom}}} \item{\code{pitchAutocor} (autocorrelation)} {\itemize{
+#' finding \code{dom}}} \item{\code{pitchAutocor} (autocorrelation)}{\itemize{
 #' \item \code{autocorThres} voicing threshold (unitless, ~0 to 1)
 #' \item\code{autocorSmooth} the width of smoothing interval (in bins) for
 #' finding peaks in the autocorrelation function. Defaults to 7 for sampling
@@ -73,9 +73,6 @@ analyzeFolder = function(...) {
 #' @param silence (0 to 1 as proportion of max amplitude) frames with RMS
 #'   amplitude below \code{silence * max_ampl adjusted by scale} are not
 #'   analyzed at all.
-#' @param SPL_measured sound pressure level at which the sound is presented, dB
-#'   (set to 0 to skip analyzing subjective loudness)
-#' @param Pref reference pressure, Pa
 #' @param cutFreq if specified, spectral descriptives (peakFreq, specCentroid,
 #'   specSlope, and quartiles) are calculated only between \code{cutFreq[1]} and
 #'   \code{cutFreq[2]}. If a single number is given, analyzes frequencies from 0
@@ -88,6 +85,9 @@ analyzeFolder = function(...) {
 #'   perform LPC analysis
 #' @param nFormants the number of formants to extract per STFT frame (0 = no
 #'   formant analysis, NULL = as many as possible)
+#' @param loudness a list of parameters passed to \code{\link{getLoudness}} for
+#'   measuring subjective loudness, namely \code{SPL_measured, Pref,
+#'   spreadSpectrum}. NULL = skip loudness analysis
 #' @param roughness a list of parameters passed to
 #'   \code{\link{modulationSpectrum}} for measuring roughness. NULL = skip
 #'   roughness analysis
@@ -180,7 +180,7 @@ analyzeFolder = function(...) {
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link{spectrogram}}
 #' @return Returns a list with \code{$detailed} frame-by-frame descriptives and
-#'   a \code{$summary} with one row per file, as deterimined by
+#'   a \code{$summary} with one row per file, as determined by
 #'   \code{summaryFun} (e.g., mean / median / SD of each acoustic variable
 #'   across all STFT frames). Output measures include:
 #'   \describe{\item{duration}{total duration, s}
@@ -197,7 +197,7 @@ analyzeFolder = function(...) {
 #'   nFormants formants per STFT frame, as calculated by
 #'   phonTools::findformants} \item{harmEnergy}{the amount of energy in upper
 #'   harmonics, namely the ratio of total spectral mass above 1.25 x F0 to the
-#'   total spectral mass below 1.25 x F0 (dB)}\item{harmHeight}{how high
+#'   total spectral mass below 1.25 x F0 (dB)} \item{harmHeight}{how high
 #'   harmonics reach in the spectrum, based on the best guess at pitch (or the
 #'   manually provided pitch values)} \item{HNR}{harmonics-to-noise ratio (dB),
 #'   a measure of harmonicity returned by soundgen:::getPitchAutocor (see "Pitch
@@ -230,7 +230,7 @@ analyzeFolder = function(...) {
 #' a = analyze(sound, samplingRate = 16000,
 #'   plot = FALSE,         # no plotting
 #'   pitchMethods = NULL,  # no pitch tracking
-#'   SPL_measured = 0,     # no loudness analysis
+#'   loudness = NULL,      # no loudness analysis
 #'   nFormants = 0         # no formant analysis
 #' )
 #'
@@ -297,10 +297,11 @@ analyzeFolder = function(...) {
 #' # Create 1 kHz tone
 #' samplingRate = 16000; dur_ms = 50
 #' sound3 = sin(2*pi*1000/samplingRate*(1:(dur_ms/1000*samplingRate)))
-#' a1 = analyze(sound3, samplingRate = samplingRate, windowLength = 25,
-#'         overlap = 50, SPL_measured = 40, scale = 1,
-#'         pitchMethods = NULL, plot = FALSE)
-#' a1$loudness  # loudness per STFT frame (1 sone by definition)
+#' a1 = analyze(sound3, samplingRate = samplingRate, scale = 1,
+#'              windowLength = 25, overlap = 50,
+#'              loudness = list(SPL_measured = 40),
+#'              pitchMethods = NULL, plot = FALSE)
+#' a1$detailed$loudness  # loudness per STFT frame (1 sone by definition)
 #' getLoudness(sound3, samplingRate = samplingRate, windowLength = 25,
 #'             overlap = 50, SPL_measured = 40, scale = 1)$loudness
 #' a1$ampl  # RMS amplitude per STFT frame
@@ -309,15 +310,18 @@ analyzeFolder = function(...) {
 #' # or even simply: sqrt(mean(sound3 ^ 2))
 #'
 #' # The same sound as above, but with half the amplitude
-#' a_half = analyze(sound3 / 2, samplingRate = samplingRate, windowLength = 25,
-#'         overlap = 50, SPL_measured = 40, scale = 1,
-#'         pitchMethods = NULL, plot = FALSE)
-#' a1$ampl / a_half$ampl  # rms amplitude halved
-#' a1$loudness/ a_half$loudness  # loudness is not a linear function of amplitude
+#' a_half = analyze(sound3 / 2, samplingRate = samplingRate, scale = 1,
+#'                  windowLength = 25, overlap = 50,
+#'                  loudness = list(SPL_measured = 40),
+#'                  pitchMethods = NULL, plot = FALSE)
+#' a1$detailed$ampl / a_half$detailed$ampl  # rms amplitude halved
+#' a1$detailed$loudness/ a_half$detailed$loudness
+#' # loudness is not a linear function of amplitude
 #'
 #' # Amplitude & loudness of an existing audio file
 #' sound4 = '~/Downloads/temp/cry_451_soundgen.wav'
-#' a2 = analyze(sound4, windowLength = 25, overlap = 50, SPL_measured = 40)
+#' a2 = analyze(sound4, windowLength = 25, overlap = 50,
+#'              loudness = list(SPL_measured = 40))
 #' apply(a2[, c('loudness', 'ampl')], 2, median, na.rm = TRUE)
 #' median(getLoudness(sound4, windowLength = 25, overlap = 50,
 #'                    SPL_measured = 40)$loudness)
@@ -377,8 +381,6 @@ analyze = function(
   to = NULL,
   dynamicRange = 80,
   silence = 0.04,
-  SPL_measured = 70,
-  Pref = 2e-5,
   windowLength = 50,
   step = NULL,
   overlap = 50,
@@ -387,6 +389,7 @@ analyze = function(
   cutFreq = NULL,
   nFormants = 3,
   formants = list(),
+  loudness = list(SPL_measured = 70, Pref = 2e-5),
   roughness = list(),
   novelty = list(input = 'melspec', kernelLen = 100),
   pitchMethods = c('dom', 'autocor'),
@@ -553,10 +556,15 @@ analyze = function(
     pitchManual_list = NULL
   }
 
-  # reformat novelty list, if any
+  # reformat loudness/novelty list, if any
   if (!is.null(novelty)) {
     if (is.null(novelty$windowLength)) novelty$windowLength = windowLength
     if (is.null(novelty$step)) novelty$step = step
+  }
+  if (!is.null(loudness)) {
+    if (is.null(loudness$SPL_measured)) loudness$SPL_measured = 70
+    if (is.null(loudness$Pref)) loudness$Pref = 2e-5
+    if (is.null(loudness$spreadSpectrum)) loudness$spreadSpectrum = TRUE
   }
 
   # match args
@@ -566,13 +574,13 @@ analyze = function(
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery',
     'savePlots', 'pitchPlot', 'pitchManual', 'summaryFun', 'invalidArgAction',
-    'roughness', 'novelty')]
+    'loudness', 'roughness', 'novelty')]
   # add plot pars correctly, without flattening the lists
   list_pars = c('pitchManual_list', 'pitchPlot',
                 'pitchDom_plotPars', 'pitchAutocor_plotPars',
                 'pitchCep_plotPars', 'pitchSpec_plotPars',
                 'pitchHps_plotPars', 'harmHeight_plotPars',
-                'roughness', 'novelty')
+                'loudness', 'roughness', 'novelty')
   for (lp in list_pars) myPars[[lp]] = get(lp)
 
   # analyze
@@ -645,8 +653,6 @@ analyzeSound = function(
   audio,
   dynamicRange = 80,
   silence = 0.04,
-  SPL_measured = 70,
-  Pref = 2e-5,
   windowLength = 50,
   step = NULL,
   overlap = 50,
@@ -655,6 +661,7 @@ analyzeSound = function(
   cutFreq = NULL,
   nFormants = 3,
   formants = NULL,
+  loudness = NULL,
   roughness = NULL,
   novelty = NULL,
   pitchMethods = c('dom', 'autocor'),
@@ -819,11 +826,12 @@ analyzeSound = function(
   ## NORMALIZATION
   # calculate scaling coefficient for loudness calculation, but don't convert
   # yet, since most routines in analyze() require scale [-1, 1]
-  if (is.numeric(SPL_measured) && SPL_measured > 0) {
-    scaleCorrection = max(abs(scaleSPL(audio$sound,
-                                       scale = audio$scale,
-                                       SPL_measured = SPL_measured,
-                                       Pref = Pref)))
+  if (!is.null(loudness)) {
+    scaleCorrection = max(abs(scaleSPL(
+      audio$sound,
+      scale = audio$scale,
+      SPL_measured = loudness$SPL_measured,
+      Pref = loudness$Pref)))
   } else {
     scaleCorrection = NA
   }
@@ -836,7 +844,7 @@ analyzeSound = function(
   if (m_to_scale < silence)
     message('The audio is too quiet: max ampl is lower than silence = ', silence)
 
-  if (SPL_measured != 0) {  # if analyzing loudness
+  if (!is.null(loudness)) {  # if analyzing loudness
     if (audio$samplingRate < 2000) {
       warning(paste('Sampling rate must be >2 KHz to resolve frequencies of at least 8 barks',
                     'and estimate loudness in sone'))
@@ -1057,6 +1065,7 @@ analyzeSound = function(
       autoCorrelation = autocorBank[, i],
       samplingRate = audio$samplingRate,
       scaleCorrection = scaleCorrection,
+      loudness = loudness,
       cutFreq = cutFreq,
       trackPitch = cond_entropy[i],
       pitchMethods = pitchMethods,

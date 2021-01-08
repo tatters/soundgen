@@ -37,6 +37,8 @@ getLoudnessFolder = function(...) {
 #'
 #' @inheritParams spectrogram
 #' @inheritParams analyze
+#' @param SPL_measured sound pressure level at which the sound is presented, dB
+#' @param Pref reference pressure, Pa (currently has no effect on the estimate)
 #' @param spreadSpectrum if TRUE, applies a spreading function to account for
 #'   frequency masking
 #' @param mar margins of the spectrogram

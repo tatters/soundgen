@@ -8,8 +8,6 @@ analyzeSound(
   audio,
   dynamicRange = 80,
   silence = 0.04,
-  SPL_measured = 70,
-  Pref = 2e-05,
   windowLength = 50,
   step = NULL,
   overlap = 50,
@@ -18,6 +16,7 @@ analyzeSound(
   cutFreq = NULL,
   nFormants = 3,
   formants = NULL,
+  loudness = NULL,
   roughness = NULL,
   novelty = NULL,
   pitchMethods = c("dom", "autocor"),
@@ -81,11 +80,6 @@ under maximum are treated as zero}
 amplitude below \code{silence * max_ampl adjusted by scale} are not
 analyzed at all.}
 
-\item{SPL_measured}{sound pressure level at which the sound is presented, dB
-(set to 0 to skip analyzing subjective loudness)}
-
-\item{Pref}{reference pressure, Pa}
-
 \item{windowLength}{length of FFT window, ms}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
@@ -114,6 +108,10 @@ formant analysis, NULL = as many as possible)}
 \item{formants}{a list of arguments passed to
 \code{\link[phonTools]{findformants}} - an external function called to
 perform LPC analysis}
+
+\item{loudness}{a list of parameters passed to \code{\link{getLoudness}} for
+measuring subjective loudness, namely \code{SPL_measured, Pref,
+spreadSpectrum}. NULL = skip loudness analysis}
 
 \item{roughness}{a list of parameters passed to
 \code{\link{modulationSpectrum}} for measuring roughness. NULL = skip

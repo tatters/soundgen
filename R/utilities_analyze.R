@@ -23,6 +23,7 @@ analyzeFrame = function(frame, bin, freqs,
                         autoCorrelation = NULL,
                         samplingRate,
                         scaleCorrection,
+                        loudness,
                         cutFreq,
                         trackPitch = TRUE,
                         pitchMethods = c('dom', 'autocor'),
@@ -74,7 +75,8 @@ analyzeFrame = function(frame, bin, freqs,
   if (is.numeric(scaleCorrection)) {
     loudness = getLoudnessPerFrame(
       spec = frame * scaleCorrection,
-      samplingRate = samplingRate
+      samplingRate = samplingRate,
+      spreadSpectrum = loudness$spreadSpectrum
     )  # in sone, assuming scaling by SPL_measured in analyze()
   } else {
     loudness = NA

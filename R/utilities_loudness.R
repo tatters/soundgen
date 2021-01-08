@@ -56,8 +56,8 @@ getLoudnessPerFrame = function(spec,
 #' sound = rnorm(100) * getSmoothContour(c(0, 1, 0), len = 100)
 #' sound = sound / max(abs(sound))
 #' # plot(sound, type = 'l')
-#' sound_scaled = soundgen:::scaleSPL(sound)
-#' # plot(sound_scaled, type = 'l')
+#' sound_scaled = soundgen:::scaleSPL(sound, Pref = 2e-1)
+#' plot(sound_scaled, type = 'l')
 #'
 #' sound2 = sound / 3
 #' range(soundgen:::scaleSPL(sound2, scale = NULL))

@@ -55,10 +55,9 @@ may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{overlap}{overlap between successive FFT frames, \%}
 
-\item{SPL_measured}{sound pressure level at which the sound is presented, dB
-(set to 0 to skip analyzing subjective loudness)}
+\item{SPL_measured}{sound pressure level at which the sound is presented, dB}
 
-\item{Pref}{reference pressure, Pa}
+\item{Pref}{reference pressure, Pa (currently has no effect on the estimate)}
 
 \item{spreadSpectrum}{if TRUE, applies a spreading function to account for
 frequency masking}
