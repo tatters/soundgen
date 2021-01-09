@@ -527,7 +527,7 @@ getCheckerboardKernel = function(size,
 
   kernel = kernel / max(kernel)
   if (plot) {
-    persp (
+    persp(
       kernel,
       theta = -20,
       phi = 25,

@@ -19,10 +19,12 @@ addAM(
 )
 }
 \arguments{
-\item{x}{path to a .wav file or a vector of amplitudes with specified
-samplingRate}
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
 
-\item{samplingRate}{sampling frequency, Hz}
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector)}
 
 \item{amDep}{amplitude modulation (AM) depth, \%. 0: no change; 100: AM with
 amplitude range equal to the dynamic range of the sound (anchor format)}
@@ -52,7 +54,7 @@ per detected syllable)}
 left every ... iterations}
 }
 \description{
-Adds sinusidal or logistic amplitude modulation to a sound. This produces
+Adds sinusoidal or logistic amplitude modulation to a sound. This produces
 additional harmonics in the spectrum at ±am_freq around each original
 harmonic and makes the sound rough. The optimal frequency for creating a
 perception of roughness is ~70 Hz (Fastl & Zwicker "Psychoacoustics").
@@ -70,14 +72,14 @@ s2 = addAM(sound1, 16000,
                       value = c(0, 0, 35, 25, 0, 0)),
          plot = TRUE, play = TRUE)
 
-# Sinusoidal AM produces exactly 2 extra harmonics at ±am_freq around each f0
-harmonic:
-s3 = addAM(sound1, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
-           plot = TRUE, play = TRUE)
+# Sinusoidal AM produces exactly 2 extra harmonics at ±am_freq
+# around each f0 harmonic:
+s3 = addAM(sound1, 16000, amDep = 30, amFreq = c(50, 80),
+           amType = 'sine', plot = TRUE, play = TRUE)
 spectrogram(s3, 16000, windowLength = 150, ylim = c(0, 2))
 
-# Non-sinusoidal AM produces multiple new harmonics, which can resemble
-subharmonics...
+# Non-sinusoidal AM produces multiple new harmonics,
+# which can resemble subharmonics...
 s4 = addAM(sound1, 16000, amDep = 70, amFreq = 50, amShape = -1,
            plot = TRUE, play = TRUE)
 spectrogram(s4, 16000, windowLength = 150, ylim = c(0, 2))
@@ -103,5 +105,9 @@ con = getSmoothContour(anchors = c(400, 600, 400),
                        len = 20, thisIsPitch = TRUE)
 s = soundgen(sylLen = 1500, pitch = con, amFreq = con/3, amDep = 30,
              plot = TRUE, play = TRUE, ylim = c(0, 3))
+
+# Process all files in a folder and save the modified audio
+addAM('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/AM',
+      amFreq = 70, amDep = c(0, 50))
 }
 }

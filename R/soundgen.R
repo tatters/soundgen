@@ -1,4 +1,4 @@
-# TODO: check functions addAM (input type, saveAudio), addFormants (input type); flatSpectrum - update, input type etc; modulationSpectrum - update description; check optimizePars; reverb - add saveAudio, maybe always return detailed list; transplantEnv, transplantFormants - check input type;
+# TODO: check addFormants (input type); flatSpectrum - update, input type etc; modulationSpectrum - update description; check optimizePars; reverb - add saveAudio, maybe always return detailed list; transplantEnv, transplantFormants - check input type; rename xSound functions to .x (use grep -rnw /home/allgoodguys/Documents/Research/methods/sound-synthesis/soundgen -e "addAMSound" )
 
 # TODO maybe: only calculate half the ssm to save time (a bit tricky b/c it's not symmetric along the main diag but at 90°); add mel/bark to spectrogram(yScale); inverse distance weighting interpolation instead of interpolMatrix; sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
@@ -1144,12 +1144,15 @@ soundgen = function(
         )
 
         if (length(sound) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
-          soundFiltered = do.call(addFormants, c(
+          soundFiltered = do.call(.addFormants, c(
             formantPars,
-            list(x = sound,
-                 formants = formants,
-                 formantDepStoch = formantDepStoch,
-                 normalize = FALSE)
+            list(audio = list(
+              sound = sound,
+              samplingRate = samplingRate
+            ),
+            formants = formants,
+            formantDepStoch = formantDepStoch,
+            normalize = FALSE)
           ))
         } else {
           soundFiltered = sound
@@ -1158,24 +1161,30 @@ soundgen = function(
         # OPTION 2: apply different formant filters to voiced and unvoiced, then mix
         # add formants to voiced
         if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
-          voicedFiltered = do.call(addFormants, c(
+          voicedFiltered = do.call(.addFormants, c(
             formantPars,
-            list(x = voiced,
-                 formants = formants,
-                 formantDepStoch = formantDepStoch,
-                 normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
+            list(audio = list(
+              sound = voiced,
+              samplingRate = samplingRate
+            ),
+            formants = formants,
+            formantDepStoch = formantDepStoch,
+            normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
           ))
         } else {
           voicedFiltered = voiced
         }
         # add formants to unvoiced
         if (length(sound_unvoiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
-          unvoicedFiltered = do.call(addFormants, c(
+          unvoicedFiltered = do.call(.addFormants, c(
             formantPars,
-            list(x = sound_unvoiced,
-                 formants = formantsNoise,
-                 formantDepStoch = formantDepStoch_noise,
-                 normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
+            list(audio = list(
+              sound = sound_unvoiced,
+              samplingRate = samplingRate
+            ),
+            formants = formantsNoise,
+            formantDepStoch = formantDepStoch_noise,
+            normalize = ifelse(noiseAmpRef == 'filtered', TRUE, FALSE))
           ))
         } else {
           unvoicedFiltered = sound_unvoiced
@@ -1195,12 +1204,15 @@ soundgen = function(
       # no unvoiced component - just add formants to voiced
       # plot(voiced, type = 'l')
       if (length(voiced) / samplingRate * 1000 > permittedValues['sylLen', 'low']) {
-        soundFiltered = do.call(addFormants, c(
+        soundFiltered = do.call(.addFormants, c(
           formantPars,
-          list(x = voiced,
-               formants = formants,
-               formantDepStoch = formantDepStoch,
-               normalize = FALSE)
+          list(audio = list(
+            sound = voiced,
+            samplingRate = samplingRate
+          ),
+          formants = formants,
+          formantDepStoch = formantDepStoch,
+          normalize = FALSE)
         ))
       } else {
         soundFiltered = voiced
@@ -1211,7 +1223,7 @@ soundgen = function(
     # Add amplitude modulation (affects both voiced and unvoiced)
     if (is.list(amDep)) {
       if (any(amDep$value > 0)) {
-        soundFiltered = addAMSound(
+        soundFiltered = .addAM(
           audio = list(
             sound = soundFiltered,
             samplingRate = samplingRate,
@@ -1223,8 +1235,7 @@ soundgen = function(
           amShape = amShape,
           invalidArgAction = invalidArgAction,
           plot = FALSE,
-          play = FALSE,
-          checkFormat = FALSE
+          play = FALSE
         )
         # plot(soundFiltered, type = 'l')
       }

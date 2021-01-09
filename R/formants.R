@@ -825,6 +825,7 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #'
 #' @inheritParams soundgen
 #' @inheritParams spectrogram
+#' @inheritParams segment
 #' @param action 'add' = add formants to the sound, 'remove' = remove formants
 #'   (inverse filtering)
 #' @param spectralEnvelope (optional): as an alternative to specifying formant
@@ -873,7 +874,7 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' s_noisy = soundgen(sylLen = 200, addSilence = 0,
 #'                    noise = list(time = c(-100, 300), value = -20))
 #' spectrogram(s_noisy, 16000)
-#' playme(s_noisy)
+#' # playme(s_noisy)
 #' zFun = function(z, cutoff = -50) {
 #'   az = abs(z)
 #'   thres = max(az) * 10 ^ (cutoff / 20)
@@ -883,7 +884,7 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' s_denoised = addFormants(s_noisy, samplingRate = 16000,
 #'                          formants = NA, zFun = zFun, cutoff = -40)
 #' spectrogram(s_denoised, 16000)
-#' playme(s_denoised)
+#' # playme(s_denoised)
 #'
 #' ## Use the spectral envelope of an existing recording (bleating of a sheep)
 #' # (see also the same example with noise as source in ?generateNoise)
@@ -896,9 +897,8 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #'
 #' # get a few pitch anchors to reproduce the original intonation
 #' pitch = analyze(sound_orig, samplingRate = samplingRate,
-#'   pitchMethod = c('autocor', 'dom'))$pitch
+#'   pitchMethod = c('autocor', 'dom'))$detailed$pitch
 #' pitch = pitch[!is.na(pitch)]
-#' pitch = pitch[seq(1, length(pitch), length.out = 10)]
 #'
 #' # extract a frequency-smoothed version of the original spectrogram
 #' # to use as filter
@@ -929,68 +929,103 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' # NB: but the source of excitation in the original is actually a mix of
 #' # harmonics and noise, while the new sound is purely tonal
 #' }
-addFormants = function(x,
-                       samplingRate = NULL,
-                       formants,
-                       spectralEnvelope = NULL,
-                       zFun = NULL,
-                       action = c('add', 'remove')[1],
-                       vocalTract = NA,
-                       formantDep = 1,
-                       formantDepStoch = 1,
-                       formantWidth = 1,
-                       formantCeiling = 2,
-                       lipRad = 6,
-                       noseRad = 4,
-                       mouthOpenThres = 0,
-                       mouth = NA,
-                       interpol = c('approx', 'spline', 'loess')[3],
-                       temperature = 0.025,
-                       formDrift = 0.3,
-                       formDisp = 0.2,
-                       windowLength_points = 800,
-                       overlap = 75,
-                       normalize = TRUE,
-                       ...) {
+addFormants = function(
+  x,
+  samplingRate = NULL,
+  formants,
+  spectralEnvelope = NULL,
+  zFun = NULL,
+  action = c('add', 'remove')[1],
+  vocalTract = NA,
+  formantDep = 1,
+  formantDepStoch = 1,
+  formantWidth = 1,
+  formantCeiling = 2,
+  lipRad = 6,
+  noseRad = 4,
+  mouthOpenThres = 0,
+  mouth = NA,
+  interpol = c('approx', 'spline', 'loess')[3],
+  temperature = 0.025,
+  formDrift = 0.3,
+  formDisp = 0.2,
+  windowLength_points = 800,
+  overlap = 75,
+  normalize = TRUE,
+  play = FALSE,
+  saveAudio = NULL,
+  reportEvery = NULL,
+  ...
+) {
   formants = reformatFormants(formants)
+  mouth = reformatFormants(mouth)
 
-  # import audio
-  if (class(x)[1] == 'character') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    if (sound_wav@stereo)
-      message('Input is a stereo file; only the left channel is analyzed')
-    samplingRate = sound_wav@samp.rate
-    sound = sound_wav@left
-  } else if (is.numeric(x)) {
-    if (is.null(samplingRate)) {
-      stop('Please specify "samplingRate", eg 44100')
-    } else {
-      sound = x
-    }
-  } else if (class(x) == 'Wave') {
-    if (x@stereo)
-      message('Input is a stereo file; only the left channel is analyzed')
-    samplingRate = x@samp.rate
-    sound = x@left
+  # match args
+  myPars = c(as.list(environment()), list(...))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'reportEvery', 'saveAudio',
+    'formants', 'mouth')]
+  myPars$formants = formants
+  myPars$mouth = mouth
+
+  pa = processAudio(x,
+                    samplingRate = samplingRate,
+                    saveAudio = saveAudio,
+                    funToCall = '.addFormants',
+                    myPars = myPars,
+                    reportEvery = reportEvery
+  )
+  # prepare output
+  if (pa$input$n == 1) {
+    result = pa$result[[1]]
   } else {
-    stop('Input not recognized: must be a numeric vector or wav/mp3 file')
+    result = pa$result
   }
+  invisible(result)
+}
 
+
+#' Add formants
+#'
+#' Internal soundgen function called by \code{\link{addFormants}}
+#' @inheritParams addFormants
+#' @param audio a list returned by \code{readAudio}
+#' @keywords internal
+.addFormants = function(
+  audio,
+  formants,
+  spectralEnvelope = NULL,
+  zFun = NULL,
+  action = c('add', 'remove')[1],
+  vocalTract = NA,
+  formantDep = 1,
+  formantDepStoch = 1,
+  formantWidth = 1,
+  formantCeiling = 2,
+  lipRad = 6,
+  noseRad = 4,
+  mouthOpenThres = 0,
+  mouth = NA,
+  interpol = c('approx', 'spline', 'loess')[3],
+  temperature = 0.025,
+  formDrift = 0.3,
+  formDisp = 0.2,
+  windowLength_points = 800,
+  overlap = 75,
+  normalize = TRUE,
+  play = FALSE,
+  saveAudio = NULL,
+  ...
+) {
   # prepare vocal tract filter (formants + some spectral noise + lip radiation)
-  if (sum(sound) == 0) {
+  if (sum(audio$sound) == 0) {
     # otherwise fft glitches
-    soundFiltered = sound
+    soundFiltered = audio$sound
   } else {
     # pad input with one windowLength_points of 0 to avoid softening the attack
     sound = c(rep(0, windowLength_points),
-              sound,
+              audio$sound,
               rep(0, windowLength_points))
 
     # for very short sounds, make sure the analysis window is no more
@@ -1043,7 +1078,7 @@ addFormants = function(x,
         temperature = temperature,
         formDrift = formDrift,
         formDisp = formDisp,
-        samplingRate = samplingRate,
+        samplingRate = audio$samplingRate,
         vocalTract = vocalTract
       )
     } else {  # user-provided spectralEnvelope
@@ -1068,7 +1103,7 @@ addFormants = function(x,
     # fft and filtering
     z = seewave::stdft(
       wave = as.matrix(sound),
-      f = samplingRate,
+      f = audio$samplingRate,
       wl = windowLength_points,
       zp = 0,
       step = step,
@@ -1102,7 +1137,7 @@ addFormants = function(x,
     soundFiltered = as.numeric(
       seewave::istft(
         z,
-        f = samplingRate,
+        f = audio$samplingRate,
         ovlp = overlap,
         wl = windowLength_points,
         output = "matrix"
@@ -1120,17 +1155,25 @@ addFormants = function(x,
   # remove zero padding
   l = length(soundFiltered)
   hl = seewave::env(soundFiltered[(l - windowLength_points + 1):l],
-                    f = samplingRate, envt = 'hil', plot = FALSE)
+                    f = audio$samplingRate, envt = 'hil', plot = FALSE)
   tailIdx = suppressWarnings(min(which(hl < (.01 * max(hl)))))
   idx = l - windowLength_points + tailIdx
   if(!is.finite(idx)) idx = l # l - windowLength_points
   soundFiltered = soundFiltered[(windowLength_points + 1):idx]
   # osc(soundFiltered, samplingRate = samplingRate)
 
+  if (play) playme(soundFiltered, audio$samplingRate)
+  if (is.character(audio$saveAudio)) {
+    seewave::savewav(
+      soundFiltered, f = audio$samplingRate,
+      filename = paste0(audio$saveAudio, audio$filename_base, '.wav'))
+  }
+
   # spectrogram(soundFiltered, samplingRate = samplingRate, ylim = c(0, 4))
   # playme(soundFiltered, samplingRate = samplingRate)
   return(soundFiltered)
 }
+
 
 
 #' Transplant formants

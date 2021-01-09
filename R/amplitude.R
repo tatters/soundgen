@@ -535,14 +535,16 @@ flatEnvSound = function(audio,
       if (is.numeric(audio$samplingRate)) {
         windowLength_points = windowLength / 1000 * audio$samplingRate
       } else {
-        stop(paste('Please specify either windowLength (ms) plus samplingRate (Hz)',
-                   'or the length of smoothing window in points (windowLength_points)'))
+        stop(paste(
+          'Please specify either windowLength (ms) plus samplingRate (Hz)',
+          'or the length of smoothing window in points (windowLength_points)'))
       }
     }
   }
 
   # audio$scale = original scale (eg -1 to +1 gives m = 1)
-  throwaway_lin = 10 ^ (-dynamicRange / 20) * audio$scale  # from dB to linear + normalize
+  throwaway_lin = 10 ^ (-dynamicRange / 20) * audio$scale
+  # from dB to linear + normalize
 
   # remove DC offset
   if (killDC) {
@@ -704,14 +706,13 @@ transplantEnv = function(
 
 #' Add amplitude modulation
 #'
-#' Adds sinusidal or logistic amplitude modulation to a sound. This produces
+#' Adds sinusoidal or logistic amplitude modulation to a sound. This produces
 #' additional harmonics in the spectrum at ±am_freq around each original
 #' harmonic and makes the sound rough. The optimal frequency for creating a
 #' perception of roughness is ~70 Hz (Fastl & Zwicker "Psychoacoustics").
 #' Sinusoidal AM creates a single pair of new harmonics, while non-sinusoidal AM
 #' creates more extra harmonics (see examples).
-#' @param x path to a .wav file or a vector of amplitudes with specified
-#'   samplingRate
+#' @inheritParams spectrogram
 #' @inheritParams soundgen
 #' @inheritParams segment
 #' @param plot if TRUE, plots the amplitude modulation
@@ -727,14 +728,14 @@ transplantEnv = function(
 #'                       value = c(0, 0, 35, 25, 0, 0)),
 #'          plot = TRUE, play = TRUE)
 #'
-#' # Sinusoidal AM produces exactly 2 extra harmonics at ±am_freq around each f0
-#' harmonic:
-#' s3 = addAM(sound1, 16000, amDep = 30, amFreq = c(50, 80), amType = 'sine',
-#'            plot = TRUE, play = TRUE)
+#' # Sinusoidal AM produces exactly 2 extra harmonics at ±am_freq
+#' # around each f0 harmonic:
+#' s3 = addAM(sound1, 16000, amDep = 30, amFreq = c(50, 80),
+#'            amType = 'sine', plot = TRUE, play = TRUE)
 #' spectrogram(s3, 16000, windowLength = 150, ylim = c(0, 2))
 #'
-#' # Non-sinusoidal AM produces multiple new harmonics, which can resemble
-#' subharmonics...
+#' # Non-sinusoidal AM produces multiple new harmonics,
+#' # which can resemble subharmonics...
 #' s4 = addAM(sound1, 16000, amDep = 70, amFreq = 50, amShape = -1,
 #'            plot = TRUE, play = TRUE)
 #' spectrogram(s4, 16000, windowLength = 150, ylim = c(0, 2))
@@ -760,6 +761,10 @@ transplantEnv = function(
 #'                        len = 20, thisIsPitch = TRUE)
 #' s = soundgen(sylLen = 1500, pitch = con, amFreq = con/3, amDep = 30,
 #'              plot = TRUE, play = TRUE, ylim = c(0, 3))
+#'
+#' # Process all files in a folder and save the modified audio
+#' addAM('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/AM',
+#'       amFreq = 70, amDep = c(0, 50))
 #' }
 addAM = function(x,
                  samplingRate = NULL,
@@ -772,14 +777,22 @@ addAM = function(x,
                  play = FALSE,
                  saveAudio = NULL,
                  reportEvery = NULL) {
+  # check the format of AM pars
+  anchors = c('amDep', 'amFreq', 'amShape')
+  for (anchor in anchors) {
+    assign(anchor, reformatAnchors(get(anchor)))
+  }
+  rm('anchor', 'anchors')
+
   # match args
   myPars = c(as.list(environment()))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'from', 'to', 'reportEvery')]
+    'x', 'samplingRate', 'from', 'to', 'reportEvery', 'saveAudio')]
   pa = processAudio(x,
                     samplingRate = samplingRate,
-                    funToCall = 'addAMSound',
+                    saveAudio = saveAudio,
+                    funToCall = '.addAM',
                     myPars = myPars,
                     reportEvery = reportEvery
   )
@@ -798,11 +811,9 @@ addAM = function(x,
 #' Internal soundgen function, see \code{\link{addAM}}.
 #'
 #' @inheritParams addAM
-#' @param sound numeric vector
-#' @param ls the length of \code{sound}, points
-#' @param checkFormat only FALSE when called internally by soundgen()
+#' @param audio a list returned by \code{readAudio}
 #' @keywords internal
-addAMSound = function(
+.addAM = function(
   audio,
   amDep = 25,
   amFreq = 30,
@@ -811,17 +822,8 @@ addAMSound = function(
   invalidArgAction = c('adjust', 'abort', 'ignore')[1],
   plot = FALSE,
   play = FALSE,
-  saveAudio = NULL,
-  filename_base = NULL,
-  checkFormat = TRUE) {
-  # check the format of AM pars
-  if (checkFormat) {
-    anchors = c('amDep', 'amFreq', 'amShape')
-    for (anchor in anchors) {
-      assign(anchor, reformatAnchors(get(anchor)))
-    }
-  }
-
+  saveAudio = NULL
+) {
   # vectorize
   amPar_vect = c('amDep', 'amFreq', 'amShape')
   # just to get rid of of NOTE on CRAN:
@@ -878,9 +880,10 @@ addAMSound = function(
         midline = FALSE)
   }
   if (play) playme(sound_am, audio$samplingRate)
-  if (!is.null(saveAudio)) {
-    if (!dir.exists(saveAudio)) dir.create(saveAudio)
-    seewave::savewav(sound_am, f = audio$samplingRate, filename = audio$filename_base)
+  if (is.character(audio$saveAudio)) {
+    seewave::savewav(
+      sound_am, f = audio$samplingRate,
+      filename = paste0(audio$saveAudio, audio$filename_base, '.wav'))
   }
   invisible(sound_am)
 }

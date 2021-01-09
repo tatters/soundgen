@@ -27,6 +27,9 @@ addFormants(
   windowLength_points = 800,
   overlap = 75,
   normalize = TRUE,
+  play = FALSE,
+  saveAudio = NULL,
+  reportEvery = NULL,
   ...
 )
 }
@@ -107,6 +110,17 @@ formant drift and dispersal, respectively}
 
 \item{normalize}{if TRUE, normalizes the output to range from -1 to +1}
 
+\item{play}{if TRUE, plays the synthesized sound using the default player on
+your system. If character, passed to \code{\link[tuneR]{play}} as the name
+of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
+setting another default player for \code{\link[tuneR]{play}}}
+
+\item{saveAudio}{full path to the folder in which to save audio files (one
+per detected syllable)}
+
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
+
 \item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }
 \description{
@@ -174,9 +188,8 @@ sound_orig = sound_orig / max(abs(sound_orig))  # range -1 to +1
 
 # get a few pitch anchors to reproduce the original intonation
 pitch = analyze(sound_orig, samplingRate = samplingRate,
-  pitchMethod = c('autocor', 'dom'))$pitch
+  pitchMethod = c('autocor', 'dom'))$detailed$pitch
 pitch = pitch[!is.na(pitch)]
-pitch = pitch[seq(1, length(pitch), length.out = 10)]
 
 # extract a frequency-smoothed version of the original spectrogram
 # to use as filter
