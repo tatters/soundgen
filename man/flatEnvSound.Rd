@@ -12,8 +12,15 @@ flatEnvSound(
   windowLength_points = NULL,
   killDC = FALSE,
   dynamicRange = 40,
+  saveAudio = NULL,
   plot = FALSE,
-  saveAudio = NULL
+  savePlots = NULL,
+  col = "blue",
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
+  ...
 )
 }
 \arguments{
@@ -35,11 +42,31 @@ average waveform from zero (see examples)}
 \item{dynamicRange}{parts of sound quieter than \code{-dynamicRange} dB will
 not be amplified}
 
+\item{saveAudio}{full path to the folder in which to save the compressed
+sound(s)}
+
 \item{plot}{if TRUE, plots the original sound, the smoothed envelope, and
 the compressed sound}
 
-\item{saveAudio}{full path to the folder in which to save the compressed
-sound(s)}
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
+
+\item{col}{the color of amplitude contours}
+
+\item{width}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{height}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{units}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{res}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{...}{other graphical parameters passed to \code{points()} that control
+the appearance of amplitude contours, eg \code{lwd, lty}, etc.}
 }
 \description{
 Internal soundgen function

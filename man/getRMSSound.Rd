@@ -18,6 +18,10 @@ getRMSSound(
   type = "b",
   col = "green",
   lwd = 2,
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
   ...
 )
 }
@@ -51,6 +55,18 @@ the maximum possible amplitude as given by \code{scale}}
 \item{col}{graphical parameters pertaining to the RMS envelope}
 
 \item{lwd}{graphical parameters pertaining to the RMS envelope}
+
+\item{width}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{height}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{units}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{res}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
 
 \item{...}{other graphical parameters}
 }

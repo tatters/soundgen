@@ -242,12 +242,10 @@ modulationSpectrum = function(
   ...
 ) {
   ## Prepare a list of arguments to pass to segmentSound()
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  myPars = c(as.list(environment()), list(...))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'scale', 'savePlots', 'reportEvery', 'summaryFun', 'averageMS')]
-  # exclude ...
-  myPars = myPars[1:(length(myPars)-1)]
 
   # analyze
   pa = processAudio(

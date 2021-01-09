@@ -14,7 +14,7 @@ normalizeFolder(
   overlap = 70,
   killDC = FALSE,
   windowDC = 200,
-  savepath = NULL,
+  saveAudio = NULL,
   reportEvery = NULL
 )
 }
@@ -44,8 +44,8 @@ may be slightly different, eg 24.98866 instead of 25.0 ms)}
 
 \item{windowDC}{the window for calculating DC offset, ms}
 
-\item{savepath}{full path to where the normalized files should be saved
-(defaults to '/normalized')}
+\item{saveAudio}{full path to where the normalized files should be saved
+(defaults to 'myfolder/normalized')}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations}
@@ -75,7 +75,7 @@ normalization procedure is similar to that for \code{type = 'rms'}.
 # put a few short audio files in a folder, eg '~/Downloads/temp'
 getRMS('~/Downloads/temp2', summaryFun = 'mean')$summary  # different
 normalizeFolder('~/Downloads/temp2', type = 'rms', summaryFun = 'mean',
-  savepath = '~/Downloads/temp2/normalized')
+  saveAudio = '~/Downloads/temp2/normalized')
 getRMS('~/Downloads/temp2/normalized', summaryFun = 'mean')$summary  # same
 # If the saved audio files are treated as stereo with one channel missing,
 # try reconverting with ffmpeg (saving is handled by tuneR::writeWave)

@@ -56,7 +56,7 @@
 #' # playme(sound)
 #' # detailed, local features (captures each syllable)
 #' s1 = ssm(sound, samplingRate = 16000, kernelLen = 100,
-#'          sparse = TRUE)  # much faster
+#'          sparse = TRUE)  # much faster with 'sparse'
 #' # more global features (captures the transition b/w the two sounds)
 #' s2 = ssm(sound, samplingRate = 16000, kernelLen = 400, sparse = TRUE)
 #'
@@ -119,13 +119,11 @@ ssm = function(
     lwd = 3
   )) {
   ## Prepare a list of arguments to pass to segmentSound()
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  myPars = as.list(environment())
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'from', 'to', 'savePlots', 'reportEvery',
     'summaryFun', 'specPars', 'ssmPars', 'noveltyPars', 'ssmWin')]
-  # exclude ...
-  myPars = myPars[1:(length(myPars)-1)]
   myPars$specPars = specPars
   myPars$ssmPars = ssmPars
   myPars$noveltyPars = noveltyPars

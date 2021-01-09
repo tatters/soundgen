@@ -19,11 +19,16 @@ getRMS(
   summaryFun = "mean",
   reportEvery = NULL,
   plot = FALSE,
+  savePlots = NULL,
   xlab = "",
   ylab = "",
   type = "b",
   col = "green",
   lwd = 2,
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
   ...
 )
 }
@@ -68,14 +73,29 @@ left every ... iterations}
 
 \item{plot}{if TRUE, plot a contour of RMS amplitude}
 
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
+
 \item{xlab, ylab}{general graphical parameters}
 
 \item{type, col, lwd}{graphical parameters pertaining to the RMS envelope}
 
+\item{width}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{height}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{units}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{res}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
 \item{...}{other graphical parameters}
 }
 \value{
-Returns a list containing: \describe{\item{detailed}{a list of RMS
+Returns a list containing: \itemize{\item{detailed}{a list of RMS
   amplitudes per frame for each sound, on the scale of input; names give time
   stamps for the center of each frame, in ms.} \item{summary}{a dataframe
   with summary measures, one row per sound}}
@@ -97,7 +117,7 @@ Having RMS estimates per frame gives more flexibility: RMS per sound can be
 calculated as the mean / median / max of RMS values per frame.
 }
 \examples{
-s = soundgen() + .1  # with added DC offset
+s = soundgen() + .25  # with added DC offset
 osc(s)
 r = getRMS(s, samplingRate = 16000,
   windowLength = 40, overlap = 50, killDC = TRUE,
@@ -107,7 +127,7 @@ r = getRMS(s, samplingRate = 16000,
   windowLength = 5, overlap = 0, killDC = TRUE,
   plot = TRUE, col = 'blue', pch = 13, main = 'RMS envelope')
 \dontrun{
-r = getRMS('~/Downloads/temp')
+r = getRMS('~/Downloads/temp', savePlots = '~/Downloads/temp/plots')
 r$summary
 
 # Compare:

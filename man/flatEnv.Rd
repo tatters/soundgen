@@ -16,8 +16,15 @@ flatEnv(
   killDC = FALSE,
   dynamicRange = 40,
   reportEvery = NULL,
+  saveAudio = NULL,
   plot = FALSE,
-  saveAudio = NULL
+  savePlots = NULL,
+  col = "blue",
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
+  ...
 )
 
 compressor(
@@ -31,8 +38,15 @@ compressor(
   killDC = FALSE,
   dynamicRange = 40,
   reportEvery = NULL,
+  saveAudio = NULL,
   plot = FALSE,
-  saveAudio = NULL
+  savePlots = NULL,
+  col = "blue",
+  width = 900,
+  height = 500,
+  units = "px",
+  res = NA,
+  ...
 )
 }
 \arguments{
@@ -65,11 +79,31 @@ not be amplified}
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations}
 
+\item{saveAudio}{full path to the folder in which to save the compressed
+sound(s)}
+
 \item{plot}{if TRUE, plots the original sound, the smoothed envelope, and
 the compressed sound}
 
-\item{saveAudio}{full path to the folder in which to save the compressed
-sound(s)}
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
+
+\item{col}{the color of amplitude contours}
+
+\item{width}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{height}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{units}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{res}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{...}{other graphical parameters passed to \code{points()} that control
+the appearance of amplitude contours, eg \code{lwd, lty}, etc.}
 }
 \value{
 If the input is a single audio (file, Wave, or numeric vector),
@@ -106,8 +140,12 @@ s1 = c(rep(0, 50), runif(1000, -1, 1), rep(0, 50)) +
 s2 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = FALSE)
 s3 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = TRUE)
 
-# "Flatten" and save all audio files in a folder
-s4 = flatEnv('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/compressed')
+# Compress and save all audio files in a folder
+s4 = flatEnv('~/Downloads/temp2',
+             method = 'peak', compression = .5,
+             saveAudio = '~/Downloads/temp2/compressed',
+             savePlots = '~/Downloads/temp2/compressed',
+             col = 'green', lwd = 5)
 osc(s4[[1]])
 }
 }

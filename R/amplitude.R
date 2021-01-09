@@ -36,14 +36,14 @@ getRMSFolder = function(...) {
 #' @param type,col,lwd graphical parameters pertaining to the RMS envelope
 #' @param ... other graphical parameters
 #'
-#' @return Returns a list containing: \describe{\item{detailed}{a list of RMS
+#' @return Returns a list containing: \itemize{\item{detailed}{a list of RMS
 #'   amplitudes per frame for each sound, on the scale of input; names give time
 #'   stamps for the center of each frame, in ms.} \item{summary}{a dataframe
 #'   with summary measures, one row per sound}}
 #'
 #' @export
 #' @examples
-#' s = soundgen() + .1  # with added DC offset
+#' s = soundgen() + .25  # with added DC offset
 #' osc(s)
 #' r = getRMS(s, samplingRate = 16000,
 #'   windowLength = 40, overlap = 50, killDC = TRUE,
@@ -53,7 +53,7 @@ getRMSFolder = function(...) {
 #'   windowLength = 5, overlap = 0, killDC = TRUE,
 #'   plot = TRUE, col = 'blue', pch = 13, main = 'RMS envelope')
 #' \dontrun{
-#' r = getRMS('~/Downloads/temp')
+#' r = getRMS('~/Downloads/temp', savePlots = '~/Downloads/temp/plots')
 #' r$summary
 #'
 #' # Compare:
@@ -68,42 +68,56 @@ getRMSFolder = function(...) {
 #' }
 #' getRMS('~/Downloads/temp', summaryFun = c('mean', 'ran', 'meanSD'))$summary
 #' }
-getRMS = function(
-  x,
-  samplingRate = NULL,
-  scale = NULL,
-  from = NULL,
-  to = NULL,
-  windowLength = 50,
-  step = NULL,
-  overlap = 70,
-  killDC = FALSE,
-  normalize = TRUE,
-  windowDC = 200,
-  summaryFun = 'mean',
-  reportEvery = NULL,
-  plot = FALSE,
-  xlab = '',
-  ylab = '',
-  type = 'b',
-  col = 'green',
-  lwd = 2,
-  ...
-) {
+getRMS = function(x,
+                  samplingRate = NULL,
+                  scale = NULL,
+                  from = NULL,
+                  to = NULL,
+                  windowLength = 50,
+                  step = NULL,
+                  overlap = 70,
+                  killDC = FALSE,
+                  normalize = TRUE,
+                  windowDC = 200,
+                  summaryFun = 'mean',
+                  reportEvery = NULL,
+                  plot = FALSE,
+                  savePlots = NULL,
+                  xlab = '',
+                  ylab = '',
+                  type = 'b',
+                  col = 'green',
+                  lwd = 2,
+                  width = 900,
+                  height = 500,
+                  units = 'px',
+                  res = NA,
+                  ...) {
   # match args
   myPars = c(as.list(environment()), list(...))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery', 'summaryFun')]
+    'x', 'samplingRate', 'scale', 'from', 'to',
+    'savePlots', 'reportEvery', 'summaryFun')]
   pa = processAudio(x,
                     samplingRate = samplingRate,
                     scale = scale,
                     from = from,
                     to = to,
                     funToCall = 'getRMSSound',
+                    savePlots = savePlots,
                     myPars = myPars,
                     reportEvery = reportEvery
   )
+
+  # htmlPlots
+  if (!is.null(pa$input$savePlots)) {
+    htmlPlots(
+      htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_rms.html'),
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_rms.png"),
+      audioFiles = pa$input$filenames,
+      width = paste0(width, units))
+  }
 
   # prepare output
   if (!is.null(summaryFun) && any(!is.na(summaryFun))) {
@@ -146,6 +160,10 @@ getRMSSound = function(audio,
                        type = 'b',
                        col = 'green',
                        lwd = 2,
+                       width = 900,
+                       height = 500,
+                       units = 'px',
+                       res = NA,
                        ...) {
   if (overlap < 0 | overlap > 100) {
     warning('overlap must be >0 and <= 100%; resetting to 70')
@@ -166,7 +184,8 @@ getRMSSound = function(audio,
 
   # DC offset
   if (killDC) {
-    sound = killDC(audio$sound, windowLength = windowDC, samplingRate = audio$samplingRate)
+    audio$sound = killDC(audio$sound, windowLength = windowDC,
+                         samplingRate = audio$samplingRate)
   }
 
   # calculate RMS per frame
@@ -177,6 +196,11 @@ getRMSSound = function(audio,
   names(r) = myseq / audio$samplingRate * 1000 + windowLength / 2
 
   # plotting
+  if (is.character(audio$savePlots)) {
+    plot = TRUE
+    png(filename = paste0(audio$savePlots, audio$filename_base, "_rms.png"),
+        width = width, height = height, units = units, res = res)
+  }
   if (plot) {
     time = 1:audio$ls / audio$samplingRate * 1000
     plot(time, audio$sound, type = 'n', xlab = xlab, ylab = ylab, xaxt = 'n',
@@ -186,6 +210,7 @@ getRMSSound = function(audio,
     axis(side = 1, at = time_location, labels = time_labels)
     points(time, audio$sound, type = 'l')
     points(as.numeric(names(r)), r, type = type, col = col, lwd = lwd, ...)
+    if (is.character(audio$savePlots)) dev.off()
   }
 
   if (normalize) r = r / audio$scale
@@ -224,15 +249,15 @@ getRMSSound = function(audio,
 #'   max possible, etc.)
 #' @param summaryFun should the output files have the same mean / median / max
 #'   etc rms amplitude or loudness? (summaryFun has no effect if type = 'peak')
-#' @param savepath full path to where the normalized files should be saved
-#'   (defaults to '/normalized')
+#' @param saveAudio full path to where the normalized files should be saved
+#'   (defaults to 'myfolder/normalized')
 #' @export
 #' @examples
 #' \dontrun{
 #' # put a few short audio files in a folder, eg '~/Downloads/temp'
 #' getRMS('~/Downloads/temp2', summaryFun = 'mean')$summary  # different
 #' normalizeFolder('~/Downloads/temp2', type = 'rms', summaryFun = 'mean',
-#'   savepath = '~/Downloads/temp2/normalized')
+#'   saveAudio = '~/Downloads/temp2/normalized')
 #' getRMS('~/Downloads/temp2/normalized', summaryFun = 'mean')$summary  # same
 #' # If the saved audio files are treated as stereo with one channel missing,
 #' # try reconverting with ffmpeg (saving is handled by tuneR::writeWave)
@@ -247,11 +272,12 @@ normalizeFolder = function(
   overlap = 70,
   killDC = FALSE,
   windowDC = 200,
-  savepath = NULL,
+  saveAudio = NULL,
   reportEvery = NULL
 ) {
   time_start = proc.time()  # timing
-  filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3", full.names = TRUE)
+  filenames = list.files(myfolder, pattern = "*.wav|.mp3|.WAV|.MP3",
+                         full.names = TRUE)
   filesizes = file.info(filenames)$size
   if (length(filenames) < 1) {
     stop(paste('No wav/mp3 files found in', myfolder))
@@ -302,8 +328,7 @@ normalizeFolder = function(
     } else if (type == 'loudness') {
       for (i in 1:n) {
         # estimate subjective loudness of each file
-        perSound[[i]] = getLoudness(as.numeric(files[[i]]@left),
-                                    samplingRate = files[[i]]@samp.rate,
+        perSound[[i]] = getLoudness(files[[i]],
                                     scale = 2^(files[[i]]@bit - 1),
                                     windowLength = windowLength,
                                     step = step,
@@ -333,15 +358,15 @@ normalizeFolder = function(
   }
 
   # save the rescaled files
-  if (is.null(savepath)) savepath = paste0(myfolder, '/normalized')
-  if (!is.na(savepath)) {
+  if (is.null(saveAudio)) saveAudio = paste0(myfolder, '/normalized')
+  if (!is.na(saveAudio)) {
     print('Saving...')
-    if (!dir.exists(savepath)) dir.create(savepath)
+    if (!dir.exists(saveAudio)) dir.create(saveAudio)
     for (i in 1:n) {
       file_wo_ext = sub("([^.]+)\\.[[:alnum:]]+$", "\\1", basename(filenames[i]))
       tuneR::writeWave(
         files[[i]],
-        filename = paste0(savepath, '/', file_wo_ext, '.wav')
+        filename = paste0(saveAudio, '/', file_wo_ext, '.wav')
       )
     }
   }
@@ -377,6 +402,9 @@ normalizeFolder = function(
 #'   the compressed sound
 #' @param saveAudio full path to the folder in which to save the compressed
 #'   sound(s)
+#' @param col the color of amplitude contours
+#' @param ... other graphical parameters passed to \code{points()} that control
+#'   the appearance of amplitude contours, eg \code{lwd, lty}, etc.
 #'
 #' @return If the input is a single audio (file, Wave, or numeric vector),
 #'   returns the compressed waveform as a numeric vector with the original
@@ -406,8 +434,12 @@ normalizeFolder = function(
 #' s2 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = FALSE)
 #' s3 = flatEnv(s1, 16000, plot = TRUE, windowLength_points = 50, killDC = TRUE)
 #'
-#' # "Flatten" and save all audio files in a folder
-#' s4 = flatEnv('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/compressed')
+#' # Compress and save all audio files in a folder
+#' s4 = flatEnv('~/Downloads/temp2',
+#'              method = 'peak', compression = .5,
+#'              saveAudio = '~/Downloads/temp2/compressed',
+#'              savePlots = '~/Downloads/temp2/compressed',
+#'              col = 'green', lwd = 5)
 #' osc(s4[[1]])
 #' }
 flatEnv = function(x,
@@ -420,20 +452,44 @@ flatEnv = function(x,
                    killDC = FALSE,
                    dynamicRange = 40,
                    reportEvery = NULL,
+                   saveAudio = NULL,
                    plot = FALSE,
-                   saveAudio = NULL) {
+                   savePlots = NULL,
+                   col = 'blue',
+                   width = 900,
+                   height = 500,
+                   units = 'px',
+                   res = NA,
+                   ...) {
   # match args
-  myPars = c(as.list(environment()))
+  myPars = c(as.list(environment()), list(...))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'scale', 'reportEvery')]
+    'x', 'samplingRate', 'scale', 'reportEvery', 'savePlots', 'saveAudio')]
+
   pa = processAudio(x = x,
                     samplingRate = samplingRate,
                     scale = scale,
+                    saveAudio = saveAudio,
+                    savePlots = savePlots,
                     funToCall = 'flatEnvSound',
                     myPars = myPars,
                     reportEvery = reportEvery
   )
+
+  # htmlPlots
+  if (!is.null(pa$input$savePlots) && pa$input$n > 1) {
+    if (is.null(pa$input$saveAudio)) {
+      audioFiles = pa$input$filenames
+    } else {
+      audioFiles = paste0(pa$input$saveAudio, pa$input$filenames_base, '.wav')
+    }
+    htmlPlots(
+      htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_compressor.html'),
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_compressor.png"),
+      audioFiles = audioFiles,
+      width = paste0(width, units))
+  }
 
   # prepare output
   if (pa$input$n == 1) {
@@ -465,8 +521,15 @@ flatEnvSound = function(audio,
                         windowLength_points = NULL,
                         killDC = FALSE,
                         dynamicRange = 40,
+                        saveAudio = NULL,
                         plot = FALSE,
-                        saveAudio = NULL) {
+                        savePlots = NULL,
+                        col = 'blue',
+                        width = 900,
+                        height = 500,
+                        units = 'px',
+                        res = NA,
+                        ...) {
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
       if (is.numeric(audio$samplingRate)) {
@@ -504,20 +567,33 @@ flatEnvSound = function(audio,
   # re-normalize to original scale
   soundFlat = soundFlat / max(abs(soundFlat)) * audio$scale
 
+  # PLOTTING
+  if (is.character(audio$savePlots)) {
+    plot = TRUE
+    png(filename = paste0(audio$savePlots, audio$filename_base, "_compressor.png"),
+        width = width, height = height, units = units, res = res)
+  }
   if (plot) {
     ylim = range(c(audio$sound, soundFlat))
     op = par('mfrow')
     par(mfrow = c(1, 2))
     plot(audio$sound, type = 'l', main = 'Original', ylim = ylim)
-    points(env, type = 'l', lty = 1, col = 'blue')
+    points(env, type = 'l', col = col, ...)
+
+    env_new = getEnv(sound = soundFlat,
+                     windowLength_points = windowLength_points,
+                     method = method)
     plot(soundFlat, type = 'l', main = 'Compressed', ylim = ylim)
+    points(env_new, type = 'l', col = col, ...)
     par(mfrow = op)
+    if (is.character(audio$savePlots)) dev.off()
   }
 
-  if (!is.null(saveAudio)) {
-    if (!dir.exists(saveAudio)) dir.create(saveAudio)
-    seewave::savewav(soundFlat, f = audio$samplingRate,
-                     filename = paste0(saveAudio, '/', audio$filename_base))
+  if (!is.null(audio$saveAudio)) {
+    if (!dir.exists(audio$saveAudio)) dir.create(audio$saveAudio)
+    seewave::savewav(
+      soundFlat, f = audio$samplingRate,
+      filename = paste0(audio$saveAudio, '/', audio$filename_base, '.wav'))
   }
 
   return(soundFlat)

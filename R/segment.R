@@ -217,13 +217,11 @@ segment = function(
   }
 
   ## Prepare a list of arguments to pass to segmentSound()
-  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  myPars = c(as.list(environment()), list(...))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'from', 'to', 'reportEvery', 'summaryFun',
     'reverbPars', 'sylPlot', 'burstPlot', 'specPlot')]  # otherwise flattens lists
-  # exclude ...
-  myPars = myPars[1:(length(myPars)-1)]
   # add back arguments that are lists
   myPars$sylPlot = sylPlot
   myPars$burstPlot = burstPlot

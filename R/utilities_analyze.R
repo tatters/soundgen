@@ -1005,7 +1005,7 @@ processAudio = function(x,
         savePlots = paste0(getwd(), '/')
       }
     } else {
-      # make sure the last character of savePath is "/"
+      # make sure the last character of savePath is "/" and expand ~
       savePlots = paste0(
         dirname(paste0(savePlots, '/arbitrary')),
         '/'
@@ -1021,15 +1021,20 @@ processAudio = function(x,
   if (is.character(saveAudio)) {
     if (saveAudio == '') {
       # same as the folder where the audio input lives
+      keypr = readline(prompt = paste(
+        "NB: saveAudio='' will overwrite the originals. Proceed? (yes/no) "))
+      if (substr(keypr, 1, 1) != 'y') stop('Aborting...')
       if (input$type[1] == 'file') {
         saveAudio = paste0(dirname(input$filenames[1]), '/')
       } else {
         saveAudio = paste0(getwd(), '/')
       }
     } else {
-      # make sure the last character of savePath is "/"
-      if (substr(saveAudio, nchar(saveAudio), nchar(saveAudio)) != '/')
-        saveAudio = paste0(saveAudio, '/')
+      # make sure the last character of savePath is "/" and expand ~
+      saveAudio = paste0(
+        dirname(paste0(saveAudio, '/arbitrary')),
+        '/'
+      )
     }
     if (!dir.exists(saveAudio)) dir.create(saveAudio)
   } else {

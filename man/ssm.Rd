@@ -145,7 +145,7 @@ sound = c(soundgen(),
 # playme(sound)
 # detailed, local features (captures each syllable)
 s1 = ssm(sound, samplingRate = 16000, kernelLen = 100,
-         sparse = TRUE)  # much faster
+         sparse = TRUE)  # much faster with 'sparse'
 # more global features (captures the transition b/w the two sounds)
 s2 = ssm(sound, samplingRate = 16000, kernelLen = 400, sparse = TRUE)
 
