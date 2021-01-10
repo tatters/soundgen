@@ -213,7 +213,6 @@ filterSoundByMS = function(
   initialPhase = c('zero', 'random', 'spsi')[3],
   nIter = 50,
   play = FALSE,
-  saveAudio = NULL,
   plot = TRUE,
   savePlots = NULL,
   width = 900,

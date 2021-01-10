@@ -521,9 +521,7 @@ compressor = flatEnv
                     windowLength_points = NULL,
                     killDC = FALSE,
                     dynamicRange = 40,
-                    saveAudio = NULL,
                     plot = FALSE,
-                    savePlots = NULL,
                     col = 'blue',
                     width = 900,
                     height = 500,
@@ -634,17 +632,15 @@ compressor = flatEnv
 #' transplantEnv(donor, samplingRateD = 200,
 #'                recipient, samplingRateR = 16000,
 #'                windowLength = 10, method = 'peak', plot = TRUE)
-transplantEnv = function(
-  donor,
-  samplingRateD,
-  recipient,
-  samplingRateR = samplingRateD,
-  windowLength = 50,
-  method = c('hil', 'rms', 'peak')[1],
-  killDC = FALSE,
-  dynamicRange = 80,
-  plot = FALSE
-) {
+transplantEnv = function(donor,
+                         samplingRateD,
+                         recipient,
+                         samplingRateR = samplingRateD,
+                         windowLength = 50,
+                         method = c('hil', 'rms', 'peak')[1],
+                         killDC = FALSE,
+                         dynamicRange = 80,
+                         plot = FALSE) {
   windowLength_points_donor = windowLength / 1000 * samplingRateD
   windowLength_points_recip = windowLength / 1000 * samplingRateR
   throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
@@ -714,7 +710,9 @@ transplantEnv = function(
 #' creates more extra harmonics (see examples).
 #' @inheritParams spectrogram
 #' @inheritParams soundgen
-#' @inheritParams segment
+#' @param play if TRUE, plays the processed audio
+#' @param saveAudio path to folder for saving the processed audio; NULL = don't
+#'   save
 #' @param plot if TRUE, plots the amplitude modulation
 #' @export
 #' @examples
@@ -821,8 +819,7 @@ addAM = function(x,
   amShape = 0,
   invalidArgAction = c('adjust', 'abort', 'ignore')[1],
   plot = FALSE,
-  play = FALSE,
-  saveAudio = NULL
+  play = FALSE
 ) {
   # vectorize
   amPar_vect = c('amDep', 'amFreq', 'amShape')

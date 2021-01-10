@@ -12,9 +12,7 @@
   windowLength_points = NULL,
   killDC = FALSE,
   dynamicRange = 40,
-  saveAudio = NULL,
   plot = FALSE,
-  savePlots = NULL,
   col = "blue",
   width = 900,
   height = 500,
@@ -42,14 +40,8 @@ average waveform from zero (see examples)}
 \item{dynamicRange}{parts of sound quieter than \code{-dynamicRange} dB will
 not be amplified}
 
-\item{saveAudio}{full path to the folder in which to save the compressed
-sound(s)}
-
 \item{plot}{if TRUE, plots the original sound, the smoothed envelope, and
 the compressed sound}
-
-\item{savePlots}{full path to the folder in which to save the plots (NULL =
-don't save, '' = same folder as audio)}
 
 \item{col}{the color of amplitude contours}
 

@@ -1,10 +1,10 @@
-# TODO: check addFormants (input type); flatSpectrum - update, input type etc; modulationSpectrum - update description; check optimizePars; reverb - add saveAudio, maybe always return detailed list; transplantEnv, transplantFormants - check input type; rename xSound functions to .x (use grep -rnw /home/allgoodguys/Documents/Research/methods/sound-synthesis/soundgen -e "getRMSSound" )
-
-#
+# TODO: modulationSpectrum - update description; check optimizePars; reverb - update input, add saveAudio, maybe always return detailed list; check for 2 uncommented playme's in examples; refer to addAM instead of segment or soundgen for saveAudio & play
 
 # TODO maybe: only calculate half the ssm to save time (a bit tricky b/c it's not symmetric along the main diag but at 90°); add mel/bark to spectrogram(yScale); inverse distance weighting interpolation instead of interpolMatrix; sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; gaussian wn implemented in seewave (check updates!); soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
 # Debugging tip: run smth like options('browser' = '/usr/bin/chromium-browser') or options('browser' = '/usr/bin/google-chrome') to check a Shiny app in a non-default browser
+
+# grep -rnw /home/allgoodguys/Documents/Research/methods/sound-synthesis/soundgen -e "getRMSSound"
 
 #' @import stats graphics utils grDevices shinyBS
 #' @encoding UTF-8
@@ -204,8 +204,8 @@ NULL
 #'   your system. If character, passed to \code{\link[tuneR]{play}} as the name
 #'   of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
 #'   setting another default player for \code{\link[tuneR]{play}}
-#' @param savePath full path for saving the output, e.g. '~/Downloads/temp.wav'.
-#'   If NA (default), doesn't save anything
+#' @param saveAudio path + filename for saving the output, e.g.
+#'   '~/Downloads/temp.wav'. If NULL = doesn't save
 #' @param ... other plotting parameters passed to \code{\link{spectrogram}}
 #' @export
 #' @return Returns the synthesized waveform as a numeric vector.
@@ -348,7 +348,7 @@ soundgen = function(
   invalidArgAction = c('adjust', 'abort', 'ignore')[1],
   plot = FALSE,
   play = FALSE,
-  savePath = NA,
+  saveAudio = NA,
   ...
 ) {
   # deprecated pars
@@ -1273,8 +1273,8 @@ soundgen = function(
   if (is.character(play)) {
     playme(bout, samplingRate = samplingRate, player = play)
   }
-  if (!is.na(savePath)) {
-    seewave::savewav(bout, filename = savePath, f = samplingRate)
+  if (!is.na(saveAudio)) {
+    seewave::savewav(bout, filename = saveAudio, f = samplingRate)
   }
   if (plot) {
     spectrogram(bout, samplingRate = samplingRate,

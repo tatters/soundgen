@@ -19,7 +19,6 @@
   initialPhase = c("zero", "random", "spsi")[3],
   nIter = 50,
   play = FALSE,
-  saveAudio = NULL,
   plot = TRUE,
   savePlots = NULL,
   width = 900,
@@ -68,9 +67,6 @@ inversion (Beauregard et al., 2015)}
 1984), 0 = don't run}
 
 \item{play}{if TRUE, plays back the output}
-
-\item{saveAudio}{path to folder in which to save audio ('' = same as input,
-NULL = don't save)}
 
 \item{plot}{if TRUE, produces a triple plot: original MS, filtered MS, and
 the MS of the output sound}

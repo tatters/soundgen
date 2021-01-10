@@ -778,7 +778,6 @@ addFormants = function(
   overlap = 75,
   normalize = TRUE,
   play = FALSE,
-  saveAudio = NULL,
   ...
 ) {
   # prepare vocal tract filter (formants + some spectral noise + lip radiation)

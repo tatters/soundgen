@@ -12,8 +12,7 @@
   amShape = 0,
   invalidArgAction = c("adjust", "abort", "ignore")[1],
   plot = FALSE,
-  play = FALSE,
-  saveAudio = NULL
+  play = FALSE
 )
 }
 \arguments{
@@ -35,13 +34,7 @@ range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 
 \item{plot}{if TRUE, plots the amplitude modulation}
 
-\item{play}{if TRUE, plays the synthesized sound using the default player on
-your system. If character, passed to \code{\link[tuneR]{play}} as the name
-of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
-setting another default player for \code{\link[tuneR]{play}}}
-
-\item{saveAudio}{full path to the folder in which to save audio files (one
-per detected syllable)}
+\item{play}{if TRUE, plays the processed audio}
 }
 \description{
 Internal soundgen function, see \code{\link{addAM}}.

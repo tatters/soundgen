@@ -47,7 +47,6 @@
   returnPitchCands = FALSE,
   plot = TRUE,
   showLegend = TRUE,
-  savePlots = NULL,
   osc = "linear",
   pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3, showPrior = TRUE),
   pitchDom_plotPars = list(),
@@ -214,9 +213,6 @@ deviation of ~4 semitones. To disable, set \code{smooth = 0}}
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
 \item{showLegend}{if TRUE, adds a legend with pitch tracking methods}
-
-\item{savePlots}{full path to the folder in which to save the plots (NULL =
-don't save, '' = same folder as audio)}
 
 \item{osc}{"none" = no oscillogram; "linear" = on the original scale; "dB" =
 in decibels}

@@ -358,7 +358,9 @@ sound = soundgen(sylLen = 300, pitch = c(500, 400, 600),
   temperature = 0.001,
   addSilence = 50)  # NB: always have some silence before and after!!!
 # playme(sound, 16000)
-a = analyze(sound, samplingRate = 16000)
+a = analyze(sound, samplingRate = 16000, plot = TRUE)
+# str(a$detailed)  # frame-by-frame
+# a$summary        # summary per sound
 
 \dontrun{
 # For maximum processing speed (just basic spectral descriptives):

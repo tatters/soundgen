@@ -6,14 +6,17 @@
 \usage{
 flatSpectrum(
   x,
-  freqWindow = NULL,
   samplingRate = NULL,
+  freqWindow = NULL,
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
   overlap = 90,
   wn = "gaussian",
-  zp = 0
+  zp = 0,
+  play = FALSE,
+  saveAudio = NULL,
+  reportEvery = NULL
 )
 }
 \arguments{
@@ -21,11 +24,11 @@ flatSpectrum(
 'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
 numeric vectors}
 
-\item{freqWindow}{the width of smoothing window, Hz. Defaults to median
-pitch estimated by \code{\link{analyze}}}
-
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector)}
+
+\item{freqWindow}{the width of smoothing window, Hz. Defaults to median
+pitch estimated by \code{\link{analyze}}}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}
@@ -43,6 +46,14 @@ may be slightly different, eg 24.98866 instead of 25.0 ms)}
 gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{zp}{window length after zero padding, points}
+
+\item{play}{if TRUE, plays the processed audio}
+
+\item{saveAudio}{path to folder for saving the processed audio; NULL = don't
+save}
+
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
 }
 \value{
 Returns a numeric vector with the same sampling rate as the input.
@@ -69,27 +80,20 @@ seewave::meanspec(sound_flat, f = 16000, dB = 'max0')
 \dontrun{
 # Now let's make a sheep say "aii"
 data(sheep, package = 'seewave')  # import a recording from seewave
-sheep_orig = as.numeric(scale(sheep@left))
-samplingRate = sheep@samp.rate
-playme(sheep_orig, samplingRate)
-# spectrogram(sheep_orig, samplingRate)
-# seewave::spec(sheep_orig, f = samplingRate, dB = 'max0')
-
-sheep_flat = flatSpectrum(sheep_orig, freqWindow = 150,  # freqWindow ~f0
-  samplingRate = samplingRate)
-# playme(sheep_flat, samplingRate)
-# spectrogram(sheep_flat, samplingRate)
-# seewave::spec(sheep_flat, f = samplingRate, dB = 'max0')
+# playme(sheep)
+sheep_flat = flatSpectrum(sheep)
+# playme(sheep_flat, sheep@samp.rate)
+# seewave::spec(sheep_flat, f = sheep@samp.rate, dB = 'max0')
 
 # So far we have a sheep bleating with a flat spectrum;
 # now let's add new formants
 sheep_aii = addFormants(sheep_flat,
-  samplingRate = samplingRate,
+  samplingRate = sheep@samp.rate,
   formants = 'aii',
   lipRad = -3)  # negative lipRad to counter unnatural flat source
-playme(sheep_aii, samplingRate)
-# spectrogram(sheep_aii, samplingRate)
-# seewave::spec(sheep_aii, f = samplingRate, dB = 'max0')
+# playme(sheep_aii, sheep@samp.rate)
+# spectrogram(sheep_aii, sheep@samp.rate)
+# seewave::spec(sheep_aii, f = sheep@samp.rate, dB = 'max0')
 }
 }
 \seealso{

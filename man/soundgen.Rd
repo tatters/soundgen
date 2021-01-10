@@ -75,7 +75,7 @@ soundgen(
   invalidArgAction = c("adjust", "abort", "ignore")[1],
   plot = FALSE,
   play = FALSE,
-  savePath = NA,
+  saveAudio = NA,
   ...
 )
 }
@@ -324,8 +324,8 @@ your system. If character, passed to \code{\link[tuneR]{play}} as the name
 of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
 
-\item{savePath}{full path for saving the output, e.g. '~/Downloads/temp.wav'.
-If NA (default), doesn't save anything}
+\item{saveAudio}{path + filename for saving the output, e.g.
+'~/Downloads/temp.wav'. If NULL = doesn't save}
 
 \item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }

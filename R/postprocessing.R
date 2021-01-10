@@ -359,6 +359,7 @@ crossFade = function(
 #'
 #' @return Returns a numeric vector with the same sampling rate as the input.
 #' @inheritParams spectrogram
+#' @inheritParams addAM
 #' @param freqWindow the width of smoothing window, Hz. Defaults to median
 #'   pitch estimated by \code{\link{analyze}}
 #' @export
@@ -375,70 +376,90 @@ crossFade = function(
 #' \dontrun{
 #' # Now let's make a sheep say "aii"
 #' data(sheep, package = 'seewave')  # import a recording from seewave
-#' sheep_orig = as.numeric(scale(sheep@left))
-#' samplingRate = sheep@samp.rate
-#' playme(sheep_orig, samplingRate)
-#' # spectrogram(sheep_orig, samplingRate)
-#' # seewave::spec(sheep_orig, f = samplingRate, dB = 'max0')
-#'
-#' sheep_flat = flatSpectrum(sheep_orig, freqWindow = 150,  # freqWindow ~f0
-#'   samplingRate = samplingRate)
-#' # playme(sheep_flat, samplingRate)
-#' # spectrogram(sheep_flat, samplingRate)
-#' # seewave::spec(sheep_flat, f = samplingRate, dB = 'max0')
+#' # playme(sheep)
+#' sheep_flat = flatSpectrum(sheep)
+#' # playme(sheep_flat, sheep@samp.rate)
+#' # seewave::spec(sheep_flat, f = sheep@samp.rate, dB = 'max0')
 #'
 #' # So far we have a sheep bleating with a flat spectrum;
 #' # now let's add new formants
 #' sheep_aii = addFormants(sheep_flat,
-#'   samplingRate = samplingRate,
+#'   samplingRate = sheep@samp.rate,
 #'   formants = 'aii',
 #'   lipRad = -3)  # negative lipRad to counter unnatural flat source
-#' playme(sheep_aii, samplingRate)
-#' # spectrogram(sheep_aii, samplingRate)
-#' # seewave::spec(sheep_aii, f = samplingRate, dB = 'max0')
+#' # playme(sheep_aii, sheep@samp.rate)
+#' # spectrogram(sheep_aii, sheep@samp.rate)
+#' # seewave::spec(sheep_aii, f = sheep@samp.rate, dB = 'max0')
 #' }
 flatSpectrum = function(x,
-                        freqWindow = NULL,
                         samplingRate = NULL,
+                        freqWindow = NULL,
                         dynamicRange = 80,
                         windowLength = 50,
                         step = NULL,
                         overlap = 90,
                         wn = 'gaussian',
-                        zp = 0) {
-  if (is.character(x)) {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    samplingRate = sound_wav@samp.rate
-    sound = as.numeric(sound_wav@left)
+                        zp = 0,
+                        play = FALSE,
+                        saveAudio = NULL,
+                        reportEvery = NULL) {
+  # match args
+  myPars = c(as.list(environment()))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'reportEvery', 'saveAudio')]
+  pa = processAudio(x,
+                    samplingRate = samplingRate,
+                    saveAudio = saveAudio,
+                    funToCall = '.flatSpectrum',
+                    myPars = myPars,
+                    reportEvery = reportEvery
+  )
+  # prepare output
+  if (pa$input$n == 1) {
+    result = pa$result[[1]]
   } else {
-    sound = x
+    result = pa$result
   }
+  invisible(result)
+}
 
+
+#' Flat spectrum per sound
+#'
+#' Internal soundgen function, see \code{\link{flatSpectrum}}.
+#'
+#' @inheritParams flatSpectrum
+#' @param audio a list returned by \code{readAudio}
+#' @keywords internal
+.flatSpectrum = function(audio,
+                         freqWindow = NULL,
+                         samplingRate = NULL,
+                         dynamicRange = 80,
+                         windowLength = 50,
+                         step = NULL,
+                         overlap = 90,
+                         wn = 'gaussian',
+                         zp = 0,
+                         play = FALSE,
+                         saveAudio = NULL) {
   # default freqWindow = f0
   if (!is.numeric(freqWindow)) {
-    a = analyze(sound, samplingRate, plot = FALSE)
-    freqWindow = median(a$pitch, na.rm = TRUE)
+    a = analyze(audio$sound, audio$samplingRate, plot = FALSE)
+    freqWindow = median(a$detailed$pitch, na.rm = TRUE)
   }
 
   # get a spectrogram of the original sound
-  spec = spectrogram(sound,
-                     samplingRate = samplingRate,
-                     dynamicRange = dynamicRange,
-                     windowLength = windowLength,
-                     step = step,
-                     overlap = overlap,
-                     wn = wn,
-                     zp = zp,
-                     output = 'complex',
-                     padWithSilence = FALSE,
-                     plot = FALSE)
+  spec = .spectrogram(audio,
+                      dynamicRange = dynamicRange,
+                      windowLength = windowLength,
+                      step = step,
+                      overlap = overlap,
+                      wn = wn,
+                      zp = zp,
+                      output = 'complex',
+                      padWithSilence = FALSE,
+                      plot = FALSE)
 
   # calculate the width of smoothing window in bins
   freqRange_kHz = diff(range(as.numeric(rownames(spec))))
@@ -463,18 +484,23 @@ flatSpectrum = function(x,
   }
 
   # recreate an audio from the modified spectrogram
-  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+  windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
   sound_new = as.numeric(
     seewave::istft(
       spec,
-      f = samplingRate,
+      f = audio$samplingRate,
       ovlp = overlap,
       wl = windowLength_points,
       output = "matrix"
     )
   )
-  # playme(sound_new, samplingRate)
-  # spectrogram(sound_new, samplingRate)
+  if (play) playme(sound_new, audio$samplingRate)
+  if (is.character(audio$saveAudio)) {
+    seewave::savewav(
+      sound_new, f = audio$samplingRate,
+      filename = paste0(audio$saveAudio, audio$filename_base, '.wav'))
+  }
+  # spectrogram(sound_new, audio$samplingRate)
   invisible(sound_new)
 }
 

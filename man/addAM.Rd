@@ -42,13 +42,10 @@ range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 
 \item{plot}{if TRUE, plots the amplitude modulation}
 
-\item{play}{if TRUE, plays the synthesized sound using the default player on
-your system. If character, passed to \code{\link[tuneR]{play}} as the name
-of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
-setting another default player for \code{\link[tuneR]{play}}}
+\item{play}{if TRUE, plays the processed audio}
 
-\item{saveAudio}{full path to the folder in which to save audio files (one
-per detected syllable)}
+\item{saveAudio}{path to folder for saving the processed audio; NULL = don't
+save}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations}

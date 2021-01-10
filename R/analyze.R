@@ -222,7 +222,9 @@ analyzeFolder = function(...) {
 #'   temperature = 0.001,
 #'   addSilence = 50)  # NB: always have some silence before and after!!!
 #' # playme(sound, 16000)
-#' a = analyze(sound, samplingRate = 16000)
+#' a = analyze(sound, samplingRate = 16000, plot = TRUE)
+#' # str(a$detailed)  # frame-by-frame
+#' # a$summary        # summary per sound
 #'
 #' \dontrun{
 #' # For maximum processing speed (just basic spectral descriptives):
@@ -693,7 +695,6 @@ analyze = function(
   returnPitchCands = FALSE,
   plot = TRUE,
   showLegend = TRUE,
-  savePlots = NULL,
   osc = 'linear',
   pitchPlot = list(col = rgb(0, 0, 1, .75), lwd = 3, showPrior = TRUE),
   pitchDom_plotPars = list(),
