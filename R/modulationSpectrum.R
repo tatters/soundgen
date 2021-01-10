@@ -241,7 +241,7 @@ modulationSpectrum = function(
   res = NA,
   ...
 ) {
-  ## Prepare a list of arguments to pass to segmentSound()
+  ## Prepare a list of arguments to pass to .modulationSpectrum()
   myPars = c(as.list(environment()), list(...))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
@@ -254,7 +254,7 @@ modulationSpectrum = function(
     scale = scale,
     from = from,
     to = to,
-    funToCall = 'modulationSpectrumSound',
+    funToCall = '.modulationSpectrum',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots
@@ -339,13 +339,13 @@ modulationSpectrum = function(
 }
 
 
-#' Modulation spectrum sound
+#' Modulation spectrum per sound
 #'
 #' Internal soundgen function.
 #' @inheritParams modulationSpectrum
 #' @param audio a list returned by \code{readAudio}
 #' @keywords internal
-modulationSpectrumSound = function(
+.modulationSpectrum = function(
   audio,
   amRes = 5,
   maxDur = 5,
@@ -596,7 +596,7 @@ modulationSpectrumSound = function(
 }
 
 
-#' Modulation spectrum fragment
+#' Modulation spectrum per fragment
 #'
 #' Internal soundgen function.
 #' @inheritParams modulationSpectrum

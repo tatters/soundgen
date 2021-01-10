@@ -216,7 +216,7 @@ segment = function(
     method = 'mel'
   }
 
-  ## Prepare a list of arguments to pass to segmentSound()
+  ## Prepare a list of arguments to pass to .segment()
   myPars = c(as.list(environment()), list(...))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
@@ -235,7 +235,7 @@ segment = function(
     scale = scale,
     from = from,
     to = to,
-    funToCall = 'segmentSound',
+    funToCall = '.segment',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots,
@@ -315,7 +315,7 @@ segment = function(
 #' @inheritParams segment
 #' @param audio a list returned by \code{readAudio}
 #' @keywords internal
-segmentSound = function(
+.segment = function(
   audio,
   shortestSyl = 40,
   shortestPause = 40,

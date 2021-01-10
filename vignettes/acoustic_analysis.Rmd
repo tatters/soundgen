@@ -191,8 +191,8 @@ seewave::env(sweep, f = samplingRate, envt = 'abs', msmooth=c(50, 0))
 RMS amplitude per STFT frame, as returned by `analyze()`, column "ampl":
 ```{r fig.height = 4, fig.width = 7}
 a = analyze(sweep, samplingRate = samplingRate, pitchMethods = NULL, plot = FALSE)
-plot(seq(0, dur, length.out = length(a$detailed$ampl)), a$detailed$ampl, 
-     type = 'b', xlab = 'Time, s')
+plot(seq(0, dur, length.out = length(a$detailed$ampl)), 
+     a$detailed$ampl, type = 'b', xlab = 'Time, s')
 ```
 
 An estimate of subjectively experienced loudness in sone, column "loudness":

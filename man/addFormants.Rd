@@ -165,7 +165,7 @@ sound_inverse_filt = addFormants(sound_filtered,
 s_noisy = soundgen(sylLen = 200, addSilence = 0,
                    noise = list(time = c(-100, 300), value = -20))
 spectrogram(s_noisy, 16000)
-playme(s_noisy)
+# playme(s_noisy)
 zFun = function(z, cutoff = -50) {
   az = abs(z)
   thres = max(az) * 10 ^ (cutoff / 20)
@@ -175,7 +175,7 @@ zFun = function(z, cutoff = -50) {
 s_denoised = addFormants(s_noisy, samplingRate = 16000,
                          formants = NA, zFun = zFun, cutoff = -40)
 spectrogram(s_denoised, 16000)
-playme(s_denoised)
+# playme(s_denoised)
 
 ## Use the spectral envelope of an existing recording (bleating of a sheep)
 # (see also the same example with noise as source in ?generateNoise)

@@ -125,7 +125,7 @@ getLoudness = function(x,
                        res = NA,
                        mar = c(5.1, 4.1, 4.1, 4.1),
                        ...) {
-  ## Prepare a list of arguments to pass to segmentSound()
+  ## Prepare a list of arguments to pass to .getLoudness()
   myPars = c(as.list(environment()), list(...))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
@@ -138,7 +138,7 @@ getLoudness = function(x,
     scale = scale,
     from = from,
     to = to,
-    funToCall = 'getLoudnessSound',
+    funToCall = '.getLoudness',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots
@@ -198,28 +198,28 @@ getLoudness = function(x,
 }
 
 
-#' Loudness sound
+#' Loudness per sound
 #'
 #' Internal soundgen function
 #' @inheritParams getLoudness
 #' @param audio a list returned by \code{readAudio}
 #' @keywords internal
-getLoudnessSound = function(audio,
-                            windowLength = 50,
-                            step = NULL,
-                            overlap = 50,
-                            SPL_measured = 70,
-                            Pref = 2e-5,
-                            spreadSpectrum = TRUE,
-                            plot = TRUE,
-                            savePlots = NULL,
-                            ylim = NULL,
-                            width = 900,
-                            height = 500,
-                            units = 'px',
-                            res = NA,
-                            mar = c(5.1, 4.1, 4.1, 4.1),
-                            ...) {
+.getLoudness = function(audio,
+                        windowLength = 50,
+                        step = NULL,
+                        overlap = 50,
+                        SPL_measured = 70,
+                        Pref = 2e-5,
+                        spreadSpectrum = TRUE,
+                        plot = TRUE,
+                        savePlots = NULL,
+                        ylim = NULL,
+                        width = 900,
+                        height = 500,
+                        units = 'px',
+                        res = NA,
+                        mar = c(5.1, 4.1, 4.1, 4.1),
+                        ...) {
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
   if (audio$samplingRate < 2000) {
     warning(paste('samplingRate of', audio$samplingRate, 'is too low;',
@@ -316,7 +316,7 @@ getLoudnessSound = function(audio,
   if (plot) {
     if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
     loudness_norm = loudness / max(loudness) * ylim[2] * 1000
-    spectrogramSound(
+    .spectrogram(
       audio[which(names(audio) != 'savePlots')],
       windowLength = windowLength, step = step,
       output = 'original', normalize = FALSE,

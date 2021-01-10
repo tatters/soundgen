@@ -1151,7 +1151,7 @@ server = function(input, output, session) {
       }
       sel_anal = round(myPars$regionToAnalyze[1] / 1000 * myPars$samplingRate) :
         round(myPars$regionToAnalyze[2] / 1000 * myPars$samplingRate)
-      myPars$temp_anal = analyzeSound(
+      myPars$temp_anal = .analyze(
         list(sound = myPars$myAudio[sel_anal],
              samplingRate = myPars$samplingRate,
              scale = myPars$maxAmpl,

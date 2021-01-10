@@ -157,7 +157,7 @@ filterSoundByMS = function(
   height = 500,
   units = 'px',
   res = NA) {
-  ## Prepare a list of arguments to pass to segmentSound()
+  ## Prepare a list of arguments to pass to .filterSoundByMS()
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
@@ -171,7 +171,7 @@ filterSoundByMS = function(
     samplingRate = samplingRate,
     from = from,
     to = to,
-    funToCall = 'filterSoundByMSSound',
+    funToCall = '.filterSoundByMS',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots,
@@ -198,7 +198,7 @@ filterSoundByMS = function(
 #' @inheritParams filterSoundByMS
 #' @param audio a list returned by \code{readAudio}
 #' @keywords internal
-filterSoundByMSSound = function(
+.filterSoundByMS = function(
   audio,
   logSpec = FALSE,
   windowLength = 25,
@@ -229,7 +229,7 @@ filterSoundByMSSound = function(
   overlap = 100 * (1 - step_points / windowLength_points)
 
   # Get a modulation spectrum
-  ms = modulationSpectrumSound(
+  ms = .modulationSpectrum(
     audio[c('sound', 'samplingRate', 'ls', 'duration')],  # avoid passing savePlots etc
     windowLength = windowLength,
     step = step, overlap = overlap, wn = wn,
@@ -284,7 +284,7 @@ filterSoundByMSSound = function(
     # Get an MS of the new sound
     audio_new = audio
     audio_new$sound = s_new
-    ms_actual = modulationSpectrumSound(
+    ms_actual = .modulationSpectrum(
       audio_new[c('sound', 'samplingRate', 'ls', 'duration')],  # avoid passing savePlots etc
       windowLength = windowLength,
       step = step, overlap = overlap, wn = wn,

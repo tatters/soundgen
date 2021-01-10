@@ -104,7 +104,7 @@ getRMS = function(x,
                     scale = scale,
                     from = from,
                     to = to,
-                    funToCall = 'getRMSSound',
+                    funToCall = '.getRMS',
                     savePlots = savePlots,
                     myPars = myPars,
                     reportEvery = reportEvery
@@ -147,24 +147,24 @@ getRMS = function(x,
 #' @param audio a list returned by \code{readAudio}
 #' @inheritParams getRMS
 #' @keywords internal
-getRMSSound = function(audio,
-                       windowLength = 50,
-                       step = NULL,
-                       overlap = 75,
-                       killDC = FALSE,
-                       normalize = TRUE,
-                       windowDC = 200,
-                       plot = TRUE,
-                       xlab = '',
-                       ylab = '',
-                       type = 'b',
-                       col = 'green',
-                       lwd = 2,
-                       width = 900,
-                       height = 500,
-                       units = 'px',
-                       res = NA,
-                       ...) {
+.getRMS = function(audio,
+                   windowLength = 50,
+                   step = NULL,
+                   overlap = 75,
+                   killDC = FALSE,
+                   normalize = TRUE,
+                   windowDC = 200,
+                   plot = TRUE,
+                   xlab = '',
+                   ylab = '',
+                   type = 'b',
+                   col = 'green',
+                   lwd = 2,
+                   width = 900,
+                   height = 500,
+                   units = 'px',
+                   res = NA,
+                   ...) {
   if (overlap < 0 | overlap > 100) {
     warning('overlap must be >0 and <= 100%; resetting to 70')
     overlap = 70
@@ -472,7 +472,7 @@ flatEnv = function(x,
                     scale = scale,
                     saveAudio = saveAudio,
                     savePlots = savePlots,
-                    funToCall = 'flatEnvSound',
+                    funToCall = '.flatEnv',
                     myPars = myPars,
                     reportEvery = reportEvery
   )
@@ -514,22 +514,22 @@ compressor = flatEnv
 #' @inheritParams flatEnv
 #' @inheritParams segment
 #' @keywords internal
-flatEnvSound = function(audio,
-                        compression = 1,
-                        method = c('hil', 'rms', 'peak')[1],
-                        windowLength = 50,
-                        windowLength_points = NULL,
-                        killDC = FALSE,
-                        dynamicRange = 40,
-                        saveAudio = NULL,
-                        plot = FALSE,
-                        savePlots = NULL,
-                        col = 'blue',
-                        width = 900,
-                        height = 500,
-                        units = 'px',
-                        res = NA,
-                        ...) {
+.flatEnv = function(audio,
+                    compression = 1,
+                    method = c('hil', 'rms', 'peak')[1],
+                    windowLength = 50,
+                    windowLength_points = NULL,
+                    killDC = FALSE,
+                    dynamicRange = 40,
+                    saveAudio = NULL,
+                    plot = FALSE,
+                    savePlots = NULL,
+                    col = 'blue',
+                    width = 900,
+                    height = 500,
+                    units = 'px',
+                    res = NA,
+                    ...) {
   if (!is.numeric(windowLength_points)) {
     if (is.numeric(windowLength)) {
       if (is.numeric(audio$samplingRate)) {
@@ -1014,4 +1014,3 @@ killDC = function(sound,
   }
   return(soundNorm)
 }
-

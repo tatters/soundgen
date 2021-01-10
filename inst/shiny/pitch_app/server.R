@@ -525,7 +525,7 @@ server = function(input, output, session) {
     if (!is.null(myPars$myAudio)) {
       if (myPars$print) print('Calling analyze()...')
       withProgress(message = 'Analyzing the sound...', value = 0.5, {
-        temp_anal = analyzeSound(
+        temp_anal = .analyze(
           myPars$myAudio_list,
           windowLength = input$windowLength,
           step = input$step,

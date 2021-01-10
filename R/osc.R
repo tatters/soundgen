@@ -87,14 +87,14 @@ osc = function(
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery', 'savePlots')]
 
-  # call oscSound
+  # call .osc
   pa = processAudio(
     x,
     samplingRate = samplingRate,
     scale = scale,
     from = from,
     to = to,
-    funToCall = 'oscSound',
+    funToCall = '.osc',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots
@@ -121,12 +121,12 @@ osc = function(
 }
 
 
-#' Oscillogram sound
+#' Oscillogram per sound
 #'
 #' Internal soundgen function called by \code{\link{osc}}.
 #' @inheritParams osc
 #' @keywords internal
-oscSound = function(
+.osc = function(
   audio,
   dynamicRange = 80,
   dB = FALSE,

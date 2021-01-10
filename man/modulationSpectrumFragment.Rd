@@ -2,7 +2,7 @@
 % Please edit documentation in R/modulationSpectrum.R
 \name{modulationSpectrumFragment}
 \alias{modulationSpectrumFragment}
-\title{Modulation spectrum fragment}
+\title{Modulation spectrum per fragment}
 \usage{
 modulationSpectrumFragment(
   sound,

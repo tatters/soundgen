@@ -230,14 +230,14 @@ spectrogram = function(
   myPars = myPars[!names(myPars) %in% c(
     'x', 'samplingRate', 'scale', 'from', 'to', 'reportEvery', 'savePlots')]
 
-  # call spectrogramSound
+  # call .spectrogram
   pa = processAudio(
     x,
     samplingRate = samplingRate,
     scale = scale,
     from = from,
     to = to,
-    funToCall = 'spectrogramSound',
+    funToCall = '.spectrogram',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots
@@ -256,7 +256,7 @@ spectrogram = function(
 }
 
 
-#' Spectrogram sound
+#' Spectrogram per sound
 #'
 #' Internal soundgen function called by \code{\link{spectrogram}} and
 #' \code{\link{analyze}}.
@@ -264,7 +264,7 @@ spectrogram = function(
 #' @param internal a long list of stuff for plotting pitch contours passed by
 #'   analyze()
 #' @keywords internal
-spectrogramSound = function(
+.spectrogram = function(
   audio,
   dynamicRange = 80,
   windowLength = 50,
@@ -316,7 +316,7 @@ spectrogramSound = function(
     step = windowLength_points / audio$samplingRate * 1000 * (1 - overlap / 100)
   }
   if (windowLength_points == 0) {
-    stop('The sound and/or the windowLength is too short for plotting a spectrogram')
+    stop('The sound and/or windowLength are too short for plotting a spectrogram')
   }
 
   # Get a bank of windowed frames
@@ -468,7 +468,7 @@ spectrogramSound = function(
       }
 
       if (osc == 'dB') {
-        audio$sound = oscSound(
+        audio$sound = .osc(
           audio,
           dynamicRange = dynamicRange,
           dB = TRUE,

@@ -118,7 +118,7 @@ ssm = function(
     col = 'black',
     lwd = 3
   )) {
-  ## Prepare a list of arguments to pass to segmentSound()
+  ## Prepare a list of arguments to pass to .ssm()
   myPars = as.list(environment())
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
@@ -139,7 +139,7 @@ ssm = function(
     samplingRate = samplingRate,
     from = from,
     to = to,
-    funToCall = 'ssmSound',
+    funToCall = '.ssm',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots
@@ -199,13 +199,13 @@ ssm = function(
 }
 
 
-#' SSM sound
+#' SSM per sound
 #'
 #' Internal soundgen function.
 #' @inheritParams ssm
 #' @param audio a list returned by \code{readAudio}
 #' @keywords internal
-ssmSound = function(
+.ssm = function(
   audio,
   windowLength = 40,
   overlap = 75,

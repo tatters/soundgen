@@ -591,7 +591,7 @@ analyze = function(
     scale = scale,
     from = from,
     to = to,
-    funToCall = 'analyzeSound',
+    funToCall = '.analyze',
     myPars = myPars,
     reportEvery = reportEvery,
     savePlots = savePlots
@@ -641,7 +641,7 @@ analyze = function(
 }
 
 
-#' Analyze sound
+#' Analyze per sound
 #'
 #' Internal soundgen function
 #'
@@ -650,7 +650,7 @@ analyze = function(
 #' @inheritParams analyze
 #' @param audio a list returned by \code{readAudio}
 #' @keywords internal
-analyzeSound = function(
+.analyze = function(
   audio,
   dynamicRange = 80,
   silence = 0.04,
@@ -899,7 +899,7 @@ analyzeSound = function(
 
   extraSpecPars = list(...)
   extraSpecPars$osc = NULL
-  s = do.call(spectrogramSound, c(list(
+  s = do.call(.spectrogram, c(list(
     audio = audio[names(audio) != 'savePlots'], # otherwise spectrogram() plots
     internal = list(frameBank = frameBank),
     dynamicRange = dynamicRange,
@@ -1247,7 +1247,7 @@ analyzeSound = function(
     # don't analyze the modulation spectrum
     result$roughness = NA
   } else {
-    rough = do.call(modulationSpectrumSound, c(
+    rough = do.call(.modulationSpectrum, c(
       list(audio = audio[c('sound', 'samplingRate', 'ls', 'duration')],
            returnMS = FALSE, plot = FALSE),
       roughness))$roughness
@@ -1260,7 +1260,7 @@ analyzeSound = function(
   if (is.null(novelty)) {
     result$novelty = NA
   } else {
-    novel = do.call(ssmSound, c(
+    novel = do.call(.ssm, c(
       list(audio = audio[c('sound', 'samplingRate', 'ls', 'duration')],
            sparse = TRUE, plot = FALSE),
       novelty))$novelty
@@ -1336,7 +1336,7 @@ analyzeSound = function(
     # pitch contours internally in spectrogram() - a hassle, but it only take a
     # few ms, and otherwise it's hard to add pitch contours b/c the y-axis is
     # messed up if spectrogram() calls layout() to add an oscillogram
-    do.call(spectrogramSound, c(list(
+    do.call(.spectrogram, c(list(
       audio = audio[names(audio) != 'savePlots'],
       dynamicRange = dynamicRange,
       windowLength = windowLength,

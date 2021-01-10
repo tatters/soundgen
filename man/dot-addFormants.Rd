@@ -2,7 +2,7 @@
 % Please edit documentation in R/formants.R
 \name{.addFormants}
 \alias{.addFormants}
-\title{Add formants}
+\title{Add formants per sound}
 \usage{
 .addFormants(
   audio,
