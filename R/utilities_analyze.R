@@ -9,6 +9,8 @@
 #' analyzes it.
 #' @param frame the abs spectrum of a frame, as returned by
 #'   \code{\link[stats]{fft}}
+#' @param bin spectrogram bin width, Hz
+#' @param freqs frequency per bin of spectrogram
 #' @param autoCorrelation pre-calculated autocorrelation of the input frame
 #'   (computationally more efficient than to do it here)
 #' @param samplingRate sampling rate (Hz)
@@ -390,12 +392,12 @@ updateAnalyze = function(
     if (is.null(freqs)) freqs = as.numeric(rownames(spectrogram)) * 1000
     if (is.null(bin)) bin = freqs[2] - freqs[1]
 
-    # Re-calculate the % of energy in harmonics based on the manual pitch estimates
+    # Calculate the % of energy in harmonics based on the final pitch estimates
     result$harmEnergy = to_dB(harmEnergy(
       pitch = result$pitch,
       s = spectrogram,
       freqs = freqs))
-    # Re-calculate how high harmonics reach in the spectrum
+    # Calculate how high harmonics reach in the spectrum
     for (f in which(result$voiced)) {
       result$harmHeight[f] = do.call('harmHeight', c(
         harmHeight_pars,
@@ -405,6 +407,18 @@ updateAnalyze = function(
              pitch = result$pitch[f]
         )))$harmHeight
     }
+    # # Calculate subharmonics-to-harmonics ratio
+    # for (f in which(result$voiced)) {
+    #   temp = do.call('subhToHarm', c(
+    #     list(),
+    #     list(frame = spectrogram[, f],
+    #          bin = bin,
+    #          freqs = freqs,
+    #          pitch = result$pitch[f]
+    #     )))
+    #   result[f, c('subRatio', 'subDep')] = temp[c('subRatio', 'subDep')]
+    # }
+    # result[, c('subRatio', 'subDep')]
     if (smooth > 0) {
       result$harmHeight = medianSmoother(
         result[, 'harmHeight', drop = FALSE],
@@ -484,238 +498,6 @@ upsamplePitchContour = function(pitch, len, plot = FALSE) {
            type = 'b', col = 'red', pch = 3)
   }
   return(pitch1)
-}
-
-#' Height of harmonics
-#'
-#' Internal soundgen function
-#'
-#' Attempts to estimate how high harmonics reach in the spectrum - that is, at
-#' what frequency we can still discern peaks at multiples of f0 or, for
-#' low-pitched sounds, regularly spaced peaks separated by ~f0.
-#' @inheritParams analyzeFrame
-#' @param pitch the final pitch estimate for the current frame
-#' @param harmThres minimum height of spectral peak, dB
-#' @param harmPerSel the number of harmonics per sliding selection
-#' @param harmTol maximum tolerated deviation of peak frequency from multiples
-#'   of f0, proportion of f0
-#' @return Returns the frequency (Hz) up to which we find harmonics
-#' @keywords internal
-#' @examples
-#' s = soundgen(sylLen = 400, addSilence = 0, pitch = 400, noise = -10,
-#'   rolloff = -15, jitterDep = .1, shimmerDep = 5, temperature = .001)
-#' sp = spectrogram(s, samplingRate = 16000)
-#' hh = soundgen:::harmHeight(sp[, 5], pitch = 400,
-#'   freqs = as.numeric(rownames(sp)) * 1000, bin = 16000 / 2 / nrow(sp))
-harmHeight = function(frame,
-                      pitch,
-                      bin,
-                      freqs,
-                      harmThres = 3,
-                      harmTol = 0.25,
-                      harmPerSel = 5) {
-  frame_dB = 20 * log10(frame)
-
-  # METHOD 1: look for peaks at multiples of f0
-  lh_peaks = harmHeight_peaks(frame_dB, pitch, bin, freqs,
-                              harmThres = harmThres,
-                              harmTol = harmTol,
-                              plot = FALSE)
-
-  # METHODS 2 & 3: look for peaks separated by f0
-  lh2 = harmHeight_dif(frame_dB, pitch, bin, freqs,
-                       harmThres = harmThres,
-                       harmTol = harmTol,
-                       harmPerSel = harmPerSel,
-                       plot = FALSE)
-  lh = median(c(lh_peaks, lh2$lastHarm_dif, lh2$lastHarm_cep), na.rm = TRUE)
-  return(list(harmHeight = lh,
-              harmHeight_peaks = lh_peaks,
-              harmHeight_dif = lh2$lastHarm_dif,
-              harmHeight_cep = lh2$lastHarm_cep))
-}
-
-#' Height of harmonics: peaks method
-#'
-#' Internal soundgen function
-#'
-#' Estimates how far harmonics reach in the spectrum by checking how many
-#' spectral peaks we can find close to multiples of f0.
-#' @inheritParams harmHeight
-#' @param plot if TRUE, produces a plot of spectral peaks
-#' @keywords internal
-harmHeight_peaks = function(frame_dB,
-                            pitch,
-                            bin,
-                            freqs,
-                            harmThres = 3,
-                            harmTol = 0.25,
-                            plot = FALSE) {
-  harmSmooth = round(harmTol * pitch / bin)  # from prop of f0 to bins
-  nHarm = floor((max(freqs) - harmSmooth * bin) / pitch)
-  peakFound = rep(FALSE, nHarm)
-  if (plot) plot(freqs, frame_dB, type = 'l')
-  for (h in 1:nHarm) {
-    # check f0 as well, otherwise may get 2 * f0 although f0 is also below thres
-    bin_h = round(pitch * h / bin)
-    # b/c of rounding error, and b/c pitch estimates are often slightly off, the
-    # true harmonic may lie a bit above or below this bin, so we search for a
-    # peak within harmSmooth of where we expect to find it
-    idx_peak = which.max(frame_dB[(bin_h - harmSmooth) : (bin_h + harmSmooth)])
-    bin_peak = bin_h + idx_peak - harmSmooth - 1
-    # left
-    if (bin_peak == 1) {
-      left_over_zero = left_over_thres = TRUE
-    } else {
-      # should be higher than both adjacent points
-      left_over_zero = frame_dB[bin_peak] - frame_dB[bin_peak - 1] > 0
-      # should be higher than either of the adjacent points by harmThres
-      left_over_thres = frame_dB[bin_peak] - frame_dB[bin_peak - 1] > harmThres
-    }
-    # right
-    if (bin_peak == length(frame_dB)) {
-      right_over_zero = right_over_thres = TRUE
-    } else {
-      right_over_zero = frame_dB[bin_peak] - frame_dB[bin_peak + 1] > 0
-      right_over_thres = frame_dB[bin_peak] - frame_dB[bin_peak + 1] > harmThres
-    }
-    peakFound[h] = left_over_zero & right_over_zero &
-      (left_over_thres | right_over_thres)
-
-    if (plot) {  # plot for debugging
-      if (peakFound[h]) {
-        text(freqs[bin_peak], frame_dB[bin_peak],
-             labels = h, pch = 5, col = 'blue')
-      } else {
-        text(freqs[bin_peak], frame_dB[bin_peak],
-             labels = h, pch = 5, col = 'red')
-      }
-    }
-  }
-  first_absent_harm = which(!peakFound)[1]
-  if (length(first_absent_harm) > 0) {
-    lastHarm = pitch * (first_absent_harm - 1)
-  } else {
-    lastHarm = NA
-  }
-  return(lastHarm)
-}
-
-#' Height of harmonics: difference method
-#'
-#' Internal soundgen function
-#'
-#' Estimates how far harmonics reach in the spectrum by analyzing the typical
-#' distances between spectral peaks in different frequency regions.
-#' @inheritParams harmHeight
-#' @param plot if TRUE, produces a plot of spectral peaks
-#' @keywords internal
-harmHeight_dif = function(frame_dB,
-                          pitch,
-                          bin,
-                          freqs,
-                          harmThres = 3,
-                          harmTol = 0.25,
-                          harmPerSel = 5,
-                          plot = FALSE) {
-  # width of smoothing interval (in bins), forced to be an odd number
-  harmSmooth_bins = 2 * ceiling(pitch / bin / 2) - 1
-
-  # find peaks in the smoothed spectrum (much faster than seewave::fpeaks)
-  temp = zoo::rollapply(
-    zoo::as.zoo(frame_dB),
-    width = harmSmooth_bins,
-    align = 'center',
-    function(x) {
-      middle = ceiling(length(x) / 2)
-      which.max(x) == middle &   # peak in the middle
-        any(x[middle] - x[1:(middle - 1)] > harmThres) &  # a deep drop on the left
-        any(x[middle] - x[(middle + 1):length(x)] > harmThres)  # ...or on the right
-    }
-  )
-  idx = zoo::index(temp)[zoo::coredata(temp)]
-
-  if (plot) {
-    plot(freqs, frame_dB, type = 'l')
-    points(freqs[idx], frame_dB[idx], pch = 5, col = 'blue')
-  }
-
-  # slide a selection along the spectrum starting from f0
-  pitch_bins = pitch / bin  # f0 location in bins
-  # width of selection in bins (no more than half the frame len)
-  sel_bins = min(round(pitch_bins * harmPerSel), length(frame_dB) / 2)
-  harmTol_bins = round(pitch_bins * harmTol)  # tolerated deviance in bins
-  i = pitch_bins  # start at f0
-  pitch_bin_cep = pitch_bin_peaks = vector('logical', 0)
-  while (i + sel_bins < length(frame_dB)) {
-    end = i + sel_bins - 1
-
-    # count intervals b/w spectral peaks
-    d = diff(idx[idx >= i & idx <= end])  # distances b/w peaks
-    # median deviation of these distances from expected (f0)
-    dp = abs(median(d, na.rm = TRUE) - pitch_bins)
-    dp_within_tol = (dp < harmTol_bins)
-    pitch_bin_peaks = c(pitch_bin_peaks, dp_within_tol)
-
-    # cepstrum
-    sel = as.numeric(frame_dB[i:(i + sel_bins - 1)])
-    cep = abs(fft(sel))
-    # plot(sel, type = 'l')
-    l = length(cep) %/% 2
-    cep = cep[1:l]
-    # plot(cep, type = 'l')
-    bin_at_pitch = harmPerSel + 1
-    # Is there a local max at bin_at_pitch? Any height will do
-    peak_at_pitch = (cep[bin_at_pitch] > cep[bin_at_pitch - 1]) &
-      (cep[bin_at_pitch] > cep[bin_at_pitch + 1])
-    pitch_bin_cep = c(pitch_bin_cep, peak_at_pitch)
-
-    i = round(i + pitch_bins)  # move the sel by one harmonic (f0)
-  }
-
-  # Find the central frequency of the first bin w/o harmonics
-  fbwh_peaks = which(!pitch_bin_peaks)[1]
-  if (is.na(fbwh_peaks)) {
-    lastHarm_dif = tail(freqs, 1)
-  } else {
-    lastHarm_dif = (pitch_bins * (fbwh_peaks - 1) - sel_bins / 2) * bin
-    if (!is.na(lastHarm_dif) && lastHarm_dif < pitch) lastHarm_dif = NA
-  }
-
-
-  fbwh_cep = which(!pitch_bin_cep)[1]
-  if (is.na(fbwh_cep)) {
-    lastHarm_cep = tail(freqs, 1)
-  } else {
-    lastHarm_cep = (pitch_bins * (fbwh_cep - 1) - sel_bins / 2) * bin
-    if (!is.na(lastHarm_cep) && lastHarm_cep < pitch) lastHarm_cep = NA
-  }
-  lastHarm_cep = (pitch_bins * (fbwh_cep - 1) - sel_bins / 2) * bin
-  if (!is.na(lastHarm_cep) && lastHarm_cep < pitch) lastHarm_cep = NA
-
-  return(list(lastHarm_cep = lastHarm_cep,
-              lastHarm_dif = lastHarm_dif))
-}
-
-#' Energy in harmonics
-#'
-#' Internal soundgun function
-#'
-#' Calculates the % of energy in harmonics based on the provided pitch estimate
-#' @param pitch pitch estimates, Hz (vector)
-#' @param s spectrogram (ncol = length(pitch))
-#' @param coef calculate above pitch * coef
-#' @param freqs as.numeric(rownames(s)) * 1000
-#' @keywords internal
-harmEnergy = function(pitch, s, freqs = NULL, coef = 1.25) {
-  if (is.null(freqs)) freqs = as.numeric(rownames(s)) * 1000
-  threshold = coef * pitch
-  he = apply(matrix(1:ncol(s)), 1, function(x) {
-    ifelse(is.na(threshold[x]),
-           NA,
-           sum(s[freqs > threshold[x], x]) / sum(s[, x]))
-  })
-  return(he)
 }
 
 

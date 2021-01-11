@@ -1314,7 +1314,8 @@ analyze = function(
                        'HNR_voiced', 'loudness', 'loudnessVoiced',
                        'roughness', 'roughnessVoiced',
                        'novelty', 'noveltyVoiced',
-                       'specSlope', 'specSlopeVoiced')
+                       'specSlope', 'specSlopeVoiced',
+                       'subDep', 'subRatio')
         if (cnt_name %in% col_non_Hz) {
           # normalize
           if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
