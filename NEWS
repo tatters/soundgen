@@ -18,6 +18,7 @@ MINOR:
   * spectrogram(), analyze(): a new argument "extraContour" for plotting something over the spectrogram
   * analyze(): spectral slope (specSlope) is returned in dB/kHz
   * analyze() calls ssm() and returns a novelty contour (a new argument "novelty")
+  * analyze(): updated cepstral pitch tracking, new argument in pitchCep = list(cepPenalty) to regulate how much high-frequency cepstral candidates are mistrusted
   * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue
   * soundgen(): pitch anchors can contain NAs, eg "pitch = c(150, 200, NA, 110)" - the 3rd quarter will be unvoiced
   * addFormants(): new argument "zFun" for arbitrary transformations of the spectrogram between STFT and iSTFT (eg for de-noising, spectral warping, etc.)

@@ -241,37 +241,42 @@ subhToHarm = function(
   bin,
   freqs,
   pitch,
+  samplingRate,
   tol = .05,
   nHarm = 5,
   harmThres = 3,
   harmTol = 0.25,
   method = c('cep', 'harm')[1]
 ) {
-  keep_idx = which(freqs < (pitch * nHarm))
-  frame = frame[keep_idx]
-  frame_dB = 20 * log10(frame[keep_idx])
-  freqs = freqs[keep_idx]
-  n = length(keep_idx)
-
+  # plot(frame, type = 'l')
+  best_subh = NA
+  subDep = 0
   if (method == 'cep') {
     # cepstrum
-    cep = abs(fft(frame_dB))
-    # plot(freqs, frame_dB, type = 'l')
+    cep = abs(fft(as.numeric(log(frame))))
     l = length(cep) %/% 2
     cep = cep[1:l]
     cep[1] = 0
-    # plot(cep, type = 'l')
-    bin_at_pitch = nHarm + 1
-    # Is there a local max at bin_at_pitch? Any height will do
-    peak_at_pitch = (cep[bin_at_pitch] > cep[bin_at_pitch - 1]) &
-      (cep[bin_at_pitch] > cep[bin_at_pitch + 1])
+    freqs_cep = samplingRate / (1:l) / 2
+    # plot(freqs_cep, cep, type = 'l', log = 'x')
+    bin_at_pitch = which.min(abs(freqs_cep - pitch))
+    nToTry = min(nHarm, floor(l / bin_at_pitch))
     ratios = data.frame(r = 1:nHarm, energy = NA)
-    for (r in 1:nrow(ratios)) {
+    for (r in 1:nToTry) {
       ratios$energy[r] = max(cep[(bin_at_pitch * r - 1) : (bin_at_pitch * r + 1)])
     }
+    ratios$extraEnergy = ratios$energy - ratios$energy[1] / ratios$r
+    subR = na.omit(ratios[ratios$extraEnergy > 0, ])
+    if (nrow(subR) > 0) {
+      best_subh = subR$r[which.max(subR$extraEnergy)]
+      subDep = ratios$extraEnergy[best_subh] / ratios$energy[best_subh]
+    }
   } else if (method == 'harm') {
-
-
+    keep_idx = which(freqs < (pitch * nHarm))
+    frame = frame[keep_idx]
+    frame_dB = 20 * log10(frame[keep_idx])
+    freqs = freqs[keep_idx]
+    n = length(keep_idx)
 
     # look for spectral peaks
     temp = zoo::rollapply(zoo::as.zoo(frame_dB),
@@ -300,62 +305,63 @@ subhToHarm = function(
           specPeaks$amp[i] = frame[idx_peak]
         }
       }
-    }
-    # specPeaks[1:10, ]
+      # specPeaks[1:10, ]
 
-    idx_pitch = rep(NA, nHarm)
-    for (h in 1:nHarm) {
-      idx_range = pitch * h * c(1 - tol, 1 + tol)
-      peaks_range = which(specPeaks$freq > idx_range[1] &
-                            specPeaks$freq < idx_range[2])
-      lp = length(peaks_range)
-      if (lp == 1) {
-        idx_pitch[h] = specPeaks$idx[peaks_range]
-      } else if (lp > 1) {
-        it = which.min(abs(specPeaks$freq[peaks_range] - pitch * h))
-        idx_pitch[h] = specPeaks$idx[peaks_range][it]
-      }
-    }
-    idx_pitch = as.numeric(na.omit(idx_pitch))
-
-    # plot(freqs, frame_dB, type = 'l')
-    # points(freqs[idx_pitch], frame_dB[idx_pitch], col = 'red', pch = 3)
-
-    # now repeat for different f0/g0 ratios
-    ratios = data.frame(r = 1:nHarm, energy = NA)
-    ratios$energy[1] = sum(frame[idx_pitch])
-    for (r in 2:nrow(ratios)) {
-      freq_max = pitch * nHarm * r
-      i_max = which(specPeaks$freq > freq_max)[1] - 1
-      if (!is.finite(i_max)) i_max = nrow(specPeaks)
-      h_max = floor(specPeaks$freq[i_max] / pitch * r)
-      idx_pitch_r = rep(NA, h_max)
-      for (h in 1:h_max) {
-        pitch_h = pitch / r * h
-        idx_range = pitch_h * c(1 - tol, 1 + tol)
+      idx_pitch = rep(NA, nHarm)
+      for (h in 1:nHarm) {
+        idx_range = pitch * h * c(1 - tol, 1 + tol)
         peaks_range = which(specPeaks$freq > idx_range[1] &
                               specPeaks$freq < idx_range[2])
         lp = length(peaks_range)
         if (lp == 1) {
-          idx_pitch_r[h] = specPeaks$idx[peaks_range]
+          idx_pitch[h] = specPeaks$idx[peaks_range]
         } else if (lp > 1) {
-          it = which.min(abs(specPeaks$freq[peaks_range] - pitch_h))
-          idx_pitch_r[h] = specPeaks$idx[peaks_range][it]
+          it = which.min(abs(specPeaks$freq[peaks_range] - pitch * h))
+          idx_pitch[h] = specPeaks$idx[peaks_range][it]
         }
       }
-      idx_pitch_r = as.numeric(na.omit(idx_pitch_r))
-      ratios$energy[r] = sum(frame[idx_pitch_r])
+      idx_pitch = as.numeric(na.omit(idx_pitch))
       # plot(freqs, frame_dB, type = 'l')
-      # points(freqs[idx_pitch_r], frame_dB[idx_pitch_r], col = 'red', pch = 3)
+      # points(freqs[idx_pitch], frame_dB[idx_pitch], col = 'red', pch = 3)
+
+      # now repeat for different f0/g0 ratios
+      ratios = data.frame(r = 1:nHarm, energy = NA)
+      ratios$energy[1] = sum(frame[idx_pitch])
+      for (r in 2:nrow(ratios)) {
+        freq_max = pitch * nHarm * r
+        i_max = which(specPeaks$freq > freq_max)[1] - 1
+        if (!is.finite(i_max)) i_max = nrow(specPeaks)
+        h_max = floor(specPeaks$freq[i_max] / pitch * r)
+        idx_pitch_r = rep(NA, h_max)
+        for (h in 1:h_max) {
+          pitch_h = pitch / r * h
+          idx_range = pitch_h * c(1 - tol, 1 + tol)
+          peaks_range = which(specPeaks$freq > idx_range[1] &
+                                specPeaks$freq < idx_range[2])
+          lp = length(peaks_range)
+          if (lp == 1) {
+            idx_pitch_r[h] = specPeaks$idx[peaks_range]
+          } else if (lp > 1) {
+            it = which.min(abs(specPeaks$freq[peaks_range] - pitch_h))
+            idx_pitch_r[h] = specPeaks$idx[peaks_range][it]
+          }
+        }
+        idx_pitch_r = as.numeric(na.omit(idx_pitch_r))
+        ratios$energy[r] = sum(frame[idx_pitch_r])
+        # plot(freqs, frame_dB, type = 'l')
+        # points(freqs[idx_pitch_r], frame_dB[idx_pitch_r], col = 'red', pch = 3)
+      }
+      # some harmonics repeat, eg for g0/2 and g0/4 - think about how to take this into account
+      ratios$extraEnergy = ratios$energy - ratios$energy[1]
+      ratios$extraEnergy[4] = ratios$extraEnergy[4] - ratios$extraEnergy[2]
+      # now we divide by subRatio b/c otherwise high subRatios are privileged (many
+      # more potential harmonics)
+      subR = na.omit(ratios[ratios$extraEnergy > 0, ])
+      if (nrow(subR) > 0) {
+        best_subh = subR$r[which.max(subR$extraEnergy)]
+        subDep = ratios$extraEnergy[best_subh] / ratios$energy[best_subh]
+      }
     }
-    # some harmonics repeat, eg for g0/2 and g0/4 - think about how to take this into account
-    ratios$energy[c(2,3,5)] = ratios$energy[c(2,3,5)] - ratios$energy[1]
-    ratios$energy[4] = ratios$energy[4] - ratios$energy[2] - ratios$energy[1]
-    # now we divide by subRatio b/c otherwise high subRatios are privileged (many
-    # more potential harmonics)
-    ratios$energy = ratios$energy / 1:nHarm
   }
-  best_subh = which.max(ratios$energy[2:nHarm]) + 1
-  subDep = ratios$energy[best_subh] / ratios$energy[1]
-  return(list(subRatio = best_subh, subDep = subDep, SHR = to_dB(subDep)))
+  return(list(subRatio = best_subh, subDep = subDep))
 }

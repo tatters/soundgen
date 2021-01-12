@@ -208,12 +208,12 @@ modulationSpectrum = function(
   scale = NULL,
   from = NULL,
   to = NULL,
-  amRes = 5,
+  amRes = 10,
   maxDur = 5,
   logSpec = FALSE,
-  windowLength = 25,
-  step = NULL,
-  overlap = 80,
+  windowLength = 15,
+  step = 3,
+  overlap = NULL,
   wn = 'hanning',
   zp = 0,
   power = 1,
@@ -245,7 +245,8 @@ modulationSpectrum = function(
   myPars = c(as.list(environment()), list(...))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'scale', 'savePlots', 'reportEvery', 'summaryFun', 'averageMS')]
+    'x', 'samplingRate', 'scale', 'from', 'to', 'savePlots',
+    'reportEvery', 'summaryFun', 'averageMS')]
 
   # analyze
   pa = processAudio(

@@ -10,6 +10,7 @@ updateAnalyze(
   spectrogram,
   freqs = NULL,
   bin = NULL,
+  samplingRate = NULL,
   harmHeight_pars,
   smooth,
   smoothing_ww,

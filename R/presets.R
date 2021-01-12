@@ -215,9 +215,10 @@ defaults_analyze = matrix(c(
   'autocorUpsample', 25, 0, 500, 1,
   'autocorBestPeak', .975, 0, 1, .001,
 
-  'cepThres', 0.3, 0, 1, 0.01,
+  'cepThres', 0.4, 0, 1, 0.01,
   'cepSmooth', 400, 10, 1000, 10,
   'cepZp', 0, 0, 13, 1,
+  'cepPenalty', 10, 0, 100, .1,
 
   'specThres', 0.3, 0, 1, 0.01,
   'specPeak', 0.35, 0, 1, 0.01,

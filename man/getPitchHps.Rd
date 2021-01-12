@@ -20,6 +20,10 @@ getPitchHps(
 \item{frame}{the abs spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
+\item{freqs}{frequency per bin of spectrogram}
+
+\item{bin}{spectrogram bin width, Hz}
+
 \item{hpsThres}{voicing threshold (unitless, ~0 to 1)}
 
 \item{hpsNum}{the number of times the spectrum is downsampled}

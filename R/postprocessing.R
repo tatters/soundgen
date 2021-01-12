@@ -80,11 +80,11 @@ playme = function(x,
       if (!is.null(from) | !is.null(to)) {
         if (is.null(from)) from = 0
         if (is.null(to)) to = length(sound_wave@left) / sound_wave@samp.rate
-        soundWave = tuneR::extractWave(object = sound_wave,
-                                       from = from,
-                                       to = to,
-                                       interact = FALSE,
-                                       xunit = 'time')
+        sound_wave = tuneR::extractWave(object = sound_wave,
+                                        from = from,
+                                        to = to,
+                                        interact = FALSE,
+                                        xunit = 'time')
       }
       p = tuneR::play(sound_wave, player = player)
       if (p > 0) {  # error in sh

@@ -77,8 +77,8 @@ ssm = function(
   from = NULL,
   to = NULL,
   windowLength = 25,
-  overlap = NULL,
   step = 5,
+  overlap = NULL,
   ssmWin = NULL,
   sparse = FALSE,
   maxFreq = NULL,
@@ -207,9 +207,9 @@ ssm = function(
 #' @keywords internal
 .ssm = function(
   audio,
-  windowLength = 40,
-  overlap = 75,
-  step = NULL,
+  windowLength = 25,
+  step = 5,
+  overlap = NULL,
   win = 1,
   sparse = FALSE,
   maxFreq = NULL,

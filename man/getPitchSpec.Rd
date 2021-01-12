@@ -26,6 +26,8 @@ getPitchSpec(
 
 \item{bin}{the width of spectral bin in \code{frame}, Hz}
 
+\item{freqs}{frequency per bin of spectrogram}
+
 \item{specSmooth}{the width of window for detecting peaks in the spectrum, Hz}
 
 \item{HNR}{harmonics-to-noise ratio returned by \code{\link{getPitchAutocor}}}

@@ -29,6 +29,10 @@ analyzeFrame(
 \item{frame}{the abs spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
+\item{bin}{spectrogram bin width, Hz}
+
+\item{freqs}{frequency per bin of spectrogram}
+
 \item{autoCorrelation}{pre-calculated autocorrelation of the input frame
 (computationally more efficient than to do it here)}
 

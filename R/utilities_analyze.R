@@ -132,6 +132,7 @@ analyzeFrame = function(frame, bin, freqs,
                              c(pitchCep,
                                list(frame = frame,
                                     samplingRate = samplingRate,
+                                    bin = bin,
                                     nCands = nCands,
                                     pitchFloor = pitchFloor,
                                     pitchCeiling = pitchCeiling)))
@@ -369,6 +370,7 @@ updateAnalyze = function(
   spectrogram,
   freqs = NULL,
   bin = NULL,
+  samplingRate = NULL,
   harmHeight_pars,
   smooth,
   smoothing_ww,
@@ -407,18 +409,19 @@ updateAnalyze = function(
              pitch = result$pitch[f]
         )))$harmHeight
     }
-    # # Calculate subharmonics-to-harmonics ratio
+    # Calculate subharmonics-to-harmonics ratio
     # for (f in which(result$voiced)) {
     #   temp = do.call('subhToHarm', c(
     #     list(),
     #     list(frame = spectrogram[, f],
     #          bin = bin,
     #          freqs = freqs,
+    #          samplingRate = samplingRate,
     #          pitch = result$pitch[f]
     #     )))
     #   result[f, c('subRatio', 'subDep')] = temp[c('subRatio', 'subDep')]
     # }
-    # result[, c('subRatio', 'subDep')]
+    # # result[, c('subRatio', 'subDep')]
     if (smooth > 0) {
       result$harmHeight = medianSmoother(
         result[, 'harmHeight', drop = FALSE],

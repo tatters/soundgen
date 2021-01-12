@@ -390,8 +390,8 @@ analyze = function(
   cutFreq = NULL,
   nFormants = 3,
   formants = list(),
-  loudness = list(SPL_measured = 70, Pref = 2e-5),
-  roughness = list(),
+  loudness = list(SPL_measured = 70),
+  roughness = list(windowLength =  15, step = 3, amRes = 10),
   novelty = list(input = 'melspec', kernelLen = 100),
   pitchMethods = c('dom', 'autocor'),
   pitchManual = NULL,
@@ -468,7 +468,7 @@ analyze = function(
     pitchDom = c('domThres', 'domSmooth'),
     pitchAutocor = c('autocorThres', 'autocorSmooth',
                      'autocorUpsample', 'autocorBestPeak'),
-    pitchCep = c('cepThres', 'cepSmooth', 'cepZp'),
+    pitchCep = c('cepThres', 'cepSmooth', 'cepZp', 'cepPenalty'),
     pitchSpec = c('specSmooth', 'specHNRslope', 'specThres',
                   'specPeak', 'specSinglePeakCert', 'specMerge'),
     pitchHps = c('hpsNum', 'hpsThres', 'hpsNorm', 'hpsPenalty')
@@ -1285,6 +1285,7 @@ analyze = function(
     spectrogram = s,
     freqs = freqs,
     bin = bin,
+    samplingRate = audio$samplingRate,
     harmHeight_pars = harmHeight,
     smooth = smooth,
     smoothing_ww = smoothing_ww,
@@ -1339,7 +1340,16 @@ analyze = function(
     # few ms, and otherwise it's hard to add pitch contours b/c the y-axis is
     # messed up if spectrogram() calls layout() to add an oscillogram
     do.call(.spectrogram, c(list(
-      audio = audio[names(audio) != 'savePlots'],
+      audio = list(
+        sound = audio$sound,
+        samplingRate = audio$samplingRate,
+        scale = audio$scale / m,  # normalize
+        ls = audio$ls,
+        duration = audio$duration,
+        timeShift = audio$timeShift,
+        filename = audio$filename,
+        filename_base = audio$filename_base
+      ),
       dynamicRange = dynamicRange,
       windowLength = windowLength,
       zp = zp,

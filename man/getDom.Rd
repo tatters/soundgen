@@ -10,6 +10,10 @@ getDom(frame, bin, freqs, domSmooth, domThres, pitchFloor, pitchCeiling)
 \item{frame}{the abs spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
+\item{bin}{spectrogram bin width, Hz}
+
+\item{freqs}{frequency per bin of spectrogram}
+
 \item{domSmooth}{the width of smoothing interval (Hz) for finding
 \code{dom}}
 

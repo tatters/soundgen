@@ -6,9 +6,9 @@
 \usage{
 .ssm(
   audio,
-  windowLength = 40,
-  overlap = 75,
-  step = NULL,
+  windowLength = 25,
+  step = 5,
+  overlap = NULL,
   win = 1,
   sparse = FALSE,
   maxFreq = NULL,
@@ -39,12 +39,12 @@
 
 \item{windowLength}{length of FFT window, ms}
 
-\item{overlap}{overlap between successive FFT frames, \%}
-
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
 may be slightly different, eg 24.98866 instead of 25.0 ms)}
+
+\item{overlap}{overlap between successive FFT frames, \%}
 
 \item{sparse}{if TRUE, the entire SSM is not calculated, but only the central
 region needed to extract the novelty contour (speeds up the processing)}

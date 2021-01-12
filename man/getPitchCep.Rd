@@ -7,12 +7,14 @@
 getPitchCep(
   frame,
   samplingRate,
+  bin,
   nCands,
   cepThres,
   cepSmooth,
   cepZp,
   pitchFloor,
-  pitchCeiling
+  pitchCeiling,
+  cepPenalty = 1
 )
 }
 \arguments{
@@ -20,6 +22,8 @@ getPitchCep(
 \code{\link[stats]{fft}}}
 
 \item{samplingRate}{sampling rate (Hz)}
+
+\item{bin}{spectrogram bin width, Hz}
 
 \item{nCands}{maximum number of pitch candidates per method, normally 1...4
 (except for \code{dom}, which returns at most one candidate per frame)}

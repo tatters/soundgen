@@ -191,7 +191,7 @@ server = function(input, output, session) {
     # matrix and re-draw manually with soundgen:::filled.contour.mod
     if (!is.null(myPars$myAudio)) {
       if (myPars$print) print('Extracting spectrogram...')
-      myPars$spec = spectrogramSound(
+      myPars$spec = .spectrogram(
         myPars$myAudio_list,
         dynamicRange = input$dynamicRange,
         windowLength = input$windowLength,

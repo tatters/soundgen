@@ -10,8 +10,8 @@ ssm(
   from = NULL,
   to = NULL,
   windowLength = 25,
-  overlap = NULL,
   step = 5,
+  overlap = NULL,
   ssmWin = NULL,
   sparse = FALSE,
   maxFreq = NULL,
@@ -56,12 +56,12 @@ from...to (s)}
 
 \item{windowLength}{length of FFT window, ms}
 
-\item{overlap}{overlap between successive FFT frames, \%}
-
 \item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
 because digital audio is sampled at discrete time intervals of
 1/samplingRate, the actual step and thus the time stamps of STFT frames
 may be slightly different, eg 24.98866 instead of 25.0 ms)}
+
+\item{overlap}{overlap between successive FFT frames, \%}
 
 \item{ssmWin}{window for averaging SSM, ms (has a smoothing effect and speeds
 up the processing)}
