@@ -38,6 +38,7 @@ analyze(
   pitchSpec = list(),
   pitchHps = list(),
   harmHeight = list(type = "n"),
+  subh = list(method = "cep", nSubh = 5),
   shortestSyl = 20,
   shortestPause = 60,
   interpol = list(win = 75, tol = 0.3, cert = 0.3),
@@ -183,6 +184,10 @@ harmonic product spectrum or "hps" method; see details and
 \item{harmHeight}{a list of control parameters for estimating how high
 harmonics reach in the spectrum; see details and \code{?soundgen:::harmHeight}}
 
+\item{subh}{a list of control parameters for estimating the strength of
+subharmonics per frame - that is, spectral energy at integer ratios of f0:
+see \code{?soundgen:::subhToHarm}}
+
 \item{shortestSyl}{the smallest length of a voiced segment (ms) that
 constitutes a voiced syllable (shorter segments will be replaced by NA, as
 if unvoiced)}
@@ -292,8 +297,11 @@ Returns a list with \code{$detailed} frame-by-frame descriptives and
   amount of amplitude modulation, see modulationSpectrum}
   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
   spectral moment (Hz)} \item{specSlope}{the slope of linear regression fit
-  to the spectrum below cutFreq (dB/kHz)} \item{voiced}{is the current STFT
-  frame voiced? TRUE / FALSE}
+  to the spectrum below cutFreq (dB/kHz)} \item{subDep}{estimated depth of
+  subharmonics per frame: 0 = none, 1 = as strong as f0. NB: this depends
+  critically on accurate pitch tracking} \item{subRatio}{the ratio of f0 to
+  subharmonics frequency with strength subDep: 2 = period doubling, 3 = f0 /
+  3, etc.} \item{voiced}{is the current STFT frame voiced? TRUE / FALSE}
 }
 }
 \description{

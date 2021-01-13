@@ -34,6 +34,7 @@
   pitchSpec = list(),
   pitchHps = list(),
   harmHeight = list(),
+  subh = list(),
   shortestSyl = 20,
   shortestPause = 60,
   interpol = NULL,
@@ -169,6 +170,10 @@ harmonic product spectrum or "hps" method; see details and
 
 \item{harmHeight}{a list of control parameters for estimating how high
 harmonics reach in the spectrum; see details and \code{?soundgen:::harmHeight}}
+
+\item{subh}{a list of control parameters for estimating the strength of
+subharmonics per frame - that is, spectral energy at integer ratios of f0:
+see \code{?soundgen:::subhToHarm}}
 
 \item{shortestSyl}{the smallest length of a voiced segment (ms) that
 constitutes a voiced syllable (shorter segments will be replaced by NA, as

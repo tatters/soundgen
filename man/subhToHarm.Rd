@@ -9,15 +9,72 @@ subhToHarm(
   bin,
   freqs,
   pitch,
+  pitchCands = NULL,
   samplingRate,
+  method = c("cep", "pitchCands", "harm")[1],
+  nSubh = 5,
   tol = 0.05,
   nHarm = 5,
   harmThres = 3,
-  harmTol = 0.25,
-  method = c("cep", "harm")[1]
+  harmTol = 0.25
 )
+}
+\arguments{
+\item{frame}{the abs spectrum of a frame, as returned by
+\code{\link[stats]{fft}}}
+
+\item{bin}{spectrogram bin width, Hz}
+
+\item{freqs}{frequency per bin of spectrogram}
+
+\item{pitch}{pitch per frame, Hz}
+
+\item{pitchCands}{a list of pitch candidates and certainties sent from
+analyze()}
+
+\item{samplingRate}{sampling rate (Hz)}
+
+\item{method}{'cep' = cepstrum, 'pitchCands' = existing pitch candidates
+below f0, 'harm' = look for harmonic peaks. Only 'cep' is really working at
+the moment.}
+
+\item{nSubh}{the maximum ratio of f0 / g0 to consider}
+
+\item{tol}{target frequency (eg f0 / 2) has to be within \code{tol * target}
+(eg tol = .05 gives a tolerance of 5\%)}
+
+\item{nHarm}{for method 'harm' only}
+
+\item{harmThres}{minimum height of spectral peak, dB}
+
+\item{harmTol}{maximum tolerated deviation of peak frequency from multiples
+of f0, proportion of f0}
 }
 \description{
 Internal soundgen function
+}
+\details{
+Looks for pitch candidates (among the ones already found if method =
+'pitchCands', or using some other pitch-tracking-like techniques such as
+cepstrum) at integer ratios of f0. If such candidates are found, they are
+treated as subharmonics. Note that this depends critically on accurate pitch
+tracking.
+}
+\examples{
+s400 = soundgen(
+  sylLen = 300, pitch = c(280, 370, 330),
+  subDep = list(
+    time = c(0, .5, .51, 1),
+    value = c(0, 0, 10, 10)
+  ), subRatio = 3,
+  smoothing = list(interpol = 'approx'), formants = 'a',
+  rolloff = -12, addSilence = 50, temperature = .001,
+)
+s = analyze(s400, samplingRate = 16000,
+            windowLength =  50, step = 10,
+            pitchMethods = c('dom', 'autocor', 'hps'), priorMean = NA,
+            plot = TRUE, ylim = c(0, 3),
+            extraContour = list('subDep', type = 'b', col = 'brown'))
+s$detailed[, c('subRatio', 'subDep')]
 }
 \keyword{internal}

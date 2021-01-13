@@ -235,23 +235,78 @@ harmEnergy = function(pitch, s, freqs = NULL, coef = 1.25) {
 #' Subharmonics-to-harmonics ratio
 #'
 #' Internal soundgen function
+#'
+#' Looks for pitch candidates (among the ones already found if method =
+#' 'pitchCands', or using some other pitch-tracking-like techniques such as
+#' cepstrum) at integer ratios of f0. If such candidates are found, they are
+#' treated as subharmonics. Note that this depends critically on accurate pitch
+#' tracking.
+#' @inheritParams analyzeFrame
+#' @param pitch pitch per frame, Hz
+#' @param pitchCands a list of pitch candidates and certainties sent from
+#'   analyze()
+#' @param method 'cep' = cepstrum, 'pitchCands' = existing pitch candidates
+#'   below f0, 'harm' = look for harmonic peaks. Only 'cep' is really working at
+#'   the moment.
+#' @param nSubh the maximum ratio of f0 / g0 to consider
+#' @param tol target frequency (eg f0 / 2) has to be within \code{tol * target}
+#'   (eg tol = .05 gives a tolerance of 5\%)
+#' @param nHarm for method 'harm' only
+#' @inheritParams harmHeight
 #' @keywords internal
+#' @examples
+#' s400 = soundgen(
+#'   sylLen = 300, pitch = c(280, 370, 330),
+#'   subDep = list(
+#'     time = c(0, .5, .51, 1),
+#'     value = c(0, 0, 10, 10)
+#'   ), subRatio = 3,
+#'   smoothing = list(interpol = 'approx'), formants = 'a',
+#'   rolloff = -12, addSilence = 50, temperature = .001,
+#' )
+#' s = analyze(s400, samplingRate = 16000,
+#'             windowLength =  50, step = 10,
+#'             pitchMethods = c('dom', 'autocor', 'hps'), priorMean = NA,
+#'             plot = TRUE, ylim = c(0, 3),
+#'             extraContour = list('subDep', type = 'b', col = 'brown'))
+#' s$detailed[, c('subRatio', 'subDep')]
 subhToHarm = function(
   frame,
   bin,
   freqs,
   pitch,
+  pitchCands = NULL,
   samplingRate,
+  method = c('cep', 'pitchCands', 'harm')[1],
+  nSubh = 5,
   tol = .05,
   nHarm = 5,
   harmThres = 3,
-  harmTol = 0.25,
-  method = c('cep', 'harm')[1]
+  harmTol = 0.25
 ) {
   # plot(frame, type = 'l')
   best_subh = NA
   subDep = 0
-  if (method == 'cep') {
+  if (method == 'pitchCands' &
+      (is.null(pitchCands) || length(pitchCands$freq) < 2)) {
+    method = 'cep'
+  }
+  if (method == 'pitchCands') {
+    ratios = data.frame(r = 1:nSubh, energy = NA)
+    for (r in 1:nSubh) {
+      pr = pitch / r
+      idx = which(abs(pitchCands$freq - pr) / pr < tol)
+      if (length(idx) > 0) {
+        ratios$energy[r] = mean(pitchCands$cert[idx])
+      }
+    }
+    ratios$extraEnergy = ratios$energy - ratios$energy[1] / ratios$r
+    subR = na.omit(ratios[ratios$extraEnergy > 0, ])
+    if (nrow(subR) > 0) {
+      best_subh = subR$r[which.max(subR$extraEnergy)]
+      subDep = ratios$extraEnergy[best_subh] / ratios$energy[best_subh]
+    }
+  } else if (method == 'cep') {
     # cepstrum
     cep = abs(fft(as.numeric(log(frame))))
     l = length(cep) %/% 2
@@ -260,8 +315,8 @@ subhToHarm = function(
     freqs_cep = samplingRate / (1:l) / 2
     # plot(freqs_cep, cep, type = 'l', log = 'x')
     bin_at_pitch = which.min(abs(freqs_cep - pitch))
-    nToTry = min(nHarm, floor(l / bin_at_pitch))
-    ratios = data.frame(r = 1:nHarm, energy = NA)
+    nToTry = min(nSubh, floor(l / bin_at_pitch))
+    ratios = data.frame(r = 1:nToTry, energy = NA)
     for (r in 1:nToTry) {
       ratios$energy[r] = max(cep[(bin_at_pitch * r - 1) : (bin_at_pitch * r + 1)])
     }
@@ -325,7 +380,7 @@ subhToHarm = function(
       # points(freqs[idx_pitch], frame_dB[idx_pitch], col = 'red', pch = 3)
 
       # now repeat for different f0/g0 ratios
-      ratios = data.frame(r = 1:nHarm, energy = NA)
+      ratios = data.frame(r = 1:nSubh, energy = NA)
       ratios$energy[1] = sum(frame[idx_pitch])
       for (r in 2:nrow(ratios)) {
         freq_max = pitch * nHarm * r
@@ -353,7 +408,7 @@ subhToHarm = function(
       }
       # some harmonics repeat, eg for g0/2 and g0/4 - think about how to take this into account
       ratios$extraEnergy = ratios$energy - ratios$energy[1]
-      ratios$extraEnergy[4] = ratios$extraEnergy[4] - ratios$extraEnergy[2]
+      if (nSubh > 3) ratios$extraEnergy[4] = ratios$extraEnergy[4] - ratios$extraEnergy[2]
       # now we divide by subRatio b/c otherwise high subRatios are privileged (many
       # more potential harmonics)
       subR = na.omit(ratios[ratios$extraEnergy > 0, ])
