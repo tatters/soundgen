@@ -27,11 +27,8 @@ modulationSpectrumFolder = function(...) {
 #' modulation spectrum is returned as \code{$processed}. If the audio is long
 #' enough, multiple windows are analyzed, resulting in a vector of roughness
 #' values. For multiple inputs, such as a list of waveforms or path to a folder
-#' with audio files, the ensemble of modulation spectra is interpolated to the
-#' same spectral and temporal resolution and averaged, resulting in a single
-#' roughness value. This is different from the behavior of
-#' \code{\link{modulationSpectrumFolder}}, which produces a separate modulation
-#' spectrum per file, without averaging.
+#' with audio files, the ensemble of modulation spectra can be interpolated to
+#' the same spectral and temporal resolution and averaged (if \code{averageMS}).
 #'
 #' @seealso \code{\link{spectrogram}} \code{\link{analyze}}
 #'
@@ -133,11 +130,11 @@ modulationSpectrumFolder = function(...) {
 #' s = soundgen(pitch = 500, amFreq = 50, amDep = 100, samplingRate = 44100)
 #' # playme(s, samplingRate = 44100)
 #' ms = modulationSpectrum(s, samplingRate = 44100,
-#'   windowLength = 50, overlap = 0, amRes = NULL)  # poor temporal resolution
+#'   windowLength = 50, step = 50, amRes = NULL)  # poor temporal resolution
 #' ms = modulationSpectrum(s, samplingRate = 44100,
-#'   windowLength = 5, overlap = 80, amRes = NULL)  # poor frequency resolution
+#'   windowLength = 5, step = 1, amRes = NULL)  # poor frequency resolution
 #' ms = modulationSpectrum(s, samplingRate = 44100,
-#'   windowLength = 15, overlap = 80, amRes = NULL)  # a reasonable compromise
+#'   windowLength = 15, step = 3, amRes = NULL)  # a reasonable compromise
 #'
 #' # customize the plot
 #' ms = modulationSpectrum(s, samplingRate = 44100,
@@ -157,8 +154,8 @@ modulationSpectrumFolder = function(...) {
 #' # separately, and the output can contain an MS per file...
 #' ms1 = modulationSpectrum('~/Downloads/temp', kernelSize = 11,
 #'                          plot = FALSE, averageMS = FALSE)
-#' str(ms1$original)
 #' ms1$summary
+#' names(ms1$original)  # a separate MS per file
 #' # ...or a single MS can be calculated:
 #' ms2 = modulationSpectrum('~/Downloads/temp', kernelSize = 11,
 #'                          plot = FALSE, averageMS = TRUE)
@@ -212,8 +209,8 @@ modulationSpectrum = function(
   maxDur = 5,
   logSpec = FALSE,
   windowLength = 15,
-  step = 3,
-  overlap = NULL,
+  step = NULL,
+  overlap = 80,
   wn = 'hanning',
   zp = 0,
   power = 1,

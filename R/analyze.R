@@ -413,7 +413,7 @@ analyze = function(
   pitchCep = list(),
   pitchSpec = list(),
   pitchHps = list(),
-  harmHeight = list(type = 'n'),
+  harmHeight = list(),
   subh = list(method = 'cep', nSubh = 5),
   shortestSyl = 20,
   shortestPause = 60,
@@ -475,7 +475,7 @@ analyze = function(
     pitchDom = c('domThres', 'domSmooth'),
     pitchAutocor = c('autocorThres', 'autocorSmooth',
                      'autocorUpsample', 'autocorBestPeak'),
-    pitchCep = c('cepThres', 'cepSmooth', 'cepZp', 'cepPenalty'),
+    pitchCep = c('cepThres', 'cepSmooth', 'cepZp', 'cepPenalty', 'logSpec'),
     pitchSpec = c('specSmooth', 'specHNRslope', 'specThres',
                   'specPeak', 'specSinglePeakCert', 'specMerge'),
     pitchHps = c('hpsNum', 'hpsThres', 'hpsNorm', 'hpsPenalty')
@@ -503,7 +503,8 @@ analyze = function(
     }
     assign(noquote(names(parsToValidate)[i]), parGroup_user)
   }
-  rm('parsToValidate', 'parGroup_user', 'parGroup_def', 'p', 'i')
+  rm('parsToValidate', 'parGroup_user', 'parGroup_def', 'p', 'i',
+     'harmHeight_plotPars')
 
   # Check defaults that depend on other pars or require customized warnings
   if (is.character(pitchMethods) && pitchMethods[1] != '') {
@@ -589,7 +590,7 @@ analyze = function(
   list_pars = c('pitchManual_list', 'pitchPlot',
                 'pitchDom_plotPars', 'pitchAutocor_plotPars',
                 'pitchCep_plotPars', 'pitchSpec_plotPars',
-                'pitchHps_plotPars', 'harmHeight_plotPars',
+                'pitchHps_plotPars',
                 'loudness', 'roughness', 'novelty', 'interpol', 'subh')
   for (lp in list_pars) myPars[[lp]] = get(lp)
 
@@ -710,7 +711,6 @@ analyze = function(
   pitchCep_plotPars = list(),
   pitchSpec_plotPars =list(),
   pitchHps_plotPars = list(),
-  harmHeight_plotPars = list(),
   extraContour = NULL,
   ylim = NULL,
   xlab = NULL,

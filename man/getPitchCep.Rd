@@ -14,7 +14,8 @@ getPitchCep(
   cepZp,
   pitchFloor,
   pitchCeiling,
-  cepPenalty = 1
+  cepPenalty = 1,
+  logSpec = FALSE
 )
 }
 \arguments{

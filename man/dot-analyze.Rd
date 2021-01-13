@@ -55,7 +55,6 @@
   pitchCep_plotPars = list(),
   pitchSpec_plotPars = list(),
   pitchHps_plotPars = list(),
-  harmHeight_plotPars = list(),
   extraContour = NULL,
   ylim = NULL,
   xlab = NULL,

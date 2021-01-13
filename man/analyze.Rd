@@ -37,7 +37,7 @@ analyze(
   pitchCep = list(),
   pitchSpec = list(),
   pitchHps = list(),
-  harmHeight = list(type = "n"),
+  harmHeight = list(),
   subh = list(method = "cep", nSubh = 5),
   shortestSyl = 20,
   shortestPause = 60,

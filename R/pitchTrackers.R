@@ -218,7 +218,8 @@ getPitchCep = function(frame,
                        cepZp,
                        pitchFloor,
                        pitchCeiling,
-                       cepPenalty = 1) {
+                       cepPenalty = 1,
+                       logSpec = FALSE) {
   pitchCep_array = NULL
 
   if (cepZp < length(frame)) {
@@ -229,9 +230,10 @@ getPitchCep = function(frame,
     cepSmooth = cepSmooth * round(cepZp / length(frame))
   }
   # plot(frameZP, type = 'l')
+  if (logSpec) frameZP = log(frameZP + 1e-6)  # 1e-6 is -120 dB
 
   # fft of fft, whatever you call it - cepstrum or smth else
-  cepstrum = abs(fft(as.numeric(frameZP))) / length(frameZP)
+  cepstrum = abs(fft(as.numeric(frameZP)))
   # normalize to make cert more comparable to other methods
   cepstrum = cepstrum / max(cepstrum)
   # plot(cepstrum, type = 'l')
