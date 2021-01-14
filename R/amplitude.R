@@ -612,13 +612,10 @@ compressor = flatEnv
 #'
 #' @seealso \code{\link{flatEnv}} \code{\link[seewave]{setenv}}
 #'
-#' @param donor the sound that "donates" the amplitude envelope (numeric vector
-#'   - NOT an audio file)
+#' @param donor the sound that "donates" the amplitude envelope
 #' @param recipient the sound that needs to have its amplitude envelope adjusted
-#'   (numeric vector - NOT an audio file)
 #' @param samplingRateD,samplingRateR sampling rate of the donor and recipient,
-#'   respectively (if only samplingRateD is provided, samplingRateR is assumed
-#'   to be the same)
+#'   respectively (only needed for vectors, not files)
 #' @inheritParams flatEnv
 #' @return Returns the recipient sound with the donor's amplitude envelope - a
 #'   numeric vector with the same sampling rate as the recipient
@@ -633,20 +630,31 @@ compressor = flatEnv
 #'                recipient, samplingRateR = 16000,
 #'                windowLength = 10, method = 'peak', plot = TRUE)
 transplantEnv = function(donor,
-                         samplingRateD,
+                         samplingRateD = NULL,
                          recipient,
-                         samplingRateR = samplingRateD,
+                         samplingRateR = NULL,
                          windowLength = 50,
-                         method = c('hil', 'rms', 'peak')[1],
+                         method = c('hil', 'rms', 'peak')[3],
                          killDC = FALSE,
                          dynamicRange = 80,
                          plot = FALSE) {
-  windowLength_points_donor = windowLength / 1000 * samplingRateD
-  windowLength_points_recip = windowLength / 1000 * samplingRateR
+  # Read inputs
+  donor = readAudio(
+    donor,
+    input = checkInputType(donor),
+    samplingRate = samplingRateD
+  )
+  recipient = readAudio(
+    recipient,
+    input = checkInputType(recipient),
+    samplingRate = samplingRateR
+  )
+  windowLength_points_donor = windowLength / 1000 * donor$samplingRate
+  windowLength_points_recip = windowLength / 1000 * recipient$samplingRate
   throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
 
   # get the amplitude envelope of the recipient
-  env_recipient = getEnv(sound = recipient,
+  env_recipient = getEnv(sound = recipient$sound,
                          windowLength_points = windowLength_points_recip,
                          method = method)
   len_recipient = length(env_recipient)
@@ -655,44 +663,52 @@ transplantEnv = function(donor,
   env_recip_cut[env_recip_cut < throwaway_lin] = 1
 
   # get the amplitude envelope of the donor
-  env_donor = getEnv(sound = donor,
+  env_donor = getEnv(sound = donor$sound,
                      windowLength_points = windowLength_points_donor,
                      method = method)
   env_donor1 = env_donor / max(env_donor)  # normalize
   env_donor1 = approx(env_donor1, n = len_recipient)$y
 
   # flatten the envelope of the recipient and apply the donor's envelope
-  out = recipient / env_recip_cut * env_donor1
+  out = recipient$sound / env_recip_cut * env_donor1
   if (plot) {
     len_donor = length(env_donor)
-    time_donor = seq(0, len_donor / samplingRateD, length.out = len_donor)
-    max_donor = max(abs(donor))
-
-    time_recipient = seq(0, len_recipient / samplingRateR,
-                         length.out = len_recipient)
-    max_recipient = max(abs(recipient))
-    max_out = max(abs(out))
+    max_donor = max(abs(donor$sound))
+    max_recipient = max(c(abs(recipient$sound), abs(out)))
 
     op = par('mfrow')
     par(mfrow = c(1, 3))
 
-    plot(time_donor, donor, type = 'l', main = 'Donor',
-         ylim = c(-max_donor, max_donor),
-         xlab = '', ylab = 'Amplitude')
-    points(time_donor, env_donor, type = 'l',
-           lty = 1, col = 'blue')
+    .osc(donor, main = 'Donor', ylim = c(-max_donor, max_donor),
+         xlab = '', ylab = 'Amplitude', midline = FALSE)
+    par(new = TRUE)
+    .osc(list(sound = env_donor,
+              samplingRate = donor$samplingRate,
+              ls = len_donor),
+         lty = 1, col = 'blue', xlab = '', ylab = '', midline = FALSE,
+         xaxt = 'n', yaxt = 'n', ylim = c(-max_donor, max_donor))
 
-    plot(time_recipient, recipient, type = 'l',
-         main = 'Recipient', ylim = c(-max_recipient, max_recipient),
-         xlab = 'Time, s', ylab = '')
-    points(time_recipient, env_recipient, type = 'l',
-           lty = 1, col = 'blue')
+    .osc(recipient,  main = 'Recipient', ylim = c(-max_recipient, max_recipient),
+         xlab = 'Time, s', ylab = '', midline = FALSE)
+    par(new = TRUE)
+    .osc(list(sound = env_recipient,
+              samplingRate = recipient$samplingRate,
+              ls = len_recipient),
+         lty = 1, col = 'blue', xlab = '', ylab = '', midline = FALSE,
+         xaxt = 'n', yaxt = 'n', ylim = c(-max_recipient, max_recipient))
 
-    plot(time_recipient, out, type = 'l',
-         main = 'Output', ylim = c(-max_out, max_out),
-         xlab = '', ylab = '')
-    points(time_recipient, getEnv(out, windowLength_points_recip, method),
-           type = 'l', lty = 1, col = 'blue')
+    .osc(list(sound = out,
+              samplingRate = recipient$samplingRate,
+              ls = len_recipient),
+         main = 'Output', ylim = c(-max_recipient, max_recipient),
+         xlab = '', ylab = '', midline = FALSE)
+    par(new = TRUE)
+    .osc(list(
+      sound = getEnv(out, windowLength_points_recip, method),
+      samplingRate = recipient$samplingRate,
+      ls = len_recipient),
+      lty = 1, col = 'blue', xlab = '', ylab = '', midline = FALSE,
+         xaxt = 'n', yaxt = 'n', ylim = c(-max_recipient, max_recipient))
 
     par(mfrow = op)
   }

@@ -6,26 +6,23 @@
 \usage{
 transplantEnv(
   donor,
-  samplingRateD,
+  samplingRateD = NULL,
   recipient,
-  samplingRateR = samplingRateD,
+  samplingRateR = NULL,
   windowLength = 50,
-  method = c("hil", "rms", "peak")[1],
+  method = c("hil", "rms", "peak")[3],
   killDC = FALSE,
   dynamicRange = 80,
   plot = FALSE
 )
 }
 \arguments{
-\item{donor}{the sound that "donates" the amplitude envelope (numeric vector
-- NOT an audio file)}
+\item{donor}{the sound that "donates" the amplitude envelope}
 
 \item{samplingRateD, samplingRateR}{sampling rate of the donor and recipient,
-respectively (if only samplingRateD is provided, samplingRateR is assumed
-to be the same)}
+respectively (only needed for vectors, not files)}
 
-\item{recipient}{the sound that needs to have its amplitude envelope adjusted
-(numeric vector - NOT an audio file)}
+\item{recipient}{the sound that needs to have its amplitude envelope adjusted}
 
 \item{windowLength}{the length of smoothing window, ms}
 

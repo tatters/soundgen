@@ -625,18 +625,18 @@ checkInputType = function(x) {
     }
     n = length(filenames)
     type = rep('file', n)
-    filenames_base = basename(filenames)
+    filenames_base = filenames_noExt = basename(filenames)
     # strip extension
     for (f in 1:n)
-      filenames_base[f] = substr(filenames_base[f], 1, nchar(filenames_base[f]) - 4)
+      filenames_noExt[f] = substr(filenames_base[f], 1, nchar(filenames_base[f]) - 4)
     filesizes = file.info(filenames)$size
   } else {
     if (!is.list(x)) x = list(x)
     n = length(x)
     if (n == 1) {
-      filenames_base = 'sound'
+      filenames_base = filenames_noExt = 'sound'
     } else {
-      filenames_base = paste0('sound', 1:n)
+      filenames_base = filenames_noExt = paste0('sound', 1:n)
     }
     filenames = NULL
     filesizes = NULL
@@ -658,6 +658,7 @@ checkInputType = function(x) {
     n = n,
     filenames = filenames,
     filenames_base = filenames_base,
+    filenames_noExt = filenames_noExt,
     filesizes = filesizes
   ))
 }
