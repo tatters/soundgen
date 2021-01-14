@@ -215,7 +215,7 @@ spectrogram = function(
   ylab = NULL,
   xaxp = NULL,
   mar = c(5.1, 4.1, 4.1, 2),
-  main = '',
+  main = NULL,
   grid = NULL,
   width = 900,
   height = 500,
@@ -295,7 +295,7 @@ spectrogram = function(
   ylab = NULL,
   xaxp = NULL,
   mar = c(5.1, 4.1, 4.1, 2),
-  main = '',
+  main = NULL,
   grid = NULL,
   width = 900,
   height = 500,
@@ -453,6 +453,13 @@ spectrogram = function(
       if (length(maxPoints) == 1) maxPoints = c(maxPoints, maxPoints)
     }
     if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
+    if (is.null(main)) {
+      if (audio$filename_base == 'sound') {
+        main = ''
+      } else {
+        main = audio$filename_base
+      }
+    }
 
     lx = length(X)
     ly = length(Y)
@@ -488,7 +495,7 @@ spectrogram = function(
         type = "l",
         ylim = ylim_osc,
         axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
-        xlab = xlab, ylab = '', main = '', ...)
+        xlab = xlab, ylab = '', main = main, ...)
       box()
       time_location = axTicks(1, axp = xaxp)
       time_labels = convert_sec_to_hms(time_location, 3)

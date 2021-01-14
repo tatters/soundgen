@@ -230,7 +230,8 @@ getPitchCep = function(frame,
     cepSmooth = cepSmooth * round(cepZp / length(frame))
   }
   # plot(frameZP, type = 'l')
-  if (logSpec) frameZP = log(frameZP + 1e-6)  # 1e-6 is -120 dB
+  if (!is.null(logSpec) && !is.na(logSpec) && logSpec)
+    frameZP = log(frameZP + 1e-6) # 1e-6 is -120 dB
 
   # fft of fft, whatever you call it - cepstrum or smth else
   cepstrum = abs(fft(as.numeric(frameZP)))

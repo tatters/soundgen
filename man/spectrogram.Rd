@@ -41,7 +41,7 @@ spectrogram(
   ylab = NULL,
   xaxp = NULL,
   mar = c(5.1, 4.1, 4.1, 2),
-  main = "",
+  main = NULL,
   grid = NULL,
   width = 900,
   height = 500,

@@ -585,8 +585,8 @@ formatPitchManual = function(pitchManual) {
   if (failed) {
     warning(paste(
       "pitchManual not recognized; should be a numeric vector, named list,",
-      "dataframe containing the output of analyze() with columns 'file' and",
-      "'pitch', or a named list with pitch contours per file"))
+      "csv file or dataframe containing the output of analyze() with columns",
+      "'file' and 'pitch', or a named list with pitch contours per file"))
   }
 
   return(pitchManual_list)
