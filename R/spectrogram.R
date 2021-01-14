@@ -495,7 +495,7 @@ spectrogram = function(
         type = "l",
         ylim = ylim_osc,
         axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
-        xlab = xlab, ylab = '', main = main, ...)
+        xlab = xlab, ylab = '', main = '', ...)
       box()
       time_location = axTicks(1, axp = xaxp)
       time_labels = convert_sec_to_hms(time_location, 3)
