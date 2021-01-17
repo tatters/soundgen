@@ -1180,6 +1180,7 @@ server = function(input, output, session) {
       myPars$nMeasuredFmts = length(grep('_freq', colnames(myPars$temp_anal)))
       myPars$allF_colnames = paste0('f', 1:myPars$nMeasuredFmts, '_freq')
       myPars$temp_anal = myPars$temp_anal[, c('time', myPars$allF_colnames)]
+      colnames(myPars$temp_anal) = c('time', paste0('F', 1:myPars$nMeasuredFmts))
       for (c in colnames(myPars$temp_anal)) {
         if (any(!is.na(myPars$temp_anal[, c]))) {
           # in case of all NAs
