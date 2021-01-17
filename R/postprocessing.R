@@ -35,14 +35,20 @@ playme = function(x,
                   player = NULL,
                   from = NULL,
                   to = NULL) {
-  # try to guess what player to use
-  os = Sys.info()[['sysname']]
-  if (os == 'Linux' | os == 'linux') {
-    player = 'play'
-  } else if (os == 'Darwin' | os == 'darwin') {
-    player = 'afplay'
-  } else {
-    # a good default on windows?
+  if (is.null(player)) {
+    if (!is.null(tuneR::getWavPlayer())) {
+      player = tuneR::getWavPlayer()
+    } else {
+      # try to guess what player to use
+      os = Sys.info()[['sysname']]
+      if (os == 'Linux' | os == 'linux') {
+        player = 'play'
+      } else if (os == 'Darwin' | os == 'darwin') {
+        player = 'afplay'
+      } else {
+        # a good default on windows?
+      }
+    }
   }
 
   # check input type
@@ -514,8 +520,7 @@ flatSpectrum = function(x,
 #' and when the sound rebounds back (as from a wall) and add these time-shifted
 #' copies to the original, optionally with some spectral filtering.
 #' @inheritParams spectrogram
-#' @param filter (optional) a spectral filter to apply to the created reverb and
-#'   echo (see \code{addFormants} for acceptable formats)
+#' @inheritParams addAM
 #' @param echoDelay the delay at which the echo appears, ms
 #' @param echoLevel the rate at which the echo weakens at each repetition, dB
 #' @param reverbDelay the time of maximum reverb density, ms
@@ -523,12 +528,13 @@ flatSpectrum = function(x,
 #'   \code{reverbDelay}, ms
 #' @param reverbLevel the maximum amplitude of reverb, dB below input
 #' @param reverbDensity the number of echos or "voices" added
-#' @param reverbType not yet implemented
+#' @param reverbType so far only "gaussian" has been implemented
+#' @param filter (optional) a spectral filter to apply to the created reverb and
+#'   echo (see \code{addFormants} for acceptable formats)
 #' @param dynamicRange the precision with which the reverb and echo are
 #'   calculated, dB
 #' @param output "audio" = returns just the processed audio, "detailed" =
 #'   returns a list with reverb window, the added reverb/echo, etc.
-#' @param len (optional) the length of input vector (used internally for speed)
 #' @export
 #' @examples
 #' s = soundgen()
@@ -569,6 +575,9 @@ flatSpectrum = function(x,
 #' s5 = reverb('~/Downloads/temp260/ut_fear_57-m-tone.wav',
 #'             echoDelay = 850, echoLevel = -40)
 #' # playme(s5, 44100)
+#'
+#' # add reverb to all files in a folder, save the result
+#' reverb('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/rvb')
 #' }
 reverb = function(x,
                   samplingRate = NULL,
@@ -582,49 +591,90 @@ reverb = function(x,
                   filter = list(),
                   dynamicRange = 80,
                   output = c('audio', 'detailed')[1],
-                  len = NULL) {
-  # import audio
-  if (class(x)[1] == 'character') {
-    extension = substr(x, nchar(x) - 2, nchar(x))
-    if (extension == 'wav' | extension == 'WAV') {
-      sound_wav = tuneR::readWave(x)
-    } else if (extension == 'mp3' | extension == 'MP3') {
-      sound_wav = tuneR::readMP3(x)
-    } else {
-      stop('Input not recognized: must be a numeric vector or wav/mp3 file')
-    }
-    samplingRate = sound_wav@samp.rate
-    sound = as.numeric(sound_wav@left)
-  } else if (class(x)[1] == 'numeric' & length(x) > 1) {
-    if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
-    } else {
-      sound = x
-    }
+                  play = FALSE,
+                  reportEvery = NULL,
+                  saveAudio = NULL) {
+  # match args
+  myPars = c(as.list(environment()))
+  # exclude some args
+  myPars = myPars[!names(myPars) %in% c(
+    'x', 'samplingRate', 'reportEvery', 'saveAudio')]
+  pa = processAudio(x,
+                    samplingRate = samplingRate,
+                    saveAudio = saveAudio,
+                    funToCall = '.reverb',
+                    myPars = myPars,
+                    reportEvery = reportEvery
+  )
+  # prepare output
+  if (pa$input$n == 1) {
+    result = pa$result[[1]]
+  } else {
+    result = pa$result
   }
-  if (is.null(len)) len = length(sound)
+  if (output == 'audio') result = result$audio
+  invisible(result)
+}
 
+
+#' Add reverb to a sound
+#'
+#' Internal soundgen function, see \code{\link{reverb}}.
+#'
+#' @inheritParams reverb
+#' @param audio a list returned by \code{readAudio}
+#' @keywords internal
+.reverb = function(audio,
+                   echoDelay = 200,
+                   echoLevel = -20,
+                   reverbDelay = 70,
+                   reverbSpread = 130,
+                   reverbLevel = -25,
+                   reverbDensity = 50,
+                   reverbType = 'gaussian',
+                   filter = list(),
+                   dynamicRange = 80,
+                   output = c('audio', 'detailed')[1],
+                   play = FALSE) {
+  win = rvb = echo = effect = numeric(0)
   ## reverb
+  addRvb = FALSE
   if (is.numeric(reverbDelay) & is.numeric(reverbLevel)) {
+    addRvb = TRUE
     if (reverbType == 'gaussian') {
       # Gaussian over 3 SD
       rvb_len_ms = reverbDelay + 3 * reverbSpread
-      nFr_rvb = round(rvb_len_ms * samplingRate / 1000)
-      win = dnorm(1:nFr_rvb,
-                  mean = reverbDelay * samplingRate / 1000,
-                  sd = reverbSpread * samplingRate / 1000)
-      win = win / max(win) * dynamicRange - dynamicRange + reverbLevel
-      idx_keep = sample(1:nFr_rvb, size = min(nFr_rvb, reverbDensity))
-      win = 10 ^ (win / 20)
-      win[-idx_keep] = 0
+      nFr_rvb = round(rvb_len_ms * audio$samplingRate / 1000)
+      win_mean = reverbDelay * audio$samplingRate / 1000
+      win_sd = reverbSpread * audio$samplingRate / 1000
+      win = dnorm(1:nFr_rvb, mean = win_mean, sd = win_sd)
+      max_win = dnorm(win_mean, win_mean, win_sd)  # density at mean
+      # win = win / max(win) * dynamicRange - dynamicRange + reverbLevel
+      win = win / max_win * 120 - 120 + reverbLevel
+      # 120 dB is used to set up the slope of decay, otherwise it would depend
+      # on dynamicRange
+      # "discretize" the win - only keep a few delay points
+      idx_keep = sort(sample(1:nFr_rvb, size = min(nFr_rvb, reverbDensity)))
+      # only keep as much of win as exceeds dynamicRange (don't bother to add
+      # very quiet reverb)
+      idx_keep = idx_keep[win[idx_keep] > (-dynamicRange)]
+      win = win[1:tail(idx_keep, 1)]
+      if (length(idx_keep) == 0) {
+        # nothing to do
+        addRvb = FALSE
+      } else {
+        nFr_rvb = tail(idx_keep, 1)
+        win[idx_keep] = 10 ^ (win[idx_keep] / 20)
+        win[-idx_keep] = 0
+      }
       # plot(win, type = 'l')
     } else {
       stop("Only reverbType = 'gaussian' has been implemented so far")
       # exponential decay: halves (-6 dB) every reverbDelay
       n_halves = min(4, round((dynamicRange + reverbLevel) / 6))
       rvb_len_ms = n_halves * reverbDelay
-      nFr_rvb = ceiling(rvb_len_ms * samplingRate / 1000)
-      len_halflife = ceiling(reverbDelay * samplingRate / 1000)
+      nFr_rvb = ceiling(rvb_len_ms * audio$samplingRate / 1000)
+      len_halflife = ceiling(reverbDelay * audio$samplingRate / 1000)
       reverbLevel_lin = 10 ^ (reverbLevel / 20)
       win = 2 ^ (-(1:nFr_rvb) / len_halflife) * reverbLevel_lin
       # plot(win, type = 'l')
@@ -642,12 +692,13 @@ reverb = function(x,
         # plot(win, type = 'l')
       }
     }
-
-    # create reverb by adding up time-shifted signal weighted by decay window
-    rvb = rep(0, len + nFr_rvb - 1)
+  }
+  # create reverb by adding up time-shifted signal weighted by decay window
+  if (addRvb) {
+    rvb = rep(0, audio$ls + nFr_rvb - 1)
     for (i in idx_keep) {
-      idx_i = i:(i + len - 1)
-      rvb[idx_i] = rvb[idx_i] + sound * win[i]
+      idx_i = i:(i + audio$ls - 1)
+      rvb[idx_i] = rvb[idx_i] + audio$sound * win[i]
     }
     # playme(rvb)
     # spectrogram(rvb, 16000, ylim = c(0, 4), osc = TRUE)
@@ -663,12 +714,12 @@ reverb = function(x,
     echo = NULL
     for (e in 1:le) {
       nFr_echo = dynamicRange / (-echoLevel[e])
-      step_echo = ceiling(echoDelay[e] * samplingRate / 1000)
-      echo_e = rep(0, len + nFr_echo * step_echo - 1)
+      step_echo = ceiling(echoDelay[e] * audio$samplingRate / 1000)
+      echo_e = rep(0, audio$ls + nFr_echo * step_echo - 1)
       for (i in 1:nFr_echo) {
         idx_start = i * step_echo
-        idx_i = idx_start:(idx_start + len - 1)
-        echo_e[idx_i] = echo_e[idx_i] + sound * 10 ^ (echoLevel[e] * i / 20)
+        idx_i = idx_start:(idx_start + audio$ls - 1)
+        echo_e[idx_i] = echo_e[idx_i] + audio$sound * 10 ^ (echoLevel[e] * i / 20)
       }
       if (is.null(echo)) {
         echo = echo_e
@@ -684,29 +735,35 @@ reverb = function(x,
   effect = addVectors(rvb, echo, normalize = FALSE)
   if (length(filter) > 1) {
     scale = max(effect)
-    rvb = do.call(addFormants, c(list(
-      x = effect, samplingRate = samplingRate,
+    rvb = do.call(.addFormants, c(list(
+      audio = list(
+        sound = effect,
+        samplingRate = audio$samplingRate
+      ),
       normalize = TRUE),
       filter)
     ) * scale
-    # playme(effect)
-    # spectrogram(effect, 16000, ylim = c(0, 4), osc = TRUE)
+    # playme(effect, audio$samplingRate)
+    # spectrogram(effect, audio$samplingRate, ylim = c(0, 4), osc = TRUE)
   }
 
-  out = addVectors(sound, effect)
-  # playme(out)
-  # spectrogram(out, 16000, ylim = c(0, 4), osc = TRUE)
+  out = addVectors(audio$sound, effect)
+  # playme(out, audio$samplingRate)
+  # spectrogram(out, audio$samplingRate, ylim = c(0, 4), osc = TRUE)
 
-  if (output == 'audio') {
-    result = out
-  } else if (output == 'detailed') {
-    result = list(
-      rvb_win = win,
-      rvb = rvb,
-      echo = echo,
-      effect = effect,
-      audio = out
-    )
+  if (play) playme(out, audio$samplingRate)
+  if (is.character(audio$saveAudio)) {
+    seewave::savewav(
+      out, f = audio$samplingRate,
+      filename = paste0(audio$saveAudio, audio$filename_noExt, '.wav'))
   }
-  invisible(result)
+
+  invisible(list(
+    rvb_win = win,
+    rvb = rvb,
+    echo = echo,
+    effect = effect,
+    audio = out
+  ))
 }
+

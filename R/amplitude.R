@@ -802,7 +802,7 @@ addAM = function(x,
   myPars = c(as.list(environment()))
   # exclude some args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'from', 'to', 'reportEvery', 'saveAudio')]
+    'x', 'samplingRate', 'reportEvery', 'saveAudio')]
   pa = processAudio(x,
                     samplingRate = samplingRate,
                     saveAudio = saveAudio,

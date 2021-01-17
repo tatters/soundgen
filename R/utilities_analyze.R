@@ -759,7 +759,8 @@ readAudio = function(x,
     duration = duration,
     timeShift = timeShift,
     filename = input$filenames[i],
-    filename_base = input$filenames_base[i]
+    filename_base = input$filenames_base[i],
+    filename_noExt = input$filenames_noExt[i]
   ))
 }
 

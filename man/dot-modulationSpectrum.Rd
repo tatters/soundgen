@@ -6,10 +6,10 @@
 \usage{
 .modulationSpectrum(
   audio,
-  amRes = 5,
+  amRes = 10,
   maxDur = 5,
   logSpec = FALSE,
-  windowLength = 25,
+  windowLength = 15,
   step = NULL,
   overlap = 80,
   wn = "hanning",

@@ -17,7 +17,9 @@ reverb(
   filter = list(),
   dynamicRange = 80,
   output = c("audio", "detailed")[1],
-  len = NULL
+  play = FALSE,
+  reportEvery = NULL,
+  saveAudio = NULL
 )
 }
 \arguments{
@@ -41,7 +43,7 @@ numeric vector)}
 
 \item{reverbDensity}{the number of echos or "voices" added}
 
-\item{reverbType}{not yet implemented}
+\item{reverbType}{so far only "gaussian" has been implemented}
 
 \item{filter}{(optional) a spectral filter to apply to the created reverb and
 echo (see \code{addFormants} for acceptable formats)}
@@ -52,7 +54,13 @@ calculated, dB}
 \item{output}{"audio" = returns just the processed audio, "detailed" =
 returns a list with reverb window, the added reverb/echo, etc.}
 
-\item{len}{(optional) the length of input vector (used internally for speed)}
+\item{play}{if TRUE, plays the processed audio}
+
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations}
+
+\item{saveAudio}{path to folder for saving the processed audio; NULL = don't
+save}
 }
 \description{
 Adds reverberation and/or echo to a sound. Algorithm for reverb: adds
@@ -101,5 +109,8 @@ s4 = reverb(s, samplingRate = 16000,
 s5 = reverb('~/Downloads/temp260/ut_fear_57-m-tone.wav',
             echoDelay = 850, echoLevel = -40)
 # playme(s5, 44100)
+
+# add reverb to all files in a folder, save the result
+reverb('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/rvb')
 }
 }

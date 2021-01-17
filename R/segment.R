@@ -188,8 +188,6 @@ segment = function(
   burstPlot = list(pch = 8, cex = 3, col = 'red'),
   ...
 ) {
-  time_start = proc.time()  # timing
-
   ## Check the arguments
   if (windowLength < 10) {
     warning('windowLength < 10 ms is slow and usually not very useful')
@@ -438,11 +436,12 @@ segment = function(
       # adaptive thresholds may help to control for reverb
       if (length(reverbPars) > 0 & is.list(reverbPars)) {
         # dynamic threshold
-        rvb_list = do.call('reverb', c(
-          list(x = ampl,
-               samplingRate = 1000 / step,
-               len = nc,
-               output = 'detailed'),
+        rvb_list = do.call('.reverb', c(
+          list(audio = list(
+            sound = ampl,
+            samplingRate = 1000 / step,
+            ls = nc),
+            output = 'detailed'),
           reverbPars
         ))
         rvb = rvb_list$rvb[1:nc]
@@ -583,11 +582,12 @@ segment = function(
       # adaptive thresholds may help to control for reverb
       if (length(reverbPars) > 0 & is.list(reverbPars)) {
         # dynamic thresholdf
-        rvb_list = do.call('reverb', c(
-          list(x = cs,
-               samplingRate = 1000 / step,
-               len = nc,
-               output = 'detailed'),
+        rvb_list = do.call('.reverb', c(
+          list(audio = list(
+            sound = cs,
+            samplingRate = 1000 / step,
+            ls = nc),
+            output = 'detailed'),
           reverbPars
         ))
         rvb = rvb_list$rvb[1:nc]
