@@ -31,7 +31,7 @@ server = function(input, output, session) {
     initDur = 2000,            # initial duration to analyze (ms)
     out_fTracks = list(),      # a list for storing formant tracks per file
     out_spects = list(),       # a list for storing spectrograms
-    selectedF = 'f1',          # preselect F1 for correction
+    selectedF = 'F1',          # preselect F1 for correction
     slider_ms = 50,            # how often to update play slider
     scrollFactor = .75,        # how far to scroll on arrow press/click
     wheelScrollFactor = .1,    # how far to scroll on mouse wheel (prop of xlim)
@@ -312,7 +312,7 @@ server = function(input, output, session) {
           id = paste0('fDiv_', f),
           class = ifelse(f == 1, 'fBox selected', 'fBox'),
           textInput(
-            inputId = paste0('f', f, '_text'),
+            inputId = paste0('F', f, '_text'),
             label = paste0('F', f),
             value = '')
         )
@@ -343,7 +343,7 @@ server = function(input, output, session) {
   # edit myPars$ann when formant freq is modified manually as text
   observeEvent(input$nFormants, {
     lapply(1:input$nFormants, function(f) {
-      fn = paste0('f', f, '_text')
+      fn = paste0('F', f, '_text')
       observeEvent(input[[fn]], {
         hr()  # otherwise row highlight disappears, no idea why!
         if (isolate(myPars$listenToFbtn)) {
@@ -498,7 +498,7 @@ server = function(input, output, session) {
             )
             if (diff(myPars$regionToAnalyze) < 500) {
               myPars$regionToAnalyze[1] = max(
-                myPars$regionToAnalyze[1] - 500, 0
+                myPars$regionToAnalyze[2] - 500, 0
               )
             }
           }
@@ -521,9 +521,8 @@ server = function(input, output, session) {
 
   observeEvent(input$nFormants, {
     myPars$ff = paste0('F', 1:input$nFormants)
-    myPars$f_col_names = paste0(myPars$ff, '_freq')
     if (!is.null(myPars$formantTracks)) {
-      missingCols = myPars$f_col_names[which(!myPars$f_col_names %in% colnames(myPars$formantTracks))]
+      missingCols = myPars$ff[which(!myPars$ff %in% colnames(myPars$formantTracks))]
       if (length(missingCols > 0)) myPars$formantTracks[, missingCols] = NA
     }
     if (!is.null(myPars$ann)) {
@@ -1096,8 +1095,8 @@ server = function(input, output, session) {
 
     # paste in formant frequencies
     avFmPerSel()
-    myPars$ann[myPars$currentAnn, myPars$ff] = myPars$formants[myPars$f_col_names]
-    updateFBtn(myPars$formants[myPars$f_col_names])
+    myPars$ann[myPars$currentAnn, myPars$ff] = myPars$formants[myPars$ff]
+    updateFBtn(myPars$formants[myPars$ff])
     updateVTL()
 
     # clear the selection, close the modal
@@ -1113,7 +1112,7 @@ server = function(input, output, session) {
   updateFBtn = function(ff) {
     if (myPars$print) print('Updating formant buttons...')
     for (f in 1:input$nFormants) {
-      updateTextInput(session, inputId = paste0('f', f, '_text'),
+      updateTextInput(session, inputId = paste0('F', f, '_text'),
                       value = ff[f])
     }
   }
@@ -1149,13 +1148,13 @@ server = function(input, output, session) {
       } else {
         coeffs = NULL
       }
-      sel_anal = round(myPars$regionToAnalyze[1] / 1000 * myPars$samplingRate) :
-        round(myPars$regionToAnalyze[2] / 1000 * myPars$samplingRate)
+      sel_anal = max(1, round(myPars$regionToAnalyze[1] / 1000 * myPars$samplingRate)) :
+        min(myPars$ls, round(myPars$regionToAnalyze[2] / 1000 * myPars$samplingRate))
       myPars$temp_anal = .analyze(
         list(sound = myPars$myAudio[sel_anal],
              samplingRate = myPars$samplingRate,
              scale = myPars$maxAmpl,
-             timeShift = 0,
+             timeShift = myPars$regionToAnalyze[1] / 1000,
              ls = length(sel_anal),
              duration = length(sel_anal) / myPars$samplingRate),
         windowLength = input$windowLength_lpc,
