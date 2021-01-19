@@ -1169,7 +1169,7 @@ server = function(input, output, session) {
       }
       sel_anal = max(1, round(myPars$regionToAnalyze[1] / 1000 * myPars$samplingRate)) :
         min(myPars$ls, round(myPars$regionToAnalyze[2] / 1000 * myPars$samplingRate))
-      myPars$temp_anal = .analyze(
+      myPars$temp_anal = soundgen:::.analyze(
         list(sound = myPars$myAudio[sel_anal],
              samplingRate = myPars$samplingRate,
              scale = myPars$maxAmpl,

@@ -191,7 +191,7 @@ server = function(input, output, session) {
     # matrix and re-draw manually with soundgen:::filled.contour.mod
     if (!is.null(myPars$myAudio)) {
       if (myPars$print) print('Extracting spectrogram...')
-      myPars$spec = .spectrogram(
+      myPars$spec = soundgen:::.spectrogram(
         myPars$myAudio_list,
         dynamicRange = input$dynamicRange,
         windowLength = input$windowLength,
@@ -525,7 +525,7 @@ server = function(input, output, session) {
     if (!is.null(myPars$myAudio)) {
       if (myPars$print) print('Calling analyze()...')
       withProgress(message = 'Analyzing the sound...', value = 0.5, {
-        temp_anal = .analyze(
+        temp_anal = soundgen:::.analyze(
           myPars$myAudio_list,
           windowLength = input$windowLength,
           step = input$step,
@@ -584,7 +584,7 @@ server = function(input, output, session) {
           returnPitchCands = TRUE
         )
         myPars$result = temp_anal$result
-        myPars$summary = summarizeAnalyze(
+        myPars$summary = soundgen:::summarizeAnalyze(
           temp_anal$result,
           summaryFun = input$summaryFun,
           var_noSummary = c('duration', 'duration_noSilence', 'voiced', 'time')
