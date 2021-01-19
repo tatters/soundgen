@@ -91,7 +91,7 @@
 #spectrum {
   resize: vertical;
   overflow: hidden;
-  height: 500px;
+  height: 300px;
 }
 
 #spectrum img {
@@ -103,6 +103,22 @@
   position: absolute;
   top: 5px;
   right: 20px;
+}
+
+/* fmtSpace */
+#fmtSpaceDiv {
+  position: relative;
+}
+
+#fmtSpace {
+  resize: vertical;
+  overflow: hidden;
+  /* height: 200px;  */
+}
+
+#fmtSpace img {
+  width: 100%;
+  height: inherit;
 }
 
 /* output table */

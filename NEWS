@@ -21,6 +21,7 @@ MINOR:
   * analyze(): updated cepstral pitch tracking, new argument in pitchCep = list(cepPenalty) to regulate how much high-frequency cepstral candidates are mistrusted
   * analyze() returns strength of subharmonics per frame (output "subRatio" and "subDep")
   * pitch_app(), formant_app(): user zoom settings preserved when moving between audio files in queue
+  * formant_app(): added a plot of relative formant frequencies to compare with IPA vowels
   * soundgen(): pitch anchors can contain NAs, eg "pitch = c(150, 200, NA, 110)" - the 3rd quarter will be unvoiced
   * addFormants(): new argument "zFun" for arbitrary transformations of the spectrogram between STFT and iSTFT (eg for de-noising, spectral warping, etc.)
   * flatEnv() AKA compressor(): a new argument "compression" regulates the amount of compression, updated plotting
