@@ -462,6 +462,7 @@ ui = fluidPage(
           id = 'spectrumDiv',
           plotOutput(
             'spectrum',
+            height = "300px",
             click = "spectrum_click",
             dblclick = dblclickOpts(id = "spectrum_dblclick"),
             hover = hoverOpts(id = "spectrum_hover")),
@@ -476,6 +477,14 @@ ui = fluidPage(
               step = def_form['spectrum_smooth', 'step'],
               width = '200px')
           )
+        )
+      ),
+
+      fluidRow(
+        tags$div(
+          id = 'fmtSpaceDiv',
+          plotOutput(
+            'fmtSpace', height = "175px")
         )
       ),
 

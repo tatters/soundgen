@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); VTL smts not updated when adjusting formant values; highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: preview position of selected vowel in vowel space normalized by estimated VTL (schwa(): relative_semitones); maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); VTL smts not updated when adjusting formant values; highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -38,7 +38,7 @@ server = function(input, output, session) {
     cursor = 0,
     listenToFbtn = FALSE,      # buggy
     play = list(on = FALSE),
-    debugQn = FALSE             # for debugging - click "?" to step into the code
+    debugQn = TRUE             # for debugging - click "?" to step into the code
   )
 
   # NB: using myPars$play$cursor for some reason invalidates the observer,
@@ -224,7 +224,7 @@ server = function(input, output, session) {
     # updateSliderInput(session, 'spectrum_xlim',
     #                   value = c(0, min(def_form['spectrum_xlim', 'default'], myPars$nyquist)),
     #                   max = myPars$nyquist)
-    myPars$dur = round(length(myPars$temp_audio@left) / myPars$temp_audio@samp.rate * 1000)
+    myPars$dur = length(myPars$temp_audio@left) * 1000 / myPars$temp_audio@samp.rate
     myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
     myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
     myPars$regionToAnalyze = myPars$spec_xlim
@@ -949,6 +949,25 @@ server = function(input, output, session) {
   })
   observeEvent(input$spectrum_smooth, {
     myPars$spectrum_hover = NULL
+  })
+
+
+  ## FORMANT SPACE
+  output$fmtSpace = renderPlot({
+    if (!is.null(myPars$ann[myPars$currentAnn]) &&
+        (is.numeric(myPars$ann[myPars$currentAnn, ]$F1) &
+         is.numeric(myPars$ann[myPars$currentAnn, ]$F2))) {
+      if (myPars$print) print('Drawing formant space')
+      caf = myPars$ann[myPars$currentAnn, myPars$ff]
+      cafr = schwa(formants = as.numeric(caf))$ff_relative_semitones
+      xlim = range(c(ipa$F1Rel, cafr[1]))
+      ylim = range(c(ipa$F2Rel, cafr[2]))
+      par(mar = c(0, 0, 0, 0))
+      plot(ipa$F1Rel, ipa$F2Rel, type = 'n', xlab = '', ylab = '',
+           xlim = xlim, ylim = ylim, bty = 'n', xaxt = 'n', yaxt = 'n')
+      text(ipa$F1Rel, ipa$F2Rel, labels = ipa$ipa, cex = 1.5, col = 'blue')
+      points(cafr[1], cafr[2], pch = 4, cex = 2.5, col = 'red')
+    }
   })
 
 

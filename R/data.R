@@ -34,3 +34,12 @@
 #' A dataframe of 192 rows and 2 columns: "note" and "freq" (Hz). Range: C-5
 #' (0.51 Hz) to B10 (31608.53 Hz)
 "notesDict"
+
+#' Manually measured frequencies of the first four formants in 21 vowels from
+#' "Seeing Speech" (http://www.seeingspeech.ac.uk)
+#'
+#' A dataframe of 21 rows (one per vowel) and 9 columns: "ipa" = vowel, "F1...4"
+#' = measured formant frequencies (Hz) in the initial stable region of each
+#' vowel, "F1Rel...F4Rel" = formant frequencies relative to the neutral
+#' equidistant formant frequencies in the schwa (semitones)
+"ipa"
