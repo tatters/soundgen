@@ -173,9 +173,9 @@ segment = function(
   savePlots = NULL,
   saveAudio = NULL,
   addSilence = 50,
+  main = NULL,
   xlab = '',
   ylab = 'Signal, dB',
-  main = NULL,
   showLegend = FALSE,
   width = 900,
   height = 500,
@@ -244,8 +244,8 @@ segment = function(
   if (!is.null(pa$input$savePlots)) {
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_segment.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_segment.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_noExt, "_segment.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
 
@@ -335,9 +335,9 @@ segment = function(
   plot = FALSE,
   plotname = '',
   savePlots = NULL,
+  main = NULL,
   xlab = '',
   ylab = 'Signal, dB',
-  main = NULL,
   showLegend = FALSE,
   width = 900,
   height = 500,
@@ -722,7 +722,7 @@ segment = function(
   ## plotting
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_segment.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_segment.png"),
         width = width, height = height, units = units, res = res)
   }
 

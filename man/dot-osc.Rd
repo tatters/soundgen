@@ -10,6 +10,7 @@
   dB = FALSE,
   returnWave = FALSE,
   plot = TRUE,
+  main = NULL,
   xlab = NULL,
   ylab = NULL,
   ylim = NULL,
@@ -32,6 +33,8 @@ under maximum are treated as zero}
 \item{returnWave}{if TRUE, returns a log-transformed waveform as a numeric vector}
 
 \item{plot}{if TRUE, plots the oscillogram}
+
+\item{main}{graphical parameters for plotting}
 
 \item{xlab}{axis labels}
 

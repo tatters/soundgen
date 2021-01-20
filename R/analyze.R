@@ -611,8 +611,8 @@ analyze = function(
   if (!is.null(pa$input$savePlots)) {
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_analyze.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_analyze.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_noExt, "_analyze.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
 
@@ -889,7 +889,7 @@ analyze = function(
   ## fft and acf per frame
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_analyze.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_analyze.png"),
         width = width, height = height, units = units, res = res)
   }
   frameBank = getFrameBank(

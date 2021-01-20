@@ -16,6 +16,7 @@ osc(
   reportEvery = NULL,
   plot = TRUE,
   savePlots = NULL,
+  main = NULL,
   xlab = NULL,
   ylab = NULL,
   ylim = NULL,
@@ -60,6 +61,8 @@ left every ... iterations}
 
 \item{savePlots}{full path to the folder in which to save the plots (NULL =
 don't save, '' = same folder as audio)}
+
+\item{main}{graphical parameters for plotting}
 
 \item{xlab, ylab}{axis labels}
 

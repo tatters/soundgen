@@ -243,12 +243,12 @@ spectrogram = function(
     savePlots = savePlots
   )
 
-  # htmlPlots (message if saved in a different folder than audio)
+  # htmlPlots
   if (!is.null(pa$input$savePlots)) {
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_spectrogram.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_spectrogram.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$filenames_noExt, "_spectrogram.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
   if (pa$input$n == 1) pa$result = pa$result[[1]]
@@ -440,7 +440,7 @@ spectrogram = function(
   # plot
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_spectrogram.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_spectrogram.png"),
         width = width, height = height, units = units, res = res)
   }
   if (plot) {
@@ -454,10 +454,10 @@ spectrogram = function(
     }
     if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
     if (is.null(main)) {
-      if (audio$filename_base == 'sound') {
+      if (audio$filename_noExt == 'sound') {
         main = ''
       } else {
-        main = audio$filename_base
+        main = audio$filename_noExt
       }
     }
 

@@ -227,9 +227,9 @@ modulationSpectrum = function(
   kernelSize = 5,
   kernelSD = .5,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
+  main = NULL,
   xlab = 'Hz',
   ylab = '1/KHz',
-  main = NULL,
   xlim = NULL,
   ylim = NULL,
   width = 900,
@@ -262,8 +262,8 @@ modulationSpectrum = function(
   if (!is.null(pa$input$savePlots)) {
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_MS.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_MS.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_noExt, "_MS.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
 
@@ -364,9 +364,9 @@ modulationSpectrum = function(
   kernelSize = 5,
   kernelSD = .5,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
+  main = NULL,
   xlab = 'Hz',
   ylab = '1/KHz',
-  main = NULL,
   xlim = NULL,
   ylim = NULL,
   width = 900,
@@ -518,7 +518,7 @@ modulationSpectrum = function(
   # PLOTTING
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_MS.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_MS.png"),
         width = width, height = height, units = units, res = res)
   }
 
@@ -526,6 +526,13 @@ modulationSpectrum = function(
     color.palette = switchColorTheme(colorTheme)
     if (is.null(xlim)) xlim = c(X[1], -X[1])
     if (is.null(ylim)) ylim = range(Y)
+    if (is.null(main)) {
+      if (audio$filename_noExt == 'sound') {
+        main = ''
+      } else {
+        main = audio$filename_noExt
+      }
+    }
     if (is.numeric(logWarp)) {
       filled.contour.mod(
         x = X, y = Y, z = t(out_transf),
@@ -533,7 +540,7 @@ modulationSpectrum = function(
         color.palette = color.palette,
         xlab = xlab, ylab = ylab,
         bty = 'n', axisX = FALSE, axisY = FALSE,
-        main = audio$filename_base,
+        main = main,
         xlim = xlim, ylim = ylim,
         ...
       )
@@ -573,7 +580,7 @@ modulationSpectrum = function(
         x = X, y = Y, z = t(out_transf),
         levels = seq(0, 1, length = 30),
         color.palette = color.palette,
-        xlab = xlab, ylab = ylab,
+        xlab = xlab, ylab = ylab, main = main,
         bty = 'n', xlim = xlim, ylim = ylim, ...
       )
     }
@@ -585,7 +592,7 @@ modulationSpectrum = function(
             levels = qntls, labels = quantiles * 100,
             xaxs = 'i', yaxs = 'i',
             axes = FALSE, frame.plot = FALSE,
-            main = audio$filename_base, xlim = xlim, ylim = ylim, ...)
+            xlim = xlim, ylim = ylim, ...)
     par(new = FALSE)
     if (is.character(audio$savePlots)) dev.off()
   }

@@ -607,6 +607,7 @@ formatPitchManual = function(pitchManual) {
 #' @keywords internal
 checkInputType = function(x) {
   if (is.character(x)) {
+    # character means file or folder
     if (length(x) == 1 && dir.exists(x)) {
       # input is a folder
       x = dirname(paste0(x, '/arbitrary'))  # strips terminal '/', if any
@@ -626,11 +627,17 @@ checkInputType = function(x) {
     n = length(filenames)
     type = rep('file', n)
     filenames_base = filenames_noExt = basename(filenames)
-    # strip extension
-    for (f in 1:n)
+
+    for (f in 1:n) {
+      # strip extension
       filenames_noExt[f] = substr(filenames_base[f], 1, nchar(filenames_base[f]) - 4)
-    filesizes = file.info(filenames)$size
+      filesizes = file.info(filenames)$size
+      # expand from relative to full path (useful for functions that save audio
+      # separately from plots)
+      filenames[f] = normalizePath(filenames[f])
+    }
   } else {
+    # not file(s), but one or more objects (Wave / numeric)
     if (!is.list(x)) x = list(x)
     n = length(x)
     if (n == 1) {

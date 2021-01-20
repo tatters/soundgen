@@ -68,6 +68,7 @@ osc = function(
   reportEvery = NULL,
   plot = TRUE,
   savePlots = NULL,
+  main = NULL,
   xlab = NULL,
   ylab = NULL,
   ylim = NULL,
@@ -100,18 +101,12 @@ osc = function(
     savePlots = savePlots
   )
 
-  # htmlPlots (message if saved in a different folder than audio)
+  # htmlPlots
   if (!is.null(pa$input$savePlots)) {
-    if (pa$input$filenames_base[1] == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(pa$input$filenames_base, 1,
-                        nchar(pa$input$filenames_base) - 4)
-    }
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_osc.html'),
-      plotFiles = paste0(pa$input$savePlots, plotname, "_osc.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$filenames_noExt, "_osc.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
   if (returnWave) {
@@ -132,6 +127,7 @@ osc = function(
   dB = FALSE,
   returnWave = FALSE,
   plot = TRUE,
+  main = NULL,
   xlab = NULL,
   ylab = NULL,
   ylim = NULL,
@@ -182,15 +178,17 @@ osc = function(
   # plot
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    if (audio$filename_base == 'sound') {
-      plotname = 'sound'
-    } else {
-      plotname = substr(audio$filename_base, 1, nchar(audio$filename_base) - 4)
-    }
-    png(filename = paste0(audio$savePlots, plotname, "_osc.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_osc.png"),
         width = width, height = height, units = units, res = res)
   }
   if (plot) {
+    if (is.null(main)) {
+      if (audio$filename_noExt == 'sound') {
+        main = ''
+      } else {
+        main = audio$filename_noExt
+      }
+    }
     # For long files, downsample before plotting
     if (!is.null(maxPoints) && maxPoints < audio$ls) {
       myseq = seq(1, audio$ls, by = ceiling(audio$ls / maxPoints))
@@ -213,7 +211,7 @@ osc = function(
     if (is.null(ylim)) if (dB) ylim = c(-2 * dynamicRange, 0) else ylim = c(-m, m)
 
     # plot
-    plot(time, sound_plot, type = 'l', xlab = xlab, ylab = ylab,
+    plot(time, sound_plot, type = 'l', main = main, xlab = xlab, ylab = ylab,
          bty = bty, xaxt = 'n', yaxt = 'n', ylim = ylim, ...)
     time_location = axTicks(1)
     if (!is.null(audio$samplingRate)) {

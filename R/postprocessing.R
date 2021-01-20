@@ -484,8 +484,9 @@ flatSpectrum = function(x,
                        samplingRate = 1,  # not used, but can't be left NULL
                        method = 'peak',
                        windowLength_points = freqWindow_bins) / abs_s
-    spec[, i] = complex(real = Re(spec[, i]) * cor_coef,
-                        imaginary = Im(spec[, i]))
+    # spec[, i] = complex(real = Re(spec[, i]) * cor_coef,
+    #                     imaginary = Im(spec[, i]))
+    spec[, i] = spec[, i] * cor_coef
     # plot(abs(spec[, i]), type = 'b')
   }
 
@@ -504,7 +505,7 @@ flatSpectrum = function(x,
   if (is.character(audio$saveAudio)) {
     seewave::savewav(
       sound_new, f = audio$samplingRate,
-      filename = paste0(audio$saveAudio, audio$filename_base, '.wav'))
+      filename = paste0(audio$saveAudio, audio$filename_noExt, '.wav'))
   }
   # spectrogram(sound_new, audio$samplingRate)
   invisible(sound_new)

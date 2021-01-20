@@ -13,6 +13,7 @@
   normalize = TRUE,
   windowDC = 200,
   plot = TRUE,
+  main = NULL,
   xlab = "",
   ylab = "",
   type = "b",
@@ -45,6 +46,8 @@ the maximum possible amplitude as given by \code{scale}}
 \item{windowDC}{the window for calculating DC offset, ms}
 
 \item{plot}{if TRUE, plot a contour of RMS amplitude}
+
+\item{main}{graphical parameters for plotting}
 
 \item{xlab}{general graphical parameters}
 

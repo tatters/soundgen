@@ -26,9 +26,9 @@
   plot = FALSE,
   plotname = "",
   savePlots = NULL,
+  main = NULL,
   xlab = "",
   ylab = "Signal, dB",
-  main = NULL,
   showLegend = FALSE,
   width = 900,
   height = 500,
@@ -108,11 +108,11 @@ padded with some silence (ms)}
 \item{savePlots}{full path to the folder in which to save the plots (NULL =
 don't save, '' = same folder as audio)}
 
+\item{main}{main plotting parameters}
+
 \item{xlab}{main plotting parameters}
 
 \item{ylab}{main plotting parameters}
-
-\item{main}{main plotting parameters}
 
 \item{showLegend}{if TRUE, shows a legend for thresholds}
 

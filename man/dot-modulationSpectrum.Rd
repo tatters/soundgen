@@ -25,9 +25,9 @@
   kernelSize = 5,
   kernelSD = 0.5,
   colorTheme = c("bw", "seewave", "heat.colors", "...")[1],
+  main = NULL,
   xlab = "Hz",
   ylab = "1/KHz",
-  main = NULL,
   xlim = NULL,
   ylim = NULL,
   width = 900,
@@ -98,11 +98,11 @@ size}
 or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
 'cm.colors', etc}
 
+\item{main}{graphical parameters}
+
 \item{xlab}{graphical parameters}
 
 \item{ylab}{graphical parameters}
-
-\item{main}{graphical parameters}
 
 \item{xlim}{graphical parameters}
 

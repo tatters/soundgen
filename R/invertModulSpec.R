@@ -161,7 +161,7 @@ filterSoundByMS = function(
   myPars = mget(names(formals()), sys.frame(sys.nframe()))
   # exclude unnecessary args
   myPars = myPars[!names(myPars) %in% c(
-    'x', 'samplingRate', 'from', 'to', 'savePlots', 'reportEvery')]
+    'x', 'samplingRate', 'from', 'to', 'savePlots', 'saveAudio', 'reportEvery')]
   # exclude ...
   myPars = myPars[1:(length(myPars)-1)]
 
@@ -182,8 +182,8 @@ filterSoundByMS = function(
   if (!is.null(pa$input$savePlots)) {
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_filterByMS.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_filterByMS.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_noExt, "_filterByMS.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
 
@@ -267,7 +267,7 @@ filterSoundByMS = function(
   # PLOTTING
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_filterByMS.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_filterByMS.png"),
         width = width, height = height, units = units, res = res)
   }
 
@@ -275,7 +275,7 @@ filterSoundByMS = function(
   if (is.character(audio$saveAudio)) {
     seewave::savewav(
       s_new, f = audio$samplingRate,
-      filename = paste0(audio$saveAudio, audio$filename_base, '_filterByMS.wav')
+      filename = paste0(audio$saveAudio, audio$filename_noExt, '_filterByMS.wav')
     )
   }
 

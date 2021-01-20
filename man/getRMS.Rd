@@ -20,6 +20,7 @@ getRMS(
   reportEvery = NULL,
   plot = FALSE,
   savePlots = NULL,
+  main = NULL,
   xlab = "",
   ylab = "",
   type = "b",
@@ -75,6 +76,8 @@ left every ... iterations}
 
 \item{savePlots}{full path to the folder in which to save the plots (NULL =
 don't save, '' = same folder as audio)}
+
+\item{main}{graphical parameters for plotting}
 
 \item{xlab, ylab}{general graphical parameters}
 

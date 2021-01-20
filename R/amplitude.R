@@ -83,6 +83,7 @@ getRMS = function(x,
                   reportEvery = NULL,
                   plot = FALSE,
                   savePlots = NULL,
+                  main = NULL,
                   xlab = '',
                   ylab = '',
                   type = 'b',
@@ -114,8 +115,8 @@ getRMS = function(x,
   if (!is.null(pa$input$savePlots)) {
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_rms.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_rms.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_noExt, "_rms.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
 
@@ -155,6 +156,7 @@ getRMS = function(x,
                    normalize = TRUE,
                    windowDC = 200,
                    plot = TRUE,
+                   main = NULL,
                    xlab = '',
                    ylab = '',
                    type = 'b',
@@ -198,13 +200,20 @@ getRMS = function(x,
   # plotting
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_rms.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_rms.png"),
         width = width, height = height, units = units, res = res)
   }
   if (plot) {
+    if (is.null(main)) {
+      if (audio$filename_noExt == 'sound') {
+        main = ''
+      } else {
+        main = audio$filename_noExt
+      }
+    }
     time = 1:audio$ls / audio$samplingRate * 1000
-    plot(time, audio$sound, type = 'n', xlab = xlab, ylab = ylab, xaxt = 'n',
-         ylim = c(-audio$scale, audio$scale), ...)
+    plot(time, audio$sound, type = 'n', main = main, xlab = xlab, ylab = ylab,
+         xaxt = 'n', ylim = c(-audio$scale, audio$scale), ...)
     time_location = axTicks(1)
     time_labels = convert_sec_to_hms(time_location / 1000, 3)
     axis(side = 1, at = time_location, labels = time_labels)
@@ -482,11 +491,11 @@ flatEnv = function(x,
     if (is.null(pa$input$saveAudio)) {
       audioFiles = pa$input$filenames
     } else {
-      audioFiles = paste0(pa$input$saveAudio, pa$input$filenames_base, '.wav')
+      audioFiles = paste0(pa$input$saveAudio, pa$input$filenames_noExt, '.wav')
     }
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_compressor.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_compressor.png"),
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_noExt, "_compressor.png"),
       audioFiles = audioFiles,
       width = paste0(width, units))
   }
@@ -570,7 +579,7 @@ compressor = flatEnv
   # PLOTTING
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_compressor.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_compressor.png"),
         width = width, height = height, units = units, res = res)
   }
   if (plot) {
@@ -593,7 +602,7 @@ compressor = flatEnv
     if (!dir.exists(audio$saveAudio)) dir.create(audio$saveAudio)
     seewave::savewav(
       soundFlat, f = audio$samplingRate,
-      filename = paste0(audio$saveAudio, '/', audio$filename_base, '.wav'))
+      filename = paste0(audio$saveAudio, '/', audio$filename_noExt, '.wav'))
   }
 
   return(soundFlat)
@@ -684,7 +693,8 @@ transplantEnv = function(donor,
     par(new = TRUE)
     .osc(list(sound = env_donor,
               samplingRate = donor$samplingRate,
-              ls = len_donor),
+              ls = len_donor,
+              filename_noExt = ''),
          lty = 1, col = 'blue', xlab = '', ylab = '', midline = FALSE,
          xaxt = 'n', yaxt = 'n', ylim = c(-max_donor, max_donor))
 
@@ -693,22 +703,25 @@ transplantEnv = function(donor,
     par(new = TRUE)
     .osc(list(sound = env_recipient,
               samplingRate = recipient$samplingRate,
-              ls = len_recipient),
+              ls = len_recipient,
+              filename_noExt = ''),
          lty = 1, col = 'blue', xlab = '', ylab = '', midline = FALSE,
          xaxt = 'n', yaxt = 'n', ylim = c(-max_recipient, max_recipient))
 
     .osc(list(sound = out,
               samplingRate = recipient$samplingRate,
-              ls = len_recipient),
+              ls = len_recipient,
+              filename_noExt = ''),
          main = 'Output', ylim = c(-max_recipient, max_recipient),
          xlab = '', ylab = '', midline = FALSE)
     par(new = TRUE)
     .osc(list(
       sound = getEnv(out, windowLength_points_recip, method),
       samplingRate = recipient$samplingRate,
-      ls = len_recipient),
+      ls = len_recipient,
+      filename_noExt = ''),
       lty = 1, col = 'blue', xlab = '', ylab = '', midline = FALSE,
-         xaxt = 'n', yaxt = 'n', ylim = c(-max_recipient, max_recipient))
+      xaxt = 'n', yaxt = 'n', ylim = c(-max_recipient, max_recipient))
 
     par(mfrow = op)
   }
@@ -896,7 +909,7 @@ addAM = function(x,
   if (is.character(audio$saveAudio)) {
     seewave::savewav(
       sound_am, f = audio$samplingRate,
-      filename = paste0(audio$saveAudio, audio$filename_base, '.wav'))
+      filename = paste0(audio$saveAudio, audio$filename_noExt, '.wav'))
   }
   invisible(sound_am)
 }

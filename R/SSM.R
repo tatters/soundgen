@@ -149,8 +149,8 @@ ssm = function(
   if (!is.null(pa$input$savePlots)) {
     htmlPlots(
       htmlFile = paste0(pa$input$savePlots, '00_clickablePlots_ssm.html'),
-      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_base, "_ssm.png"),
-      audioFiles = pa$input$filenames,
+      plotFiles = paste0(pa$input$savePlots, pa$input$filenames_noExt, "_ssm.png"),
+      audioFiles = if (savePlots == '') pa$input$filenames_base else pa$input$filenames,
       width = paste0(width, units))
   }
 
@@ -304,7 +304,7 @@ ssm = function(
   ## PLOTTING
   if (is.character(audio$savePlots)) {
     plot = TRUE
-    png(filename = paste0(audio$savePlots, audio$filename_base, "_ssm.png"),
+    png(filename = paste0(audio$savePlots, audio$filename_noExt, "_ssm.png"),
         width = width, height = height, units = units, res = res)
   }
   if (plot) {

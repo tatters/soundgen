@@ -14,6 +14,7 @@
   spreadSpectrum = TRUE,
   plot = TRUE,
   savePlots = NULL,
+  main = NULL,
   ylim = NULL,
   width = 900,
   height = 500,
@@ -46,6 +47,8 @@ frequency masking}
 
 \item{savePlots}{full path to the folder in which to save the plots (NULL =
 don't save, '' = same folder as audio)}
+
+\item{main}{graphical parameters for plotting}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 

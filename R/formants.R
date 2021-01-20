@@ -928,7 +928,7 @@ addFormants = function(
   if (is.character(audio$saveAudio)) {
     seewave::savewav(
       soundFiltered, f = audio$samplingRate,
-      filename = paste0(audio$saveAudio, audio$filename_base, '.wav'))
+      filename = paste0(audio$saveAudio, audio$filename_noExt, '.wav'))
   }
 
   # spectrogram(soundFiltered, samplingRate = samplingRate, ylim = c(0, 4))

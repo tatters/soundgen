@@ -151,6 +151,7 @@ htmlPlots = function(htmlFile,
                      plotFiles,
                      audioFiles = '',
                      width = "900px") {
+  if (length(plotFiles) < 2) return(NA)
   plotFiles_concat = paste0(plotFiles, collapse = "', '")
   audioFiles_concat = paste0(audioFiles, collapse = "', '")
 
