@@ -19,12 +19,9 @@ square amplitude, 'mean' for mean (for DC offset removal), 'hil' for
 Hilbert, 'raw' for low-pass filtering the actual sound}
 }
 \description{
-Internal soundgen function
-}
-\details{
 Returns the smoothed amplitude envelope of a waveform on the original scale.
-NB: unlike seewave::env, this function returns an envelope of the same length
-as the original sound, regardless of the amount of smoothing.
+Unlike seewave::env, this function always returns an envelope of the same
+length as the original sound, regardless of the amount of smoothing.
 }
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
@@ -41,4 +38,3 @@ points(soundgen:::getEnv(a, windowLength_points, 'hil'),
 points(soundgen:::getEnv(a, windowLength_points, 'mean'),
        type = 'l', lty = 3, lwd = 3)
 }
-\keyword{internal}

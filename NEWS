@@ -13,6 +13,7 @@ MAJOR (affects back-compatibility)
 
 NEW FUNCTIONS:
   * reverb(): adds reverberation and/or echo to a sound
+  * getEnv(): returns the amplitude envelope of a sound
 
 MINOR:
   * spectrogram(), analyze(): a new argument "extraContour" for plotting something over the spectrogram

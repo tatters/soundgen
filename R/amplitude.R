@@ -915,19 +915,16 @@ addAM = function(x,
 }
 
 
-
 #' Get amplitude envelope
 #'
-#' Internal soundgen function
-#'
 #' Returns the smoothed amplitude envelope of a waveform on the original scale.
-#' NB: unlike seewave::env, this function returns an envelope of the same length
-#' as the original sound, regardless of the amount of smoothing.
+#' Unlike seewave::env, this function always returns an envelope of the same
+#' length as the original sound, regardless of the amount of smoothing.
 #' @inheritParams flatEnv
 #' @param method 'peak' for peak amplitude per window, 'rms' for root mean
 #'   square amplitude, 'mean' for mean (for DC offset removal), 'hil' for
 #'   Hilbert, 'raw' for low-pass filtering the actual sound
-#' @keywords internal
+#' @export
 #' @examples
 #' a = rnorm(500) * seq(1, 0, length.out = 500)
 #' windowLength_points = 50
