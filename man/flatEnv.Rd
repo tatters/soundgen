@@ -120,8 +120,8 @@ smoothed amplitude envelope (Hilbert, peak or root mean square).
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
 b = flatEnv(a, 1000, plot = TRUE, windowLength_points = 5)    # too short
-c = flatEnv(a, 1000, plot = TRUE, windowLength_points = 250)  # too long
-d = flatEnv(a, 1000, plot = TRUE, windowLength_points = 50)   # about right
+c = flatEnv(a, 1000, plot = TRUE, windowLength_points = 450)  # too long
+d = flatEnv(a, 1000, plot = TRUE, windowLength_points = 100)  # about right
 
 \dontrun{
 s = soundgen(sylLen = 1000, ampl = c(0, -40, 0), plot = TRUE)

@@ -4,7 +4,11 @@
 \alias{getEnv}
 \title{Get amplitude envelope}
 \usage{
-getEnv(sound, windowLength_points, method = c("rms", "peak", "mean", "hil")[1])
+getEnv(
+  sound,
+  windowLength_points,
+  method = c("rms", "hil", "peak", "raw", "mean")[1]
+)
 }
 \arguments{
 \item{windowLength_points}{the length of smoothing window, points. If
@@ -12,7 +16,7 @@ specified, overrides \code{windowLength}}
 
 \item{method}{'peak' for peak amplitude per window, 'rms' for root mean
 square amplitude, 'mean' for mean (for DC offset removal), 'hil' for
-Hilbert}
+Hilbert, 'raw' for low-pass filtering the actual sound}
 }
 \description{
 Internal soundgen function
@@ -26,6 +30,8 @@ as the original sound, regardless of the amount of smoothing.
 a = rnorm(500) * seq(1, 0, length.out = 500)
 windowLength_points = 50
 plot(a, type = 'l')
+points(soundgen:::getEnv(a, windowLength_points, 'raw'),
+       type = 'l', col = 'brown')
 points(soundgen:::getEnv(a, windowLength_points, 'rms'),
        type = 'l', col = 'red')
 points(soundgen:::getEnv(a, windowLength_points, 'peak'),

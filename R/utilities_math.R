@@ -835,12 +835,12 @@ interpolMatrix = function(m,
 
   # Downsample rows if necessary
   if (nrow(m) > nr) {
-    m = m[seq(1, nrow(m), length.out = nr), ]
+    m = m[seq(1, nrow(m), length.out = nr),, drop = FALSE]
   }
 
   # Downsample columns if necessary
   if (ncol(m) > nc) {
-    m = m[, seq(1, ncol(m), length.out = nc)]
+    m = m[, seq(1, ncol(m), length.out = nc), drop = FALSE]
   }
 
   # Interpolate rows if necessary
@@ -873,7 +873,7 @@ interpolMatrix = function(m,
   # Interpolate columns if necessary
   if (ncol(m) < nc) {
     if (ncol(m) == 1) {
-      out = matrix(rep(m, nc), ncol = nc, byrow = FALSE)
+      out = matrix(rep(temp[, 1], nc), ncol = nc, byrow = FALSE)
     } else {
       out = matrix(1, nrow = nr, ncol = nc)
       for (r in 1:nr) {

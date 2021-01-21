@@ -146,7 +146,7 @@ getSmoothContour = function(
     duration_ms = len / samplingRate * 1000
   }
 
-  # if there are more anchors than len, pick just some anchors at random
+  # if there are more anchors than len, downsample the anchors
   if (nrow(anchors) > len) {
     anchors = as.data.frame(anchors)
     idx = seq(1, nrow(anchors), length.out = len)
