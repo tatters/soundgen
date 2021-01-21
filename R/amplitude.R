@@ -660,7 +660,7 @@ transplantEnv = function(donor,
   )
   windowLength_points_donor = windowLength / 1000 * donor$samplingRate
   windowLength_points_recip = windowLength / 1000 * recipient$samplingRate
-  throwaway_lin = 10 ^ (-dynamicRange / 20)  # from dB to linear
+  throwaway_lin = 10 ^ (-dynamicRange / 20) * recipient$scale
 
   # get the amplitude envelope of the recipient
   env_recipient = getEnv(sound = recipient$sound,
@@ -669,7 +669,8 @@ transplantEnv = function(donor,
   len_recipient = length(env_recipient)
   # don't amplify very quiet sections
   env_recip_cut = env_recipient
-  env_recip_cut[env_recip_cut < throwaway_lin] = 1
+  env_recip_cut[env_recip_cut < throwaway_lin] = throwaway_lin
+  # plot(env_recip_cut, type = 'l')
 
   # get the amplitude envelope of the donor
   env_donor = getEnv(sound = donor$sound,
@@ -677,9 +678,12 @@ transplantEnv = function(donor,
                      method = method)
   env_donor1 = env_donor / max(env_donor)  # normalize
   env_donor1 = approx(env_donor1, n = len_recipient)$y
+  # plot(env_donor1, type = 'l')
 
   # flatten the envelope of the recipient and apply the donor's envelope
   out = recipient$sound / env_recip_cut * env_donor1
+  out = out / max(abs(out)) * recipient$scale
+  # plot(out, type = 'l')
   if (plot) {
     len_donor = length(env_donor)
     max_donor = max(abs(donor$sound))
