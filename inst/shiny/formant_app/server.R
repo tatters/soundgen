@@ -886,8 +886,8 @@ server = function(input, output, session) {
       }
 
       isolate({
-        myPars$spectrum_freq_range = range(myPars$spectrum$freq)
-        myPars$spectrum_ampl_range = range(myPars$spectrum$ampl)
+        myPars$spectrum_freq_range = try(range(myPars$spectrum$freq))
+        myPars$spectrum_ampl_range = try(range(myPars$spectrum$ampl))
       })
     }
   })
@@ -955,8 +955,8 @@ server = function(input, output, session) {
   ## FORMANT SPACE
   output$fmtSpace = renderPlot({
     if (!is.null(myPars$ann[myPars$currentAnn]) &&
-        (is.numeric(myPars$ann[myPars$currentAnn, ]$F1) &
-         is.numeric(myPars$ann[myPars$currentAnn, ]$F2))) {
+        (is.finite(myPars$ann[myPars$currentAnn, ]$F1) &
+         is.finite(myPars$ann[myPars$currentAnn, ]$F2))) {
       if (myPars$print) print('Drawing formant space')
       caf = myPars$ann[myPars$currentAnn, myPars$ff]
       cafr = schwa(formants = as.numeric(caf))$ff_relative_semitones

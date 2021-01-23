@@ -671,8 +671,10 @@ segment = function(
     # start next part just before the last detected syllable if it looks like
     # this syllable might be incomplete (ends within 100 ms of the end of sound_part)
     if (!is.na(syllables_part$start[1]) &&
+        analyze_to < dur_total_ms &&
         (analyze_to - (syllables_part$end[nrow(syllables_part)] - audio$timeShift) < 100)) {
-      analyze_from = syllables_part$start[nrow(syllables_part)] - audio$timeShift - shortestPause
+      analyze_from = syllables_part$start[nrow(syllables_part)] -
+        audio$timeShift - shortestPause
       # remove syllables and bursts from the overlapping part
       syllables_part = syllables_part[-nrow(syllables_part), ]
       bursts_part = bursts_part[bursts_part$time < analyze_from, ]
