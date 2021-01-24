@@ -948,6 +948,10 @@ getEnv = function(
   windowLength_points,
   method = c('rms', 'hil', 'peak', 'raw', 'mean')[1]
 ) {
+  windowLength_points = round(windowLength_points)
+  sound = c(rep(0, windowLength_points),
+            sound,
+            rep(0, windowLength_points))
   len = length(sound)
   if (method == 'peak') sound_abs = abs(sound)  # avoid repeated calculations
 
@@ -995,19 +999,16 @@ getEnv = function(
     }
     # plot(envLong, type = 'l')
     # low-pass
-    envLong = c(rep(0, windowLength_points),
-                envLong,
-                rep(0, windowLength_points))
     env = pitchSmoothPraat(envLong,
                            bandwidth = 1000 / windowLength_points,
                            samplingRate = 1000)
-    env = env[(windowLength_points + 1):(windowLength_points + len)]
     # NB: at least for long sounds, this is faster than doing window +
     # upsampling as above (plus we avoid artifacts from spline/loess), and even
     # a bit faster than filtering with addFormants
   } else {
     stop("Valid values for method are c('rms', 'hil', 'peak', 'raw', 'mean')")
   }
+  env = env[(windowLength_points + 1):(len - windowLength_points)]
   # plot(env, type = 'l')
   return(env)
 }
