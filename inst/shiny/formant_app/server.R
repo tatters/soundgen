@@ -1659,6 +1659,15 @@ server = function(input, output, session) {
     }
   })
 
+  observeEvent(input$synthBtn, {
+    if (!is.null(myPars$ann[myPars$currentAnn, ]) &&
+        any(!is.na(myPars$ann[myPars$currentAnn, myPars$ff]))) {
+      if (myPars$print) print('Calling soundgen()...')
+      temp_s = soundgen(formants = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff]))
+      playme(temp_s)
+    }
+  })
+
   ### TOOLTIPS - have to be here instead of UI b/c otherwise problems with regulating delay
   # (see https://stackoverflow.com/questions/47477237/delaying-and-expiring-a-shinybsbstooltip)
   ## Analysis
@@ -1714,6 +1723,7 @@ server = function(input, output, session) {
   shinyBS:::addTooltip(session, id='selection_annotate', title='Create a new annotation (DOUBLE-CLICK)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS:::addTooltip(session, id='selection_delete', title='Remove annotation (DELETE)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='saveRes', title = 'Download results (see ?pitch_app for recovering unsaved data after a crash)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS::addTooltip(session, id='synthBtn', title = 'Synthesize and play a vowel with formants as measured in the current annotation. Check ?playme() if no sound', placement="bottom", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
 
   # navigation / zoom
   shinyBS::addTooltip(session, id='zoomIn_freq', title = 'Zoom in frequency (+)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))

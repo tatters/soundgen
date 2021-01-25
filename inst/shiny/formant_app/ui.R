@@ -454,7 +454,18 @@ ui = fluidPage(
     tags$div(
       id = 'right',
       fluidRow(
-        uiOutput('fButtons', style = "height: 60px;")
+        column(
+          width = 10,
+          uiOutput('fButtons', style = "height: 60px;")
+        ),
+        column(
+          width = 2,
+          actionButton(
+            inputId = 'synthBtn',
+            label = HTML("<img src='icons/synth.png' width = '30px'>"),
+            class = "buttonInline"
+          )
+        )
       ),
 
       fluidRow(
