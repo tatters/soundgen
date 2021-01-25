@@ -137,6 +137,8 @@ server = function(input, output, session) {
         myPars$out = user_ann
       } else {
         myPars$out = rbind_fill(myPars$out, user_ann)
+        # remove duplicate rows
+        myPars$out = unique(myPars$out)
       }
     }
 
