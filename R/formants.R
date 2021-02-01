@@ -588,7 +588,7 @@ getSpectralEnvelope = function(
 #'
 #' @inheritParams soundgen
 #' @inheritParams spectrogram
-#' @inheritParams segment
+#' @inheritParams addAM
 #' @param action 'add' = add formants to the sound, 'remove' = remove formants
 #'   (inverse filtering)
 #' @param spectralEnvelope (optional): as an alternative to specifying formant

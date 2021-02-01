@@ -185,7 +185,7 @@ sound = soundgen(sylLen = 500, temperature = 0.001, noise = list(
 # playme(sound, samplingRate = 16000)
 
 # basic spectrogram
-spectrogram(sound, samplingRate = 16000)
+spectrogram(sound, samplingRate = 16000, yScale = 'log')
 
 \dontrun{
 # add bells and whistles

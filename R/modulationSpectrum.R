@@ -298,7 +298,6 @@ modulationSpectrum = function(
   for (i in idx_failed) pa$result[[i]] = list(
     original = NULL, processed = NULL, complex = NULL, roughness = NULL
   )
-  435
   original = processed = complex = roughness = NULL
   # (otherwise note about no visible binding)
   out_prep = c('original', 'processed', 'complex', 'roughness')
@@ -701,6 +700,11 @@ getRough = function(m, roughRange, colNames = NULL) {
   } else {
     roughness = 0
   }
+  # # alternatively / in addition, could try gaussian filter when calculating roughness
+  # ampl_filter = dnorm(colNames, mean = roughMean, sd = roughSD)
+  # ampl_filter = ampl_filter / sum(ampl_filter)  # to pdf
+  # # plot(ampl_filter, type = 'l')
+  # roughness = sum(colSums(m) * ampl_filter) / sum(m) * 100
   return(roughness)
 }
 

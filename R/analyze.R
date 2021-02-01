@@ -18,9 +18,9 @@ analyzeFolder = function(...) {
 #' optimized for human non-linguistic vocalizations. See
 #' vignette('acoustic_analysis', package = 'soundgen') for details. The defaults
 #' and reasonable ranges of all arguments can be found in
-#' \link{defaults_analyze}. Alternative workflow: extract manually corrected
-#' pitch contours with pitch_app(), then run \code{analyze(pitchManual = ...)}
-#' with these manual contours.
+#' \code{\link{defaults_analyze}}. Alternative workflow: extract manually
+#' corrected pitch contours with \code{\link{pitch_app}}, then run
+#' \code{analyze(pitchManual = ...)} with these manual contours.
 #'
 #' Each pitch tracker is controlled by its own list of settings, as follows:
 #' \describe{\item{\code{pitchDom} (lowest dominant frequency band)}{\itemize{
@@ -62,8 +62,7 @@ analyzeFolder = function(...) {
 #' spectrum)}{\itemize{\item \code{harmThres} minimum height of spectral peak,
 #' dB \item \code{harmPerSel} the number of harmonics per sliding selection
 #' \item \code{harmTol} maximum tolerated deviation of peak frequency from
-#' multiples of f0, proportion of f0 \item + plotting pars, notably set
-#' \code{type = 'l'} to plot the \code{harmHeight} contour }} }
+#' multiples of f0, proportion of f0 }} }
 #'
 #' @seealso \code{\link{pitch_app}} \code{\link{getLoudness}}
 #'   \code{\link{segment}} \code{\link{getRMS}}
@@ -96,12 +95,13 @@ analyzeFolder = function(...) {
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band, 'hps' =
-#'   harmonic product spectrum, '' or NULL = no pitch analysis
+#'   harmonic product spectrum, NULL = no pitch analysis
 #' @param pitchManual manually corrected pitch contour. For a single sound,
-#'   provide a numeric vector of any length, and for multiple sounds, a
-#'   dataframe with columns "file" and "pitch" (or path to a csv file), ideally
-#'   as returned by \code{\link{pitch_app}} with the same windowLength and step
-#'   as in current call to analyze
+#'   provide a numeric vector of any length. For multiple sounds, provide a
+#'   dataframe with columns "file" and "pitch" (or path to a csv file) as
+#'   returned by \code{\link{pitch_app}}, ideally with the same windowLength and
+#'   step as in current call to analyze. A named list with pitch vectors per
+#'   file is also OK
 #' @param entropyThres pitch tracking is only performed for frames with Weiner
 #'   entropy below \code{entropyThres}, but other spectral descriptives are
 #'   still calculated (NULL = analyze everything)
@@ -176,7 +176,8 @@ analyzeFolder = function(...) {
 #'   pitch contour. Set to \code{list(type = 'n')} to suppress
 #' @param extraContour name of an output variable to overlapy on the pitch
 #'   contour plot, eg 'peakFreq' or 'loudness'; can also be a list with extra
-#'   graphical parameters such as lwd, col, etc.
+#'   graphical parameters, eg \code{extraContour = list(x = 'harmHeight', col =
+#'   'red')}
 #' @param xlab,ylab,main plotting parameters
 #' @param width,height,units,res parameters passed to
 #'   \code{\link[grDevices]{png}} if the plot is saved
@@ -229,8 +230,8 @@ analyzeFolder = function(...) {
 #'   addSilence = 50)  # NB: always have some silence before and after!!!
 #' # playme(sound, 16000)
 #' a = analyze(sound, samplingRate = 16000, plot = TRUE)
-#' # str(a$detailed)  # frame-by-frame
-#' # a$summary        # summary per sound
+#' str(a$detailed)  # frame-by-frame
+#' a$summary        # summary per sound
 #'
 #' \dontrun{
 #' # For maximum processing speed (just basic spectral descriptives):
@@ -263,10 +264,10 @@ analyzeFolder = function(...) {
 #'   temperature = 0.001, samplingRate = 44100, pitchSamplingRate = 44100)
 #' # playme(sound2, 44100)
 #' a2 = analyze(sound2, samplingRate = 44100, priorSD = 24,
-#'              pathfinding = 'slow', ylim = c(0, 5))
+#'              plot = TRUE, pathfinding = 'fast', ylim = c(0, 5))
 #'
 #' # Fancy plotting options:
-#' a = analyze(sound1, samplingRate = 44100,
+#' a = analyze(sound1, samplingRate = 44100, plot = TRUE,
 #'   xlab = 'Time, ms', colorTheme = 'seewave',
 #'   contrast = .5, ylim = c(0, 4), main = 'My plot',
 #'   pitchMethods = c('dom', 'autocor', 'spec', 'hps', 'cep'),
@@ -278,26 +279,21 @@ analyzeFolder = function(...) {
 #'
 #' # Different options for summarizing the output
 #' a = analyze(sound1, 44100,
-#'             summaryFun = NULL)  # frame-by-frame
-#' a = analyze(sound1, 44100,
-#'             summaryFun = c('mean', 'range'))  # one row per sound
+#'             summaryFun = c('mean', 'range'))
+#' a$summary  # one row per sound
 #' # ...with custom summaryFun, eg time of peak relative to duration (0 to 1)
 #' timePeak = function(x) which.max(x) / length(x)  # without omitting NAs
 #' timeTrough = function(x) which.min(x) / length(x)
 #' a = analyze(sound2, samplingRate = 16000,
 #'             summaryFun = c('mean', 'timePeak', 'timeTrough'))
+#' colnames(a$summary)
 #'
 #' # Analyze a selection rather than the whole sound
-#' a = analyze(sound1, samplingRate = 16000, from = .4, to = .8)
+#' a = analyze(sound1, samplingRate = 16000, from = .4, to = .8, plot = TRUE)
 #'
 #' # Use only a range of frequencies when calculating spectral descriptives
 #' # (ignore everything below 100 Hz and above 8000 Hz as irrelevant noise)
 #' a = analyze(sound1, samplingRate = 16000, cutFreq = c(100, 8000))
-#'
-#' # Save the plot
-#' a = analyze(sound1, 44100, ylim = c(0, 5),
-#'             savePlots = '~/Downloads/',
-#'             width = 20, height = 15, units = 'cm', res = 300)
 #'
 #' ## Amplitude and loudness: analyze() should give the same results as
 #' # dedicated functions getRMS() / getLoudness()
@@ -311,9 +307,9 @@ analyzeFolder = function(...) {
 #' a1$detailed$loudness  # loudness per STFT frame (1 sone by definition)
 #' getLoudness(sound3, samplingRate = samplingRate, windowLength = 25,
 #'             overlap = 50, SPL_measured = 40, scale = 1)$loudness
-#' a1$ampl  # RMS amplitude per STFT frame
+#' a1$detailed$ampl  # RMS amplitude per STFT frame
 #' getRMS(sound3, samplingRate = samplingRate, windowLength = 25,
-#'        overlap = 50, scale = 1)
+#'        overlap = 50, scale = 1)$detailed
 #' # or even simply: sqrt(mean(sound3 ^ 2))
 #'
 #' # The same sound as above, but with half the amplitude
@@ -325,27 +321,17 @@ analyzeFolder = function(...) {
 #' a1$detailed$loudness/ a_half$detailed$loudness
 #' # loudness is not a linear function of amplitude
 #'
-#' # Amplitude & loudness of an existing audio file
-#' sound4 = '~/Downloads/temp/cry_451_soundgen.wav'
-#' a2 = analyze(sound4, windowLength = 25, overlap = 50,
-#'              loudness = list(SPL_measured = 40))
-#' apply(a2[, c('loudness', 'ampl')], 2, median, na.rm = TRUE)
-#' median(getLoudness(sound4, windowLength = 25, overlap = 50,
-#'                    SPL_measured = 40)$loudness)
-#' # NB: not identical b/c analyze() doesn't consider very quiet frames
-#' median(getRMS(sound4, windowLength = 25, overlap = 50, scale = 1))
-#'
 #' # Analyzing ultrasounds (slow but possible, just adjust pitchCeiling)
-#' s = soundgen(sylLen = 200, addSilence = 10,
+#' s = soundgen(sylLen = 100, addSilence = 10,
 #'   pitch = c(25000, 35000, 30000),
 #'   formants = NA, rolloff = -12, rolloffKHz = 0,
 #'   pitchSamplingRate = 350000, samplingRate = 350000, windowLength = 5,
 #'   pitchCeiling = 45000, invalidArgAction = 'ignore')
 #' # s is a bat-like ultrasound inaudible to humans
-#' spectrogram(s, 350000, windowLength = 5)
-#' a = analyze(s, 350000, pitchCeiling = 45000, priorMean = NA,
-#'             windowLength = 5, overlap = 0,
-#'             nFormants = 0, SPL_measured = 0)
+#' a = analyze(s, 350000, plot = TRUE,
+#'             pitchCeiling = 45000, priorMean = NA,
+#'             windowLength = 2, overlap = 0,
+#'             nFormants = 0, loudness = NULL)
 #' # NB: ignore formants and loudness estimates for such non-human sounds
 #'
 #' # download 260 sounds from Anikin & Persson (2017)

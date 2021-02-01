@@ -1025,7 +1025,7 @@ addPitchCands = function(pitchCands,
       if (extraContour_pars$type != 'n') {
         if (is.null(extraContour_pars$lty)) extraContour_pars$lty = 2
         if (is.null(extraContour_pars$lwd)) extraContour_pars$lwd = 2
-        if (is.null(extraContour_pars$col)) extraContour_pars$col = 'pink'
+        if (is.null(extraContour_pars$col)) extraContour_pars$col = 'red'
         do.call(points, c(list(x = timestamps, y = extraContour * yScaleCoef),
                          extraContour_pars))
       }

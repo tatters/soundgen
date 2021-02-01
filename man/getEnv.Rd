@@ -11,6 +11,8 @@ getEnv(
 )
 }
 \arguments{
+\item{sound}{waveform as a numeric vector}
+
 \item{windowLength_points}{the length of smoothing window, points. If
 specified, overrides \code{windowLength}}
 

@@ -110,7 +110,7 @@ spectrogramFolder = function(...) {
 #' # playme(sound, samplingRate = 16000)
 #'
 #' # basic spectrogram
-#' spectrogram(sound, samplingRate = 16000)
+#' spectrogram(sound, samplingRate = 16000, yScale = 'log')
 #'
 #' \dontrun{
 #' # add bells and whistles
@@ -425,10 +425,10 @@ spectrogram = function(
     Z1[Z1 <= 0] = 0
   }
 
+  # contrast & brightness
   if (contrast_exp != 1) {
     Z1 = Z1 ^ contrast_exp
   }
-
   if (any(Z1 != 0)) Z1 = Z1 / max(Z1)
   if (brightness_exp != 1) {
     Z1 = Z1 / brightness_exp
@@ -445,148 +445,18 @@ spectrogram = function(
   }
   if (plot) {
     # produce a spectrogram of the modified fft
-    color.palette = switchColorTheme(colorTheme)
-    if (osc == TRUE) osc = 'linear' else if (!is.character(osc)) osc = 'none'
-    op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
-    if (is.null(xlab)) xlab = ''
-    if (!is.null(maxPoints)) {
-      if (length(maxPoints) == 1) maxPoints = c(maxPoints, maxPoints)
-    }
-    if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
-    if (is.null(main)) {
-      if (audio$filename_noExt == 'sound') {
-        main = ''
-      } else {
-        main = audio$filename_noExt
-      }
-    }
-
-    lx = length(X)
-    ly = length(Y)
-    x_ms = X[lx] < 1    # need to convert x-scale
-    y_Hz = ylim[2] < 1  # need to convert y-scale
-
-    if (osc %in% c('linear', 'dB')) {
-      # For long files, downsample before plotting
-      if (!is.null(maxPoints) && maxPoints[1] < audio$ls) {
-        myseq = seq(1, audio$ls, by = ceiling(audio$ls / maxPoints[1]))
-        audio$sound = audio$sound[myseq]
-        audio$ls = length(myseq)
-      }
-
-      if (osc == 'dB') {
-        audio$sound = .osc(
-          audio,
-          dynamicRange = dynamicRange,
-          dB = TRUE,
-          plot = FALSE,
-          returnWave = TRUE)
-        ylim_osc = c(-2 * dynamicRange, 0)
-      } else {
-        ylim_osc = c(-audio$scale, audio$scale)
-      }
-
-      layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
-      par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
-      time_stamps = seq(0, audio$duration, length.out = audio$ls) + audio$timeShift
-      plot(
-        time_stamps,
-        audio$sound,
-        type = "l",
-        ylim = ylim_osc,
-        axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
-        xlab = xlab, ylab = '', main = '', ...)
-      box()
-      time_location = axTicks(1, axp = xaxp)
-      time_labels = convert_sec_to_hms(time_location, 3)
-      axis(side = 1, at = time_location, labels = time_labels, ...)
-
-      if (osc == 'dB') {
-        axis(side = 4, at = seq(-dynamicRange, 0, by = 10), ...)
-        abline(h = -dynamicRange, lty = 2, col = 'gray70')
-        # mtext("dB", side = 2, line = 3, ...)
-      } else {
-        abline(h = 0, lty = 2, col = 'gray70')
-      }
-      par(mar = c(0, mar[2:4]), xaxt = 'n', yaxt = 's')
-      xlab = ''
-    } else {
-      par(mar = mar)
-    }
-
-    if (x_ms) {
-      xlim = c(0, audio$duration * 1000) + audio$timeShift * 1000
-    } else {
-      X = X / 1000
-      xlim = c(0, audio$duration) + audio$timeShift
-    }
-    if (y_Hz) {
-      Y = Y * 1000
-      ylim = ylim * 1000
-      min_log_freq = 10
-      if (is.null(ylab)) ylab = 'Frequency, Hz'
-    }  else {
-      min_log_freq = .01
-      if (is.null(ylab)) ylab = 'Frequency, kHz'
-    }
-    if (yScale == 'log' & ylim[1] < min_log_freq)  ylim[1] = min_log_freq
-    idx_y = which(Y >= (ylim[1] / 1.05) & Y <= (ylim[2] * 1.05))
-    # 1.05 to avoid having a bit of white space
-    Y = Y[idx_y]
-    ly = length(Y)
-    Z1_plot = Z1[, idx_y]
-
-    filled.contour.mod(
-      x = X, y = Y, z = Z1_plot,
-      levels = seq(0, 1, length = 30),
-      color.palette = color.palette,
-      ylim = ylim, main = main,
-      xlab = xlab, ylab = ylab,
-      xlim = xlim, xaxt = 'n',
-      log = ifelse(yScale == 'log', 'y', ''),
-      maxPoints = maxPoints[2],
+    plotSpec(
+      X = X, Y = Y, Z = Z1,
+      audio = audio, internal = internal, dynamicRange = dynamicRange,
+      osc = osc, heights = heights, ylim = ylim, yScale = yScale,
+      maxPoints = maxPoints, colorTheme = colorTheme,
+      extraContour = extraContour,
+      xlab = xlab, ylab = ylab, xaxp = xaxp,
+      mar = mar, main = main, grid = grid,
+      width = width, height = height,
+      units = units, res = res,
       ...
     )
-    if (!(osc %in% c('linear', 'dB'))) {
-      time_location = axTicks(1, axp = xaxp)
-      time_labels = convert_sec_to_hms(time_location, 3)
-      axis(side = 1, at = time_location, labels = time_labels, ...)
-    }
-    if (is.numeric(grid)) {
-      n_grid_per_kHz = diff(range(ylim)) * grid
-      if (Y[length(Y)] < 1) n_grid_per_kHz = n_grid_per_kHz / 1000
-      grid(nx = n_grid_per_kHz, ny = n_grid_per_kHz,
-           col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3)
-      # grid(nx = NULL, ny = NULL,
-      #      col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3,
-      #      equilogs = TRUE)
-    }
-    if (!is.null(internal$pitch)) {
-      do.call(addPitchCands, c(internal$pitch, list(y_Hz = y_Hz)))
-    }
-
-    # add an extra contour, if any
-    if (!is.null(extraContour)) {
-      extraContour_pars = list()
-      if (is.list(extraContour)) {
-        if (length(extraContour) > 1)
-          extraContour_pars = extraContour[2:length(extraContour)]
-        cnt = extraContour[[1]]
-      } else {
-        cnt = extraContour
-      }
-      # make sure the contour's length = ncol(spectrogram)
-      lc = length(cnt)
-      cnt = approx(x = 1:lc, y = cnt,
-                   xout = seq(1, lc, length.out = length(X)),
-                   na.rm = FALSE)$y  # see ex. in ?approx on handling NAs
-      do.call(addPitchCands, list(
-        extraContour = cnt, extraContour_pars = extraContour_pars,
-        y_Hz = y_Hz, timestamps = X,
-        pitchCands = NA, pitchCert = NA, pitchSource = NA, pitch = NA))
-    }
-    # restore original pars
-    par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
   }
   if (is.character(audio$savePlots)) {
     dev.off()
@@ -813,3 +683,174 @@ getSmoothSpectrum = function(sound,
   invisible(out)
 }
 
+
+
+plotSpec = function(
+  X, Y, Z,
+  audio = NULL,
+  internal = NULL,
+  dynamicRange = 80,
+  osc = c('none', 'linear', 'dB')[2],
+  heights = c(3, 1),
+  ylim = NULL,
+  yScale = c('linear', 'log')[1],
+  maxPoints = c(1e5, 5e5),
+  padWithSilence = TRUE,
+  colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],
+  extraContour = NULL,
+  xlab = NULL,
+  ylab = NULL,
+  xaxp = NULL,
+  mar = c(5.1, 4.1, 4.1, 2),
+  main = NULL,
+  grid = NULL,
+  width = 900,
+  height = 500,
+  units = 'px',
+  res = NA,
+  ...
+) {
+  # produce a spectrogram of the modified fft
+  color.palette = switchColorTheme(colorTheme)
+  if (osc == TRUE) osc = 'linear' else if (!is.character(osc)) osc = 'none'
+  op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
+  if (is.null(xlab)) xlab = ''
+  if (!is.null(maxPoints)) {
+    if (length(maxPoints) == 1) maxPoints = c(maxPoints, maxPoints)
+  }
+  if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
+  if (is.null(main)) {
+    if (audio$filename_noExt == 'sound') {
+      main = ''
+    } else {
+      main = audio$filename_noExt
+    }
+  }
+
+  lx = length(X)
+  ly = length(Y)
+  x_ms = X[lx] < 1    # need to convert x-scale
+  y_Hz = ylim[2] < 1  # need to convert y-scale
+
+  if (osc %in% c('linear', 'dB')) {
+    # For long files, downsample before plotting
+    if (!is.null(maxPoints) && maxPoints[1] < audio$ls) {
+      myseq = seq(1, audio$ls, by = ceiling(audio$ls / maxPoints[1]))
+      audio$sound = audio$sound[myseq]
+      audio$ls = length(myseq)
+    }
+
+    if (osc == 'dB') {
+      audio$sound = .osc(
+        audio,
+        dynamicRange = dynamicRange,
+        dB = TRUE,
+        plot = FALSE,
+        returnWave = TRUE)
+      ylim_osc = c(-2 * dynamicRange, 0)
+    } else {
+      ylim_osc = c(-audio$scale, audio$scale)
+    }
+
+    layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = heights)
+    par(mar = c(mar[1:2], 0, mar[4]), xaxt = 's', yaxt = 's')
+    time_stamps = seq(0, audio$duration, length.out = audio$ls) + audio$timeShift
+    plot(
+      time_stamps,
+      audio$sound,
+      type = "l",
+      ylim = ylim_osc,
+      axes = FALSE, xaxs = "i", yaxs = "i", bty = 'o',
+      xlab = xlab, ylab = '', main = '', ...)
+    box()
+    time_location = axTicks(1, axp = xaxp)
+    time_labels = convert_sec_to_hms(time_location, 3)
+    axis(side = 1, at = time_location, labels = time_labels, ...)
+
+    if (osc == 'dB') {
+      axis(side = 4, at = seq(-dynamicRange, 0, by = 10), ...)
+      abline(h = -dynamicRange, lty = 2, col = 'gray70')
+      # mtext("dB", side = 2, line = 3, ...)
+    } else {
+      abline(h = 0, lty = 2, col = 'gray70')
+    }
+    par(mar = c(0, mar[2:4]), xaxt = 'n', yaxt = 's')
+    xlab = ''
+  } else {
+    par(mar = mar)
+  }
+
+  if (x_ms) {
+    xlim = c(0, audio$duration * 1000) + audio$timeShift * 1000
+  } else {
+    X = X / 1000
+    xlim = c(0, audio$duration) + audio$timeShift
+  }
+  if (y_Hz) {
+    Y = Y * 1000
+    ylim = ylim * 1000
+    min_log_freq = 10
+    if (is.null(ylab)) ylab = 'Frequency, Hz'
+  }  else {
+    min_log_freq = .01
+    if (is.null(ylab)) ylab = 'Frequency, kHz'
+  }
+  if (yScale == 'log' & ylim[1] < min_log_freq)  ylim[1] = min_log_freq
+  idx_y = which(Y >= (ylim[1] / 1.05) & Y <= (ylim[2] * 1.05))
+  # 1.05 to avoid having a bit of white space
+  Y = Y[idx_y]
+  ly = length(Y)
+  Z = Z[, idx_y]
+
+  filled.contour.mod(
+    x = X, y = Y, z = Z,
+    levels = seq(0, 1, length = 30),
+    color.palette = color.palette,
+    ylim = ylim, main = main,
+    xlab = xlab, ylab = ylab,
+    xlim = xlim, xaxt = 'n',
+    log = ifelse(yScale == 'log', 'y', ''),
+    maxPoints = maxPoints[2],
+    ...
+  )
+  if (!(osc %in% c('linear', 'dB'))) {
+    time_location = axTicks(1, axp = xaxp)
+    time_labels = convert_sec_to_hms(time_location, 3)
+    axis(side = 1, at = time_location, labels = time_labels, ...)
+  }
+  if (is.numeric(grid)) {
+    n_grid_per_kHz = diff(range(ylim)) * grid
+    if (Y[length(Y)] < 1) n_grid_per_kHz = n_grid_per_kHz / 1000
+    grid(nx = n_grid_per_kHz, ny = n_grid_per_kHz,
+         col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3)
+    # grid(nx = NULL, ny = NULL,
+    #      col = rgb(0, 0, 0, .25, maxColorValue = 1), lty = 3,
+    #      equilogs = TRUE)
+  }
+  if (!is.null(internal$pitch)) {
+    do.call(addPitchCands, c(internal$pitch, list(y_Hz = y_Hz)))
+  }
+
+  # add an extra contour, if any
+  if (!is.null(extraContour)) {
+    extraContour_pars = list()
+    if (is.list(extraContour)) {
+      if (length(extraContour) > 1)
+        extraContour_pars = extraContour[2:length(extraContour)]
+      cnt = extraContour[[1]]
+    } else {
+      cnt = extraContour
+    }
+    # make sure the contour's length = ncol(spectrogram)
+    lc = length(cnt)
+    cnt = approx(x = 1:lc, y = cnt,
+                 xout = seq(1, lc, length.out = length(X)),
+                 na.rm = FALSE)$y  # see ex. in ?approx on handling NAs
+    do.call(addPitchCands, list(
+      extraContour = cnt, extraContour_pars = extraContour_pars,
+      y_Hz = y_Hz, timestamps = X,
+      pitchCands = NA, pitchCert = NA, pitchSource = NA, pitch = NA))
+  }
+  # restore original pars
+  par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
+}

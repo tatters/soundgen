@@ -385,7 +385,7 @@ compareSounds = function(target,
 
   if (penalizeLengthDif) {
     out = apply(sim_by_column, 2, function(x) {
-      # if two sounds are of different length, similarity is reduced
+      # if two sounds have different lengths, similarity is reduced
       sum(x, na.rm = TRUE) / length(x)
     })
   } else {
@@ -398,6 +398,7 @@ compareSounds = function(target,
   }
   return(out)
 }
+
 
 #' Wiggle parameters
 #'

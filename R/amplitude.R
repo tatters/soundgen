@@ -925,6 +925,7 @@ addAM = function(x,
 #' Unlike seewave::env, this function always returns an envelope of the same
 #' length as the original sound, regardless of the amount of smoothing.
 #' @inheritParams flatEnv
+#' @param sound waveform as a numeric vector
 #' @param method 'peak' for peak amplitude per window, 'rms' for root mean
 #'   square amplitude, 'mean' for mean (for DC offset removal), 'hil' for
 #'   Hilbert, 'raw' for low-pass filtering the actual sound

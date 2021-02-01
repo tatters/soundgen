@@ -120,7 +120,7 @@ spectral novelty. NULL = skip novelty analysis}
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band, 'hps' =
-harmonic product spectrum, '' or NULL = no pitch analysis}
+harmonic product spectrum, NULL = no pitch analysis}
 
 \item{entropyThres}{pitch tracking is only performed for frames with Weiner
 entropy below \code{entropyThres}, but other spectral descriptives are
@@ -226,7 +226,8 @@ pitch contour. Set to \code{list(type = 'n')} to suppress}
 
 \item{extraContour}{name of an output variable to overlapy on the pitch
 contour plot, eg 'peakFreq' or 'loudness'; can also be a list with extra
-graphical parameters such as lwd, col, etc.}
+graphical parameters, eg \code{extraContour = list(x = 'harmHeight', col =
+'red')}}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 

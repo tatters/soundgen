@@ -56,7 +56,7 @@ is above some threshold - specified in \code{\link{analyze}})}
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band, 'hps' =
-harmonic product spectrum, '' or NULL = no pitch analysis}
+harmonic product spectrum, NULL = no pitch analysis}
 
 \item{nCands}{maximum number of pitch candidates per method, normally 1...4
 (except for \code{dom}, which returns at most one candidate per frame)}
