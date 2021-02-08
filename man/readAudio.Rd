@@ -15,7 +15,7 @@ readAudio(
 )
 }
 \arguments{
-\item{x}{audio input (only used for Wave object or numeric vectors)}
+\item{x}{audio input (only used for Wave objects or numeric vectors)}
 
 \item{input}{a list returned by \code{\link{checkInputType}}}
 

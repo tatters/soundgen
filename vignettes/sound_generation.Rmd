@@ -774,7 +774,7 @@ s = soundgen(sylLen = 1200,
              samplingRate = 22000, play = playback, plot = TRUE)
 ```
 
-Another method is to encode very rapid pitch jumps, say f0 and a formant or between harmonically related values, like this:
+Another method is to encode very rapid pitch jumps, say between f0 and a formant or between harmonically related values, like this:
 
 ```{r fig.width = 7, fig.height = 7}
 s = soundgen(sylLen = 1200, 

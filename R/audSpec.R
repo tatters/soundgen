@@ -41,6 +41,7 @@
 #'
 #' # remove the oscillogram
 #' soundgen:::audSpectrogram(sound, samplingRate = 16000, osc = 'none')  # or NULL etc
+#' }
 audSpectrogram = function(
   x,
   samplingRate = NULL,
@@ -227,6 +228,7 @@ audSpectrogram = function(
         width = width, height = height, units = units, res = res)
   }
   if (plot) {
+    if (is.null(ylim)) ylim = c(minFreq, maxFreq) / 1000
     plotSpec(
       X = as.numeric(colnames(audSpec)),  # time
       Y = as.numeric(rownames(audSpec)),  # freq

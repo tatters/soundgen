@@ -263,6 +263,7 @@ spectrogram = function(
 #' @inheritParams spectrogram
 #' @param internal a long list of stuff for plotting pitch contours passed by
 #'   analyze()
+#' @param audio a list returned by \code{readAudio}
 #' @keywords internal
 .spectrogram = function(
   audio,
@@ -684,7 +685,18 @@ getSmoothSpectrum = function(sound,
 }
 
 
-
+#' Plot spectrogram
+#'
+#' Internal soundgen function
+#'
+#' Helper function called by spectrogram() etc to plot a spectrogram.
+#' @param X time stamps, ms
+#' @param Y frequency stamps, kHz
+#' @param Z time in rows, frequency in columns (NB: this is the transpose of the
+#'   exported spectrogram!)
+#' @param audio a list returned by \code{readAudio}
+#' @inheritParams spectrogram
+#' @keywords internal
 plotSpec = function(
   X, Y, Z,
   audio = NULL,
@@ -694,6 +706,8 @@ plotSpec = function(
   heights = c(3, 1),
   ylim = NULL,
   yScale = c('linear', 'log')[1],
+  contrast = .2,
+  brightness = 0,
   maxPoints = c(1e5, 5e5),
   padWithSilence = TRUE,
   colorTheme = c('bw', 'seewave', 'heat.colors', '...')[1],

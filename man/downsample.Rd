@@ -20,12 +20,13 @@ Internal soundgen function
 }
 \details{
 Takes a numeric vector and downsamples it to the required sampling rate by
-simply throwing away some of the original points. If the new sampling rate is
-higher than the original, does nothing.
+applying a low-pass filter and then decimating. If the new sampling rate is
+higher than the original, it does nothing.
 }
 \examples{
-s = sort(rnorm(20))
-soundgen:::downsample(s, srNew = 5, srOld = 18)
-soundgen:::downsample(s, srNew = 5, srOld = 40)
+s = rnorm(100); plot(s, type = 'l')
+s1 = soundgen:::downsample(s, srNew = 5, srOld = 18)
+plot(s1, type = 'l', col = 'red')
+plot(soundgen:::downsample(s, srNew = 5, srOld = 40), type = 'b')
 }
 \keyword{internal}

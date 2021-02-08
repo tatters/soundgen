@@ -9,19 +9,12 @@ matchPars(
   samplingRate = NULL,
   pars = NULL,
   init = NULL,
-  method = c("cor", "cosine", "pixel", "dtw"),
   probMutation = 0.25,
   stepVariance = 0.1,
   maxIter = 50,
   minExpectedDelta = 0.001,
-  windowLength = 40,
-  overlap = 50,
-  step = NULL,
-  verbose = TRUE,
-  padWith = NA,
-  penalizeLengthDif = TRUE,
-  dynamicRange = 80,
-  maxFreq = NULL
+  compareSoundsPars = list(),
+  verbose = TRUE
 )
 }
 \arguments{
@@ -38,13 +31,6 @@ optimize}
 and the values of other arguments to soundgen that are fixed at non-default
 values (if any)}
 
-\item{method}{method of comparing mel-transformed spectra of two sounds:
-"cor" = average Pearson's correlation of mel-transformed spectra of
-individual FFT frames; "cosine" = same as "cor" but with cosine similarity
-instead of Pearson's correlation; "pixel" = absolute difference between
-each point in the two spectra; "dtw" = discrete time warp with
-\code{\link[dtw]{dtw}}}
-
 \item{probMutation}{the probability of a parameter mutating per iteration}
 
 \item{stepVariance}{scale factor for calculating the size of mutations}
@@ -55,33 +41,11 @@ the fit to target}
 \item{minExpectedDelta}{minimum improvement in fit to target required to
 accept the new sound candidate}
 
-\item{windowLength}{length of FFT window, ms}
-
-\item{overlap}{overlap between successive FFT frames, \%}
-
-\item{step}{you can override \code{overlap} by specifying FFT step, ms (NB:
-because digital audio is sampled at discrete time intervals of
-1/samplingRate, the actual step and thus the time stamps of STFT frames
-may be slightly different, eg 24.98866 instead of 25.0 ms)}
+\item{compareSoundsPars}{a list of control parameters passed to
+\code{\link{compareSounds}}}
 
 \item{verbose}{if TRUE, plays back the accepted candidate at each iteration
 and reports the outcome}
-
-\item{padWith}{compared spectra are padded with either silence (\code{padWith
-= 0}) or with NA's (\code{padWith = NA}) to have the same number of
-columns. When the sounds are of different duration, padding with zeros
-rather than NA's improves the fit to target measured by \code{method =
-'pixel'} and \code{'dtw'}, but it has no effect on \code{'cor'} and
-\code{'cosine'}.}
-
-\item{penalizeLengthDif}{if TRUE, sounds of different length are considered
-to be less similar; if FALSE, only the overlapping parts of two sounds are
-compared}
-
-\item{dynamicRange}{parts of the spectra quieter than \code{-dynamicRange} dB
-are not compared}
-
-\item{maxFreq}{parts of the spectra above \code{maxFreq} Hz are not compared}
 }
 \value{
 Returns a list of length 2: \code{$history} contains the tried
@@ -100,8 +64,8 @@ package = 'soundgen') for more information.
 }
 \examples{
 \dontrun{
-target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-  pitch = c(300, 200), rolloff = -5, play = TRUE)
+target = soundgen(sylLen = 600, pitch = c(300, 200),
+                  rolloff = -15, play = TRUE, plot = TRUE)
 # we hope to reproduce this sound
 
 # Match pars based on acoustic analysis alone, without any optimization.
@@ -110,7 +74,8 @@ m1 = matchPars(target = target,
                samplingRate = 16000,
                maxIter = 0,  # no optimization, only acoustic analysis
                verbose = TRUE)
-cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0.001)))
+cand1 = do.call(soundgen, c(m1$pars, list(
+  temperature = 0.001, play = TRUE, plot = TRUE)))
 
 # Try to improve the match by optimizing rolloff
 # (this may take a few minutes to run, and the results may vary)
@@ -119,8 +84,8 @@ m2 = matchPars(target = target,
                pars = 'rolloff',
                maxIter = 100,
                verbose = TRUE)
-# rolloff should be moving from default (-9) to target (-5):
+# rolloff should be moving from default (-9) to target (-15):
 sapply(m2$history, function(x) x$pars$rolloff)
-cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
+cand2 = do.call(soundgen, c(m2$pars, list(play = TRUE, plot = TRUE)))
 }
 }

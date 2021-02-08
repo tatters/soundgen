@@ -50,4 +50,40 @@ of filters. The main difference is that we don't window the signal and
 therefore get full temporal resolution in all frequency bins. For ex., this
 preserves high-frequency AM that is completely invisible in a spectrogram.
 }
+\examples{
+# synthesize a sound 500 ms long, with gradually increasing hissing noise
+sound = soundgen(sylLen = 500, temperature = 0.001, noise = list(
+  time = c(0, 650), value = c(-40, 0)), formantsNoise = list(
+  f1 = list(freq = 5000, width = 10000)))
+# playme(sound, samplingRate = 16000)
+
+# basic spectrogram
+soundgen:::audSpectrogram(sound, samplingRate = 16000)
+
+# compare to an FFT-based spectrogram
+spectrogram(sound, samplingRate = 16000, yScale = 'log')
+
+\dontrun{
+# add bells and whistles
+soundgen:::audSpectrogram(sound, samplingRate = 16000,
+  yScale = 'linear',
+  osc = 'dB',  # plot oscillogram in dB
+  heights = c(2, 1),  # spectro/osc height ratio
+  brightness = -.1,  # reduce brightness
+  colorTheme = 'heat.colors',  # pick color theme
+  cex.lab = .75, cex.axis = .75,  # text size and other base graphics pars
+  grid = 5,  # lines per kHz; to customize, add manually with graphics::grid()
+  ylim = c(0, 5),  # always in kHz
+  main = 'My spectrogram' # title
+  # + axis labels, etc
+)
+
+# change dynamic range
+soundgen:::audSpectrogram(sound, samplingRate = 16000, dynamicRange = 40)
+soundgen:::audSpectrogram(sound, samplingRate = 16000, dynamicRange = 120)
+
+# remove the oscillogram
+soundgen:::audSpectrogram(sound, samplingRate = 16000, osc = 'none')  # or NULL etc
+}
+}
 \keyword{internal}

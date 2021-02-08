@@ -26,6 +26,7 @@ Imports: stats,
     mvtnorm,
     dtw,
     phonTools,
+    signal,
     shiny,
     shinyjs
 Depends: R (>= 3.4), shinyBS

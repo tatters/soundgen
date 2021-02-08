@@ -18,43 +18,26 @@
 #'   file or numeric vector
 #' @param samplingRate sampling rate of \code{target} (only needed if target is
 #'   a numeric vector, rather than a .wav file)
-#' @inheritParams spectrogram
 #' @param pars arguments to \code{\link{soundgen}} that we are attempting to
 #'   optimize
 #' @param init a list of initial values for the optimized parameters \code{pars}
 #'   and the values of other arguments to soundgen that are fixed at non-default
 #'   values (if any)
-#' @param method method of comparing mel-transformed spectra of two sounds:
-#'   "cor" = average Pearson's correlation of mel-transformed spectra of
-#'   individual FFT frames; "cosine" = same as "cor" but with cosine similarity
-#'   instead of Pearson's correlation; "pixel" = absolute difference between
-#'   each point in the two spectra; "dtw" = discrete time warp with
-#'   \code{\link[dtw]{dtw}}
 #' @param probMutation the probability of a parameter mutating per iteration
 #' @param stepVariance scale factor for calculating the size of mutations
 #' @param maxIter maximum number of mutated sounds produced without improving
 #'   the fit to target
 #' @param minExpectedDelta minimum improvement in fit to target required to
 #'   accept the new sound candidate
+#' @param compareSoundsPars a list of control parameters passed to
+#'   \code{\link{compareSounds}}
 #' @param verbose if TRUE, plays back the accepted candidate at each iteration
 #'   and reports the outcome
-#' @param padWith compared spectra are padded with either silence (\code{padWith
-#'   = 0}) or with NA's (\code{padWith = NA}) to have the same number of
-#'   columns. When the sounds are of different duration, padding with zeros
-#'   rather than NA's improves the fit to target measured by \code{method =
-#'   'pixel'} and \code{'dtw'}, but it has no effect on \code{'cor'} and
-#'   \code{'cosine'}.
-#' @param penalizeLengthDif if TRUE, sounds of different length are considered
-#'   to be less similar; if FALSE, only the overlapping parts of two sounds are
-#'   compared
-#' @param dynamicRange parts of the spectra quieter than \code{-dynamicRange} dB
-#'   are not compared
-#' @param maxFreq parts of the spectra above \code{maxFreq} Hz are not compared
 #' @export
 #' @examples
 #' \dontrun{
-#' target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-#'   pitch = c(300, 200), rolloff = -5, play = TRUE)
+#' target = soundgen(sylLen = 600, pitch = c(300, 200),
+#'                   rolloff = -15, play = TRUE, plot = TRUE)
 #' # we hope to reproduce this sound
 #'
 #' # Match pars based on acoustic analysis alone, without any optimization.
@@ -63,7 +46,8 @@
 #'                samplingRate = 16000,
 #'                maxIter = 0,  # no optimization, only acoustic analysis
 #'                verbose = TRUE)
-#' cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0.001)))
+#' cand1 = do.call(soundgen, c(m1$pars, list(
+#'   temperature = 0.001, play = TRUE, plot = TRUE)))
 #'
 #' # Try to improve the match by optimizing rolloff
 #' # (this may take a few minutes to run, and the results may vary)
@@ -72,49 +56,36 @@
 #'                pars = 'rolloff',
 #'                maxIter = 100,
 #'                verbose = TRUE)
-#' # rolloff should be moving from default (-9) to target (-5):
+#' # rolloff should be moving from default (-9) to target (-15):
 #' sapply(m2$history, function(x) x$pars$rolloff)
-#' cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
+#' cand2 = do.call(soundgen, c(m2$pars, list(play = TRUE, plot = TRUE)))
 #' }
 matchPars = function(target,
                      samplingRate = NULL,
                      pars = NULL,
                      init = NULL,
-                     method = c('cor', 'cosine', 'pixel', 'dtw'),
                      probMutation = .25,
                      stepVariance = 0.1,
                      maxIter = 50,
                      minExpectedDelta = 0.001,
-                     windowLength = 40,
-                     overlap = 50,
-                     step = NULL,
-                     verbose = TRUE,
-                     padWith = NA,
-                     penalizeLengthDif = TRUE,
-                     dynamicRange = 80,
-                     maxFreq = NULL) {
+                     compareSoundsPars = list(),
+                     verbose = TRUE) {
   parsToRound = c('repeatBout', 'nSyl', 'rolloffParabHarm')
-  if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  if (is.character(target)) {
-    targetWave = tuneR::readWave(target)
-    samplingRate = targetWave@samp.rate
-  } else if (is.numeric(target)) {
-    if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
-    }
-    targetWave = tuneR::Wave(target, samp.rate = samplingRate, bit = 16)
-  } else if (class(target)[1] == 'Wave') {
-    targetWave = target
-    samplingRate = targetWave@samp.rate
+  tgt_audio = readAudio(target, input = checkInputType(target), samplingRate = samplingRate)
+  pars_melSpec = c('windowLength', 'overlap', 'step', 'dynamicRange', 'maxFreq')
+  passPars = which(names(compareSoundsPars) %in% pars_melSpec)
+  if (length(passPars) > 0) {
+    passPars_list = compareSoundsPars[[passPars]]
+  } else {
+    passPars_list = list()
   }
-
-  targetSpec = getMelSpec(targetWave,
-                          windowLength = windowLength,
-                          overlap = overlap,
-                          step = step,
-                          dynamicRange = dynamicRange,
-                          maxFreq = maxFreq,
-                          plot = FALSE)
+  spec1 = do.call(getMelSpec, c(list(
+    tgt_audio$sound,
+    samplingRate = tgt_audio$samplingRate,
+    specPars = compareSoundsPars$specPars,
+    plot = FALSE),
+    passPars_list
+  ))
 
   ## initialize
   # start with default par values, unless initial values are provided
@@ -123,24 +94,23 @@ matchPars = function(target,
   parDefault[['samplingRate']] = samplingRate
 
   # analyse the target and update the default pars
-  as = segment(target, samplingRate = samplingRate, plot = FALSE)
   aa = analyze(target, samplingRate = samplingRate, plot = FALSE)
-  af = phonTools::findformants(targetWave@left, fs = samplingRate, verify = FALSE)
-
-  parDefault$nSyl = max(nrow(as$bursts), 1)
-  parDefault$sylLen = round(mean(as$syllables$sylLen))
-  medianPause = median(as$syllables$pauseLen, na.rm = TRUE)
-  if (is.numeric(medianPause)) {
-    parDefault$pauseLen = round(medianPause)
+  af = phonTools::findformants(tgt_audio$sound,
+                               fs = tgt_audio$samplingRate, verify = FALSE)
+  if (FALSE) {
+    # syllable analysis
+    as = suppressMessages(segment(target,
+                                  samplingRate = samplingRate, plot = FALSE))
+    parDefault$nSyl = max(as$summary$nSyl, 1)
+    parDefault$sylLen = as$summary$sylLen_median
+    medianPause = as$summary$pauseLen_median
+  } else {
+    # just a single pitch contour with NAs
+    parDefault$sylLen = aa$summary$duration_noSilence * 1000
   }
-
-  p = as.numeric(na.omit(aa$pitch))
-  p = downsample(p, srNew = 5, srOld = 1 / step * 1000)  # downsample F0 measures to 5 Hz
-  if (length(p) > 1) {
-    parDefault$pitch = list(
-      time = round(seq(0, 1, length.out = length(p)), 2),
-      value = round(p)
-  )}
+  parDefault$pitch = aa$detailed$pitch
+  # downsample F0 measures to 5 Hz
+  # parDefault$pitch = downsample(p, srNew = 5, srOld = 1 / 20 * 1000)
   if (is.list(af)) {
     if (nrow(af) > 0) {
       for (f in 1:min(3, nrow(af))) {  # add max 3 formants
@@ -169,21 +139,11 @@ matchPars = function(target,
   if (class(cand)[1] == 'try-error') {
     stop ('Invalid initial pars')
   }
-  output[[1]]$sim = compareSounds(
-    target = NULL,
-    targetSpec = targetSpec,
-    cand = cand,
-    samplingRate = samplingRate,
-    method = method,
-    windowLength = windowLength,
-    overlap = overlap,
-    step = step,
-    padWith = padWith,
-    penalizeLengthDif = penalizeLengthDif,
-    dynamicRange = dynamicRange,
-    maxFreq = maxFreq,
-    summary = TRUE
-  )
+  output[[1]]$sim = mean(do.call(compareSounds, c(list(
+    x = spec1,
+    y = cand,
+    samplingRate = samplingRate
+  ), compareSoundsPars))$sim)
 
   # iteratively mutate pars and save par values that improve fit to target ('sim')
   i = 1
@@ -207,21 +167,11 @@ matchPars = function(target,
                     paste(parMut, collapse = ', ')))
     } else {
       # compare to target
-      sim_new = compareSounds(
-        target = NULL,
-        targetSpec = targetSpec,
-        cand = cand,
-        samplingRate = samplingRate,
-        method = method,
-        windowLength = windowLength,
-        overlap = overlap,
-        step = step,
-        padWith = padWith,
-        penalizeLengthDif = penalizeLengthDif,
-        dynamicRange = dynamicRange,
-        maxFreq = maxFreq,
-        summary = TRUE
-      )
+      sim_new = mean(do.call(compareSounds, c(list(
+        x = spec1,
+        y = cand,
+        samplingRate = samplingRate
+      ), compareSoundsPars))$sim)
       delta = sim_new - output[[length(output)]]$sim  # want to maximize similarity
     }
 
@@ -249,155 +199,9 @@ matchPars = function(target,
     }
   }
 
-  return (list(history = output, pars = output[[length(output)]]$pars))
+  return(list(history = output, pars = output[[length(output)]]$pars))
 }
 
-
-#' Compare sounds (experimental)
-#'
-#' Computes similarity between two sounds based on correlating mel-transformed
-#' spectra (auditory spectra). Called by \code{\link{matchPars}}.
-#' @inheritParams matchPars
-#' @param targetSpec if already calculated, the target auditory spectrum can be
-#'   provided to speed things up
-#' @param cand the sound to be compared to \code{target}
-#' @param summary if TRUE, returns the mean of similarity values calculated by
-#'   all methods in \code{method}
-#' @export
-#' @examples
-#' \dontrun{
-#' target = soundgen(sylLen = 500, formants = 'a',
-#'                   pitch = data.frame(time = c(0, 0.1, 0.9, 1),
-#'                                      value = c(100, 150, 135, 100)),
-#'                   temperature = 0.001)
-#' targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
-#'
-#' parsToTry = list(
-#'   list(formants = 'i',                                            # wrong
-#'        pitch = data.frame(time = c(0, 1),                         # wrong
-#'                           value = c(200, 300))),
-#'   list(formants = 'i',                                            # wrong
-#'        pitch = data.frame(time = c(0, 0.1, 0.9, 1),               # right
-#'                                  value = c(100, 150, 135, 100))),
-#'   list(formants = 'a',                                            # right
-#'        pitch = data.frame(time = c(0,1),                          # wrong
-#'                                  value = c(200, 300))),
-#'   list(formants = 'a',
-#'        pitch = data.frame(time = c(0, 0.1, 0.9, 1),               # right
-#'                                  value = c(100, 150, 135, 100)))  # right
-#' )
-#'
-#' sounds = list()
-#' for (s in 1:length(parsToTry)) {
-#'   sounds[[length(sounds) + 1]] =  do.call(soundgen,
-#'     c(parsToTry[[s]], list(temperature = 0.001, sylLen = 500)))
-#' }
-#'
-#' method = c('cor', 'cosine', 'pixel', 'dtw')
-#' df = matrix(NA, nrow = length(parsToTry), ncol = length(method))
-#' colnames(df) = method
-#' df = as.data.frame(df)
-#' for (i in 1:nrow(df)) {
-#'   df[i, ] = compareSounds(
-#'     target = NULL,            # can use target instead of targetSpec...
-#'     targetSpec = targetSpec,  # ...but faster to calculate targetSpec once
-#'     cand = sounds[[i]],
-#'     samplingRate = 16000,
-#'     padWith = NA,
-#'     penalizeLengthDif = TRUE,
-#'     method = method,
-#'     summary = FALSE
-#'   )
-#' }
-#' df$av = rowMeans(df, na.rm = TRUE)
-#' # row 1 = wrong pitch & formants, ..., row 4 = right pitch & formants
-#' df$formants = c('wrong', 'wrong', 'right', 'right')
-#' df$pitch = c('wrong', 'right', 'wrong', 'right')
-#' df
-#' }
-compareSounds = function(target,
-                         targetSpec = NULL,
-                         cand,
-                         samplingRate = NULL,
-                         method = c('cor', 'cosine', 'pixel', 'dtw')[1:4],
-                         windowLength = 40,
-                         overlap = 50,
-                         step = NULL,
-                         padWith = NA,
-                         penalizeLengthDif = TRUE,
-                         dynamicRange = 80,
-                         maxFreq = NULL,
-                         summary = TRUE) {
-  # extract spectrums
-  if (is.null(targetSpec)) {
-    targetSpec = getMelSpec(target,
-                            samplingRate = samplingRate,
-                            windowLength = windowLength,
-                            overlap = overlap,
-                            step = step,
-                            dynamicRange = dynamicRange,
-                            maxFreq = maxFreq)
-  }
-  candSpec = getMelSpec(cand,
-                        samplingRate = samplingRate,
-                        windowLength = windowLength,
-                        overlap = overlap,
-                        step = step,
-                        dynamicRange = dynamicRange,
-                        maxFreq = maxFreq)
-
-  # make sure the number of columns (frames) is equal for comparing the two
-  # spectrograms by padding with zeros (silence)
-  if (ncol(targetSpec) < ncol(candSpec)) {
-    targetSpec = matchColumns(matrix_short = targetSpec,
-                              nCol = ncol(candSpec),
-                              padWith = padWith)
-  } else if (ncol(targetSpec) > ncol(candSpec)) {
-    candSpec = matchColumns(matrix_short = candSpec,
-                            nCol = ncol(targetSpec),
-                            padWith = padWith)
-  }
-
-  # correlate column by column
-  sim_by_column = matrix(NA, nrow = ncol(targetSpec), ncol = length(method))
-  colnames(sim_by_column) = method
-  sim_by_column = as.data.frame(sim_by_column)
-  for (c in 1:ncol(targetSpec)) {
-    if ('cor' %in% method) {
-      sim_by_column$cor[c] = suppressWarnings(
-        cor(targetSpec[,c], candSpec[,c], use = 'na.or.complete')
-      )
-    }
-    if ('cosine' %in% method) {
-      sim_by_column$cosine[c] = crossprod(targetSpec[,c], candSpec[,c]) /
-        sqrt(crossprod(targetSpec[,c]) * crossprod(candSpec[,c]))
-    }
-    if ('pixel' %in% method) {
-      sim_by_column$pixel[c] = 1 - mean(abs(targetSpec[,c] - candSpec[,c]))
-    }
-    if ('dtw' %in% method) {
-      d = try(dtw::dtw(targetSpec[,c], candSpec[,c],
-                       distance.only = TRUE)$normalizedDistance, silent = TRUE)
-      if (class(d)[1] == 'try-error') d = NA
-      sim_by_column$dtw[c] = 1 - d
-    }
-  }
-
-  if (penalizeLengthDif) {
-    out = apply(sim_by_column, 2, function(x) {
-      # if two sounds have different lengths, similarity is reduced
-      sum(x, na.rm = TRUE) / length(x)
-    })
-  } else {
-    # length difference has no effect on similarity (e.g., it just tells us
-    # how well the shorter sound fits the middle part of the longer sound)
-    out = colMeans(sim_by_column, na.rm = TRUE)
-  }
-  if (summary) {
-    out = mean(out[method], na.rm = TRUE)
-  }
-  return(out)
-}
 
 
 #' Wiggle parameters
@@ -498,69 +302,5 @@ wigglePars = function(parList,
       }
     }
   }
-  return (parList)
-}
-
-
-#' Mel-transformed spectrum
-#'
-#' Internal soundgen function
-#'
-#' Takes a .wav file or a waveform as numeric vector + samplingRate and returns
-#' mel-transformed spectrum (auditory spectrum). Calls
-#' \code{\link[tuneR]{melfcc}}. See \code{\link{matchPars}}.
-#' @param s input sound (path to a .wav file or numeric vector)
-#' @inheritParams matchPars
-#' @param plot if TRUE, plots the spectrum
-#' @keywords internal
-getMelSpec = function(s,
-                      samplingRate = NULL,
-                      windowLength = 40,
-                      overlap = 50,
-                      step = NULL,
-                      dynamicRange = 80,
-                      maxFreq = NULL,
-                      plot = FALSE) {
-  if (is.null(step)) step = windowLength * (1 - overlap / 100)
-  throwaway01 = 2 ^ (-dynamicRange / 10)
-
-  if (is.character(s)) {
-    sWave = tuneR::readWave(s)
-    samplingRate = sWave@samp.rate
-  } else if (is.numeric(s)) {
-    if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
-    }
-    sWave = tuneR::Wave(s, samp.rate = samplingRate, bit = 16)
-  } else if (class(s)[1] == 'Wave') {
-    sWave = s
-    samplingRate = sWave@samp.rate
-  }
-
-  if (is.null(maxFreq)) maxFreq = samplingRate / 2
-  spec = t(tuneR::melfcc(
-    sWave,
-    wintime = windowLength / 1000,
-    hoptime = step / 1000,
-    maxfreq = maxFreq,
-    nbands = 100 * windowLength / 20,
-    spec_out = T
-  )$aspectrum)
-  # strip empty frames
-  spec = spec[, colMeans(spec, na.rm = TRUE) > throwaway01, drop = FALSE]
-  # log-transform and normalize
-  spec = log01(spec)
-
-  if (plot) {
-    # show the spectrum of the target
-    filled.contour.mod(
-      x = seq(1, ncol(spec) * step,
-              length.out = ncol(spec)),
-      y = 1:nrow(spec),
-      z = t(spec),
-      levels = seq(0, 1, length = 30),
-      color.palette = function(x) gray(seq(1, 0, length.out = x))
-    )
-  }
-  return(spec)
+  return(parList)
 }

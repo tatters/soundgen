@@ -390,8 +390,7 @@ updateAnalyze = function(
 
   # Calculate how far harmonics reach in the spectrum and how strong they are
   # relative to f0
-  result$harmEnergy = NA
-  result$harmHeight = NA
+  result[, c('harmEnergy', 'harmHeight', 'subRatio', 'subDep')] = NA
   if (any(result$voiced)) {
     if (is.null(freqs)) freqs = as.numeric(rownames(spectrogram)) * 1000
     if (is.null(bin)) bin = freqs[2] - freqs[1]
@@ -675,7 +674,7 @@ checkInputType = function(x) {
 #'
 #' Internal soundgen function.
 #'
-#' @param x audio input (only used for Wave object or numeric vectors)
+#' @param x audio input (only used for Wave objects or numeric vectors)
 #' @param input a list returned by \code{\link{checkInputType}}
 #' @param i iteration
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a

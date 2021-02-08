@@ -1,4 +1,6 @@
-          CHANGES IN SOUNDGEN VERSION 1.8.2.9000 [...date...]
+          CHANGES IN SOUNDGEN VERSION 2.0.0 [...date...]
+This version represents an attempt to standardize and better integrate all functions for acoustic analysis in the package. Functions for sound synthesis, notably soundgen(), are not affected by these structural changes and remain fully back-compatible.
+
 GLOBAL (seriously affects back-compatibility):
   * Functions analyzeFolder(), spectrogramFolder(), segmentFolder(), modulationSpectrumFolder(), getRMSFolder(), getLoudnessFolder() are deprecated.
   * Instead, analyze(), spectrogram(), osc(), segment(), modulationSpectrum(), getRMS(), getLoudness(), ssm(), playme(), etc. accept as input either a single sound (numeric vector, Wave object, or filename) or multiple sounds (a list of vectors or Wave objects, multiple filenames like "c(file1, file2)"", or path to folder with audio files).
@@ -10,6 +12,7 @@ MAJOR (affects back-compatibility)
   * transplantFormants(): a single argument "freqWindow", support for Wave input, etc.
   * analyze(): SPL_measured and Pref moved to a new argument "loudness = list(SPL_measured, Pref, SpreadSpectrum)"
   * analyze(): interpolWin, interpolTol, interpolCert moved to a new argument "interpol = list(win, tol, cert)"
+  * compareSounds(): multivariate DTW, different input formats, new arguments, etc.
 
 NEW FUNCTIONS:
   * reverb(): adds reverberation and/or echo to a sound

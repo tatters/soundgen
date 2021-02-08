@@ -4,7 +4,13 @@
 \alias{matchColumns}
 \title{Match number of columns}
 \usage{
-matchColumns(matrix_short, nCol, padWith = 0)
+matchColumns(
+  matrix_short,
+  nCol,
+  padWith = 0,
+  padDir = "central",
+  interpol = c("approx", "spline")[1]
+)
 }
 \arguments{
 \item{matrix_short}{input matrix}
@@ -12,16 +18,24 @@ matchColumns(matrix_short, nCol, padWith = 0)
 \item{nCol}{the required number of columns}
 
 \item{padWith}{the value to pad with, normally \code{0} or \code{NA}}
+
+\item{padDir}{specifies the affected side. For padding, it is the side on
+which new elements will be added. For trimming, this is the side that will
+be trimmed. Defaults to 'central'}
 }
 \description{
 Internal soundgen function
 }
 \details{
-Adds columns of zeros or NA to a matrix (attaching them both left and
-right), so that the new number of columns = \code{len}
+Adds columns of new values (eg zeros or NAs) to a matrix, so that the new
+number of columns = \code{len}
 }
 \examples{
 a = matrix(1:9, nrow = 3)
-soundgen:::matchColumns(a, nCol = 6, padWith = NA)
+soundgen:::matchColumns(a, nCol = 6, padWith = NA, padDir = 'central')
+soundgen:::matchColumns(a, nCol = 6, padWith = 0, padDir = 'central')
+soundgen:::matchColumns(a, nCol = 6, padWith = NA, padDir = 'left')
+soundgen:::matchColumns(a, nCol = 6, padWith = 'a', padDir = 'right')
+soundgen:::matchColumns(a, nCol = 2)
 }
 \keyword{internal}
