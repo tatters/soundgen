@@ -220,75 +220,82 @@ compareSounds = function(
   }
 
   # make sure the number of columns (STFT frames) is the same by padding with
-  # zeros (silence)
-  if (ncol(spec1) < ncol(spec2)) {
-    if (is.na(padWith)) {
-      # simply discard non-overlapping sections (shorten the long sound)
-      col_long = matchLengths(1:ncol(spec1), ncol(spec2),
-                              padDir = padDir, padWith = NA)
-      spec2 = spec2[, which(!is.na(col_long))]
-    } else {
-      # pad the shorter sound
-      spec1 = matchColumns(matrix_short = spec1,
-                           nCol = ncol(spec2),
-                           padWith = padWith,
-                           padDir = padDir)
-    }
-  } else if (ncol(spec1) > ncol(spec2)) {
-    if (is.na(padWith)) {
-      # simply discard non-overlapping sections (shorten the long sound)
-      col_long = matchLengths(1:ncol(spec2), ncol(spec1),
-                              padDir = padDir, padWith = NA)
-      spec1 = spec1[, which(!is.na(col_long))]
-    } else {
-      # pad the shorter sound
-      spec2 = matchColumns(matrix_short = spec2,
-                           nCol = ncol(spec1),
-                           padWith = padWith,
-                           padDir = padDir)
-    }
-  }
-
-  if (is.na(padWith)) {
-    # simply remove non-overlapping sections
-    na_tgt = as.numeric(which(apply(spec1, 2, function(x) any(is.na(x)))))
-    na_cnd = as.numeric(which(apply(spec2, 2, function(x) any(is.na(x)))))
-    na_idx = c(na_tgt, na_cnd)
-    if (length(na_idx) > 0) {
-      spec1 = spec1[, -na_idx]
-      spec2 = spec2[, -na_idx]
-    }
-  }
-
-  # correlate the equal-sized matrices
+  # zeros (silence). This is not needed for "dtw"
   sim = data.frame(method = method, sim = NA)
-  tgt = as.numeric(spec1)  # range 01
-  cnd = as.numeric(spec2)
-  if ('cor' %in% method) {
-    sim$sim[sim$method == 'cor'] = cor(tgt, cnd, use = 'na.or.complete')
+  if (length(method[method != 'dtw']) > 0) {
+    spec1_resized = spec1
+    spec2_resized = spec2
+    if (ncol(spec1) < ncol(spec2)) {
+      if (is.na(padWith)) {
+        # simply discard non-overlapping sections (shorten the long sound)
+        col_long = matchLengths(1:ncol(spec1), ncol(spec2),
+                                padDir = padDir, padWith = NA)
+        spec2_resized = spec2[, which(!is.na(col_long))]
+      } else {
+        # pad the shorter sound
+        spec1_resized = matchColumns(matrix_short = spec1,
+                                     nCol = ncol(spec2),
+                                     padWith = padWith,
+                                     padDir = padDir)
+      }
+    } else if (ncol(spec1) > ncol(spec2)) {
+      if (is.na(padWith)) {
+        # simply discard non-overlapping sections (shorten the long sound)
+        col_long = matchLengths(1:ncol(spec2), ncol(spec1),
+                                padDir = padDir, padWith = NA)
+        spec1_resized = spec1[, which(!is.na(col_long))]
+      } else {
+        # pad the shorter sound
+        spec2_resized = matchColumns(matrix_short = spec2,
+                                     nCol = ncol(spec1),
+                                     padWith = padWith,
+                                     padDir = padDir)
+      }
+    }
+    if (is.na(padWith)) {
+      # simply remove non-overlapping sections
+      na_tgt = as.numeric(which(apply(spec1, 2, function(x) any(is.na(x)))))
+      na_cnd = as.numeric(which(apply(spec2, 2, function(x) any(is.na(x)))))
+      na_idx = c(na_tgt, na_cnd)
+      if (length(na_idx) > 0) {
+        spec1_resized = spec1[, -na_idx]
+        spec2_resized = spec2[, -na_idx]
+      }
+    }
+    # correlate the equal-sized matrices
+    tgt = as.numeric(spec1_resized)  # range 01
+    cnd = as.numeric(spec2_resized)
+    if ('cor' %in% method) {
+      sim$sim[sim$method == 'cor'] = cor(tgt, cnd, use = 'na.or.complete')
+    }
+    if ('cosine' %in% method) {
+      # sim$sim[sim$method == 'cosine'] = crossprod(tgt, cnd) / sqrt(
+      #   crossprod(tgt, tgt) * crossprod(cnd, cnd)
+      # )
+      sim$sim[sim$method == 'cosine'] = sum(tgt * cnd, na.rm = TRUE) / sqrt(
+        sum(tgt * tgt, na.rm = TRUE) * sum(cnd * cnd, na.rm = TRUE)
+      )
+      # same as replacing NAs with 0 and running crossprod instead of sum
+    }
+    if ('diff' %in% method) {
+      sim$sim[sim$method == 'diff'] = 1 - sum(abs(tgt - cnd), na.rm = TRUE) /
+        (sum(tgt, na.rm = TRUE) + sum(cnd, na.rm = TRUE))
+      # range(0, 1); or could do 1 - 2 * ... if we want a sim measure (-1, 1)
+    }
   }
-  if ('cosine' %in% method) {
-    # sim$sim[sim$method == 'cosine'] = crossprod(tgt, cnd) / sqrt(
-    #   crossprod(tgt, tgt) * crossprod(cnd, cnd)
-    # )
-    sim$sim[sim$method == 'cosine'] = sum(tgt * cnd, na.rm = TRUE) / sqrt(
-      sum(tgt * tgt, na.rm = TRUE) * sum(cnd * cnd, na.rm = TRUE)
-    )
-    # same as replacing NAs with 0 and running crossprod instead of sum
-  }
-  if ('diff' %in% method) {
-    sim$sim[sim$method == 'diff'] = 1 - sum(abs(tgt - cnd), na.rm = TRUE) /
-      (sum(tgt, na.rm = TRUE) + sum(cnd, na.rm = TRUE))
-    # range(0, 1); or could do 1 - 2 * ... if we want a sim measure (-1, 1)
-  }
+
   if ('dtw' %in% method) {
     d = try(do.call(dtw::dtw, c(list(
-      x = t(spec1), y = t(spec2),
+      x = t(spec1), y = t(spec2),  # before resizing; t() b/c need time in columns
       distance.only = TRUE),
-      dtwPars))$normalizedDistance,
+      dtwPars)),
       silent = TRUE)
-    if (class(d)[1] == 'try-error') d = NA
-    sim$sim[sim$method == 'dtw'] = 1 - d
+    if (class(d)[1] == 'try-error') {
+      dist_dtw = NA
+    } else {
+      dist_dtw = d$normalizedDistance
+    }
+    sim$sim[sim$method == 'dtw'] = 1 - dist_dtw
   }
   return(sim)
 }

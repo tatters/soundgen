@@ -153,7 +153,7 @@ osc = function(
 
   if (dB) {
     # center and normalize to range from -1 to +1, unless it is quieter than maxAmpl
-    ms = mean(audio$sound)
+    ms = median(audio$sound)
     s1 = audio$sound - ms
     rs = rs - ms
     s1 = s1 / max(abs(rs)) * mult
@@ -172,7 +172,11 @@ osc = function(
     audio$sound[zero] = -dynamicRange
     midline_pos = -dynamicRange
   } else {
-    midline_pos = mean(rs)
+    if (prod(rs) < 0) {
+      midline_pos = 0
+    } else {
+      midline_pos = median(rs)
+    }
   }
 
   # plot
