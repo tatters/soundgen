@@ -956,7 +956,8 @@ server = function(input, output, session) {
 
   ## FORMANT SPACE
   output$fmtSpace = renderPlot({
-    if (!is.null(myPars$ann[myPars$currentAnn]) &&
+    if (!is.null(myPars$currentAnn) &&
+        !is.null(myPars$ann[myPars$currentAnn]) &&
         (is.finite(myPars$ann[myPars$currentAnn, ]$F1) &
          is.finite(myPars$ann[myPars$currentAnn, ]$F2))) {
       if (myPars$print) print('Drawing formant space')
