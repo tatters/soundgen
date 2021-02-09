@@ -419,6 +419,9 @@ ssm = function(
 #' @param win the length of window for averaging self-similarity, frames
 #' @return Returns a square self-similarity matrix.
 #' @keywords internal
+#' @examples
+#' m = matrix(rnorm(40), nrow = 5)
+#' selfsim(m, sparse = TRUE, kernelSize = 2)
 selfsim = function(m,
                    norm = FALSE,
                    simil = c('cosine', 'cor')[1],
@@ -441,15 +444,19 @@ selfsim = function(m,
   }
 
   # calculate windows for averaging self-similarity
-  numWins = ceiling(ncol(m) / win)
-  winIdx = round(seq(1, ncol(m) - win, length.out = numWins))
+  winIdx = unique(round(seq(1, ncol(m) - win + 1, length.out = ceiling(ncol(m) / win))))
+  numWins = length(winIdx)
 
-  # calculate self-similarity
+  # calculate the lower triangle of self-similarity matrix
   out = matrix(NA, nrow = numWins, ncol = numWins)
   rownames(out) = colnames(out) = winIdx
   if (!sparse) j_idx = 1:numWins
   for (i in 1:length(winIdx)) {
-    if (sparse) j_idx = max(1, i - kernelSize) : min(numWins, i + kernelSize)
+    if (sparse) {
+      j_idx = max(1, i - kernelSize) : max(1, (i - 1))
+    } else {
+      j_idx = 1:max(1, (i - 1))
+    }
     for (j in j_idx) {
       mi = as.vector(m[, winIdx[i]:(winIdx[i] + win - 1)])
       mj = as.vector(m[, winIdx[j]:(winIdx[j] + win - 1)])
@@ -466,6 +473,12 @@ selfsim = function(m,
       }
     }
   }
+  # fill up the upper triangle as well
+  diag(out) = 1
+  out1 = t(out)
+  out1[lower.tri(out1)] = out[lower.tri(out)]
+  out = t(out1)
+  # isSymmetric(out)
   # image(t(out))
   out = zeroOne(out, na.rm = TRUE)
   return(out)
