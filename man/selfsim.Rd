@@ -37,6 +37,6 @@ Called by \code{\link{ssm}}.
 }
 \examples{
 m = matrix(rnorm(40), nrow = 5)
-selfsim(m, sparse = TRUE, kernelSize = 2)
+soundgen:::selfsim(m, sparse = TRUE, kernelSize = 2)
 }
 \keyword{internal}

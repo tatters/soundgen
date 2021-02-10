@@ -52,15 +52,16 @@ preserves high-frequency AM that is completely invisible in a spectrogram.
 }
 \examples{
 # synthesize a sound 500 ms long, with gradually increasing hissing noise
-sound = soundgen(sylLen = 500, temperature = 0.001, noise = list(
-  time = c(0, 650), value = c(-40, 0)), formantsNoise = list(
-  f1 = list(freq = 5000, width = 10000)))
+sound = soundgen(sylLen = 200, temperature = 0.001,
+  noise = list(time = c(0, 650), value = c(-40, 0)),
+  formantsNoise = list(f1 = list(freq = 5000, width = 10000)),
+  addSilence = 25)
 # playme(sound, samplingRate = 16000)
 
-# basic spectrogram
+# auditory spectrogram
 soundgen:::audSpectrogram(sound, samplingRate = 16000)
 
-# compare to an FFT-based spectrogram
+# compare to an FFT-based spectrogram on log-scale
 spectrogram(sound, samplingRate = 16000, yScale = 'log')
 
 \dontrun{

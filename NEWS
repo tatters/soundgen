@@ -10,7 +10,7 @@ GLOBAL (seriously affects back-compatibility):
 MAJOR (affects back-compatibility)
   * segment(): a new segmentation algorithm based on spectral signal-noise separation, several deprecated and several new arguments, support for long files (>1 h of audio), an option to export detected syllables as separate files, etc.
   * transplantFormants(): a single argument "freqWindow", support for Wave input, etc.
-  * analyze(): SPL_measured and Pref moved to a new argument "loudness = list(SPL_measured, Pref, SpreadSpectrum)"
+  * analyze(): SPL_measured and Pref moved to a new argument "loudness = list(SPL_measured, Pref, spreadSpectrum)"
   * analyze(): interpolWin, interpolTol, interpolCert moved to a new argument "interpol = list(win, tol, cert)"
   * compareSounds(): multivariate DTW, different input formats, new arguments, etc.
 
@@ -33,7 +33,7 @@ MINOR:
 
 BUGS FIXED:
   * formant_app(): fixed occasional crashing when scrolling with left/right buttons, other small-scale debugging
-  * soundgen(): fixed a problem with occasionally cutting off sounds with sharp attack, which made them end with audible clicks
+  * soundgen(): fixed a problem with occasionally cutting off sounds with sharp attack, which made them end with audible clicks, and with tempEffects(formDisp = 0)
   * flatEnv(), transplantEnv(), transplantFormants(): fixed problems with envelope extraction previously caused by incorrect smoothing
 
 

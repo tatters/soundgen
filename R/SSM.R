@@ -421,7 +421,7 @@ ssm = function(
 #' @keywords internal
 #' @examples
 #' m = matrix(rnorm(40), nrow = 5)
-#' selfsim(m, sparse = TRUE, kernelSize = 2)
+#' soundgen:::selfsim(m, sparse = TRUE, kernelSize = 2)
 selfsim = function(m,
                    norm = FALSE,
                    simil = c('cosine', 'cor')[1],
