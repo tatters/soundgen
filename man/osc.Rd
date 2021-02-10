@@ -55,7 +55,7 @@ under maximum are treated as zero}
 \item{returnWave}{if TRUE, returns a log-transformed waveform as a numeric vector}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{plot}{if TRUE, plots the oscillogram}
 

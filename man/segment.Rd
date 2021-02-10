@@ -116,7 +116,7 @@ but plotting is switched off. Note that noise profile is estimated in each
 chunk separately, so set it low if the background noise is highly variable}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{plot}{if TRUE, produces a segmentation plot}
 

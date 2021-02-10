@@ -16,7 +16,7 @@ optimizePars(
   init = NULL,
   initSD = 0.2,
   control = list(maxit = 50, reltol = 0.01, trace = 0),
-  otherPars = list(plot = FALSE, verbose = FALSE),
+  otherPars = list(plot = FALSE),
   mygrid = NULL,
   verbose = TRUE
 )
@@ -97,7 +97,7 @@ on your data.
 # Download 260 sounds from the supplements in Anikin & Persson (2017)
 # - see http://cogsci.se/publications.html
 # Unzip them into a folder, say '~/Downloads/temp'
-myfolder = '~/Downloads/temp'  # 260 .wav files live here
+myfolder = '~/Downloads/temp260'  # 260 .wav files live here
 
 # Optimization of SEGMENTATION
 # Import manual counts of syllables in 260 sounds from
@@ -108,8 +108,8 @@ key = segmentManual  # a vector of 260 integers
 # to check convergence
 # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
 res = optimizePars(myfolder = myfolder, myfun = 'segment', key = key,
-  pars = c('shortestSyl', 'shortestPause', 'sylThres'),
-  fitnessPar = 'nBursts',
+  pars = c('shortestSyl', 'shortestPause'),
+  fitnessPar = 'nBursts', otherPars = list(method = 'env'),
   nIter = 3, control = list(maxit = 50, reltol = .01, trace = 0))
 
 # Examine the results
@@ -124,26 +124,28 @@ boxplot(as.numeric(s[, fitnessPar]) ~ as.integer(key), xlab='key')
 abline(a=0, b=1, col='red')
 
 # Try a grid with particular parameter values instead of formal optimization
-res = optimizePars(myfolder = myfolder, myfun = 'segment', key = segment_manual,
+res = optimizePars(myfolder = myfolder, myfun = 'segment', key = segmentManual,
   pars = c('shortestSyl', 'shortestPause'),
-  fitnessPar = 'nBursts',
+  fitnessPar = 'nBursts', otherPars = list(method = 'env'),
   mygrid = expand.grid(shortestSyl = c(30, 40),
                        shortestPause = c(30, 40, 50)))
 1 - res$fit  # correlations with key
 
 # Optimization of PITCH TRACKING (takes several hours!)
+key = as.numeric(log(pitchManual))
 res = optimizePars(
   myfolder = myfolder,
     myfun = 'analyze',
-    key = log(pitchManual),  # log-scale better for pitch
+    key = key,  # log-scale better for pitch
     pars = c('windowLength', 'silence'),
-    bounds = list(low = c(5, 0), high = c(500, 1)),
+    bounds = list(low = c(5, 0), high = c(200, .2)),
     fitnessPar = 'pitch_median',
     nIter = 2,
-    otherPars = list(plot = FALSE, verbose = FALSE, step = 50),
+    otherPars = list(plot = FALSE, loudness = NULL, novelty = NULL,
+                     roughness = NULL, nFormants = 0),
     fitnessFun = function(x) {
       1 - cor(log(x), key, use = 'pairwise.complete.obs') *
-      (1 - mean(is.na(x) & !is.na(key))) # penalize failing to detect f0
+      (1 - mean(is.na(x) & is.finite(key))) # penalize failing to detect f0
 })
 }
 }

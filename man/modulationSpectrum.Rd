@@ -107,7 +107,7 @@ take care of NAs yourself}
 into a single output; if FALSE, a separate MS is returned for each input}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{plot}{if TRUE, plots the modulation spectrum of each sound}
 

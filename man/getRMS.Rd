@@ -70,7 +70,7 @@ the maximum possible amplitude as given by \code{scale}}
 see \code{\link{analyze}}}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{plot}{if TRUE, plot a contour of RMS amplitude}
 

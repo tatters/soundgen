@@ -83,7 +83,7 @@ inversion (Beauregard et al., 2015)}
 1984), 0 = don't run}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{play}{if TRUE, plays back the output}
 

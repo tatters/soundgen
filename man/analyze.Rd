@@ -235,7 +235,7 @@ range in \code{defaults_analyze}: 'adjust' = reset to default value,
 crash)}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 

@@ -249,7 +249,7 @@ ssm = function(
   ## set pars
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
   if (is.null(nBands)) {
-    nBands = 100 * windowLength / 20
+    nBands = round(100 * windowLength / 20)
   }
   if (is.null(step)) {
     step = windowLength / 4

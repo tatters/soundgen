@@ -48,7 +48,7 @@ may be slightly different, eg 24.98866 instead of 25.0 ms)}
 (defaults to 'myfolder/normalized')}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 }
 \description{
 Normalizes the amplitude of all wav/mp3 files in a folder based on their peak

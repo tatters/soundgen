@@ -53,7 +53,7 @@ gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 save}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 }
 \value{
 Returns a numeric vector with the same sampling rate as the input.

@@ -48,7 +48,7 @@ range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 save}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 }
 \description{
 Adds sinusoidal or logistic amplitude modulation to a sound. This produces

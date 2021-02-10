@@ -77,7 +77,7 @@ average waveform from zero (see examples)}
 not be amplified}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{saveAudio}{full path to the folder in which to save the compressed
 sound(s)}

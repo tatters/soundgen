@@ -119,7 +119,7 @@ setting another default player for \code{\link[tuneR]{play}}}
 '~/Downloads/temp.wav'. If NULL = doesn't save}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }

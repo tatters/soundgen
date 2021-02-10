@@ -72,7 +72,7 @@ spectrogramFolder = function(...) {
 #'   ('processed'), or unmodified spectrogram with the imaginary part giving
 #'   phase ('complex')
 #' @param reportEvery when processing multiple inputs, report estimated time
-#'   left every ... iterations
+#'   left every ... iterations (NULL = default, NA = don't report)
 #' @param plot should a spectrogram be plotted? TRUE / FALSE
 #' @param savePlots full path to the folder in which to save the plots (NULL =
 #'   don't save, '' = same folder as audio)

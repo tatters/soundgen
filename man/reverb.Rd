@@ -57,7 +57,7 @@ returns a list with reverb window, the added reverb/echo, etc.}
 \item{play}{if TRUE, plays the processed audio}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{saveAudio}{path to folder for saving the processed audio; NULL = don't
 save}

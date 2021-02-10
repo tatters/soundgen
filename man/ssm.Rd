@@ -99,7 +99,7 @@ are omitted automatically for mean/median/sd/min/max/range/sum, otherwise
 take care of NAs yourself}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{plot}{if TRUE, plots the SSM}
 

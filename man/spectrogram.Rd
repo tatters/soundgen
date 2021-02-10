@@ -108,7 +108,7 @@ spectrogram ('original'), denoised and/or smoothed spectrogram
 phase ('complex')}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
-left every ... iterations}
+left every ... iterations (NULL = default, NA = don't report)}
 
 \item{plot}{should a spectrogram be plotted? TRUE / FALSE}
 
