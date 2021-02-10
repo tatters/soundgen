@@ -1666,7 +1666,9 @@ server = function(input, output, session) {
     if (!is.null(myPars$ann[myPars$currentAnn, ]) &&
         any(!is.na(myPars$ann[myPars$currentAnn, myPars$ff]))) {
       if (myPars$print) print('Calling soundgen()...')
-      temp_s = soundgen(formants = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff]))
+      temp_s = soundgen(
+        formants = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff]),
+        temperature = .001, tempEffects = list(formDisp = 0, formDrift = 0))
       playme(temp_s)
     }
   })

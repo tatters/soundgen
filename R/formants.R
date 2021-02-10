@@ -230,6 +230,7 @@ getSpectralEnvelope = function(
 
     ## Stochastic part (only for temperature > 0)
     if (temperature > 0) {
+      if (formDisp == 0) formDisp = 1e-6  # otherwise division by 0
       # non-integer formants like "f1.4" refer to extra zero-pole pairs.
       # They should not be considered for VTL estimation or for adding formants
       non_integer_formants = apply(
