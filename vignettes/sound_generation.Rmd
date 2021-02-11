@@ -13,6 +13,32 @@ vignette: >
  %\VignetteEncoding{UTF-8}
 ---
   
+```{r echo = FALSE, results = 'hide'}
+saveAudio = c(TRUE, FALSE)[2]  # TRUE for local, FALSE for CRAN
+if (saveAudio) {
+  # path for saving audio
+  # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+  audio_path = 'sounds/'
+  if (!dir.exists(audio_path)) dir.create(audio_path)
+  
+  # create a function for saving audio
+  saveAudioFun = function(sound, samplingRate = 16000) {
+    name_wav = paste0(audio_path, sound, '.wav')
+    name_mp3 = paste0(audio_path, sound, '.mp3')
+    seewave::savewav(get(sound) / 2, f = samplingRate, filename = name_wav)
+    if (file.exists(name_mp3)) file.remove(name_mp3)
+    system(paste('ffmpeg -y -i', name_wav, '-qscale:a 0', name_mp3))
+  }
+  
+  # create a function for adding an audio tag
+  addAudioTag = function(sound) {
+    print(paste0('<audio controls style = "display: block"> <source src="',  
+                 audio_path, sound, '.mp3" type="audio/mp3"> </audio>'))
+  }
+}
+```
+  
+  
 # Intro
 ## Purpose
 The function `soundgen` is intended for the synthesis of animal vocalizations, including human non-linguistic vocalizations like sighs, moans, screams, etc. It can also create non-biological sounds that require precise control over spectral and temporal modulations, such as special sound effects in computer games or acoustic stimuli for scientific experiments. Soundgen is NOT meant to be used for text-to-speech conversion. It can be adapted for this purpose, but existing specialized tools will probably serve better.
@@ -72,14 +98,20 @@ playback = list(TRUE, FALSE, 'vlc', 'my-awesome-player')[[2]]
 The basic workflow from R console is as follows:
 ```{r}
 library(soundgen)
-s = soundgen(play = playback)  # default sound: a short [a] by a male speaker
+s001 = soundgen(play = playback)  # default sound: a short [a] by a male speaker
 # 's' is a numeric vector - the waveform. You can save it, play it, plot it, ...
+```
+`r if (saveAudio) {saveAudioFun('s001', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s001.mp3" type="audio/mp3"> </audio>'}`
 
+```{r}
 # names(presets)  # speakers in the preset library
 # names(presets$Chimpanzee)  # presets per speaker
-s = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # a screaming chimp
+s002 = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # a screaming chimp
 # playme(s)
 ```
+`r if (saveAudio) {saveAudioFun('s002', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s002.mp3" type="audio/mp3"> </audio>'}`
 
 ## From the app
 The basic workflow in the Shiny app is as follows:
@@ -97,28 +129,35 @@ If you need to generate a single syllable without pauses, the only temporal para
 
 1.  Set `nSyl` ("Number of syllables" in the app). Unvoiced noise is then allowed to fill in the pauses (if noise is longer than the voiced part), and you can specify an amplitude contour, intonation contour, and formant transitions that will span the entire bout. For ex., if the vowel sequence in a three-syllable bout is “uai”, the output will be approximately “[u] – pause – [a] – pause – [i]”. 
 ```{r}
-s = soundgen(formants = 'uai', repeatBout = 1, nSyl = 3, play = playback)
+s003 = soundgen(formants = 'uai', repeatBout = 1, nSyl = 3, play = playback)
 # to replay without re-generating the sound, type "playme(s)"
 ```
+`r if (saveAudio) {saveAudioFun('s003', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s003.mp3" type="audio/mp3"> </audio>'}`
+
 2.  Set `repeatBout` ("Repeat bout # times" in the app). This is the same as calling `soundgen` repeatedly with the same settings or clicking the Generate button in the app several times. If temperature = 0, you will get exactly the same sound repeated each time, otherwise some variation will be introduced. For the same “uai” example, the output will be “[uai] – pause – [uai] – pause – [uai]”.
 ```{r}
-s = soundgen(formants = 'uai', repeatBout = 3, nSyl = 1, play = playback)
+s004 = soundgen(formants = 'uai', repeatBout = 3, nSyl = 1, play = playback)
 # playme(s)
 ```
+`r if (saveAudio) {saveAudioFun('s004', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s004.mp3" type="audio/mp3"> </audio>'}`
 
 Like most arguments to soundgen, `sylLen` and `pauseLen` can also be vectors. For example, if you want to synthesize 5 syllables of progressively shorter duration and separated by increasingly longer pauses, you can write:
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(nSyl = 5, 
+s005 = soundgen(nSyl = 5, 
              sylLen = c(300, 100),   # linearly decreasing from 300 to 100 ms
              pauseLen = c(50, 150),  # increasing from 50 to 150 ms
              plot = TRUE,
              play = playback)
 # playme(s)
 ```
+`r if (saveAudio) {saveAudioFun('s005', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s005.mp3" type="audio/mp3"> </audio>'}`
 
 For more complicated changes in the length of syllables or pauses, you can use the function `getSmoothContour` to upsample your anchors (see "Intonation" for examples) or manually code longer sequences of values. The length of your input vector doesn't matter: it will be up- or downsampled automatically. This also works with all other vectorized arguments to soundgen (rolloff, jitterDep, vibratoFreq, etc).
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(
+s006 = soundgen(
   nSyl = 10, 
   sylLen = c(60, 200, 90, 50, 50),  # quickly up to 200 and down to 50
   pauseLen = c(50, 60, 80, 150),    # growing ~exponentially
@@ -126,10 +165,12 @@ s = soundgen(
   play = playback
 )
 ```
+`r if (saveAudio) {saveAudioFun('s006', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s006.mp3" type="audio/mp3"> </audio>'}`
 
 As a special case, your values will be used without interpolation if you provide exactly as many as needed:
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(
+s007 = soundgen(
   nSyl = 5, 
   sylLen = c(300, 100, 400, 50, 100),  # 5 syllables, 5 values
   pauseLen = c(50, 150, 50, 100),      # 4 pauses, 4 values
@@ -137,10 +178,12 @@ s = soundgen(
   play = playback
 )
 ```
+`r if (saveAudio) {saveAudioFun('s007', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s007.mp3" type="audio/mp3"> </audio>'}`
 
 You can use both `repeatBout` and `nSyl` simultaneously. The pause between bouts is equal to the length of the first syllable:
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(
+s008 = soundgen(
   repeatBout = 2,
   nSyl = 3, 
   sylLen = c(300, 100), 
@@ -149,10 +192,12 @@ s = soundgen(
   play = playback
 )
 ```
+`r if (saveAudio) {saveAudioFun('s008', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s008.mp3" type="audio/mp3"> </audio>'}`
 
 Note that all pauses between syllables have to be positive. A negative pause (overlap) between bouts is allowed, but you have to enforce it with `invalidArgAction = "ignore"`:
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(
+s009 = soundgen(
   repeatBout = 2,
   sylLen = c(300, 100), 
   pauseLen = -50,     
@@ -161,6 +206,8 @@ s = soundgen(
   invalidArgAction = 'ignore'
 )
 ```
+`r if (saveAudio) {saveAudioFun('s009', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s009.mp3" type="audio/mp3"> </audio>'}`
 
 ## Intonation
 ### One syllable
@@ -168,25 +215,48 @@ When we hear a tonal sound such as someone singing, one of its most salient char
 
 In the simplest case, all anchors are equidistant, dividing the sound into equal time steps. You can then specify anchors as a numeric vector. For example:
 
-```{r}
-sound = soundgen(pitch = 440, play = playback)  # steady pitch at 440 Hz
-sound = soundgen(pitch = 3000:2000, play = playback)  # downward chirp
-sound = soundgen(pitch = c(150, 250, 100), 
-                 sylLen = 700, play = playback)  # up and down
-sound = soundgen(pitch = c(150, 200, NA, 110), 
-                 sylLen = 700, play = playback)  # 3rd quarter silent
+```{r} 
+# steady pitch at 440 Hz
+s010 = soundgen(pitch = 440, play = playback) 
 ```
+`r if (saveAudio) {saveAudioFun('s010', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s010.mp3" type="audio/mp3"> </audio>'}`
+
+```{r} 
+# downward chirp
+s011 = soundgen(pitch = 3000:2000, play = playback,
+                samplingRate = 44100, pitchSamplingRate = 44100)  
+# when f0 is high, increase samplingRate and pitchSamplingRate for better quality
+```
+`r if (saveAudio) {saveAudioFun('s011', samplingRate = 44100)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s011.mp3" type="audio/mp3"> </audio>'}`
+
+```{r} 
+# up and down
+s012 = soundgen(pitch = c(150, 250, 100), sylLen = 700, play = playback) 
+```
+`r if (saveAudio) {saveAudioFun('s012', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s012.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+# 3rd quarter silent
+s013 = soundgen(pitch = c(150, 200, NA, 110), 
+                 sylLen = 700, play = playback)  
+```
+`r if (saveAudio) {saveAudioFun('s013', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s013.mp3" type="audio/mp3"> </audio>'}`
 
 You can also use a mathematical formula to produce very precise pitch modulation, just check that the values are on the right scale. For example, sinusoidal pitch modulation can be created as follows:
 
-```{r fig.show = "hold", fig.width = 7, fig.height = 5}
+```{r fig.show = "hold", fig.width = 5, fig.height = 3}
 anchors = (sin(1:70 / 3) * .25 + 1) * 350
 par(mfrow = c(1, 2))
 plot(anchors, type = 'l', xlab = 'Time (points)', ylab = 'Pitch (Hz)')
-sound = soundgen(pitch = anchors, sylLen = 1000, 
-                 play = playback, plot = TRUE)
+s014 = soundgen(pitch = anchors, sylLen = 1000, play = playback)
 par(mfrow = c(1, 1))
 ```
+`r if (saveAudio) {saveAudioFun('s014', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s014.mp3" type="audio/mp3"> </audio>'}`
 
 For more flexibility, anchors can also be specified at arbitary times using the "anchor format" - a dataframe with two columns: `time` (ms) and `value` (in the case of pitch, this is frequency in Hz). The function that generates smooth contours of f0 and other parameters is `getSmoothContour()`. When you generate sounds, `soundgen()` has an argument `smooth(list = ...)`, where you can put the settings passed on to `getSmoothContour()`. So you do not have to call `getSmoothContour()` explicitly, although sometimes it can be helpful to do so in order to visualize the curve implied by your anchors. Time can range from 0 to 1, or it can be specified in ms – it makes no difference, since the produced contour is rescaled to match syllable duration.
 
@@ -194,10 +264,13 @@ For example, say we want f0 first to increase sharply from 350 to 700 Hz and the
 
 A sound with this intonation can be generated as follows:
 ```{r}
-sound = soundgen(sylLen = 900, play = playback,
-                 pitch = list(time = c(0, .1, 1),  # or (c(0, 30, 300)) - in ms
-                              value = c(350, 700, 350)))
+s015 = soundgen(
+  sylLen = 900, play = playback,
+  pitch = list(time = c(0, .1, 1),  # or (c(0, 30, 300)) - in ms
+               value = c(350, 700, 350)))
 ```
+`r if (saveAudio) {saveAudioFun('s015', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s015.mp3" type="audio/mp3"> </audio>'}`
 
 Beware of smoothing! A curve interpolated from a few anchors is not uniquely defined, and the interpolation algorithm has a major effect on its shape. The amount of smoothing can be controlled with `loessSpan` and `interpol`:
 
@@ -241,10 +314,13 @@ If you are not satisfied with the smooth curve generated by `soundgen()` based o
 To get more complex curves, simply add more anchors. The assumption behind specifying an entire contour with a few discrete anchors is that the contour is smooth and continuous. However, there may be special occasions when you do want a discontinuity such as an instantaneous pitch jump. The default behavior of `getSmoothContour()` is to make a jump if two anchors are closer than one percent of the syllable length (as specified with the default `jumpThres = 0.01`). To make a pitch jump, you thus provide two values of f0 that are very close in time, for example:
 
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(sylLen = 800, plot = TRUE, play = playback,
-             pitch = list(time = c(0, .2, .201, .4, 1), 
-                          value = c(900, 1200, 1800, 2000, 1500)))
+s016 = soundgen(sylLen = 800, plot = TRUE, play = playback,
+                pitch = list(time = c(0, .2, .201, .4, 1), 
+                             value = c(900, 1200, 1800, 2000, 1500)),
+                samplingRate = 22050)
 ```
+`r if (saveAudio) {saveAudioFun('s016', samplingRate = 22050)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s016.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP Given the same anchors, the shape of the resulting curve depends on syllable duration. That's because the amount of smoothing is adjusted automatically as you change syllable duration. Double-check that all your contours still look reasonable if you change the duration!*
 
@@ -253,31 +329,39 @@ To draw f0 contour in the Shiny app, use "Intonation / Intonation syllable" tab 
 ### Multiple syllables
 If the bout consists of several syllables (`nSyl > 1`), you can also specify the overall intonation over several syllables using `pitchGlobal` (app: "Intonation / Intonation global"). The global intonation contour specifies the deviation of pitch per syllable from the main pitch contour in semitones, i.e. 12 semitones = 1 octave. In other words, it shows how much higher or lower the average pitch of each syllable is compared to the rest of the syllables. For ex., we can generate five seagull-like sounds, which have the same intonation contour within each syllable, but which vary in average pitch spanning about an octave in an inverted U-shaped curve. Note that the number of anchors need not equal the number of syllables:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, plot = TRUE, play = playback,
-             pitch = data.frame(time = c(0, 0.65, 1), 
-                                value = c(977, 1540, 826)),
-             pitchGlobal = data.frame(time = c(0, .5, 1), 
-                                      value = c(-6, 7, 0)))
+s017 = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, 
+                plot = TRUE, play = playback,
+                pitch = list(time = c(0, 0.65, 1), 
+                             value = c(977, 1540, 826)),
+                pitchGlobal = list(time = c(0, .5, 1), 
+                                   value = c(-6, 7, 0)))
 # pitchGlobal = c(-6, 7, 0) is equivalent, since time steps are equal
 ```
+`r if (saveAudio) {saveAudioFun('s017', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s017.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP Calling `soundgen` with argument `plot = TRUE` produces a spectrogram using a function from soundgen package, `spectrogram`. Type `?spectrogram` or `?spectrogramFolder` and see the vignette on acoustic analysis for plotting tips and advanced options. You can also plot the waveform produced by `soundgen` using any other function, e.g. `seewave::spectro`*
 
 ### Vibrato
 Vibrato adds frequency modulation (FM) to f0 contour by modifying f0 per glottal cycle. In contrast to irregular jitter and temperature-related random drift, this FM is regular, namely sinusoidal:
 ```{r fig.width = 5, fig.height = 5}
-# variable, but deterministic vibrato
-s1 = soundgen(vibratoDep = 0:3, vibratoFreq = 7:5, 
-              sylLen = 2000, pitch = c(300, 280), 
-              play = playback, plot = TRUE)
-
-# stochastic vibrato
-s2 = soundgen(vibratoDep = rnorm(n = 10, mean = .5, sd = .1), 
-              vibratoFreq = rnorm(n = 10, mean = 5, sd = .5), 
-              sylLen = 2000, pitch = c(300, 280), 
-              play = playback, plot = TRUE)
+# variable, but deterministic vibrato (same every time)
+s018 = soundgen(vibratoDep = 0:3, vibratoFreq = 7:5, 
+                sylLen = 2000, pitch = c(300, 280), 
+                play = playback, plot = TRUE)
 ```
+`r if (saveAudio) {saveAudioFun('s018', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s018.mp3" type="audio/mp3"> </audio>'}`
 
+```{r fig.width = 5, fig.height = 5}
+# stochastic vibrato (different every time)
+s019 = soundgen(vibratoDep = rnorm(n = 10, mean = .5, sd = .1), 
+                vibratoFreq = rnorm(n = 10, mean = 5, sd = .5), 
+                sylLen = 2000, pitch = c(300, 280), 
+                play = playback, plot = TRUE)
+```
+`r if (saveAudio) {saveAudioFun('s019', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s019.mp3" type="audio/mp3"> </audio>'}`
 
 ## Hyper-parameters
 ### Temperature
@@ -286,10 +370,12 @@ It is a basic principle of soundgen that random variation can be introduced in t
 Code example : 
 ```{r}
 # the sound is a bit different each time, because temperature is above zero
-s = soundgen(repeatBout = 3, temperature = 0.3, play = playback)
-# Setting repeatBout = 3 is equivalent to:
-# for (i in 1:3) soundgen(temperature = 0.3, play = playback)
+s020 = soundgen(repeatBout = 5, temperature = 0.3, play = playback)
+# Setting repeatBout = 5 is equivalent to:
+# for (i in 1:5) soundgen(temperature = 0.3, play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s020', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s020.mp3" type="audio/mp3"> </audio>'}`
 
 If you don't want stochastic behavior, set temperature to zero. But note that some effects, notably jitter and subharmonics, will then be added in an all-or-nothing manner: either to the entire sound or not at all. Also note that additional formants will not be added above the user-specified ones if temperature is exactly 0. In practice it may be better to set temperature to a very small positive value like 0.01. You can also change the extent to which temperature affects different parameters (e.g., if you want more variation in intonation and less variation in syllable structure). To do so, use `tempEffects`, which is a list of scaling coefficients that determine how much different parameters vary at a given temperature. `tempEffects` includes the following scaling coefficients:
 
@@ -312,29 +398,43 @@ The default value of each scaling parameter is 1. To enhance a particular compon
 ```{r}
 # despite the high temperature, temporal structure does not vary at all, 
 # while formants are more variable than the default
-s = soundgen(repeatBout = 3, nSyl = 2, temperature = .3, play = playback,
-             tempEffects = list(sylLenDep = 0, formDrift = 3))
+s021 = soundgen(repeatBout = 3, nSyl = 2, temperature = .3, play = playback,
+                tempEffects = list(sylLenDep = 0, formDrift = 3))
 ```
-
+`r if (saveAudio) {saveAudioFun('s021', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s021.mp3" type="audio/mp3"> </audio>'}`
 
 ### Other hypers
 To simplify usage, there are a few other hyper-parameters. They are redundant in the sense that they are not strictly necessary to produce the full range of sounds, but they provide convenient shortcuts by making it possible to control several low-level parameters at once in a coordinated manner. Hyper-parameters are marked "hyper" in the Shiny app. 
 
-For example, to imitate the effect of varying body size, you can use `maleFemale`:
+For example, to imitate the effect of varying body size, you can use `maleFemale`. Since `formants` are not specified, but temperature is above zero, a schwa-like sound with approximately equidistant formants is generated using `vocalTract` (cm) to calculate the expected formant dispersion:
 ```{r}
+s022 = soundgen(
+  maleFemale = -1,  # male: 100% lower f0, 25% lower formants, 25% longer vocal tract
+  formants = NA, pitch = 220, vocalTract = 15, play = playback)
 mf = c(-1,  # male: 100% lower f0, 25% lower formants, 25% longer vocal tract
        0,   # neutral (default)
        1)   # female: 100% higher f0, 25% higher formants, 25% shorter vocal tract
 # See e.g. http://www.santiagobarreda.com/vignettes/v1/v1.html
-
-for (i in mf) {
-  s = soundgen(maleFemale = i, formants = NA, pitch = 220, 
-               vocalTract = 15, play = playback)
-  # Since `formants` are not specified, but temperature is above zero, a 
-  # schwa-like sound with approximately equidistant formants is generated using
-  # `vocalTract` (cm) to calculate the expected formant dispersion.
-}
 ```
+`r if (saveAudio) {saveAudioFun('s022', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s022.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+s023 = soundgen(
+  maleFemale = 0,  # neutral (default)
+  formants = NA, pitch = 220, vocalTract = 15, play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s023', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s023.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+s024 = soundgen(
+  maleFemale = 1,  # female: 100% higher f0, 25% higher formants, 25% shorter vocal tract
+  formants = NA, pitch = 220, vocalTract = 15, play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s024', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s024.mp3" type="audio/mp3"> </audio>'}`
 
 To change the basic voice quality along the breathy-creaky continuum, use `creakyBreathy`. It affects the rolloff of harmonics, the type and strength of pitch effects (jitter, subharmonics), and the amount of aspiration noise. For example:
 ```{r}
@@ -343,10 +443,15 @@ cb = c(-1,  # max creaky
        0,   # neutral (default)
        .5,  # moderately breathy
        1)   # max breathy (no tonal component)
+silence = rep(0, 1600)
+s025 = silence
 for (i in cb) {
-  soundgen(creakyBreathy = i, play = playback)
+  s025 = c(s025, soundgen(creakyBreathy = i), silence)
 }
+# playme(s025)
 ```
+`r if (saveAudio) {saveAudioFun('s025', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s025.mp3" type="audio/mp3"> </audio>'}`
 
 ## Amplitude envelope
 Use `ampl` and `amplGlobal` to modulate the amplitude (loudness) of an individual syllable or a polysyllabic bout, respectively. In the app, they are found under "Amplitude / Amplitude syllable" and "Amplitude / Amplitude global". Note that `ampl` affects only the voiced component, while `amplGlobal`, `attackLen` ("Attack length, ms" in the app), and `amDep` ("Amplitude / Amplitude modulation / AM depth" in the app) affect both the voiced and the unvoiced components. Avoid `attackLen = 0`, since that can cause clicks. 
@@ -354,29 +459,35 @@ Use `ampl` and `amplGlobal` to modulate the amplitude (loudness) of an individua
 # each syllable has a 10-dB dip in the middle (note the dumbbell shapes 
 # in the oscillogram under the spectrogram), and there is an overall fade-out
 # over the entire bout
-s = soundgen(nSyl = 4, 
-             ampl = data.frame(time = c(0, .3, 1),  # unequal time steps
-                               value = c(0, -10, 0)),
-             amplGlobal = c(0, -20),  # this fade-out applies to noise as well
-             noise = -10,
-             plot = TRUE, heights = c(1, 1), play = playback)
+s026 = soundgen(
+  nSyl = 4, 
+  ampl = list(time = c(0, .3, 1),  # unequal time steps
+              value = c(0, -10, 0)),
+  amplGlobal = c(0, -20),  # this fade-out applies to noise as well
+  noise = -10,
+  plot = TRUE, heights = c(1, 1), play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s026', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s026.mp3" type="audio/mp3"> </audio>'}`
 
 The dynamic amplitude range is determined by `dynamicRange`. This parameter sets the minimum level of loudness, below which components are discarded as essentially silence. For maximum sound quality, set a high dynamicRange, like 120 dB. This helps to avoid artifacts like audibly clicking harmonics, but it also slows down sound generation. The default is 80 dB.
 
 Rapid amplitude modulation imitating a trill is implemented by multiplying the synthesized waveform by a wave with adjustable `amType` ("sine" or "logistic"), shape `amShape` (logistic only), frequency `amFreq`, and amplitude `amDep`:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(sylLen = 1000, formants = NA,
-             # set the depth of AM (0% = none, 100% = max)
-             amDep = c(0, 100),   
-             # set AM frequency in Hz (vectorized)
-             amFreq = c(50, 25),  
-             # set the shape: 0 = close to sine, -1 = notches, +1 = clicks
-             amShape = 0,  
-             # asymmetrical attack: 20 ms at the beginning and 140 ms at the end
-             attackLen = c(20, 140),
-             plot = TRUE, heights = c(1, 1), play = playback)
+s027 = soundgen(
+  sylLen = 1000, formants = NA,
+  # set the depth of AM (0% = none, 100% = max)
+  amDep = c(0, 100),   
+  # set AM frequency in Hz (vectorized)
+  amFreq = c(50, 25),  
+  # set the shape: 0 = close to sine, -1 = notches, +1 = clicks
+  amShape = 0,  
+  # asymmetrical attack: 20 ms at the beginning and 140 ms at the end
+  attackLen = c(20, 140),
+  plot = TRUE, heights = c(1, 1), play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s027', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s027.mp3" type="audio/mp3"> </audio>'}`
 
 A common special case of modifying the amplitude envelope of a synthesized or recorded sound is compression, which helps to make the amplitude remains relatively stable throughout the duration of the signal. There is a separate function for achieving this, namely `compressor()` AKA `flatEnv()`:
 ```{r fig.width = 7, fig.height = 3}
@@ -388,13 +499,20 @@ s1 = compressor(s, samplingRate = 1000, plot = TRUE,
 Another common modification is to fade the sound in and/or out. One way to do this is to change the attack (which affects both the beginning and the end) or to use amplitude anchors. On other occasions, or if your sound already exists and you want to change it, the way to go about it is to use a separate function, `fade()`. This also gives you more options, e.g. different attack shapes, while soundgen() defaults to linear fade-in/out for attack.
 ```{r fig.show = "hold", fig.width = 7, fig.height = 3}
 # Create a sound with sharp attack
-s = soundgen(sylLen = 300, pitch = 800, addSilence = 0, attackLen = 10)  
+s028 = soundgen(sylLen = 300, pitch = 800, addSilence = 0, attackLen = 10)  
 # playme(s)
-s1 = fade(s, fadeIn = 50, fadeOut = 100, samplingRate = 16000,
-          shape = 'logistic', steepness = 1, plot = TRUE)
-# playme(s1)
+```
+`r if (saveAudio) {saveAudioFun('s028', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s028.mp3" type="audio/mp3"> </audio>'}`
+
+```{r fig.show = "hold", fig.width = 7, fig.height = 3}
+s029 = fade(s028, fadeIn = 50, fadeOut = 100, samplingRate = 16000,
+            shape = 'logistic', steepness = 1, plot = TRUE)
+# playme(s029)
 # different fades are available: linear, logarithmic, etc
 ```
+`r if (saveAudio) {saveAudioFun('s029', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s029.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP: attackLen in soundgen is applied only to voiced source, and before it is filtered (i.e., before formants are added). In case of artifacts increase attackLen or apply fade() after synthesizing the sound.*
 
@@ -405,9 +523,17 @@ Argument `formants` (tab "Tract / Formants" in the app) sets the formants – fr
 Using presets for callers M1 and F1, you can directly specify a string of vowels. When you call `soundgen` with `formants = 'aouuuui'` or some such character string, the values are taken from `presets$M1$Formants` (or `presets$F1$Formants` if the speaker is "F1" in the Shiny app). Formants can remain the same throughout the vocalizations, or they can move. For example, `formants = 'ai'` produces a sound that goes smoothly from [a] to [i], while `formants = 'aaai'` produces mostly [a] with a rapid transition to [i] at the very end. Argument `formantStrength` ("Formant prominence" in the app) adjusts the overall effect of all formant filters at once, and `formantWidth` scales all bandwidths.
 
 ```{r}
-soundgen(formants = 'ai', play = playback)
-soundgen(formants = 'aaai', play = playback)
+s030 = soundgen(formants = 'ai', play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s030', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s030.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+s031 = soundgen(formants = 'aaai', play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s031', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s031.mp3" type="audio/mp3"> </audio>'}`
+
 
 ### Manual formants
 Presets give you some rudimentary control over vowels. More subtle control is necessary for animal sounds, as well as for human vowels that are not included in the presets dictionary or for non-default speakers. For such cases you will have to specify at least the frequency of each formant (and optionally, also amplitude, bandwidth, and time stamps for each value). The easiest, and normally sufficient, approach is to specify frequencies only and have soundgen() figure out the appropriate amplitude and bandwidth for each formant. Bandwidth is calculated from frequency using a formula derived from human phonetic research. Namely, above 500 Hz it follows the original formula known as "TMF-1963" (Tappert, Martony, and Fant, 1963), and below 500 Hz it applies a correction to allow for energy losses at low frequencies (Khodai-Joopari & Clermont, 2002). Below 250 Hz the bandwidth starts to decrease again, in a purely empirical attempt to achieve reasonable values even for formant frequencies below ordinary human range. See the internal function soundgen:::getBandwidth() if you are interested and note that for anything but ordinary human voices it may be safer to specify formant bandwidths manually.
@@ -457,18 +583,28 @@ estimateVTL(formants = c(400, 1800, 2550, 4100), plot = TRUE)
 It is usually useful to allow soundgen to create upper formants automatically based on the estimated VTL, since upper formants are typically less perceptually salient. As a result, we don't want to spend too much time specifying them manually, but still we don't want them to be completely absent, either, since that makes for very weak high frequencies in the spectrum. An approximation based on standard open-closed tube models is often good enough for calculating the missing formant frequencies. You can remove them by setting `temperature = 0` or `formantDepStoch = 0`, but note that without higher formants the entire spectrum loses energy at higher frequencies:
 
 ```{r fig.width = 7, fig.height = 5}
-soundgen(formants = c(800, 1200), play = playback, plot = TRUE)
-soundgen(formants = c(800, 1200), formantDepStoch = 0,
-              play = playback, plot = TRUE)
+s032 = soundgen(formants = c(800, 1200), play = playback, plot = TRUE)
 ```
+`r if (saveAudio) {saveAudioFun('s032', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s032.mp3" type="audio/mp3"> </audio>'}`
+
+```{r fig.width = 7, fig.height = 5}
+s033 = soundgen(formants = c(800, 1200), formantDepStoch = 0,
+                play = playback, plot = TRUE)
+```
+`r if (saveAudio) {saveAudioFun('s033', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s033.mp3" type="audio/mp3"> </audio>'}`
 
 Another useful method is to specify vocal tract length without any formants. In this case soundgen() approximates a neutral schwa sound for an animal with a vocal tract that looks like a uniform tube of this length. Crude, but often sufficient. A toy example (check presets for some more realistic sounds created using this method):
 
 ```{r fig.width = 7, fig.height = 5}
-soundgen(sylLen = 800, formants = NULL, rolloff = -6,
-         vocalTract = c(12, 18, 19), formantCeiling = 5, 
-         play = playback, plot = TRUE)
+s034 = soundgen(
+  sylLen = 800, formants = NULL, rolloff = -6,
+  vocalTract = c(12, 18, 19), formantCeiling = 5, 
+  play = playback, plot = TRUE)
 ```
+`r if (saveAudio) {saveAudioFun('s034', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s034.mp3" type="audio/mp3"> </audio>'}`
 
 For very long vocal tracts, it is advisable to increase `formantCeiling` to ~5-10 (i.e., 5 times the Nyquist frequency), otherwise the filter dampens high frequencies too much. The default setting is `formantCeiling = 2`, which is much faster and not too inaccurate for human-length vocal tracts. Note that vocal tract length can be variable, providing an easy way to create parallel formant transitions. 
 
@@ -476,15 +612,24 @@ Unlike the argument "mouth", variable "vocalTract" parameter recalculates forman
 ```{r fig.width = 7, fig.height = 5}
 formants = list(f1 = c(500, 250), f2 = c(1500, 2800), f3 = 3500, f4 = 4300)
 estimateVTL(formants)  # 13.7 cm - so the initial VTL should be close to 13.7
-soundgen(sylLen = 800, rolloff = -6, formants = formants, 
-         vocalTract = list(time = c(0, .3, 1), value = c(14, 28, 25)), 
-         play = playback, plot = TRUE, main = 'Good initial VTL')
-# wrong: VTL too high for these formants, causing an overlap
-soundgen(sylLen = 800, rolloff = -6, formants = formants, 
-         vocalTract = list(time = c(0, .3, 1), value = c(18, 28, 25)), 
-         play = playback, plot = TRUE, main = 'Bad initial VTL')
+s035 = soundgen(
+  sylLen = 800, rolloff = -6, formants = formants, 
+  vocalTract = list(time = c(0, .3, 1), value = c(14, 28, 25)), 
+  play = playback, plot = TRUE, main = 'Good initial VTL')
 ```
+`r if (saveAudio) {saveAudioFun('s035', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s035.mp3" type="audio/mp3"> </audio>'}`
 
+
+```{r fig.width = 7, fig.height = 5}
+# wrong: VTL too high for these formants, causing an overlap
+s036 = soundgen(
+  sylLen = 800, rolloff = -6, formants = formants, 
+  vocalTract = list(time = c(0, .3, 1), value = c(18, 28, 25)), 
+  play = playback, plot = TRUE, main = 'Bad initial VTL')
+```
+`r if (saveAudio) {saveAudioFun('s036', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s036.mp3" type="audio/mp3"> </audio>'}`
 
 ### Spectral envelope
 Sometimes it may be useful to view moving formants before synthesizing the sound, or you may want to create a spectral envelope and then apply it to another sound with `transplantFormants()`. The way to create and view a spectral envelope is to call the function that handles all formant processing under the hood in soundgen, namely `getSpectralEnvelope`:
@@ -524,12 +669,14 @@ formants = list(
               amp = c(30, 20), width = c(120, 200)), 
   f3   = list(time=c(0, 1), freq = c(2900, 3100), 
               amp = 25, width = 200))
-s = soundgen(sylLen = 1500, play = playback, pitch = 140, formants = formants)
-spectrogram(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5, 
+s037 = soundgen(sylLen = 1500, play = playback, pitch = 140, formants = formants)
+spectrogram(s037, samplingRate = 16000, ylim = c(0, 4), contrast = .5, 
             windowLength = 10, step = 5, colorTheme = 'seewave')
 # long-term average spectrum (less helpful for moving formants but very good for stationary):
 # seewave::meanspec(s, f = 16000, wl = 256)  
 ```
+`r if (saveAudio) {saveAudioFun('s037', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s037.mp3" type="audio/mp3"> </audio>'}`
 
 If you look at the filter towards the end of the sound, you can observe the additional zero-pole pair between the first and second formant:
 ```{r fig.show = "hold", fig.width = 5, fig.height = 4}
@@ -539,20 +686,21 @@ plot(as.numeric(rownames(se)), 20 * log10(se[, ncol(se)]),
 ```
 
 
-
 ### Mouth opening
 In addition to variable vocal tract length (`vocalTract` argument), an even easier shortcut for creating parallel formant transitions without coding all transitions by hand is provided by the `mouth` argument (in the app, tab "Tract / Mouth opening"). This can be thought of as a hyper-parameter offering an easy way to define moving formants within a bout (easy because you don't need to know the VTL in cm): all formants simply go down relative to specified values as the mouth closes and rise as it opens (see Moore, 2016). 
 
 In addition, an open mouth has lip radiation, which has the effect of amplifying higher frequencies. Lip radiation is replaced by nose radiation when the mouth is completely closed, dampening the higher frequencies, and the vowel is automatically nasalized using a simple approximation (Hawkins & Stevens, 1985). Basically, with the mouth closed we switch from a tube open at one end to a tube closed at both ends and coupled with a (simplified) nasal cavity. Despite being a crude model of what really happens when a vocalizing animal closes its mouth, in many cases `mouth` can save you a lot of manual coding of formants. Here is a simple example, with the mouth gradually opening and closing again:
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(sylLen = 1200, play = playback, pitch = 140, 
-             mouth = list(time = c(0, .3, .75, 1), 
-                          value = c(0, 0, .7, 0)))
-spectrogram(s, samplingRate = 16000, 
+s038 = soundgen(sylLen = 1200, play = playback, pitch = 140, 
+                mouth = list(time = c(0, .3, .75, 1), 
+                             value = c(0, 0, .7, 0)))
+spectrogram(s038, samplingRate = 16000, 
             ylim = c(0, 4), contrast = .5, 
             windowLength = 10, step = 5, 
             colorTheme = 'seewave')
 ```
+`r if (saveAudio) {saveAudioFun('s038', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s038.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP Here and elsewhere, I talk about applying soundgen to the task of synthesizing non-human sounds. It does work, but be aware that many computational routines are based on human phonetic research, simply because there is vastly more data available on human vocal production. For example, formant bandwidths and spectral consequences of nasalization are estimated based on human phonetics, but it is far from clear to what extent these equations are applicable to sounds produced by non-human mammals. Bird calls are again a whole new ball game. And once you move on to insects or non-biological sounds, just forget about hyperparameters like `mouth` and code everything at the lowest possible level.*
 
@@ -561,7 +709,7 @@ The standard source-filter model (Fant, 1971) assumes that the vibration of the 
 
 In humans, spontaneous formant locking is usually observed in high-pitched sounds like screams, although formant matching can also be performed intentionally in order to maximize sonority, as in soprano singing, or to produce unusual vocal effects such as Tuvinian throat singing. In animal vocalizations, formant locking appears to be particularly common when the vocal tract is long and formants are closely spaced (my speculation). For example, elk bugles often contain a series of stepwise pitch jumps from one formant to the next, a bit like this:
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(
+s039 = soundgen(
   sylLen = 1500, rolloff = -20,
   pitch = c(500, 1000, 1800, 1700, 500),
   formants = NULL, vocalTract = 55,
@@ -573,6 +721,8 @@ s = soundgen(
   play = playback, plot = TRUE, ylim = c(0, 8)
 )
 ```
+`r if (saveAudio) {saveAudioFun('s039', samplingRate = 22000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s039.mp3" type="audio/mp3"> </audio>'}`
 
 ### Add formants to an existing sound
 For some purposes it may be useful to separate the generation of glottal source (or another source of acoustic excitation) from its spectral filtering. You may also need to add formants to an existing waveform. To do so, you can call the helper function `addFormants()`, which normally works under the hood in soundgen. The algorithm is to take an STFT, multiply the resulting spectrum by the filter, and then convert it back to time domain via inverse STFT. The same function can theoretically be used to perform inverse filtering - that is, to remove formants from a signal - as long as you can provide a VERY accurate formant filter. See `?addFormants` for more information.
@@ -591,10 +741,12 @@ r = getRolloff(rolloff = c(-5, -20),  # rolloff parameters are vectorized
                pitch_per_gc = c(170, 340), plot = TRUE)
 
 # to generate the corresponding sound:
-s = soundgen(sylLen = 1000, rolloff = c(-5, -20), rolloffOct = 0,
-             rolloffParab = -10, rolloffParabHarm = 13,
-             pitch = c(170, 340),  play = playback)
+s040 = soundgen(sylLen = 1000, rolloff = c(-5, -20), rolloffOct = 0,
+                rolloffParab = -10, rolloffParabHarm = 13,
+                pitch = c(170, 340),  play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s040', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s040.mp3" type="audio/mp3"> </audio>'}`
 
 In the app the relevant parameters are found in the tab "Source / Rolloff". To develop an intuition for source spectrum settings, I recommend practicing with disabled formants in the app (set "Formants prominence" under "Tract / Formants" to 0). This way you can isolate the effects of source spectrum and use the preview plot for instant feedback – it shows the rolloff for the lowest and the highest pitch in your intonation contour. Rolloff parameters are vectorized, but this functionality is only available from R console. However, rolloff also varies over time if temperature is above zero (use `tempEffects$specDep` to control the amount of stochastic variation of rolloff and other spectral characteristics).
 
@@ -604,43 +756,58 @@ Apart from using `rolloff` and related parameters to control the general shape o
 rolloffExact = matrix(c(.1, .2, 1, .02, .2,  # strength of H1-H5 at time 0
                         1, .2, .01, .1, .4), # strength of H1-H5 at time 1000
                       ncol = 2)
-s = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
-             rolloffExact = rolloffExact, 
-             plot = TRUE, ylim = c(0, 4), play = playback)
+s041 = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
+                rolloffExact = rolloffExact, 
+                plot = TRUE, ylim = c(0, 4), play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s041', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s041.mp3" type="audio/mp3"> </audio>'}`
 
 If you do not want source spectrum to change over time, a single vector instead of a matrix will do:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
-             rolloffExact = c(.1, .5, .25, 1, .25, .08, .05, .02), 
-             plot = TRUE, ylim = c(0, 4), play = playback)
+s042 = soundgen(sylLen = 1000, pitch = c(400, 430), formants = NULL,
+                rolloffExact = c(.1, .5, .25, 1, .25, .08, .05, .02), 
+                plot = TRUE, ylim = c(0, 4), play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s042', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s042.mp3" type="audio/mp3"> </audio>'}`
 
 ### Closed glottis
 If f0 is very low, as in vocal fry or some animal vocalizations like crocodile roaring or elephant rumbling, individual glottal pulses can be both seen on a spectrogram and perceived as distinct percussion-like acoustic events separated by noticeable pauses. Soundgen can create such sounds by switching to a new mode of production: instead of synthesizing continuous sine waves spanning the entire syllable, it creates each glottal pulse individually (each with its full set of harmonics) and then glues them together with pauses in between. 
 
 This is a lot slower than continuous sine wave synthesis and mostly justified for very low-pitched sounds, since with higher pitch there will be too few points per glottal cycle to sound convincing without increasing `samplingRate` to astronomical values. Also note that some spectral artifacts may appear. Example:
-```{r fig.width = 7, fig.height = 7}
+```{r fig.width = 7, fig.height = 6}
 # Not a good idea: samplingRate is too low
-s1 = soundgen(pitch = c(1500, 800), glottis = 75, 
-              samplingRate = 16000, play = playback)
+s043 = soundgen(pitch = c(1500, 800), glottis = 75, 
+                samplingRate = 16000, play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s043', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s043.mp3" type="audio/mp3"> </audio>'}`
 
+```{r fig.width = 7, fig.height = 6}
 # This sounds better but takes a long time to synthesize:
-s2 = suppressWarnings(soundgen(pitch = c(1500, 800), glottis = 75, 
-                               samplingRate = 80000, play = playback, 
-                               invalidArgAction = 'ignore'))
+s044 = suppressWarnings(soundgen(
+  pitch = c(1500, 800), glottis = 75, 
+  samplingRate = 80000, play = playback, 
+  invalidArgAction = 'ignore'))
 # NB: invalidArgAction = 'ignore' forces a "weird" samplingRate value
 # to be accepted without question
-
-# Now this is what this feature is meant for: vocal fry
-s3 = soundgen(sylLen = 1500, pitch = c(110, 90), rolloff = -12,
-              glottis = c(0, 500), 
-              jitterDep = 1, shimmerDep = 20,
-              # subharmonics not implemented with "glottis" 
-              play = playback)
-spectrogram(s3, samplingRate = 16000, heights = c(1, 1))
 ```
+`r if (saveAudio) {saveAudioFun('s044', samplingRate = 80000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s044.mp3" type="audio/mp3"> </audio>'}`
 
+```{r fig.width = 7, fig.height = 6}
+# Now this is what this feature is meant for: vocal fry
+s045 = soundgen(
+  sylLen = 1500, pitch = c(110, 90), rolloff = -12,
+  glottis = c(0, 500), 
+  jitterDep = 1, shimmerDep = 20,
+  # subharmonics not implemented with "glottis" 
+  play = playback)
+spectrogram(s045, samplingRate = 16000, heights = c(1, 1))
+```
+`r if (saveAudio) {saveAudioFun('s045', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s045.mp3" type="audio/mp3"> </audio>'}`
 
 ## Nonlinear effects
 Soundgen can add frequency jumps, subharmonics, sidebands (implemented as a modification of subharmonics or as amplitude modulation), and approximate deterministic chaos by adding strong jitter and shimmer. These effects basically make the sound appear noisy / harsh / rough / unpredictable / etc. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid amplitude and/or frequency modulation, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic. To achieve sidebands, the amplitude of each subharmonic is set to be a function of its distance from the nearest harmonic of the f0 stack; the rate at which g0 harmonics lose energy away from the nearest f0 harmonic determines the width of sidebands (`subWidth`). This way we can create either subharmonics or narrow sidebands that vary naturally as f0 changes over time, producing bifurcations and switching between different subharmonic regimes (see Wilden et al., 2012). 
@@ -661,33 +828,39 @@ If nonlinBalance = 100%, the whole syllable is in regime 3.
 
 To see any effect, you have to set jitterDep, shimmerDep, and subFreq/subDep/subWidth to some positive values. With nonlinBalance < 100%, the result is a stochastic combination of the three regimes (tonal, subharmonics, subharmonics + jitter + shimmer):
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
-soundgen(sylLen = 1500, pitch = c(170, 420, 400, 190),
-         nonlinBalance = 60,
-         subDep = 10, jitterDep = 1.5, shimmerDep = 25,
-         play = playback, plot = TRUE, ylim = c(0, 5))
+s046 = soundgen(
+  sylLen = 1500, pitch = c(170, 420, 400, 190),
+  nonlinBalance = 60,
+  subDep = 10, jitterDep = 1.5, shimmerDep = 25,
+  play = playback, plot = TRUE, ylim = c(0, 5))
 ```
-
+`r if (saveAudio) {saveAudioFun('s046', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s046.mp3" type="audio/mp3"> </audio>'}`
 
 ### Subharmonics
 To add nonlinearities non-stochastically (exactly where you want them), keep `nonlinBalance` at the default value of 100% and specify the nature and timing of nonlinearities manually. To add a single subharmonic between each pair of f-harmonics (period doubling), set `subRatio = 2`, for period tripling, `subRatio = 3`, etc. This number of subharmonics will be added regardless of pitch changes. Another way is to set `subFreq` ("Target subharmonic frequency, Hz" in the app), which gives an approximate g0 target, so that the number of subharmonics will vary with pitch. The amplitude (loudness) of subharmonics is controlled by `subDep` ("Depth of subharmonics"). All these parameters can vary within a syllable. 
 
 Add one subharmonic regardless of pitch:
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
-soundgen(subRatio = 2, subDep = c(5, 20),
-         sylLen = 800, pitch = c(700, 1300), formants = NULL,
-         play = playback, plot = TRUE, ylim = c(0, 3))
+s047 = soundgen(subRatio = 2, subDep = c(5, 20),
+                sylLen = 800, pitch = c(700, 1300), formants = NULL,
+                play = playback, plot = TRUE, ylim = c(0, 3))
 ```
+`r if (saveAudio) {saveAudioFun('s047', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s047.mp3" type="audio/mp3"> </audio>'}`
 
 Set target g0, so that the number of subharmonics depends on pitch:
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
-soundgen(subFreq = 400, subDep = c(5, 20),
-         sylLen = 800, pitch = c(700, 1300), formants = NULL,
-         play = playback, plot = TRUE, ylim = c(0, 3))
+s048 = soundgen(subFreq = 400, subDep = c(5, 20),
+                sylLen = 800, pitch = c(700, 1300), formants = NULL,
+                play = playback, plot = TRUE, ylim = c(0, 3))
 ```
+`r if (saveAudio) {saveAudioFun('s048', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s048.mp3" type="audio/mp3"> </audio>'}`
 
 Sidebands are best demonstrated with high-pitched sounds and low subharmonic frequencies. For example, chimpanzees emit piercing screams with narrow subharmonic bands. If we set `subFreq` to 75 Hz and `subWidth` to 130 Hz, subharmonics literally form a band around each harmonic of the main stack, creating a very distinct, immediately recognizable sound quality:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(
+s049 = soundgen(
   sylLen = 800, 
   pitch = list(time=c(0, .3, .9, 1), 
                value = c(1200, 1547, 1487, 1154)),
@@ -701,111 +874,150 @@ s = soundgen(
   pitchSamplingRate = 22050, samplingRate = 22050,
   play = playback, plot = TRUE, ylim = c(0, 5))
 ```
+`r if (saveAudio) {saveAudioFun('s049', samplingRate = 22050)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s049.mp3" type="audio/mp3"> </audio>'}`
 
 Another way to create sidebands is to add amplitude modulation (AM). Perfectly sinusoidal AM creates a simple pair of extra harmonics, while non-sinusoidal AM creates sidebands:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(sylLen = 800, 
-             pitch = data.frame(time=c(0, .3, .9, 1), 
-                                value = c(1200, 1547, 1487, 1154)),
-             rolloff = -3, rolloffKHz = 0,
-             # gradually increasing width of sidebands at 0-600 ms
-             amFreq = 75, amShape = .1,
-             amDep = data.frame(time = c(0, 600, 650, 800), 
-                                value = c(0, 100, 0, 0)),  
-             vocalTract = 12, mouth = c(.1, .8, .1),
-             temperature = .001,
-             pitchSamplingRate = 22050, samplingRate = 22050,
-             play = playback, plot = TRUE, ylim = c(0, 5))
+s050 = soundgen(
+  sylLen = 800, 
+  pitch = list(time=c(0, .3, .9, 1), 
+               value = c(1200, 1547, 1487, 1154)),
+  rolloff = -3, rolloffKHz = 0,
+  # gradually increasing width of sidebands at 0-600 ms
+  amFreq = 75, amShape = .1,
+  amDep = list(time = c(0, 600, 650, 800), 
+               value = c(0, 100, 0, 0)),  
+  vocalTract = 12, mouth = c(.1, .8, .1),
+  temperature = .001,
+  pitchSamplingRate = 22050, samplingRate = 22050,
+  play = playback, plot = TRUE, ylim = c(0, 5))
 ```
+`r if (saveAudio) {saveAudioFun('s050', samplingRate = 22050)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s050.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP The parameters regulating nonlinear effects are vectorized, so you can write `subDep = c(0, 130), jitterDep = c(0, 1)`, etc., or use the "anchor format" as above (console only, not available in the app)*
 
 ### Jitter / shimmer
 As for jitter in pitch regime 3, it wiggles both f0 and g0 harmonic stacks, blurring the spectrum. Parameter `jitterDep` ("Jitter depth, semitones" in the app) defines how much the pitch fluctuates, while `jitterLen` ("Jitter period, ms") defines how rapid these fluctuations are. Slow jitter with a period of ~50 ms produces the effect of a shaky, unsteady voice. It may sound similar to a vibrato, but jitter is irregular. Rapid jitter with a period of ~1 ms, especially in combination with subharmonics, may be used to imitate deterministic chaos, which is found in voiced but highly irregular animal sounds such as barks, roars, noisy screams, etc. This works best for high-pitched sounds like screams. Shimmer is similar to jitter, except that it defines random fluctuations of the amplitude rather than frequency. It is controlled by two arguments, `shimmerDep` (percent) and `shimmerLen` (ms).
 ```{r fig.width = 5, fig.height = 5}
-s1 = soundgen(jitterLen = 40, jitterDep = 1,  # shaky voice
-              shimmerLen = 30, shimmerDep = 30,   
-              sylLen = 1000, pitch =  c(150, 170), 
-              play = playback, plot = TRUE, ylim = c(0, 3))
-s2 = soundgen(jitterLen = 1, jitterDep = 1,   # harsh voice
-              shimmerLen = 1, shimmerDep = 10, 
-              sylLen = 1000, pitch =  c(150, 170), 
-              play = playback, plot = TRUE, ylim = c(0, 3))
+s051 = soundgen(jitterLen = 40, jitterDep = 1,  # shaky voice
+                shimmerLen = 30, shimmerDep = 30,   
+                sylLen = 1000, pitch =  c(150, 170), 
+                play = playback, plot = TRUE, ylim = c(0, 3))
 ```
+`r if (saveAudio) {saveAudioFun('s051', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s051.mp3" type="audio/mp3"> </audio>'}`
+
+```{r fig.width = 5, fig.height = 5}
+s052 = soundgen(jitterLen = 1, jitterDep = 1,   # harsh voice
+                shimmerLen = 1, shimmerDep = 10, 
+                sylLen = 1000, pitch =  c(150, 170), 
+                play = playback, plot = TRUE, ylim = c(0, 3))
+```
+`r if (saveAudio) {saveAudioFun('s052', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s052.mp3" type="audio/mp3"> </audio>'}`
 
 Jitter + shimmer + subharmonics work well together. For example, barks of a small, annoying dog can be roughly approximated with this minimal code (ignoring respiration to keep things simple):
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, 
-             vocalTract = 8, formants = NULL, rolloff = 0,
-             pitch = c(1100, 1600, 1100), mouth =  c(0, 0.5, 0),
-             jitterDep = 1, subDep = 60, play = playback) 
+s053 = soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, 
+                vocalTract = 8, formants = NULL, rolloff = 0,
+                pitch = c(1100, 1600, 1100), mouth = c(0, 0.5, 0),
+                jitterDep = 1, subDep = 60, play = playback) 
 ```
+`r if (saveAudio) {saveAudioFun('s053', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s053.mp3" type="audio/mp3"> </audio>'}`
 
 Note that jitter is random variation around a target value, but soundgen also has relatively slow random pitch drift, which is implemented as a random walk and can thus wander into values quite far removed from the target. Random pitch drift is added whenever temperature > 0. Use `tempEffects` to regulate its amount and frequency:
 ```{r fig.width = 5, fig.height = 5}
 # slight and slow (slightly unsteady voice)
-soundgen(sylLen = 1500, pitch = 300,
-         tempEffects = list(pitchDriftDep = 1, pitchDriftFreq = .5),
-         play = playback, plot = TRUE, ylim = c(0, 2))
-# strong and rapid (trembling voice, similar to jitter)
-soundgen(sylLen = 1500, pitch = 300,
-         tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
-         play = playback, plot = TRUE, ylim = c(0, 2))
-# both drift and jitter (trembling voice ending with some "chaos")
-soundgen(sylLen = 1500, pitch = 300,
-         tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
-         jitterDep = c(0, 0, 0, 2),
-         play = playback, plot = TRUE, ylim = c(0, 2))
+s054 = soundgen(
+  sylLen = 1500, pitch = 300,
+  tempEffects = list(pitchDriftDep = 1, pitchDriftFreq = .5),
+  play = playback, plot = TRUE, ylim = c(0, 2))
 ```
+`r if (saveAudio) {saveAudioFun('s054', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s054.mp3" type="audio/mp3"> </audio>'}`
 
+```{r fig.width = 5, fig.height = 5}
+# strong and rapid (trembling voice, similar to jitter)
+s055 = soundgen(
+  sylLen = 1500, pitch = 300,
+  tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
+  play = playback, plot = TRUE, ylim = c(0, 2))
+```
+`r if (saveAudio) {saveAudioFun('s055', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s055.mp3" type="audio/mp3"> </audio>'}`
+
+```{r fig.width = 5, fig.height = 5}
+# both drift and jitter (trembling voice ending with some "chaos")
+s056 = soundgen(
+  sylLen = 1500, pitch = 300,
+  tempEffects = list(pitchDriftDep = 5, pitchDriftFreq = 5),
+  jitterDep = c(0, 0, 0, 2),
+  play = playback, plot = TRUE, ylim = c(0, 2))
+```
+`r if (saveAudio) {saveAudioFun('s056', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s056.mp3" type="audio/mp3"> </audio>'}`
 
 ### Chaos
 There is no way to synthesize true deterministic chaos with residual harmonic structure in soundgen. However, there are several roundabout ways to achieve a comparable effect. As already mentioned, strong jitter and shimmer create harsh sounds that are perceptually similar to deterministic chaos, especially for higher f0 values:
 ```{r fig.width = 7, fig.height = 7}
-s = soundgen(sylLen = 1200, 
-             pitch = list(
-               time = c(0, 110, 111, 180, 350, 940, 941, 1100, 1200),
-               value = c(700, 1150, 1550, 2000, 2240, 1940, 1180, 900, 500)),
-             temperature = 0.05, tempEffects = list(pitchDep = 0),
-             jitterDep = data.frame(time = c(0, 200, 201, 900, 901, 1200),
-                                    value = c(0, 0,  1.7, 1.2, 0,   0)),
-             formants = c(900, 1300, 3300, 4300),
-             attackLen = c(10, 200),
-             samplingRate = 22000, play = playback, plot = TRUE)
+s057 = soundgen(
+  sylLen = 1200, 
+  pitch = list(
+    time = c(0, 110, 111, 180, 350, 940, 941, 1100, 1200),
+    value = c(700, 1150, 1550, 2000, 2240, 1940, 1180, 900, 500)),
+  temperature = 0.05, tempEffects = list(pitchDep = 0),
+  jitterDep = list(time = c(0, 200, 201, 900, 901, 1200),
+                   value = c(0, 0,  1.7, 1.2, 0,   0)),
+  formants = c(900, 1300, 3300, 4300),
+  attackLen = c(10, 200),
+  samplingRate = 44100, play = playback, plot = TRUE, ylim = c(0, 5))
 ```
+`r if (saveAudio) {saveAudioFun('s057', samplingRate = 44100)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s057.mp3" type="audio/mp3"> </audio>'}`
 
 Another method is to encode very rapid pitch jumps, say between f0 and a formant or between harmonically related values, like this:
 
 ```{r fig.width = 7, fig.height = 7}
-s = soundgen(sylLen = 1200, 
-             pitch = list(
-               time = c(0, 80, 81, 230, 231, 385, 
-                        # 500 time anchors here - an episode of "chaos"
-                        seq(385, 850, length.out = 500), 
-                        851, 1020, 1021, 1085),
-               value = c(700, 1130, 1000, 1200, 1860, 1840, 
-                         # random f0 jumps b/w 1.2 & 1.8 KHz 
-                         sample(c(1200, 1800), size = 500, replace = TRUE), 
-                         1620, 1540, 1220, 900)),
-             temperature = 0.05, 
-             tempEffects = list(pitchDep = 0),
-             jitterDep = .3,
-             rolloffKHz = 0, rolloff = 0, formants = c(900, 1300, 3300, 4300),
-             samplingRate = 22000, play = playback, plot = TRUE)
+s058 = soundgen(
+  sylLen = 1200, 
+  pitch = list(
+    time = c(0, 80, 81, 230, 231, 385, 
+             # 500 time anchors here - an episode of "chaos"
+             seq(385, 850, length.out = 500), 
+             851, 1020, 1021, 1085),
+    value = c(700, 1130, 1000, 1200, 1860, 1840, 
+              # random f0 jumps b/w 1.2 & 1.8 KHz 
+              sample(c(1200, 1800), size = 500, replace = TRUE), 
+              1620, 1540, 1220, 900)),
+  temperature = 0.05, 
+  tempEffects = list(pitchDep = 0),
+  jitterDep = .3,
+  rolloffKHz = 0, rolloff = 0, formants = c(900, 1300, 3300, 4300),
+  samplingRate = 44100, play = playback, plot = TRUE, ylim = c(0, 5))
 ```
+`r if (saveAudio) {saveAudioFun('s058', samplingRate = 44100)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s058.mp3" type="audio/mp3"> </audio>'}`
 
 Incidentally, you can use similar tricks for introducing variation in any soundgen parameter. For example, you can use `runif()` or `rnorm()` to randomly vary things like mouth opening, pitch, amplitude. That's the best part of working in R!
 ```{r}
+s059 = silence
 # run several times to appreciate the randomness
-for (i in 1:5) s = soundgen(sylLen = 800, 
-             mouth = rnorm(n = 5, mean = .5, sd = .3),
-             play = playback)
+for (i in 1:5) s059 = c(s059, soundgen(
+  sylLen = 800, 
+  mouth = rnorm(n = 5, mean = .5, sd = .3)
+), silence)
+# playme(s059)
 ```
+`r if (saveAudio) {saveAudioFun('s059', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s059.mp3" type="audio/mp3"> </audio>'}`
 
 ### Specifying the timing of each nonlinear regime
 Sometimes it may be necessary to control precisely the timing of each nonlinear regime. For example, in an experiment a sound containing nonlinear effects may need to be synthesized repeatedly, varying one parameter and preserving everything else, including nonlinear regimes. To control the timing of nonlinear effects manually, set `nonlinBalance` to 100 (the entire vocalization) and vary the strength of nonlinear effects with their vectorized "depth" settings:
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
-s = soundgen(
+s060 = soundgen(
   # nonlinear settings
   jitterDep = c(0, 0, 1.5, .5), shimmerDep = c(0, 0, 15, 5),
   # settings for high precision
@@ -815,25 +1027,27 @@ s = soundgen(
   sylLen = 1000, pitch = c(240, 200),
   rolloff = c(-20, -18, -23, -28) + 4, vibratoDep = .2,
   formants = c(800, 1400, 2500, 3700, 5000, 6800),
-  noise = data.frame(time = c(0, 340, 900, 1000), 
-                     value = c(-60, -45, -60, -80) + 10),
+  noise = list(time = c(0, 340, 900, 1000), 
+               value = c(-60, -45, -60, -80) + 10),
   rolloffNoise = 0,
   mouth = c(.55, .5, .45, .6),
   play = playback, plot = TRUE, ylim = c(0, 4)
 )
 ```
+`r if (saveAudio) {saveAudioFun('s060', samplingRate = 22050)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s060.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP For analytical-precision work, set `pitchSamplingRate` to the same (high) value as `samplingRate`, say 22050. By default, `pitchSamplingRate` is much lower to speed up the synthesis, but this way sound duration can vary considerably depending on nonliear regimes, especially in sounds like screams with highly variable pitch.*
 
 In the example above `jitterDep = c(0, 0, 1.5, .5)` means that there is no jitter roughly in the first half of the voiced fragment, then a jitter of 1.5 semitones, and then .5 semitones towards the end. For more precision, use the "anchor format". The same goes for all vectorized parameters: jitterLen, shimmerDep, shimmerLen, subFreq, subDep, rolloff settings, etc. For example, to turn on jitter abruptly at 300 ms and turn it off again at 500 ms, and to have shimmer only between 600 and 800 ms, we can modify the code as follows (it still won't be precise down to a millisecond, though):
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
-s = soundgen(
+s061 = soundgen(
   # nonlinear settings
-  jitterDep = data.frame(
+  jitterDep = list(
     time = c(0, 300, 301, 500, 501, 1000), 
     value = c(0, 0, 1.5, 1.5, 0, 0)
   ),   
-  shimmerDep = data.frame(
+  shimmerDep = list(
     time = c(0, 600, 601, 800, 801, 1000), 
     value = c(0, 0, 40, 40, 0, 0)
   ),
@@ -845,23 +1059,27 @@ s = soundgen(
   sylLen = 1000, pitch = c(240, 200),
   rolloff = c(-20, -18, -23, -28), vibratoDep = .2,
   formants = c(800, 1400, 2500, 3700, 5000, 6800),
-  noise = data.frame(time = c(0, 340, 900, 1000), 
-                     value = c(-60, -45, -60, -80) + 30),
+  noise = list(time = c(0, 340, 900, 1000), 
+               value = c(-60, -45, -60, -80) + 30),
   rolloffNoise = -8,
   mouth = c(.55, .5, .45, .6),
   play = playback, plot = TRUE, ylim = c(0, 4)
 )
 ```
+`r if (saveAudio) {saveAudioFun('s061', samplingRate = 22050)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s061.mp3" type="audio/mp3"> </audio>'}`
 
 Here is another method of controlling the timing of nonlinear phenomena. When `nonlinBalance < 100`, soundgen divides a sound into different nonlinear regimes by generating a random walk, which also controls the drift of some other control parameters. Setting temperature at nearly zero (say, at 0.001) removes random variation in most control parameters, but the random walk for nonlinear effects still remains random. To standardize that random walk as well, use `nonlinRandomWalk`. `nonlinRandomWalk` should be a vector containing 0, 1, and 2, where 0 = no nonlinearities, 1 = subharmonics, and 2 = subharmonics + jitter + shimmer. The number and order of 0/1/2 determines which nonlinear regime is active at which time. For example, this will make a sound with no effect in the first third, subharmonics in the second third, and jitter in the final third of the total duration:
 
 ```{r fig.width = 5, fig.height = 5}
 rw_bin = c(rep(0, 100), rep(1, 100), rep(2, 100))
-s = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
-             subFreq = 100, subDep = 70, jitterDep = 1,
-             nonlinRandomWalk = rw_bin, 
-             play = playback, plot = TRUE, ylim = c(0, 4))
+s062 = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
+                subFreq = 100, subDep = 70, jitterDep = 1,
+                nonlinRandomWalk = rw_bin, 
+                play = playback, plot = TRUE, ylim = c(0, 4))
 ```
+`r if (saveAudio) {saveAudioFun('s062', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s062.mp3" type="audio/mp3"> </audio>'}`
 
 Make `nonlinRandomWalk` a fairly long vector for greater precision, i.e. not just `c(0, 1)` - because of the way `approx` works, that will NOT split the sound into 50% with no nonlinear effects and 50% with subharmonics. Instead, write `c(rep(0, 50), rep(1, 50))` or some such. 
 
@@ -873,16 +1091,22 @@ rw = getRandomWalk(len = 1000, rw_range = 100,
                    trend = c(0.5, -0.5), rw_smoothing = .95)
 rw_bin = getIntegerRandomWalk(rw, minLength = 100, plot = TRUE)
 # synthesize two sounds with identical nonlinear effects but different f0
-s1 = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
-              subFreq = 100, subDep = 70, jitterDep = 1,
-              nonlinRandomWalk = rw_bin, 
-              play = playback, plot = TRUE, ylim = c(0, 4))
-s2 = soundgen(sylLen = 800, pitch = 500, temperature = 0.001,
-              subFreq = 100, subDep = 70, jitterDep = 1,
+s063 = soundgen(sylLen = 800, pitch = 300, temperature = 0.001,
+              subFreq = 100, subDep = 20, jitterDep = 1,
               nonlinRandomWalk = rw_bin, 
               play = playback, plot = TRUE, ylim = c(0, 4))
 ```
+`r if (saveAudio) {saveAudioFun('s063', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s063.mp3" type="audio/mp3"> </audio>'}`
 
+```{r fig.show = "hold", fig.width = 5, fig.height = 5}
+s064 = soundgen(sylLen = 800, pitch = 500, temperature = 0.001,
+                subFreq = 100, subDep = 20, jitterDep = 1,
+                nonlinRandomWalk = rw_bin, 
+                play = playback, plot = TRUE, ylim = c(0, 4))
+```
+`r if (saveAudio) {saveAudioFun('s064', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s064.mp3" type="audio/mp3"> </audio>'}`
 
 ## Unvoiced component (turbulent noise)
 In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces turbulent noise (unvoiced component). This noise can be added to the voiced component to create breathing, sniffing, snuffling, hissing, gargling, etc. It is often appropriate to include at least some noise in synthetic vocalizations, if only because it is more natural to have noise instead of harmonics in the upper part of the source spectrum.
@@ -893,115 +1117,169 @@ The perceptual quality of turbulent noise depends on its spectral composition, w
 1.  Noise with the same formant structure as the voiced component, the spectrum of which only depends on the `rolloffNoise` setting, while `formantsNoise` is `NULL` or `NA`. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noise`, but leave `formantsNoise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
 
 ```{r fig.width = 5, fig.height = 5}
-soundgen(sylLen = 500, 
-         noise = data.frame(time = c(0, 800), value = c(-20, -10)),
-         formantsNoise = NA,  # breathing - same formants as for voiced
-         play = playback, plot = TRUE)
+s065 = soundgen(
+  sylLen = 500, 
+  noise = list(time = c(0, 800), value = c(-20, -10)),
+  formantsNoise = NA,  # breathing - same formants as for voiced
+  play = playback, plot = TRUE)
 # observe that the voiced and unvoiced components have exactly the same formants
 ```
+`r if (saveAudio) {saveAudioFun('s065', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s065.mp3" type="audio/mp3"> </audio>'}`
 
 2.  Noise with a different formant structure than the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component (`formantsNoise`) manually in exactly the same format as for the voiced component (`formants`). 
 
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(sylLen = 200, pitch = c(150, 120),
-             noise = data.frame(time = c(180, 250, 400), value = c(-20, -10, -50)),
-             # specify noise filter ≠ voiced filter to get ~[s]
-             formantsNoise = list(
-               f1 = data.frame(freq = 7000,
-                               amp = 40, 
-                               width = 1500)
-             ), 
-             rolloffNoise = 0,
-             play = playback, plot = TRUE)
+s066 = soundgen(
+  sylLen = 200, pitch = c(150, 120),
+  noise = list(time = c(180, 250, 400), value = c(-20, -10, -50)),
+  # specify noise filter ≠ voiced filter to get ~[s]
+  formantsNoise = list(f1 = list(freq = 7000, amp = 40, width = 1500)), 
+  rolloffNoise = 0,
+  play = playback, plot = TRUE)
 # observe that the voiced and unvoiced components have different formants
 ```
+`r if (saveAudio) {saveAudioFun('s066', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s066.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP: `pitch = NA` or `NULL` removes the voiced component, so that only turbulent noise is synthesized. In the app, untick the box Intonation / Intonation syllable / "Generate voiced component?"*
 
 If `formantsNoise = NA` or `NULL` (i.e., if this is aspiration noise), formant structure is calculated based on vocal tract length, and then extra stochastic formants are added as usual. For example, to create simple sighs, you can just specify the length of your creature's vocal tract:
 ```{r}
-s1 = soundgen(vocalTract = 15.5,  # ~human throat (15.5 cm)
-              formants = NULL, attackLen = 200, play = playback,
-              noise = list(time = c(0, 800), value = c(40, 40)))
+s067 = soundgen(
+  vocalTract = 15.5,  # ~human throat (15.5 cm)
+  formants = NULL, attackLen = 200, play = playback,
+  noise = list(time = c(0, 800), value = c(40, 40)))
 # NB: since there is no voiced component, we control syllable length
 # by specifying the appropriate noise$time, in this case 0 to 800 ms
+```
+`r if (saveAudio) {saveAudioFun('s067', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s067.mp3" type="audio/mp3"> </audio>'}`
 
-s2 = soundgen(vocalTract = 30,    # a large animal
-              formants = NULL, attackLen = 200, play = playback,
-              sylLen = 800, noise = 40)  # another way to specify the length
+```{r}
+s068 = soundgen(
+  vocalTract = 30,    # a large animal
+  formants = NULL, attackLen = 200, play = playback,
+  sylLen = 800, noise = 40)  # another way to specify the length
 # NB: voiced component is not generated if noise$value >= 40 dB
+```
+`r if (saveAudio) {saveAudioFun('s068', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s068.mp3" type="audio/mp3"> </audio>'}`
 
-s3 = soundgen(vocalTract = 100, invalidArgAction = 'ignore',    # a whale
-              formants = NULL, attackLen = 200, play = playback,
-              sylLen = 800, pitch = NULL, noise = 0) 
+```{r}
+s069 = soundgen(
+  vocalTract = 100, invalidArgAction = 'ignore',    # a whale
+  formants = NULL, attackLen = 200, play = playback,
+  sylLen = 800, pitch = NULL, noise = 0) 
 # Another way to remove the voiced component is to write pitch = NULL
 ```
+`r if (saveAudio) {saveAudioFun('s069', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s069.mp3" type="audio/mp3"> </audio>'}`
 
 In contrast, if `formantsNoise` are specified explicitly (i.e., if this is not aspiration noise), breathing noise is by default NOT enriched with stochastically added formants. To avoid losing all high-frequency energy in your noise, make sure you add a sufficient number of formants in `formantsNoise`, ideally all the way up to Nyquist frequency (half the sampling rate). Alternatively, you can explicitly specify `vocalTract`, and then extra formants will be added to the unvoiced component. Compare: 
 ```{r fig.width = 5, fig.height = 5}
 # only two specified formants
-s3 = soundgen(pitch = NULL, 
-              formantsNoise = c(1000, 2000),  
-              noise = 40, sylLen = 800,
-              play = playback, plot = TRUE)
-# two specified formants plus extra formants based on vocalTract
-s4 = soundgen(vocalTract = 15.5, 
-              pitch = NULL,
-              formantsNoise = c(1000, 2000),  
-              noise = 40, sylLen = 800,
-              play = playback, plot = TRUE)
+s070 = soundgen(pitch = NULL, 
+                formantsNoise = c(1000, 2000),  
+                noise = 40, sylLen = 800,
+                play = playback, plot = TRUE)
 ```
+`r if (saveAudio) {saveAudioFun('s070', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s070.mp3" type="audio/mp3"> </audio>'}`
+
+```{r fig.width = 5, fig.height = 5}
+# two specified formants plus extra formants based on vocalTract
+s071 = soundgen(vocalTract = 15.5, 
+                pitch = NULL,
+                formantsNoise = c(1000, 2000),  
+                noise = 40, sylLen = 800,
+                play = playback, plot = TRUE)
+```
+`r if (saveAudio) {saveAudioFun('s071', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s071.mp3" type="audio/mp3"> </audio>'}`
 
 The excitation source for the unvoiced component can be synthesized as white noise (if `rolloffNoise = 0`) or as turbulent noise with a spectrum that linearly (not exponentially!) loses power above `noiseFlatSpec` (the default is 1200 Hz). The parameter `rolloffNoise` thus controls the source spectrum of the unvoiced component:
 ```{r fig.width = 6, fig.height = 6}
-s1 = soundgen(vocalTract = 17.5, 
-              noise = 40, rolloffNoise = c(5, -20),
-              formants = NULL, attackLen = 200, 
-              play = playback, plot = TRUE)
+s072 = soundgen(vocalTract = 17.5, 
+                noise = 40, rolloffNoise = c(5, -20),
+                formants = NULL, attackLen = 200, 
+                play = playback, plot = TRUE)
 # NB: noise amplitude may change as rolloffNoise changes
 ```
+`r if (saveAudio) {saveAudioFun('s072', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s072.mp3" type="audio/mp3"> </audio>'}`
 
 ### Noise amplitude
 In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. In soundgen, the relevant argument is `noise = data.frame(time = ..., value = ...)`. It sets the timing and loudness of turbulent noise relative to the voiced component of a typical syllable. Starting from soundgen v1.4, you have three options in terms of how the amplitudes of the voiced and unvoiced components are compaired: 
 
 1. If `noiseAmpRef = 'f0'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the first harmonic (f0) of the voiced component. Until soundgen v1.4, this was the only available option. This setting makes the balance between harmonics and noise dependent on source spectrum (rolloff settings) and formants of both components. Example:
 ```{r}
-s1 = soundgen(noiseAmpRef = 'f0', rolloff = -1, 
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
-s2 = soundgen(noiseAmpRef = 'f0', rolloff = -15, 
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
+s073 = soundgen(noiseAmpRef = 'f0', rolloff = -1, 
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s073', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s073.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+s074 = soundgen(noiseAmpRef = 'f0', rolloff = -15, 
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s074', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s074.mp3" type="audio/mp3"> </audio>'}`
 
 2. If `noiseAmpRef = 'source'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the unfiltered voiced component ("glottal source"). In other words, you are specifying how loud the noise is relative to the source of excitation, but the actual balance between harmonics and noise can vary depending on the formant structure. Example:
 ```{r}
 # Harmonics-noise balance doesn't depend on rolloff...
-s3 = soundgen(noiseAmpRef = 'source', rolloff = -15, rolloffNoise = 0,
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
-s4 = soundgen(noiseAmpRef = 'source', rolloff = -1, rolloffNoise = -20,
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
-
-# ...but it does depend on the formant structure
-s5 = soundgen(noiseAmpRef = 'source', formants = 'a', 
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
-s6 = soundgen(noiseAmpRef = 'source', formants = 'u',
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
+s075 = soundgen(noiseAmpRef = 'source', rolloff = -15, rolloffNoise = 0,
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s075', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s075.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+s076 = soundgen(noiseAmpRef = 'source', rolloff = -1, rolloffNoise = -20,
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s076', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s076.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+# ...but it does depend on the formant structure
+s077 = soundgen(noiseAmpRef = 'source', formants = 'a', 
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s077', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s077.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+s078 = soundgen(noiseAmpRef = 'source', formants = 'u',
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s078', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s078.mp3" type="audio/mp3"> </audio>'}`
 
 3. If `noiseAmpRef = 'filtered'`, `noise$value` gives the maximum amplitude of noise relative to the maximum amplitude of the filtered voiced component (after adding formants). The balance between harmonics and noise therefore doesn't depend on either rolloff or formants. This is the default option. Example:
 ```{r}
-s7 = soundgen(noiseAmpRef = 'filtered', formants = 'a', 
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
-s8 = soundgen(noiseAmpRef = 'filtered', formants = 'u',
-              noise = data.frame(time = c(-100, 400), value = c(0, 0)), 
-              play = playback)
+s079 = soundgen(noiseAmpRef = 'filtered', formants = 'a', 
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s079', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s079.mp3" type="audio/mp3"> </audio>'}`
+
+```{r}
+s080 = soundgen(noiseAmpRef = 'filtered', formants = 'u',
+                noise = list(time = c(-100, 400), value = c(0, 0)), 
+                play = playback)
+```
+`r if (saveAudio) {saveAudioFun('s080', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s080.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP If you need a very precise balance of harmonics and noise based on another normalization (RMS amplitude, minimum or median instead of maximum amplitude, etc.), you can always synthesize the harmonic and noise components separately and then simply add them up at whatever amplitudes you like*
 
@@ -1009,38 +1287,46 @@ s8 = soundgen(noiseAmpRef = 'filtered', formants = 'u',
 If you want noise to be time-locked to the voiced component, make the argument `noise` a numeric vector. Anchor format with `time = c(), value = c()` is more flexible, but note that it may cause the noise and voiced components to be slightly out of sync (which may be useful if you want noise to extend beyond the voiced segment).
  
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(nSyl = 2,
-             noise = c(-10, 0),
-             plot = TRUE, ylim = c(0, 4), play = playback)
+s081 = soundgen(nSyl = 2,
+                noise = c(-10, 0),
+                plot = TRUE, ylim = c(0, 4), play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s081', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s081.mp3" type="audio/mp3"> </audio>'}`
 
 Turbulent noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 
-             temperature = 0.001, rolloffNoise = -2, 
-             noise = data.frame(time = c(39, 56, 209), 
-                                value = c(-40, 0, -20)),
-             formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
-             formantsNoise = list(f1 = c(420, 1200)),
-             plot = TRUE, ylim = c(0, 4), play = playback)
+s082 = soundgen(
+  nSyl = 2, sylLen = 120, pauseLen = 120, 
+  temperature = 0.001, rolloffNoise = -2, 
+  noise = list(time = c(39, 56, 209), 
+               value = c(-40, 0, -20)),
+  formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
+  formantsNoise = list(f1 = c(420, 1200)),
+  plot = TRUE, ylim = c(0, 4), play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s082', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s082.mp3" type="audio/mp3"> </audio>'}`
 
 Note that in the previous example `formantsNoise` defines the change of filter for the unvoiced components over the entire bout, i.e. across multiple syllables. This is similar to the way `formants` define the global change in formants across syllables. In contrast, if you have multiple bouts with one syllable in each, the change of unvoiced filter plays out within each bout, and the pause between the bouts is counted from the end of the unvoiced component, without any overlap between bouts. Compare the example above to the following (the only change is to use `repeatBout` instead of `nSyl`). Observe the behavior of `formantsNoise` (moving within each bout) and the duration of the pause between the syllables (~30 ms) and between the bouts (120 ms):
 ```{r fig.width = 7, fig.height = 5}
-s = soundgen(repeatBout = 2, nSyl = 2,
-             sylLen = 120, pauseLen = 120, 
-             temperature = 0.001, rolloffNoise = -2, 
-             noise = data.frame(time = c(39, 56, 209), 
-                                value = c(-40, 0, -20)),
-             formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
-             formantsNoise = list(f1 = c(420, 1200)),
-             plot = TRUE, ylim = c(0, 4), play = playback)
+s083 = soundgen(
+  repeatBout = 2, nSyl = 2,
+  sylLen = 120, pauseLen = 120, 
+  temperature = 0.001, rolloffNoise = -2, 
+  noise = list(time = c(39, 56, 209), 
+               value = c(-40, 0, -20)),
+  formants = list(f1 = c(860, 530),  f2 = c(1280, 2400)),
+  formantsNoise = list(f1 = c(420, 1200)),
+  plot = TRUE, ylim = c(0, 4), play = playback)
 ```
+`r if (saveAudio) {saveAudioFun('s083', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s083.mp3" type="audio/mp3"> </audio>'}`
 
 Both the timing and the amplitude of noise anchors are defined relative to the voiced component. Because noise can extend beyond voiced fragmets, however, time anchors for noise MUST be specified in ms (unlike all the other contours, which also accept time anchors on any arbitrary scale, say 0 to 1). If the noise starts before the voiced part, the first time anchor will be negative. This is easier to visualize in the app, which provides a preview. From R console, you can also preview the noise amplitude contour implied by your anchors by calling `getSmoothContour`, for example:
-```{r fig.width = 5, fig.height = 5}
-a = getSmoothContour(anchors = data.frame(time = c(-50, 200, 300), 
-                                          value = c(-80, 20, -80)),
+```{r fig.width = 5, fig.height = 4}
+a = getSmoothContour(anchors = list(time = c(-50, 200, 300), 
+                                    value = c(-80, 20, -80)),
                      voiced = 200, 
                      normalizeTime = FALSE,  # keep time in ms
                      plot = TRUE, ylim = c(-80, 40), main = '')
@@ -1096,16 +1382,18 @@ cow2 = soundgen(sylLen = 310, pitch = c(359, 359),
                              value = c(-80, -33, -32, -80)), 
                 rolloffNoise = -6,
                 attackLen = 0, addSilence = 0)
-s = crossFade(cow1 * 3, cow2,  # adjust the relative volume by scaling
-              samplingRate = 16000, crossLen = 150)
-# playme(s, 16000)
-spectrogram(s, 16000, ylim = c(0, 4))
+s084 = crossFade(cow1 * 3, cow2,  # adjust the relative volume by scaling
+                 samplingRate = 16000, crossLen = 150)
+# playme(s084, 16000)
+spectrogram(s084, 16000, ylim = c(0, 4))
 ```
+`r if (saveAudio) {saveAudioFun('s084', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s084.mp3" type="audio/mp3"> </audio>'}`
 
 If you want the two sounds to overlap without a cross-fade, you can use `addVectors()`, which simply makes sure two waveforms are padded with zeros to the same length and overlapped intelligently. Note that in this case cross-fading is not appropriate, so it may be safer to apply fade-in/out to both sounds to soften the attack. For example, here is how to add some chirping of birds in the background:
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
-samplingRate = 48000  # >10 times the highest pitch 
+samplingRate = 50000  # >10 times the highest pitch 
 sound1 = soundgen(sylLen = 700, pitch = 250:180, 
                   formants = 'aaao',  addSilence = 100, 
                   samplingRate = samplingRate, play = playback)
@@ -1117,15 +1405,16 @@ sound2 = soundgen(nSyl = 2, sylLen = 150,
 
 insertionTime = .1 + .15  # silence + 150 ms
 insertionPoint = insertionTime * samplingRate
-comb = addVectors(sound1, 
+s085 = addVectors(sound1, 
                   sound2 * .05,  # to make sound2 quieter relative to sound1
                   insertionPoint = insertionPoint)
 # sound1 and sound2 have attack of 50 and 10 ms, so no clicks
-# playme(comb, samplingRate)
-spectrogram(comb, samplingRate, windowLength = 10, ylim = c(0, 5), 
+# playme(s085, samplingRate)
+spectrogram(s085, samplingRate, windowLength = 10, ylim = c(0, 5), 
             contrast = .5, colorTheme = 'seewave')
 ```
-
+`r if (saveAudio) {saveAudioFun('s085', samplingRate = samplingRate)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s085.mp3" type="audio/mp3"> </audio>'}`
 
 # Morphing two sounds
 Sometimes it is desirable to combine the characteristics of two different stiimuli, producing some kind of intermediate form - a hybrid or blend. This technique is called morphing, and it is employed regularly and successfully with visual stimuli, but not so often with sounds, because it turns out to be rather tricky to morph audio. Since soundgen creates sounds parametrically, however, morphing becomes much more straightforward: all we need to do is define the rules for interpolating between all control parameters. For example, say we have sound A (100 ms) and sound B (500 ms), which only differ in their duration. To morph them, we could generate five otherwise identical sounds that are 100, 200, 300, 400, and 500 ms long, giving us the originals and three equidistant intermediate forms - that is, if we assume that linear interpolation is the natural way to take perceptually equal steps between parameter values.
@@ -1156,7 +1445,11 @@ m = suppressMessages(morph(formula1 = list(repeatBout = 2),
 # use $formulas to access formulas for each morph, $sounds for waveforms
 # m$formulas[[4]]
 # playme(m$sounds[[3]])
+s086 = c(unlist(m$sounds))
+# playme(s086)
 ```
+`r if (saveAudio) {saveAudioFun('s086', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s086.mp3" type="audio/mp3"> </audio>'}`
 
 *TIP Morphing a completely unvoiced into a voiced sound is currently not implemented. Add a very quiet voiced component to avoid glitches. Also try to make formants and formantsNoise compatible in both formulas: either leave both NULL or specify both in the same way (e.g. with or without explicitly defined amplitudes and bandwidths)*
 
@@ -1190,20 +1483,27 @@ In addition to manual matching, there are two ways to find the optimal values of
 The first thing you might want to do with your target audio recording is to analyze it acoustically and extract precise measurements of syllable number and duration, pitch contour, and formant structure. You can use any tool of your choice to do this, including soundgen's functions `segment` and `analyze`, which are described in the vignette on acoustic analysis. Once you have the measurements, you can convert them into appropriate values of soundgen arguments. An even easier solution is to use the function `matchPars` without optimization (`maxIter = 0`), which will perform a quick acoustic analysis and translate the results into soundgen settings, as follows:
 
 ```{r}
-target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
-                  pitch = c(300, 200),
-                  rolloff = -5, play = playback)  # we hope to reproduce this sound
-# playme(target)
+s087 = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
+                pitch = c(300, 200),
+                rolloff = -5, play = playback)  
+# playme(s087)  # we hope to reproduce this sound
+```
+`r if (saveAudio) {saveAudioFun('s087', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s087.mp3" type="audio/mp3"> </audio>'}`
 
-m1 = matchPars(target = target,
+```{r}
+m1 = matchPars(target = s087,
                samplingRate = 16000,
                maxIter = 0)  # no optimization, only acoustic analysis
 # ignore the warning about failing to improve the fit: we don't want to optimize yet
 
 # m1$pars contains a list of soundgen settings
-cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0.001)))
+s088 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0.001)))
 # playme(cand1)
 ```
+`r if (saveAudio) {saveAudioFun('s088', samplingRate = 16000)}`
+`r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s088.mp3" type="audio/mp3"> </audio>'}`
+
 Without optimization, we simply match soundgen parameters based on acoustic analysis. In particular, `matchPars()` calls `segment()` and `analyze()` to get some basic descriptives of the target sound and to choose the appropriate settings for `soundgen` based on these measurements. If you are very lucky, this *might* in fact accurately match the temporal structure, pitch, and (stationary) formants of your target. Most likely, it won't. In particular, for animal vocalizations a better option is often to estimate the vocal tract length from the dispersion of a few consecutive formants you can identify on the spectrogram (use `estimateVTL()`) and set `vocalTract = your_estimate, formants = NULL`. 
 
 At this point you can copy-paste your call to `soundgen` into the Shiny app and start adjusting these settings in an interactive environment, rather than from the console. For example, to use the parameters in `m1$pars`, type `call('soundgen', m1$pars)`, remove the "list()" part from the output, and you have your formula:
@@ -1228,7 +1528,7 @@ Let's assume that you have a working version of your candidate sound, which rese
 The same function as above, `matchPars`, offers a simple way to optimize several parameters by randomly varying their values, generating the corresponding sound, and comparing it with the target. The currently implemented version uses simple hill climbing and is best regarded as experimental. 
 
 ```{r, eval = FALSE}
-m2 = matchPars(target = target,
+m2 = matchPars(target = s087,
                samplingRate = 16000,
                pars = 'rolloff',
                maxIter = 100)
@@ -1238,8 +1538,7 @@ sapply(m2$history, function(x) {
   paste('Rolloff:', round(x$pars$rolloff, 1),
         '; fit to target:', round(x$sim, 2))
 })
-
-cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
+do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0.001)))
 ```
 
 
