@@ -698,7 +698,7 @@ readAudio = function(x,
     ext_i = substr(fi, nchar(fi) - 3, nchar(fi))
     if (ext_i %in% c('.wav', '.WAV')) {
       sound_wave = try(tuneR::readWave(fi))
-    } else if (ext_i %in% c('mp3', 'MP3')) {
+    } else if (ext_i %in% c('.mp3', '.MP3')) {
       sound_wave = try(tuneR::readMP3(fi))
     } else {
       warning(paste('Input', fi, 'not recognized: expected a wav/mp3 file'))
