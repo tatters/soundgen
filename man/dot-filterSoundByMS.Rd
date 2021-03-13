@@ -66,7 +66,7 @@ inversion (Beauregard et al., 2015)}
 \item{nIter}{the number of iterations of the GL algorithm (Griffin & Lim,
 1984), 0 = don't run}
 
-\item{play}{if TRUE, plays back the output}
+\item{play}{if TRUE, plays back the reconstructed audio}
 
 \item{plot}{if TRUE, produces a triple plot: original MS, filtered MS, and
 the MS of the output sound}

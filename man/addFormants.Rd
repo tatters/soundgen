@@ -129,14 +129,16 @@ is, amplifies or dampens certain frequency bands, as in human vowels. See
 \code{\link{soundgen}} and \code{\link{getSpectralEnvelope}} for more
 information. With \code{action = 'remove'} this function can perform inverse
 filtering to remove formants and obtain raw glottal output, provided that you
-can specify the correct formant structure.
+can specify the correct formant structure. Instead of formants, any arbitrary
+spectral filtering function can be applied using the \code{spectralEnvelope}
+argument (eg for a low/high/bandpass filter).
 }
 \details{
 Algorithm: converts input from a time series (time domain) to a spectrogram
 (frequency domain) through short-term Fourier transform (STFT), multiples by
 the spectral filter containing the specified formants, and transforms back to
-a time series via inverse STFT. This is a subroutine in
-\code{\link{soundgen}}, but it can also be used on any existing sound.
+a time series via inverse STFT. This is a subroutine for voice synthesis in
+\code{\link{soundgen}}, but it can also be applied to a recording.
 }
 \examples{
 sound = c(rep(0, 1000), runif(8000) * 2 - 1, rep(0, 1000))  # white noise

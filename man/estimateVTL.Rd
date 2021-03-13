@@ -51,11 +51,8 @@ If \code{output = 'simple'} (default), returns the estimated vocal
   were used.
 }
 \description{
-Estimates the length of vocal tract based on formant frequencies, assuming
-that the vocal tract can be modeled as a tube open at one end.
-}
-\details{
-If \code{method = 'meanFormant'}, vocal tract length (VTL) is calculated
+Estimates the length of vocal tract based on formant frequencies. If
+\code{method = 'meanFormant'}, vocal tract length (VTL) is calculated
 separately for each formant as \eqn{(2 * formant_number - 1) * speedSound /
 (4 * formant_frequency)}, and then the resulting VTLs are averaged. If
 \code{method = 'meanDispersion'}, formant dispersion is calculated as the

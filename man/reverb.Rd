@@ -59,8 +59,8 @@ returns a list with reverb window, the added reverb/echo, etc.}
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations (NULL = default, NA = don't report)}
 
-\item{saveAudio}{path to folder for saving the processed audio; NULL = don't
-save}
+\item{saveAudio}{full (!) path to folder for saving the processed audio; NULL
+= don't save, '' = same as input folder (NB: overwrites the originals!)}
 }
 \description{
 Adds reverberation and/or echo to a sound. Algorithm for reverb: adds

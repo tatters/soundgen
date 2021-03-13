@@ -2,7 +2,7 @@
 % Please edit documentation in R/analyze.R
 \name{analyze}
 \alias{analyze}
-\title{Analyze}
+\title{Acoustic analysis}
 \usage{
 analyze(
   x,
@@ -314,9 +314,10 @@ novelty (see \code{\link{ssm}}), etc. The default values of arguments are
 optimized for human non-linguistic vocalizations. See
 vignette('acoustic_analysis', package = 'soundgen') for details. The defaults
 and reasonable ranges of all arguments can be found in
-\code{\link{defaults_analyze}}. Alternative workflow: extract manually
-corrected pitch contours with \code{\link{pitch_app}}, then run
-\code{analyze(pitchManual = ...)} with these manual contours.
+\code{\link{defaults_analyze}}. For high-precision work, first extract and
+manually correct pitch contours with \code{\link{pitch_app}}, PRAAT, or
+whatever, and then run \code{analyze(pitchManual = ...)} with these manual
+contours.
 }
 \details{
 Each pitch tracker is controlled by its own list of settings, as follows:
@@ -377,6 +378,8 @@ a = analyze(sound, samplingRate = 16000,
   plot = FALSE,         # no plotting
   pitchMethods = NULL,  # no pitch tracking
   loudness = NULL,      # no loudness analysis
+  novelty = NULL,       # no novelty analysis
+  roughness = NULL,     # no roughness analysis
   nFormants = 0         # no formant analysis
 )
 
@@ -500,7 +503,7 @@ abline(a=0, b=1, col='red')
 
 # Save spectrograms with pitch contours plus an html file for easy access
 s2 = analyze('~/Downloads/temp', savePlots = '',
-  showLegend = TRUE, pitchManual = pitchContour,
+  showLegend = TRUE,
   width = 20, height = 12,
   units = 'cm', res = 300, ylim = c(0, 5))
 }

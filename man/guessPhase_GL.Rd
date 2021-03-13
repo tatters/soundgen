@@ -11,7 +11,6 @@ guessPhase_GL(
   samplingRate,
   overlap,
   wn,
-  windowLength_points,
   step_points,
   verbose = TRUE,
   plotError = TRUE
@@ -33,8 +32,6 @@ numeric vector)}
 
 \item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
 gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
-
-\item{windowLength_points}{STFT window length in points}
 
 \item{step_points}{STFT step in points}
 

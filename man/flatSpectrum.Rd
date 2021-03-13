@@ -49,8 +49,8 @@ gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{play}{if TRUE, plays the processed audio}
 
-\item{saveAudio}{path to folder for saving the processed audio; NULL = don't
-save}
+\item{saveAudio}{full (!) path to folder for saving the processed audio; NULL
+= don't save, '' = same as input folder (NB: overwrites the originals!)}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations (NULL = default, NA = don't report)}

@@ -85,10 +85,10 @@ inversion (Beauregard et al., 2015)}
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations (NULL = default, NA = don't report)}
 
-\item{play}{if TRUE, plays back the output}
+\item{play}{if TRUE, plays back the reconstructed audio}
 
-\item{saveAudio}{path to folder in which to save audio ('' = same as input,
-NULL = don't save)}
+\item{saveAudio}{full (!) path to folder for saving the processed audio; NULL
+= don't save, '' = same as input folder (NB: overwrites the originals!)}
 
 \item{plot}{if TRUE, produces a triple plot: original MS, filtered MS, and
 the MS of the output sound}
@@ -135,13 +135,13 @@ s = soundgen(pitch = rnorm(n = 20, mean = 200, sd = 25),
 # Filter
 s_filt = filterSoundByMS(s, samplingRate = 16000,
   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
-  action = 'remove', nIter = 10)
-# playme(s_filt, samplingRate)
+  action = 'remove', nIter = 10, plot = TRUE)
+# playme(s_filt, samplingRate = 16000)
 
 \dontrun{
 # Process all files in a folder, save filtered audio and plots
 s_filt = filterSoundByMS('~/Downloads/temp2',
-  saveAudio = '', savePlots = '',
+  saveAudio = '~/Downloads/temp2/ms', savePlots = '',
   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
   action = 'remove', nIter = 10)
 

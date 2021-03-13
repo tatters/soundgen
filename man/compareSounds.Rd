@@ -22,8 +22,9 @@ compareSounds(
 )
 }
 \arguments{
-\item{x, y}{either two spectrograms or two sounds to be compared (numeric
-vectors, Wave objects, or paths to wav/mp3 files)}
+\item{x, y}{either two matrices (spectrograms or feature matrices) or two
+sounds to be compared (numeric vectors, Wave objects, or paths to wav/mp3
+files)}
 
 \item{samplingRate}{if one or both inputs are numeric vectors, specify
 sampling rate, Hz. A vector of length 2 means the two inputs have different
@@ -75,22 +76,20 @@ Returns a dataframe with two columns: "method" for the method(s)
 }
 \description{
 Computes similarity between two sounds based on comparing their
-spectrogram-like representations. The input can be the actual audio or two
-pre-extracted spectrograms (matrices produced by any function of your
-choice). If the input is audio, two methods of producing spectrograms are
-available: \code{specType = 'linear'} calls \code{\link[tuneR]{powspec}} for
-an power spectrogram with frequencies in Hz, and \code{specType = 'mel'}
-calls \code{\link[tuneR]{melfcc}} for an auditory spectrogram with
-frequencies in Mel. For more customized options, just produce your
-spectrograms with your favorite function before calling \code{compareSounds}
-because it also accepts matrices with pre-extracted spectrograms as its
-input. To be directly comparable, the two spectrograms are made into matrices
-of the same size. In case of differences in sampling rates, only frequencies
-below the lower Nyquist frequency or below \code{maxFreq} are kept. In case
-of differences in duration, the shorter sound is padded with 0 (silence) or
-NA, as controlled by arguments \code{padWith, padDir}. Then the matrices are
-compared using methods like bin-by-bin difference, correlation, or Dynamic
-Time Warp.
+spectrogram-like representations. If the input is audio, two methods of
+producing spectrograms are available: \code{specType = 'linear'} calls
+\code{\link[tuneR]{powspec}} for an power spectrogram with frequencies in Hz,
+and \code{specType = 'mel'} calls \code{\link[tuneR]{melfcc}} for an auditory
+spectrogram with frequencies in Mel. For more customized options, just
+produce your spectrograms or feature matrices (time in column, features like
+pitch, peak frequency etc in rows) with your favorite function before calling
+\code{compareSounds} because it also accepts matrices as input. To be
+directly comparable, the two matrices are made into matrices of the same
+size. In case of differences in sampling rates, only frequencies below the
+lower Nyquist frequency or below \code{maxFreq} are kept. In case of
+differences in duration, the shorter sound is padded with 0 (silence) or NA,
+as controlled by arguments \code{padWith, padDir}. Then the matrices are
+compared using methods like cross-correlation or Dynamic Time Warp.
 }
 \examples{
 data(orni, peewit, package = 'seewave')
@@ -110,7 +109,7 @@ compareSounds(s1, s4, samplingRate = 16000)
 compareSounds(s1, s3, samplingRate = 16000, padDir = 'left')
 compareSounds(s1, s3, samplingRate = 16000, padDir = 'central')
 
-# padding with 0 penalized differences in duration, whereas padding with NA
+# padding with 0 penalizes differences in duration, whereas padding with NA
 # is like saying we only care about the overlapping part
 compareSounds(s1, s3, samplingRate = 16000, padWith = 0)
 compareSounds(s1, s3, samplingRate = 16000, padWith = NA)
@@ -123,6 +122,16 @@ compareSounds(s1, s3, samplingRate = 16000, specType = 'mel')
 compareSounds(s1, s3, samplingRate = 16000,
               specPars = list(nbands = 128),
               dtwPars = list(dist.method = "Manhattan"))
+
+# use feature matrices instead of spectrograms (time in columns, features in rows)
+a1 = t(as.matrix(analyze(s1, samplingRate = 16000)$detailed))
+a1 = a1[4:nrow(a1), ]; a1[is.na(a1)] = 0
+a2 = t(as.matrix(analyze(s2, samplingRate = 16000)$detailed))
+a2 = a2[4:nrow(a2), ]; a2[is.na(a2)] = 0
+a4 = t(as.matrix(analyze(s4, samplingRate = 16000)$detailed))
+a4 = a4[4:nrow(a4), ]; a4[is.na(a4)] = 0
+compareSounds(a1, a2, method = c('cosine', 'dtw'))
+compareSounds(a1, a4, method = c('cosine', 'dtw'))
 
 # a demo for comparing different similarity metrics
 target = soundgen(sylLen = 500, formants = 'a',

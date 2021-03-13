@@ -44,8 +44,8 @@ range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 
 \item{play}{if TRUE, plays the processed audio}
 
-\item{saveAudio}{path to folder for saving the processed audio; NULL = don't
-save}
+\item{saveAudio}{full (!) path to folder for saving the processed audio; NULL
+= don't save, '' = same as input folder (NB: overwrites the originals!)}
 
 \item{reportEvery}{when processing multiple inputs, report estimated time
 left every ... iterations (NULL = default, NA = don't report)}
@@ -104,7 +104,7 @@ s = soundgen(sylLen = 1500, pitch = con, amFreq = con/3, amDep = 30,
              plot = TRUE, play = TRUE, ylim = c(0, 3))
 
 # Process all files in a folder and save the modified audio
-addAM('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/AM',
+addAM('~/Downloads/temp', saveAudio = '~/Downloads/temp/AM',
       amFreq = 70, amDep = c(0, 50))
 }
 }
