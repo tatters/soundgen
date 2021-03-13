@@ -19,9 +19,7 @@
 #' @inheritParams modulationSpectrum
 #' @inheritParams filterMS
 #' @inheritParams invertSpectrogram
-#' @param saveAudio path to folder in which to save audio ('' = same as input,
-#'   NULL = don't save)
-#' @param play if TRUE, plays back the output
+#' @inheritParams addAM
 #' @param plot if TRUE, produces a triple plot: original MS, filtered MS, and
 #'   the MS of the output sound
 #' @export
@@ -35,13 +33,13 @@
 #' # Filter
 #' s_filt = filterSoundByMS(s, samplingRate = 16000,
 #'   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
-#'   action = 'remove', nIter = 10)
-#' # playme(s_filt, samplingRate)
+#'   action = 'remove', nIter = 10, plot = TRUE)
+#' # playme(s_filt, samplingRate = 16000)
 #'
 #' \dontrun{
 #' # Process all files in a folder, save filtered audio and plots
 #' s_filt = filterSoundByMS('~/Downloads/temp2',
-#'   saveAudio = '', savePlots = '',
+#'   saveAudio = '~/Downloads/temp2/ms', savePlots = '',
 #'   amCond = 'abs(am) > 15', fmCond = 'abs(fm) > 5',
 #'   action = 'remove', nIter = 10)
 #'

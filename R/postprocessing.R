@@ -483,7 +483,9 @@ flatSpectrum = function(x,
     cor_coef = flatEnv(abs_s,
                        samplingRate = 1,  # not used, but can't be left NULL
                        method = 'peak',
+                       dynamicRange = dynamicRange,
                        windowLength_points = freqWindow_bins) / abs_s
+    plot(cor_coef, type = 'b')
     # spec[, i] = complex(real = Re(spec[, i]) * cor_coef,
     #                     imaginary = Im(spec[, i]))
     spec[, i] = spec[, i] * cor_coef

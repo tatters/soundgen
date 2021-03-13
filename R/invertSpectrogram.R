@@ -71,19 +71,20 @@
 #' spectrogram(s, samplingRate, osc = TRUE)
 #' spectrogram(s_new, samplingRate, osc = TRUE)
 #' }
-invertSpectrogram = function(spec,
-                             samplingRate,
-                             windowLength,
-                             overlap,
-                             step = NULL,
-                             wn = 'hanning',
-                             specType = c('abs', 'log', 'dB')[1],
-                             initialPhase = c('zero', 'random', 'spsi')[3],
-                             nIter = 50,
-                             normalize = TRUE,
-                             play = TRUE,
-                             verbose = FALSE,
-                             plotError = TRUE) {
+invertSpectrogram = function(
+  spec,
+  samplingRate,
+  windowLength,
+  overlap,
+  step = NULL,
+  wn = 'hanning',
+  specType = c('abs', 'log', 'dB')[1],
+  initialPhase = c('zero', 'random', 'spsi')[3],
+  nIter = 50,
+  normalize = TRUE,
+  play = TRUE,
+  verbose = FALSE,
+  plotError = TRUE) {
   nr = nrow(spec)  # frequency bins
   nc = ncol(spec)  # time frames
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
@@ -116,7 +117,6 @@ invertSpectrogram = function(spec,
                        phase = phase_init,
                        nIter = nIter,
                        samplingRate = samplingRate,
-                       windowLength_points = windowLength_points,
                        step_points = step_points,
                        overlap = overlap,
                        wn = wn,
@@ -133,7 +133,7 @@ invertSpectrogram = function(spec,
                                   f = samplingRate,
                                   ovlp = overlap,
                                   wn = wn,
-                                  wl = windowLength_points,
+                                  wl = nrow(spec_complex) * 2,
                                   output = 'matrix'))
   if (normalize) out = out / max(abs(out))
 
@@ -258,10 +258,10 @@ guessPhase_GL = function(spec,
                          samplingRate,
                          overlap,
                          wn,
-                         windowLength_points,
                          step_points,
                          verbose = TRUE,
                          plotError = TRUE) {
+  windowLength_points = nrow(spec) * 2  # otherwise vulnerable to rounding error
   step_seq = NULL
   squareError = rep(NA, nIter)
   time_start = proc.time()
@@ -279,7 +279,8 @@ guessPhase_GL = function(spec,
 
     # STFT of the candidate time series
     if (is.null(step_seq)) {
-      step_seq = seq(1, length(x) + 1 - windowLength_points, step_points)
+      step_seq = seq(1, length(x) + 1 - windowLength_points, length.out = ncol(spec))
+      # NB: length.out ensures that the dims are the same (rounding error etc ±1)
     }
     spec_new = seewave::stdft(wave = as.matrix(x),
                               wn = wn,

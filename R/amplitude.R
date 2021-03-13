@@ -744,8 +744,8 @@ transplantEnv = function(donor,
 #' @inheritParams spectrogram
 #' @inheritParams soundgen
 #' @param play if TRUE, plays the processed audio
-#' @param saveAudio path to folder for saving the processed audio; NULL = don't
-#'   save
+#' @param saveAudio full (!) path to folder for saving the processed audio; NULL
+#'   = don't save, '' = same as input folder (NB: overwrites the originals!)
 #' @param plot if TRUE, plots the amplitude modulation
 #' @export
 #' @examples
@@ -794,7 +794,7 @@ transplantEnv = function(donor,
 #'              plot = TRUE, play = TRUE, ylim = c(0, 3))
 #'
 #' # Process all files in a folder and save the modified audio
-#' addAM('~/Downloads/temp2', saveAudio = '~/Downloads/temp2/AM',
+#' addAM('~/Downloads/temp', saveAudio = '~/Downloads/temp/AM',
 #'       amFreq = 70, amDep = c(0, 50))
 #' }
 addAM = function(x,
