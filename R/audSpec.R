@@ -12,15 +12,15 @@
 #'   become too narrow when nFilters is high)
 #' @keywords export
 #' @examples
-#' # synthesize a sound 500 ms long, with gradually increasing hissing noise
+#' # synthesize a sound with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 200, temperature = 0.001,
-#'   noise = list(time = c(0, 650), value = c(-40, 0)),
+#'   noise = list(time = c(0, 350), value = c(-40, 0)),
 #'   formantsNoise = list(f1 = list(freq = 5000, width = 10000)),
 #'   addSilence = 25)
 #' # playme(sound, samplingRate = 16000)
 #'
 #' # auditory spectrogram
-#' soundgen:::audSpectrogram(sound, samplingRate = 16000)
+#' soundgen:::audSpectrogram(sound, samplingRate = 16000, nFilters = 64)
 #'
 #' # compare to an FFT-based spectrogram on log-scale
 #' spectrogram(sound, samplingRate = 16000, yScale = 'log')
@@ -161,7 +161,7 @@ audSpectrogram = function(
   nyquist = audio$samplingRate / 2
   cf_semitones = seq(
     HzToSemitones(minFreq),
-    HzToSemitones(min(maxFreq, nyquist / 2^(filter_width / 2 / 12))),
+    HzToSemitones(min(maxFreq, nyquist / 2^(filter_width / 2 / 12))) - 1,
     length.out = nFilters
   )
   filters = data.frame(
