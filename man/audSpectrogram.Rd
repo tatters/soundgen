@@ -41,14 +41,105 @@ audSpectrogram(
   ...
 )
 }
-\description{
-Internal soundgen function (work in progress)
+\arguments{
+\item{x}{path to a folder, one or more wav or mp3 files c('file1.wav',
+'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
+numeric vectors}
+
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector)}
+
+\item{scale}{maximum possible amplitude of input used for normalization of
+input vector (only needed if \code{x} is a numeric vector)}
+
+\item{from}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
+
+\item{to}{if NULL (default), analyzes the whole sound, otherwise
+from...to (s)}
+
+\item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
+under maximum are treated as zero}
+
+\item{nFilters}{the number of filterbanks}
+
+\item{minFreq, maxFreq}{the range of frequencies to analyze}
+
+\item{minBandwidth}{minimum filter bandwidth, Hz (otherwise filters may
+become too narrow when nFilters is high)}
+
+\item{reportEvery}{when processing multiple inputs, report estimated time
+left every ... iterations (NULL = default, NA = don't report)}
+
+\item{plot}{should a spectrogram be plotted? TRUE / FALSE}
+
+\item{savePlots}{full path to the folder in which to save the plots (NULL =
+don't save, '' = same folder as audio)}
+
+\item{osc}{"none" = no oscillogram; "linear" = on the original scale; "dB" =
+in decibels}
+
+\item{heights}{a vector of length two specifying the relative height of the
+spectrogram and the oscillogram (including time axes labels)}
+
+\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
+
+\item{yScale}{scale of the frequency axis: 'linear' = linear, 'log' =
+logarithmic}
+
+\item{contrast}{spectrum is exponentiated by contrast (any real number,
+recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
+sharpness}
+
+\item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
+
+\item{maxPoints}{the maximum number of "pixels" in the oscillogram (if any)
+and spectrogram; good for quickly plotting long audio files; defaults to
+c(1e5, 5e5)}
+
+\item{padWithSilence}{if TRUE, pads the sound with just enough silence to
+resolve the edges properly (only the original region is plotted, so the
+apparent duration doesn't change)}
+
+\item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
+or any palette from \code{\link[grDevices]{palette}} such as 'heat.colors',
+'cm.colors', etc}
+
+\item{extraContour}{a vector of arbitrary length scaled in Hz that will be
+plotted over the spectrogram (eg pitch contour); can also be a list with
+extra graphical parameters such as lwd, col, etc. (see examples)}
+
+\item{xlab}{graphical parameters for plotting}
+
+\item{ylab}{graphical parameters for plotting}
+
+\item{xaxp}{graphical parameters for plotting}
+
+\item{mar}{graphical parameters for plotting}
+
+\item{main}{graphical parameters for plotting}
+
+\item{grid}{if numeric, adds n = \code{grid} dotted lines per kHz}
+
+\item{width}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{height}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{units}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{res}{graphical parameters for saving plots passed to
+\code{\link[grDevices]{png}}}
+
+\item{...}{other graphical parameters}
 }
-\details{
-While tuneR::audspec is based on FFT, here we convolve the sound with a bank
-of filters. The main difference is that we don't window the signal and
-therefore get full temporal resolution in all frequency bins. For ex., this
-preserves high-frequency AM that is completely invisible in a spectrogram.
+\description{
+Produces an auditory spectrogram by extracting a bank of bandpass filters
+(work in progress). While tuneR::audspec is based on FFT, here we convolve
+the sound with a bank of filters. The main difference is that we don't window
+the signal and therefore get full temporal resolution in all frequency bins.
 }
 \examples{
 # synthesize a sound 500 ms long, with gradually increasing hissing noise
@@ -84,7 +175,7 @@ soundgen:::audSpectrogram(sound, samplingRate = 16000, dynamicRange = 40)
 soundgen:::audSpectrogram(sound, samplingRate = 16000, dynamicRange = 120)
 
 # remove the oscillogram
-soundgen:::audSpectrogram(sound, samplingRate = 16000, osc = 'none')  # or NULL etc
+soundgen:::audSpectrogram(sound, samplingRate = 16000, osc = 'none')
 }
 }
-\keyword{internal}
+\keyword{export}

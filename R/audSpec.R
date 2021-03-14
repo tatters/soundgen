@@ -1,12 +1,16 @@
 #' Auditory spectrogram
 #'
-#' Produces an auditory spectrogram by extracting a bank of bandpass filters (work in progress)
+#' Produces an auditory spectrogram by extracting a bank of bandpass filters
+#' (work in progress). While tuneR::audspec is based on FFT, here we convolve
+#' the sound with a bank of filters. The main difference is that we don't window
+#' the signal and therefore get full temporal resolution in all frequency bins.
 #'
-#' While tuneR::audspec is based on FFT, here we convolve the sound with a bank
-#' of filters. The main difference is that we don't window the signal and
-#' therefore get full temporal resolution in all frequency bins. For ex., this
-#' preserves high-frequency AM that is completely invisible in a spectrogram.
-#' @keywords internal
+#' @inheritParams spectrogram
+#' @param nFilters the number of filterbanks
+#' @param minFreq,maxFreq the range of frequencies to analyze
+#' @param minBandwidth minimum filter bandwidth, Hz (otherwise filters may
+#'   become too narrow when nFilters is high)
+#' @keywords export
 #' @examples
 #' # synthesize a sound 500 ms long, with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 200, temperature = 0.001,
@@ -41,7 +45,7 @@
 #' soundgen:::audSpectrogram(sound, samplingRate = 16000, dynamicRange = 120)
 #'
 #' # remove the oscillogram
-#' soundgen:::audSpectrogram(sound, samplingRate = 16000, osc = 'none')  # or NULL etc
+#' soundgen:::audSpectrogram(sound, samplingRate = 16000, osc = 'none')
 #' }
 audSpectrogram = function(
   x,

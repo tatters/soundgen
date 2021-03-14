@@ -17,6 +17,7 @@ MAJOR (affects back-compatibility)
 NEW FUNCTIONS:
   * reverb(): adds reverberation and/or echo to a sound
   * getEnv(): returns the amplitude envelope of a sound
+  * audSpectrogram(): produces a spectrogram by applying a bank of bandpass filters with Mel-spaced central frequencies (experimental)
 
 MINOR:
   * spectrogram(), analyze(): a new argument "extraContour" for plotting something over the spectrogram
