@@ -11,10 +11,9 @@ getEnv(
 )
 }
 \arguments{
-\item{sound}{waveform as a numeric vector}
+\item{sound}{numeric vector}
 
-\item{windowLength_points}{the length of smoothing window, points. If
-specified, overrides \code{windowLength}}
+\item{windowLength_points}{the length of smoothing window, in points}
 
 \item{method}{'peak' for peak amplitude per window, 'rms' for root mean
 square amplitude, 'mean' for mean (for DC offset removal), 'hil' for
@@ -28,7 +27,8 @@ length as the original sound, regardless of the amount of smoothing.
 \examples{
 a = rnorm(500) * seq(1, 0, length.out = 500)
 windowLength_points = 50
-plot(a, type = 'l')
+scale = max(abs(a))
+plot(a, type = 'l', ylim = c(-scale, scale))
 points(soundgen:::getEnv(a, windowLength_points, 'raw'),
        type = 'l', col = 'brown')
 points(soundgen:::getEnv(a, windowLength_points, 'rms'),

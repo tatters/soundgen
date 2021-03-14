@@ -164,7 +164,7 @@ estimateVTL = function(
 #' frequencies of enough formants (not just the first two) or the true length of
 #' the vocal tract. See also \code{\link{estimateVTL}} on the algorithm for
 #' estimating formant dispersion if VTL is not known (note that \code{schwa}
-#' calls \code{\link{estimateVTL}} with the option \code{method = 'regression'}.
+#' calls \code{\link{estimateVTL}} with the option \code{method = 'regression'}).
 #'
 #' @seealso \code{\link{estimateVTL}}
 #'

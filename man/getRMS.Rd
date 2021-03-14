@@ -98,9 +98,9 @@ don't save, '' = same folder as audio)}
 \item{...}{other graphical parameters}
 }
 \value{
-Returns a list containing: \itemize{\item{detailed}{a list of RMS
+Returns a list containing: \itemize{\item{$detailed: }{a list of RMS
   amplitudes per frame for each sound, on the scale of input; names give time
-  stamps for the center of each frame, in ms.} \item{summary}{a dataframe
+  stamps for the center of each frame, in ms.} \item{$summary: }{a dataframe
   with summary measures, one row per sound}}
 }
 \description{

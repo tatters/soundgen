@@ -49,12 +49,13 @@ Returns a numeric vector of certainties of length \code{len} if
 \description{
 Prior for adjusting the estimated pitch certainties in \code{\link{analyze}}.
 For ex., if primarily working with speech, we could prioritize pitch
-candidates in the expected pitch range (100-1000 Hz) and dampen candidates
-with very high or very low frequency as unlikely but still remotely possible
-in everyday vocalizing contexts (think a soft pitch ceiling). Algorithm: the
-multiplier for each pitch candidate is the density of gamma distribution with
-mean = priorMean (Hz) and sd = priorSD (semitones) normalized so max = 1 over
-[pitchFloor, pitchCeiling]. Useful for previewing the prior given to
+candidates in the expected pitch range (100-1000 Hz) and decrease our
+confidence in candidates with very high or very low frequency as unlikely but
+still remotely possible. You can think of this as a "soft" alternative to
+setting absolute pitch floor and ceiling. Algorithm: the multiplier for each
+pitch candidate is the density of gamma distribution with mean = priorMean
+(Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
+pitchCeiling]. Useful for previewing the prior given to
 \code{\link{analyze}}.
 }
 \examples{

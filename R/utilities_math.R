@@ -2,10 +2,11 @@
 
 #' Convert Hz to semitones
 #'
-#' Converts from Hz to semitones above C-5 (~0.5109875 Hz). This may not seem
-#' very useful, but note that this gives us a nice logarithmic scale for
-#' generating natural pitch transitions with the added benefit of getting
-#' musical notation for free from \code{notesDict} (see examples).
+#' Converts from Hz to semitones above C-5 (~0.5109875 Hz) or another reference
+#' frequency. This may not seem very useful, but note that this gives us a nice
+#' logarithmic scale for generating natural pitch transitions with the added
+#' benefit of getting musical notation for free from \code{notesDict} (see
+#' examples).
 #'
 #' @seealso \code{\link{semitonesToHz}}
 #'
@@ -17,14 +18,18 @@
 #' # to convert to musical notation
 #' notesDict$note[1 + round(s)]
 #' # note the "1 +": semitones ABOVE C-5, i.e. notesDict[1, ] is C-5
+#'
+#' # Any reference tone can be specified. For ex., for semitones above C0, use:
+#' HzToSemitones(440, ref = 16.35)
+#' # TIP: see notesDict for a table of Hz frequencies to musical notation
 HzToSemitones = function(h, ref = 0.5109875) {
   return(log2(h / ref) * 12)
 }
 
 #' Convert semitones to Hz
 #'
-#' Converts from semitones above C-5 (~0.5109875 Hz) to Hz. See
-#' \code{\link{HzToSemitones}}
+#' Converts from semitones above C-5 (~0.5109875 Hz) or another reference
+#' frequency to Hz. See \code{\link{HzToSemitones}}
 #'
 #' @seealso \code{\link{HzToSemitones}}
 #'

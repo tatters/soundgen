@@ -42,4 +42,7 @@
 #' = measured formant frequencies (Hz) in the initial stable region of each
 #' vowel, "F1Rel...F4Rel" = formant frequencies relative to the neutral
 #' equidistant formant frequencies in the schwa (semitones)
+#' @examples
+#' plot(ipa$F1, ipa$F2, type = 'n')
+#' text(ipa$F1, ipa$F2, label = ipa$ipa)
 "ipa"

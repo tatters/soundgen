@@ -60,11 +60,12 @@ wank to append the old data to the new one. Path to backup file:
 }
 \description{
 Starts a shiny app for manually editing pitch contours. IMPORTANT: please use
-Firefox! A bug in Chrome interferes with correct audio playback; Safari may
-or may not work. The settings in the panels on the left correspond to
-arguments to \code{\link{analyze}} - see `?analyze` and the vignette on
-acoustic analysis for help and examples. You can verify the pitch contours
-first, and then feed them back into \code{analyze} (see examples).
+Firefox on a Linux or Windows PC. A bug in Chrome interferes with correct
+audio playback; Mac OS is not supported due to an unresolved issue with png
+transparency. The settings in the panels on the left correspond to arguments
+to \code{\link{analyze}} - see `?analyze` and the vignette on acoustic
+analysis for help and examples. You can verify the pitch contours first, and
+then feed them back into \code{analyze} (see examples).
 }
 \examples{
 \dontrun{

@@ -3,14 +3,13 @@
 
 #' Generate noise
 #'
-#' Generates noise of length \code{len} and with spectrum defined by linear
-#' decay of \code{rolloffNoise} dB/kHz above \code{noiseFlatSpec} Hz OR by a
-#' specified filter \code{spectralEnvelope}. This function is called internally
-#' by \code{\link{soundgen}}, but it may be more convenient to call it directly
-#' when synthesizing non-biological noises defined by specific spectral and
-#' amplitude envelopes rather than formants: the wind, whistles, impact noises,
-#' etc. See \code{\link{fart}} and \code{\link{beat}} for similarly simplified
-#' functions for tonal non-biological sounds.
+#' Generates noise of length \code{len} and with spectrum defined by rolloff
+#' parameters OR by a specified filter \code{spectralEnvelope}. This function is
+#' called internally by \code{\link{soundgen}}, but it may be more convenient to
+#' call it directly when synthesizing non-biological noises defined by specific
+#' spectral and amplitude envelopes rather than formants: the wind, whistles,
+#' impact noises, etc. See \code{\link{fart}} and \code{\link{beat}} for
+#' similarly simplified functions for tonal non-biological sounds.
 #'
 #' Algorithm: paints a spectrogram with desired characteristics, sets phase to
 #' zero, and generates a time sequence via inverse FFT.
@@ -45,7 +44,7 @@
 #' # playme(c(noise2, noise3), samplingRate)
 #'
 #' \dontrun{
-#' playback = c(TRUE, FALSE, 'aplay', 'vlc')[2]
+#' playback = list(TRUE, FALSE, 'aplay', 'vlc')[[1]]
 #' # 1.2 s of noise with rolloff changing from 0 to -12 dB above 2 kHz
 #' noise = generateNoise(len = samplingRate * 1.2,
 #'   rolloffNoise = c(0, -12), noiseFlatSpec = 2000,
@@ -119,21 +118,22 @@
 #' # (which sounds like noise if windowLength is ~5-10 ms,
 #' # but becomes more and more like the original at longer window lengths)
 #' }
-generateNoise = function(len,
-                         rolloffNoise = 0,
-                         noiseFlatSpec = 1200,
-                         rolloffNoiseExp = 0,
-                         spectralEnvelope = NULL,
-                         noise = NULL,
-                         temperature = .1,
-                         attackLen = 10,
-                         windowLength_points = 1024,
-                         samplingRate = 16000,
-                         overlap = 75,
-                         dynamicRange = 80,
-                         interpol = c('approx', 'spline', 'loess')[3],
-                         invalidArgAction = c('adjust', 'abort', 'ignore')[1],
-                         play = FALSE) {
+generateNoise = function(
+  len,
+  rolloffNoise = 0,
+  noiseFlatSpec = 1200,
+  rolloffNoiseExp = 0,
+  spectralEnvelope = NULL,
+  noise = NULL,
+  temperature = .1,
+  attackLen = 10,
+  windowLength_points = 1024,
+  samplingRate = 16000,
+  overlap = 75,
+  dynamicRange = 80,
+  interpol = c('approx', 'spline', 'loess')[3],
+  invalidArgAction = c('adjust', 'abort', 'ignore')[1],
+  play = FALSE) {
   # wiggle pars
   if (temperature > 0) {  # set to 0 when called internally by soundgen()
     # len = rnorm_truncated(n = 1,
@@ -333,7 +333,7 @@ generateNoise = function(len,
   } else {
     ## instead of synthesizing the time series and then doing fft-ifft,
     # we can simply synthesize spectral noise, convert to complex
-    # (setting imaginary=0), and then do inverse FFT just once
+    # (setting imaginary=0 or random), and then do inverse FFT just once
     # set up spectrum with white noise (works b/c phase doesn't matter for noise)
     z1 = matrix(as.complex(runif(nr * nc)), nrow = nr, ncol = nc)
     # multiply by filter

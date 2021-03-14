@@ -17,4 +17,8 @@ A dataframe of 21 rows (one per vowel) and 9 columns: "ipa" = vowel, "F1...4"
 vowel, "F1Rel...F4Rel" = formant frequencies relative to the neutral
 equidistant formant frequencies in the schwa (semitones)
 }
+\examples{
+plot(ipa$F1, ipa$F2, type = 'n')
+text(ipa$F1, ipa$F2, label = ipa$ipa)
+}
 \keyword{datasets}

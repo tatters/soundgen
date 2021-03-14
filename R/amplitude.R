@@ -36,9 +36,9 @@ getRMSFolder = function(...) {
 #' @param type,col,lwd graphical parameters pertaining to the RMS envelope
 #' @param ... other graphical parameters
 #'
-#' @return Returns a list containing: \itemize{\item{detailed}{a list of RMS
+#' @return Returns a list containing: \itemize{\item{$detailed: }{a list of RMS
 #'   amplitudes per frame for each sound, on the scale of input; names give time
-#'   stamps for the center of each frame, in ms.} \item{summary}{a dataframe
+#'   stamps for the center of each frame, in ms.} \item{$summary: }{a dataframe
 #'   with summary measures, one row per sound}}
 #'
 #' @export
@@ -924,8 +924,8 @@ addAM = function(x,
 #' Returns the smoothed amplitude envelope of a waveform on the original scale.
 #' Unlike seewave::env, this function always returns an envelope of the same
 #' length as the original sound, regardless of the amount of smoothing.
-#' @inheritParams flatEnv
-#' @param sound waveform as a numeric vector
+#' @param sound numeric vector
+#' @param windowLength_points the length of smoothing window, in points
 #' @param method 'peak' for peak amplitude per window, 'rms' for root mean
 #'   square amplitude, 'mean' for mean (for DC offset removal), 'hil' for
 #'   Hilbert, 'raw' for low-pass filtering the actual sound
@@ -933,7 +933,8 @@ addAM = function(x,
 #' @examples
 #' a = rnorm(500) * seq(1, 0, length.out = 500)
 #' windowLength_points = 50
-#' plot(a, type = 'l')
+#' scale = max(abs(a))
+#' plot(a, type = 'l', ylim = c(-scale, scale))
 #' points(soundgen:::getEnv(a, windowLength_points, 'raw'),
 #'        type = 'l', col = 'brown')
 #' points(soundgen:::getEnv(a, windowLength_points, 'rms'),

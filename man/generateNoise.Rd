@@ -79,14 +79,13 @@ of player to use, eg "aplay", "play", "vlc", etc. In case of errors, try
 setting another default player for \code{\link[tuneR]{play}}}
 }
 \description{
-Generates noise of length \code{len} and with spectrum defined by linear
-decay of \code{rolloffNoise} dB/kHz above \code{noiseFlatSpec} Hz OR by a
-specified filter \code{spectralEnvelope}. This function is called internally
-by \code{\link{soundgen}}, but it may be more convenient to call it directly
-when synthesizing non-biological noises defined by specific spectral and
-amplitude envelopes rather than formants: the wind, whistles, impact noises,
-etc. See \code{\link{fart}} and \code{\link{beat}} for similarly simplified
-functions for tonal non-biological sounds.
+Generates noise of length \code{len} and with spectrum defined by rolloff
+parameters OR by a specified filter \code{spectralEnvelope}. This function is
+called internally by \code{\link{soundgen}}, but it may be more convenient to
+call it directly when synthesizing non-biological noises defined by specific
+spectral and amplitude envelopes rather than formants: the wind, whistles,
+impact noises, etc. See \code{\link{fart}} and \code{\link{beat}} for
+similarly simplified functions for tonal non-biological sounds.
 }
 \details{
 Algorithm: paints a spectrogram with desired characteristics, sets phase to
@@ -108,7 +107,7 @@ noise3 = generateNoise(len = samplingRate * .25, noise = c(0, -40),
 # playme(c(noise2, noise3), samplingRate)
 
 \dontrun{
-playback = c(TRUE, FALSE, 'aplay', 'vlc')[2]
+playback = list(TRUE, FALSE, 'aplay', 'vlc')[[1]]
 # 1.2 s of noise with rolloff changing from 0 to -12 dB above 2 kHz
 noise = generateNoise(len = samplingRate * 1.2,
   rolloffNoise = c(0, -12), noiseFlatSpec = 2000,

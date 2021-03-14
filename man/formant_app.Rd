@@ -8,8 +8,9 @@ formant_app()
 }
 \description{
 Starts a shiny app for manually correcting formant measurements. IMPORTANT:
-please use Firefox! A bug in Chrome interferes with correct audio playback;
-Safari may or may not work. For more tips, see \code{\link{pitch_app}} and
+please use Firefox on a Linux or Windows PC. A bug in Chrome interferes with
+correct audio playback; Mac OS is not supported due to an unresolved issue
+with png transparency. For more tips, see \code{\link{pitch_app}} and
 http://cogsci.se/soundgen.html.
 }
 \details{

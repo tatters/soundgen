@@ -1,6 +1,6 @@
 #' Auditory spectrogram
 #'
-#' Internal soundgen function (work in progress)
+#' Produces an auditory spectrogram by extracting a bank of bandpass filters (work in progress)
 #'
 #' While tuneR::audspec is based on FFT, here we convolve the sound with a bank
 #' of filters. The main difference is that we don't window the signal and

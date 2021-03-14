@@ -127,10 +127,10 @@ or another color theme (e.g. 'heat.colors')}
 \item{...}{other graphical parameters passed on to \code{image()}}
 }
 \value{
-Returns a spectral filter (matrix nr x nc, where nr is the number of
-  frequency bins and nc is the number of time steps). Accordingly, rownames
-  of the output give central frequency of each bin(in kHz), while colnames
-  give time values (in ms if duration is specified, otherwise 0 to 1).
+Returns a spectral filter: a matrix with frequency bins in rows and
+  time steps in columns. Accordingly, rownames of the output give central
+  frequency of each bin (in kHz), while colnames give time stamps (in ms if
+  duration is specified, otherwise 0 to 1).
 }
 \description{
 Prepares a spectral envelope for filtering a sound to add formants, lip

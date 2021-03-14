@@ -48,10 +48,10 @@
 #' @param xlab,ylab labels of axes
 #' @param ... other graphical parameters passed on to \code{image()}
 #' @export
-#' @return Returns a spectral filter (matrix nr x nc, where nr is the number of
-#'   frequency bins and nc is the number of time steps). Accordingly, rownames
-#'   of the output give central frequency of each bin(in kHz), while colnames
-#'   give time values (in ms if duration is specified, otherwise 0 to 1).
+#' @return Returns a spectral filter: a matrix with frequency bins in rows and
+#'   time steps in columns. Accordingly, rownames of the output give central
+#'   frequency of each bin (in kHz), while colnames give time stamps (in ms if
+#'   duration is specified, otherwise 0 to 1).
 #' @examples
 #' # [a] with only F1-F3 visible, with no stochasticity
 #' e = getSpectralEnvelope(nr = 512, nc = 50, duration = 300,

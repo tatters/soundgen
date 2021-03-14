@@ -20,11 +20,12 @@ soundgen_app = function() {
 #' Interactive pitch tracker
 #'
 #' Starts a shiny app for manually editing pitch contours. IMPORTANT: please use
-#' Firefox! A bug in Chrome interferes with correct audio playback; Safari may
-#' or may not work. The settings in the panels on the left correspond to
-#' arguments to \code{\link{analyze}} - see `?analyze` and the vignette on
-#' acoustic analysis for help and examples. You can verify the pitch contours
-#' first, and then feed them back into \code{analyze} (see examples).
+#' Firefox on a Linux or Windows PC. A bug in Chrome interferes with correct
+#' audio playback; Mac OS is not supported due to an unresolved issue with png
+#' transparency. The settings in the panels on the left correspond to arguments
+#' to \code{\link{analyze}} - see `?analyze` and the vignette on acoustic
+#' analysis for help and examples. You can verify the pitch contours first, and
+#' then feed them back into \code{analyze} (see examples).
 #'
 #' @return The app produces a .csv file with one row per audio file. Apart from
 #'   the usual descriptives from analyze(), there are two additional columns:
@@ -124,8 +125,9 @@ pitch_app = function() {
 #' Interactive formant tracker
 #'
 #' Starts a shiny app for manually correcting formant measurements. IMPORTANT:
-#' please use Firefox! A bug in Chrome interferes with correct audio playback;
-#' Safari may or may not work. For more tips, see \code{\link{pitch_app}} and
+#' please use Firefox on a Linux or Windows PC. A bug in Chrome interferes with
+#' correct audio playback; Mac OS is not supported due to an unresolved issue
+#' with png transparency. For more tips, see \code{\link{pitch_app}} and
 #' http://cogsci.se/soundgen.html.
 #'
 #' Suggested workflow: load one or several audio files (wav/mp3), preferably not

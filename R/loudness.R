@@ -24,13 +24,13 @@ getLoudnessFolder = function(...) {
 #' different segments within the same recording.
 #'
 #' Algorithm: calibrates the sound to the desired SPL (Timoney et al., 2004),
-#' extracts a \code{\link{spectrogram}}, converts to bark scale
-#' (\code{\link[tuneR]{audspec}}), spreads the spectrum to account for frequency
-#' masking across the critical bands (Yang, 1999), converts dB to phon by using
-#' standard equal loudness curves (ISO 226), converts phon to sone (Timoney et
-#' al., 2004), sums across all critical bands, and applies a correction
-#' coefficient to standardize output. Calibrated so as to return a loudness of 1
-#' sone for a 1 kHz pure tone with SPL of 40 dB.
+#' extracts a spectrogram with \code{\link[tuneR]{powspec}}, converts to bark
+#' scale with (\code{\link[tuneR]{audspec}}), spreads the spectrum to account
+#' for frequency masking across the critical bands (Yang, 1999), converts dB to
+#' phon by using standard equal loudness curves (ISO 226), converts phon to sone
+#' (Timoney et al., 2004), sums across all critical bands, and applies a
+#' correction coefficient to standardize output. Calibrated so as to return a
+#' loudness of 1 sone for a 1 kHz pure tone with SPL of 40 dB.
 #'
 #' @seealso \code{\link{getLoudnessFolder}} \code{\link{getRMS}}
 #'   \code{\link{analyze}}

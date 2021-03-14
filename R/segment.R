@@ -44,7 +44,7 @@ segmentFolder = function(...) {
 #' is very flexible, but the parameters may be hard to optimize by hand. If you
 #' have an annotated sample of the sort of audio you are planning to analyze,
 #' with syllables and/or bursts counted manually, you can use it for automatic
-#' optimization of control parameters (see \code{\link{optimizePars}}.
+#' optimization of control parameters (see \code{\link{optimizePars}}).
 #'
 #' @seealso \code{\link{analyze}}  \code{\link{ssm}}
 #'
