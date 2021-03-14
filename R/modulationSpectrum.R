@@ -91,15 +91,18 @@ modulationSpectrumFolder = function(...) {
 #' @examples
 #' # White noise
 #' ms = modulationSpectrum(runif(16000), samplingRate = 16000,
-#'   logSpec = FALSE, power = TRUE)
+#'   logSpec = FALSE, power = TRUE,
+#'   amRes = NULL)  # analyze the entire sound, giving a single roughness value
+#' str(ms)
 #'
 #' # Harmonic sound
 #' s = soundgen()
-#' ms = modulationSpectrum(s, samplingRate = 16000)
-#' ms$roughness  # roughness over time
-#'
-#' # A single roughness measure per sound
-#' modulationSpectrum(s, samplingRate = 16000, amRes = NULL)$roughness
+#' ms = modulationSpectrum(s, samplingRate = 16000, amRes = NULL)
+#' ms$roughness  # a single value
+#' ms1 = modulationSpectrum(s, samplingRate = 16000, amRes = 10)
+#' ms1$roughness
+#' # roughness over time (low values of amRes mean more precision, so shorter
+#' # segments analyzed and fewer roughness values per sound).
 #'
 #' # Embellish
 #' ms = modulationSpectrum(s, samplingRate = 16000,
@@ -391,7 +394,7 @@ modulationSpectrum = function(
       'or else look for roughness in a lower range'))
   }
   if (is.numeric(amRes)) {
-    nFrames = ceiling(max_am / amRes * 2)
+    nFrames = max(3, ceiling(max_am / amRes * 2))  # min 3 spectrograms frames
   } else {
     nFrames = NULL
   }

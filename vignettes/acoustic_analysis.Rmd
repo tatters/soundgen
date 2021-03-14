@@ -650,14 +650,14 @@ The first and crucial thing to remember when working with modulation spectra is 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 5}
 s = soundgen(pitch = 70, amFreq = 25, amDep = 80, rolloff = -15)
 ms = modulationSpectrum(s, samplingRate = 16000, logWarp = NULL,
-                        windowLength = 25, step = 25)
+                        windowLength = 25, step = 25, amRes = NULL)
 ```
 
 In this example we missed both spectral modulation at ~14 cycles/KHz corresponding to the f0 of 70 Hz (1000/70 = 14.3) and temporal modulation at 25 Hz. To increase the resolution in both directions, we can simultaneously increase the window length (to capture spectral modulations) and decrease STFT step (to capture temporal modulations):
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 5}
 ms = modulationSpectrum(s, samplingRate = 16000, logWarp = NULL,
-                        windowLength = 40, step = 10)
+                        windowLength = 40, step = 10, amRes = NULL)
 ```
 
 Now we can see both spectral modulations at 14 Hz (f0) and temporal modulations at 25 Hz, as expected. When working with sounds for which you don't know the ground truth, however, the point is not to take the first modulation spectrum you happen to produce at face value - play around with different settings and compare the results. This is really the same indeterminacy principle as the more familiar tradeoff between frequency and time resolution in spectrograms.
@@ -665,7 +665,7 @@ Now we can see both spectral modulations at 14 Hz (f0) and temporal modulations 
 Beyond these basic settings, there are several other options:
 ```{r fig.show = "hold", fig.height = 5, fig.width = 5}
 ms = modulationSpectrum(
-  s, samplingRate = 16000, windowLength = 40, step = 10,
+  s, samplingRate = 16000, windowLength = 40, step = 10, amRes = NULL,
   logSpec = FALSE,  # log-transform the spectrogram before 2D FFT?
   power = 2,  # square amplitudes in modulation spectrum ("power" spectrum)
   roughRange = c(30, 150),  # temporal modulations in the "roughness" range
