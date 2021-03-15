@@ -2,17 +2,17 @@ Package: soundgen
 Type: Package
 Title: Sound Synthesis and Acoustic Analysis
 Version: 2.0.0
-Date: 2021-03-14
+Date: 2021-03-15
 Authors@R: person("Andrey", "Anikin", email = "rty.anik@rambler.ru", role = c("aut", "cre"))
 Maintainer: Andrey Anikin <rty.anik@rambler.ru>
 URL: http://cogsci.se/soundgen.html
 BugReports: https://github.com/tatters/soundgen/issues
 Description: Performs parametric synthesis of sounds with harmonic and noise 
     components such as animal vocalizations or human voice. Also offers tools 
-    for spectral analysis, audio segmentation, self-similarity matrices, 
-    modulation spectra, morphing, etc., as well as interactive web apps for 
-    manually corrected pitch tracking and formant measurement. Reference: 
-    Anikin (2019) <doi:10.3758/s13428-018-1095-7>.
+    for pitch tracking, spectral analysis, audio segmentation, self-similarity 
+    matrices, modulation spectra, morphing, etc., as well as interactive web 
+    apps for manually corrected pitch tracking and formant measurement. 
+    Reference: Anikin (2019) <doi:10.3758/s13428-018-1095-7>.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
