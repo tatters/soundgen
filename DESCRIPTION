@@ -16,7 +16,7 @@ Description: Performs parametric synthesis of sounds with harmonic and noise
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Imports: stats,
+Imports: stats (>= 4.0.0),
     graphics,
     utils,
     tuneR,
