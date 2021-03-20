@@ -22,6 +22,7 @@
 #' The corpus can be downloaded from http://cogsci.se/publications.html
 "pitchManual"
 
+
 #' Manually corrected pitch contours in 260 sounds
 #'
 #' A dataframe of 260 rows and two columns: "file" for filename in the corpus
@@ -29,20 +30,36 @@
 #' can be downloaded from http://cogsci.se/publications.html
 "pitchContour"
 
+
 #' Conversion table from Hz to musical notation
 #'
 #' A dataframe of 192 rows and 2 columns: "note" and "freq" (Hz). Range: C-5
 #' (0.51 Hz) to B10 (31608.53 Hz)
 "notesDict"
 
-#' Manually measured frequencies of the first four formants in 21 vowels from
-#' "Seeing Speech" (http://www.seeingspeech.ac.uk)
+
+#' Formants in American vowels
 #'
-#' A dataframe of 21 rows (one per vowel) and 9 columns: "ipa" = vowel, "F1...4"
-#' = measured formant frequencies (Hz) in the initial stable region of each
-#' vowel, "F1Rel...F4Rel" = formant frequencies relative to the neutral
-#' equidistant formant frequencies in the schwa (semitones)
+#' Relative frequencies of F1 and F2 (semitones above or below schwa based on
+#' estimated VTL) in American English, from Hillenbrand (1995), who measured
+#' F1-F4 in ~1.5K recordings (139 speakers, 12 vowels from each). Audio and
+#' formant measurements are freely available online:
+#' https://homepages.wmich.edu/~hillenbr/voweldata.html. The dataset below is
+#' the result of modeling Hillenbrand's data with brms: mvbind(F1rel, F2rel) ~
+#' vowel. It shows the most credible location of each vowel centroid in the
+#' F1Rel-F2Rel space.
+#'
+#' A dataframe of 12 observations and 3 columns: "vowel" = vowel (American
+#' English), "F1Rel" and "F2Rel" = formant frequencies in semitones relative to
+#' their neutral, equidistant positions in a perfectly cylindrical vocal tract.
+#' See \code{\link{schwa}} - this is what schwa() returns as
+#' $ff_relative_semitones
+#'
+#' @references Hillenbrand, J., Getty, L. A., Clark, M. J., & Wheeler, K.
+#'   (1995). Acoustic characteristics of American English vowels. The Journal of
+#'   the Acoustical society of America, 97(5), 3099-3111.
+#'
 #' @examples
-#' plot(ipa$F1, ipa$F2, type = 'n')
-#' text(ipa$F1, ipa$F2, label = ipa$ipa)
-"ipa"
+#' plot(hillenbrand$F1Rel, hillenbrand$F2Rel, type = 'n')
+#' text(hillenbrand$F1Rel, hillenbrand$F2Rel, labels = hillenbrand$vowel)
+"hillenbrand"

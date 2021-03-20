@@ -963,13 +963,20 @@ server = function(input, output, session) {
       if (myPars$print) print('Drawing formant space')
       caf = myPars$ann[myPars$currentAnn, myPars$ff]
       cafr = schwa(formants = as.numeric(caf))$ff_relative_semitones
-      xlim = range(c(ipa$F1Rel, cafr[1]))
-      ylim = range(c(ipa$F2Rel, cafr[2]))
+      xlim = range(c(hillenbrand$F1Rel, cafr[1]))
+      ylim = range(c(hillenbrand$F2Rel, cafr[2]))
       par(mar = c(0, 0, 0, 0))
-      plot(ipa$F1Rel, ipa$F2Rel, type = 'n', xlab = '', ylab = '',
+      plot(hillenbrand$F1Rel, hillenbrand$F2Rel, type = 'n', xlab = '', ylab = '',
            xlim = xlim, ylim = ylim, bty = 'n', xaxt = 'n', yaxt = 'n')
-      text(ipa$F1Rel, ipa$F2Rel, labels = ipa$ipa, cex = 1.5, col = 'blue')
+      text(hillenbrand$F1Rel, hillenbrand$F2Rel,
+           labels = hillenbrand$vowel, cex = 1.5, col = 'blue')
       points(cafr[1], cafr[2], pch = 4, cex = 2.5, col = 'red')
+    } else {
+      par(mar = c(0, 0, 0, 0))
+      plot(hillenbrand$F1Rel, hillenbrand$F2Rel, type = 'n', xlab = '', ylab = '',
+           bty = 'n', xaxt = 'n', yaxt = 'n')
+      text(hillenbrand$F1Rel, hillenbrand$F2Rel,
+           labels = hillenbrand$vowel, cex = 1.5, col = 'blue')
     }
   })
 
