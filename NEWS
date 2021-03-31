@@ -3,7 +3,8 @@ MINOR
   * Switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
 
 BUGS FIXED:
-  * vowel plot in formant_app()
+  * formant_app(): vowel plot, VTL updated in output
+
 
           CHANGES IN SOUNDGEN VERSION 2.0.0 [15-March-2021]
 This version represents an attempt to standardize and better integrate all functions for acoustic analysis in the package. Functions for sound synthesis, notably soundgen(), are not affected by these structural changes and remain fully back-compatible.

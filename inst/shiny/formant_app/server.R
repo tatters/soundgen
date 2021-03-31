@@ -1292,33 +1292,37 @@ server = function(input, output, session) {
     }
   }
 
-  updateVTL = function() {
-    if (!is.null(myPars$ann[myPars$currentAnn, ]) &&
-        any(!is.na(myPars$ann[myPars$currentAnn, myPars$ff]))) {
+  updateVTL = function(rows = myPars$currentAnn) {
+    if (!is.null(rows) && length(rows) > 0 && !is.null(myPars$ann[rows, ])) {
       if (myPars$print) print('Updating VTL...')
-      fmts_ann = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff])
-      vtl_ann = estimateVTL(
-        formants = fmts_ann,
-        method = input$vtl_method,
-        speedSound = input$speedSound,
-        interceptZero = input$interceptZero,
-        output = 'detailed'
-      )
-      # method = c('regression', 'meanDispersion', 'meanFormant')[1],
-      # speedSound = 35400,
-      try({
-        vtl_ann$formantDispersion = round(vtl_ann$formantDispersion)
-      }, silent = TRUE)
-      try({
-        vtl_ann$vocalTract = round(vtl_ann$vocalTract, 2)
-      }, silent = TRUE)
-      myPars$ann$dF[myPars$currentAnn] = vtl_ann$formantDispersion
-      myPars$ann$vtl[myPars$currentAnn] = vtl_ann$vocalTract
-      # drawAnnTbl()
-      # hr()
+      for (i in rows) {
+        if (!is.null(myPars$ann[i, ]) &&
+            any(!is.na(myPars$ann[i, myPars$ff]))) {
+          fmts_ann = as.numeric(myPars$ann[i, myPars$ff])
+          vtl_ann = estimateVTL(
+            formants = fmts_ann,
+            method = input$vtl_method,
+            speedSound = input$speedSound,
+            interceptZero = input$interceptZero,
+            output = 'detailed'
+          )
+          try({
+            vtl_ann$formantDispersion = round(vtl_ann$formantDispersion)
+          }, silent = TRUE)
+          try({
+            vtl_ann$vocalTract = round(vtl_ann$vocalTract, 2)
+          }, silent = TRUE)
+          myPars$ann$dF[i] = vtl_ann$formantDispersion
+          myPars$ann$vtl[i] = vtl_ann$vocalTract
+        }
+      }
     }
   }
-  observeEvent(c(input$vtl_method, input$speedSound, input$interceptZero), updateVTL())
+  observeEvent(c(input$vtl_method, input$speedSound, input$interceptZero), {
+    if (!is.null(myPars$ann) && nrow(myPars$ann) > 0) {
+      updateVTL(rows = 1:nrow(myPars$ann))
+    }
+  })
 
   observeEvent(input$tableRow, {
     if (!is.null(myPars$ann) && input$tableRow > 0) {
