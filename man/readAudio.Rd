@@ -6,7 +6,7 @@
 \usage{
 readAudio(
   x,
-  input,
+  input = checkInputType(x),
   i,
   samplingRate = NULL,
   scale = NULL,

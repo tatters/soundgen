@@ -1,9 +1,12 @@
           CHANGES IN SOUNDGEN VERSION 2.0.1 [--date--]
+NEW FUNCTIONS:
+  * shiftFormants(): raises or lowers formants without changing the pitch
+
 MINOR
-  * Switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
+  * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
 
 BUGS FIXED:
-  * formant_app(): vowel plot, VTL updated in output
+  * formant_app(): vowel plot, VTL updated in output table
 
 
           CHANGES IN SOUNDGEN VERSION 2.0.0 [15-March-2021]

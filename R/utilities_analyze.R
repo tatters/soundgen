@@ -687,7 +687,7 @@ checkInputType = function(x) {
 #'   from...to (s)
 #' @keywords internal
 readAudio = function(x,
-                     input,
+                     input = checkInputType(x),
                      i,
                      samplingRate = NULL,
                      scale = NULL,
