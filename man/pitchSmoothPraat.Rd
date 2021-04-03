@@ -21,7 +21,8 @@ Smoothes an intonation (pitch) contour with a low-pass filter, as in Praat
 (http://www.fon.hum.uva.nl/praat/). Algorithm: interpolates missing values
 (unvoiced frames), performs FFT to obtain the spectrum, multiplies by a
 Gaussian filter, performs an inverse FFT, and fills the missing values back
-in.
+in. The \code{bandwidth} parameter is about half the cutoff frequency (ie
+some frequencies will still be present up to ~2 * bandwidth)
 }
 \examples{
 pitch = c(NA, NA, 405, 441, 459, 459, 460, 462, 462, 458, 458, 445, 458, 451,

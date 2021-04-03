@@ -2,18 +2,18 @@
 % Please edit documentation in R/utilities_math.R
 \name{downsample}
 \alias{downsample}
-\title{Simple downsampling}
+\title{Downsample a vector}
 \usage{
-downsample(s, srNew = 10, srOld = 120, minLen = 3)
+downsample(x, f, maxDec = 100)
 }
 \arguments{
-\item{s}{a numeric vector}
+\item{x}{numeric vector of real numbers on any scale}
 
-\item{srNew}{the new, required sampling rate}
+\item{f}{decimation factor (1 = no effect, 1.1 = 10\% shorter, 2 = half the
+original length)}
 
-\item{srOld}{the original sampling rate}
-
-\item{minLen}{the minimum length of returned vector}
+\item{maxDec}{don't low-pass filter for f greater than this value, just
+decimate directly}
 }
 \description{
 Internal soundgen function
@@ -24,9 +24,19 @@ applying a low-pass filter and then decimating. If the new sampling rate is
 higher than the original, it does nothing.
 }
 \examples{
-s = rnorm(100); plot(s, type = 'l')
-s1 = soundgen:::downsample(s, srNew = 5, srOld = 18)
-plot(s1, type = 'l', col = 'red')
-plot(soundgen:::downsample(s, srNew = 5, srOld = 40), type = 'b')
+silence = rep(0, 10)
+samplingRate = 1000
+fr = seq(100, 300, length.out = 400)
+x = c(silence, sin(cumsum(fr) * 2 * pi / samplingRate), silence)
+spectrogram(x, samplingRate)
+x1 = soundgen:::downsample(x, f = 2.5)
+spectrogram(x1, samplingRate)  # no aliasing
+
+# cf. simple decimation w/o low-pass filtering
+x3 = x[seq(1, length(x), length.out = length(x) / 2.5)]
+spectrogram(x3, samplingRate)  # major aliasing
+
+# low-pass is not applied for extreme decimation
+soundgen:::downsample(x, f = 120)
 }
 \keyword{internal}

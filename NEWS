@@ -4,6 +4,7 @@ NEW FUNCTIONS:
 
 MINOR
   * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
+  * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
 
 BUGS FIXED:
   * formant_app(): vowel plot, VTL updated in output table

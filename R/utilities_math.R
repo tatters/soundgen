@@ -98,37 +98,57 @@ log01 = function(v) {
 }
 
 
-#' Simple downsampling
+#' Downsample a vector
 #'
 #' Internal soundgen function
 #'
 #' Takes a numeric vector and downsamples it to the required sampling rate by
 #' applying a low-pass filter and then decimating. If the new sampling rate is
 #' higher than the original, it does nothing.
-#' @param s a numeric vector
-#' @param srNew the new, required sampling rate
-#' @param srOld the original sampling rate
-#' @param minLen the minimum length of returned vector
+#' @param x numeric vector of real numbers on any scale
+#' @param f decimation factor (1 = no effect, 1.1 = 10\% shorter, 2 = half the
+#'   original length)
+#' @param maxDec don't low-pass filter for f greater than this value, just
+#'   decimate directly
 #' @keywords internal
 #' @examples
-#' s = rnorm(100); plot(s, type = 'l')
-#' s1 = soundgen:::downsample(s, srNew = 5, srOld = 18)
-#' plot(s1, type = 'l', col = 'red')
-#' plot(soundgen:::downsample(s, srNew = 5, srOld = 40), type = 'b')
-downsample = function(s, srNew = 10, srOld = 120, minLen = 3){
-  if (!srNew < srOld) {
-    return(s)
+#' silence = rep(0, 10)
+#' samplingRate = 1000
+#' fr = seq(100, 300, length.out = 400)
+#' x = c(silence, sin(cumsum(fr) * 2 * pi / samplingRate), silence)
+#' spectrogram(x, samplingRate)
+#' x1 = soundgen:::downsample(x, f = 2.5)
+#' spectrogram(x1, samplingRate)  # no aliasing
+#'
+#' # cf. simple decimation w/o low-pass filtering
+#' x3 = x[seq(1, length(x), length.out = length(x) / 2.5)]
+#' spectrogram(x3, samplingRate)  # major aliasing
+#'
+#' # low-pass is not applied for extreme decimation
+#' soundgen:::downsample(x, f = 120)
+downsample = function(x, f, maxDec = 100){
+  if (f <= 1) {
+    # nothing to do
+    out = x
+  } else if (f < maxDec) {
+    # low-pass filter
+    # if (is.null(butterOrder)) butterOrder = (2 * round(f / cutoff)) / 2 + 8
+    # bf = signal::butter(butterOrder, 1 / f * cutoff, type = 'low')
+    # x_lowPass = as.numeric(signal::filter(bf, x))  # only works well for low f
+    mx = min(x)
+    x_lowPass = soundgen::pitchSmoothPraat(
+      x - mx, samplingRate = 1000, bandwidth = 1000 / f / 4
+    ) + mx
+    # downsample
+    n1 = length(x_lowPass)
+    n2 = round(n1 / f)
+    out = approx(x_lowPass, xout = seq(1, n1, length.out = n2))$y
+  } else {
+    # just decimate directly
+    n1 = length(x)
+    out = x[seq(1, n1, length.out = n1 / f)]
   }
-  # low-pass filter
-  min_s = min(s)
-  s_pos = s - min(s)
-  s_lowPass = pitchSmoothPraat(s_pos, bandwidth = srNew / 2,
-                               samplingRate = srOld) + min_s
-  # downsample
-  len = length(s_lowPass)
-  len_new = round(len * srNew / srOld)
-  idx = seq(1, len, length.out = len_new)
-  return(s_lowPass[idx])
+  return(out)
 }
 
 

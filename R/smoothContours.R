@@ -4,11 +4,14 @@
 #'
 #' Returns a smooth contour based on an arbitrary number of anchors. Used by
 #' \code{\link{soundgen}} for generating intonation contour, mouth opening, etc.
-#' Note that pitch contours are treated as a special case: values are
-#' log-transformed prior to smoothing, so that with 2 anchors we get a linear
-#' transition on a log scale (as if we were operating with musical notes rather
-#' than frequencies in Hz). Pitch plots have two Y axes: one showing Hz and the
-#' other showing musical notation.
+#' Although this function is mostly intended to be used internally by soundgen,
+#' and it's slower than directly calling something like approx(), it may be a
+#' convenient "lazy" option because it can both up- and downsample vectors to
+#' the required size without aliasing. Note that pitch contours are treated as a
+#' special case: values are log-transformed prior to smoothing, so that with 2
+#' anchors we get a linear transition on a log scale (as if we were operating
+#' with musical notes rather than frequencies in Hz). Pitch plots have two Y
+#' axes: one showing Hz and the other showing musical notation.
 #' @param anchors a numeric vector of values or a list/dataframe with one column
 #'   (value) or two columns (time and value). \code{achors$time} can be in ms
 #'   (with len=NULL) or in arbitrary units, eg 0 to 1 (with duration determined
@@ -33,8 +36,16 @@
 #' @param xlim,ylim plotting options
 #' @param ... other plotting options passed to \code{plot()}
 #' @export
-#' @return Returns a numeric vector.
+#' @return Returns a numeric vector of length \code{len}.
 #' @examples
+#' # downsampling (low-pass filter + decimation, see ?soundgen:::downsample for
+#' # details)
+#' getSmoothContour(rnorm(100), len = 5)
+#'
+#' # upsampling
+#' getSmoothContour(c(1, 3, 2), len = 5, interpol = 'approx')
+#' getSmoothContour(c(1, 3, 2), len = 5, interpol = 'loess')
+#'
 #' # long format: anchors are a dataframe
 #' a = getSmoothContour(anchors = data.frame(
 #'   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
@@ -108,7 +119,7 @@ getSmoothContour = function(
       main = ''
   }
   # if (is.null(my_args$main)) {
-
+  if (!is.null(len) && len == 1) return(anchors[1])
   anchors = reformatAnchors(anchors, normalizeTime = normalizeTime)
   if (is.list(anchors)) {
     if (nrow(anchors) > 10 & nrow(anchors) < 50 & interpol == 'loess') {
@@ -146,13 +157,6 @@ getSmoothContour = function(
     duration_ms = len / samplingRate * 1000
   }
 
-  # if there are more anchors than len, downsample the anchors
-  if (nrow(anchors) > len) {
-    anchors = as.data.frame(anchors)
-    idx = seq(1, nrow(anchors), length.out = len)
-    anchors = anchors[idx, ]
-  }
-
   if (!is.numeric(duration_ms) | !is.numeric(len)) {
     return(NA)
   } else if (duration_ms == 0 | len == 0) {
@@ -160,9 +164,14 @@ getSmoothContour = function(
   }
 
   # get smooth contours
-  if (nrow(anchors) == len) {
+  nr = nrow(anchors)
+  if (nr == len) {
+    # nothing to do
     smoothContour = anchors$value
-  } else if (discontThres <= 0 | nrow(anchors) < 3) {
+  } else if (nr > len) {
+    # if there are more anchors than len, downsample the anchors
+    smoothContour = downsample(anchors$value, f = nr / len)
+  } else if (discontThres <= 0 | nr < 3) {
     smoothContour = drawContour(len = len,
                                 anchors = anchors,
                                 interpol = interpol,
@@ -300,7 +309,7 @@ getSmoothContour = function(
     smoothContour[is.na(smoothContour)] = 0
   if (thisIsPitch)
     smoothContour = semitonesToHz(smoothContour)
-  invisible(smoothContour)
+  return(smoothContour)
 }
 
 
@@ -498,10 +507,11 @@ getDiscreteContour = function(len,
 #'                                           value = c(150, 200, 220)))
 #' # returns NA
 #' soundgen:::reformatAnchors('aha')
+#' \dontrun{
 #' # returns NA with a warning
 #' soundgen:::reformatAnchors(anchors = list(time = c(0, .1, 1),
 #'                                           freq = c(150, 200, 220)))
-#' \dontrun{
+#'
 #' # throws a warning and rearranges in order of time stamps
 #' soundgen:::reformatAnchors(anchors = list(time = c(0, .8, .7, 1),
 #'                                           value = c(150, 200, 150, 220)))

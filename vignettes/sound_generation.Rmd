@@ -484,7 +484,8 @@ s027 = soundgen(
   amShape = 0,  
   # asymmetrical attack: 20 ms at the beginning and 140 ms at the end
   attackLen = c(20, 140),
-  plot = TRUE, heights = c(1, 1), play = playback)
+  plot = TRUE, heights = c(1, 1), ylim = c(0, 1), windowLength = 100, 
+  play = playback)
 ```
 `r if (saveAudio) {saveAudioFun('s027', samplingRate = 16000)}`
 `r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s027.mp3" type="audio/mp3"> </audio>'}`

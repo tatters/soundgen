@@ -1108,7 +1108,8 @@ intplPitch = function(pitch, idx_unv = NULL) {
 #' (http://www.fon.hum.uva.nl/praat/). Algorithm: interpolates missing values
 #' (unvoiced frames), performs FFT to obtain the spectrum, multiplies by a
 #' Gaussian filter, performs an inverse FFT, and fills the missing values back
-#' in.
+#' in. The \code{bandwidth} parameter is about half the cutoff frequency (ie
+#' some frequencies will still be present up to ~2 * bandwidth)
 #'
 #' @seealso \code{\link{analyze}}
 #'
@@ -1151,10 +1152,11 @@ pitchSmoothPraat = function(pitch,
   freq = seq(bin_width / 2,
              samplingRate / 2 - bin_width / 2,
              length.out = half_len)
-  # plot(freq, abs(sp[1:half_len]), type = 'l')
+  # plot(freq, abs(sp[1:half_len]) / max(abs(sp[1:half_len])), type = 'l')
 
   # gaussian filter
   filter = exp(-(freq/bandwidth)^2)  # NB: a bit different from dnorm()
+  # points(freq, filter, type = 'l', col = 'blue')
   if (even) {
     filter = c(filter, rev(filter))
   } else {
