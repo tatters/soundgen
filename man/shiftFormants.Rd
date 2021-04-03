@@ -12,7 +12,7 @@ shiftFormants(
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
-  overlap = 90,
+  overlap = 75,
   wn = "gaussian",
   interpol = c("approx", "spline")[1],
   normalize = TRUE,

@@ -914,7 +914,11 @@ interpolMatrix = function(m,
     }
     if (!is.null(colnames(m))) {
       cnms = as.numeric(colnames(m))
-      colnames(out) = do.call(interpol, list(x = cnms, n = nc))$y
+      try_colnames = try(do.call(interpol, list(x = cnms, n = nc))$y,
+                         silent = TRUE)
+      if (class(try_colnames) != 'try-error') {
+        colnames(out) = try_colnames
+      }
     }
   } else {
     out = temp

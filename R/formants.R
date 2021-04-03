@@ -1115,15 +1115,13 @@ transplantFormants = function(donor,
   }
   for (i in 1:ncol(spec_recipient)) {
     abs_s = abs(spec_recipient[, i])
-    # plot(abs_s, type = 'l')
+    # plot(log(abs_s), type = 'l')
     cor_coef = flatEnv(
       abs_s, samplingRate = 1, method = 'peak',
+      dynamicRange = dynamicRange,
       windowLength_points = freqWindow_bins) / abs_s
     # plot(Re(spec_recipient[, i]) * cor_coef, type = 'l')
-    spec_recipient[, i] = complex(
-      real = Re(spec_recipient[, i]) * cor_coef,
-      imaginary = Im(spec_recipient[, i])
-    )
+    spec_recipient[, i] = spec_recipient[, i] * cor_coef
     # plot(abs(spec_recipient[, i]), type = 'l')
   }
 
@@ -1139,6 +1137,10 @@ transplantFormants = function(donor,
 
   # Multiply the spectrograms and reconstruct the audio
   spec_recipient_new = spec_recipient * spec_donor_rightDim
+  image(log(abs(t(spec_recipient))))
+  image(log(t(spec_donor_rightDim)))
+  image(log(abs(t(spec_recipient_new))))
+
   recipient_new = as.numeric(
     seewave::istft(
       spec_recipient_new,

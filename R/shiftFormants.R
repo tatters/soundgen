@@ -67,7 +67,7 @@ shiftFormants = function(
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
-  overlap = 90,
+  overlap = 75,
   wn = 'gaussian',
   interpol = c('approx', 'spline')[1],
   normalize = TRUE,
@@ -111,7 +111,7 @@ shiftFormants = function(
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
-  overlap = 90,
+  overlap = 75,
   wn = 'gaussian',
   interpol = c('approx', 'spline')[1],
   normalize = TRUE,
@@ -155,7 +155,7 @@ shiftFormants = function(
   throwaway_lin = 10 ^ (-dynamicRange / 20) * audio$scale
   for (i in 1:ncol(spec)) {
     abs_s = abs(spec[, i])
-    # plot(abs_s, type = 'l')
+    # plot(log(abs_s), type = 'l')
 
     # Smooth the "donor" spectrogram of formants (magnitude only)
     env_s = getEnv(
