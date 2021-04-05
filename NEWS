@@ -1,8 +1,9 @@
           CHANGES IN SOUNDGEN VERSION 2.0.1 [--date--]
 NEW FUNCTIONS:
-  * shiftFormants(): raises or lowers formants without changing the pitch
+  * shiftFormants(): raises or lowers formants in a sound without changing its pitch
 
 MINOR
+  * analyze(), modulationSpectrum(): new outputs "amFreq" and "amDep" give the frequency and depth of amplitude modulation
   * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
   * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
 

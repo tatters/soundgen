@@ -6,7 +6,7 @@
 \usage{
 .modulationSpectrum(
   audio,
-  amRes = 10,
+  amRes = 5,
   maxDur = 5,
   logSpec = FALSE,
   windowLength = 15,
@@ -16,6 +16,7 @@
   zp = 0,
   power = 1,
   roughRange = c(30, 150),
+  amRange = c(10, 200),
   returnMS = TRUE,
   returnComplex = FALSE,
   plot = TRUE,
@@ -41,10 +42,12 @@
 \item{audio}{a list returned by \code{readAudio}}
 
 \item{amRes}{target resolution of amplitude modulation, Hz. If \code{NULL},
-the entire sound is analyzed at once (or in chunks \code{maxDur} s long),
-resulting in a single roughness value. Otherwise, roughness is calculated
-per frame, each selected to contain enough STFT windows to calculate
-roughness with precision given by \code{amRes}}
+the entire sound is analyzed at once, resulting in a single roughness value
+(unless it is longer than \code{maxDur}, in which case it is analyzed in
+chunks \code{maxDur} s long). If \code{amRes} is set, roughness is
+calculated for windows \code{~1000/amRes} ms long (but at least 3 STFT
+frames). \code{amRes} also affects the amount of smoothing when calculating
+\code{amFreq} and \code{amDep}}
 
 \item{maxDur}{sounds longer than \code{maxDur} s are split into fragments,
 and the modulation spectra of all fragments are averaged}
@@ -71,6 +74,9 @@ gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{roughRange}{the range of temporal modulation frequencies that
 constitute the "roughness" zone, Hz}
+
+\item{amRange}{the range of temporal modulation frequencies that we are
+interested in as "amplitude modulation" (AM), Hz}
 
 \item{returnMS}{if FALSE, only roughness is returned (much faster)}
 

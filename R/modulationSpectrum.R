@@ -15,20 +15,28 @@ modulationSpectrumFolder = function(...) {
 #' Produces a modulation spectrum of waveform(s) or audio file(s), with temporal
 #' modulation along the X axis (Hz) and spectral modulation (1/KHz) along the Y
 #' axis. A good visual analogy is decomposing the spectrogram into a sum of
-#' ripples of various frequencies and directions. Algorithm: prepare a
-#' spectrogram, take its logarithm (if \code{logSpec = TRUE}), center, perform a
-#' 2D Fourier transform (see also spectral::spec.fft()), take the upper half of
-#' the resulting symmetric matrix, and raise it to \code{power}. The result is
-#' returned as \code{$original}. Roughness is calculated as the proportion of
-#' energy / amplitude of the modulation spectrum within \code{roughRange} of
-#' temporal modulation frequencies. For plotting purposes, the modulation matrix
-#' is smoothed with Gaussian blur (see \code{\link{gaussianSmooth2D}}) and
-#' log-warped (if \code{logWarp} is a positive number). This processed
-#' modulation spectrum is returned as \code{$processed}. If the audio is long
-#' enough, multiple windows are analyzed, resulting in a vector of roughness
-#' values. For multiple inputs, such as a list of waveforms or path to a folder
-#' with audio files, the ensemble of modulation spectra can be interpolated to
-#' the same spectral and temporal resolution and averaged (if \code{averageMS}).
+#' ripples of various frequencies and directions. Roughness is calculated as the
+#' proportion of energy / amplitude of the modulation spectrum within
+#' \code{roughRange} of temporal modulation frequencies. The frequency of
+#' amplitude modulation (amFreq, Hz) is calculated as the highest peak in the
+#' smoothed AM function, and its depth (amDep, dB) as the ratio of this peak to
+#' the median AM over \code{amRange}. For relatively short and steady sounds,
+#' set \code{amRes = NULL} and analyze the entire sound. For longer sounds and
+#' when roughness or AM vary over time, set \code{amRes} to get multiple
+#' measurements over time (see examples).
+#'
+#' Algorithm: prepare a spectrogram, take its logarithm (if \code{logSpec =
+#' TRUE}), center, perform a 2D Fourier transform (see also
+#' spectral::spec.fft()), take the upper half of the resulting symmetric matrix,
+#' and raise it to \code{power}. The result is returned as \code{$original}. For
+#' plotting purposes, the modulation matrix can be smoothed with Gaussian blur
+#' (see \code{\link{gaussianSmooth2D}}) and log-warped (if \code{logWarp} is a
+#' positive number). This processed modulation spectrum is returned as
+#' \code{$processed}. If the audio is long enough, multiple windows are
+#' analyzed, resulting in a vector of roughness values. For multiple inputs,
+#' such as a list of waveforms or path to a folder with audio files, the
+#' ensemble of modulation spectra can be interpolated to the same spectral and
+#' temporal resolution and averaged (if \code{averageMS}).
 #'
 #' @seealso \code{\link{spectrogram}} \code{\link{analyze}}
 #'
@@ -41,11 +49,15 @@ modulationSpectrumFolder = function(...) {
 #' @inheritParams analyze
 #' @param roughRange the range of temporal modulation frequencies that
 #'   constitute the "roughness" zone, Hz
+#' @param amRange the range of temporal modulation frequencies that we are
+#'   interested in as "amplitude modulation" (AM), Hz
 #' @param amRes target resolution of amplitude modulation, Hz. If \code{NULL},
-#'   the entire sound is analyzed at once (or in chunks \code{maxDur} s long),
-#'   resulting in a single roughness value. Otherwise, roughness is calculated
-#'   per frame, each selected to contain enough STFT windows to calculate
-#'   roughness with precision given by \code{amRes}
+#'   the entire sound is analyzed at once, resulting in a single roughness value
+#'   (unless it is longer than \code{maxDur}, in which case it is analyzed in
+#'   chunks \code{maxDur} s long). If \code{amRes} is set, roughness is
+#'   calculated for windows \code{~1000/amRes} ms long (but at least 3 STFT
+#'   frames). \code{amRes} also affects the amount of smoothing when calculating
+#'   \code{amFreq} and \code{amDep}
 #' @param maxDur sounds longer than \code{maxDur} s are split into fragments,
 #'   and the modulation spectra of all fragments are averaged
 #' @param logSpec if TRUE, the spectrogram is log-transformed prior to taking 2D
@@ -73,19 +85,29 @@ modulationSpectrumFolder = function(...) {
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed on to \code{filled.contour.mod}
 #'   and \code{\link[graphics]{contour}} (see \code{\link{spectrogram}})
-#' @return Returns a list with four components:
+#' @return Returns a list with the following components:
 #' \itemize{
 #' \item \code{$original} modulation spectrum prior to blurring and log-warping,
 #' but after squaring if \code{power = TRUE}, a matrix of nonnegative values.
 #' Rownames are spectral modulation frequencies (cycles/KHz), and colnames are
 #' temporal modulation frequencies (Hz).
 #' \item \code{$processed} modulation spectrum after blurring and log-warping
+#' \item \code{$complex} untransformed complex modulation spectrum (returned
+#' only if returnComplex = TRUE)
 #' \item \code{$roughness} proportion of energy / amplitude of the modulation
 #' spectrum within \code{roughRange} of temporal modulation frequencies, \% - a
 #' vector if amRes is numeric and the sound is long enough, a single number
 #' otherwise
-#' \item \code{$complex} untransformed complex modulation spectrum (returned
-#' only if returnComplex = TRUE)
+#' \item \code{$amFreq} frequency of the highest peak, within \code{amRange}, of
+#' the folded AM function (average AM across all FM bins for both negative and
+#' positive AM frequencies), where a peak is a local maximum over \code{amRes}
+#' Hz. Like \code{roughness}, \code{amFreq} and \code{amDep} can be single
+#' numbers or vectors, depending on whether the sound is analyzed as a whole or
+#' in chunks
+#' \item \code{$amDep} ratio of the peak at amFreq to the median AM over
+#' \code{amRange}, dB
+#' \item \code{$summary} dataframe with summaries of roughness, amFreq, and
+#' amDep
 #' }
 #' @export
 #' @examples
@@ -96,13 +118,13 @@ modulationSpectrumFolder = function(...) {
 #' str(ms)
 #'
 #' # Harmonic sound
-#' s = soundgen()
+#' s = soundgen(amFreq = 25, amDep = 50)
 #' ms = modulationSpectrum(s, samplingRate = 16000, amRes = NULL)
-#' ms$roughness  # a single value
-#' ms1 = modulationSpectrum(s, samplingRate = 16000, amRes = 10)
-#' ms1$roughness
-#' # roughness over time (low values of amRes mean more precision, so shorter
-#' # segments analyzed and fewer roughness values per sound).
+#' ms[c('roughness', 'amFreq', 'amDep')]  # a single value for each
+#' ms1 = modulationSpectrum(s, samplingRate = 16000, amRes = 5)
+#' ms1[c('roughness', 'amFreq', 'amDep')]
+#' # measured over time (low values of amRes mean more precision, so we analyze
+#' # longer segments and get fewer values per sound)
 #'
 #' # Embellish
 #' ms = modulationSpectrum(s, samplingRate = 16000,
@@ -110,24 +132,18 @@ modulationSpectrumFolder = function(...) {
 #'   colorTheme = 'heat.colors', main = 'Modulation spectrum', lty = 3)
 #'
 #' \dontrun{
-#' # Roughness contour of a long sound (starts tonal, then gets rough)
-#' s_long = soundgen(sylLen = 4000, pitch = 400,
-#'   amDep = c(0, 0, 50), jitterDep = c(0, 0, 2))
-#' rough = modulationSpectrum(s_long, 16000, plot = FALSE)$roughness
+#' # A long sound with varying AM and a bit of chaos at the end
+#' s_long = soundgen(sylLen = 1500, pitch = c(250, 320, 280),
+#'                   amFreq = c(30, 55), amDep = c(20, 60, 40),
+#'                   jitterDep = c(0, 0, 2))
+#' playme(s_long)
+#' ms = modulationSpectrum(s_long, 16000)
+#' # plot AM over time
+#' plot(x = seq(1, 1500, length.out = length(ms$amFreq)), y = ms$amFreq,
+#'      cex = ms$amDep / 5, xlab = 'Time, ms', ylab = 'AM frequency, Hz')
+#' # plot roughness over time
 #' spectrogram(s_long, 16000, ylim = c(0, 4),
-#'             extraContour = list(rough / max(rough) * 4000, col = 'blue'))
-#'
-#' # Input can also be a list of waveforms (numeric vectors)
-#' ss = vector('list', 10)
-#' for (i in 1:length(ss)) {
-#'   ss[[i]] = soundgen(sylLen = runif(1, 100, 1000), temperature = .4,
-#'     pitch = runif(3, 400, 600))
-#' }
-#' # lapply(ss, playme)
-#' # MS of the first sound
-#' ms1 = modulationSpectrum(ss[[1]], samplingRate = 16000, scale = 1)
-#' # average MS of all 10 sounds
-#' ms2 = modulationSpectrum(ss, samplingRate = 16000, scale = 1, averageMS = TRUE)
+#'   extraContour = list(ms$roughness / max(ms$roughness) * 4000, col = 'blue'))
 #'
 #' # As with spectrograms, there is a tradeoff in time-frequency resolution
 #' s = soundgen(pitch = 500, amFreq = 50, amDep = 100, samplingRate = 44100)
@@ -162,8 +178,20 @@ modulationSpectrumFolder = function(...) {
 #' # ...or a single MS can be calculated:
 #' ms2 = modulationSpectrum('~/Downloads/temp', kernelSize = 11,
 #'                          plot = FALSE, averageMS = TRUE)
-#' str(ms2$original)
+#' image(t(ms2$original))
 #' ms2$summary
+#'
+#' # Input can also be a list of waveforms (numeric vectors)
+#' ss = vector('list', 10)
+#' for (i in 1:length(ss)) {
+#'   ss[[i]] = soundgen(sylLen = runif(1, 100, 1000), temperature = .4,
+#'     pitch = runif(3, 400, 600))
+#' }
+#' # lapply(ss, playme)
+#' # MS of the first sound
+#' ms1 = modulationSpectrum(ss[[1]], samplingRate = 16000, scale = 1)
+#' # average MS of all 10 sounds
+#' ms2 = modulationSpectrum(ss, samplingRate = 16000, scale = 1, averageMS = TRUE)
 #'
 #' # A sound with ~3 syllables per second and only downsweeps in F0 contour
 #' s = soundgen(nSyl = 8, sylLen = 200, pauseLen = 100, pitch = c(300, 200))
@@ -208,7 +236,7 @@ modulationSpectrum = function(
   scale = NULL,
   from = NULL,
   to = NULL,
-  amRes = 10,
+  amRes = 5,
   maxDur = 5,
   logSpec = FALSE,
   windowLength = 15,
@@ -218,6 +246,7 @@ modulationSpectrum = function(
   zp = 0,
   power = 1,
   roughRange = c(30, 150),
+  amRange = c(10, 200),
   returnMS = TRUE,
   returnComplex = FALSE,
   summaryFun = c('mean', 'median', 'sd'),
@@ -276,7 +305,9 @@ modulationSpectrum = function(
     for (i in 1:pa$input$n) {
       if (!pa$input$failed[i]) {
         temp[[i]] = summarizeAnalyze(
-          data.frame(roughness = pa$result[[i]]$roughness),
+          data.frame(roughness = pa$result[[i]]$roughness,
+                     amFreq = pa$result[[i]]$amFreq,
+                     amDep = pa$result[[i]]$amDep),
           summaryFun = summaryFun,
           var_noSummary = NULL)
       }
@@ -299,11 +330,12 @@ modulationSpectrum = function(
     mysum_all = NULL
   }
   for (i in idx_failed) pa$result[[i]] = list(
-    original = NULL, processed = NULL, complex = NULL, roughness = NULL
+    original = NULL, processed = NULL, complex = NULL,
+    roughness = NULL, amFreq = NULL, amDep = NULL
   )
-  original = processed = complex = roughness = NULL
+  original = processed = complex = roughness = amFreq = amDep = NULL
   # (otherwise note about no visible binding)
-  out_prep = c('original', 'processed', 'complex', 'roughness')
+  out_prep = c('original', 'processed', 'complex', 'roughness', 'amFreq', 'amDep')
   if (pa$input$n == 1) {
     # unlist
     for (op in out_prep) assign(noquote(op), pa$result[[1]] [[op]])
@@ -335,6 +367,8 @@ modulationSpectrum = function(
                  processed = processed,
                  complex = complex,
                  roughness = roughness,
+                 amFreq = amFreq,
+                 amDep = amDep,
                  summary = mysum_all))
 }
 
@@ -347,7 +381,7 @@ modulationSpectrum = function(
 #' @keywords internal
 .modulationSpectrum = function(
   audio,
-  amRes = 10,
+  amRes = 5,
   maxDur = 5,
   logSpec = FALSE,
   windowLength = 15,
@@ -357,6 +391,7 @@ modulationSpectrum = function(
   zp = 0,
   power = 1,
   roughRange = c(30, 150),
+  amRange = c(10, 200),
   returnMS = TRUE,
   returnComplex = FALSE,
   plot = TRUE,
@@ -456,19 +491,30 @@ modulationSpectrum = function(
     return(list('original' = NA,
                 'processed' = NA,
                 'complex' = NA,
-                'roughness' = NA))
+                'roughness' = NA,
+                'amFreq' = NA,
+                'amDep' = NA))
   }
 
   # extract a measure of roughness
   roughness = unlist(lapply(out, function(x)
     getRough(x, roughRange, colNames = as.numeric(colnames(out[[1]])))))
 
+  # detect systematic amplitude modulation at the same frequency
+  am_list = lapply(out, function(x)
+    getAM(x, amRange = amRange, amRes = amRes,
+          colNames = as.numeric(colnames(out[[1]]))))
+  amFreq = unlist(lapply(am_list, function(x) x$amFreq))
+  amDep = unlist(lapply(am_list, function(x) x$amDep))
+
   # average modulation spectra across all sounds
   if (!returnMS) {
     result = list('original' = NULL,
                   'processed' = NULL,
                   'complex' = NULL,
-                  'roughness' = roughness)
+                  'roughness' = roughness,
+                  'amFreq' = amFreq,
+                  'amDep' = amDep)
   } else {
     out_aggreg = averageMatrices(
       out,
@@ -513,7 +559,9 @@ modulationSpectrum = function(
     result = list('original' = out_aggreg,
                   'processed' = out_transf,
                   'complex' = out_aggreg_complex,
-                  'roughness' = roughness)
+                  'roughness' = roughness,
+                  'amFreq' = amFreq,
+                  'amDep' = amDep)
   }  # end of if (returnMS)
 
 
@@ -687,8 +735,8 @@ modulationSpectrumFragment = function(sound,
 #' amplitude in the roughness range
 #' @param m numeric matrix of non-negative values with colnames giving temporal
 #'   modulation frequency
-#' @param roughRange range of temporal modulation frequencies corresponding to
-#'   roughness
+#' @inheritParams modulationSpectrum
+#' @param colNames numeric vector with frequencies corresponding to columns
 #' @return Returns roughness in percent.
 #' @keywords internal
 #' @examples
@@ -742,4 +790,76 @@ averageMatrices = function(mat_list,
   mat_list_sameDim = lapply(mat_list, function(x) interpolMatrix(x, nr = nr, nc = nc))
   agg = Reduce(reduceFun, mat_list_sameDim) / length(mat_list)
   return(agg)
+}
+
+
+#' Get amplitude modulation
+#'
+#' Internal soundgen function
+#'
+#' Helper function for calculating amplitude modulation based on the modulation
+#' spectrum. Algorithm: averages AM across all FM bins in the positive half of
+#' the modulation spectrum and looks for a peak in the specified AM frequency
+#' range.
+#' @param m numeric matrix of non-negative values with colnames giving temporal
+#'   modulation frequency
+#' @inheritParams modulationSpectrum
+#' @param amRes controls the width of window over which we look for local maxima
+#' @param colNames numeric vector with frequencies corresponding to columns
+#' @return Returns a list with the frequency (Hz) and depth (dB relative to
+#'   median over amRange) of amplitude modulation.
+#' @keywords internal
+getAM = function(m, amRange = c(10, 100), amRes = NULL, colNames = NULL) {
+  if (is.null(amRes)) amRes = 0
+  if (is.null(colNames)) colNames = abs(as.numeric(colnames(m)))
+  out = list(amFreq = NA, amDep = NA)
+  # image(t(log(m)))
+
+  # fold around 0 and average AM across all FM bins
+  am = data.frame(freq = abs(colNames), amp = colSums(m))
+  am = am[order(am$freq), ]
+  # plot(am, type = 'l')
+
+  # average folded AM function cross pos/neg AM frequencies
+  # (b/c each point is doubled)
+  am_sm = am
+  i = 1
+  while(i < nrow(am_sm)) {
+    if (abs(am_sm$freq[i] - am_sm$freq[i + 1]) < .1) {
+      am_sm$amp[i] = (am_sm$amp[i] + am_sm$amp[i + 1]) / 2
+      am_sm$amp[i + 1] = NA
+      i = i + 2
+    } else {
+      i = i + 1
+    }
+  }
+  am_sm = na.omit(am_sm)
+  # plot(am, type = 'l')
+  # lines(am_sm, type = 'l', col = 'blue')
+
+  # find local maxima within amRange (note that we don't just throw away the
+  # rest of ms to improve the precision of smoothed AM function)
+  am_sm = am_sm[am_sm$freq >= amRange[1] & am_sm$freq <= amRange[2], ]
+  # plot(am_sm, type = 'l')
+  wl = max(3, round(amRes / (colNames[2] - colNames[1])))
+  # eg if amRes = 10, we look for a local maximum within ±5 Hz
+  temp = zoo::rollapply(
+    zoo::as.zoo(am_sm$amp),
+    width = wl,  # width 10 Hz, ie ±5 Hz
+    align = 'center',
+    function(x) {
+      middle = ceiling(length(x) / 2)
+      return(which.max(x) == middle)
+    })
+  idx = zoo::index(temp)[zoo::coredata(temp)]
+
+  if (length(idx) > 0) {
+    peaks = am_sm[idx, ]
+    peaks = peaks[which.max(peaks$amp), ]
+    if (nrow(peaks) > 0) {
+      out$amFreq = peaks$freq
+      out$amDep = log10(peaks$amp / median(am_sm$amp)) * 20
+    }
+  }
+  return(out)
 }

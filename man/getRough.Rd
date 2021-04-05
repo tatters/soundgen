@@ -10,8 +10,10 @@ getRough(m, roughRange, colNames = NULL)
 \item{m}{numeric matrix of non-negative values with colnames giving temporal
 modulation frequency}
 
-\item{roughRange}{range of temporal modulation frequencies corresponding to
-roughness}
+\item{roughRange}{the range of temporal modulation frequencies that
+constitute the "roughness" zone, Hz}
+
+\item{colNames}{numeric vector with frequencies corresponding to columns}
 }
 \value{
 Returns roughness in percent.

@@ -100,6 +100,8 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `time`: time of the middle of each frame (ms)
 * `duration`: total duration (s)
 * `duration_noSilence`: duration from the beginning of the first non-silent STFT frame to the end of the last non-silent STFT frame, s (NB: depends strongly on `windowLength` and `silence` settings)
+* `amDep`: depth of amplitude modulation, dB (estimated by `modulationSpectrum`, the arguments to which are passed in `roughness = list()`)
+* `amFreq`: frequency of amplitude modulation, Hz (estimated by `modulationSpectrum`, the arguments to which are passed in `roughness = list()`)
 * `ampl`: root mean square of amplitude per frame, calculated as `sqrt(mean(frame ^ 2))`
 * `dom`: lowest dominant frequency band (Hz) (see "Pitch tracking methods / Dominant frequency")
 * `entropy`: Weiner entropy of the spectrum of the current frame. Close to 0: pure tone or tonal sound with nearly all energy in harmonics; close to 1: white noise
@@ -107,7 +109,7 @@ Apart from pitch tracking, `analyze` calculates and returns several acoustic cha
 * `harmEnergy`: the amount of energy in upper harmonics, namely the ratio of total spectral energy above 1.25 x f0 to the total spectral energy below 1.25 x f0 (dB)
 * `harmHeight`: how high harmonics reach in the spectrum, based on the best guess at pitch (or the manually provided pitch values): see `soundgen:::harmHeight` for details
 * `HNR`: harmonics-to-noise ratio (dB), a measure of harmonicity returned by `soundgen:::getPitchAutocor()` (see "Pitch tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as in noise
-* `loudness`: subjective loudness in sone, assuming a certain sound pressure level (takes into account the energy in different frequency bands as well as the sensitivity of human ears to different frequencies); see `getLoudness()` and section on Loudness below for details
+* `loudness`: subjective loudness in sone, assuming a certain sound pressure level (takes into account the energy in different frequency bands as well as the sensitivity of human ears to different frequencies); see `getLoudness()` and the section on Loudness below for details
 * `novelty`: spectral novelty - a measure of how variable the spectrum is on a particular time scale, as estimated by `ssm()`
 * `peakFreq`: the frequency with maximum spectral energy below `cutFreq` (Hz)
 * `roughness`: the amount of spectrotemporal modulation in the "roughness" zone of frequencies (estimated by `modulationSpectrum`, the arguments to which are passed in `roughness = list()`)
@@ -665,19 +667,21 @@ Now we can see both spectral modulations at 14 Hz (f0) and temporal modulations 
 Beyond these basic settings, there are several other options:
 ```{r fig.show = "hold", fig.height = 5, fig.width = 5}
 ms = modulationSpectrum(
-  s, samplingRate = 16000, windowLength = 40, step = 10, amRes = NULL,
+  s, samplingRate = 16000, windowLength = 15, step = 5, 
+  amRes = NULL,  # analyze the entire sound at once (see TIP below)
   logSpec = FALSE,  # log-transform the spectrogram before 2D FFT?
   power = 2,  # square amplitudes in modulation spectrum ("power" spectrum)
   roughRange = c(30, 150),  # temporal modulations in the "roughness" range
+  amRange = c(10, 70),    # AM frequencies of interest
   logWarp = 2,  # log-transform axes for plotting
   kernelSize = 7,  # apply Gaussian blur for smoothing
   quantiles = c(.5, .8, .95, .99),  # customize contour lines
   colorTheme = 'terrain.colors'  # alternative palette
 )
-ms$roughness  # percent of energy in the roughness range
+ms[c('roughness', 'amFreq', 'amDep')]
 ```
 
-*TIP Roughness can be calculated for the entire sound (set `amRes = NULL`) or for as many frames as possible given the duration of audio and the desired resolution for the analysis of temporal modulation (one frame for the analysis of roughness comprises several STFT frames, so the higher `amRes`, the fewer roughness values per second)*
+*TIP Roughness and amplitude modulation can be calculated for the entire sound (set `amRes = NULL`) or for as many frames as possible given the duration of audio and the desired resolution for the analysis of temporal modulation (one frame for the analysis of roughness comprises several STFT frames, so we measure about `amRes` values per second)*
 
 # Optimization
 The results of acoustic analysis are sensitive to the chosen settings: the size and overlap of Fourier windows, the method(s) of pitch tracking and their parameters, etc. The default settings of the two main functions presented in this vignette, `analyze` and `segment`, have been optimized for human non-linguistic vocalizations. If you analyze other types of sounds, such as human speech or whale songs, you can probably improve the accuracy by changing some settings. In many cases the required changes are obvious: for example, to analyze f0 in ultrasonic whistles of dolphins or rodents you will obviously want to record at a much higher sampling rate, use shorter FFT windows, raise `pitch_ceiling` and / or `prior_mean`, etc. Other settings are not so obvious or even downright opaque, inviting some form of automatic optimization. 

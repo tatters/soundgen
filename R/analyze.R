@@ -184,36 +184,38 @@ analyzeFolder = function(...) {
 #'   \code{\link[grDevices]{png}} if the plot is saved
 #' @param ... other graphical parameters passed to \code{\link{spectrogram}}
 #' @return Returns a list with \code{$detailed} frame-by-frame descriptives and
-#'   a \code{$summary} with one row per file, as determined by
-#'   \code{summaryFun} (e.g., mean / median / SD of each acoustic variable
-#'   across all STFT frames). Output measures include:
-#'   \describe{\item{duration}{total duration, s}
-#'   \item{duration_noSilence}{duration from the beginning of the first
+#'   a \code{$summary} with one row per file, as determined by \code{summaryFun}
+#'   (e.g., mean / median / SD of each acoustic variable across all STFT
+#'   frames). Output measures include: \describe{\item{duration}{total duration,
+#'   s} \item{duration_noSilence}{duration from the beginning of the first
 #'   non-silent STFT frame to the end of the last non-silent STFT frame, s (NB:
 #'   depends strongly on \code{windowLength} and \code{silence} settings)}
-#'   \item{time}{time of the middle of each frame (ms)} \item{ampl}{root mean
-#'   square of amplitude per frame, calculated as sqrt(mean(frame ^ 2))}
-#'   \item{dom}{lowest dominant frequency band (Hz) (see "Pitch tracking methods
-#'   / Dominant frequency" in the vignette)} \item{entropy}{Weiner entropy of
-#'   the spectrum of the current frame. Close to 0: pure tone or tonal sound
-#'   with nearly all energy in harmonics; close to 1: white noise}
-#'   \item{f1_freq, f1_width, ...}{the frequency and bandwidth of the first
-#'   nFormants formants per STFT frame, as calculated by
-#'   phonTools::findformants} \item{harmEnergy}{the amount of energy in upper
-#'   harmonics, namely the ratio of total spectral mass above 1.25 x F0 to the
-#'   total spectral mass below 1.25 x F0 (dB)} \item{harmHeight}{how high
-#'   harmonics reach in the spectrum, based on the best guess at pitch (or the
-#'   manually provided pitch values)} \item{HNR}{harmonics-to-noise ratio (dB),
-#'   a measure of harmonicity returned by soundgen:::getPitchAutocor (see "Pitch
-#'   tracking methods / Autocorrelation"). If HNR = 0 dB, there is as much
-#'   energy in harmonics as in noise} \item{loudness}{subjective loudness, in
-#'   sone, corresponding to the chosen SPL_measured - see
-#'   \code{\link{getLoudness}}} \item{novelty}{spectral novelty - a measure of
-#'   how variable the spectrum is on a particular time scale, as estimated by
-#'   \code{\link{ssm}}} \item{peakFreq}{the frequency with maximum spectral
-#'   power (Hz)} \item{pitch}{post-processed pitch contour based on all F0
-#'   estimates} \item{quartile25, quartile50, quartile75}{the 25th, 50th, and
-#'   75th quantiles of the spectrum of voiced frames (Hz)} \item{roughness}{the
+#'   \item{time}{time of the middle of each frame (ms)} \item{amDep}{depth of
+#'   amplitude modulation, dB (see \code{\link{modulationSpectrum}})}
+#'   \item{amFreq}{frequency of amplitude modulation, Hz (see
+#'   \code{\link{modulationSpectrum}})} \item{ampl}{root mean square of
+#'   amplitude per frame, calculated as sqrt(mean(frame ^ 2))} \item{dom}{lowest
+#'   dominant frequency band (Hz) (see "Pitch tracking methods / Dominant
+#'   frequency" in the vignette)} \item{entropy}{Weiner entropy of the spectrum
+#'   of the current frame. Close to 0: pure tone or tonal sound with nearly all
+#'   energy in harmonics; close to 1: white noise} \item{f1_freq, f1_width,
+#'   ...}{the frequency and bandwidth of the first nFormants formants per STFT
+#'   frame, as calculated by phonTools::findformants} \item{harmEnergy}{the
+#'   amount of energy in upper harmonics, namely the ratio of total spectral
+#'   mass above 1.25 x F0 to the total spectral mass below 1.25 x F0 (dB)}
+#'   \item{harmHeight}{how high harmonics reach in the spectrum, based on the
+#'   best guess at pitch (or the manually provided pitch values)}
+#'   \item{HNR}{harmonics-to-noise ratio (dB), a measure of harmonicity returned
+#'   by soundgen:::getPitchAutocor (see "Pitch tracking methods /
+#'   Autocorrelation"). If HNR = 0 dB, there is as much energy in harmonics as
+#'   in noise} \item{loudness}{subjective loudness, in sone, corresponding to
+#'   the chosen SPL_measured - see \code{\link{getLoudness}}}
+#'   \item{novelty}{spectral novelty - a measure of how variable the spectrum is
+#'   on a particular time scale, as estimated by \code{\link{ssm}}}
+#'   \item{peakFreq}{the frequency with maximum spectral power (Hz)}
+#'   \item{pitch}{post-processed pitch contour based on all F0 estimates}
+#'   \item{quartile25, quartile50, quartile75}{the 25th, 50th, and 75th
+#'   quantiles of the spectrum of voiced frames (Hz)} \item{roughness}{the
 #'   amount of amplitude modulation, see modulationSpectrum}
 #'   \item{specCentroid}{the center of gravity of the frame’s spectrum, first
 #'   spectral moment (Hz)} \item{specSlope}{the slope of linear regression fit
@@ -1239,19 +1241,23 @@ analyze = function(
     }
   }
 
-  ## Roughness calculation
+  ## Roughness and AM calculation via a modulation spectrum
   if (is.null(roughness) ||
       (!is.null(roughness$amRes) && roughness$amRes == 0)) {
     # don't analyze the modulation spectrum
-    result$roughness = NA
+    result[, c('roughness', 'amFreq', 'amDep')] = NA
   } else {
-    rough = do.call(.modulationSpectrum, c(
+    ms = do.call(.modulationSpectrum, c(
       list(audio = audio[c('sound', 'samplingRate', 'ls', 'duration')],
            returnMS = FALSE, plot = FALSE),
-      roughness))$roughness
-    result$roughness = upsamplePitchContour(rough, len = nrow(result),
+      roughness))
+    result$roughness = upsamplePitchContour(ms$roughness, len = nrow(result),
                                             plot = FALSE)
-    result$roughness[!cond_silence] = NA
+    result$amFreq = upsamplePitchContour(ms$amFreq, len = nrow(result),
+                                         plot = FALSE)
+    result$amDep = upsamplePitchContour(ms$amDep, len = nrow(result),
+                                        plot = FALSE)
+    result[!cond_silence, c('roughness', 'amFreq', 'amDep')] = NA
   }
 
   ## Novelty calculation
@@ -1267,10 +1273,10 @@ analyze = function(
     result$novelty[!cond_silence] = NA
   }
 
-  varsToUnv = c('ampl', 'roughness', 'novelty', 'entropy', 'dom', 'HNR',
-                'loudness', 'peakFreq', 'quartile25', 'quartile50',
-                'quartile75', 'specCentroid', 'specSlope')
   # save spectral descriptives separately for voiced and unvoiced frames
+  varsToUnv = c('ampl', 'roughness', 'amFreq', 'amDep', 'novelty', 'entropy',
+                'dom', 'HNR', 'loudness', 'peakFreq', 'quartile25',
+                'quartile50', 'quartile75', 'specCentroid', 'specSlope')
   for (v in varsToUnv) {
     result[, paste0(v, 'Voiced')] = result[, v]
   }
