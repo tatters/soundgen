@@ -1315,13 +1315,15 @@ analyze = function(
       valid_cols = valid_cols[valid_cols != 'voiced']
       if (cnt_name %in% valid_cols) {
         cnt = result[, cnt_name]
-        col_non_Hz = c('ampl, amplVoiced', 'entropy', 'entropyVoiced',
-                       paste0('f', 1:10, '_width'), 'harmEnergy', 'HNR',
-                       'HNR_voiced', 'loudness', 'loudnessVoiced',
-                       'roughness', 'roughnessVoiced',
-                       'novelty', 'noveltyVoiced',
-                       'specSlope', 'specSlopeVoiced',
-                       'subDep', 'subRatio')
+        col_non_Hz = c(
+          'amDep', 'ampl, amplVoiced', 'entropy', 'entropyVoiced',
+          paste0('f', 1:10, '_width'), 'harmEnergy', 'HNR',
+          'HNR_voiced', 'loudness', 'loudnessVoiced',
+          'roughness', 'roughnessVoiced',
+          'novelty', 'noveltyVoiced',
+          'specSlope', 'specSlopeVoiced',
+          'subDep', 'subRatio'
+        )
         if (cnt_name %in% col_non_Hz) {
           # normalize
           if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
