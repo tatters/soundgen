@@ -837,12 +837,12 @@ getAM = function(m, amRange = c(10, 100), amRes = NULL) {
 
   # find local maxima within amRange (note that we don't just throw away the
   # rest of ms to improve the precision of smoothed AM function)
-  am_sm = am_sm[am_sm$freq >= amRange[1] & am_sm$freq <= amRange[2], ]
-  # plot(am_sm, type = 'l')
+  am_smRan = am_sm[am_sm$freq >= amRange[1] & am_sm$freq <= amRange[2], ]
+  # plot(am_smRan, type = 'l')
   wl = max(3, round(amRes / (colNames[2] - colNames[1])))
   # eg if amRes = 10, we look for a local maximum within ±5 Hz
   temp = zoo::rollapply(
-    zoo::as.zoo(am_sm$amp),
+    zoo::as.zoo(am_smRan$amp),
     width = wl,  # width 10 Hz, ie ±5 Hz
     align = 'center',
     function(x) {
@@ -852,11 +852,11 @@ getAM = function(m, amRange = c(10, 100), amRes = NULL) {
   idx = zoo::index(temp)[zoo::coredata(temp)]
 
   if (length(idx) > 0) {
-    peaks = am_sm[idx, ]
+    peaks = am_smRan[idx, ]
     peaks = peaks[which.max(peaks$amp), ]
     if (nrow(peaks) > 0) {
       out$amFreq = peaks$freq
-      out$amDep = log10(peaks$amp / median(am_sm$amp)) * 20
+      out$amDep = log10(peaks$amp / max(am_sm$amp)) * 20
     }
   }
   return(out)
