@@ -4,7 +4,7 @@
 \alias{getAM}
 \title{Get amplitude modulation}
 \usage{
-getAM(m, amRange = c(10, 100), amRes = NULL, colNames = NULL)
+getAM(m, amRange = c(10, 100), amRes = NULL)
 }
 \arguments{
 \item{m}{numeric matrix of non-negative values with colnames giving temporal
@@ -14,8 +14,6 @@ modulation frequency}
 interested in as "amplitude modulation" (AM), Hz}
 
 \item{amRes}{controls the width of window over which we look for local maxima}
-
-\item{colNames}{numeric vector with frequencies corresponding to columns}
 }
 \value{
 Returns a list with the frequency (Hz) and depth (dB relative to
