@@ -928,6 +928,7 @@ server = function(input, output, session) {
       updateTextInput(
         session, paste0(myPars$selectedF, '_text'),
         value = as.character(myPars$ann[myPars$currentAnn, myPars$selectedF]))
+      updateVTL()
     }
   })
 
