@@ -1137,9 +1137,9 @@ transplantFormants = function(donor,
 
   # Multiply the spectrograms and reconstruct the audio
   spec_recipient_new = spec_recipient * spec_donor_rightDim
-  image(log(abs(t(spec_recipient))))
-  image(log(t(spec_donor_rightDim)))
-  image(log(abs(t(spec_recipient_new))))
+  # image(log(abs(t(spec_recipient))))
+  # image(log(t(spec_donor_rightDim)))
+  # image(log(abs(t(spec_recipient_new))))
 
   recipient_new = as.numeric(
     seewave::istft(
