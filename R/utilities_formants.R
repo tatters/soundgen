@@ -34,7 +34,9 @@
 reformatFormants = function(formants,
                             output = c('all', 'freqs')[1],
                             keepNonInteger = TRUE) {
-  if (class(formants)[1] == 'character') {
+  if (is.null(formants)) {
+    formants = NA
+  } else if (class(formants)[1] == 'character') {
     # "aui" etc - read off values from presets$M1
     formants = convertStringToFormants(formants)
   } else if (is.numeric(formants)) {
