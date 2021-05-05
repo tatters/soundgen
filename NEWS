@@ -9,6 +9,7 @@ MINOR
 
 BUGS FIXED:
   * formant_app(): vowel plot, VTL updated in output table
+  * ssm(): silence has novelty = 0
 
 
           CHANGES IN SOUNDGEN VERSION 2.0.0 [15-March-2021]
