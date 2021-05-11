@@ -11,7 +11,7 @@ spectrogramFolder = function(...) {
 
 #' Spectrogram
 #'
-#' Produces the spectrogram of a sound using short-term Fourier transform.
+#' Produces the spectrogram of a sound using short-time Fourier transform.
 #' Inspired by \code{\link[seewave]{spectro}}, this function offers added
 #' routines for noise reduction, smoothing in time and frequency domains, manual
 #' control of contrast and brightness, plotting the oscillogram on a dB scale,

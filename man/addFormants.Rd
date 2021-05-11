@@ -7,7 +7,7 @@
 addFormants(
   x,
   samplingRate = NULL,
-  formants,
+  formants = NULL,
   spectralEnvelope = NULL,
   zFun = NULL,
   action = c("add", "remove")[1],
@@ -135,7 +135,7 @@ argument (eg for a low/high/bandpass filter).
 }
 \details{
 Algorithm: converts input from a time series (time domain) to a spectrogram
-(frequency domain) through short-term Fourier transform (STFT), multiples by
+(frequency domain) through short-time Fourier transform (STFT), multiples by
 the spectral filter containing the specified formants, and transforms back to
 a time series via inverse STFT. This is a subroutine for voice synthesis in
 \code{\link{soundgen}}, but it can also be applied to a recording.
@@ -178,6 +178,22 @@ s_denoised = addFormants(s_noisy, samplingRate = 16000,
                          formants = NA, zFun = zFun, cutoff = -40)
 spectrogram(s_denoised, 16000)
 # playme(s_denoised)
+
+# If neither formants nor spectralEnvelope are defined, only lipRad has an effect
+# For ex., we can boost low frequencies by 6 dB/oct
+noise = runif(8000)
+noise1 = addFormants(noise, 16000, lipRad = -6)
+seewave::meanspec(noise1, f = 16000, dB = 'max0')
+
+# Arbitrary spectra can be defined with spectralEnvelope. For ex., we can
+# have a flat spectrum up to 2 kHz (Nyquist / 4) and -3 dB/kHz above:
+freqs = seq(0, 16000 / 2, length.out = 100)
+n = length(freqs)
+idx = (n / 4):n
+sp_dB = c(rep(0, n / 4 - 1), (freqs[idx] - freqs[idx[1]]) / 1000 * (-3))
+plot(freqs, sp_dB, type = 'b')
+noise2 = addFormants(noise, 16000, lipRad = 0, spectralEnvelope = 10 ^ (sp_dB / 20))
+seewave::meanspec(noise2, f = 16000, dB = 'max0')
 
 ## Use the spectral envelope of an existing recording (bleating of a sheep)
 # (see also the same example with noise as source in ?generateNoise)

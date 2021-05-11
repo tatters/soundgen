@@ -581,7 +581,7 @@ getSpectralEnvelope = function(
 #' argument (eg for a low/high/bandpass filter).
 #'
 #' Algorithm: converts input from a time series (time domain) to a spectrogram
-#' (frequency domain) through short-term Fourier transform (STFT), multiples by
+#' (frequency domain) through short-time Fourier transform (STFT), multiples by
 #' the spectral filter containing the specified formants, and transforms back to
 #' a time series via inverse STFT. This is a subroutine for voice synthesis in
 #' \code{\link{soundgen}}, but it can also be applied to a recording.
