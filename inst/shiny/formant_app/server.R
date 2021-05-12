@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); VTL smts not updated when adjusting formant values; highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -62,7 +62,7 @@ server = function(input, output, session) {
     removeModal()
   })
   observeEvent(input$append, {
-    myPars$out = read.csv('www/temp.csv', stringsAsFactors = FALSE)
+    myPars$out = try(read.csv('www/temp.csv', stringsAsFactors = FALSE))
     removeModal()
   })
 
@@ -785,13 +785,14 @@ server = function(input, output, session) {
       xlim = input$spectrum_xlim # xlim = c(0, myPars$spectrum_freq_range[2])
       ylim = c(
         myPars$spectrum_ampl_range[1],
-        # leave extra room for "smoothing" slider
-        myPars$spectrum_ampl_range[2] + 1/4 * diff(myPars$spectrum_ampl_range)
+        # leave extra room for formant labels
+        myPars$spectrum_ampl_range[2] + 5
       )
       plot(myPars$spectrum$freq,
            myPars$spectrum$ampl,
            xlab = '', ylab = '',
-           xlim = xlim, ylim = ylim,
+           xlim = xlim,
+           ylim = ylim,
            xaxs = "i",
            type = 'l')
       # # fill in the AUC if needed
@@ -886,10 +887,12 @@ server = function(input, output, session) {
           ))
         }
       }
-
       isolate({
-        myPars$spectrum_freq_range = try(range(myPars$spectrum$freq))
-        myPars$spectrum_ampl_range = try(range(myPars$spectrum$ampl))
+        # myPars$spectrum_freq_range = try(range(myPars$spectrum$freq))
+        idx = try(which(myPars$spectrum$freq < input$spec_ylim[2]))
+        if (class(idx) != 'try-error') {
+          myPars$spectrum_ampl_range = range(myPars$spectrum$ampl[idx])
+        }
       })
     }
   })
@@ -1444,7 +1447,8 @@ server = function(input, output, session) {
     # halfRan = diff(input$spec_ylim) / 2 / coef
     # newLow = max(0, midpoint - halfRan)
     # newHigh = min(myPars$samplingRate / 2, midpoint + halfRan)
-    updateSliderInput(session, 'spec_ylim', value = c(0, input$spec_ylim[2] * coef))
+    newHigh = min(input$spec_ylim[2] * coef, myPars$samplingRate / 2 / 1000)
+    updateSliderInput(session, 'spec_ylim', value = c(0, newHigh))
   }
   observeEvent(input$zoomIn_freq, changeZoom_freq(1 / myPars$zoomFactor_freq))
   observeEvent(input$zoomOut_freq, changeZoom_freq(myPars$zoomFactor_freq))
