@@ -8,7 +8,7 @@ MINOR
   * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
 
 BUGS FIXED:
-  * formant_app(): vowel plot, VTL updated in output table
+  * formant_app(): vowel plot, VTL updated in output table, synthetic audio playback with browser
   * ssm(): silence has novelty = 0
 
 

@@ -18,7 +18,8 @@ ui = fluidPage(
   # (eg for playing the audio)
   shinyjs::extendShinyjs(
     script = 'www/formant_app_shinyjs.js',
-    functions = c('playme_js', 'stopAudio_js', 'clearBrush', 'inheritSize', 'scrollBar')
+    functions = c('playme_js', 'stopAudio_js', 'play_file',
+                  'clearBrush', 'inheritSize', 'scrollBar')
   ),
 
   # html
@@ -43,7 +44,7 @@ ui = fluidPage(
                   label = 'Reset ALL to defaults'),
                 radioButtons(
                   'audioMethod',
-                  label = "Play audio with",
+                  label = "Play analyzed audio with",
                   choices = list('Browser' = 'Browser', 'R' = 'R'),
                   selected = 'Browser', inline = TRUE, width = NULL
                 ),
@@ -460,6 +461,7 @@ ui = fluidPage(
         ),
         column(
           width = 2,
+          uiOutput("synthAudio"),  # not actually shown
           actionButton(
             inputId = 'synthBtn',
             label = HTML("<img src='icons/synth.png' width = '30px'>"),

@@ -21,6 +21,11 @@
     a.pause();
   };
 
+  shinyjs.play_file = function(params) {
+    let a = new Audio(params.filename);
+    a.play();
+  };
+
   // Manually remove all brush div's in case the brush is not properly cleared
   // (seems like a bug in Shiny)
   shinyjs.clearBrush = function(params) {

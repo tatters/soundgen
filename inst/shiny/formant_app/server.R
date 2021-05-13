@@ -67,7 +67,6 @@ server = function(input, output, session) {
   })
 
   files = list.files('www/', pattern = '.wav')
-  files = files[files != 'temp.wav']
   for (f in files){
     file.remove(paste0('www/', f))
   }
@@ -296,7 +295,7 @@ server = function(input, output, session) {
     output$htmlAudio = renderUI(
       tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
                  id = 'myAudio',
-                 style = "display: none; transform: scale(0.75); transform-origin: 0 0;")
+                 style = "display: none;")
     )
   })
 
@@ -1361,7 +1360,7 @@ server = function(input, output, session) {
       if (input$audioMethod == 'Browser') {
         # play with javascript
         shinyjs::js$playme_js(  # need an external js script for this
-          audio_id = 'myAudio',  # defined in UI
+          audio_id = 'myAudio',  # defined in tags$audio
           from = myPars$play$from,
           to = myPars$play$to)
       } else {
@@ -1685,7 +1684,14 @@ server = function(input, output, session) {
       temp_s = soundgen(
         formants = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff]),
         temperature = .001, tempEffects = list(formDisp = 0, formDrift = 0))
-      playme(temp_s)
+      if (input$audioMethod == 'Browser') {
+        # save a temporary file and play with the browser
+        seewave::savewav(temp_s, f = 16000, filename = 'www/temp.wav')
+        shinyjs::js$play_file(filename = 'temp.wav')
+      } else {
+        # play directly in R without saving to disk
+        playme(temp_s)
+      }
     }
   })
 
