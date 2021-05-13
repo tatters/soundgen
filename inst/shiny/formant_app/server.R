@@ -242,6 +242,7 @@ server = function(input, output, session) {
     idx = which(myPars$out$file == myPars$myAudio_filename)
     if (length(idx) > 0) {
       myPars$ann = myPars$out[idx, ]
+      myPars$currentAnn = 1
     } else {
       myPars$ann = NULL
     }
@@ -1039,7 +1040,6 @@ server = function(input, output, session) {
   observeEvent(myPars$currentAnn, {
     if (!is.null(myPars$currentAnn)) {
       if (myPars$print) print('Updating selection...')
-      hr()
       sel_points = as.numeric(round(myPars$ann[myPars$currentAnn, c('from', 'to')] /
                                       1000 * myPars$samplingRate))
       idx_points = sel_points[1]:sel_points[2]
@@ -1063,6 +1063,7 @@ server = function(input, output, session) {
           myPars$spec_xlim[2] = min(myPars$dur, mid_ann + half_span)
         }
       }
+      hr()
     }
   })
 
