@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: nPoints in spectrum should only apply to the selected frequency range; maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -859,9 +859,11 @@ server = function(input, output, session) {
         myPars$spectrum = try(as.list(soundgen:::getSmoothSpectrum(
           sound = myPars$selection,
           samplingRate = myPars$samplingRate,
-          len = input$spectrum_len,
+          len = input$spectrum_len * (myPars$samplingRate / 1000 / 2) / diff(input$spec_ylim),
           loessSpan = 10 ^ input$spectrum_smooth
         )))
+        # note: len is corrected to ensure constant resolution no matter how
+        # much we zoom in on a particular frequency region
         # if (class(myPars$spectrum) == 'try-error') browser()
         # myPars$spectrum = list(
         #     freq = as.numeric(rownames(myPars$spec)),
@@ -882,7 +884,7 @@ server = function(input, output, session) {
           )
           myPars$spectrum = as.list(soundgen:::getSmoothSpectrum(
             spectrum = spec_temp,
-            len = input$spectrum_len,
+            len = input$spectrum_len * (myPars$samplingRate / 1000 / 2) / diff(input$spec_ylim),
             loessSpan = 10 ^ input$spectrum_smooth
           ))
         }

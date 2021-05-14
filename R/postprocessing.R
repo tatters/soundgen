@@ -92,6 +92,9 @@ playme = function(x,
                                         interact = FALSE,
                                         xunit = 'time')
       }
+      # if shorter than 100 ms, pad with 100 ms of silence (otherwise doesn't play)
+      if (length(sound_wave@left) / sound_wave@samp.rate < .1)
+        sound_wave@left = c(sound_wave@left, rep(0, .1 * sound_wave@samp.rate))
       p = tuneR::play(sound_wave, player = player)
       if (p > 0) {  # error in sh
         warning(paste0(
