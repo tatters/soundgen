@@ -6,6 +6,7 @@ MINOR
   * analyze(), modulationSpectrum(): new outputs "amFreq" and "amDep" give the frequency and depth of amplitude modulation
   * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
   * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
+  * formant_app(): playback speed can be adjusted
 
 BUGS FIXED:
   * formant_app(): vowel plot, VTL updated in output table, synthetic audio playback with browser

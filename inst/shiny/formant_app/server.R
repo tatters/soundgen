@@ -35,6 +35,7 @@ server = function(input, output, session) {
     slider_ms = 50,            # how often to update play slider
     scrollFactor = .75,        # how far to scroll on arrow press/click
     wheelScrollFactor = .1,    # how far to scroll on mouse wheel (prop of xlim)
+    samplingRate_idx = 1,      # sampling rate scaling index for playback
     cursor = 0,
     listenToFbtn = FALSE,      # buggy
     play = list(on = FALSE),
@@ -228,6 +229,7 @@ server = function(input, output, session) {
     myPars$dur = length(myPars$temp_audio@left) * 1000 / myPars$temp_audio@samp.rate
     myPars$time = seq(1, myPars$dur, length.out = myPars$ls)
     myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
+    if (!is.finite(myPars$spec_xlim[2])) browser()  # weird glitches
     myPars$regionToAnalyze = myPars$spec_xlim
 
     # update info - file number ... out of ...
@@ -276,7 +278,7 @@ server = function(input, output, session) {
     }
   })
 
-  writeAudioFile = observeEvent(myPars$temp_audio, {
+  writeAudioFile = observeEvent(c(myPars$temp_audio, myPars$samplingRate_idx), {
     if (myPars$print) print('Writing audio file...')
     # Method: saves a temporary audio file in 'www/'. This is a workaround since
     # html tag for some reason cannot play myPars$myAudio_path (although feeding
@@ -291,13 +293,16 @@ server = function(input, output, session) {
     myPars$myfile = paste0(randomID, '.wav')
     # this is the new sound file. NB: has to be saved in www/ !!!
     seewave::savewav(myPars$temp_audio,
-                     f = myPars$samplingRate,
+                     f = myPars$samplingRate * myPars$samplingRate_idx,
                      filename = paste0('www/', myPars$myfile))
     output$htmlAudio = renderUI(
       tags$audio(src = myPars$myfile, type = myPars$myAudio_type,
                  id = 'myAudio',
                  style = "display: none;")
     )
+  }, ignoreInit = TRUE)
+  observeEvent(input$samplingRate_mult, {
+    myPars$samplingRate_idx = 2 ^ input$samplingRate_mult
   })
 
 
@@ -1354,7 +1359,7 @@ server = function(input, output, session) {
       }
       myPars$play$dur = myPars$play$to - myPars$play$from
       myPars$play$timeOn = proc.time()
-      myPars$play$timeOff = myPars$play$timeOn + myPars$play$dur
+      myPars$play$timeOff = myPars$play$timeOn + myPars$play$dur / myPars$samplingRate_idx
       myPars$cursor_temp = myPars$cursor
       myPars$play$on = TRUE
       if (myPars$print) print('Playing selection...')
@@ -1364,11 +1369,14 @@ server = function(input, output, session) {
         # play with javascript
         shinyjs::js$playme_js(  # need an external js script for this
           audio_id = 'myAudio',  # defined in tags$audio
-          from = myPars$play$from,
-          to = myPars$play$to)
+          from = myPars$play$from / myPars$samplingRate_idx,
+          to = myPars$play$to / myPars$samplingRate_idx)
       } else {
         # or play with R:
-        playme(myPars$myAudio_path, from = myPars$play$from, to = myPars$play$to)
+        playme(myPars$myAudio,
+               samplingRate = myPars$samplingRate * myPars$samplingRate_idx,
+               from = myPars$play$from / myPars$samplingRate_idx,
+               to = myPars$play$to / myPars$samplingRate_idx)
       }
     }
   }
@@ -1389,9 +1397,8 @@ server = function(input, output, session) {
         myPars$play$on = FALSE
         myPars$cursor = myPars$cursor_temp  # reset to original cursor
       } else {
-        myPars$cursor = as.numeric(
-          myPars$play$from + time - myPars$play$timeOn
-        )[3] * 1000  # [3] for "elapsed", ie "real" time
+        myPars$cursor = myPars$play$from * 1000 + as.numeric(time - myPars$play$timeOn)[3] * 1000 * myPars$samplingRate_idx
+        # [3] for "elapsed", ie "real" time
       }
     }
   })
@@ -1685,15 +1692,18 @@ server = function(input, output, session) {
         any(!is.na(myPars$ann[myPars$currentAnn, myPars$ff]))) {
       if (myPars$print) print('Calling soundgen()...')
       temp_s = soundgen(
+        sylLen = 300 * myPars$samplingRate_idx,
         formants = as.numeric(myPars$ann[myPars$currentAnn, myPars$ff]),
         temperature = .001, tempEffects = list(formDisp = 0, formDrift = 0))
       if (input$audioMethod == 'Browser') {
         # save a temporary file and play with the browser
-        seewave::savewav(temp_s, f = 16000, filename = 'www/temp.wav')
+        seewave::savewav(temp_s,
+                         f = 16000 * myPars$samplingRate_idx,
+                         filename = 'www/temp.wav')
         shinyjs::js$play_file(filename = 'temp.wav')
       } else {
         # play directly in R without saving to disk
-        playme(temp_s)
+        playme(temp_s, samplingRate = 16000 * myPars$samplingRate_idx)
       }
     }
   })
@@ -1704,6 +1714,9 @@ server = function(input, output, session) {
   # LPC
   shinyBS::addTooltip(session, id='reset_to_def', title = 'Reset all settings to default values', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='audioMethod', title = "Play audio with javascript (recommended in Firefox, doesn't work in Chrome) or with R (browser-independent, but then the cursor doesn't move, and you can't stop playback)", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+    shinyBS::addTooltip(session, id='samplingRate_mult', title = 'Speed up or slow down the original and synthesized audio for playback purposes only, without affecting the measurements (eg to make it sound more human-like)', placement="below", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+
+  # LPC
   shinyBS::addTooltip(session, id='nFormants', title = 'Number of formants to analyze', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='silence', title = 'Frames below this threshold are not analyzed', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='coeffs', title = 'The number of LPC coefficients (see ?phonTools::findformants)', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))

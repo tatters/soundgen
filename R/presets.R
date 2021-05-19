@@ -337,8 +337,9 @@ def_form = matrix(c(
 
   'spectrum_len', 500, 100, 5000, 25,
   'spectrum_smooth', -1, -2, 0, .05,
-  'spectrum_xlim', 5, 0, 96, .1
-), ncol=5, byrow=TRUE)
+  'spectrum_xlim', 5, 0, 96, .1,
+  'samplingRate_mult', 0, -3, 3, .1
+), ncol = 5, byrow = TRUE)
 temp = def_form[,1]
 def_form = apply(def_form[,2:5], 2, as.numeric)
 colnames(def_form) = c('default', 'low', 'high', 'step')

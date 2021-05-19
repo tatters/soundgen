@@ -48,6 +48,14 @@ ui = fluidPage(
                   choices = list('Browser' = 'Browser', 'R' = 'R'),
                   selected = 'Browser', inline = TRUE, width = NULL
                 ),
+                sliderInput(
+                  'samplingRate_mult',
+                  'Playback speed, 2 ^',
+                  value = def_form['samplingRate_mult', 'default'],
+                  min = def_form['samplingRate_mult', 'low'],
+                  max = def_form['samplingRate_mult', 'high'],
+                  step = def_form['samplingRate_mult', 'step']
+                ),
                 checkboxInput(
                   'normalizeInput',
                   'Normalize for peak amplitude',
@@ -297,9 +305,7 @@ ui = fluidPage(
                   min = def_form['spectrum_len', 'low'],
                   max = def_form['spectrum_len', 'high'],
                   step = def_form['spectrum_len', 'step'])
-              ),
-
-              tabPanel("Annotations")
+              )
             )
           )
         ),  # end of column "sidebar"
