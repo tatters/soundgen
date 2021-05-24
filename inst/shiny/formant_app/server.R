@@ -1488,7 +1488,9 @@ server = function(input, output, session) {
     newRight = min(myPars$dur, midpoint + halfRan)
     myPars$spec_xlim = c(newLeft, newRight)
     # use user-set time zoom in the next audio
-    if (!is.null(myPars$spec_xlim)) myPars$initDur = diff(myPars$spec_xlim)
+    if (!is.null(myPars$spec_xlim) &&
+        !any(!is.finite(myPars$spec_xlim)))
+      myPars$initDur = diff(myPars$spec_xlim)
   }
   observeEvent(input$zoomIn, changeZoom(myPars$zoomFactor, toCursor = TRUE))
   observeEvent(input$zoomOut, changeZoom(1 / myPars$zoomFactor))
@@ -1714,7 +1716,7 @@ server = function(input, output, session) {
   # LPC
   shinyBS::addTooltip(session, id='reset_to_def', title = 'Reset all settings to default values', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='audioMethod', title = "Play audio with javascript (recommended in Firefox, doesn't work in Chrome) or with R (browser-independent, but then the cursor doesn't move, and you can't stop playback)", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
-    shinyBS::addTooltip(session, id='samplingRate_mult', title = 'Speed up or slow down the original and synthesized audio for playback purposes only, without affecting the measurements (eg to make it sound more human-like)', placement="below", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  shinyBS::addTooltip(session, id='samplingRate_mult', title = 'Speed up or slow down the original and synthesized audio for playback purposes only, without affecting the measurements (eg to make it sound more human-like)', placement="below", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
 
   # LPC
   shinyBS::addTooltip(session, id='nFormants', title = 'Number of formants to analyze', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
