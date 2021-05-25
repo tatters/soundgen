@@ -716,10 +716,13 @@ analyze = function(
   ## Validate the parameter values that do not depend on sound-specific
   ## characteristics like samplingRate and duration
   if (!is.numeric(windowLength) | windowLength <= 0 |
-      windowLength > (audio$duration * 1000)) {
-    windowLength = min(50, audio$duration / 2 * 1000)
-    warning(paste0('"windowLength" must be between 0 and sound_duration ms;
-            defaulting to ', windowLength, ' ms'))
+      windowLength > (audio$duration / 2 * 1000)) {
+    windowLength = min(50, round(audio$duration / 2 * 1000))
+    step = windowLength / 2
+    warning(paste0(
+      '"windowLength" must be between 0 and half the sound duration (in ms);
+            resetting to ', windowLength, ' ms')
+    )
   }
   windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:
@@ -899,7 +902,7 @@ analyze = function(
 
   extraSpecPars = list(...)
   extraSpecPars$osc = NULL
-  s = do.call(.spectrogram, c(list(
+  s = try(do.call(.spectrogram, c(list(
     audio = audio[names(audio) != 'savePlots'], # otherwise spectrogram() plots
     internal = list(frameBank = frameBank),
     dynamicRange = dynamicRange,
@@ -910,12 +913,9 @@ analyze = function(
     normalize = FALSE,
     output = 'original',
     plot = FALSE
-  ), extraSpecPars))
+  ), extraSpecPars)))
+  if (class(s)[1] == 'try-error') return(NA)
   # image(t(s))
-  if (is.na(s)[1]) {
-    stop(paste('The sound is too short to analyze',
-               'with windowLength =', windowLength))
-  }
   bin = audio$samplingRate / 2 / nrow(s)  # width of spectral bin, Hz
   freqs = as.numeric(rownames(s)) * 1000  # central bin freqs, Hz
 

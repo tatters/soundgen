@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: nPoints in spectrum should only apply to the selected frequency range; maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: make sure NAs are not filled in automatically when there are NAs in the input csv; maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -231,6 +231,17 @@ server = function(input, output, session) {
     myPars$spec_xlim = c(0, min(myPars$initDur, myPars$dur))
     if (!is.finite(myPars$spec_xlim[2])) browser()  # weird glitches
     myPars$regionToAnalyze = myPars$spec_xlim
+
+    # shorten window and step if the input is very short
+    max_win = round(myPars$dur / 2)
+    if (input$windowLength > myPars$dur) {
+      updateNumericInput(session, 'windowLength', value = max_win)
+      updateNumericInput(session, 'step', value = max_win / 2)
+    }
+    if (input$windowLength_lpc > myPars$dur) {
+      updateNumericInput(session, 'windowLength_lpc', value = max_win)
+      updateNumericInput(session, 'step_lpc', value = max_win / 2)
+    }
 
     # update info - file number ... out of ...
     updateSelectInput(session, 'fileList',

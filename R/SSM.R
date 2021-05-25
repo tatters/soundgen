@@ -247,6 +247,14 @@ ssm = function(
     lwd = 3
   )) {
   ## set pars
+  if (!is.numeric(windowLength) | windowLength <= 0 |
+      windowLength > (audio$duration / 2 * 1000)) {
+    windowLength = min(50, round(audio$duration / 2 * 1000))
+    warning(paste0(
+      '"windowLength" must be between 0 and half the sound duration (in ms);
+            resetting to ', windowLength, ' ms')
+    )
+  }
   if (is.null(step)) step = windowLength * (1 - overlap / 100)
   if (is.null(nBands)) {
     nBands = round(100 * windowLength / 20)
