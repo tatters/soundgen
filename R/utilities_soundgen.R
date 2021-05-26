@@ -94,38 +94,44 @@ reportTime = function(
 #' time_s = c(.0001, .01, .33, .8, 2.135, 5.4, 12, 250, 3721, 10000,
 #'            150000, 365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
 #' soundgen:::convert_sec_to_hms(time_s)
-#' soundgen:::convert_sec_to_hms(time_s, 1)
+#' soundgen:::convert_sec_to_hms(time_s, 2)
 convert_sec_to_hms = function(time_s, digits = 0) {
-  if (any(time_s > 1)) {
-    # years = time_s %/% 31536000
-    # years_string = ifelse(years > 0, paste(years, 'y '), '')
-    #
-    # months = time_s %/% 2592000 - years * 12
-    # months_string = ifelse(months > 0, paste(months, 'm '), '')
-
-    days = time_s %/% 86400
-    days_string = ifelse(days > 0, paste(days, 'd '), '')
-
-    hours = time_s %/% 3600 - days * 24
-    hours_string = ifelse(hours > 0, paste(hours, 'h '), '')
-
-    minutes = time_s %/% 60 - days * 1440 - hours * 60
-    minutes_string = ifelse(minutes > 0, paste(minutes, 'min '), '')
-
-    seconds = time_s - days * 86400 - hours * 3600 - minutes * 60
-    seconds_floor = floor(seconds)
-    idx_s = time_s > 1 & time_s < 60
-    seconds_round = ifelse(idx_s, round(seconds, digits = digits), seconds_floor)
-    seconds_string = ifelse(seconds_round > 0, paste(seconds_round, 's '), '')
-
-    idx_ms = time_s < 1
-    ms_string = ifelse(idx_ms, paste(round((seconds - seconds_floor) * 1000), 'ms'), '')
-    ms_string[ms_string == '0 ms'] = '0'
-
-    output = paste0(days_string, hours_string,
-                    minutes_string, seconds_string, ms_string)
-  } else {
+  if (!any(time_s > 1)) {
     output = paste(round(time_s * 1000), 'ms')
+  } else {
+    len = length(time_s)
+    output = vector('character', len)
+    for (i in 1:len) {
+      # years = time_s %/% 31536000
+      # years_string = ifelse(years > 0, paste(years, 'y '), '')
+      #
+      # months = time_s %/% 2592000 - years * 12
+      # months_string = ifelse(months > 0, paste(months, 'm '), '')
+      days_string = hours_string = minutes_string = seconds_string = ms_string = ''
+      days = time_s[i] %/% 86400
+      if (days > 0) days_string = paste(days, 'd ')
+
+      hours = time_s[i] %/% 3600 - days * 24
+      if (hours > 0) hours_string = paste(hours, 'h ')
+
+      if (days == 0) {
+        minutes = time_s[i] %/% 60 - days * 1440 - hours * 60
+        if (minutes > 0) minutes_string = paste(minutes, 'min ')
+
+        if (hours == 0) {
+          seconds = time_s[i] - days * 86400 - hours * 3600 - minutes * 60
+          seconds_floor = floor(seconds)
+          if (seconds_floor > 0) seconds_string = paste(round(seconds, digits), 's ')
+
+          if (minutes == 0 & seconds_floor == 0) {
+            ms = (time_s[i] %% 1) * 1000
+            if (ms > 0) ms_string = paste(ms, 'ms')
+          }
+        }
+      }
+      output[i] = paste0(days_string, hours_string,
+                         minutes_string, seconds_string, ms_string)
+    }
   }
   output = trimws(output)
   return(output)

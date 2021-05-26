@@ -7,9 +7,10 @@ MINOR
   * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
   * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
   * formant_app(): playback speed can be adjusted
+  * reportTime() and all loops that use it: max two time levels shown (eg days + hours)
 
 BUGS FIXED:
-  * formant_app(): vowel plot, VTL updated in output table, synthetic audio playback with browser
+  * formant_app(): vowel plot, VTL updated in output table, synthetic audio playback with browser, NAs not filled in user annotations
   * ssm(): silence has novelty = 0
 
 
