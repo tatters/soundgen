@@ -1281,9 +1281,12 @@ server = function(input, output, session) {
         round(do.call(input$summaryFun, list(x, na.rm = TRUE))))
       # myPars$bandwidth ?
 
-      idx_f_na = which(is.na(myPars$ann[myPars$currentAnn, myPars$ff]))
-      if (length(idx_f_na) > 0)
-        myPars$ann[myPars$currentAnn, myPars$ff[idx_f_na]] = myPars$formants[idx_f_na]
+      if (FALSE) {
+        # fill in NAs
+        idx_f_na = which(is.na(myPars$ann[myPars$currentAnn, myPars$ff]))
+        if (length(idx_f_na) > 0)
+          myPars$ann[myPars$currentAnn, myPars$ff[idx_f_na]] = myPars$formants[idx_f_na]
+      }
 
       # fill in the formant boxes - note that we use the (possibly
       # user-modified) myPars$ann instead of myPars$formants
