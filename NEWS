@@ -11,6 +11,7 @@ MINOR
 
 BUGS FIXED:
   * formant_app(): vowel plot, VTL updated in output table, synthetic audio playback with browser, NAs not filled in user annotations
+  * formant_app(), pitch_app(): bug-prone "overlap" setting removed, use "step" instead
   * ssm(): silence has novelty = 0
 
 

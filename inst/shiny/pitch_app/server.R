@@ -608,7 +608,7 @@ server = function(input, output, session) {
             myPars$manual = myPars$manual[!duplicated(myPars$manual$frame), ]
           }
           obs_pitch()  # run pathfinder
-          if (length(myPars$pitch) != ncol(myPars$pitchCands$freq)) browser()
+          # if (length(myPars$pitch) != ncol(myPars$pitchCands$freq)) browser()
           # save the prior
           myPars$pitchCert_mult = getPrior(
             priorMean = input$priorMean,
@@ -1187,32 +1187,19 @@ server = function(input, output, session) {
     }
   }, ignoreNULL = TRUE)
 
-  # step-overlap
-  # observeEvent(input$overlap, {myPars$updateStepOv = 'step'})
-  # observeEvent(input$step, {myPars$updateStepOv = 'overlap'})
-  # observeEvent(myPars$updateStepOv, {
-  #   if (myPars$updateStepOv == 'step') {
-  #     step = input$windowLength * (1 - input$overlap / 100)
+  # # step-overlap
+  # observeEvent(input$overlap, {
+  #   # change step if overlap changes, but don't change step if windowLength changes
+  #   step = round(input$windowLength * (1 - input$overlap / 100))
+  #   if (input$step != step)
   #     updateNumericInput(session, 'step', value = step)
-  #   } else if (myPars$updateStepOv == 'overlap') {
-  #     overlap = (1 - input$step / input$windowLength) * 100
+  # }, ignoreInit = TRUE)
+  # observeEvent(c(input$step, input$windowLength), {
+  #   # change overlap if step or windowLength change
+  #   overlap = (1 - input$step / input$windowLength) * 100
+  #   if (input$overlap != overlap)
   #     updateSliderInput(session, 'overlap', value = overlap)
-  #   }
   # })
-
-  # step-overlap
-  observeEvent(input$overlap, {
-    # change step if overlap changes, but don't change step if windowLength changes
-    step = round(input$windowLength * (1 - input$overlap / 100))
-    if (input$step != step)
-      updateNumericInput(session, 'step', value = step)
-  }, ignoreInit = TRUE)
-  observeEvent(c(input$step, input$windowLength), {
-    # change overlap if step or windowLength change
-    overlap = (1 - input$step / input$windowLength) * 100
-    if (input$overlap != overlap)
-      updateSliderInput(session, 'overlap', value = overlap)
-  })
 
 
   # SAVE OUTPUT
@@ -1332,7 +1319,7 @@ server = function(input, output, session) {
   shinyBS::addTooltip(session, id='audioMethod', title = "Play audio with javascript (recommended in Firefox, doesn't work in Chrome) or with R (browser-independent, but then the cursor doesn't move, and you can't stop playback)", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window, ms. Larger values improve frequency resolution at the expense of time resolution', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='step', title = 'Step between analysis frames, ms (alternative to "overlap")', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
-  shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, % (alternative to "step")', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  # shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, % (alternative to "step")', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range of spectrogram, dB', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='zp', title = 'Zero padding of STFT window (improves frequency resolution): 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='wn', title = 'Type of STFT window', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))

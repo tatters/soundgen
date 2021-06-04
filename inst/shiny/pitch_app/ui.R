@@ -70,13 +70,13 @@ ui = fluidPage(
               min = defaults_analyze['step', 'low'],
               max = defaults_analyze['step', 'high'],
               step = defaults_analyze['step', 'step']),
-            sliderInput(
-              'overlap',
-              'Overlap, % ("overlap")',
-              value = defaults_analyze['overlap', 'default'],
-              min = defaults_analyze['overlap', 'low'],
-              max = defaults_analyze['overlap', 'high'],
-              step = defaults_analyze['overlap', 'step']),
+            # sliderInput(
+            #   'overlap',
+            #   'Overlap, % ("overlap")',
+            #   value = defaults_analyze['overlap', 'default'],
+            #   min = defaults_analyze['overlap', 'low'],
+            #   max = defaults_analyze['overlap', 'high'],
+            #   step = defaults_analyze['overlap', 'step']),
             sliderInput(
               'dynamicRange',
               'Dynamic range, dB ("dynamicRange")',

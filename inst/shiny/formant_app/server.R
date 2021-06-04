@@ -126,19 +126,27 @@ server = function(input, output, session) {
     reset()  # also triggers done(), but done() needs to run first in case loadAudio
     # is re-executed (need to save myPars$ann --> myPars$out)
 
-    # if output.csv is among the uploaded files, use the annotations in it
+    # if there is a csv among the uploaded files, use the annotations in it
     ext = substr(input$loadAudio$name,
                  (nchar(input$loadAudio$name) - 2),
                  nchar(input$loadAudio$name))
     old_out_idx = which(ext == 'csv')[1]  # grab the first csv, if any
     if (!is.na(old_out_idx)) {
       user_ann = read.csv(input$loadAudio$datapath[old_out_idx], stringsAsFactors = FALSE)
-      if (is.null(myPars$out)) {
-        myPars$out = user_ann
-      } else {
-        myPars$out = rbind_fill(myPars$out, user_ann)
-        # remove duplicate rows
-        myPars$out = unique(myPars$out)
+      oblig_cols = c('file', 'from', 'to')
+      if (nrow(user_ann) > 0 &
+          !any(!oblig_cols %in% colnames(user_ann))) {
+        idx_missing = which(apply(user_ann[, oblig_cols], 1, function(x) any(is.na(x))))
+        user_ann = user_ann[-idx_missing, ]
+        if (nrow(user_ann) > 0) {
+          if (is.null(myPars$out)) {
+            myPars$out = user_ann
+          } else {
+            myPars$out = rbind_fill(myPars$out, user_ann)
+            # remove duplicate rows
+            myPars$out = unique(myPars$out)
+          }
+        }
       }
     }
 
@@ -1583,32 +1591,32 @@ server = function(input, output, session) {
     }
   }, ignoreNULL = TRUE)
 
-  # step-overlap
-  observeEvent(input$overlap, {
-    # change step if overlap changes, but don't change step if windowLength changes
-    step = round(input$windowLength * (1 - input$overlap / 100))
-    if (input$step != step)
-      updateNumericInput(session, 'step', value = step)
-  }, ignoreInit = TRUE)
-  observeEvent(c(input$step, input$windowLength), {
-    # change overlap if step or windowLength change
-    overlap = (1 - input$step / input$windowLength) * 100
-    if (input$overlap != overlap)
-      updateSliderInput(session, 'overlap', value = overlap)
-  })
-
-  observeEvent(input$overlap_lpc, {
-    # change step if overlap changes, but don't change step if windowLength changes
-    step_lpc = round(input$windowLength_lpc * (1 - input$overlap_lpc / 100))
-    if (input$step_lpc != step_lpc)
-      updateNumericInput(session, 'step_lpc', value = step_lpc)
-  }, ignoreInit = TRUE)
-  observeEvent(c(input$step_lpc, input$windowLength_lpc), {
-    # change overlap if step or windowLength change
-    overlap_lpc = (1 - input$step_lpc / input$windowLength_lpc) * 100
-    if (input$overlap_lpc != overlap_lpc)
-      updateSliderInput(session, 'overlap_lpc', value = overlap_lpc)
-  })
+  # # step-overlap
+  # observeEvent(input$overlap, {
+  #   # change step if overlap changes, but don't change step if windowLength changes
+  #   step = round(input$windowLength * (1 - input$overlap / 100))
+  #   if (input$step != step)
+  #     updateNumericInput(session, 'step', value = step)
+  # }, ignoreInit = TRUE)
+  # observeEvent(c(input$step, input$windowLength), {
+  #   # change overlap if step or windowLength change
+  #   overlap = (1 - input$step / input$windowLength) * 100
+  #   if (input$overlap != overlap)
+  #     updateSliderInput(session, 'overlap', value = overlap)
+  # })
+#
+#   observeEvent(input$overlap_lpc, {
+#     # change step if overlap changes, but don't change step if windowLength changes
+#     step_lpc = round(input$windowLength_lpc * (1 - input$overlap_lpc / 100))
+#     if (input$step_lpc != step_lpc)
+#       updateNumericInput(session, 'step_lpc', value = step_lpc)
+#   }, ignoreInit = TRUE)
+#   observeEvent(c(input$step_lpc, input$windowLength_lpc), {
+#     # change overlap if step or windowLength change
+#     overlap_lpc = (1 - input$step_lpc / input$windowLength_lpc) * 100
+#     if (input$overlap_lpc != overlap_lpc)
+#       updateSliderInput(session, 'overlap_lpc', value = overlap_lpc)
+#   })
 
 
   # SAVE OUTPUT
@@ -1742,7 +1750,7 @@ server = function(input, output, session) {
   # Windowing
   shinyBS::addTooltip(session, id='windowLength_lpc', title = 'Length of STFT window for LPC analysis, ms. Independent of the window used for plotting the spectrogram', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='step_lpc', title = 'Step between analysis frames, ms', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
-  shinyBS::addTooltip(session, id='overlap_lpc', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  # shinyBS::addTooltip(session, id='overlap_lpc', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='dynamicRange_lpc', title = 'Dynamic range, dB', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='zp_lpc', title = 'Zero padding: 8 means 2^8 = 256, etc.', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='wn_lpc', title = 'Type of STFT window', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
@@ -1757,7 +1765,7 @@ server = function(input, output, session) {
   shinyBS::addTooltip(session, id='spec_ylim', title = "Range of displayed frequencies, kHz", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='windowLength', title = 'Length of STFT window for LPC analysis, ms. Independent of the window used for plotting the spectrogram', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='step', title = 'Step between analysis frames, ms', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
-  shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
+  # shinyBS::addTooltip(session, id='overlap', title = 'Overlap between analysis frames, %', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='dynamicRange', title = 'Dynamic range, dB', placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='spec_cex', title = "Magnification coefficient controlling the size of points showing pitch candidates", placement="right", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))
   shinyBS::addTooltip(session, id='specContrast', title = 'Regulates the contrast of the spectrogram', placement="below", trigger="hover", options = list(delay = list(show = 1000, hide = 0)))

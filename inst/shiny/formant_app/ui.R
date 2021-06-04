@@ -121,13 +121,13 @@ ui = fluidPage(
                   min = def_form['step_lpc', 'low'],
                   max = def_form['step_lpc', 'high'],
                   step = def_form['step_lpc', 'step']),
-                sliderInput(
-                  'overlap_lpc',
-                  'Overlap, %',
-                  value = def_form['overlap_lpc', 'default'],
-                  min = def_form['overlap_lpc', 'low'],
-                  max = def_form['overlap_lpc', 'high'],
-                  step = def_form['overlap_lpc', 'step']),
+                # sliderInput(
+                #   'overlap_lpc',
+                #   'Overlap, %',
+                #   value = def_form['overlap_lpc', 'default'],
+                #   min = def_form['overlap_lpc', 'low'],
+                #   max = def_form['overlap_lpc', 'high'],
+                #   step = def_form['overlap_lpc', 'step']),
                 sliderInput(
                   'dynamicRange_lpc',
                   'Dynamic range, dB',
@@ -200,13 +200,13 @@ ui = fluidPage(
                   min = def_form['step', 'low'],
                   max = def_form['step', 'high'],
                   step = def_form['step', 'step']),
-                sliderInput(
-                  'overlap',
-                  'Overlap, %',
-                  value = def_form['overlap', 'default'],
-                  min = def_form['overlap', 'low'],
-                  max = def_form['overlap', 'high'],
-                  step = def_form['overlap', 'step']),
+                # sliderInput(
+                #   'overlap',
+                #   'Overlap, %',
+                #   value = def_form['overlap', 'default'],
+                #   min = def_form['overlap', 'low'],
+                #   max = def_form['overlap', 'high'],
+                #   step = def_form['overlap', 'step']),
                 sliderInput(
                   'dynamicRange',
                   'Dynamic range, dB',
