@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 2.0.1 [--date--]
+          CHANGES IN SOUNDGEN VERSION 2.0.1 [04-June-2021]
 NEW FUNCTIONS:
   * shiftFormants(): raises or lowers formants in a sound without changing its pitch
 

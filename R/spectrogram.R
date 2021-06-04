@@ -803,10 +803,10 @@ plotSpec = function(
   if (y_Hz) {
     Y = Y * 1000
     ylim = ylim * 1000
-    min_log_freq = 10
+    min_log_freq = Y[2] * 1000  # 10
     if (is.null(ylab)) ylab = 'Frequency, Hz'
   }  else {
-    min_log_freq = .01
+    min_log_freq = Y[2]  # .01
     if (is.null(ylab)) ylab = 'Frequency, kHz'
   }
   if (yScale == 'log' & ylim[1] < min_log_freq)  ylim[1] = min_log_freq

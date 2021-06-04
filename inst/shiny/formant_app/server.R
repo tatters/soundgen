@@ -1,6 +1,6 @@
 # formant_app()
 #
-# To do: maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
+# To do: maybe an option to have log-spectrogram and log-spectrum (a bit tricky b/c all layers have to be adjusted); maybe remove the buggy feature of editing formant freq in the button as text, just display current value there (but then how to make it NA?); LPC saves all avail formants - check beh when changing nFormants across annotations & files; from-to in play sometimes weird (stops audio while cursor is still moving); highlight smts disappears in ann_table (buggy! tricky!); load audio upon session start; maybe arbitrary number of annotation tiers
 
 # Start with a fresh R session and run the command options(shiny.reactlog=TRUE)
 # Then run your app in a show case mode: runApp('inst/shiny/formant_app', display.mode = "showcase")
@@ -137,7 +137,7 @@ server = function(input, output, session) {
       if (nrow(user_ann) > 0 &
           !any(!oblig_cols %in% colnames(user_ann))) {
         idx_missing = which(apply(user_ann[, oblig_cols], 1, function(x) any(is.na(x))))
-        user_ann = user_ann[-idx_missing, ]
+        if (length(idx_missing) > 0) user_ann = user_ann[-idx_missing, ]
         if (nrow(user_ann) > 0) {
           if (is.null(myPars$out)) {
             myPars$out = user_ann
@@ -1306,7 +1306,9 @@ server = function(input, output, session) {
   observeEvent(myPars$ann, {
     if (myPars$print) print('Drawing ann_table...')
     if (!is.null(myPars$ann)) {
-      ann_for_print = myPars$ann[, which(!colnames(myPars$ann) %in% c('X', 'file'))]
+      # ann_for_print = myPars$ann[, which(!colnames(myPars$ann) %in% c('X', 'file'))]
+      show_cols = c('from', 'to', 'label', 'dF', 'vtl', paste0('F', 1:ncol(myPars$ann)))
+      ann_for_print = myPars$ann[, show_cols[which(show_cols %in% colnames(myPars$ann))]]
     } else {
       ann_for_print = '...waiting for some annotations...'
     }
