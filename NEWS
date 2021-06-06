@@ -1,12 +1,14 @@
           CHANGES IN SOUNDGEN VERSION 2.0.1 [04-June-2021]
 NEW FUNCTIONS:
   * shiftFormants(): raises or lowers formants in a sound without changing its pitch
+  * pitchDescriptives(): extracts common descriptives of time series such as pitch contours: measures of average / range / variability / slope / inflections etc
+  * findInflections(): finds inflections in time series such as pitch contours
 
 MINOR
   * analyze(), modulationSpectrum(): new outputs "amFreq" and "amDep" give the frequency and depth of amplitude modulation
   * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
   * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
-  * formant_app(): playback speed can be adjusted
+  * formant_app(): adjustable playback speed
   * reportTime() and all loops that use it: max two time levels shown (eg days + hours)
 
 BUGS FIXED:

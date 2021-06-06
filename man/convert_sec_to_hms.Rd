@@ -24,6 +24,6 @@ Converts time in seconds to time in y m d h min s for pretty printing.
 time_s = c(.0001, .01, .33, .8, 2.135, 5.4, 12, 250, 3721, 10000,
            150000, 365 * 24 * 3600 + 35 * 24 * 3600 + 3721)
 soundgen:::convert_sec_to_hms(time_s)
-soundgen:::convert_sec_to_hms(time_s, 1)
+soundgen:::convert_sec_to_hms(time_s, 2)
 }
 \keyword{internal}
