@@ -1274,12 +1274,14 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
 #'   \describe{\item{duration}{total duration, s} \item{durDefined}{duration
 #'   after omitting leading and trailing NAs} \item{propDefined}{proportion of
 #'   input with non-NA value, eg proportion of voiced frames if the input is
-#'   pitch} \item{start, end}{the first and last values} \item{mean, median,
-#'   max, min}{average and extreme values} \item{time_max, time_min}{the
-#'   location of minimum and maximum relative to durDefined, 0 to 1}
-#'   \item{range, range_sem, sd, sd_sem}{range and standard deviation on the
-#'   original scale and in semitones} \item{CV}{coefficient of variation =
-#'   mean/sd (provided for historical reasons)} \item{meanSlope,
+#'   pitch} \item{start, start_oct, end, end_oct}{the first and last values on
+#'   the original scale and in octaves above C0 (16.3516 Hz)} \item{mean,
+#'   median, max, min}{average and extreme values on the original scale}
+#'   \item{mean_oct, median_oct, min_oct, max_oct}{same in octaves above C0}
+#'   \item{time_max, time_min}{the location of minimum and maximum relative to
+#'   durDefined, 0 to 1} \item{range, range_sem, sd, sd_sem}{range and standard
+#'   deviation on the original scale and in semitones} \item{CV}{coefficient of
+#'   variation = mean/sd (provided for historical reasons)} \item{meanSlope,
 #'   meanSlope_sem}{mean slope in Hz/s or semitones/s (NB: does not depend on
 #'   duration or missing values)} \item{meanAbsSlope, meanAbsSlope_sem}{mean
 #'   absolute slope (modulus, ie rising and falling sections no longer cancel
