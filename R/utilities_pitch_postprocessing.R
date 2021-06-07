@@ -1452,11 +1452,15 @@ pitchDescriptives = function(x,
 timeSeriesSummary = function(x, step, inflThres = NULL, plot = FALSE) {
   len = length(x)
   out = data.frame(duration = step * (len + 1))
-  out[, c('durDefined', 'propDefined', 'start', 'end', 'mean', 'median',
-          'max', 'time_max', 'min', 'time_min',
-          'range', 'range_sem', 'sd', 'sd_sem', 'CV',
-          'meanSlope', 'meanSlope_sem', 'meanAbsSlope', 'meanAbsSlope_sem',
-          'maxAbsSlope', 'maxAbsSlope_sem')] = NA
+  vars = c('durDefined', 'propDefined',
+           'start', 'start_oct', 'end', 'end_oct',
+           'mean', 'mean_oct', 'median', 'median_oct',
+           'min', 'min_oct', 'time_min',
+           'max', 'max_oct', 'time_max',
+           'range', 'range_sem', 'sd', 'sd_sem', 'CV',
+           'meanSlope', 'meanSlope_sem', 'meanAbsSlope', 'meanAbsSlope_sem',
+           'maxAbsSlope', 'maxAbsSlope_sem')
+  out[, vars] = NA
 
   # transform to semitones, drop NAs
   x_noNA = as.numeric(na.omit(x))
@@ -1471,18 +1475,24 @@ timeSeriesSummary = function(x, step, inflThres = NULL, plot = FALSE) {
   out$start = x_noNA[1]
   out$end = tail(x_noNA, n = 1)
   out$mean = mean(x_noNA)
-  out$median = median(x_sem_noNA)
+  out$median = median(x_noNA)
 
   # min, max
+  idx_min = which.min(x)
+  if (length(idx_min) > 0) {
+    out$min = x[idx_min]
+    out$time_min = (idx_min - ran_not_NA[1]) / diff(ran_not_NA)
+  }
   idx_max = which.max(x)
   if (length(idx_max) > 0) {
     out$max = x[idx_max]
     out$time_max = (idx_max - ran_not_NA[1]) / diff(ran_not_NA)
   }
-  idx_min = which.min(x)
-  if (length(idx_min) > 0) {
-    out$min = x[idx_min]
-    out$time_min = (idx_min - ran_not_NA[1]) / diff(ran_not_NA)
+
+  # convert mean-related vars from Hz to octaves above C0
+  vars_to_oct = c('start', 'end', 'mean', 'median', 'min', 'max')
+  for (v in vars_to_oct) {
+    out[, paste0(v, '_oct')] = soundgen::HzToSemitones(out[, v], ref = 16.3516) / 12
   }
 
   # range, sd
