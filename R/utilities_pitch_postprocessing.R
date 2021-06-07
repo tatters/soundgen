@@ -1424,8 +1424,15 @@ pitchDescriptives = function(x,
     out_i = timeSeriesSummary(pitch_sm, step = step,
                               inflThres = inflThres[i], plot = plot)
     if (is.finite(smoothBW[i])) {
-      out_i = out_i[, 3:ncol(out_i)]  # remove durDefined and propDefined
-      colnames(out_i) = paste0(colnames(out_i), '_', smoothBW[i])
+      if (i == 1) {
+        colnames(out_i)[4:ncol(out_i)] = paste0(
+          colnames(out_i)[4:ncol(out_i)], '_', smoothBW[i]
+        )
+      } else {
+        # only save durDefined and propDefined once
+        out_i = out_i[, 4:ncol(out_i)]
+        colnames(out_i) = paste0(colnames(out_i), '_', smoothBW[i])
+      }
     }
     out = cbind(out, out_i)
   }
