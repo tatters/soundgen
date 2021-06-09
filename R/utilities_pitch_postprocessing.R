@@ -1214,8 +1214,8 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
   # remove leading/trailing NAs
   orig = x  # for plotting
   r = rle(is.na(x))
+  x = zoo::na.trim(x)
   if (r$values[1]) {
-    x = zoo::na.trim(x)
     shift = r$lengths[1]
   } else {
     shift = 0
@@ -1239,13 +1239,27 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
     # now get rid of "staircase effects" - successive extrema in the same direction
     de = c(xInt[1], xInt[extrema], xInt[len])
     extrema = extrema[which(diff(diff(de) > 0) != 0)]
+
+    # check that the last extremum is >thres below or above the final point
+    le = length(extrema)
+    if (le > 0) {
+      d_last = abs(tail(xInt, 1) - xInt[tail(extrema, 1)])
+      if (d_last <= thres) extrema = extrema[-le]
+    }
   }
   extrema = extrema + shift
 
   if (plot) {
-    plot(orig, type = 'b')
-    points(c(rep(NA, shift), xInt), type = 'b', col = 'gray70', pch = 4, xlab = '', ylab = '')
-    points(extrema, orig[extrema], col = 'blue', pch = 18)
+    le = length(extrema)
+    plot(c(rep(NA, shift), xInt), type = 'b', col = 'gray70',
+         pch = 16, cex = .5, xlab = '', ylab = '')
+    points(orig, pch = 16, type = 'b')
+    if (le > 0) {
+      points(extrema, orig[extrema], col = 'blue', pch = 18)
+      for (i in 1:le)
+        segments(x0 = extrema[i], y0 = 0, y1 = orig[extrema[i]],
+                 lty = 1, lwd = .25, col = 'black')
+    }
   }
   return(extrema)
 }
@@ -1281,7 +1295,7 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
 #'   \item{time_max, time_min}{the location of minimum and maximum relative to
 #'   durDefined, 0 to 1} \item{range, range_sem, sd, sd_sem}{range and standard
 #'   deviation on the original scale and in semitones} \item{CV}{coefficient of
-#'   variation = mean/sd (provided for historical reasons)} \item{meanSlope,
+#'   variation = sd/mean (provided for historical reasons)} \item{meanSlope,
 #'   meanSlope_sem}{mean slope in Hz/s or semitones/s (NB: does not depend on
 #'   duration or missing values)} \item{meanAbsSlope, meanAbsSlope_sem}{mean
 #'   absolute slope (modulus, ie rising and falling sections no longer cancel
@@ -1312,9 +1326,11 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
 #'   timeUnit = 'ms', smoothBW = c(NA, 2), inflThres = .25)
 #'
 #' # a single file, exported from Praat
+#' par(mfrow = c(3, 1))
 #' pd = pitchDescriptives(
 #'   '~/Downloads/F-Hin-Om_jana.wav_F0contour.txt',
-#'   timeUnit = 's', smoothBW = c(NA, 2), inflThres = .25, plot = TRUE)
+#'   timeUnit = 's', smoothBW = c(NA, 25, 2), inflThres = .25, plot = TRUE)
+#' par(mfrow = c(1, 1))
 #' }
 pitchDescriptives = function(x,
                              step = NULL,
@@ -1402,6 +1418,7 @@ pitchDescriptives = function(x,
                               smoothBW = c(25, 2),
                               inflThres = 2,
                               plot = FALSE) {
+  if (plot) par(mfrow = c(length(smoothBW), 1))  # plot each smoothing separately
   len = length(time)
   if (len < 2) return(NA)
   if (length(pitch) != len) stop('time and pitch must have the same length')
@@ -1438,6 +1455,7 @@ pitchDescriptives = function(x,
     }
     out = cbind(out, out_i)
   }
+  if (plot) par(mfrow = c(1, 1))
   return(out)
 }
 
