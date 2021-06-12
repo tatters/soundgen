@@ -7,9 +7,11 @@
 pitchDescriptives(
   x,
   step = NULL,
-  smoothBW = c(NA, 25, 2),
-  inflThres = 0.25,
+  smoothBW = c(NA, 10, 1),
+  inflThres = 0.2,
   timeUnit = c("s", "ms")[1],
+  extraSummaryFun = c(),
+  ref = 16.35,
   plot = FALSE
 )
 }
@@ -22,14 +24,20 @@ the output of \code{\link{pitch_app}} or \code{\link{analyze}}}
 \item{step}{distance between values in s (only needed if input is a vector)}
 
 \item{smoothBW}{a vector of bandwidths (Hz) for consecutive smoothing of
-input using \code{\link{pitchSmoothPraat}}}
+input using \code{\link{pitchSmoothPraat}}; NA = no smoothing}
 
 \item{inflThres}{minimum difference (in semitones) between consecutive
 extrema to consider them inflections; to apply a different threshold at
 each smoothing level, provide \code{inflThres} as a vector of the same
-length as \code{smoothBW}}
+length as \code{smoothBW}; NA = no threshold}
 
 \item{timeUnit}{specify whether the time stamps (if any) are in ms or s}
+
+\item{extraSummaryFun}{additional summary function(s) that take a numeric
+vector with some NAs and return a single number, eg c('myFun1', 'myFun2')}
+
+\item{ref}{reference value for transforming Hz to semitones, defaults to
+C0 (16.35 Hz)}
 
 \item{plot}{if TRUE, plots the inflections for manual verification}
 }
@@ -46,7 +54,7 @@ Returns a dataframe with columns containing summaries of one or
   \item{time_max, time_min}{the location of minimum and maximum relative to
   durDefined, 0 to 1} \item{range, range_sem, sd, sd_sem}{range and standard
   deviation on the original scale and in semitones} \item{CV}{coefficient of
-  variation = mean/sd (provided for historical reasons)} \item{meanSlope,
+  variation = sd/mean (provided for historical reasons)} \item{meanSlope,
   meanSlope_sem}{mean slope in Hz/s or semitones/s (NB: does not depend on
   duration or missing values)} \item{meanAbsSlope, meanAbsSlope_sem}{mean
   absolute slope (modulus, ie rising and falling sections no longer cancel
@@ -55,16 +63,32 @@ Returns a dataframe with columns containing summaries of one or
 \description{
 Provides common descriptives of time series such as pitch contours, including
 measures of average / range / variability / slope / inflections etc. Several
-degrees of smoothing can be applied consecutively.
+degrees of smoothing can be applied consecutively. The summaries are produced
+on the original and log-transformed scales, so this is meant to be used on
+frequency-related variables in Hz.
 }
 \examples{
-x = 5 + sin(2 * pi * (1:100) / 15) * seq(1, 5, length.out = 100)
-idx_na = c(1:4, 6, 7, 14, 25, 30:36, 39, 40, 42, 45:50,
-           57, 59, 62, 66, 71:79, 98)
-x[idx_na] = NA
+x = c(NA, NA, 405, 441, 459, 459, 460, 462, 462, 458, 458, 445, 458, 451,
+444, 444, 430, 416, 409, 403, 403, 389, 375, NA, NA, NA, NA, NA, NA, NA, NA,
+NA, 183, 677, 677, 846, 883, 886, 924, 938, 883, 946, 846, 911, 826, 826,
+788, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 307,
+307, 368, 377, 383, 383, 383, 380, 377, 377, 377, 374, 374, 375, 375, 375,
+375, 368, 371, 374, 375, 361, 375, 389, 375, 375, 375, 375, 375, 314, 169,
+NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 238, 285, 361, 374, 375, 375,
+375, 375, 375, 389, 403, 389, 389, 375, 375, 389, 375, 348, 361, 375, 348,
+348, 361, 348, 342, 361, 361, 361, 365, 365, 361, 966, 966, 966, 959, 959,
+946, 1021, 1021, 1026, 1086, 1131, 1131, 1146, 1130, 1172, 1240, 1172, 1117,
+1103, 1026, 1026, 966, 919, 946, 882, 832, NA, NA, NA, NA, NA, NA, NA, NA,
+NA, NA)
 plot(x, type = 'b')
-pd = pitchDescriptives(x, step = .025, smoothBW = c(NA, 25, 2),
-                       inflThres = c(NA, 2, 2), plot = TRUE)
+ci95 = function(x) diff(quantile(na.omit(x), probs = c(.025, .975)))
+pd = pitchDescriptives(
+  x, step = .025,
+  smoothBW = c(NA, 10, 1),   # original + smoothed at 10 Hz and 1 Hz
+  inflThres = c(NA, .2, .2), # different for each level of smoothing
+  extraSummaryFun = 'ci95',  # user-defined, here 95\% coverage interval
+  plot = TRUE
+)
 pd
 
 \dontrun{
@@ -72,7 +96,7 @@ pd
 data(sheep, package = 'seewave')
 a = analyze(sheep)
 pd1 = pitchDescriptives(a$detailed[, c('time', 'pitch')],
-                        timeUnit = 'ms', inflThres = NULL, plot = TRUE)
+                        timeUnit = 'ms', inflThres = NA, plot = TRUE)
 pd2 = pitchDescriptives(a$detailed[, c('time', 'pitch')],
                         timeUnit = 'ms', inflThres = c(0.1, .5), plot = TRUE)
 
@@ -82,8 +106,10 @@ pd = pitchDescriptives(
   timeUnit = 'ms', smoothBW = c(NA, 2), inflThres = .25)
 
 # a single file, exported from Praat
+par(mfrow = c(3, 1))
 pd = pitchDescriptives(
   '~/Downloads/F-Hin-Om_jana.wav_F0contour.txt',
-  timeUnit = 's', smoothBW = c(NA, 2), inflThres = .25, plot = TRUE)
+  timeUnit = 's', smoothBW = c(NA, 25, 2), inflThres = .25, plot = TRUE)
+par(mfrow = c(1, 1))
 }
 }

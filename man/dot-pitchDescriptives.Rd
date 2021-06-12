@@ -7,9 +7,12 @@
 .pitchDescriptives(
   time,
   pitch,
-  smoothBW = c(25, 2),
-  inflThres = 2,
-  plot = FALSE
+  smoothBW,
+  inflThres,
+  extraSummaryFun = c(),
+  ref = 16.35,
+  plot = FALSE,
+  main = ""
 )
 }
 \arguments{
@@ -18,12 +21,18 @@
 \item{pitch}{a vector of pitch values in Hz}
 
 \item{smoothBW}{a vector of bandwidths (Hz) for consecutive smoothing of
-input using \code{\link{pitchSmoothPraat}}}
+input using \code{\link{pitchSmoothPraat}}; NA = no smoothing}
 
 \item{inflThres}{minimum difference (in semitones) between consecutive
 extrema to consider them inflections; to apply a different threshold at
 each smoothing level, provide \code{inflThres} as a vector of the same
-length as \code{smoothBW}}
+length as \code{smoothBW}; NA = no threshold}
+
+\item{extraSummaryFun}{additional summary function(s) that take a numeric
+vector with some NAs and return a single number, eg c('myFun1', 'myFun2')}
+
+\item{ref}{reference value for transforming Hz to semitones, defaults to
+C0 (16.35 Hz)}
 
 \item{plot}{if TRUE, plots the inflections for manual verification}
 }

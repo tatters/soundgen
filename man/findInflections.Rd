@@ -4,7 +4,7 @@
 \alias{findInflections}
 \title{Find inflections}
 \usage{
-findInflections(x, thres = NULL, plot = FALSE)
+findInflections(x, thres = NULL, step = NULL, plot = FALSE, main = "")
 }
 \arguments{
 \item{x}{numeric vector with or without NAs}
@@ -12,7 +12,11 @@ findInflections(x, thres = NULL, plot = FALSE)
 \item{thres}{minimum vertical distance between two extrema for them to count
 as two independent inflections}
 
+\item{step}{distance between values in s (only needed for plotting)}
+
 \item{plot}{if TRUE, produces a simple plot}
+
+\item{main}{plot title}
 }
 \value{
 Returns a vector of indices giving the location of inflections.

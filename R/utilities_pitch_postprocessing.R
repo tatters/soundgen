@@ -1179,109 +1179,29 @@ pitchSmoothPraat = function(pitch,
 }
 
 
-#' Find inflections
-#'
-#' Finds inflections in discrete time series such as pitch contours. When there
-#' are no missing values and no thresholds, this can be accomplished with a fast
-#' one-liner like \code{which(diff(diff(x) > 0) != 0) + 1}. Missing values are
-#' interpolated by repeating the first and last non-missing values at the head
-#' and tail, respectively, and by linear interpolation in the middle. Setting a
-#' threshold means that small "wiggling" no longer counts. To use an analogy
-#' with ocean waves, smoothing (low-pass filtering) removes the ripples and only
-#' leaves the slow roll, while thresholding preserves only waves that are
-#' sufficiently high, whatever their period.
-#' @param x numeric vector with or without NAs
-#' @param thres minimum vertical distance between two extrema for them to count
-#'   as two independent inflections
-#' @param plot if TRUE, produces a simple plot
-#' @return Returns a vector of indices giving the location of inflections.
-#' @export
-#' @examples
-#' x = sin(2 * pi * (1:100) / 15) * seq(1, 5, length.out = 100)
-#' idx_na = c(1:4, 6, 7, 14, 25, 30:36, 39, 40, 42, 45:50,
-#'            57, 59, 62, 66, 71:79, 98)
-#' x[idx_na] = NA
-#' soundgen:::findInflections(x, plot = TRUE)
-#' soundgen:::findInflections(x, thres = 5, plot = TRUE)
-#'
-#' for (i in 1:10) {
-#'   temp = soundgen:::getRandomWalk(len = runif(1, 10, 100), rw_range = 10,
-#'                                   rw_smoothing = runif(1, 0, 1))
-#'   soundgen:::findInflections(temp, thres = 1, plot = TRUE)
-#'   invisible(readline(prompt="Press [enter] to continue"))
-#' }
-findInflections = function(x, thres = NULL, plot = FALSE) {
-  # remove leading/trailing NAs
-  orig = x  # for plotting
-  r = rle(is.na(x))
-  x = zoo::na.trim(x)
-  if (r$values[1]) {
-    shift = r$lengths[1]
-  } else {
-    shift = 0
-  }
-
-  len = length(x)
-  if (len < 3) return(numeric(0))
-  if (any(is.na(x))) {
-    xInt = approx(x, n = len, na.rm = TRUE)$y  # soundgen:::intplPitch(x)
-  } else {
-    xInt = x
-  }
-  extrema = which(diff(diff(xInt) > 0) != 0) + 1
-
-  # threshold
-  if (!is.null(thres) && is.finite(thres) && length(extrema) > 0) {
-    de = abs(diff(c(xInt[1], xInt[extrema])))
-    idx_keep = which(de > thres)
-    extrema = extrema[idx_keep]
-
-    # now get rid of "staircase effects" - successive extrema in the same direction
-    de = c(xInt[1], xInt[extrema], xInt[len])
-    extrema = extrema[which(diff(diff(de) > 0) != 0)]
-
-    # check that the last extremum is >thres below or above the final point
-    le = length(extrema)
-    if (le > 0) {
-      d_last = abs(tail(xInt, 1) - xInt[tail(extrema, 1)])
-      if (d_last <= thres) extrema = extrema[-le]
-    }
-  }
-  extrema = extrema + shift
-
-  if (plot) {
-    le = length(extrema)
-    plot(c(rep(NA, shift), xInt), type = 'b', col = 'gray70',
-         pch = 16, cex = .5, xlab = '', ylab = '')
-    points(orig, pch = 16, type = 'b')
-    if (le > 0) {
-      points(extrema, orig[extrema], col = 'blue', pch = 18)
-      for (i in 1:le)
-        segments(x0 = extrema[i], y0 = 0, y1 = orig[extrema[i]],
-                 lty = 1, lwd = .25, col = 'black')
-    }
-  }
-  return(extrema)
-}
-
-
 #' Pitch descriptives
 #'
 #' Provides common descriptives of time series such as pitch contours, including
 #' measures of average / range / variability / slope / inflections etc. Several
-#' degrees of smoothing can be applied consecutively.
+#' degrees of smoothing can be applied consecutively. The summaries are produced
+#' on the original and log-transformed scales, so this is meant to be used on
+#' frequency-related variables in Hz.
 #' @param x input: numeric vector, a list of time stamps and values in rows, a
 #'   dataframe with one row per file and time/pitch values stored as characters
 #'   (as exported by \code{\link{pitch_app}}), or path to csv file containing
 #'   the output of \code{\link{pitch_app}} or \code{\link{analyze}}
 #' @param step distance between values in s (only needed if input is a vector)
 #' @param smoothBW a vector of bandwidths (Hz) for consecutive smoothing of
-#'   input using \code{\link{pitchSmoothPraat}}
+#'   input using \code{\link{pitchSmoothPraat}}; NA = no smoothing
 #' @param inflThres minimum difference (in semitones) between consecutive
 #'   extrema to consider them inflections; to apply a different threshold at
 #'   each smoothing level, provide \code{inflThres} as a vector of the same
-#'   length as \code{smoothBW}
+#'   length as \code{smoothBW}; NA = no threshold
 #' @param timeUnit specify whether the time stamps (if any) are in ms or s
+#' @param ref reference value for transforming Hz to semitones, defaults to
+#'   C0 (16.35 Hz)
+#' @param extraSummaryFun additional summary function(s) that take a numeric
+#'   vector with some NAs and return a single number, eg c('myFun1', 'myFun2')
 #' @param plot if TRUE, plots the inflections for manual verification
 #' @return Returns a dataframe with columns containing summaries of one or
 #'   multiple inputs (one input per row). The descriptives are as follows:
@@ -1302,13 +1222,27 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
 #'   out)} \item{maxAbsSlope, maxAbsSlope_sem}{the steepest slope}}
 #' @export
 #' @examples
-#' x = 5 + sin(2 * pi * (1:100) / 15) * seq(1, 5, length.out = 100)
-#' idx_na = c(1:4, 6, 7, 14, 25, 30:36, 39, 40, 42, 45:50,
-#'            57, 59, 62, 66, 71:79, 98)
-#' x[idx_na] = NA
+#' x = c(NA, NA, 405, 441, 459, 459, 460, 462, 462, 458, 458, 445, 458, 451,
+#' 444, 444, 430, 416, 409, 403, 403, 389, 375, NA, NA, NA, NA, NA, NA, NA, NA,
+#' NA, 183, 677, 677, 846, 883, 886, 924, 938, 883, 946, 846, 911, 826, 826,
+#' 788, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 307,
+#' 307, 368, 377, 383, 383, 383, 380, 377, 377, 377, 374, 374, 375, 375, 375,
+#' 375, 368, 371, 374, 375, 361, 375, 389, 375, 375, 375, 375, 375, 314, 169,
+#' NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 238, 285, 361, 374, 375, 375,
+#' 375, 375, 375, 389, 403, 389, 389, 375, 375, 389, 375, 348, 361, 375, 348,
+#' 348, 361, 348, 342, 361, 361, 361, 365, 365, 361, 966, 966, 966, 959, 959,
+#' 946, 1021, 1021, 1026, 1086, 1131, 1131, 1146, 1130, 1172, 1240, 1172, 1117,
+#' 1103, 1026, 1026, 966, 919, 946, 882, 832, NA, NA, NA, NA, NA, NA, NA, NA,
+#' NA, NA)
 #' plot(x, type = 'b')
-#' pd = pitchDescriptives(x, step = .025, smoothBW = c(NA, 25, 2),
-#'                        inflThres = c(NA, 2, 2), plot = TRUE)
+#' ci95 = function(x) diff(quantile(na.omit(x), probs = c(.025, .975)))
+#' pd = pitchDescriptives(
+#'   x, step = .025,
+#'   smoothBW = c(NA, 10, 1),   # original + smoothed at 10 Hz and 1 Hz
+#'   inflThres = c(NA, .2, .2), # different for each level of smoothing
+#'   extraSummaryFun = 'ci95',  # user-defined, here 95% coverage interval
+#'   plot = TRUE
+#' )
 #' pd
 #'
 #' \dontrun{
@@ -1316,7 +1250,7 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
 #' data(sheep, package = 'seewave')
 #' a = analyze(sheep)
 #' pd1 = pitchDescriptives(a$detailed[, c('time', 'pitch')],
-#'                         timeUnit = 'ms', inflThres = NULL, plot = TRUE)
+#'                         timeUnit = 'ms', inflThres = NA, plot = TRUE)
 #' pd2 = pitchDescriptives(a$detailed[, c('time', 'pitch')],
 #'                         timeUnit = 'ms', inflThres = c(0.1, .5), plot = TRUE)
 #'
@@ -1334,11 +1268,15 @@ findInflections = function(x, thres = NULL, plot = FALSE) {
 #' }
 pitchDescriptives = function(x,
                              step = NULL,
-                             smoothBW = c(NA, 25, 2),
-                             inflThres = .25,
+                             smoothBW = c(NA, 10, 1),
+                             inflThres = .2,
                              timeUnit = c('s', 'ms')[1],
+                             extraSummaryFun = c(),
+                             ref = 16.35,
                              plot = FALSE) {
+  orig = ''
   if (is.character(x)) {
+    # full path to csv file
     orig = x
     if (file.exists(x)) {
       x = try(read.csv(x), silent = TRUE)
@@ -1347,6 +1285,7 @@ pitchDescriptives = function(x,
     }
   }
   if (is.list(x) && !is.null(x$time) && !is.null(x$pitch)) {
+    # dataframe with time/pitch
     if (is.numeric(x$time)) {
       data = suppressWarnings(list(list(file = basename(orig),
                                         time = x$time,
@@ -1369,6 +1308,7 @@ pitchDescriptives = function(x,
     if (is.null(step))
       stop('If x is a vector, step must be provided')
     data = list(list(
+      file = '',
       pitch = x,
       time = step * (1:length(x) - .5)
     ))
@@ -1389,7 +1329,10 @@ pitchDescriptives = function(x,
            pitch = data_i$pitch,
            smoothBW = smoothBW,
            inflThres = inflThres,
-           plot = plot)
+           extraSummaryFun = extraSummaryFun,
+           ref = ref,
+           plot = plot,
+           main = data_i$file)
     )
     if (!is.null(data_i$file)) res$file = data_i$file
     if (is.null(out)) {
@@ -1415,9 +1358,12 @@ pitchDescriptives = function(x,
 #' @keywords internal
 .pitchDescriptives = function(time,
                               pitch,
-                              smoothBW = c(25, 2),
-                              inflThres = 2,
-                              plot = FALSE) {
+                              smoothBW,
+                              inflThres,
+                              extraSummaryFun = c(),
+                              ref = 16.35,
+                              plot = FALSE,
+                              main = '') {
   if (plot) par(mfrow = c(length(smoothBW), 1))  # plot each smoothing separately
   len = length(time)
   if (len < 2) return(NA)
@@ -1427,8 +1373,11 @@ pitchDescriptives = function(x,
 
   step = time[2] - time[1]
   samplingRate = 1 / step
-  if (length(inflThres) < length(smoothBW))
+  if (length(inflThres) == 1) {
     inflThres = rep(inflThres[1], length(smoothBW))
+  } else if (length(inflThres) != length(smoothBW)) {
+    stop('inflThres should be of length 1 or the same length as smoothBW')
+  }
 
   # apply smoothing
   out = data.frame(file = NA)
@@ -1440,8 +1389,13 @@ pitchDescriptives = function(x,
       pitch_sm = pitch
     }
     # plot(time, pitch_sm, type = 'b')
-    out_i = timeSeriesSummary(pitch_sm, step = step,
-                              inflThres = inflThres[i], plot = plot)
+    out_i = timeSeriesSummary(pitch_sm,
+                              step = step,
+                              inflThres = inflThres[i],
+                              extraSummaryFun = extraSummaryFun,
+                              ref = ref,
+                              plot = plot,
+                              main = paste(main, 'smoothed at', smoothBW[i], 'Hz'))
     if (is.finite(smoothBW[i])) {
       if (i == 1) {
         colnames(out_i)[4:ncol(out_i)] = paste0(
@@ -1469,7 +1423,13 @@ pitchDescriptives = function(x,
 #' @param step time step in s
 #' @inheritParams pitchDescriptives
 #' @keywords internal
-timeSeriesSummary = function(x, step, inflThres = NULL, plot = FALSE) {
+timeSeriesSummary = function(x,
+                             step,
+                             inflThres = NULL,
+                             extraSummaryFun = c(),
+                             ref = 16.35,
+                             plot = FALSE,
+                             main = '') {
   len = length(x)
   out = data.frame(duration = step * (len + 1))
   vars = c('durDefined', 'propDefined',
@@ -1484,10 +1444,20 @@ timeSeriesSummary = function(x, step, inflThres = NULL, plot = FALSE) {
 
   # transform to semitones, drop NAs
   x_noNA = as.numeric(na.omit(x))
-  x_sem = soundgen::HzToSemitones(x)
+  x_sem = soundgen::HzToSemitones(x, ref = ref)
   x_sem_noNA = as.numeric(na.omit(x_sem))
   ran_not_NA = range(which(!is.na(x)))
   if (length(x_noNA) < 1) return(out)
+
+  # user-defined function(x)
+  lu = length(extraSummaryFun)
+  if (lu > 0) {
+    out[, extraSummaryFun] = NA
+    for (f in 1:lu) {
+      temp = try(do.call(extraSummaryFun[f], list(x)))
+      if (class(temp) != 'try-error') out[extraSummaryFun[f]] = temp
+    }
+  }
 
   # basic descriptives
   out$durDefined = (diff(ran_not_NA) + 1) * step  # from first to last non-NA frame
@@ -1539,8 +1509,113 @@ timeSeriesSummary = function(x, step, inflThres = NULL, plot = FALSE) {
   }
 
   # inflections
-  infl = findInflections(x_sem, thres = inflThres, plot = plot)
+  infl = findInflections(x_sem, thres = inflThres,
+                         step = step, plot = plot, main = main)
   n_inflections = length(infl)
   out$inflex = n_inflections / out$durDefined
   return(out)
+}
+
+
+#' Find inflections
+#'
+#' Finds inflections in discrete time series such as pitch contours. When there
+#' are no missing values and no thresholds, this can be accomplished with a fast
+#' one-liner like \code{which(diff(diff(x) > 0) != 0) + 1}. Missing values are
+#' interpolated by repeating the first and last non-missing values at the head
+#' and tail, respectively, and by linear interpolation in the middle. Setting a
+#' threshold means that small "wiggling" no longer counts. To use an analogy
+#' with ocean waves, smoothing (low-pass filtering) removes the ripples and only
+#' leaves the slow roll, while thresholding preserves only waves that are
+#' sufficiently high, whatever their period.
+#' @param x numeric vector with or without NAs
+#' @param thres minimum vertical distance between two extrema for them to count
+#'   as two independent inflections
+#' @param step distance between values in s (only needed for plotting)
+#' @param plot if TRUE, produces a simple plot
+#' @param main plot title
+#' @return Returns a vector of indices giving the location of inflections.
+#' @export
+#' @examples
+#' x = sin(2 * pi * (1:100) / 15) * seq(1, 5, length.out = 100)
+#' idx_na = c(1:4, 6, 7, 14, 25, 30:36, 39, 40, 42, 45:50,
+#'            57, 59, 62, 66, 71:79, 98)
+#' x[idx_na] = NA
+#' soundgen:::findInflections(x, plot = TRUE)
+#' soundgen:::findInflections(x, thres = 5, plot = TRUE)
+#'
+#' for (i in 1:10) {
+#'   temp = soundgen:::getRandomWalk(len = runif(1, 10, 100), rw_range = 10,
+#'                                   rw_smoothing = runif(1, 0, 1))
+#'   soundgen:::findInflections(temp, thres = 1, plot = TRUE)
+#'   invisible(readline(prompt="Press [enter] to continue"))
+#' }
+findInflections = function(x,
+                           thres = NULL,
+                           step = NULL,
+                           plot = FALSE,
+                           main = '') {
+  # remove leading/trailing NAs
+  orig = x  # for plotting
+  r = rle(is.na(x))
+  x = zoo::na.trim(x)
+  if (r$values[1]) {
+    shift = r$lengths[1]
+  } else {
+    shift = 0
+  }
+
+  len = length(x)
+  if (len < 3) return(numeric(0))
+  if (any(is.na(x))) {
+    xInt = approx(x, n = len, na.rm = TRUE)$y  # soundgen:::intplPitch(x)
+  } else {
+    xInt = x
+  }
+  extrema = which(diff(diff(xInt) > 0) != 0) + 1
+
+  # threshold
+  if (!is.null(thres) && is.finite(thres) && length(extrema) > 0) {
+    de = abs(diff(c(xInt[1], xInt[extrema])))
+    idx_keep = which(de > thres)
+    extrema = extrema[idx_keep]
+
+    # now get rid of "staircase effects" - successive extrema in the same direction
+    de = c(xInt[1], xInt[extrema], xInt[len])
+    extrema = extrema[which(diff(diff(de) > 0) != 0)]
+
+    # check that the last extremum is >thres below or above the final point
+    le = length(extrema)
+    if (le > 0) {
+      d_last = abs(tail(xInt, 1) - xInt[tail(extrema, 1)])
+      if (d_last <= thres) extrema = extrema[-le]
+    }
+  }
+  extrema = extrema + shift
+
+  if (plot) {
+    if (!is.null(step)) {
+      time = ((1:length(orig)) - 0.5) * step
+      xlab = 'Time, s'
+      xaxt = 'n'
+    } else {
+      xlab = ''
+      xaxt = 's'
+    }
+    plot(c(rep(NA, shift), xInt), type = 'b', col = 'gray70', main = main,
+           pch = 16, cex = .5, ylab = '', xlab = xlab)
+    points(orig, pch = 16, type = 'b')
+    le = length(extrema)
+    if (le > 0) {
+      points(extrema, orig[extrema], col = 'blue', pch = 18)
+      for (i in 1:le)
+        segments(x0 = extrema[i], y0 = -1e50, y1 = orig[extrema[i]],
+                 lty = 1, lwd = .25, col = 'black')
+    }
+    if (!is.null(step)) {
+      pt = pretty(time)
+      axis(1, at = pt / step + .5, labels = pt)
+    }
+  }
+  return(extrema)
 }

@@ -4,7 +4,15 @@
 \alias{timeSeriesSummary}
 \title{Time series summary}
 \usage{
-timeSeriesSummary(x, step, inflThres = NULL, plot = FALSE)
+timeSeriesSummary(
+  x,
+  step,
+  inflThres = NULL,
+  extraSummaryFun = c(),
+  ref = 16.35,
+  plot = FALSE,
+  main = ""
+)
 }
 \arguments{
 \item{x}{numeric vector}
@@ -14,7 +22,13 @@ timeSeriesSummary(x, step, inflThres = NULL, plot = FALSE)
 \item{inflThres}{minimum difference (in semitones) between consecutive
 extrema to consider them inflections; to apply a different threshold at
 each smoothing level, provide \code{inflThres} as a vector of the same
-length as \code{smoothBW}}
+length as \code{smoothBW}; NA = no threshold}
+
+\item{extraSummaryFun}{additional summary function(s) that take a numeric
+vector with some NAs and return a single number, eg c('myFun1', 'myFun2')}
+
+\item{ref}{reference value for transforming Hz to semitones, defaults to
+C0 (16.35 Hz)}
 
 \item{plot}{if TRUE, plots the inflections for manual verification}
 }
