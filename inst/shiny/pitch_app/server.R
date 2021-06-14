@@ -1,6 +1,6 @@
 # pitch_app()
 #
-# To do: maybe analyze one bit at a time like in formant_app; load audio + results to double-check old work
+# To do: maybe analyze one bit at a time like in formant_app
 #
 # # tip: to read the output, do smth like:
 # a = read.csv('~/Downloads/output.csv', stringsAsFactors = FALSE)
@@ -111,6 +111,42 @@ server = function(input, output, session) {
     names(myPars$history) = myPars$fileList$name
     for (i in 1:length(myPars$history)) {
       myPars$history[[i]] = list(manual = NULL, manualUnv = NULL)
+    }
+
+    # if there is a csv among the uploaded files, use the annotations in it
+    ext = substr(input$loadAudio$name,
+                 (nchar(input$loadAudio$name) - 2),
+                 nchar(input$loadAudio$name))
+    old_out_idx = which(ext == 'csv')[1]  # grab the first csv, if any
+    if (!is.na(old_out_idx)) {
+      user_ann = read.csv(input$loadAudio$datapath[old_out_idx], stringsAsFactors = FALSE)
+      oblig_cols = c('file', 'time', 'pitch')
+      if (nrow(user_ann) > 0 &
+          !any(!oblig_cols %in% colnames(user_ann))) {
+        if (is.null(myPars$out)) {
+          myPars$out = user_ann[, oblig_cols]
+        } else {
+          myPars$out = soundgen:::rbind_fill(myPars$out, user_ann[, oblig_cols])
+          # remove duplicate rows
+          myPars$out = unique(myPars$out)
+        }
+        # save f0 contours from the csv as manual anchors
+        for (i in 1:nrow(user_ann)) {
+          time_i = suppressWarnings(as.numeric(unlist(strsplit(user_ann$time[i], ','))))
+          pitch_i = suppressWarnings(as.numeric(unlist(strsplit(user_ann$pitch[i], ','))))
+
+          frame_i = round(time_i / input$step)
+          step_i = time_i[2] - time_i[1]
+          if (step_i != input$step) pitch_i = pitch_i[!duplicated(frame_i)]
+          manual_i = data.frame(
+            frame = frame_i, freq = pitch_i
+          )
+          myPars$history[[user_ann$file[i]]] = list(
+            manual = manual_i[!is.na(manual_i$freq), ],
+            manualUnv = manual_i$frame[is.na(manual_i$freq)]
+            )
+        }
+      }
     }
 
     choices = as.list(myPars$fileList$name)
@@ -1240,11 +1276,9 @@ server = function(input, output, session) {
         myPars$out = new
       } else {
         idx = which(myPars$out$file == new$file)
-        if (length(idx) == 1) {
-          myPars$out[idx, ] = new
-        } else {
-          myPars$out = rbind(myPars$out, new)
-        }
+        myPars$out = soundgen:::rbind_fill(myPars$out, new)
+        if (length(idx) == 1) myPars$out = myPars$out[-idx, ]
+        myPars$out = myPars$out[order(myPars$out$file), ]
       }
     }
     if (!is.null(myPars$out))

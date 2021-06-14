@@ -9,6 +9,7 @@ MINOR
   * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
   * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
   * formant_app(): adjustable playback speed
+  * pitch_app(): support for opening previously saved pitch contours (added as manual anchors)
   * reportTime() and all loops that use it: max two time levels shown (eg days + hours)
 
 BUGS FIXED:

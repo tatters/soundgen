@@ -1178,3 +1178,19 @@ parabPeakInterpol = function(threePoints, plot = FALSE) {
   }
   return(list(p = p, ampl_p = ampl_p))
 }
+
+#' rbind_fill
+#'
+#' Internal soundgen function
+#'
+#' Fills missing columns with NAs, then rbinds - handy in case one has extra
+#' columns. Used in formant_app(), pitch_app()
+#' @param df1,df2 two dataframes with partly matching columns
+#' @keywords internal
+rbind_fill = function(df1, df2) {
+  if (!is.list(df1) || nrow(df1) == 0) return(df2)
+  if (!is.list(df2) || nrow(df2) == 0) return(df1)
+  df1[setdiff(names(df2), names(df1))] = NA
+  df2[setdiff(names(df1), names(df2))] = NA
+  return(rbind(df1, df2))
+}

@@ -110,15 +110,6 @@ server = function(input, output, session) {
   }
   observeEvent(input$reset_to_def, resetSliders())
 
-  rbind_fill = function(df1, df2) {
-    # fill missing columns with NAs, then rbind - handy in case nFormants changes
-    if (!is.list(df1) || nrow(df1) == 0) return(df2)
-    if (!is.list(df2) || nrow(df2) == 0) return(df1)
-    df1[setdiff(names(df2), names(df1))] = NA
-    df2[setdiff(names(df1), names(df2))] = NA
-    return(rbind(df1, df2))
-  }
-
   loadAudio = function() {
     # shinyjs::js$inheritSize(parentDiv = 'specDiv')
     if (myPars$print) print('Loading audio...')
@@ -142,7 +133,7 @@ server = function(input, output, session) {
           if (is.null(myPars$out)) {
             myPars$out = user_ann
           } else {
-            myPars$out = rbind_fill(myPars$out, user_ann)
+            myPars$out = soundgen:::rbind_fill(myPars$out, user_ann)
             # remove duplicate rows
             myPars$out = unique(myPars$out)
           }
@@ -1144,7 +1135,7 @@ server = function(input, output, session) {
     if (is.null(myPars$ann)) {
       myPars$ann = new
     } else {
-      myPars$ann = rbind_fill(myPars$ann, new)
+      myPars$ann = soundgen:::rbind_fill(myPars$ann, new)
     }
 
     # reorder and select the newly added annotation
@@ -1165,7 +1156,8 @@ server = function(input, output, session) {
     # hr()
 
     # save a backup in case the app crashes before done() fires
-    write.csv(rbind_fill(myPars$out, myPars$ann), 'www/temp.csv', row.names = FALSE)
+    write.csv(soundgen:::rbind_fill(myPars$out, myPars$ann),
+              'www/temp.csv', row.names = FALSE)
   })
 
   updateFBtn = function(ff) {
@@ -1256,7 +1248,8 @@ server = function(input, output, session) {
           if (length(idx) > 0) {
             myPars$formantTracks = myPars$formantTracks[-idx, ]
           }
-          myPars$formantTracks = rbind_fill(myPars$formantTracks, myPars$temp_anal)
+          myPars$formantTracks = soundgen:::rbind_fill(
+            myPars$formantTracks, myPars$temp_anal)
           # myPars$formantTracks = myPars$formantTracks[order(myPars$formantTracks$time), ]
         }
       })
@@ -1606,19 +1599,19 @@ server = function(input, output, session) {
   #   if (input$overlap != overlap)
   #     updateSliderInput(session, 'overlap', value = overlap)
   # })
-#
-#   observeEvent(input$overlap_lpc, {
-#     # change step if overlap changes, but don't change step if windowLength changes
-#     step_lpc = round(input$windowLength_lpc * (1 - input$overlap_lpc / 100))
-#     if (input$step_lpc != step_lpc)
-#       updateNumericInput(session, 'step_lpc', value = step_lpc)
-#   }, ignoreInit = TRUE)
-#   observeEvent(c(input$step_lpc, input$windowLength_lpc), {
-#     # change overlap if step or windowLength change
-#     overlap_lpc = (1 - input$step_lpc / input$windowLength_lpc) * 100
-#     if (input$overlap_lpc != overlap_lpc)
-#       updateSliderInput(session, 'overlap_lpc', value = overlap_lpc)
-#   })
+  #
+  #   observeEvent(input$overlap_lpc, {
+  #     # change step if overlap changes, but don't change step if windowLength changes
+  #     step_lpc = round(input$windowLength_lpc * (1 - input$overlap_lpc / 100))
+  #     if (input$step_lpc != step_lpc)
+  #       updateNumericInput(session, 'step_lpc', value = step_lpc)
+  #   }, ignoreInit = TRUE)
+  #   observeEvent(c(input$step_lpc, input$windowLength_lpc), {
+  #     # change overlap if step or windowLength change
+  #     overlap_lpc = (1 - input$step_lpc / input$windowLength_lpc) * 100
+  #     if (input$overlap_lpc != overlap_lpc)
+  #       updateSliderInput(session, 'overlap_lpc', value = overlap_lpc)
+  #   })
 
 
   # SAVE OUTPUT
@@ -1637,7 +1630,7 @@ server = function(input, output, session) {
           myPars$out = myPars$out[-idx, ]
 
         # append annotations from the current audio
-        myPars$out = rbind_fill(myPars$out, myPars$ann)
+        myPars$out = soundgen:::rbind_fill(myPars$out, myPars$ann)
       }
       # keep track of formant tracks and spectrograms
       # to avoid analyzing them again if the user goes
