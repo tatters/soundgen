@@ -144,7 +144,7 @@ server = function(input, output, session) {
           myPars$history[[user_ann$file[i]]] = list(
             manual = manual_i[!is.na(manual_i$freq), ],
             manualUnv = manual_i$frame[is.na(manual_i$freq)]
-            )
+          )
         }
       }
     }
@@ -1281,6 +1281,9 @@ server = function(input, output, session) {
         myPars$out = myPars$out[order(myPars$out$file), ]
       }
     }
+    cols_order = c(colnames(myPars$out)[!colnames(myPars$out) %in% c('time', 'pitch')],
+                   'time', 'pitch')
+    myPars$out = myPars$out[, cols_order]
     if (!is.null(myPars$out))
       write.csv(myPars$out, 'www/temp.csv', row.names = FALSE)
 
