@@ -361,6 +361,7 @@ summarizeAnalyze = function(
   return(as.data.frame(out))
 }
 
+
 #' Update analyze
 #'
 #' Internal soundgen function

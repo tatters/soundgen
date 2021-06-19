@@ -250,10 +250,8 @@ You can also use a mathematical formula to produce very precise pitch modulation
 
 ```{r fig.show = "hold", fig.width = 5, fig.height = 3}
 anchors = (sin(1:70 / 3) * .25 + 1) * 350
-par(mfrow = c(1, 2))
 plot(anchors, type = 'l', xlab = 'Time (points)', ylab = 'Pitch (Hz)')
 s014 = soundgen(pitch = anchors, sylLen = 1000, play = playback)
-par(mfrow = c(1, 1))
 ```
 `r if (saveAudio) {saveAudioFun('s014', samplingRate = 16000)}`
 `r if (saveAudio) {'<audio controls style = "display: block"> <source src="sounds/s014.mp3" type="audio/mp3"> </audio>'}`
@@ -282,21 +280,21 @@ anchors = data.frame(time = c(0, .1, 1),
                        value = c(350, 700, 350))
 
 par(mfrow = c(1, 3))
-getSmoothContour(
+smc1 = getSmoothContour(
   anchors = anchors,
   len = sylLen_points,
   interpol = 'approx',
   thisIsPitch = TRUE, plot = TRUE, 
   main = 'No smoothing', samplingRate = samplingRate
 )
-getSmoothContour(
+sm2 = getSmoothContour(
   anchors = anchors,
   len = sylLen_points,
   loessSpan = 0.75,
   thisIsPitch = TRUE, plot = TRUE, 
   main = 'loessSpan = .75', samplingRate = samplingRate
 )
-getSmoothContour(
+smc3 = getSmoothContour(
   anchors = anchors,
   len = sylLen_points,
   loessSpan = 1,

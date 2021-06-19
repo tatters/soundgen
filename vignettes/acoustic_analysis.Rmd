@@ -541,6 +541,21 @@ Just like `soundgen_app()` is an interactive shiny app for sound synthesis, `pit
 *TIP `pitch_app()` is meant for extracting pitch contours. Although its output is similar to that of `analyze()`, it doesn't offer options for measuring formants, loudness, etc. Suggested workflow: extract manually corrected pitch contours first, and then run `analyzeFolder(..., pitchManual = output.csv)`, where output.csv is the dataset produced by `pitch_app`*
 
 
+## Summarizing pitch contours
+By default, `analyze()` and `pitch_app()` summarize contours of estimated pitch and other variables using simple summary functions such as mean, median, SD, etc. These summaries can be extended with user-defined `summaryFun`, but then the same descriptives are applied to every single output of `analyze()`, potentially resulting in very large output matrices with a lot of descriptives no-one is ever going to need. To avoid this clutter, it can be convenient to summarize one variable at a time - normally pitch - and extract a much larger number of summary measures of the average value, its variability, slope, inflections, etc. This task can be accomplished with `pitchDescriptives()`. For example:
+
+```{r fig.height = 6, fig.width = 5} 
+pd = pitchDescriptives(
+  a1$detailed$pitch, step = a1$detailed$time[2] - a1$detailed$time[1],
+  timeUnit = 'ms',
+  smoothBW = c(10, 1),   # original + smoothed at 10 Hz and 1 Hz
+  inflThres = .2,        # min amplitude that counts as inflections
+  plot = TRUE
+)
+colnames(pd)
+```
+
+
 # Formant analysis with formant_app()
 Formants are the natural resonances of the vocal tract - that is, frequency bands that are amplified as the sound passes through the vocal tract. In speech, formants are responsible for differences between vowel sounds such as /a/, /i/, /u/, etc., but formants are also present in many animal calls. The most common way to estimate formant frequencies and bandwidth is by using Linear Predictive Coding (LPC), which is implemented in `phonTools::findformants()`. Because formant measurement is quite error-prone, however, any serious analysis should include manual verification of LPC measurements. Soundgen offers a web app for this task: `formant_app()`. Just like `pitch_app()`, it runs in the system-default web browser; you can add annotations to audio files and manually verify and, if needed, correct the formant measurements for each annotated segment.
 
@@ -548,8 +563,7 @@ Formants are the natural resonances of the vocal tract - that is, frequency band
 
 
 # Audio segmentation 
-## Bursts and syllables 
-### Segmenting a single sound: `segment`
+## Finding syllables with segment()
 In addition to measuring spectral characteristics and fundamental frequency, it is often important to analyze the temporal structure of a sound. In particular, it is often helpful to divide a sound into separate "syllables" - continuous acoustic fragments separated by what we consider to be "silence". If this "silence" was not full of background noise and breathing, the task would be trivial: we could simply define syllables as continuous segments with ampiltude above some threshold. As it is, with non-studio material it is problematic to find a single threshold that would accurately coincide with the beginning and end of syllables in different sounds (presuming that we are interested in batch processing multiple sounds without manually adjusting the settings for each sound). Soundgen attempts to solve this problem by using an adaptive algorithm sensitive to the nature of background noise, signal-to-noise ratio, and acoustic novelty to achieve flexible and fast syllable segmentation.
 
 Sometimes we are more interested in the rate of syllables per second and in their regularity, rather than the absolute duration of each syllable. In this case it makes more sense to look for bursts of acoustic energy or sudden changes relative to background noise. The spacing between bursts - the interburst interval - is a perceptually salient characteristic of a bout of vocalizing.
@@ -639,7 +653,7 @@ m2 = ssm(s3, samplingRate = 16000,
 par(mfrow = c(1, 1))
 ```
 
-*TIP The output of `segment` can potentially be combined with novelty from `ssm` and perhaps also with pitch tracking to improve audio segmentation using all these sources of information. At present this integration has not been implemented*
+*TIP analyze() internally calls ssm() to calculate novelty*
 
 
 # Modulation spectrum
@@ -683,6 +697,7 @@ ms[c('roughness', 'amFreq', 'amDep')]
 
 *TIP Roughness and amplitude modulation can be calculated for the entire sound (set `amRes = NULL`) or for as many frames as possible given the duration of audio and the desired resolution for the analysis of temporal modulation (one frame for the analysis of roughness comprises several STFT frames, so we measure about `amRes` values per second)*
 
+
 # Optimization
 The results of acoustic analysis are sensitive to the chosen settings: the size and overlap of Fourier windows, the method(s) of pitch tracking and their parameters, etc. The default settings of the two main functions presented in this vignette, `analyze` and `segment`, have been optimized for human non-linguistic vocalizations. If you analyze other types of sounds, such as human speech or whale songs, you can probably improve the accuracy by changing some settings. In many cases the required changes are obvious: for example, to analyze f0 in ultrasonic whistles of dolphins or rodents you will obviously want to record at a much higher sampling rate, use shorter FFT windows, raise `pitch_ceiling` and / or `prior_mean`, etc. Other settings are not so obvious or even downright opaque, inviting some form of automatic optimization. 
 
@@ -694,7 +709,7 @@ Soundgen package contains two vectors containing "keys" for the optimization of 
 
 The easiest, "out-of-the-box" solution is to use the soundgen function `optimizePars`, which is essentially a wrapper around `stats::optim` tailored to this particular task. There are extensive examples in the documentation for this function: see `?optimizePars`. 
 
-*TIP The parameters of `segment` can be optimized within an hour or two with 260 sounds (total audio duration ~9 min), but pitch tracking is really too slow to be optimized head-on. Try a few parameters at a time and use grid optimization instead of `optim` whenever possible. Even so, this might take a few nights* 
+*TIP The parameters of `segment` can be optimized within an hour or two with 260 sounds (total audio duration ~9 min), but pitch tracking is really too slow to be optimized head-on, except maybe for one or two parameters at a time using grid optimization instead of `optim`* 
 
 If you prefer to optimize manually, without calling `opitmizePars`, here are a couple of examples. 
 
@@ -713,8 +728,8 @@ res = data.frame('pars' = sapply(pp, function(x) paste(x, collapse = ',')),
                  cor2 = rep(NA, length(pp)))
 # repeating the analysis for each combination of methods in pp
 for (i in 1:length(pp)) {
-  out[[i]] = analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 50,
-                           pitchMethods = pp[[i]])$pitch_median
+  out[[i]] = analyze(myfolder, plot = FALSE, step = 50,
+                           pitchMethods = pp[[i]])$summary$pitch_median
   res$cor1[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs')
   res$cor2[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs') *
     (1 - mean(is.na(out[[i]]) & !is.na(key)))
@@ -732,10 +747,11 @@ out = list()
 pars = expand.grid(windowLength = c(17, 35, 50),
                    smooth = c(0, 1, 2))
 for (i in 1:nrow(pars)) {
-  out[[i]] = suppressWarnings(analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 25,
-               pitchMethods = c('autocor','dom','spec'),
+  out[[i]] = suppressWarnings(analyze(myfolder, plot = FALSE,
+               step = 25,
+               pitchMethods = c('autocor','dom'),
                windowLength = pars$windowLength[i],
-               smooth = pars$smooth[i]))$pitch_median
+               smooth = pars$smooth[i]))$summary$pitch_median
   print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs'))
   print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs') *
           (1 - mean(is.na(out[[i]]) & !is.na(key))))
@@ -751,8 +767,9 @@ pars
 
 v = 6  # pick some combination of par values to explore
 trial = log(out[[v]])  
-cor (key, trial, use = 'pairwise.complete.obs')
-cor (key, trial, use = 'pairwise.complete.obs') * (1 - mean(is.na(trial) & !is.na(key)))
+cor(key, trial, use = 'pairwise.complete.obs')
+cor(key, trial, use = 'pairwise.complete.obs') *
+  (1 - mean(is.na(trial) & !is.na(key)))
 plot (key, trial)
 abline(a=0, b=1, col='red')
 ```

@@ -1014,15 +1014,15 @@ addPitchCands = function(pitchCands,
                                          2:ncol(plotPars)])
     # first points, in case there are isolated, unconnected points surrounded by
     # NAs (not plotted with type = 'l')
-    # do.call('points', c(list(
-    #   x = timestamps,
-    #   y = pitch * yScaleCoef
-    # ), pars_pitchContour))
+    do.call('points', c(list(
+      x = timestamps,
+      y = pitch * yScaleCoef
+    ), pars_pitchContour))
     # now join pitch contour with a line
     do.call('points', c(list(
       x = timestamps,
       y = pitch * yScaleCoef,
-      type = 'b'
+      type = 'l'
     ), pars_pitchContour))
   }
 
@@ -1611,7 +1611,7 @@ findInflections = function(x,
       xaxt = 's'
     }
     plot(c(rep(NA, shift), xInt), type = 'b', col = 'gray70', main = main,
-         pch = 16, cex = .5, ylab = '', xlab = xlab)
+         pch = 16, cex = .5, ylab = '', xlab = xlab, xaxt = 'n')
     points(orig, pch = 16, type = 'b')
     le = length(extrema)
     if (le > 0) {
