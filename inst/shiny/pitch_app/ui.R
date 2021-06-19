@@ -160,7 +160,11 @@ ui = fluidPage(
               value = defaults_analyze['priorSD', 'default'],
               min = defaults_analyze['priorSD', 'low'],
               max = defaults_analyze['priorSD', 'high'],
-              step = defaults_analyze['priorSD', 'step'])
+              step = defaults_analyze['priorSD', 'step']),
+            checkboxInput(
+              'priorAdapt',
+              'Adaptive prior',
+              value = TRUE)
           )
         ),
 

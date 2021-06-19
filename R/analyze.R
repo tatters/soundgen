@@ -112,6 +112,9 @@ analyzeFolder = function(...) {
 #'   most likely pitch values for this file. For ex., \code{priorMean = 300,
 #'   priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 #'   an octave)
+#' @param priorAdapt adaptive second-pass prior: if TRUE, optimal pitch contours
+#'   are estimated first with a prior determined by \code{priorMean,priorSD}, and
+#'   then with a new prior adjusted according to this first-pass pitch contour
 #' @param nCands maximum number of pitch candidates per method, normally 1...4
 #'   (except for \code{dom}, which returns at most one candidate per frame)
 #' @param minVoicedCands minimum number of pitch candidates that have to be
@@ -278,8 +281,8 @@ analyzeFolder = function(...) {
 #'   pitchMethods = c('dom', 'autocor', 'spec', 'hps', 'cep'),
 #'   priorMean = NA,  # no prior info at all
 #'   pitchDom = list(col = 'red', domThres = .25),
-#'   pitchPlot = list(col = 'black', lty = 3, lwd = 3),
-#'   extraContour = list(x = 'peakFreq', type = 'b', col = 'brown'),
+#'   pitchPlot = list(col = 'black', pch = 9, lty = 3, lwd = 3),
+#'   extraContour = list(x = 'peakFreq', type = 'b', pch = 4, col = 'brown'),
 #'   osc = 'dB', heights = c(2, 1))
 #'
 #' # Different options for summarizing the output
@@ -397,6 +400,7 @@ analyze = function(
   pitchCeiling = 3500,
   priorMean = 300,
   priorSD = 6,
+  priorAdapt = TRUE,
   nCands = 1,
   minVoicedCands = NULL,
   pitchDom = list(),
@@ -673,6 +677,7 @@ analyze = function(
   pitchCeiling = 3500,
   priorMean = 300,
   priorSD = 6,
+  priorAdapt = TRUE,
   nCands = 1,
   minVoicedCands = NULL,
   pitchDom = list(),
@@ -1137,17 +1142,6 @@ analyze = function(
       }
     }
 
-    # add prior
-    if (is.numeric(priorMean) & is.numeric(priorSD)) {
-      pitchCert_multiplier = getPrior(priorMean = priorMean,
-                                      priorSD = priorSD,
-                                      pitchFloor = pitchFloor,
-                                      pitchCeiling = pitchCeiling,
-                                      pitchCands = pitchCands_list$freq,
-                                      plot = FALSE)
-      pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
-    }
-
     # divide the file into continuous voiced syllables
     voicedSegments = findVoicedSegments(
       pitchCands_list$freq,
@@ -1158,6 +1152,17 @@ analyze = function(
       step = step,
       samplingRate = audio$samplingRate
     )
+
+    # add prior
+    if (is.numeric(priorMean) & is.numeric(priorSD)) {
+      pitchCert_multiplier = getPrior(priorMean = priorMean,
+                                      priorSD = priorSD,
+                                      pitchFloor = pitchFloor,
+                                      pitchCeiling = pitchCeiling,
+                                      pitchCands = pitchCands_list$freq,
+                                      plot = FALSE)
+      pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier
+    }
 
     # for each syllable, impute NA's and find a nice path through pitch candidates
     pitchFinal = rep(NA, ncol(pitchCands_list$freq))
@@ -1179,6 +1184,47 @@ analyze = function(
           snakeStep = snakeStep,
           snakePlot = snakePlot
         )
+      }
+    }
+
+    # second pass with adaptive prior
+    if (priorAdapt) {
+      # revert to original pitchCert
+      if (exists('pitchCert_multiplier'))
+        pitchCands_list$cert = pitchCands_list$cert / pitchCert_multiplier
+      if (any(!is.na(pitchFinal))) {
+        pitch_sem = HzToSemitones(pitchFinal[!is.na(pitchFinal)])
+        priorMean = semitonesToHz(mean(pitch_sem))
+        priorSD = semitonesToHz(sd(pitch_sem)) * 4
+        pitchCert_multiplier2 = getPrior(priorMean = priorMean,
+                                        priorSD = priorSD,
+                                        pitchFloor = pitchFloor,
+                                        pitchCeiling = pitchCeiling,
+                                        pitchCands = pitchCands_list$freq,
+                                        plot = FALSE)
+        pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier2
+      }
+
+      pitchFinal = rep(NA, ncol(pitchCands_list$freq))
+      if (nrow(voicedSegments) > 0) {
+        # if we have found at least one putatively voiced syllable
+        for (syl in 1:nrow(voicedSegments)) {
+          myseq = voicedSegments$segmentStart[syl]:voicedSegments$segmentEnd[syl]
+          # compute the optimal path through pitch candidates
+          pitchFinal[myseq] = pathfinder(
+            pitchCands = pitchCands_list$freq[, myseq, drop = FALSE],
+            pitchCert = pitchCands_list$cert[, myseq, drop = FALSE],
+            pitchSource = pitchCands_list$source[, myseq, drop = FALSE],
+            certWeight = certWeight,
+            pathfinding = pathfinding,
+            annealPars = annealPars,
+            interpolWin_bin = ceiling(interpol$win / step),
+            interpolTol = interpol$tol,
+            interpolCert = interpol$cert,
+            snakeStep = snakeStep,
+            snakePlot = snakePlot
+          )
+        }
       }
     }
 
@@ -1327,7 +1373,7 @@ analyze = function(
         if (cnt_name %in% col_non_Hz) {
           # normalize
           if (is.null(ylim)) ylim = c(0, audio$samplingRate / 2 / 1000)
-          cnt = cnt / max(cnt, na.rm = TRUE) * ylim[2] * 1000
+          cnt = zeroOne(cnt, na.rm = TRUE) * ylim[2] * 1000
         }
       } else {
         message(paste0('Valid extraContour names are: ',

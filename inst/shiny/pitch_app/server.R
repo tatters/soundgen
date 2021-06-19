@@ -27,10 +27,10 @@ server = function(input, output, session) {
     cursor = 0,
     pitchCert_mult = NULL,     # old pitch prior
     initDur = 1500,            # initial duration to plot (ms)
+    spec_xlim = c(0, 1500),
     play = list(on = FALSE),
     debugQn = TRUE            # for debugging - click "?" to step into the code
   )
-
 
   # clean-up of www/ folder: remove all files except temp.wav
   # if (!dir.exists("www")) dir.create("www")  # otherwise trouble with shinyapps.io
@@ -458,18 +458,22 @@ server = function(input, output, session) {
       }
 
       # show prior
-      ran_x_5 = diff(range(myPars$spec_xlim)) * .05   # 5% of plot width
-      points(myPars$spec_xlim[1] + myPars$prior$prob * ran_x_5,
-             myPars$prior$freq / 1000, type = 'l', lty = 2)
-      text(x = myPars$spec_xlim[1] + ran_x_5,
-           y = input$priorMean / 1000,
-           pos = 2, labels = 'Prior', offset = 0.25)
-      text(x = myPars$spec_xlim[1],
-           y = input$pitchFloor / 1000,
-           pos = 4, labels = 'floor', offset = 0)
-      text(x = myPars$spec_xlim[1],
-           y = input$pitchCeiling / 1000,
-           pos = 4, labels = 'ceiling', offset = 0)
+      if (is.list(myPars$prior)) {
+        ran_x_5 = diff(range(myPars$spec_xlim)) * .05   # 5% of plot width
+        points(myPars$spec_xlim[1] + myPars$prior$prob * ran_x_5,
+               myPars$prior$freq / 1000, type = 'l', lty = 2)
+        text(x = myPars$spec_xlim[1] + ran_x_5,
+             y = ifelse(input$priorAdapt,
+                        myPars$priorMean / 1000,
+                        input$priorMean / 1000),
+             pos = 2, labels = 'Prior', offset = 0.25)
+        text(x = myPars$spec_xlim[1],
+             y = input$pitchFloor / 1000,
+             pos = 4, labels = 'floor', offset = 0)
+        text(x = myPars$spec_xlim[1],
+             y = input$pitchCeiling / 1000,
+             pos = 4, labels = 'ceiling', offset = 0)
+      }
 
       # add manual values to the list of pitch candidates for seamless plotting
       n = ncol(myPars$pitchCands$freq)
@@ -578,6 +582,7 @@ server = function(input, output, session) {
           pitchCeiling = input$pitchCeiling,
           priorMean = isolate(input$priorMean),
           priorSD = isolate(input$priorSD),
+          priorAdapt = input$priorAdapt,  # rerun analyze() if priorAdapt changes
           nCands = input$nCands,
           minVoicedCands = input$minVoicedCands,
           pitchDom = list(
@@ -646,14 +651,32 @@ server = function(input, output, session) {
           obs_pitch()  # run pathfinder
           # if (length(myPars$pitch) != ncol(myPars$pitchCands$freq)) browser()
           # save the prior
-          myPars$pitchCert_mult = getPrior(
-            priorMean = input$priorMean,
-            priorSD = input$priorSD,
-            pitchFloor = input$pitchFloor,
-            pitchCeiling = input$pitchCeiling,
-            pitchCands = myPars$pitchCands$freq,
-            plot = FALSE
-          )
+          if (input$priorAdapt) {
+            pitch_sem = HzToSemitones(myPars$pitch[!is.na(myPars$pitch)])
+            if (length(pitch_sem) > 0) {
+              myPars$priorMean = semitonesToHz(mean(pitch_sem))
+              myPars$priorSD = semitonesToHz(sd(pitch_sem)) * 4
+              myPars$pitchCert_mult = getPrior(
+                priorMean = myPars$priorMean,
+                priorSD = myPars$priorSD,
+                pitchFloor = input$pitchFloor,
+                pitchCeiling = input$pitchCeiling,
+                pitchCands = myPars$pitchCands$freq,
+                plot = FALSE
+              )
+            } else {
+              myPars$priorMean = NA
+            }
+          } else {
+            myPars$pitchCert_mult = getPrior(
+              priorMean = input$priorMean,
+              priorSD = input$priorSD,
+              pitchFloor = input$pitchFloor,
+              pitchCeiling = input$pitchCeiling,
+              pitchCands = myPars$pitchCands$freq,
+              plot = FALSE
+            )
+          }
         })
       })
     }
@@ -703,7 +726,7 @@ server = function(input, output, session) {
       # print(sylToUpdate)
 
       # for each syllable, impute NA's and find a nice path through pitch candidates
-      if (is.null(myPars$pitch)) {
+      if (is.null(myPars$pitch) || nrow(myPars$voicedSegments) == 0) {
         myPars$pitch = rep(NA, ncol(myPars$pitchCands$freq))
       } else if (nrow(myPars$voicedSegments) > 0) {
         voiced_frames = unlist(apply(myPars$voicedSegments, 1, function(x) x[1]:x[2]))
@@ -767,31 +790,32 @@ server = function(input, output, session) {
     c(input$shortestSyl, input$shortestPause,
       input$interpolWin, input$interpolTol, input$interpolCert,
       input$pathfinding, input$certWeight, input$smooth,
-      input$priorMean, input$priorSD),
+      input$priorMean, input$priorSD, input$priorAdapt),
     obs_pitch()
   )
   observeEvent(
     priority = 1, ignoreInit = TRUE,
-    c(input$priorMean, input$priorSD, input$pitchFloor, input$pitchCeiling), {
-      if (!is.null(myPars$pitchCands$cert)) {
-        if (myPars$print) print('Updating pitchCert with new prior')
-        if (!is.null(myPars$pitchCert_mult)) {
-          # undo the old prior, if any
-          myPars$pitchCands$cert = myPars$pitchCands$cert / myPars$pitchCert_mult
+    c(input$priorMean, input$priorSD, input$priorAdapt,
+      input$pitchFloor, input$pitchCeiling), {
+        if (!is.null(myPars$pitchCands$cert) & !input$priorAdapt) {
+          if (myPars$print) print('Updating pitchCert with new prior')
+          if (!is.null(myPars$pitchCert_mult)) {
+            # undo the old prior, if any
+            myPars$pitchCands$cert = myPars$pitchCands$cert / myPars$pitchCert_mult
+          }
+          # get a new prior
+          myPars$pitchCert_mult = getPrior(
+            priorMean = input$priorMean,
+            priorSD = input$priorSD,
+            pitchFloor = input$pitchFloor,
+            pitchCeiling = input$pitchCeiling,
+            pitchCands = myPars$pitchCands$freq,
+            plot = FALSE
+          )
+          # update pitchCert
+          myPars$pitchCands$cert = myPars$pitchCands$cert * myPars$pitchCert_mult
         }
-        # get a new prior
-        myPars$pitchCert_mult = getPrior(
-          priorMean = input$priorMean,
-          priorSD = input$priorSD,
-          pitchFloor = input$pitchFloor,
-          pitchCeiling = input$pitchCeiling,
-          pitchCands = myPars$pitchCands$freq,
-          plot = FALSE
-        )
-        # update pitchCert
-        myPars$pitchCands$cert = myPars$pitchCands$cert * myPars$pitchCert_mult
       }
-    }
   )
 
   ## Clicking events
@@ -949,10 +973,12 @@ server = function(input, output, session) {
   })
   unvoiceSel = function() {
     if (myPars$print) print('Unvoicing selection...')
-    if (!is.null(myPars$bp) & length(myPars$brush_sel_xy) > 0) {
+    if (!is.null(myPars$bp) & length(myPars$brush_sel_x) > 0) {
       # NB: play forgets the previous selection, but other buttons do not,
       # hence myPars$bp instead of input$spectrogram_brush
-      myPars$manualUnv = c(myPars$manualUnv, myPars$brush_sel_xy)
+      myPars$manualUnv = sort(unique(c(myPars$manualUnv, myPars$brush_sel_x)))
+      # (ie all points within selected time range, regardless of frequency - or
+      # could use myPars$brush_sel_xy)
       # remove manual anchors within selection, if any
       idx_rem = which(myPars$manual$frame %in% myPars$manualUnv)
       if (length(idx_rem) > 0) myPars$manual = myPars$manual[-idx_rem, ]
@@ -1034,14 +1060,33 @@ server = function(input, output, session) {
 
   # PRIOR
   observe({
-    myPars$prior = getPrior(
-      priorMean = input$priorMean,
-      priorSD = input$priorSD,
-      pitchFloor = input$pitchFloor,
-      pitchCeiling = input$pitchCeiling,
-      len = 100,
-      plot = FALSE
-    )
+    if (input$priorAdapt) {
+      pitch_sem = HzToSemitones(myPars$pitch[!is.na(myPars$pitch)])
+      if (length(pitch_sem) > 0) {
+        myPars$priorMean = semitonesToHz(mean(pitch_sem))
+        myPars$priorSD = semitonesToHz(sd(pitch_sem)) * 4
+        myPars$prior = getPrior(
+          priorMean = myPars$priorMean,
+          priorSD = myPars$priorSD,
+          pitchFloor = input$pitchFloor,
+          pitchCeiling = input$pitchCeiling,
+          len = 100,
+          plot = FALSE
+        )
+      } else {
+        myPars$priorMean = NA
+        myPars$prior = NA
+      }
+    } else {
+      myPars$prior = getPrior(
+        priorMean = input$priorMean,
+        priorSD = input$priorSD,
+        pitchFloor = input$pitchFloor,
+        pitchCeiling = input$pitchCeiling,
+        len = 100,
+        plot = FALSE
+      )
+    }
   })
   setPrior = function() {
     if (myPars$print) print('Setting prior...')
@@ -1081,7 +1126,7 @@ server = function(input, output, session) {
       )
     }
   })
-  shinyjs::onevent('mouseout', id = 'specOver', {
+  shinyjs::onevent('dblclick', id = 'specOver', {
     # NB: more flexible and less mafan than juggling with the observer of
     # input$spectrogram_hover
     myPars$spectrogram_hover = NULL
@@ -1371,6 +1416,7 @@ server = function(input, output, session) {
   shinyBS::addTooltip(session, id='pitchFloor', title = 'No candidates below this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='pitchCeiling', title = 'No candidates above this absolute threshold', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='priorMean', title = 'Candidates close to this value are prioritized (how close is determined by priorSD)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
+  shinyBS::addTooltip(session, id='priorAdapt', title = 'Adds a second pass for finding the optimal pitch contour, with prior determined by the initial pitch estimates', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
   shinyBS::addTooltip(session, id='priorSD', title = 'Determines the width of expected pitch range (standard deviation of gamma distribution around priorMean)', placement="right", trigger="hover", options = list(delay = list(show=1000, hide=0)))
 
   # trackers

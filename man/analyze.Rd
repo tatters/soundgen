@@ -30,6 +30,7 @@ analyze(
   pitchCeiling = 3500,
   priorMean = 300,
   priorSD = 6,
+  priorAdapt = TRUE,
   nCands = 1,
   minVoicedCands = NULL,
   pitchDom = list(),
@@ -156,6 +157,10 @@ still calculated (NULL = analyze everything)}
 most likely pitch values for this file. For ex., \code{priorMean = 300,
 priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
+
+\item{priorAdapt}{adaptive second-pass prior: if TRUE, optimal pitch contours
+are estimated first with a prior determined by \code{priorMean,priorSD}, and
+then with a new prior adjusted according to this first-pass pitch contour}
 
 \item{nCands}{maximum number of pitch candidates per method, normally 1...4
 (except for \code{dom}, which returns at most one candidate per frame)}
@@ -416,8 +421,8 @@ a = analyze(sound1, samplingRate = 44100, plot = TRUE,
   pitchMethods = c('dom', 'autocor', 'spec', 'hps', 'cep'),
   priorMean = NA,  # no prior info at all
   pitchDom = list(col = 'red', domThres = .25),
-  pitchPlot = list(col = 'black', lty = 3, lwd = 3),
-  extraContour = list(x = 'peakFreq', type = 'b', col = 'brown'),
+  pitchPlot = list(col = 'black', pch = 9, lty = 3, lwd = 3),
+  extraContour = list(x = 'peakFreq', type = 'b', pch = 4, col = 'brown'),
   osc = 'dB', heights = c(2, 1))
 
 # Different options for summarizing the output

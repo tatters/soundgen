@@ -26,6 +26,7 @@
   pitchCeiling = 3500,
   priorMean = 300,
   priorSD = 6,
+  priorAdapt = TRUE,
   nCands = 1,
   minVoicedCands = NULL,
   pitchDom = list(),
@@ -141,6 +142,10 @@ an octave)}
 most likely pitch values for this file. For ex., \code{priorMean = 300,
 priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
+
+\item{priorAdapt}{adaptive second-pass prior: if TRUE, optimal pitch contours
+are estimated first with a prior determined by \code{priorMean,priorSD}, and
+then with a new prior adjusted according to this first-pass pitch contour}
 
 \item{nCands}{maximum number of pitch candidates per method, normally 1...4
 (except for \code{dom}, which returns at most one candidate per frame)}

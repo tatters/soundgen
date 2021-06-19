@@ -278,7 +278,7 @@ rm(temp)
 #'   ...
 #' }
 defaults_analyze_pitchCand = as.data.frame(matrix(c(
-  'final', '#0000FFBF', NA, 1, 3, 1,  # final pitch contour
+  'final', '#0000FFBF', 16, 1, 5, 1,  # final pitch contour
   'manual', 'blue', 18, 2, 1, 1,  # manual pitch candidates
   'dom', 'orange', 3, 2, 1, 1,
   'autocor', 'green', 16, 2, 1, 1,

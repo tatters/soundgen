@@ -211,7 +211,7 @@ analyzeFrame = function(frame, bin, freqs,
 #' confidence in candidates with very high or very low frequency as unlikely but
 #' still remotely possible. You can think of this as a "soft" alternative to
 #' setting absolute pitch floor and ceiling. Algorithm: the multiplier for each
-#' pitch candidate is the density of gamma distribution with mean = priorMean
+#' pitch candidate is the density of prior distribution with mean = priorMean
 #' (Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
 #' pitchCeiling]. Useful for previewing the prior given to
 #' \code{\link{analyze}}.
@@ -223,6 +223,8 @@ analyzeFrame = function(frame, bin, freqs,
 #'   pitchCands otherwise.
 #' @inheritParams analyze
 #' @param len the required length of output vector (resolution)
+#' @param distribution the shape of prior distribution on the musical scale:
+#'   'normal' (mode = priorMean) or 'gamma' (skewed to lower frequencies)
 #' @param plot if TRUE, plots the prior
 #' @param ... additional graphical parameters passed on to plot()
 #' @param pitchCands a matrix of pitch candidate frequencies (for internal
@@ -236,6 +238,7 @@ analyzeFrame = function(frame, bin, freqs,
 #' plot(s, type = 'l')
 getPrior = function(priorMean,
                     priorSD,
+                    distribution = c('normal', 'gamma')[1],
                     pitchFloor = 75,
                     pitchCeiling = 3000,
                     len = 100,
@@ -247,13 +250,17 @@ getPrior = function(priorMean,
               length.out = len)
   if (is.numeric(priorMean) & is.numeric(priorSD)) {
     priorMean_semitones = HzToSemitones(priorMean)
-    shape = priorMean_semitones ^ 2 / priorSD ^ 2
-    rate = priorMean_semitones / priorSD ^ 2
-    prior_normalizer = dgamma(
-      freqs,
-      shape = shape,
-      rate = rate
-    )
+    if (distribution == 'normal') {
+      prior_normalizer = dnorm(freqs, priorMean_semitones, priorSD)
+    } else if (distribution == 'gamma') {
+      shape = priorMean_semitones ^ 2 / priorSD ^ 2
+      rate = priorMean_semitones / priorSD ^ 2
+      prior_normalizer = dgamma(
+        freqs,
+        shape = shape,
+        rate = rate
+      )
+    }
     prior_norm_max = max(prior_normalizer)
     prior = prior_normalizer / prior_norm_max
   } else {
@@ -273,11 +280,15 @@ getPrior = function(priorMean,
   }
   if (!is.null(pitchCands)) {
     if (is.numeric(priorMean) & is.numeric(priorSD)) {
-      pitchCert_multiplier = dgamma(
-        HzToSemitones(pitchCands),
-        shape = shape,
-        rate = rate
-      ) / prior_norm_max
+      if (distribution == 'normal') {
+        pitchCert_multiplier = dnorm(
+          HzToSemitones(pitchCands), priorMean_semitones, priorSD
+        ) / prior_norm_max
+      } else if (distribution == 'gamma') {
+        pitchCert_multiplier = dgamma(
+          HzToSemitones(pitchCands), shape, rate
+        ) / prior_norm_max
+      }
     } else {
       pitchCert_multiplier = matrix(1, nrow = nrow(pitchCands),
                                     ncol = ncol(pitchCands))

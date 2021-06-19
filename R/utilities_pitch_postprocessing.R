@@ -1012,9 +1012,17 @@ addPitchCands = function(pitchCands,
   if (any(is.numeric(pitch))) {
     pars_pitchContour = as.list(plotPars[plotPars$method == 'final',
                                          2:ncol(plotPars)])
-    do.call('lines', c(list(
+    # first points, in case there are isolated, unconnected points surrounded by
+    # NAs (not plotted with type = 'l')
+    # do.call('points', c(list(
+    #   x = timestamps,
+    #   y = pitch * yScaleCoef
+    # ), pars_pitchContour))
+    # now join pitch contour with a line
+    do.call('points', c(list(
       x = timestamps,
-      y = pitch * yScaleCoef
+      y = pitch * yScaleCoef,
+      type = 'b'
     ), pars_pitchContour))
   }
 
@@ -1603,7 +1611,7 @@ findInflections = function(x,
       xaxt = 's'
     }
     plot(c(rep(NA, shift), xInt), type = 'b', col = 'gray70', main = main,
-           pch = 16, cex = .5, ylab = '', xlab = xlab)
+         pch = 16, cex = .5, ylab = '', xlab = xlab)
     points(orig, pch = 16, type = 'b')
     le = length(extrema)
     if (le > 0) {

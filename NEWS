@@ -6,6 +6,8 @@ NEW FUNCTIONS:
 
 MINOR
   * analyze(), modulationSpectrum(): new outputs "amFreq" and "amDep" give the frequency and depth of amplitude modulation
+  * analyze(), pitch_app(): adaptive second-pass priors (new argument "priorAdapt")
+  * analyze(), pitch_app(): prior distribution for pitch candidates is lognormal instead of gamma
   * switch from Seeing Speech to Hillenbrand 1995 for vowel centroids in formant_app()
   * getSmoothContour(): downsampling is preceeded by low-pass filtering to avoid aliasing
   * formant_app(): adjustable playback speed
@@ -13,9 +15,12 @@ MINOR
   * reportTime() and all loops that use it: max two time levels shown (eg days + hours)
 
 BUGS FIXED:
+  * analyze(), pitch_app(): pitch contour changed from type = 'l' to 'b', ensuring that isolated voiced frames surrounded by NAs are shown
   * formant_app(): vowel plot, VTL updated in output table, synthetic audio playback with browser, NAs not filled in user annotations
   * formant_app(), pitch_app(): bug-prone "overlap" setting removed, use "step" instead
+  * pitch_app(): brush is cleared on double click instead of "mouseout" (otherwise it's hard to operate buttons like voice/unvoice)
   * ssm(): silence has novelty = 0
+  * analyze(): correctly plots extraContour with negative values (eg HNR, amDep)
 
 
           CHANGES IN SOUNDGEN VERSION 2.0.0 [15-March-2021]

@@ -7,6 +7,7 @@
 getPrior(
   priorMean,
   priorSD,
+  distribution = c("normal", "gamma")[1],
   pitchFloor = 75,
   pitchCeiling = 3000,
   len = 100,
@@ -27,6 +28,9 @@ an octave)}
 most likely pitch values for this file. For ex., \code{priorMean = 300,
 priorSD = 6} gives a prior with mean = 300 Hz and SD = 6 semitones (half
 an octave)}
+
+\item{distribution}{the shape of prior distribution on the musical scale:
+'normal' (mode = priorMean) or 'gamma' (skewed to lower frequencies)}
 
 \item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
@@ -53,7 +57,7 @@ candidates in the expected pitch range (100-1000 Hz) and decrease our
 confidence in candidates with very high or very low frequency as unlikely but
 still remotely possible. You can think of this as a "soft" alternative to
 setting absolute pitch floor and ceiling. Algorithm: the multiplier for each
-pitch candidate is the density of gamma distribution with mean = priorMean
+pitch candidate is the density of prior distribution with mean = priorMean
 (Hz) and sd = priorSD (semitones) normalized so max = 1 over [pitchFloor,
 pitchCeiling]. Useful for previewing the prior given to
 \code{\link{analyze}}.
