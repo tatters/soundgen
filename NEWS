@@ -1,4 +1,4 @@
-          CHANGES IN SOUNDGEN VERSION 2.0.1 [04-June-2021]
+          CHANGES IN SOUNDGEN VERSION 2.1.0 [19-June-2021]
 NEW FUNCTIONS:
   * shiftFormants(): raises or lowers formants in a sound without changing its pitch
   * pitchDescriptives(): extracts common descriptives of time series such as pitch contours: measures of average / range / variability / slope / inflections etc
