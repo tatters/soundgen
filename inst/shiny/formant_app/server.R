@@ -40,7 +40,7 @@ server = function(input, output, session) {
     cursor = 0,
     listenToFbtn = FALSE,      # buggy
     play = list(on = FALSE),
-    debugQn = TRUE             # for debugging - click "?" to step into the code
+    debugQn = FALSE             # for debugging - click "?" to step into the code
   )
 
   # NB: using myPars$play$cursor for some reason invalidates the observer,

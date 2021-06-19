@@ -29,7 +29,7 @@ server = function(input, output, session) {
     initDur = 1500,            # initial duration to plot (ms)
     spec_xlim = c(0, 1500),
     play = list(on = FALSE),
-    debugQn = TRUE            # for debugging - click "?" to step into the code
+    debugQn = FALSE            # for debugging - click "?" to step into the code
   )
 
   # clean-up of www/ folder: remove all files except temp.wav
