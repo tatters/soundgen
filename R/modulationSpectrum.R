@@ -804,10 +804,12 @@ averageMatrices = function(mat_list,
 #'   modulation frequency
 #' @inheritParams modulationSpectrum
 #' @param amRes controls the width of window over which we look for local maxima
-#' @return Returns a list with the frequency (Hz) and depth (dB relative to
-#'   median over amRange) of amplitude modulation.
+#' @return Returns a list with the frequency (Hz) and depth of amplitude
+#'   modulation (dB relative to global max, normally at 0 Hz).
 #' @keywords internal
-getAM = function(m, amRange = c(10, 100), amRes = NULL) {
+getAM = function(m,
+                 amRange = c(10, 100),
+                 amRes = NULL) {
   if (is.null(amRes)) amRes = 0
   colNames = abs(as.numeric(colnames(m)))
   out = list(amFreq = NA, amDep = NA)

@@ -1194,3 +1194,79 @@ rbind_fill = function(df1, df2) {
   df2[setdiff(names(df1), names(df2))] = NA
   return(rbind(df1, df2))
 }
+
+
+#' Identify and play
+#'
+#' Internal soundgen function
+#'
+#' A wrapper around \code{identify()} intended to play the sound corresponding
+#' to a clicked point.
+#' @param x,y plot coordinates
+#' @param data dataframe from which x & y are taken, also containing a column
+#'   called "file"
+#' @param audioFolder path to audio files
+#' @param to play only the first ... s
+#' @param plot if TRUE, plots the index of clicked points
+#' @param pch symbol for marking clicked points
+#' @param ... other arguments passed to \code{identify()}
+#' @keywords internal
+#' @examples
+#' \dontrun{
+#' msf = modulationSpectrum('~/Downloads/temp', plot = FALSE)
+#'
+#' # Method 1: provide path to folder, leave data = NULL
+#' plot(msf$summary$amFreq_median, msf$summary$amDep_median)
+#' identifyPch(msf$summary$amFreq_median, msf$summary$amDep_median,
+#'   audioFolder = '~/Downloads/temp',
+#'   to = 2,
+#'  plot = TRUE,
+#'  pch = 19)
+#'
+#' # Method 2:
+#' plot(msf$summary$amFreq_median, msf$summary$amDep_median)
+#' x = msf$summary$amFreq_median
+#' y = msf$summary$amDep_median
+#' identifyPch(x, y, data = msf$summary,
+#'   audioFolder = '~/Downloads/temp',
+#'   to = 2,
+#'   plot = FALSE,
+#'   pch = 8)
+#' }
+identifyAndPlay = function(
+  x,
+  y = NULL,
+  data = NULL,
+  audioFolder,
+  to = 5,
+  plot = FALSE,
+  pch = 19,
+  ...) {
+  n = length(x)
+  if (is.null(data)) {
+    data = data.frame(
+      file = list.files(audioFolder, full.names = TRUE)
+    )
+  } else {
+    data = data.frame(
+      file = paste0(audioFolder, '/', data$file)
+    )
+  }
+  xy = xy.coords(x, y)
+  x = xy$x
+  y = xy$y
+  sel = rep(FALSE, n)
+  answers = numeric(0)
+  while(sum(sel) < n) {
+    ans = identify(x[!sel], y[!sel], labels = which(!sel),
+                   n = 1, plot = plot, ...)
+    if(!length(ans)) break
+    ans = which(!sel)[ans]
+    answers = c(answers, ans)
+    points(x[ans], y[ans], pch = pch)
+    ## play the selected point
+    try(playme(data$file[ans], to = to))
+  }
+  ## return indices of selected points
+  return(data$file[answers])
+}
