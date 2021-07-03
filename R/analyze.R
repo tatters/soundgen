@@ -1197,11 +1197,11 @@ analyze = function(
         priorMean = semitonesToHz(mean(pitch_sem))
         priorSD = semitonesToHz(sd(pitch_sem)) * 4
         pitchCert_multiplier2 = getPrior(priorMean = priorMean,
-                                        priorSD = priorSD,
-                                        pitchFloor = pitchFloor,
-                                        pitchCeiling = pitchCeiling,
-                                        pitchCands = pitchCands_list$freq,
-                                        plot = FALSE)
+                                         priorSD = priorSD,
+                                         pitchFloor = pitchFloor,
+                                         pitchCeiling = pitchCeiling,
+                                         pitchCands = pitchCands_list$freq,
+                                         plot = FALSE)
         pitchCands_list$cert = pitchCands_list$cert * pitchCert_multiplier2
       }
 
@@ -1276,9 +1276,10 @@ analyze = function(
     }
     if (!is.null(pitch_raw)) {
       # up/downsample pitchManual to the right length
-      pitch_true = upsamplePitchContour(
+      pitch_true = resample(
         pitch = pitch_raw,
-        len = nrow(result),
+        mult = nrow(result) / length(pitch_raw),
+        lowPass = FALSE,
         plot = FALSE)
     } else {
       message(paste(
@@ -1297,12 +1298,13 @@ analyze = function(
       list(audio = audio[c('sound', 'samplingRate', 'ls', 'duration')],
            returnMS = FALSE, plot = FALSE),
       roughness))
-    result$roughness = upsamplePitchContour(ms$roughness, len = nrow(result),
-                                            plot = FALSE)
-    result$amFreq = upsamplePitchContour(ms$amFreq, len = nrow(result),
-                                         plot = FALSE)
-    result$amDep = upsamplePitchContour(ms$amDep, len = nrow(result),
-                                        plot = FALSE)
+    mult = nrow(result) / length(ms$roughness)
+    result$roughness = resample(ms$roughness, mult = mult,
+                                lowPass = FALSE, plot = FALSE)
+    result$amFreq = resample(ms$amFreq, mult = mult,
+                             lowPass = FALSE, plot = FALSE)
+    result$amDep = resample(ms$amDep, mult = mult,
+                            lowPass = FALSE, plot = FALSE)
     result[!cond_silence, c('roughness', 'amFreq', 'amDep')] = NA
   }
 
@@ -1314,8 +1316,8 @@ analyze = function(
       list(audio = audio[c('sound', 'samplingRate', 'ls', 'duration')],
            sparse = TRUE, plot = FALSE),
       novelty))$novelty
-    result$novelty = upsamplePitchContour(novel, len = nrow(result),
-                                          plot = FALSE)
+    result$novelty = resample(novel, mult = nrow(result) / length(novel),
+                              lowPass = FALSE, plot = FALSE)
     result$novelty[!cond_silence] = NA
   }
 

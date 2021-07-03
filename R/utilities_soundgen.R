@@ -290,7 +290,7 @@ findZeroCrossing = function(ampl, location) {
 }
 
 
-#' Upsample pitch contour
+#' Upsample glottal cycles
 #'
 #' Internal soundgen function.
 #'
@@ -303,8 +303,8 @@ findZeroCrossing = function(ampl, location) {
 #'   upsampled scale)
 #' @keywords internal
 #' @examples
-#' soundgen:::upsample(pitch_per_gc = c(100, 150, 130), samplingRate = 16000)
-upsample = function(pitch_per_gc, samplingRate = 16000) {
+#' soundgen:::upsampleGC(pitch_per_gc = c(100, 150, 130), samplingRate = 16000)
+upsampleGC = function(pitch_per_gc, samplingRate = 16000) {
   l = length(pitch_per_gc)
   gccrossLenPoints = round(samplingRate / pitch_per_gc)
   c = cumsum(gccrossLenPoints)

@@ -21,9 +21,12 @@
 #' transformations are required. We then multiply the "receiver" and "donor"
 #' spectrograms and reconstruct the audio with iSTFT.
 #'
+#' @seealso \code{\link{shiftPitch}} \code{\link{transplantFormants}}
+#'
 #' @inheritParams spectrogram
-#' @inheritParams addAM
-#' @param scaleFactor 1 = no change, >1 = raise formants (eg 1.1 = 10\% up, 2 =
+#' @inheritParams segment
+#' @inheritParams soundgen
+#' @param multFormants 1 = no change, >1 = raise formants (eg 1.1 = 10\% up, 2 =
 #'   one octave up), <1 = lower formants
 #' @param freqWindow the width of spectral smoothing window, Hz. Defaults to
 #'   detected f0
@@ -35,7 +38,7 @@
 #'              noise = -40,
 #'              formants = 'aii', addSilence = 50)
 #' # playme(s)
-#' s1 = shiftFormants(s, samplingRate = 16000, scaleFactor = 1.25,
+#' s1 = shiftFormants(s, samplingRate = 16000, multFormants = 1.25,
 #'                    freqWindow = 200)
 #' # playme(s1)
 #'
@@ -45,7 +48,7 @@
 #' spectrogram(sheep)
 #'
 #' # Lower formants by 4 semitones or ~20% = 2 ^ (-4 / 12)
-#' sheep1 = shiftFormants(sheep, scaleFactor = 2 ^ (-4 / 12), freqWindow = 150)
+#' sheep1 = shiftFormants(sheep, multFormants = 2 ^ (-4 / 12), freqWindow = 150)
 #' playme(sheep1, sheep@samp.rate)
 #' spectrogram(sheep1, sheep@samp.rate)
 #'
@@ -55,13 +58,13 @@
 #' points(shifted[, 1], log(shifted[, 2]), type = 'l', col = 'blue')
 #'
 #' # dynamic change: raise formants at the beginning, lower at the end
-#' sheep2 = shiftFormants(sheep, scaleFactor = c(1.3, .7), freqWindow = 150)
+#' sheep2 = shiftFormants(sheep, multFormants = c(1.3, .7), freqWindow = 150)
 #' playme(sheep2, sheep@samp.rate)
 #' spectrogram(sheep2, sheep@samp.rate)
 #' }
 shiftFormants = function(
   x,
-  scaleFactor,
+  multFormants,
   samplingRate = NULL,
   freqWindow = NULL,
   dynamicRange = 80,
@@ -97,6 +100,7 @@ shiftFormants = function(
   invisible(result)
 }
 
+
 #' Shift formants per sound
 #'
 #' Internal soundgen function called by \code{\link{shiftFormants}}
@@ -105,7 +109,7 @@ shiftFormants = function(
 #' @keywords internal
 .shiftFormants = function(
   audio,
-  scaleFactor,
+  multFormants,
   samplingRate = NULL,
   freqWindow = NULL,
   dynamicRange = 80,
@@ -121,17 +125,20 @@ shiftFormants = function(
   }
   windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
 
-  # Get a spectrogram
-  spec = .spectrogram(
-    audio,
-    dynamicRange = dynamicRange,
-    windowLength = windowLength,
-    step = step,
-    overlap = overlap,
+  # Get a spectrogram (use seewave to avoid inconsistent dims when running iSTFT)
+  step_seq = seq(1,
+                 max(1, (audio$ls - windowLength_points)),
+                 windowLength_points - (overlap * windowLength_points / 100))
+  spec = seewave::stdft(
+    wave = as.matrix(audio$sound),
+    f = audio$samplingRate,
+    wl = windowLength_points,
+    zp = 0,
+    step = step_seq,
     wn = wn,
-    output = 'complex',
-    padWithSilence = FALSE,
-    plot = FALSE
+    fftw = FALSE,
+    scale = TRUE,
+    complex = TRUE
   )
   # image(t(log(abs(spec))))
 
@@ -140,7 +147,7 @@ shiftFormants = function(
     anal = analyze(audio$sound, audio$samplingRate, plot = FALSE)
     freqWindow = median(anal$detailed$pitch, na.rm = TRUE)
   }
-  freqRange_kHz = diff(range(as.numeric(rownames(spec))))
+  freqRange_kHz = audio$samplingRate / 2 / 1000 # diff(range(as.numeric(rownames(spec))))
   freqBin_Hz = freqRange_kHz * 1000 / nrow(spec)
   freqWindow_bins = round(freqWindow / freqBin_Hz, 0)
   if (freqWindow_bins < 3) {
@@ -176,7 +183,9 @@ shiftFormants = function(
   # image(t(abs(spec_recipient)))
 
   # Warp the "donor" spectrogram
-  spec_donor = warpMatrix(spec_donor, scaleFactor = scaleFactor, interpol = interpol)
+  spec_donor = warpMatrix(spec_donor,
+                          scaleFactor = multFormants,
+                          interpol = interpol)
   # image(t(log(abs(spec_donor))))
 
   # Multiply the spectrograms
@@ -190,6 +199,7 @@ shiftFormants = function(
       f = samplingRate,
       ovlp = overlap,
       wl = windowLength_points,
+      wn = wn,
       output = "matrix"
     )
   )
@@ -214,46 +224,4 @@ shiftFormants = function(
   }
 
   return(soundFiltered)
-}
-
-
-#' Warp matrix
-#'
-#' Internal soundgen function
-#'
-#' Warps or scales each column of a matrix (normally a spectrogram).
-#' @keywords internal
-#' @param m matrix (rows = frequency bins, columns = time)
-#' @param scaleFactor 1 = no change, >1 = raise formants
-#' @param interpol interpolation method
-#' @examples
-#' a = matrix(1:12, nrow = 4)
-#' a
-#' soundgen:::warpMatrix(a, 1.5, 'approx')
-#' soundgen:::warpMatrix(a, 1/1.5, 'spline')
-warpMatrix = function(m, scaleFactor, interpol = c('approx', 'spline')[1]) {
-  scaleFactor = getSmoothContour(scaleFactor, len = ncol(m))
-  n1 = nrow(m)
-  m_warped = m
-  for (i in 1:ncol(m)) {
-    if (scaleFactor[i] > 1) {
-      # "stretch" the vector (eg spectrum of a frame)
-      n2 = round(n1 / scaleFactor[i])
-      m_warped[, i] = do.call(interpol, list(x = m[1:n2, i], n = n1))$y
-    } else if (scaleFactor[i] < 1) {
-      # "shrink" the vector and pad it with the last obs to the original length
-      n2 = round(n1 * scaleFactor[i])
-      padding = rep(m[n1, i], n1 - n2)  # or 0
-      m_warped[, i] = c(
-        do.call(interpol, list(x = m_warped[, i],
-                               xout = seq(1, n1, length.out = n2),
-                               n = n1))$y,
-        padding
-      )
-    }
-    # plot(m_warped[, i], type = 'l')
-    # plot(abs(m[, i]), type = 'l', xlim = c(1, max(n1, n2)))
-    # points(m_warped[, i], type = 'l', col = 'blue')
-  }
-  return(m_warped)
 }

@@ -801,7 +801,7 @@ generateHarmonics = function(pitch,
   if (temperature > 0 & amplDriftDep > 0) {
     drift_ampl = zeroOne(drift) * temperature
     drift_ampl = drift_ampl - mean(drift_ampl) + 1  # hist(drift_ampl)
-    gc_upsampled = upsample(pitch_per_gc, samplingRate = samplingRate)$gc
+    gc_upsampled = upsampleGC(pitch_per_gc, samplingRate = samplingRate)$gc
     drift_upsampled = approx(drift_ampl,  # otherwise pitchDriftDep scales amplDriftDep
                              n = length(waveform),
                              x = gc_upsampled[-length(gc_upsampled)])$y
@@ -982,7 +982,7 @@ generateEpoch = function(pitch_per_gc,
   #   Uses a more sophisticated but still very fast version of linear
   #   interpolation, which takes into account the variable length
   #   of glottal cycles
-  up = upsample(pitch_per_gc, samplingRate = samplingRate)
+  up = upsampleGC(pitch_per_gc, samplingRate = samplingRate)
   pitch_upsampled = up$pitch
   gc_upsampled = up$gc
   integr = cumsum(pitch_upsampled) / samplingRate

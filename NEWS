@@ -1,4 +1,12 @@
           CHANGES IN SOUNDGEN VERSION 2.1.0.9000 [--date--]
+NEW FUNCTIONS:
+  * shiftPitch(): shifts pitch and/or formants + performns time stretch
+  * resample(): changes the sampling rate without introducing artefacts like aliasing
+  * bandpass(): low-pass, high-pass, bandpass, and bandstop filters with FFT
+
+MINOR
+  * shiftFormants(): arguments "scaleFactor" renamed to "multFormants" to be consistent with the new function shiftPitch()
+
 
           CHANGES IN SOUNDGEN VERSION 2.1.0 [19-June-2021]
 NEW FUNCTIONS:

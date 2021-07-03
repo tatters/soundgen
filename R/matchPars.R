@@ -110,7 +110,7 @@ matchPars = function(target,
   }
   parDefault$pitch = aa$detailed$pitch
   # downsample F0 measures to 5 Hz
-  # parDefault$pitch = downsample(p, srNew = 5, srOld = 1 / 20 * 1000)
+  # parDefault$pitch = resample(p, samplingRate_new = 5, samplingRate = 1 / 20 * 1000)
   if (is.list(af)) {
     if (nrow(af) > 0) {
       for (f in 1:min(3, nrow(af))) {  # add max 3 formants

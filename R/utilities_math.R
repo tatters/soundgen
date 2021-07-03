@@ -98,60 +98,6 @@ log01 = function(v) {
 }
 
 
-#' Downsample a vector
-#'
-#' Internal soundgen function
-#'
-#' Takes a numeric vector and downsamples it to the required sampling rate by
-#' applying a low-pass filter and then decimating. If the new sampling rate is
-#' higher than the original, it does nothing.
-#' @param x numeric vector of real numbers on any scale
-#' @param f decimation factor (1 = no effect, 1.1 = 10\% shorter, 2 = half the
-#'   original length)
-#' @param maxDec don't low-pass filter for f greater than this value, just
-#'   decimate directly
-#' @keywords internal
-#' @examples
-#' silence = rep(0, 10)
-#' samplingRate = 1000
-#' fr = seq(100, 300, length.out = 400)
-#' x = c(silence, sin(cumsum(fr) * 2 * pi / samplingRate), silence)
-#' spectrogram(x, samplingRate)
-#' x1 = soundgen:::downsample(x, f = 2.5)
-#' spectrogram(x1, samplingRate)  # no aliasing
-#'
-#' # cf. simple decimation w/o low-pass filtering
-#' x3 = x[seq(1, length(x), length.out = length(x) / 2.5)]
-#' spectrogram(x3, samplingRate)  # major aliasing
-#'
-#' # low-pass is not applied for extreme decimation
-#' soundgen:::downsample(x, f = 120)
-downsample = function(x, f, maxDec = 100){
-  if (f <= 1) {
-    # nothing to do
-    out = x
-  } else if (f < maxDec) {
-    # low-pass filter
-    # if (is.null(butterOrder)) butterOrder = (2 * round(f / cutoff)) / 2 + 8
-    # bf = signal::butter(butterOrder, 1 / f * cutoff, type = 'low')
-    # x_lowPass = as.numeric(signal::filter(bf, x))  # only works well for low f
-    mx = min(x)
-    x_lowPass = soundgen::pitchSmoothPraat(
-      x - mx, samplingRate = 1000, bandwidth = 1000 / f / 4
-    ) + mx
-    # downsample
-    n1 = length(x_lowPass)
-    n2 = round(n1 / f)
-    out = approx(x_lowPass, xout = seq(1, n1, length.out = n2))$y
-  } else {
-    # just decimate directly
-    n1 = length(x)
-    out = x[seq(1, n1, length.out = n1 / f)]
-  }
-  return(out)
-}
-
-
 #' Entropy
 #'
 #' Returns Weiner or Shannon entropy of an input vector such as the spectrum of
@@ -668,7 +614,7 @@ clumper = function(s, minLength) {
              length(s) < minLength[1]) {
     return(rep(round(median(s)), length(s)))
   }
-  if (length(minLength)==1 |length(minLength)!=length(s)) {
+  if (length(minLength)==1 | length(minLength) != length(s)) {
     minLength = rep(minLength, length(s)) # upsample minLength
   }
 
@@ -1270,3 +1216,55 @@ identifyAndPlay = function(
   ## return indices of selected points
   return(data$file[answers])
 }
+
+
+#' Warp matrix
+#'
+#' Internal soundgen function
+#'
+#' Warps or scales each column of a matrix (normally a spectrogram).
+#' @keywords internal
+#' @param m matrix (rows = frequency bins, columns = time)
+#' @param scaleFactor 1 = no change, >1 = raise formants
+#' @param interpol interpolation method
+#' @examples
+#' a = matrix(1:12, nrow = 4)
+#' a
+#' soundgen:::warpMatrix(a, 1.5, 'approx')
+#' soundgen:::warpMatrix(a, 1/1.5, 'spline')
+warpMatrix = function(m, scaleFactor, interpol = c('approx', 'spline')[1]) {
+  scaleFactor = getSmoothContour(scaleFactor, len = ncol(m))
+  n1 = nrow(m)
+  m_warped = m
+  for (i in 1:ncol(m)) {
+    if (scaleFactor[i] > 1) {
+      # "stretch" the vector (eg spectrum of a frame)
+      n2 = round(n1 / scaleFactor[i])
+      m_warped[, i] = do.call(interpol, list(x = m[1:n2, i], n = n1))$y
+    } else if (scaleFactor[i] < 1) {
+      # "shrink" the vector and pad it with the last obs to the original length
+      n2 = round(n1 * scaleFactor[i])
+      padding = rep(m[n1, i], n1 - n2)  # or 0
+      m_warped[, i] = c(
+        do.call(interpol, list(x = m_warped[, i],
+                               xout = seq(1, n1, length.out = n2),
+                               n = n1))$y,
+        padding
+      )
+    }
+    # plot(m_warped[, i], type = 'l')
+    # plot(abs(m[, i]), type = 'l', xlim = c(1, max(n1, n2)))
+    # points(m_warped[, i], type = 'l', col = 'blue')
+  }
+  return(m_warped)
+}
+
+
+#' Principal argument
+#'
+#' Internal soundgen function.
+#'
+#' Recalculates the phase of complex numbers to be within the interval from -pi to pi.
+#' @param x real number representing phase angle
+#' @keywords internal
+princarg = function(x) (x + pi) %% (2 * pi) - pi

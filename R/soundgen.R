@@ -1,4 +1,4 @@
-# TODO: NB: turn off debug mode in pitch_app & formant_app before submitting to CRAN!
+# TODO: a single function replaces shiftFormants + shiftPitch + timeStretch; implement "vocoder done right"; NB: turn off debug mode in pitch_app & formant_app before submitting to CRAN!
 
 # TODO maybe: think about how best to normalize amDep; check main in all plots - should be like analyze & spectrogram ('' if audio$filename_base = 'sound'); shiftPitch (phase vocoder and/or psola); compareSounds - input folder creates a distance matrix based on features and/or melSpec; add mel/bark to spectrogram(yScale); inverse distance weighting interpolation instead of interpolMatrix; sharpness in getLoudness(see Fastl p. 242); Viterbi algorithm for pathfinding; check loudness estimation (try to find standard values to compare); adaptive priors for pitch tracking - use first pass to update the prior per sound, then redo pathfinding; pitch tracker based on coincidence of subharmonics of strong spectral peaks (see Fastl & Zwicker p. 124), maybe also refine cepstrum to look for freq windows with a strong cepstral peak, like opera singing over the orchestra; morph multiple sounds not just 2; maybe vectorize lipRad/noseRad; some smart rbind_fill in all ...Folder functions() in case of missing columns; soundgen- use psola when synthesizing 1 gc at a time; soundgen - pitch2 for dual source (desynchronized vocal folds); AM aspiration noise (not really needed, except maybe for glottis > 0); morph() - tempEffects; streamline saving all plots a la ggsave: filename, path, different supported devices instead of only png(); automatic addition of pitch jumps at high temp in soundgen() (?)
 
@@ -421,7 +421,7 @@ soundgen = function(
     na_seg = na_seg[is.na(pitch[na_seg$start]), ]
     na_seg$prop_start = (na_seg$start - 1) / lp
     na_seg$prop_end = na_seg$end / lp
-    pitch = intplPitch(pitch)  # fill in NA by interpolation
+    pitch = intplNA(pitch)  # fill in NA by interpolation
   } else {
     na_seg = NULL
   }

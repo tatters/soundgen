@@ -4,14 +4,14 @@
 #'
 #' Returns a smooth contour based on an arbitrary number of anchors. Used by
 #' \code{\link{soundgen}} for generating intonation contour, mouth opening, etc.
-#' Although this function is mostly intended to be used internally by soundgen,
-#' and it's slower than directly calling something like approx(), it may be a
-#' convenient "lazy" option because it can both up- and downsample vectors to
-#' the required size without aliasing. Note that pitch contours are treated as a
-#' special case: values are log-transformed prior to smoothing, so that with 2
-#' anchors we get a linear transition on a log scale (as if we were operating
-#' with musical notes rather than frequencies in Hz). Pitch plots have two Y
-#' axes: one showing Hz and the other showing musical notation.
+#' This function is mostly intended to be used internally by soundgen, more
+#' precisely to construct (upsample) smooth curves from a number of anchors. For
+#' general upsampling or downsampling of audio, use \code{\link{resample}}. Note
+#' that pitch contours are treated as a special case: values are log-transformed
+#' prior to smoothing, so that with 2 anchors we get a linear transition on a
+#' log scale (as if we were operating with musical notes rather than frequencies
+#' in Hz). Pitch plots have two Y axes: one showing Hz and the other showing
+#' musical notation.
 #' @param anchors a numeric vector of values or a list/dataframe with one column
 #'   (value) or two columns (time and value). \code{achors$time} can be in ms
 #'   (with len=NULL) or in arbitrary units, eg 0 to 1 (with duration determined
@@ -38,14 +38,6 @@
 #' @export
 #' @return Returns a numeric vector of length \code{len}.
 #' @examples
-#' # downsampling (low-pass filter + decimation, see ?soundgen:::downsample for
-#' # details)
-#' getSmoothContour(rnorm(100), len = 5)
-#'
-#' # upsampling
-#' getSmoothContour(c(1, 3, 2), len = 5, interpol = 'approx')
-#' getSmoothContour(c(1, 3, 2), len = 5, interpol = 'loess')
-#'
 #' # long format: anchors are a dataframe
 #' a = getSmoothContour(anchors = data.frame(
 #'   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
@@ -169,9 +161,10 @@ getSmoothContour = function(
     # nothing to do
     smoothContour = anchors$value
   } else if (nr > len) {
-    # if there are more anchors than len, downsample the anchors
-    smoothContour = downsample(anchors$value, f = nr / len)
+    # downsample
+    smoothContour = suppressWarnings(resample(anchors$value, mult = nr / len))
   } else if (discontThres <= 0 | nr < 3) {
+    # upsample in one go
     smoothContour = drawContour(len = len,
                                 anchors = anchors,
                                 interpol = interpol,
@@ -330,16 +323,17 @@ drawContour = function(len,
                        duration_ms = 500,
                        loessSpan = NULL) {
   time = 1:len
-  if (nrow(anchors) == 1) {
+  nr = nrow(anchors)
+  if (nr == 1) {
     # flat
     smoothContour = rep(anchors$value[1], len)
-  } else if (nrow(anchors) == 2) {
+  } else if (nr == 2) {
     # linear
     smoothContour = seq(anchors$value[1], anchors$value[2], length.out = len)
   } else {
     # smooth contour
     if (interpol == 'approx') {
-      if (len > nrow(anchors)) {
+      if (len > nr) {
         smoothContour = approx(anchors$value, n = len, x = anchors$time)$y
       } else {
         smoothContour = anchors$value
@@ -391,11 +385,14 @@ drawContour = function(len,
         }
       }
     }
+
+    # floor / ceiling
     smoothContour[smoothContour < valueFloor] = valueFloor
     smoothContour[smoothContour > valueCeiling] = valueCeiling
     return(smoothContour)
   }
 }
+
 
 #' Split contour
 #'

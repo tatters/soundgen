@@ -72,24 +72,16 @@ Returns a numeric vector of length \code{len}.
 \description{
 Returns a smooth contour based on an arbitrary number of anchors. Used by
 \code{\link{soundgen}} for generating intonation contour, mouth opening, etc.
-Although this function is mostly intended to be used internally by soundgen,
-and it's slower than directly calling something like approx(), it may be a
-convenient "lazy" option because it can both up- and downsample vectors to
-the required size without aliasing. Note that pitch contours are treated as a
-special case: values are log-transformed prior to smoothing, so that with 2
-anchors we get a linear transition on a log scale (as if we were operating
-with musical notes rather than frequencies in Hz). Pitch plots have two Y
-axes: one showing Hz and the other showing musical notation.
+This function is mostly intended to be used internally by soundgen, more
+precisely to construct (upsample) smooth curves from a number of anchors. For
+general upsampling or downsampling of audio, use \code{\link{resample}}. Note
+that pitch contours are treated as a special case: values are log-transformed
+prior to smoothing, so that with 2 anchors we get a linear transition on a
+log scale (as if we were operating with musical notes rather than frequencies
+in Hz). Pitch plots have two Y axes: one showing Hz and the other showing
+musical notation.
 }
 \examples{
-# downsampling (low-pass filter + decimation, see ?soundgen:::downsample for
-# details)
-getSmoothContour(rnorm(100), len = 5)
-
-# upsampling
-getSmoothContour(c(1, 3, 2), len = 5, interpol = 'approx')
-getSmoothContour(c(1, 3, 2), len = 5, interpol = 'loess')
-
 # long format: anchors are a dataframe
 a = getSmoothContour(anchors = data.frame(
   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),

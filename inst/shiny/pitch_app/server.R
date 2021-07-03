@@ -733,9 +733,10 @@ server = function(input, output, session) {
         unvoiced_frames = (1:ncol(myPars$pitchCands$freq)) [-voiced_frames]
         # make sure myPars$pitch is the same length as ncol(pitchCands$freq)
         if (length(myPars$pitch) != ncol(myPars$pitchCands$freq)) {
-          myPars$pitch = soundgen:::upsamplePitchContour(
+          myPars$pitch = resample(
             pitch = myPars$pitch,
-            len = ncol(myPars$pitchCands$freq),
+            mult = ncol(myPars$pitchCands$freq) / length(myPars$pitch),
+            lowPass = FALSE,
             plot = FALSE)
         }
         myPars$pitch[unvoiced_frames] = NA
