@@ -152,6 +152,7 @@ resample = function(x,
   } else {
     x_noNA = x
   }
+  if (!any(diff(x) != 0)) return(rep(x[1], n2))
 
   if (!is.finite(mult) | mult < 0) {
     stop('mult must be a real positive number')

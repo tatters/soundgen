@@ -59,7 +59,7 @@
 #' }
 shiftPitch = function(
   x,
-  multPitch,
+  multPitch = 1,
   multFormants = multPitch,
   timeStretch = 1,
   samplingRate = NULL,
@@ -70,6 +70,7 @@ shiftPitch = function(
   overlap = 75,
   wn = 'gaussian',
   interpol = c('approx', 'spline')[1],
+  propagation = c('time', 'adaptive')[1],
   normalize = TRUE,
   play = FALSE,
   saveAudio = NULL,
@@ -106,7 +107,7 @@ shiftPitch = function(
 #' @keywords internal
 .shiftPitch = function(
   audio,
-  multPitch,
+  multPitch = 1,
   multFormants = multPitch,
   timeStretch = 1,
   samplingRate = NULL,
@@ -117,10 +118,14 @@ shiftPitch = function(
   overlap = 75,
   wn = 'gaussian',
   interpol = c('approx', 'spline')[1],
+  propagation = c('time', 'adaptive')[1],
   normalize = TRUE,
   play = FALSE) {
-  if (multPitch == 1 & multFormants == 1 & timeStretch == 1)
+  if (!any((multPitch != 1) | (multFormants != 1) | (timeStretch != 1))) {
+    message('Nothing to do')
     return(audio$sound)
+  }
+
   if (!is.null(step)) {
     overlap = (1 - step / windowLength) * 100  # for istft
   }
@@ -142,18 +147,19 @@ shiftPitch = function(
     scale = TRUE,
     complex = TRUE
   )
+  nr = nrow(spec)
+  nc = ncol(spec)
   # image(t(log(abs(spec))))
   magn = abs(spec)
 
   ## Time-stretching / pitch-shifting
-  if (multPitch == 1 & timeStretch == 1) {
+  if (!any((multPitch != 1) | (timeStretch != 1))) {
     soundFiltered = audio$sound
     recalculateSpec = FALSE
   } else {
-    recalculateSpec = TRUE
-    n1 = floor(windowLength_points / 2)  # zpExtra
+    recalculateSpec = TRUE  # will need a new spec of stretched/pitch-shifted sound
     bin_width = audio$samplingRate / windowLength_points
-    freqs = (0:(n1 - 1)) * bin_width
+    freqs = (0:(nr - 1)) * bin_width
     step_s = step / 1000
 
     # unwrap the phase  - see Royer 2019, Prusa 2017
@@ -162,33 +168,59 @@ shiftPitch = function(
     # original formants back in after pitch-shifting (or do a formant shift)
     phase_orig = phase_new = Arg(spec)
     spec1 = spec
-    if (ncol(phase_orig) > 1) {
-      for (i in 2:ncol(phase_orig)) {
-        dPhase =  step_s * 2 * pi * freqs +
-          princarg(phase_orig[, i] - phase_orig[, i - 1] - step_s * 2 * pi * freqs)
-        # plot(dPhase, type = 'l')
-        phase_new[, i] = phase_new[, i - 1] + dPhase * multPitch * timeStretch
-        spec1[, i] = complex(modulus = magn[, i], argument = phase_new[, i])
+    if (FALSE) {
+      if (nc > 1) {
+        for (i in 2:n) {
+          dPhase =  step_s * 2 * pi * freqs +
+            princarg(phase_orig[, i] - phase_orig[, i - 1] - step_s * 2 * pi * freqs)
+          # plot(dPhase, type = 'l')
+          phase_new[, i] = phase_new[, i - 1] + dPhase * multPitch * timeStretch
+          spec1[, i] = complex(modulus = magn[, i], argument = phase_new[, i])
+        }
+        # spec1 = matrix(complex(modulus = magn, argument = phase_new), nrow = nrow(spec))
       }
+    } else {
+      multPitch = getSmoothContour(multPitch, len = nc - 1)
+      timeStretch = getSmoothContour(timeStretch, len = nc - 1)
+      phase_new = dPhase(phase = phase_orig,
+                         magn = magn,
+                         step_s = step_s,
+                         freqs = freqs,
+                         alpha = multPitch * timeStretch,
+                         propagation = propagation)
+      spec1 = matrix(complex(modulus = magn, argument = phase_new), nrow = nrow(spec))
     }
 
     # Reconstruct the audio
-    step_s_new = step_s * multPitch * timeStretch
-    overlap_new = 100 * (1 - step_s_new * 1000 / windowLength)
-    soundFiltered = as.numeric(
-      seewave::istft(
+    if (TRUE) {
+      step_s_new = step_s * multPitch * timeStretch
+      overlap_new = 100 * (1 - step_s_new * 1000 / windowLength)
+      soundFiltered =  istft_mod(   # seewave::istft(
         spec1,
-        f = 16000,
+        f = audio$samplingRate,
         ovlp = overlap_new,
         wl = windowLength_points,
         wn = wn,
-        output = "matrix"
+        mult_short = multPitch,
+        mult_long = getSmoothContour(multPitch, len = nc)
       )
-    )
-
-    # Resample
-    if (multPitch != 1)
-      soundFiltered = resample(soundFiltered, mult = 1 / multPitch)
+    } else {
+      step_s_new = step_s * multPitch[1] * timeStretch[1]
+      overlap_new = 100 * (1 - step_s_new * 1000 / windowLength)
+      soundFiltered = as.numeric(
+        seewave::istft(
+          spec1,
+          f = audio$samplingRate,
+          ovlp = overlap_new,
+          wl = windowLength_points,
+          wn = wn,
+          output = 'matrix'
+        )
+      )
+      # Resample
+      if (any(multPitch != 1))
+        soundFiltered = resample(soundFiltered, mult = 1 / multPitch)
+    }
 
     # normalize, otherwise glitches with shifting formats
     soundFiltered = soundFiltered / max(soundFiltered) * audio$scale
@@ -198,7 +230,8 @@ shiftPitch = function(
 
 
   ## Shift formants, unless they are supposed to shift with pitch
-  if (multFormants != multPitch) {
+  multFormants = getSmoothContour(multFormants, len = nc - 1)
+  if (any(multFormants != multPitch)) {
     if (recalculateSpec) {
       # Get a new spectrogram of the pitch-shifted sound
       step_seq_ps = seq(1,
@@ -314,3 +347,142 @@ shiftPitch = function(
 
   return(soundFiltered)
 }
+
+
+dPhase = function(phase,
+                  magn,
+                  step_s,
+                  freqs,
+                  alpha,
+                  propagation = c('time', 'adaptive')[1],
+                  tol = 10^(-6),
+                  nr = nrow(phase),
+                  nc = ncol(phase)) {
+  ## Calculate partial derivatives of phase with respect to time and frequency
+  # horizontal (dTime)
+  dp_hor = dp_ver = matrix(0, nrow = nr, ncol = nc)
+  for (i in 2:(nc - 1)) {
+    dp_backward = step_s * 2 * pi * freqs +
+      princarg(phase[, i] - phase[, i - 1] - step_s * 2 * pi * freqs)
+    dp_forward =step_s * 2 * pi * freqs +
+      princarg(phase[, i + 1] - phase[, i] - step_s * 2 * pi * freqs)
+    dp_hor[, i] = (dp_backward + dp_forward) / 2
+    # plot(dp_hor[, i], type = 'l')
+  }
+  # only backward for the last frame
+  dp_hor[, nc] = step_s * 2 * pi * freqs +
+    princarg(phase[, nc] - phase[, nc - 1] - step_s * 2 * pi * freqs)
+
+  # vertical (dFreq)
+  bin_width = freqs[2] - freqs[1]
+  for (i in 2:(nr - 1)) {
+    dp_down = princarg(phase[i, ] - phase[i - 1, ]) / bin_width
+    dp_up = princarg(phase[i + 1, ] - phase[i, ]) / bin_width
+    dp_ver[i, ] = (dp_down + dp_up) / 2
+    # plot(dp_ver[, i], type = 'l')
+  }
+  # only down for the last bin
+  dp_ver[nr, ] = princarg(phase[nr, ] - phase[nr - 1, ]) / bin_width
+
+  ## Combine partial derivatives by propagating either horizontally or
+  ## vertically, depending on magnitudes
+  phase_new = phase
+  if (propagation == 'time') {
+    for (i in 2:nc) {
+      phase_new[, i] = phase_new[, i - 1] + (dp_hor[, i - 1] + dp_hor[, i]) / 2 * alpha[i - 1]
+    }
+  } else if (propagation == 'adaptive') {
+    for (i in 2:nc) {
+      phase_new[, i] = phasePropagate(i, dp_hor = dp_hor,
+                                      dp_ver = dp_ver, magn = magn,
+                                      phase_new = phase_new, tol = tol,
+                                      bin_width = bin_width, alpha = alpha[i - 1])
+      # print(i)
+    }
+
+  }
+  # image(phase_new)
+  return(phase_new)
+}
+
+
+phasePropagate = function(i,
+                          dp_hor,
+                          dp_ver,
+                          magn,
+                          phase_new,
+                          tol,
+                          bin_width,
+                          alpha) {
+  bin_width_new = alpha * bin_width
+  out = runif(nrow(dp_hor), -pi, pi)
+  abstol = tol * max(magn[, c(i, i - 1)])
+  bins_cur = which(magn[, i] > abstol)
+  if (!length(bins_cur) > 0) return(out)
+  maxHeap = data.frame(frame = i - 1, bin = bins_cur, magn = magn[bins_cur, i - 1])
+  while(length(bins_cur) > 0) {
+    row_max = which.max(maxHeap$magn)
+    top = maxHeap[row_max, ]
+    maxHeap = maxHeap[-row_max, ]
+    h = top$bin  # bin at top of the heap
+    if (top$frame == i - 1) {
+      if (h %in% bins_cur) {
+        out[h] = phase_new[h, i - 1] + alpha * (dp_hor[h, i - 1] + dp_hor[h, i]) / 2
+        bins_cur = bins_cur[bins_cur != h]
+        maxHeap = rbind(maxHeap, data.frame(
+          frame = i, bin = h, magn = magn[h, i]
+        ))
+      }
+    } else if (top$frame == i) {
+      if ((h + 1) %in% bins_cur) {
+        out[h + 1] = out[h] + bin_width_new * (dp_ver[h] + dp_ver[h + 1]) / 2
+        bins_cur = bins_cur[bins_cur != (h + 1)]
+        maxHeap = rbind(maxHeap, data.frame(
+          frame = i, bin = h + 1, magn = magn[h + 1, i]
+        ))
+      }
+      if ((h - 1) %in% bins_cur) {
+        out[h - 1] = out[h] - bin_width_new * (dp_ver[h - 1] + dp_ver[h]) / 2
+        bins_cur = bins_cur[bins_cur != (h - 1)]
+        maxHeap = rbind(maxHeap, data.frame(
+          frame = i, bin = h - 1, magn = magn[h - 1, i]
+        ))
+      }
+    }
+    # print(length(bins_cur))
+  }
+  return(out)
+}
+
+
+istft_mod = function (stft, f, wl, ovlp = 75, wn = "hanning", mult_short = 1, mult_long = 1) {
+  if (!is.complex(stft))
+    stop("The object stft should be of complex mode (ie Re + Im.")
+  h <- wl * (100 - ovlp)/100 / mult_short
+  coln <- ncol(stft)
+  # xlen <- wl + (coln - 1) * h
+  # x <- numeric(xlen)
+  xlen <- ceiling(wl / min(mult_long)) + sum(h)
+  x <- rep(0, xlen)
+  start_seq = c(0, cumsum(h))
+  for (i in 1:length(start_seq)) {
+    b = start_seq[i]
+    X <- stft[, i]
+    mirror <- rev(X[-1])
+    mirror <- complex(real = Re(mirror), imaginary = -Im(mirror))
+    X <- c(X, complex(real = Re(X[length(X)]), imaginary = 0),
+           mirror)
+    xprim <- Re(fft(X, inverse = TRUE)/length(X))
+    if (any(mult_long != 1))
+      xprim = resample(xprim, mult = 1 / mult_long[i])
+    len_xprim = length(xprim)
+    win <- seewave:::ftwindow(wl = len_xprim, wn = wn)
+    idx = (b + 1) : (b + len_xprim )
+    x[idx] = x[idx] + xprim * win
+    # x <- addVectors(x, xprim * win, insertionPoint = b + 1, normalize = FALSE)
+  }
+  W0 <- sum(win^2)
+  x <- x * mean(h)/W0
+  return(x)
+}
+
