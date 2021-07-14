@@ -3,13 +3,13 @@
 #' Raises or lowers pitch with or without also shifting the formants (resonance
 #' frequencies) and performing a time-stretch. The three operations (pitch
 #' shift, formant shift, and time stretch) are independent and can be performed
-#' in any combination. Accordingly, this function can also be used to shift
-#' formants without changing pitch or duration, but the dedicated
+#' in any combination, statically or dynamically. \code{shiftPitch} can also be
+#' used to shift formants without changing pitch or duration, but the dedicated
 #' \code{\link{shiftFormants}} is faster for that task.
 #'
 #' Algorithm: phase vocoder. Pitch shifting is accomplished by performing a time
-#' stretch (at present, with horizontal phase propagation) followed by
-#' resampling. This shifts both pitch and formants; to preserve the original
+#' stretch (at present, with horizontal or adaptive phase propagation) followed
+#' by resampling. This shifts both pitch and formants; to preserve the original
 #' formant frequencies or modify them independently of pitch, a variant of
 #' \code{link{transplantFormants}} is performed to "transplant" the original or
 #' scaled formants onto the time-stretched new sound.
@@ -19,15 +19,19 @@
 #' @inheritParams spectrogram
 #' @inheritParams segment
 #' @inheritParams soundgen
-#' @param multPitch 1 = no change, >1 = raise pitch (eg 1.1 = 10\% up, 2 =
-#'   one octave up), <1 = lower pitch
+#' @param multPitch 1 = no change, >1 = raise pitch (eg 1.1 = 10\% up, 2 = one
+#'   octave up), <1 = lower pitch. Anchor format accepted for multPitch /
+#'   multFormant / timeStretch (see \code{\link{soundgen}})
 #' @param multFormants 1 = no change, >1 = raise formants (eg 1.1 = 10\% up, 2 =
 #'   one octave up), <1 = lower formants
 #' @param timeStretch 1 = no change, >1 = longer, <1 = shorter
 #' @param freqWindow the width of spectral smoothing window, Hz. Defaults to
 #'   detected f0 prior to pitch shifting - see \code{\link{shiftFormants}} for
 #'   discussion and examples
-#' @param interpol the method for interpolating scaled spectra
+#' @param propagation the method for propagating phase: "time" = horizontal
+#'   propagation (default), "adaptive" = an experimental implementation of
+#'   "vocoder done right" (Prusa & Holighaus 2017)
+#' @param interpol the method for interpolating scaled spectra and anchors
 #' @export
 #' @examples
 #' s = soundgen(sylLen = 200, ampl = c(0,-10),
@@ -40,6 +44,20 @@
 #' # playme(s1)
 #'
 #' \dontrun{
+#' ## Dynamic manipulations
+#' # Add a chevron-shaped pitch contour
+#' s2 = shiftPitch(s, samplingRate = 16000, multPitch = c(1.1, 1.3, .8))
+#' playme(s2)
+#'
+#' # Time-stretch only the middle
+#' s3 = shiftPitch(s, samplingRate = 16000, timeStretch = list(
+#'   time = c(0, .25, .31, .5, .55, 1),
+#'   value = c(1, 1, 3, 3, 1, 1))
+#' )
+#' playme(s3)
+#'
+#'
+#' ## Various combinations of 3 manipulations
 #' data(sheep, package = 'seewave')  # import a recording from seewave
 #' playme(sheep)
 #' spectrogram(sheep)
@@ -65,9 +83,9 @@ shiftPitch = function(
   samplingRate = NULL,
   freqWindow = NULL,
   dynamicRange = 80,
-  windowLength = 50,
-  step = NULL,
-  overlap = 75,
+  windowLength = 40,
+  step = 2,
+  overlap = NULL,
   wn = 'gaussian',
   interpol = c('approx', 'spline')[1],
   propagation = c('time', 'adaptive')[1],
@@ -76,6 +94,10 @@ shiftPitch = function(
   saveAudio = NULL,
   reportEvery = NULL,
   ...) {
+  multPitch = reformatAnchors(multPitch)
+  multFormants = reformatAnchors(multFormants)
+  timeStretch = reformatAnchors(timeStretch)
+
   # match args
   myPars = c(as.list(environment()), list(...))
   # exclude some args
@@ -107,9 +129,9 @@ shiftPitch = function(
 #' @keywords internal
 .shiftPitch = function(
   audio,
-  multPitch = 1,
-  multFormants = multPitch,
-  timeStretch = 1,
+  multPitch,
+  multFormants,
+  timeStretch,
   samplingRate = NULL,
   freqWindow = NULL,
   dynamicRange = 80,
@@ -121,7 +143,9 @@ shiftPitch = function(
   propagation = c('time', 'adaptive')[1],
   normalize = TRUE,
   play = FALSE) {
-  if (!any((multPitch != 1) | (multFormants != 1) | (timeStretch != 1))) {
+  if (!(any(multPitch$value != 1) |
+        any(multFormants$value != 1) |
+        any(timeStretch$value != 1))) {
     message('Nothing to do')
     return(audio$sound)
   }
@@ -153,7 +177,7 @@ shiftPitch = function(
   magn = abs(spec)
 
   ## Time-stretching / pitch-shifting
-  if (!any((multPitch != 1) | (timeStretch != 1))) {
+  if (!(any(multPitch$value != 1) | any(timeStretch$value != 1))) {
     soundFiltered = audio$sound
     recalculateSpec = FALSE
   } else {
@@ -162,50 +186,45 @@ shiftPitch = function(
     freqs = (0:(nr - 1)) * bin_width
     step_s = step / 1000
 
-    # unwrap the phase  - see Royer 2019, Prusa 2017
+    # unwrap the phase, calculate instantaneous frequency - see Prusa 2017, Royer 2019
     # could do simply: magn = warpMatrix(abs(z), scaleFactor = 1 / alpha)
     # ...but then formant bandwidths change, so it's better to transplant the
     # original formants back in after pitch-shifting (or do a formant shift)
     phase_orig = phase_new = Arg(spec)
     spec1 = spec
-    if (FALSE) {
-      if (nc > 1) {
-        for (i in 2:n) {
-          dPhase =  step_s * 2 * pi * freqs +
-            princarg(phase_orig[, i] - phase_orig[, i - 1] - step_s * 2 * pi * freqs)
-          # plot(dPhase, type = 'l')
-          phase_new[, i] = phase_new[, i - 1] + dPhase * multPitch * timeStretch
-          spec1[, i] = complex(modulus = magn[, i], argument = phase_new[, i])
-        }
-        # spec1 = matrix(complex(modulus = magn, argument = phase_new), nrow = nrow(spec))
-      }
-    } else {
-      multPitch = getSmoothContour(multPitch, len = nc - 1)
-      timeStretch = getSmoothContour(timeStretch, len = nc - 1)
-      phase_new = dPhase(phase = phase_orig,
-                         magn = magn,
-                         step_s = step_s,
-                         freqs = freqs,
-                         alpha = multPitch * timeStretch,
-                         propagation = propagation)
-      spec1 = matrix(complex(modulus = magn, argument = phase_new), nrow = nrow(spec))
-    }
+    multPitch_vector = getSmoothContour(multPitch,
+                                        len = nc - 1,
+                                        interpol = interpol)
+    timeStretch_vector = getSmoothContour(timeStretch,
+                                          len = nc - 1,
+                                          interpol = interpol)
+    phase_new = dPhase(phase = phase_orig,
+                       magn = magn,
+                       step_s = step_s,
+                       freqs = freqs,
+                       alpha = multPitch_vector * timeStretch_vector,
+                       propagation = propagation)
+    spec1 = matrix(complex(modulus = magn, argument = phase_new),
+                   nrow = nrow(spec))
 
     # Reconstruct the audio
-    if (TRUE) {
-      step_s_new = step_s * multPitch * timeStretch
+    if (any(diff(multPitch$value) != 0) |
+        any(diff(timeStretch$value) != 0)) {
+      # dynamic
+      step_s_new = step_s * multPitch_vector * timeStretch_vector
       overlap_new = 100 * (1 - step_s_new * 1000 / windowLength)
-      soundFiltered =  istft_mod(   # seewave::istft(
+      soundFiltered =  istft_mod(   # instead of seewave::istft(
         spec1,
         f = audio$samplingRate,
         ovlp = overlap_new,
         wl = windowLength_points,
         wn = wn,
-        mult_short = multPitch,
+        mult_short = multPitch_vector,
         mult_long = getSmoothContour(multPitch, len = nc)
       )
     } else {
-      step_s_new = step_s * multPitch[1] * timeStretch[1]
+      # static - shortcut
+      step_s_new = step_s * multPitch_vector[1] * timeStretch_vector[1]
       overlap_new = 100 * (1 - step_s_new * 1000 / windowLength)
       soundFiltered = as.numeric(
         seewave::istft(
@@ -218,8 +237,8 @@ shiftPitch = function(
         )
       )
       # Resample
-      if (any(multPitch != 1))
-        soundFiltered = resample(soundFiltered, mult = 1 / multPitch)
+      if (multPitch_vector[1] != 1)
+        soundFiltered = resample(soundFiltered, mult = 1 / multPitch_vector[1])
     }
 
     # normalize, otherwise glitches with shifting formats
@@ -230,10 +249,10 @@ shiftPitch = function(
 
 
   ## Shift formants, unless they are supposed to shift with pitch
-  multFormants = getSmoothContour(multFormants, len = nc - 1)
-  if (any(multFormants != multPitch)) {
+  if (any(multFormants$value != multPitch$value)) {
+    multFormants_vector = getSmoothContour(multFormants, len = nc - 1)
     if (recalculateSpec) {
-      # Get a new spectrogram of the pitch-shifted sound
+      # Get a new spectrogram (needed if we applied pitch shift and/or time stretch)
       step_seq_ps = seq(1,
                         max(1, (length(soundFiltered) - windowLength_points)),
                         windowLength_points - (overlap * windowLength_points / 100))
@@ -264,7 +283,7 @@ shiftPitch = function(
     freqBin_Hz = audio$samplingRate / 2 / nrow(spec_ps)
     freqWindow_bins = round(freqWindow / freqBin_Hz, 0)
     # adjust freqWindow if shifting pitch
-    freqWindow_bins_adj = max(3, round(freqWindow_bins * multPitch))
+    freqWindow_bins_adj = max(3, round(freqWindow_bins * mean(multPitch_vector)))
     if (freqWindow_bins < 3) {
       message(paste('freqWindow has to be at least 3 bins wide;
                   resetting to', ceiling(freqBin_Hz * 3)))
@@ -305,7 +324,7 @@ shiftPitch = function(
 
     # Warp the donor spectrogram
     spec_donor = warpMatrix(spec_donor,
-                            scaleFactor = multFormants,
+                            scaleFactor = multFormants_vector,
                             interpol = interpol)
 
     # Multiply the spectrograms and reconstruct the audio
@@ -349,6 +368,17 @@ shiftPitch = function(
 }
 
 
+#' Phase derivatives
+#'
+#' Internal soundgen function called by pitchShift().
+#' @inheritParams shiftPitch
+#' @param phase,magn phase and magnitude of a spectrogram
+#' @param step_s step in s
+#' @param freqs a vector of central frequencies per bin
+#' @param alpha stretch factor
+#' @param tol tolerance of "vocoder done right" algorithm
+#' @param nr,nc dimensions of input spectrogram
+#' @keywords internal
 dPhase = function(phase,
                   magn,
                   step_s,
@@ -406,6 +436,17 @@ dPhase = function(phase,
 }
 
 
+#' Propagate phase
+#'
+#' Internal soundgen function called by dPhase(). Propagates phase using the
+#' "vocoder done right" algorithm, as in Prusa & Holighaus 2017 "Phase vocoder
+#' done right".
+#' @inheritParams dPhase
+#' @param i analyzed frame
+#' @param dp_hor,dp_ver time and frequency partical derivatives of phase
+#' @param phase_new matrix for storing the new phase
+#' @param bin_width width of frequency bin, Hz
+#' @keywords internal
 phasePropagate = function(i,
                           dp_hor,
                           dp_ver,
@@ -455,34 +496,42 @@ phasePropagate = function(i,
 }
 
 
-istft_mod = function (stft, f, wl, ovlp = 75, wn = "hanning", mult_short = 1, mult_long = 1) {
+#' Modified istft
+#'
+#' Internal soundgen function. Similar to seewave:::istft(), but adapted to work
+#' with time-variable step sizes in the context of dynamic pitch shifting. Only
+#' call it for dynamic istft because the original seewave function should be a
+#' bit faster for static.
+#' @param stft,f,wl,ovlp,wn see seewave:::istft()
+#' @param mult_short stretch factor of length \code{ncol(stft) - 1}
+#' @param mult_long stretch factor of length \code{ncol(stft)}
+istft_mod = function (stft, f, wl, ovlp = 75, wn = "hanning",
+                      mult_short = 1,
+                      mult_long = 1) {
   if (!is.complex(stft))
     stop("The object stft should be of complex mode (ie Re + Im.")
-  h <- wl * (100 - ovlp)/100 / mult_short
-  coln <- ncol(stft)
-  # xlen <- wl + (coln - 1) * h
-  # x <- numeric(xlen)
-  xlen <- ceiling(wl / min(mult_long)) + sum(h)
-  x <- rep(0, xlen)
+  h = wl * (100 - ovlp)/100 / mult_short
+  coln = ncol(stft)
+  xlen = ceiling(wl / min(mult_long)) + sum(h)
+  x = rep(0, xlen)
   start_seq = c(0, cumsum(h))
   for (i in 1:length(start_seq)) {
     b = start_seq[i]
-    X <- stft[, i]
-    mirror <- rev(X[-1])
-    mirror <- complex(real = Re(mirror), imaginary = -Im(mirror))
-    X <- c(X, complex(real = Re(X[length(X)]), imaginary = 0),
-           mirror)
-    xprim <- Re(fft(X, inverse = TRUE)/length(X))
+    X = stft[, i]
+    mirror = rev(X[-1])
+    mirror = complex(real = Re(mirror), imaginary = -Im(mirror))
+    X = c(X, complex(real = Re(X[length(X)]), imaginary = 0), mirror)
+    xprim = Re(fft(X, inverse = TRUE)/length(X))
     if (any(mult_long != 1))
       xprim = resample(xprim, mult = 1 / mult_long[i])
     len_xprim = length(xprim)
-    win <- seewave:::ftwindow(wl = len_xprim, wn = wn)
+    win = seewave::ftwindow(wl = len_xprim, wn = wn)
     idx = (b + 1) : (b + len_xprim )
     x[idx] = x[idx] + xprim * win
     # x <- addVectors(x, xprim * win, insertionPoint = b + 1, normalize = FALSE)
   }
-  W0 <- sum(win^2)
-  x <- x * mean(h)/W0
+  W0 = sum(win^2)
+  x = x * mean(h)/W0
   return(x)
 }
 

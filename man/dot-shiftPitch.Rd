@@ -7,8 +7,8 @@
 .shiftPitch(
   audio,
   multPitch,
-  multFormants = multPitch,
-  timeStretch = 1,
+  multFormants,
+  timeStretch,
   samplingRate = NULL,
   freqWindow = NULL,
   dynamicRange = 80,
@@ -17,6 +17,7 @@
   overlap = 75,
   wn = "gaussian",
   interpol = c("approx", "spline")[1],
+  propagation = c("time", "adaptive")[1],
   normalize = TRUE,
   play = FALSE
 )
@@ -24,8 +25,9 @@
 \arguments{
 \item{audio}{a list returned by \code{readAudio}}
 
-\item{multPitch}{1 = no change, >1 = raise pitch (eg 1.1 = 10\% up, 2 =
-one octave up), <1 = lower pitch}
+\item{multPitch}{1 = no change, >1 = raise pitch (eg 1.1 = 10\% up, 2 = one
+octave up), <1 = lower pitch. Anchor format accepted for multPitch /
+multFormant / timeStretch (see \code{\link{soundgen}})}
 
 \item{multFormants}{1 = no change, >1 = raise formants (eg 1.1 = 10\% up, 2 =
 one octave up), <1 = lower formants}
@@ -54,7 +56,11 @@ may be slightly different, eg 24.98866 instead of 25.0 ms)}
 \item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
 gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
-\item{interpol}{the method for interpolating scaled spectra}
+\item{interpol}{the method for interpolating scaled spectra and anchors}
+
+\item{propagation}{the method for propagating phase: "time" = horizontal
+propagation (default), "adaptive" = an experimental implementation of
+"vocoder done right" (Prusa & Holighaus 2017)}
 
 \item{normalize}{if TRUE, scales input prior to FFT}
 

@@ -28,7 +28,8 @@ shiftFormants(
 numeric vectors}
 
 \item{multFormants}{1 = no change, >1 = raise formants (eg 1.1 = 10\% up, 2 =
-one octave up), <1 = lower formants}
+one octave up), <1 = lower formants. Anchor format accepted (see
+\code{\link{soundgen}})}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector)}
@@ -70,13 +71,13 @@ left every ... iterations (NULL = default, NA = don't report)}
 }
 \description{
 Raises or lowers formants (resonance frequencies), changing the voice quality
-or timbre of the sound without changing its pitch. Note that this is only
-possible when the fundamental frequency f0 is lower than the formant
-frequencies. For best results, \code{freqWindow} should be no lower than f0
-and no higher than formant bandwidths. Obviously, this is impossible for many
-signals, so just try a few reasonable values, like ~200 Hz for speech. If
-\code{freqWindow} is not specified, soundgen sets it to the average detected
-f0, which is slow.
+or timbre of the sound without changing its pitch, statically or dynamically.
+Note that this is only possible when the fundamental frequency f0 is lower
+than the formant frequencies. For best results, \code{freqWindow} should be
+no lower than f0 and no higher than formant bandwidths. Obviously, this is
+impossible for many signals, so just try a few reasonable values, like ~200
+Hz for speech. If \code{freqWindow} is not specified, soundgen sets it to the
+average detected f0, which is slow.
 }
 \details{
 Algorithm: phase vocoder. In the frequency domain, we separate the complex

@@ -23,7 +23,8 @@
 \item{audio}{a list returned by \code{readAudio}}
 
 \item{multFormants}{1 = no change, >1 = raise formants (eg 1.1 = 10\% up, 2 =
-one octave up), <1 = lower formants}
+one octave up), <1 = lower formants. Anchor format accepted (see
+\code{\link{soundgen}})}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector)}

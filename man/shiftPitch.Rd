@@ -6,17 +6,18 @@
 \usage{
 shiftPitch(
   x,
-  multPitch,
+  multPitch = 1,
   multFormants = multPitch,
   timeStretch = 1,
   samplingRate = NULL,
   freqWindow = NULL,
   dynamicRange = 80,
-  windowLength = 50,
-  step = NULL,
-  overlap = 75,
+  windowLength = 40,
+  step = 2,
+  overlap = NULL,
   wn = "gaussian",
   interpol = c("approx", "spline")[1],
+  propagation = c("time", "adaptive")[1],
   normalize = TRUE,
   play = FALSE,
   saveAudio = NULL,
@@ -29,8 +30,9 @@ shiftPitch(
 'file2.mp3'), Wave object, numeric vector, or a list of Wave objects or
 numeric vectors}
 
-\item{multPitch}{1 = no change, >1 = raise pitch (eg 1.1 = 10\% up, 2 =
-one octave up), <1 = lower pitch}
+\item{multPitch}{1 = no change, >1 = raise pitch (eg 1.1 = 10\% up, 2 = one
+octave up), <1 = lower pitch. Anchor format accepted for multPitch /
+multFormant / timeStretch (see \code{\link{soundgen}})}
 
 \item{multFormants}{1 = no change, >1 = raise formants (eg 1.1 = 10\% up, 2 =
 one octave up), <1 = lower formants}
@@ -59,7 +61,11 @@ may be slightly different, eg 24.98866 instead of 25.0 ms)}
 \item{wn}{window type accepted by \code{\link[seewave]{ftwindow}}, currently
 gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
-\item{interpol}{the method for interpolating scaled spectra}
+\item{interpol}{the method for interpolating scaled spectra and anchors}
+
+\item{propagation}{the method for propagating phase: "time" = horizontal
+propagation (default), "adaptive" = an experimental implementation of
+"vocoder done right" (Prusa & Holighaus 2017)}
 
 \item{normalize}{if TRUE, scales input prior to FFT}
 
@@ -80,14 +86,14 @@ left every ... iterations (NULL = default, NA = don't report)}
 Raises or lowers pitch with or without also shifting the formants (resonance
 frequencies) and performing a time-stretch. The three operations (pitch
 shift, formant shift, and time stretch) are independent and can be performed
-in any combination. Accordingly, this function can also be used to shift
-formants without changing pitch or duration, but the dedicated
+in any combination, statically or dynamically. \code{shiftPitch} can also be
+used to shift formants without changing pitch or duration, but the dedicated
 \code{\link{shiftFormants}} is faster for that task.
 }
 \details{
 Algorithm: phase vocoder. Pitch shifting is accomplished by performing a time
-stretch (at present, with horizontal phase propagation) followed by
-resampling. This shifts both pitch and formants; to preserve the original
+stretch (at present, with horizontal or adaptive phase propagation) followed
+by resampling. This shifts both pitch and formants; to preserve the original
 formant frequencies or modify them independently of pitch, a variant of
 \code{link{transplantFormants}} is performed to "transplant" the original or
 scaled formants onto the time-stretched new sound.
@@ -103,6 +109,20 @@ s1 = shiftPitch(s, samplingRate = 16000, freqWindow = 400,
 # playme(s1)
 
 \dontrun{
+## Dynamic manipulations
+# Add a chevron-shaped pitch contour
+s2 = shiftPitch(s, samplingRate = 16000, multPitch = c(1.1, 1.3, .8))
+playme(s2)
+
+# Time-stretch only the middle
+s3 = shiftPitch(s, samplingRate = 16000, timeStretch = list(
+  time = c(0, .25, .31, .5, .55, 1),
+  value = c(1, 1, 3, 3, 1, 1))
+)
+playme(s3)
+
+
+## Various combinations of 3 manipulations
 data(sheep, package = 'seewave')  # import a recording from seewave
 playme(sheep)
 spectrogram(sheep)
