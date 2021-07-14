@@ -18,6 +18,8 @@ shiftPitch(
   wn = "gaussian",
   interpol = c("approx", "spline")[1],
   propagation = c("time", "adaptive")[1],
+  preserveEnv = NULL,
+  transplantEnv_pars = list(windowLength = 10),
   normalize = TRUE,
   play = FALSE,
   saveAudio = NULL,

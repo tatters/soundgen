@@ -7,8 +7,8 @@
 .shiftFormants(
   audio,
   multFormants,
-  samplingRate = NULL,
   freqWindow = NULL,
+  spec = NULL,
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
@@ -26,11 +26,10 @@
 one octave up), <1 = lower formants. Anchor format accepted (see
 \code{\link{soundgen}})}
 
-\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
-numeric vector)}
-
 \item{freqWindow}{the width of spectral smoothing window, Hz. Defaults to
 detected f0}
+
+\item{spec}{precomputed spectrogram}
 
 \item{dynamicRange}{dynamic range, dB. All values more than one dynamicRange
 under maximum are treated as zero}

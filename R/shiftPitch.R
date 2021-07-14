@@ -89,6 +89,8 @@ shiftPitch = function(
   wn = 'gaussian',
   interpol = c('approx', 'spline')[1],
   propagation = c('time', 'adaptive')[1],
+  preserveEnv = NULL,
+  transplantEnv_pars = list(windowLength = 10),
   normalize = TRUE,
   play = FALSE,
   saveAudio = NULL,
@@ -141,6 +143,8 @@ shiftPitch = function(
   wn = 'gaussian',
   interpol = c('approx', 'spline')[1],
   propagation = c('time', 'adaptive')[1],
+  preserveEnv = NULL,
+  transplantEnv_pars = list(),
   normalize = TRUE,
   play = FALSE) {
   if (!(any(multPitch$value != 1) |
@@ -249,109 +253,48 @@ shiftPitch = function(
 
 
   ## Shift formants, unless they are supposed to shift with pitch
-  if (any(multFormants$value != multPitch$value)) {
+  if ((nrow(multFormants) != nrow(multPitch)) ||
+      any(multFormants$value != multPitch$value)) {
     multFormants_vector = getSmoothContour(multFormants, len = nc - 1)
-    if (recalculateSpec) {
-      # Get a new spectrogram (needed if we applied pitch shift and/or time stretch)
-      step_seq_ps = seq(1,
-                        max(1, (length(soundFiltered) - windowLength_points)),
-                        windowLength_points - (overlap * windowLength_points / 100))
-      spec_ps = seewave::stdft(
-        wave = as.matrix(soundFiltered),
-        f = audio$samplingRate,
-        wl = windowLength_points,
-        zp = 0,
-        step = step_seq_ps,
-        wn = wn,
-        fftw = FALSE,
-        scale = TRUE,
-        complex = TRUE
-      )
-    } else {
-      # reuse the original spec
-      step_seq_ps = step_seq
-      spec_ps = spec
-    }
-    # image(t(log(abs(spec_ps))))
-
-    # Choose the width of smoothing window for the "recipient"
-    if (!is.numeric(freqWindow)) {
-      anal = analyze(audio$sound, audio$samplingRate, plot = FALSE)
-      freqWindow = median(anal$detailed$pitch, na.rm = TRUE)
-      if (!is.numeric(freqWindow)) freqWindow = 200
-    }
-    freqBin_Hz = audio$samplingRate / 2 / nrow(spec_ps)
-    freqWindow_bins = round(freqWindow / freqBin_Hz, 0)
-    # adjust freqWindow if shifting pitch
-    freqWindow_bins_adj = max(3, round(freqWindow_bins * mean(multPitch_vector)))
-    if (freqWindow_bins < 3) {
-      message(paste('freqWindow has to be at least 3 bins wide;
-                  resetting to', ceiling(freqBin_Hz * 3)))
-      freqWindow_rec_bins = 3
-    }
-
-    # Smooth the "donor" and "recipient" spectrograms
-    spec_recipient = spec_ps
-    throwaway_lin = 10 ^ (-dynamicRange / 20) * audio$scale
-
-    # Flatten the recipient spectrogram
-    for (i in 1:ncol(spec_recipient)) {
-      abs_s = abs(spec_recipient[, i])
-      # plot(log(abs_s), type = 'l')
-      env_s = flatEnv(
-        abs_s, samplingRate = 1, method = 'peak',
-        dynamicRange = dynamicRange,
-        windowLength_points = freqWindow_bins_adj)
-      idx = which(env_s > throwaway_lin)  # don't amplify very quiet sections
-      if (length(idx) > 0)
-        spec_recipient[idx, i] = spec_recipient[idx, i] * env_s[idx] / abs_s[idx]
-      # plot(abs(spec_recipient[, i]), type = 'l')
-    }
-
-    # Make sure the donor spec has the same dimensions as the recipient spec
-    spec_donor = interpolMatrix(m = magn,
-                                nr = nrow(spec_recipient),
-                                nc = ncol(spec_recipient))
-
-    # Smooth the donor spectrogram
-    for (i in 1:ncol(spec_donor)) {
-      spec_donor[, i] = getEnv(
-        sound = spec_donor[, i],
-        windowLength_points = freqWindow_bins,
-        method = 'peak'
-      )
-    }
-
-    # Warp the donor spectrogram
-    spec_donor = warpMatrix(spec_donor,
-                            scaleFactor = multFormants_vector,
-                            interpol = interpol)
-
-    # Multiply the spectrograms and reconstruct the audio
-    spec_recipient_new = spec_recipient * spec_donor
-    # image(log(abs(t(spec_recipient))))
-    # image(log(t(spec_donor)))
-    # image(log(abs(t(spec_recipient_new))))
-
-    soundFiltered = as.numeric(
-      seewave::istft(
-        spec_recipient_new,
-        f = samplingRate,
-        ovlp = overlap,
-        wl = windowLength_points,
-        wn = wn,
-        output = "matrix"
-      )
+    # for some weird reason, .shiftFormants() emphasizes low freqs (???), so
+    # calling top function shiftFormants()
+    soundFiltered = shiftFormants(
+      soundFiltered,
+      samplingRate = audio$samplingRate,
+      multFormants = multFormants_vector / multPitch_vector,
+      freqWindow = freqWindow,
+      windowLength = windowLength,
+      step = step,
+      wn = wn,
+      interpol = interpol,
+      dynamicRange = dynamicRange,
+      play = FALSE,
+      normalize = normalize
     )
     # spectrogram(audio$sound, audio$samplingRate)
     # spectrogram(soundFiltered, audio$samplingRate)
   }
 
-  # postprocessing
-  if (normalize) {
-    soundFiltered = soundFiltered - mean(soundFiltered)
-    soundFiltered = soundFiltered / max(abs(soundFiltered))
+  # Transplant amplitude envelope from the original
+  if (is.null(preserveEnv)) {
+    if (any(diff(timeStretch$value, na.rm = TRUE) != 0)) {
+      preserveEnv = FALSE
+    } else {
+      preserveEnv = TRUE
+    }
   }
+  if (preserveEnv) {
+    soundFiltered = do.call(transplantEnv, c(
+      transplantEnv_pars,
+      list(
+        donor = audio$sound,
+        samplingRateD = audio$samplingRate,
+        recipient = soundFiltered
+      )
+    ))
+  }
+
+  # Play, save, return
   if (play == TRUE) {
     playme(soundFiltered, samplingRate = audio$samplingRate)
   }
@@ -363,7 +306,6 @@ shiftPitch = function(
       soundFiltered, f = audio$samplingRate,
       filename = paste0(audio$saveAudio, audio$filename_noExt, '.wav'))
   }
-
   return(soundFiltered)
 }
 

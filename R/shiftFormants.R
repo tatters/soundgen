@@ -107,12 +107,13 @@ shiftFormants = function(
 #' Internal soundgen function called by \code{\link{shiftFormants}}
 #' @inheritParams shiftFormants
 #' @param audio a list returned by \code{readAudio}
+#' @param spec precomputed spectrogram
 #' @keywords internal
 .shiftFormants = function(
   audio,
   multFormants,
-  samplingRate = NULL,
   freqWindow = NULL,
+  spec = NULL,
   dynamicRange = 80,
   windowLength = 50,
   step = NULL,
@@ -127,21 +128,23 @@ shiftFormants = function(
   windowLength_points = floor(windowLength / 1000 * audio$samplingRate / 2) * 2
 
   # Get a spectrogram (use seewave to avoid inconsistent dims when running iSTFT)
-  step_seq = seq(1,
-                 max(1, (audio$ls - windowLength_points)),
-                 windowLength_points - (overlap * windowLength_points / 100))
-  spec = seewave::stdft(
-    wave = as.matrix(audio$sound),
-    f = audio$samplingRate,
-    wl = windowLength_points,
-    zp = 0,
-    step = step_seq,
-    wn = wn,
-    fftw = FALSE,
-    scale = TRUE,
-    complex = TRUE
-  )
-  # image(t(log(abs(spec))))
+  if (is.null(spec)) {
+    step_seq = seq(1,
+                   max(1, (audio$ls - windowLength_points)),
+                   windowLength_points - (overlap * windowLength_points / 100))
+    spec = seewave::stdft(
+      wave = as.matrix(audio$sound),
+      f = audio$samplingRate,
+      wl = windowLength_points,
+      zp = 0,
+      step = step_seq,
+      wn = wn,
+      fftw = FALSE,
+      scale = TRUE,
+      complex = TRUE
+    )
+    # image(t(log(abs(spec))))
+  }
 
   # Choose the width of smoothing window for the "recipient"
   if (!is.numeric(freqWindow)) {
@@ -181,7 +184,7 @@ shiftFormants = function(
     # plot(abs(spec_recipient[, i]), type = 'l')
   }
   # image(t(log(spec_donor)))
-  # image(t(abs(spec_recipient)))
+  # image(t(log(abs(spec_recipient))))
 
   # Warp the "donor" spectrogram
   spec_donor = warpMatrix(spec_donor,

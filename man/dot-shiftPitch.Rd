@@ -18,6 +18,8 @@
   wn = "gaussian",
   interpol = c("approx", "spline")[1],
   propagation = c("time", "adaptive")[1],
+  preserveEnv = NULL,
+  transplantEnv_pars = list(),
   normalize = TRUE,
   play = FALSE
 )

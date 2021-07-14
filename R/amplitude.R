@@ -641,7 +641,7 @@ compressor = flatEnv
 transplantEnv = function(donor,
                          samplingRateD = NULL,
                          recipient,
-                         samplingRateR = NULL,
+                         samplingRateR = samplingRateD,
                          windowLength = 50,
                          method = c('hil', 'rms', 'peak')[3],
                          killDC = FALSE,
