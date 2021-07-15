@@ -69,6 +69,13 @@ gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 propagation (default), "adaptive" = an experimental implementation of
 "vocoder done right" (Prusa & Holighaus 2017)}
 
+\item{preserveEnv}{if TRUE, transplants the amplitude envelope from the
+original to the modified sound with \code{\link{transplantEnv}}. Defaults
+to TRUE if no time stretching is performed and FALSE otherwise}
+
+\item{transplantEnv_pars}{a list of parameters passed on to
+\code{\link{transplantEnv}} if \code{preserveEnv = TRUE}}
+
 \item{normalize}{if TRUE, scales input prior to FFT}
 
 \item{play}{if TRUE, plays the synthesized sound using the default player on

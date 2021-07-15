@@ -32,6 +32,11 @@
 #'   propagation (default), "adaptive" = an experimental implementation of
 #'   "vocoder done right" (Prusa & Holighaus 2017)
 #' @param interpol the method for interpolating scaled spectra and anchors
+#' @param preserveEnv if TRUE, transplants the amplitude envelope from the
+#'   original to the modified sound with \code{\link{transplantEnv}}. Defaults
+#'   to TRUE if no time stretching is performed and FALSE otherwise
+#' @param transplantEnv_pars a list of parameters passed on to
+#'   \code{\link{transplantEnv}} if \code{preserveEnv = TRUE}
 #' @export
 #' @examples
 #' s = soundgen(sylLen = 200, ampl = c(0,-10),
